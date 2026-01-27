@@ -172,6 +172,21 @@ export const router = createBrowserRouter([
         ),
     },
     {
+        path: '/reservation-architect',
+        element: (
+            <React.Suspense fallback={<LoadingFallback />}>
+                <ReservationArchitect />
+            </React.Suspense>
+        ),
+        errorElement: (
+            <div style={{ padding: '20px', color: 'white', background: '#1a1a2e', height: '100vh' }}>
+                <h1>Greška u učitavanju forme za rezervaciju</h1>
+                <p>Molimo osvežite stranicu ili kontaktirajte podršku.</p>
+                <button onClick={() => window.location.reload()}>Osveži</button>
+            </div>
+        )
+    },
+    {
         path: '/',
         element: (
             <AuthGuard>
@@ -366,10 +381,6 @@ export const router = createBrowserRouter([
             {
                 path: 'reservations',
                 element: <ReservationsDashboard />,
-            },
-            {
-                path: 'reservation-architect',
-                element: <ReservationArchitect />,
             },
             {
                 path: 'admin/import',
