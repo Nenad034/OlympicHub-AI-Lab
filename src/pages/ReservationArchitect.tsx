@@ -356,10 +356,15 @@ const ReservationArchitect: React.FC = () => {
                         supplier: res.source,
                         country: res.location.includes('Grčka') ? 'Grčka' : (res.location.includes(',') ? res.location.split(',').pop()?.trim() : res.location),
                         city: res.location.split(',')[0].trim(),
-                        // Clean hotel name - remove city name in parentheses if present
-                        subject: res.name.replace(/\s*\(.*?\)\s*/g, '').trim(),
-                        // Store stars separately
-                        stars: res.stars || 0,
+                        // Clean hotel name - remove city name in parentheses, underscores, and 'Not defined' text
+                        subject: res.name
+                            .replace(/\s*\(.*?\)\s*/g, ' ') // Remove (Sunny Beach)
+                            .replace(/Not defined/gi, '')    // Remove "Not defined"
+                            .replace(/_{1,}/g, ' ')         // Replace underscores with spaces
+                            .replace(/\s+/g, ' ')           // Collapse spaces
+                            .trim(),
+                        // Store stars separately, handle "Not defined" or non-numeric values
+                        stars: typeof res.stars === 'number' ? res.stars : (isNaN(parseInt(res.stars)) ? 0 : parseInt(res.stars)),
                         // Map room code to full description
                         details: getRoomDescription(loadData.selectedRoom?.name || 'Standard Room'),
                         mealPlan: getMealPlanDescription((res.mealPlan || loadData.selectedRoom?.mealPlan || '').replace('Standard Room', '')),
@@ -1386,7 +1391,14 @@ const ReservationArchitect: React.FC = () => {
                                                 {/* Row 2: Subject, City, Country */}
                                                 <div className="item-row-v4" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                                                     <div className="input-group-v4">
-                                                        <label>Naziv Hotela / Objekata</label>
+                                                        <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                            Naziv Hotela / Objekata
+                                                            {item.stars && item.stars > 0 && (
+                                                                <span style={{ color: '#f59e0b', fontSize: '10px' }}>
+                                                                    {'⭐'.repeat(Math.round(item.stars))}
+                                                                </span>
+                                                            )}
+                                                        </label>
                                                         <input
                                                             value={item.subject}
                                                             placeholder="Npr. Panorama Village Hotel"
@@ -1399,20 +1411,51 @@ const ReservationArchitect: React.FC = () => {
                                                         />
                                                     </div>
                                                     <div className="input-group-v4">
-                                                        <label>Mesto</label>
-                                                        <input value={item.city || ''} placeholder="Npr. Tasos" onChange={e => {
-                                                            const next = [...dossier.tripItems];
-                                                            next[idx].city = e.target.value;
-                                                            setDossier({ ...dossier, tripItems: next });
-                                                        }} />
+                                                        <label>Kategorija</label>
+                                                        <select
+                                                            value={item.stars || 0}
+                                                            style={{
+                                                                background: 'var(--bg-input)',
+                                                                border: '1px solid var(--border)',
+                                                                borderRadius: '8px',
+                                                                padding: '10px',
+                                                                color: 'var(--text-primary)',
+                                                                fontWeight: 700
+                                                            }}
+                                                            onChange={e => {
+                                                                const next = [...dossier.tripItems];
+                                                                next[idx].stars = parseInt(e.target.value);
+                                                                setDossier({ ...dossier, tripItems: next });
+                                                            }}
+                                                        >
+                                                            <option value="0">Bez kategorije</option>
+                                                            <option value="1">1*</option>
+                                                            <option value="2">2*</option>
+                                                            <option value="3">3*</option>
+                                                            <option value="4">4*</option>
+                                                            <option value="5">5*</option>
+                                                        </select>
                                                     </div>
                                                     <div className="input-group-v4">
-                                                        <label>Država</label>
-                                                        <input value={item.country || ''} placeholder="Npr. Grčka" onChange={e => {
-                                                            const next = [...dossier.tripItems];
-                                                            next[idx].country = e.target.value;
-                                                            setDossier({ ...dossier, tripItems: next });
-                                                        }} />
+                                                        <label style={{ opacity: 0 }}>Spacer</label>
+                                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                                            <div className="input-group-v4" style={{ flex: 1 }}>
+                                                                <label>Mesto</label>
+                                                                <input value={item.city || ''} placeholder="Npr. Tasos" onChange={e => {
+                                                                    const next = [...dossier.tripItems];
+                                                                    next[idx].city = e.target.value;
+                                                                    setDossier({ ...dossier, tripItems: next });
+                                                                }} />
+                                                            </div>
+                                                            <div className="input-group-v4" style={{ flex: 1 }}>
+                                                                <label>Država</label>
+                                                                <input value={item.country || ''} placeholder="Npr. Grčka" onChange={e => {
+                                                                    const next = [...dossier.tripItems];
+                                                                    next[idx].country = e.target.value;
+                                                                    setDossier({ ...dossier, tripItems: next });
+                                                                }} />
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
 
