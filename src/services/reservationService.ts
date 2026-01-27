@@ -220,10 +220,19 @@ export async function saveDossierToDatabase(dossier: any): Promise<{ success: bo
         const totalBrutto = dossier.tripItems.reduce((sum: number, item: any) => sum + (item.bruttoPrice || 0), 0);
         const totalPaid = (dossier.finance.payments || []).reduce((sum: number, p: any) => p.status === 'deleted' ? sum : sum + (p.amount || 0), 0);
 
+        // Map UI status to Database status
+        const mapUiStatusToDb = (uiStatus: string): 'pending' | 'confirmed' | 'cancelled' | 'completed' => {
+            const s = uiStatus.toLowerCase();
+            if (s === 'confirmed' || s === 'active' || s === 'reservation') return 'confirmed';
+            if (s === 'canceled' || s === 'cancelled') return 'cancelled';
+            if (s === 'processing' || s === 'completed') return 'completed';
+            return 'pending'; // Default for 'Request', 'Offer', etc.
+        };
+
         const dbRes: DatabaseReservation = {
             cis_code: dossier.cisCode,
             ref_code: dossier.resCode || dossier.clientReference,
-            status: dossier.status.toLowerCase() as any, // Map 'Request' -> 'request' etc if needed, or keeping it
+            status: mapUiStatusToDb(dossier.status),
             customer_name: dossier.booker.fullName,
             customer_type: dossier.customerType,
             destination: firstItem?.city + ', ' + firstItem?.country || 'Unknown',
