@@ -23,8 +23,16 @@ if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('your_') || supabas
                 order: () => Promise.resolve({ data: [], error: mockError(`select from ${table}`).error }),
                 eq: () => Promise.resolve({ data: [], error: mockError(`select from ${table}`).error })
             }),
-            upsert: () => Promise.resolve(mockError(`upsert to ${table}`)),
-            insert: () => ({ select: () => Promise.resolve(mockError(`insert to ${table}`)) }),
+            upsert: () => ({
+                select: () => ({
+                    single: () => Promise.resolve(mockError(`upsert to ${table}`))
+                })
+            }),
+            insert: () => ({
+                select: () => ({
+                    single: () => Promise.resolve(mockError(`insert to ${table}`))
+                })
+            }),
             update: () => Promise.resolve(mockError(`update ${table}`)),
             delete: () => Promise.resolve(mockError(`delete from ${table}`))
         }),
