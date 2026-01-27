@@ -97,30 +97,37 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
         try {
             const guests = [state.mainGuest, ...state.additionalGuests];
-            navigate('/reservations/architect', {
-                state: {
-                    selectedResult: {
-                        name: bookingData.hotelName,
-                        location: bookingData.location,
-                        source: provider.toUpperCase(),
-                        price: bookingData.totalPrice,
-                        mealPlan: bookingData.mealPlan || '',
-                        originalData: bookingData.providerData
-                    },
-                    selectedRoom: {
-                        name: bookingData.roomType
-                    },
-                    searchParams: {
-                        checkIn: bookingData.checkIn,
-                        checkOut: bookingData.checkOut,
-                        nights: bookingData.nights,
-                        adults: bookingData.adults,
-                        children: bookingData.children
-                    },
-                    prefilledGuests: guests,
-                    specialRequests: state.specialRequests
-                }
-            });
+
+            const payload = {
+                selectedResult: {
+                    name: bookingData.hotelName,
+                    location: bookingData.location,
+                    source: provider.toUpperCase(),
+                    price: bookingData.totalPrice,
+                    mealPlan: bookingData.mealPlan || '',
+                    originalData: bookingData.providerData
+                },
+                selectedRoom: {
+                    name: bookingData.roomType,
+                    price: bookingData.totalPrice
+                },
+                searchParams: {
+                    checkIn: bookingData.checkIn,
+                    checkOut: bookingData.checkOut,
+                    nights: bookingData.nights,
+                    adults: bookingData.adults,
+                    children: bookingData.children
+                },
+                prefilledGuests: guests,
+                specialRequests: state.specialRequests
+            };
+
+            // Save to localStorage for the new tab to pick up
+            localStorage.setItem('pending_booking', JSON.stringify(payload));
+
+            // Open in new tab
+            window.open('/reservation-architect?loadFrom=pending_booking', '_blank');
+
             onClose();
         } catch (error) {
             console.error('Booking error:', error);
