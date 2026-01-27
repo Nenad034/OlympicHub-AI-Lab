@@ -16,8 +16,6 @@ import { softZoneService } from '../services/softZoneService';
 import { translations } from '../translations';
 import { formatDate } from '../utils/dateUtils';
 import { ModernCalendar } from '../components/ModernCalendar';
-import { BookingModal } from '../components/booking/BookingModal';
-import { BookingSuccess } from '../components/booking/BookingSuccess';
 import '../modules/pricing/TotalTripSearch.css';
 import './GlobalHubSearch.css';
 import { MultiSelectDropdown } from '../components/MultiSelectDropdown';
@@ -178,11 +176,6 @@ const GlobalHubSearch: React.FC = () => {
     const [selectedArrivalDate, setSelectedArrivalDate] = useState<string | null>(null);
     const [expandedHotel, setExpandedHotel] = useState<CombinedResult | null>(null);
 
-    // Booking modal state
-    const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-    const [selectedRoomForBooking, setSelectedRoomForBooking] = useState<any>(null);
-
-
     // Sidebar providers
     const generateFlexDates = (baseDate: string, range: number) => {
         if (!baseDate) return [];
@@ -198,13 +191,26 @@ const GlobalHubSearch: React.FC = () => {
 
     // Booking handlers
     const handleReserveClick = (room: any) => {
-        console.log('[GlobalSearch] Opening booking modal for room:', room.name);
-        setSelectedRoomForBooking(room);
-        setIsBookingModalOpen(true);
-    };
+        console.log('[GlobalSearch] Opening booking in new tab for room:', room.name);
 
-    const handleBookingError = (error: string) => {
-        console.error('Booking failed:', error);
+        const payload = {
+            selectedResult: expandedHotel,
+            searchParams: {
+                checkIn,
+                checkOut,
+                nights,
+                adults,
+                children,
+                rooms
+            },
+            selectedRoom: room
+        };
+
+        localStorage.setItem('pending_booking', JSON.stringify(payload));
+        window.open('/reservation-architect?loadFrom=pending_booking', '_blank');
+
+        // Close the selection modal in the current tab
+        setExpandedHotel(null);
     };
 
     React.useEffect(() => {
@@ -1400,21 +1406,7 @@ const GlobalHubSearch: React.FC = () => {
 
                                                 <button
                                                     className="view-more-btn"
-                                                    onClick={() => {
-                                                        const payload = {
-                                                            selectedResult: hotel,
-                                                            searchParams: {
-                                                                checkIn,
-                                                                checkOut,
-                                                                adults,
-                                                                children,
-                                                                rooms
-                                                            },
-                                                            selectedRoom: null // Default room (cheapest/base)
-                                                        };
-                                                        localStorage.setItem('pending_booking', JSON.stringify(payload));
-                                                        window.open('/reservation-architect?loadFrom=pending_booking', '_blank');
-                                                    }}
+                                                    onClick={() => setExpandedHotel(hotel)}
                                                 >
                                                     Detalji <ArrowRight size={16} />
                                                 </button>
@@ -1499,34 +1491,38 @@ const GlobalHubSearch: React.FC = () => {
                 )}
             </div>
 
-            {/* Booking Modal (Passenger Form) */}
-            {isBookingModalOpen && expandedHotel && selectedRoomForBooking && (
-                <BookingModal
-                    isOpen={isBookingModalOpen}
-                    onClose={() => {
-                        setIsBookingModalOpen(false);
-                        setSelectedRoomForBooking(null);
+            {/* Active Calendar Modal */}
+            {activeCalendar === 'in' && (
+                <ModernCalendar
+                    startDate={checkIn}
+                    endDate={checkOut}
+                    onChange={(s, e) => {
+                        setCheckIn(s);
+                        if (e) {
+                            setCheckOut(e);
+                            syncNightsFromDates(s, e);
+                        }
+                        setActiveCalendar(null);
                     }}
-                    provider={expandedHotel.source.toLowerCase() as 'solvex' | 'tct' | 'opengreece'}
-                    bookingData={{
-                        hotelName: expandedHotel.name,
-                        location: expandedHotel.location,
-                        checkIn: checkIn,
-                        checkOut: checkOut,
-                        nights: nights,
-                        roomType: selectedRoomForBooking.name || 'Standardna soba',
-                        mealPlan: getMealPlanDisplayName(expandedHotel.mealPlan || ''),
-                        adults: adults,
-                        children: children,
-                        totalPrice: selectedRoomForBooking.price || expandedHotel.price,
-                        currency: expandedHotel.currency,
-                        providerData: expandedHotel.originalData || {}
-                    }}
-                    onSuccess={() => { }} // Success is handled by navigation inside modal
-                    onError={handleBookingError}
+                    onClose={() => setActiveCalendar(null)}
                 />
             )}
-        </div >
+            {activeCalendar === 'out' && (
+                <ModernCalendar
+                    startDate={checkIn}
+                    endDate={checkOut}
+                    onChange={(s, e) => {
+                        setCheckIn(s);
+                        if (e) {
+                            setCheckOut(e);
+                            syncNightsFromDates(s, e);
+                        }
+                        setActiveCalendar(null);
+                    }}
+                    onClose={() => setActiveCalendar(null)}
+                />
+            )}
+        </div>
     );
 };
 
