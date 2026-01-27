@@ -59,14 +59,25 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             if (saved) setConfig(JSON.parse(saved));
 
             try {
-                const { data } = await supabase.from('app_config').select('*').limit(1).single();
+                // Set a safety timeout - if Supabase takes too long, just proceed
+                const timeoutPromise = new Promise(resolve => setTimeout(resolve, 3000));
+
+                const { data } = await Promise.race([
+                    supabase.from('app_config').select('*').limit(1).single(),
+                    timeoutPromise.then(() => ({ data: null }))
+                ]) as any;
+
                 if (data) {
                     setConfig(data.content);
                     localStorage.setItem('olympic_config', JSON.stringify(data.content));
                 }
 
-                const { data: bData } = await supabase.from('app_backups').select('*').order('created_at', { ascending: false });
-                if (bData) setBackups(bData);
+                // Load backups in background without blocking
+                supabase.from('app_backups').select('*').order('created_at', { ascending: false })
+                    .then(({ data: bData }) => {
+                        if (bData) setBackups(bData);
+                    });
+
             } catch (e) {
                 console.error("Failed to load config from Supabase, using LocalStorage/defaults.");
             } finally {

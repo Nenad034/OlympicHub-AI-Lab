@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import { APITestTemplate, APITestSection } from '../components/APITestTemplate';
+import { APITestTemplate, type APITestSection } from '../components/APITestTemplate';
 import { marsAuthService } from '../services/mars/marsAuthService';
 import { marsContentService } from '../services/mars/marsContentService';
 import { marsPriceCalculator } from '../services/mars/marsPriceCalculator';
@@ -70,7 +70,7 @@ export const MarsTest: React.FC = () => {
                     id: 'auth-status',
                     label: 'Get Auth Status',
                     description: 'Check authentication configuration',
-                    onClick: () => runTest('Auth Status', () => marsAuthService.getAuthStatus()),
+                    onClick: () => runTest('Auth Status', async () => marsAuthService.getAuthStatus()),
                 },
                 {
                     id: 'test-connection',

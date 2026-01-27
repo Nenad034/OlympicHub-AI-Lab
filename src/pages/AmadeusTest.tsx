@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import { APITestTemplate, APITestSection } from '../components/APITestTemplate';
+import { APITestTemplate, type APITestSection } from '../components/APITestTemplate';
 
 // Mock Amadeus API functions
 const amadeusApi = {

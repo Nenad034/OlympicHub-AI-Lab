@@ -11,7 +11,7 @@ import { useThemeStore, useAppStore } from './stores';
 // Components
 import GeneralAIChat from './components/GeneralAIChat';
 import { GeometricBrain } from './components/icons/GeometricBrain';
-import { ToastProvider } from './components/ui/Toast';
+// ToastProvider removed here (provided in main.tsx)
 import SentinelPopup from './components/common/SentinelPopup';
 
 // Context
@@ -53,23 +53,36 @@ const App: React.FC = () => {
   const loadingContent = (
     <div style={{
       height: '100vh',
+      width: '100vw',
       display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      background: '#050608' // Fallback color
+      background: '#1a1a2e', // CHANGED TO DARK BLUE TO IDENTIFY IF THIS IS RENDERING
+      color: '#3fb950',
+      fontFamily: 'sans-serif'
     }}>
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ repeat: Infinity, duration: 1 }}
-        style={{ color: '#3fb950' }}
-      >
-        <Zap size={48} />
-      </motion.div>
+      <div className="spinner-simple" style={{
+        width: '40px',
+        height: '40px',
+        border: '3px solid rgba(63, 185, 80, 0.3)',
+        borderTop: '3px solid #3fb950',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
+        marginBottom: '20px'
+      }} />
+      <div style={{ fontSize: '14px', letterSpacing: '2px', color: 'white' }}>OLYMPIC HUB LOADING...</div>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 
   return (
-    <ToastProvider>
+    <>
       {isLoading ? loadingContent : (
         <>
           {/* Main App Router */}
@@ -123,7 +136,7 @@ const App: React.FC = () => {
           <SentinelPopup />
         </>
       )}
-    </ToastProvider>
+    </>
   );
 };
 

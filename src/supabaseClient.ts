@@ -6,7 +6,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 // Safe client creation to prevent crash if env vars are missing
 let client: any;
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('your_') || supabaseAnonKey.includes('your_')) {
     console.warn("⚠️ OlympicHub: Supabase Cloud credentials missing. App running in OFFLINE/DEMO mode.");
     // Soft mock implementation to prevent crash while informing developer
     const mockError = (method: string) => ({
@@ -30,6 +30,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
         }),
         auth: {
             getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+            refreshSession: () => Promise.resolve({ data: { session: null, user: null }, error: null }),
             onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } })
         },
         functions: {

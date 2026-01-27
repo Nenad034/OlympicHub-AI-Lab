@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import { APITestTemplate, APITestSection } from '../components/APITestTemplate';
+import { APITestTemplate, type APITestSection } from '../components/APITestTemplate';
 import * as SolvexAuth from '../services/solvex/solvexAuthService';
 import * as SolvexDict from '../services/solvex/solvexDictionaryService';
 import * as SolvexSearch from '../services/solvex/solvexSearchService';
