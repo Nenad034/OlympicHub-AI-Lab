@@ -285,29 +285,48 @@ export async function getNextReservationNumber(): Promise<string> {
     try {
         const currentYear = new Date().getFullYear();
 
-        // Get the latest reservation code for this year
+        // 1. Primarni način: Tražimo najveći već postojeći broj za ovu godinu
         const { data, error } = await supabase
             .from('reservations')
             .select('ref_code')
-            .like('ref_code', `%/${currentYear}`)
+            .like('ref_code', '%/202%') // Tražimo bilo šta što se završava na godinu
             .order('ref_code', { ascending: false })
             .limit(1);
 
-        if (error || !data || data.length === 0) {
-            // First reservation of the year
-            return `0000001/${currentYear}`;
+        if (error) {
+            console.error('[Reservation Service] Database error fetching latest number:', error);
+            // Nastavljamo na fallback
         }
 
-        const latestCode = data[0].ref_code;
-        if (!latestCode.includes('/')) return `0000001/${currentYear}`;
+        if (data && data.length > 0) {
+            const latestCode = data[0].ref_code;
+            console.log('[Reservation Service] Found latest code in DB:', latestCode);
 
-        const [numPart] = latestCode.split('/');
-        const nextNum = parseInt(numPart) + 1;
+            if (latestCode && latestCode.includes('/')) {
+                const parts = latestCode.split('/');
+                const currentNum = parseInt(parts[0]);
+                if (!isNaN(currentNum)) {
+                    const nextNum = currentNum + 1;
+                    return nextNum.toString().padStart(7, '0') + `/${currentYear}`;
+                }
+            }
+        }
 
-        // Zero-pad to 7 digits
-        return nextNum.toString().padStart(7, '0') + `/${currentYear}`;
+        // 2. Fallback način: Ako nema rezultata ili je format čudan, brojimo ukupno za ovu godinu
+        const { count, error: countError } = await supabase
+            .from('reservations')
+            .select('*', { count: 'exact', head: true })
+            .like('ref_code', `%/${currentYear}`);
+
+        if (!countError && typeof count === 'number') {
+            const nextNum = count + 1;
+            return nextNum.toString().padStart(7, '0') + `/${currentYear}`;
+        }
+
+        // 3. Poslednja opcija: Vrati broj 1
+        return `0000001/${currentYear}`;
     } catch (error) {
-        console.error('[Reservation Service] Error generating next number:', error);
+        console.error('[Reservation Service] Unexpected error in number generation:', error);
         return `0000001/${new Date().getFullYear()}`;
     }
 }
