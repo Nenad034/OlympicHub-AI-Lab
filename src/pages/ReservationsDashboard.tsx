@@ -1255,7 +1255,7 @@ ${data.map(r => `  <reservation>
                             <div
                                 key={res.id}
                                 className={`reservation-row ${selectedReservations.includes(res.id) ? 'selected' : ''}`}
-                                onClick={() => navigate(`/reservations/architect?id=${res.id}`)}
+                                onClick={() => navigate(`/reservation-architect?id=${res.id}`)}
                             >
                                 {bulkEmailMode && (
                                     <div
