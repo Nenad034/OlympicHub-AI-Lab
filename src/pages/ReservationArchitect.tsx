@@ -357,12 +357,12 @@ const ReservationArchitect: React.FC = () => {
                         // Add stars to name
                         subject: `${res.name} ${res.stars ? '⭐'.repeat(Math.round(res.stars)) : ''}`.trim(),
                         // Map room code to full description
-                        details: getRoomDescription(location.state.selectedRoom?.name || 'Standard Room'),
-                        mealPlan: getMealPlanDescription((res.mealPlan || location.state.selectedRoom?.mealPlan || '').replace('Standard Room', '')),
+                        details: getRoomDescription(loadData.selectedRoom?.name || 'Standard Room'),
+                        mealPlan: getMealPlanDescription((res.mealPlan || loadData.selectedRoom?.mealPlan || '').replace('Standard Room', '')),
                         checkIn: searchParams.checkIn,
                         checkOut: searchParams.checkOut,
-                        netPrice: Math.round((location.state.selectedRoom?.price || res.price) * 100) / 100,
-                        bruttoPrice: Math.round((location.state.selectedRoom?.price || res.price) * 100) / 100,
+                        netPrice: Math.round((loadData.selectedRoom?.price || res.price) * 100) / 100,
+                        bruttoPrice: Math.round((loadData.selectedRoom?.price || res.price) * 100) / 100,
                         passengers: [...calculatedPassengers]
                     }
                 ],
@@ -380,14 +380,14 @@ const ReservationArchitect: React.FC = () => {
                 passengers: calculatedPassengers,
                 notes: {
                     ...prev.notes,
-                    general: location.state.specialRequests || ''
+                    general: loadData.specialRequests || ''
                 }
             }));
 
             // Go directly to Passengers tab
             setActiveSection('parties');
         }
-    }, [location.state]);
+    }, [location.state, location.search]);
 
     // --- EXCHANGE RATE SIMULATION --- (To be replaced by API)
     const NBS_RATES = {
