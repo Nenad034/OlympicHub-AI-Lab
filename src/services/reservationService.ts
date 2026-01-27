@@ -1,4 +1,4 @@
-// Reservation Service
+// Reservation Service - Updated for Vercel Deployment Sync
 // Handles saving and retrieving reservations from Supabase
 
 import { supabase } from '../supabaseClient';
