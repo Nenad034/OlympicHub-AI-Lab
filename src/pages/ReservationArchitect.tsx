@@ -48,6 +48,7 @@ interface TripItem {
     subject: string; // Hotel name, Flight route, etc.
     details: string; // Room type, Flight class, etc.
     mealPlan?: string; // Meal plan (e.g. All Inclusive)
+    stars?: number; // Hotel category
     checkIn: string;
     checkOut: string;
     netPrice: number;
@@ -355,8 +356,10 @@ const ReservationArchitect: React.FC = () => {
                         supplier: res.source,
                         country: res.location.includes('Grčka') ? 'Grčka' : (res.location.includes(',') ? res.location.split(',').pop()?.trim() : res.location),
                         city: res.location.split(',')[0].trim(),
-                        // Add stars to name
-                        subject: `${res.name} ${res.stars ? '⭐'.repeat(Math.round(res.stars)) : ''}`.trim(),
+                        // Clean hotel name - remove city name in parentheses if present
+                        subject: res.name.replace(/\s*\(.*?\)\s*/g, '').trim(),
+                        // Store stars separately
+                        stars: res.stars || 0,
                         // Map room code to full description
                         details: getRoomDescription(loadData.selectedRoom?.name || 'Standard Room'),
                         mealPlan: getMealPlanDescription((res.mealPlan || loadData.selectedRoom?.mealPlan || '').replace('Standard Room', '')),
