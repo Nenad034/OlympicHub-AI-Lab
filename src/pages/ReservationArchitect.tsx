@@ -15,7 +15,7 @@ import { ModernCalendar } from '../components/ModernCalendar';
 import { GoogleAddressAutocomplete } from '../components/GoogleAddressAutocomplete';
 import { NATIONALITIES } from '../constants/nationalities';
 import ReservationEmailModal from '../components/ReservationEmailModal';
-import { saveDossierToDatabase } from '../services/reservationService';
+import { saveDossierToDatabase, getNextReservationNumber } from '../services/reservationService';
 import '../components/GoogleAddressAutocomplete.css';
 import './ReservationArchitect.css';
 
@@ -710,8 +710,8 @@ const ReservationArchitect: React.FC = () => {
             let isInitialSave = false;
 
             if (!dossier.resCode) {
-                // Generisanje broja (u realnom sistemu ovo obično radi baza, ali zadržavamo logiku)
-                const nextNum = '0000001/2026';
+                // Fetch the next available reservation number from the database
+                const nextNum = await getNextReservationNumber();
                 currentDossier.resCode = nextNum;
                 isInitialSave = true;
                 setDossier(currentDossier);

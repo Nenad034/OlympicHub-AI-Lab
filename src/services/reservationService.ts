@@ -277,3 +277,37 @@ export async function saveDossierToDatabase(dossier: any): Promise<{ success: bo
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
 }
+
+/**
+ * Get the next sequential reservation number (e.g., 0000002/2026)
+ */
+export async function getNextReservationNumber(): Promise<string> {
+    try {
+        const currentYear = new Date().getFullYear();
+
+        // Get the latest reservation code for this year
+        const { data, error } = await supabase
+            .from('reservations')
+            .select('ref_code')
+            .like('ref_code', `%/${currentYear}`)
+            .order('ref_code', { ascending: false })
+            .limit(1);
+
+        if (error || !data || data.length === 0) {
+            // First reservation of the year
+            return `0000001/${currentYear}`;
+        }
+
+        const latestCode = data[0].ref_code;
+        if (!latestCode.includes('/')) return `0000001/${currentYear}`;
+
+        const [numPart] = latestCode.split('/');
+        const nextNum = parseInt(numPart) + 1;
+
+        // Zero-pad to 7 digits
+        return nextNum.toString().padStart(7, '0') + `/${currentYear}`;
+    } catch (error) {
+        console.error('[Reservation Service] Error generating next number:', error);
+        return `0000001/${new Date().getFullYear()}`;
+    }
+}
