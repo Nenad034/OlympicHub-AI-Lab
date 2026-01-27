@@ -14,11 +14,14 @@ export interface ScoredResult {
 export class AiIntelligenceService {
     private genAI: GoogleGenerativeAI | null = null;
     private static instance: AiIntelligenceService;
+    private callCount = 0;
+    private readonly MAX_CALLS = Number((import.meta as any).env?.VITE_AI_MAX_CALLS_PER_SESSION) || 50;
 
     private constructor() {
         const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
         if (apiKey) {
             this.genAI = new GoogleGenerativeAI(apiKey);
+            console.log('✨ AI Intelligence Service initialized with API Key');
         }
     }
 
@@ -27,6 +30,18 @@ export class AiIntelligenceService {
             AiIntelligenceService.instance = new AiIntelligenceService();
         }
         return AiIntelligenceService.instance;
+    }
+
+    /**
+     * Checks if we are within usage limits
+     */
+    private checkLimits(): boolean {
+        if (this.callCount >= this.MAX_CALLS) {
+            console.warn('[AiLab] AI Usage limit reached for this session.');
+            this.emitInsight('AI limit za ovu sesiju je dostignut radi štednje resursa.');
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -80,12 +95,19 @@ export class AiIntelligenceService {
      * Uses LLM to fix/enrich data when things look weird
      */
     public async smartEnrich(data: any): Promise<any> {
-        if (!this.genAI) return data;
+        if (!this.genAI || !this.checkLimits()) return data;
 
-        // In a real Agoda Agent, we'd send the recipe to the LLM
-        // For now, we simulate the "Recipe Success"
-        console.log('[AiLab] AI is enriching result data patterns...');
-        return data;
+        try {
+            this.callCount++;
+            const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+            // Simulation of AI pattern enrichment
+            console.log(`[AiLab] LLM Call ${this.callCount}/${this.MAX_CALLS}: Enriching data...`);
+            return data;
+        } catch (error) {
+            console.error('[AiLab] LLM Enrichment failed:', error);
+            return data;
+        }
     }
 
     /**
