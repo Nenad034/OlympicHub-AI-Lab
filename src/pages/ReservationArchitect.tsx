@@ -249,11 +249,35 @@ const ReservationArchitect: React.FC = () => {
     const balance = totalBrutto - totalPaid;
 
     // --- INITIAL DATA LOAD FROM SEARCH ---
+    // --- INITIAL DATA LOAD FROM SEARCH ---
     useEffect(() => {
+        let loadData: any = null;
+
+        // 1. Try reading from navigation state (Same tab navigation)
         if (location.state && location.state.selectedResult) {
-            const res = location.state.selectedResult;
-            const searchParams = location.state.searchParams;
-            const prefilled = location.state.prefilledGuests || [];
+            loadData = location.state;
+        }
+        // 2. Try reading from LocalStorage (New tab handover)
+        else {
+            const urlParams = new URLSearchParams(location.search);
+            if (urlParams.get('loadFrom') === 'pending_booking') {
+                const pending = localStorage.getItem('pending_booking');
+                if (pending) {
+                    try {
+                        loadData = JSON.parse(pending);
+                        // Optional: Clear it so it doesn't reload on refresh (if desired, but keeping it is safer for refresh)
+                        // localStorage.removeItem('pending_booking'); 
+                    } catch (e) {
+                        console.error('Failed to parse pending booking', e);
+                    }
+                }
+            }
+        }
+
+        if (loadData && loadData.selectedResult) {
+            const res = loadData.selectedResult;
+            const searchParams = loadData.searchParams;
+            const prefilled = loadData.prefilledGuests || [];
             const leadPassenger = prefilled.find((p: any) => p.isLeadPassenger) || prefilled[0];
 
             const calculatedPassengers = prefilled.length > 0 ? prefilled.map((pg: any, i: number) => ({

@@ -1400,7 +1400,21 @@ const GlobalHubSearch: React.FC = () => {
 
                                                 <button
                                                     className="view-more-btn"
-                                                    onClick={() => setExpandedHotel(hotel)}
+                                                    onClick={() => {
+                                                        const payload = {
+                                                            selectedResult: hotel,
+                                                            searchParams: {
+                                                                checkIn,
+                                                                checkOut,
+                                                                adults,
+                                                                children,
+                                                                rooms
+                                                            },
+                                                            selectedRoom: null // Default room (cheapest/base)
+                                                        };
+                                                        localStorage.setItem('pending_booking', JSON.stringify(payload));
+                                                        window.open('/reservation-architect?loadFrom=pending_booking', '_blank');
+                                                    }}
                                                 >
                                                     Detalji <ArrowRight size={16} />
                                                 </button>
