@@ -1,0 +1,128 @@
+/* Booking Summary Styles */
+
+.booking-summary {
+    background: linear-gradient(135deg, var(--accent-glow) 0%, var(--bg-surface) 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(10px);
+}
+
+.booking-summary-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.booking-summary-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.booking-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.summary-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summary-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.summary-item.summary-price {
+    grid-column: 1 / -1;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.summary-value.price {
+    font-size: 20px;
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+/* Progress Indicator */
+.booking-progress {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-input);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 12px;
+    color: #94a3b8;
+    display: block;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .booking-summary {
+        padding: 16px;
+    }
+
+    .booking-summary-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .summary-value.price {
+        font-size: 18px;
+    }
+}
+
+/* Animation */
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.progress-fill {
+    animation: pulse 2s ease-in-out infinite;
+}

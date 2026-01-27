@@ -1,0 +1,238 @@
+.notification-center {
+    padding: 24px;
+    max-width: 900px;
+    margin: 0 auto;
+    color: var(--text-primary);
+}
+
+.nc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.nc-title-area {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.nc-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2);
+}
+
+.nc-title-area h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.nc-title-area p {
+    margin: 4px 0 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.nc-back-button {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nc-back-button:hover {
+    background: var(--border-color);
+}
+
+.nc-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 24px;
+}
+
+.nc-module-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.nc-module-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.nc-module-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.nc-module-info {
+    display: flex;
+    gap: 12px;
+}
+
+.nc-module-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nc-module-details h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.nc-status {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.nc-status.enabled {
+    color: #3fb950;
+    background: rgba(63, 185, 80, 0.1);
+}
+
+.nc-status.disabled {
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Switch Styling */
+.nc-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.nc-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.nc-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border-color);
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.nc-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.nc-slider {
+    background-color: var(--accent);
+}
+
+input:checked+.nc-slider:before {
+    transform: translateX(20px);
+}
+
+.nc-module-settings {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.nc-setting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.nc-setting-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.nc-setting-control {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.nc-setting-control input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    outline: none;
+}
+
+.nc-setting-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.nc-value {
+    font-weight: 600;
+    font-size: 14px;
+    min-width: 30px;
+}
+
+.nc-preview-info {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #3fb950;
+    padding: 8px 12px;
+    background: rgba(63, 185, 80, 0.05);
+    border-radius: 8px;
+}
+
+.nc-preview-info.warning {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.05);
+}

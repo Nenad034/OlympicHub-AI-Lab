@@ -1,0 +1,403 @@
+/* Open Greece Search Additional Styles */
+.opengreece-search {
+    background: linear-gradient(180deg, rgba(0, 92, 197, 0.05) 0%, transparent 50%);
+}
+
+.opengreece-search .header-badge.opengreece {
+    background: linear-gradient(135deg, #0d5eaf, #1e88e5);
+}
+
+.opengreece-search .back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 16px;
+}
+
+.opengreece-search .back-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.opengreece-search .stats-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 12px;
+    color: #10b981;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.opengreece-search .hotel-dropdown {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.opengreece-search .hotel-suggestion {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 12px;
+}
+
+.opengreece-search .hotel-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.opengreece-search .hotel-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.opengreece-search .hotel-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.opengreece-search .status-pill {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.opengreece-search .status-pill.new {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.opengreece-search .status-pill.updated {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.opengreece-search .status-pill.deleted {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.opengreece-search .error-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 16px;
+    color: #ef4444;
+    margin-bottom: 24px;
+}
+
+.opengreece-search .greece-icon {
+    filter: drop-shadow(0 10px 30px rgba(13, 94, 175, 0.3));
+}
+
+.opengreece-search .info-pills {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.opengreece-search .info-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.opengreece-search .pulse-loader.greece {
+    background: linear-gradient(135deg, #0d5eaf, #1e88e5);
+}
+
+.opengreece-search .cat-header-premium.greece {
+    background: linear-gradient(135deg, rgba(13, 94, 175, 0.2), rgba(30, 136, 229, 0.1));
+    border-color: rgba(30, 136, 229, 0.3);
+}
+
+.opengreece-search .raw-api-response {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    padding: 24px;
+    overflow-x: auto;
+}
+
+.opengreece-search .raw-api-response pre {
+    margin: 0;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: #10b981;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Spin animation */
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Results Layout */
+.results-container {
+    margin-top: 32px;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.results-info-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: rgba(13, 94, 175, 0.1);
+    border: 1px solid rgba(13, 94, 175, 0.2);
+    border-radius: 16px;
+    margin-bottom: 24px;
+    color: var(--text-primary);
+}
+
+.banner-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.banner-left strong {
+    color: #1e88e5;
+}
+
+/* Hotel Card Premium Grid */
+.hotel-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 24px;
+}
+
+.hotel-result-card-premium {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hotel-result-card-premium:hover {
+    transform: translateY(-8px);
+    border-color: rgba(30, 136, 229, 0.5);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.hotel-card-image {
+    position: relative;
+    height: 220px;
+}
+
+.hotel-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-overlay {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+}
+
+.hotel-stars-badge {
+    display: flex;
+    gap: 2px;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    border-radius: 30px;
+    color: #ffca28;
+}
+
+.hotel-card-content {
+    padding: 24px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.hotel-header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.hotel-header-main h3 {
+    margin: 0 0 6px 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.hotel-location-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.lowest-price-tag {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+}
+
+.from-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.price-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: #10b981;
+}
+
+/* Room Offers */
+.room-options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.room-offer-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.room-info-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.room-name-main {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.room-meta-tags {
+    display: flex;
+    gap: 8px;
+}
+
+.meta-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.meal-tag {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.room-price-box {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.room-price-val {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.book-btn-small {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #1e88e5;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.book-btn-small:hover {
+    background: #1565c0;
+    transform: translateX(4px);
+}
+
+.show-more-rooms {
+    background: none;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 8px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.show-more-rooms:hover {
+    border-color: #1e88e5;
+    color: #1e88e5;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

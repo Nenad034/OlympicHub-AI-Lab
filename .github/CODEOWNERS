@@ -1,0 +1,28 @@
+# CODEOWNERS - Automatic Code Review Assignments
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @Nenad034
+
+# Security-critical files require review
+SECURITY.md @Nenad034
+.github/workflows/* @Nenad034
+.env.example @Nenad034
+
+# API Integration files
+src/services/tct* @Nenad034
+src/services/aiMonitor.ts @Nenad034
+src/services/hitlManager.ts @Nenad034
+src/services/businessHealthMonitor.ts @Nenad034
+
+# Supabase Edge Functions
+supabase/functions/* @Nenad034
+
+# Configuration files
+vite.config.ts @Nenad034
+tsconfig.json @Nenad034
+package.json @Nenad034
+
+# Documentation
+docs/SECURITY*.md @Nenad034
+docs/API_INTEGRATION*.md @Nenad034

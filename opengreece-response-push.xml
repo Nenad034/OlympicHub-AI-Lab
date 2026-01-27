@@ -1,0 +1,3 @@
+﻿<StartPushProcessRS xmlns="http://www.opentravel.org/OTA/2003/05">
+  <Error Code="4" Text="No user authentication." />
+</StartPushProcessRS>

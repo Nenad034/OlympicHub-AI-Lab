@@ -1,0 +1,34 @@
+=== Analyzing: Tipovi smestaja i cenovnika.xlsx ===
+
+--- Sheet: Tipovi smestaja ---
+Row 1:  | Generalni tipovi smestaja
+Row 2:  | adl | odrasla osoba
+Row 3:  | chd | dete
+Row 4:  | inf | beba
+Row 5: 
+Row 6:  | Napomena: Prilikom kreiranja cenovnika vrsicemo definicije godina od...do za odrasle, decu i bebe
+Row 7: 
+Row 8:  | 1/2 | Dvokrevetna soba | max 1 infant. U koliko ima vise od jednog infanta u upitu sistem treba da da obavestenje - Napomena: potrebno je odobrenje za smestaj druge bebe.
+Row 9:  | Broj  osnovnih kreveta | 2
+Row 10:  | Broj pomocnih kreveta | 0
+Row 11: 
+Row 12: Odaberi varijantu | Zauzetost prema broju osoba | osnovni krevet | osnovni krevet | dete deli krevet
+Row 13: check box | 1 | adl | chd | check box
+Row 14: check box | 2 | adl | adl | check box
+Row 15: 
+Row 16:  | 1/2+1 | Dvokrevetna soba sa pomocnim krevetom |  | max 1 infant. U koliko ima vise od jednog infanta u upitu sistem treba da da obavestenje - Napomena: potrebno je odobrenje za smestaj druge bebe.
+Row 17:  | Broj  osnovnih kreveta | 2
+Row 18:  | Broj pomocnih kreveta | 1
+Row 19: Odaberi varijantu | Zauzetost prema broju osoba | osnovni krevet | osnovni krevet | pomocni krevet | dete deli krevet
+Row 20: check box | 1 | adl | chd | chd | check box
+Row 21: check box | 2 | adl | adl | chd | check box
+Row 22: check box | 3 | adl | adl | adl | check box
+Row 23: 
+Row 24:  | 1/2+2 | Dvokrevetna soba sa dva pomocna kreveta |  | max 1 infant. U koliko ima vise od jednog infanta u upitu sistem treba da da obavestenje - Napomena: potrebno je odobrenje za smestaj druge bebe.
+Row 25:  | Broj  osnovnih kreveta | 2
+Row 26:  | Broj pomocnih kreveta | 2
+Row 27: Odaberi varijantu | Zauzetost prema broju osoba | osnovni krevet | osnovni krevet | pomocni krevet | pomocni krevet | dete deli krevet
+Row 28: check box | 1 | adl | chd | chd | chd | check box
+Row 29: check box | 2 | adl | adl | chd | chd | check box
+Row 30: check box | 3 | adl | adl | adl | chd | check box
+Row 31: check box | 4 | adl | adl | adl | adl | check box

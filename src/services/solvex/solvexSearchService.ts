@@ -1,0 +1,178 @@
+// Solvex Search Service
+import { makeSoapRequest, buildHotelSearchParams } from '../../utils/solvexSoapClient';
+import type {
+    SolvexHotelSearchResult,
+    SolvexHotelSearchParams,
+    SolvexApiResponse
+} from '../../types/solvex.types';
+import { connect } from './solvexAuthService';
+import { rateLimiter } from '../../utils/rateLimiter';
+import { SOLVEX_SOAP_METHODS, SOLVEX_RESPONSE_PATHS } from './solvexConstants';
+
+/**
+ * Search for hotel availability
+ * This is the primary search method for Solvex
+ */
+export async function searchHotels(params: Omit<SolvexHotelSearchParams, 'guid'>): Promise<SolvexApiResponse<SolvexHotelSearchResult[]>> {
+    try {
+        // Check rate limit BEFORE making request
+        const limitCheck = rateLimiter.checkLimit('solvex');
+        if (!limitCheck.allowed) {
+            console.warn(`[Solvex Search] Rate limit exceeded. Retry after ${limitCheck.retryAfter}s`);
+            return {
+                success: false,
+                error: `Rate limit exceeded. Please wait ${limitCheck.retryAfter} seconds before retrying.`
+            };
+        }
+
+        const auth = await connect();
+        if (!auth.success || !auth.data) {
+            return { success: false, error: auth.error };
+        }
+
+        const soapParams = buildHotelSearchParams({
+            ...params,
+            guid: auth.data
+        });
+
+        // Using SearchHotelServices method name from constants
+        const result = await makeSoapRequest<any>(SOLVEX_SOAP_METHODS.SEARCH_HOTELS, soapParams);
+
+        console.log('[Solvex Search] Raw SOAP result:', result);
+
+        let items: any[] = [];
+
+        // Navigate response using constants for better abstraction
+        if (result?.Data?.[SOLVEX_RESPONSE_PATHS.DATA_REQUEST_RESULT]) {
+            const dataReqResults = Array.isArray(result.Data[SOLVEX_RESPONSE_PATHS.DATA_REQUEST_RESULT])
+                ? result.Data[SOLVEX_RESPONSE_PATHS.DATA_REQUEST_RESULT]
+                : [result.Data[SOLVEX_RESPONSE_PATHS.DATA_REQUEST_RESULT]];
+
+            console.log(`[Solvex Search] Processing ${dataReqResults.length} data results`);
+
+            dataReqResults.forEach((dr: any, idx: number) => {
+                const rt = dr[SOLVEX_RESPONSE_PATHS.RESULT_TABLE];
+                const diffgram = rt?.[SOLVEX_RESPONSE_PATHS.DIFFGRAM];
+                const docElement = diffgram?.[SOLVEX_RESPONSE_PATHS.DOCUMENT_ELEMENT];
+
+                console.log(`[Solvex Search] Result[${idx}] keys:`, Object.keys(dr));
+                if (rt) console.log(`[Solvex Search] Result[${idx}] ResultTable keys:`, Object.keys(rt));
+
+                if (docElement?.[SOLVEX_RESPONSE_PATHS.HOTEL_SERVICES]) {
+                    const hotelServices = docElement[SOLVEX_RESPONSE_PATHS.HOTEL_SERVICES];
+                    const services = Array.isArray(hotelServices) ? hotelServices : [hotelServices];
+                    items = items.concat(services);
+                    console.log(`[Solvex Search] Result[${idx}] Found ${services.length} services`);
+                } else {
+                    console.warn(`[Solvex Search] Result[${idx}] no services found in DocumentElement`);
+                }
+            });
+        } else {
+            console.error('[Solvex Search] No DataRequestResult found in response. Available keys:', Object.keys(result?.Data || {}));
+        }
+
+        if (items.length === 0) {
+            console.warn('[Solvex Search] No items found in response structure.');
+            return {
+                success: true,
+                data: []
+            };
+        }
+
+        console.log(`[Solvex Search] Found ${items.length} hotel services`);
+
+        // Map SOAP results to our typed interface
+        const mappedResults: SolvexHotelSearchResult[] = items.map(s => {
+            const hotelName = String(s.HotelName || 'Unknown Hotel');
+
+            // Solvex stores star rating in Description field, NOT in a separate Stars field
+            // Format: "5*  (\Golden Sands)" or "4*+  (\Golden Sands)" or "Not defined  (\Golden Sands)"
+            let starRating = 0;
+            const description = String(s.Description || s.HotelDescription || '');
+
+            // Try to extract stars from description (e.g. "5*", "4*+", "3*")
+            const descStarMatch = description.match(/(\d)\s*\*+/);
+            if (descStarMatch) {
+                starRating = parseInt(descStarMatch[1]);
+            }
+
+            // Fallback: try hotel name if description didn't have it
+            if (starRating === 0) {
+                const nameStarMatch = hotelName.match(/(\d)\s*\*+/);
+                if (nameStarMatch) {
+                    starRating = parseInt(nameStarMatch[1]);
+                }
+            }
+
+            return {
+                hotel: {
+                    id: parseInt(String(s.HotelKey || '0')),
+                    name: hotelName,
+                    city: {
+                        id: parseInt(String(s.CityKey || '0')),
+                        name: String(s.CityName || ''),
+                        nameLat: String(s.CityName || '')
+                    },
+                    country: {
+                        id: parseInt(String(s.CountryKey || '0')),
+                        name: 'Bulgaria',
+                        nameLat: 'Bulgaria'
+                    },
+                    starRating: starRating,
+                    nameLat: hotelName,
+                    priceType: 0
+                },
+                room: {
+                    roomType: {
+                        id: parseInt(String(s.RtKey || '0')),
+                        name: String(s.RtCode || s.RoomTypeName || ''),
+                        nameLat: String(s.RtCode || s.RoomTypeName || ''),
+                        places: 0,
+                        exPlaces: 0
+                    },
+                    roomCategory: {
+                        id: parseInt(String(s.RcKey || '0')),
+                        name: String(s.RcName || s.RoomCategoryName || ''),
+                        nameLat: String(s.RcName || s.RoomCategoryName || '')
+                    },
+                    roomAccommodation: {
+                        id: parseInt(String(s.AcKey || '0')),
+                        name: String(s.AcName || s.RoomAccommodationName || ''),
+                        nameLat: String(s.AcName || s.RoomAccommodationName || ''),
+                        adultMainPlaces: 0,
+                        childMainPlaces: 0
+                    }
+                },
+                pansion: {
+                    id: parseInt(String(s.PnKey || '0')),
+                    name: String(s.PnCode || s.PansionName || ''),
+                    nameLat: String(s.PnCode || s.PansionName || ''),
+                    code: String(s.PnCode || '')
+                },
+                totalCost: parseFloat(String(s.TotalCost || s.Cost || '0')),
+                quotaType: parseInt(String(s.QuoteType || '0')),
+                tariff: {
+                    id: parseInt(String(s.TariffId || '0')),
+                    name: String(s.TariffName || '')
+                },
+                duration: Math.ceil((new Date(params.dateTo).getTime() - new Date(params.dateFrom).getTime()) / (1000 * 60 * 60 * 24)),
+                startDate: params.dateFrom
+            };
+        });
+
+        return {
+            success: true,
+            data: mappedResults
+        };
+    } catch (error) {
+        console.error('[Solvex Search] searchHotels failed:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to perform hotel search'
+        };
+    }
+}
+
+export default {
+    searchHotels
+};

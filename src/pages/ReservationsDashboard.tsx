@@ -1,0 +1,2080 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+    Search, Filter, Calendar, Users, DollarSign, Clock,
+    CheckCircle2, XCircle, AlertCircle, Eye, Edit, Trash2,
+    Download, Mail, Phone, MapPin, Building2, Plane,
+    LayoutGrid, List, CalendarDays, ArrowUpDown, Plus,
+    TrendingUp, TrendingDown, Minus, ChevronDown, X as XIcon,
+    FileText, CreditCard, Package, Globe, Truck, Bell, CheckCheck,
+    FileCheck, Receipt, Send, Star, User, Table, FileCode, Code, RefreshCw, CloudLightning, Tag, Briefcase,
+    BarChart3, ChevronUp
+} from 'lucide-react';
+import './ReservationsDashboard.css';
+import ReservationEmailModal from '../components/ReservationEmailModal';
+import DateRangeInput from '../components/DateRangeInput.tsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { getUserReservations, type DatabaseReservation } from '../services/reservationService';
+
+// Types
+type ResStatus = 'Active' | 'Reservation' | 'Canceled' | 'Offer' | 'Request' | 'Processing';
+type ViewMode = 'grid' | 'list' | 'calendar';
+
+interface TripItem {
+    id: string;
+    type: 'Smestaj' | 'Avio karte' | 'Dinamicki paket' | 'Putovanja' | 'Transfer';
+    supplier: string;
+    subject: string;
+    details: string;
+    checkIn: string;
+    checkOut: string;
+    price: number;
+}
+
+interface Reservation {
+    id: string;
+    cisCode: string;
+    refCode: string;
+    status: ResStatus;
+    customerName: string;
+    customerType: 'B2C-Individual' | 'B2C-Legal' | 'B2B-Subagent';
+    destination: string;
+    accommodationName: string; // Hotel/Service name
+    checkIn: string;
+    checkOut: string;
+    nights: number;
+    paxCount: number;
+    totalPrice: number;
+    paid: number;
+    currency: string;
+    createdAt: string;
+    supplier: string;
+    tripType: string;
+    phone: string;
+    email: string;
+    // Workflow status flags
+    hotelNotified?: boolean; // Najavljeno hotelu
+    reservationConfirmed?: boolean; // Potvrđena rezervacija
+    proformaInvoiceSent?: boolean; // Poslata profaktura
+    finalInvoiceCreated?: boolean; // Kreiran konačni račun
+    hotelCategory?: number; // Broj zvezdica
+    leadPassenger?: string; // Nosilac putovanja (putnik)
+    items?: TripItem[];
+}
+
+import { ModernCalendar } from '../components/ModernCalendar';
+import { MultiSelectDropdown } from '../components/MultiSelectDropdown';
+
+// ... (existing imports)
+
+const ReservationsDashboard: React.FC = () => {
+    const navigate = useNavigate();
+    const [viewMode, setViewMode] = useState<ViewMode>('list');
+    const [showStats, setShowStats] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchTerms, setSearchTerms] = useState<string[]>([]); // Multi-term search chips
+    const [calendarViewMode, setCalendarViewMode] = useState<'checkIn' | 'checkOut'>('checkIn'); // Calendar grouping
+    const [activeFilters, setActiveFilters] = useState<{
+        status: string[];
+        reservationFrom: string;
+        reservationTo: string;
+        stayFrom: string;
+        stayTo: string;
+        customerType: string[];
+        supplier: string[];
+        workflow: string[];
+    }>({
+        status: ['all'],
+        reservationFrom: '',
+        reservationTo: '',
+        stayFrom: '',
+        stayTo: '',
+        customerType: ['all'],
+        supplier: ['all'],
+        workflow: ['all']
+    });
+    const toggleWorkflowFilter = (key: string, val: boolean) => {
+        const filterStr = `${key}:${val}`;
+        let newWorkflow = activeFilters.workflow.includes('all') ? [] : [...activeFilters.workflow];
+
+        if (newWorkflow.includes(filterStr)) {
+            newWorkflow = newWorkflow.filter(w => w !== filterStr);
+        } else {
+            newWorkflow.push(filterStr);
+        }
+
+        if (newWorkflow.length === 0) newWorkflow = ['all'];
+
+        setActiveFilters(prev => ({ ...prev, workflow: newWorkflow }));
+    };
+    const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+    const [modalPos, setModalPos] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+    // Handle Modal Dragging
+    const handleHeaderMouseDown = (e: React.MouseEvent) => {
+        if ((e.target as HTMLElement).classList.contains('modal-header') || (e.target as HTMLElement).tagName === 'H2') {
+            setIsDragging(true);
+            setDragStart({ x: e.clientX - modalPos.x, y: e.clientY - modalPos.y });
+        }
+    };
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (isDragging) {
+                setModalPos({
+                    x: e.clientX - dragStart.x,
+                    y: e.clientY - dragStart.y
+                });
+            }
+        };
+        const handleMouseUp = () => setIsDragging(false);
+
+        if (isDragging) {
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+        }
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDragging, dragStart, modalPos]);
+
+    const [emailModalOpen, setEmailModalOpen] = useState(false);
+    const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+    const [selectedReservations, setSelectedReservations] = useState<string[]>([]); // For bulk email
+    const [bulkEmailMode, setBulkEmailMode] = useState(false);
+
+    // Mock data - replace with API call
+    const mockReservations: Reservation[] = [
+        {
+            id: '1',
+            cisCode: 'CIS-A2K5L1',
+            refCode: 'REF-3045',
+            status: 'Active',
+            customerName: 'Petar Petrović',
+            customerType: 'B2C-Individual',
+            destination: 'Budva, Crna Gora',
+            accommodationName: 'Hotel Splendid Conference & Spa',
+            checkIn: '2025-07-20',
+            checkOut: '2025-07-30',
+            nights: 10,
+            paxCount: 2,
+            totalPrice: 1850,
+            paid: 500,
+            currency: 'EUR',
+            createdAt: '2025-01-05',
+            supplier: 'TCT (Travelgate)',
+            tripType: 'Smeštaj',
+            phone: '+381 64 123 4567',
+            email: 'petar@email.com',
+            hotelNotified: true,
+            reservationConfirmed: true,
+            proformaInvoiceSent: true,
+            finalInvoiceCreated: false,
+            hotelCategory: 5,
+            leadPassenger: 'Petar Petrović',
+            items: [
+                {
+                    id: 'i1',
+                    type: 'Smestaj',
+                    supplier: 'TravelgateX',
+                    subject: 'Hotel Splendid Conference & Spa',
+                    details: 'Superior Room, Half Board',
+                    checkIn: '2025-07-20',
+                    checkOut: '2025-07-30',
+                    price: 1500
+                },
+                {
+                    id: 'i2',
+                    type: 'Transfer',
+                    supplier: 'Local Transfer Partner',
+                    subject: 'Tivat Airport - Hotel Splendid',
+                    details: 'Private Car, Mercedes E-Class',
+                    checkIn: '2025-07-20',
+                    checkOut: '2025-07-20',
+                    price: 350
+                }
+            ]
+        },
+        {
+            id: '2',
+            cisCode: 'CIS-B3N8P1',
+            refCode: 'REF-3046',
+            status: 'Request',
+            customerName: 'Travel Pro Agency',
+            customerType: 'B2B-Subagent',
+            destination: 'Rodos, Grčka',
+            accommodationName: 'Lindos Imperial Resort & Spa',
+            checkIn: '2025-08-15',
+            checkOut: '2025-08-22',
+            nights: 7,
+            paxCount: 4,
+            totalPrice: 2400,
+            paid: 0,
+            currency: 'EUR',
+            createdAt: '2025-01-06',
+            supplier: 'Open Greece',
+            tripType: 'Dinamički paket',
+            phone: '+381 11 234 5678',
+            email: 'info@travelpro.rs',
+            hotelNotified: false,
+            reservationConfirmed: false,
+            proformaInvoiceSent: false,
+            finalInvoiceCreated: false,
+            hotelCategory: 5,
+            leadPassenger: 'Jelena Janković'
+        },
+        {
+            id: '3',
+            cisCode: 'CIS-C5M2K9',
+            refCode: 'REF-3047',
+            status: 'Processing',
+            customerName: 'Marko Marković',
+            customerType: 'B2C-Individual',
+            destination: 'Hurgada, Egipat',
+            accommodationName: 'Jaz Aquamarine Resort',
+            checkIn: '2025-06-10',
+            checkOut: '2025-06-17',
+            nights: 7,
+            paxCount: 3,
+            totalPrice: 1650,
+            paid: 1650,
+            currency: 'EUR',
+            createdAt: '2025-01-04',
+            supplier: 'Solvex',
+            tripType: 'Smeštaj',
+            phone: '+381 63 987 6543',
+            email: 'marko@email.com',
+            hotelNotified: true,
+            reservationConfirmed: true,
+            proformaInvoiceSent: true,
+            finalInvoiceCreated: true,
+            hotelCategory: 4,
+            leadPassenger: 'Marko Marković'
+        },
+        {
+            id: '4',
+            cisCode: 'CIS-D8K3L5',
+            refCode: 'REF-3048',
+            status: 'Offer',
+            customerName: 'Ana Anić',
+            customerType: 'B2C-Individual',
+            destination: 'Pariz, Francuska',
+            accommodationName: 'Air France AF1234 BEG-CDG',
+            checkIn: '2025-09-01',
+            checkOut: '2025-09-05',
+            nights: 4,
+            paxCount: 2,
+            totalPrice: 980,
+            paid: 0,
+            currency: 'EUR',
+            createdAt: '2025-01-06',
+            supplier: 'Amadeus',
+            tripType: 'Avio karte',
+            phone: '+381 65 111 2222',
+            email: 'ana@email.com',
+            hotelNotified: false,
+            reservationConfirmed: false,
+            proformaInvoiceSent: true,
+            finalInvoiceCreated: false,
+            leadPassenger: 'Ana Anić'
+        },
+        {
+            id: '5',
+            cisCode: 'CIS-E2M9N7',
+            refCode: 'REF-3049',
+            status: 'Reservation',
+            customerName: 'Tech Corp d.o.o.',
+            customerType: 'B2C-Legal',
+            destination: 'Budva, Crna Gora',
+            accommodationName: 'Hotel Splendid Conference & Spa',
+            checkIn: '2025-07-20',
+            checkOut: '2025-07-27',
+            nights: 7,
+            paxCount: 8,
+            totalPrice: 3200,
+            paid: 800,
+            currency: 'EUR',
+            createdAt: '2025-01-05',
+            supplier: 'TCT (Travelgate), Local Transfer',
+            tripType: 'Transfer',
+            phone: '+381 11 333 4444',
+            email: 'office@firma.rs',
+            hotelNotified: true,
+            reservationConfirmed: true,
+            proformaInvoiceSent: false,
+            finalInvoiceCreated: false,
+            hotelCategory: 5,
+            leadPassenger: 'Jovan Jovanović'
+        },
+        {
+            id: '6',
+            cisCode: 'CIS-F7P4Q2',
+            refCode: 'REF-3050',
+            status: 'Canceled',
+            customerName: 'Milica Milić',
+            customerType: 'B2C-Individual',
+            destination: 'Santorini, Grčka',
+            accommodationName: 'Katikies Hotel',
+            checkIn: '2025-08-01',
+            checkOut: '2025-08-10',
+            nights: 9,
+            paxCount: 2,
+            totalPrice: 2100,
+            paid: 500,
+            currency: 'EUR',
+            createdAt: '2025-01-03',
+            supplier: 'Open Greece',
+            tripType: 'Putovanja',
+            phone: '+381 64 555 6666',
+            email: 'milica@email.com',
+            hotelNotified: true,
+            reservationConfirmed: false,
+            proformaInvoiceSent: false,
+            finalInvoiceCreated: false,
+            hotelCategory: 5,
+            leadPassenger: 'Milica Milić'
+        }
+    ];
+
+    const [reservations, setReservations] = useState<Reservation[]>(mockReservations);
+    const [isLoadingReservations, setIsLoadingReservations] = useState(false);
+
+    // Funkcija za mapiranje database statusa u UI status
+    const mapDatabaseStatusToUIStatus = (dbStatus: string): ResStatus => {
+        const statusMap: Record<string, ResStatus> = {
+            'pending': 'Request',
+            'confirmed': 'Active',
+            'cancelled': 'Canceled',
+            'completed': 'Processing'
+        };
+        return statusMap[dbStatus] || 'Request';
+    };
+
+    // Funkcija za mapiranje DatabaseReservation u Reservation
+    const mapDatabaseToReservation = (dbRes: DatabaseReservation): Reservation => {
+        return {
+            id: dbRes.id || '',
+            cisCode: dbRes.cis_code,
+            refCode: dbRes.ref_code,
+            status: mapDatabaseStatusToUIStatus(dbRes.status),
+            customerName: dbRes.customer_name,
+            customerType: dbRes.customer_type,
+            destination: dbRes.destination,
+            accommodationName: dbRes.accommodation_name,
+            checkIn: dbRes.check_in,
+            checkOut: dbRes.check_out,
+            nights: dbRes.nights,
+            paxCount: dbRes.pax_count,
+            totalPrice: dbRes.total_price,
+            paid: dbRes.paid,
+            currency: dbRes.currency,
+            createdAt: dbRes.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+            supplier: dbRes.supplier,
+            tripType: dbRes.trip_type,
+            phone: dbRes.phone,
+            email: dbRes.email,
+            hotelNotified: dbRes.hotel_notified,
+            reservationConfirmed: dbRes.reservation_confirmed,
+            proformaInvoiceSent: dbRes.proforma_invoice_sent,
+            finalInvoiceCreated: dbRes.final_invoice_created,
+            hotelCategory: dbRes.hotel_category,
+            leadPassenger: dbRes.lead_passenger
+        };
+    };
+
+    // Učitavanje rezervacija iz baze
+    useEffect(() => {
+        const loadReservationsFromDatabase = async () => {
+            setIsLoadingReservations(true);
+            setSyncStatus('syncing');
+
+            try {
+                const result = await getUserReservations();
+
+                if (result.success && result.data && result.data.length > 0) {
+                    // Mapiranje database rezervacija u UI format
+                    const mappedReservations = result.data.map(mapDatabaseToReservation);
+
+                    // Kombinovanje sa mock podacima (opciono - možete ukloniti mockReservations ako želite samo prave podatke)
+                    const allReservations = [...mappedReservations, ...mockReservations];
+
+                    setReservations(allReservations);
+                    console.log(`✅ Učitano ${mappedReservations.length} rezervacija iz baze`);
+                } else {
+                    // Ako nema podataka u bazi, koristi mock podatke
+                    console.log('ℹ️ Nema rezervacija u bazi, koriste se mock podaci');
+                    setReservations(mockReservations);
+                }
+
+                setSyncStatus('synced');
+            } catch (error) {
+                console.error('❌ Greška pri učitavanju rezervacija:', error);
+                setSyncStatus('error');
+                // U slučaju greške, koristi mock podatke
+                setReservations(mockReservations);
+            } finally {
+                setIsLoadingReservations(false);
+            }
+        };
+
+        loadReservationsFromDatabase();
+    }, []); // Učitava se samo jednom pri mount-u
+
+    // Sync State
+    const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
+
+    // Payment Status Filters
+    const [paymentFilter, setPaymentFilter] = useState({
+        paid: false,
+        partial: false,
+        unpaid: false
+    });
+
+    // Function to simulate update and trigger sync
+    const handleReservationUpdate = (updatedRes: Reservation) => {
+        setReservations(prev => prev.map(r => r.id === updatedRes.id ? updatedRes : r));
+
+        // Trigger Sync
+        setSyncStatus('syncing');
+        setTimeout(() => {
+            setSyncStatus('synced');
+            console.log(`📡 WEBHOOK SENT: Reservation ${updatedRes.cisCode} updated. Data sent to external CRM.`);
+            // Here you would do: fetch('https://external-system.com/webhook', { method: 'POST', body: JSON.stringify(updatedRes) })
+        }, 1500);
+    };
+
+    // Handle adding search term on Enter
+    const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && searchQuery.trim()) {
+            if (!searchTerms.includes(searchQuery.trim())) {
+                setSearchTerms([...searchTerms, searchQuery.trim()]);
+            }
+            setSearchQuery('');
+        }
+    };
+
+    // --- DIAGNOSTICS ---
+    const testDbConnection = async () => {
+        console.log('🕵️ Testiranje DB Konekcije...');
+        try {
+            // 1. Provera čitanja
+            const { data: readData, error: readError } = await getUserReservations();
+            if (readError) {
+                console.error('❌ Greška pri čitanju:', readError);
+                alert(`Greška pri čitanju iz baze: ${readError}`);
+            } else {
+                console.log('✅ Čitanje uspešno. Broj zapisa:', readData?.length);
+            }
+
+            // 2. Provera pisanja (Insert Test)
+            const testCis = `TEST-${Date.now()}`;
+            console.log('📝 Pokušavam insert testa:', testCis);
+            const { data: insertData, error: insertError } = await import('../supabaseClient').then(({ supabase }) =>
+                supabase.from('reservations').insert([{
+                    cis_code: testCis,
+                    ref_code: `REF-${Date.now()}`,
+                    status: 'pending',
+                    customer_name: 'Dijagnostika Test',
+                    customer_type: 'B2C-Individual',
+                    email: 'test@diagnostics.com',
+                    phone: '123456',
+                    destination: 'Test City',
+                    accommodation_name: 'Test Hotel',
+                    check_in: new Date().toISOString(),
+                    check_out: new Date().toISOString(),
+                    nights: 1,
+                    pax_count: 1,
+                    total_price: 100,
+                    provider: 'solvex',
+                    trip_type: 'Smeštaj',
+                    supplier: 'Test'
+                }]).select()
+            );
+
+            if (insertError) {
+                console.error('❌ Greška pri pisanju:', insertError);
+                alert(`Greška pri pisanju u bazu (RLS?): ${insertError.message}`);
+            } else {
+                console.log('✅ Pisanje uspešno:', insertData);
+                alert('✅ Baza radi ispravno! (Read & Write test passed)');
+
+                // Cleanup
+                await import('../supabaseClient').then(({ supabase }) =>
+                    supabase.from('reservations').delete().eq('cis_code', testCis)
+                );
+            }
+
+        } catch (err) {
+            console.error('❌ Neočekivana greška:', err);
+            alert(`Neočekivana greška: ${err}`);
+        }
+    };
+
+    // Remove search term chip
+    const removeSearchTerm = (term: string) => {
+        setSearchTerms(searchTerms.filter(t => t !== term));
+    };
+
+    const [isExportMenuOpen, setIsExportMenuOpen] = useState(false); // Export menu state
+
+    // --- EXPORT LOGIC ---
+    const getReservationsToExport = () => {
+        // If bulk mode is active and items are selected, export only those
+        if (bulkEmailMode && selectedReservations.length > 0) {
+            return reservations.filter(r => selectedReservations.includes(r.id));
+        }
+        // Otherwise export current filtered results
+        return filteredReservations;
+    };
+
+    const downloadFile = (content: string, fileName: string, contentType: string) => {
+        const blob = new Blob([content], { type: contentType });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        setIsExportMenuOpen(false);
+    };
+
+    const handleExport = (format: 'csv' | 'xml' | 'json' | 'html' | 'pdf') => {
+        const data = getReservationsToExport();
+        const timestamp = new Date().toISOString().split('T')[0];
+        const fileName = `OlympicHub_Reservations_${timestamp}`;
+
+        if (format === 'pdf') {
+            const doc = new jsPDF();
+
+            // Header
+            doc.setFontSize(18);
+            doc.text('Olympic Hub - Reservations Report', 14, 22);
+            doc.setFontSize(11);
+            doc.setTextColor(100);
+            doc.text(`Generated on: ${new Date().toLocaleDateString('sr-RS')}`, 14, 30);
+
+            // Table
+            const tableColumn = ["CIS Code", "Customer", "Destination", "Accommodation", "Check In", "Total", "Status"];
+            const tableRows = data.map(res => [
+                res.cisCode,
+                res.customerName,
+                res.destination,
+                res.accommodationName,
+                res.checkIn,
+                `${res.totalPrice.toLocaleString()} ${res.currency}`,
+                res.status
+            ]);
+
+            autoTable(doc, {
+                head: [tableColumn],
+                body: tableRows,
+                startY: 40,
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [41, 128, 185] } // Olympic Blueish
+            });
+
+            doc.save(`${fileName}.pdf`);
+            setIsExportMenuOpen(false);
+        } else if (format === 'json') {
+            const jsonContent = JSON.stringify(data, null, 2);
+            downloadFile(jsonContent, `${fileName}.txt`, 'text/plain');
+        } else if (format === 'csv') {
+            // Excel-compatible CSV with BOM
+            const headers = ['CIS Code', 'Reference', 'Status', 'Customer', 'Type', 'Destination', 'Accommodation', 'Check In', 'Check Out', 'Nights', 'Pax', 'Total', 'Paid', 'Currency', 'Supplier', 'Trip Type'];
+            const rows = data.map(r => [
+                r.cisCode, r.refCode, r.status, r.customerName, r.customerType,
+                r.destination, r.accommodationName, r.checkIn, r.checkOut,
+                r.nights, r.paxCount, r.totalPrice, r.paid, r.currency,
+                r.supplier, r.tripType
+            ].map(val => `"${val}"`).join(',')); // Quote values
+
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+            downloadFile(csvContent, `${fileName}.csv`, 'text/csv;charset=utf-8;');
+        } else if (format === 'xml') {
+            const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<reservations>
+${data.map(r => `  <reservation>
+    <cisCode>${r.cisCode}</cisCode>
+    <refCode>${r.refCode}</refCode>
+    <status>${r.status}</status>
+    <customer>${r.customerName}</customer>
+    <destination>${r.destination}</destination>
+    <totalPrice currency="${r.currency}">${r.totalPrice}</totalPrice>
+  </reservation>`).join('\n')}
+</reservations>`;
+            downloadFile(xmlContent, `${fileName}.xml`, 'text/xml');
+        } else if (format === 'html') {
+            const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: sans-serif; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h2>Olympic Hub Reservations Export</h2>
+    <p>Date: ${new Date().toLocaleDateString()}</p>
+    <table>
+        <thead>
+            <tr>
+                <th>CIS Code</th><th>Ref</th><th>Customer</th><th>Destination</th><th>Check In</th><th>Total</th><th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${data.map(r => `
+            <tr>
+                <td>${r.cisCode}</td>
+                <td>${r.refCode}</td>
+                <td>${r.customerName}</td>
+                <td>${r.destination}</td>
+                <td>${r.checkIn}</td>
+                <td>${r.totalPrice} ${r.currency}</td>
+                <td>${r.status}</td>
+            </tr>`).join('')}
+        </tbody>
+    </table>
+</body>
+</html>`;
+            downloadFile(htmlContent, `${fileName}.html`, 'text/html');
+        }
+    };
+
+    // Clear all search terms
+    const clearAllSearchTerms = () => {
+        setSearchTerms([]);
+        setSearchQuery('');
+    };
+
+    // Stats calculation
+
+    // Filter reservations - MULTI-TERM DEEP SEARCH
+    const filteredReservations = reservations.filter(res => {
+        // 0. Payment Status Filter (New)
+        const isPaid = res.paid >= res.totalPrice;
+        const isUnpaid = res.paid === 0;
+        const isPartial = res.paid > 0 && res.paid < res.totalPrice;
+
+        const isPaymentFilterActive = paymentFilter.paid || paymentFilter.partial || paymentFilter.unpaid;
+
+        if (isPaymentFilterActive) {
+            const matchesPayment =
+                (paymentFilter.paid && isPaid) ||
+                (paymentFilter.partial && isPartial) ||
+                (paymentFilter.unpaid && isUnpaid);
+
+            if (!matchesPayment) return false;
+        }
+
+        // Multi-term search - ALL terms must match (AND logic)
+        if (searchTerms.length > 0) {
+            const allFieldsText = [
+                res.cisCode,
+                res.refCode,
+                res.customerName,
+                res.destination,
+                res.accommodationName,
+                res.supplier,
+                res.tripType,
+                res.status,
+                res.phone,
+                res.email,
+                res.currency,
+                res.customerType,
+                res.leadPassenger || ''
+            ].join(' ').toLowerCase();
+
+            // Check if ALL search terms are present
+            const allTermsMatch = searchTerms.every(term =>
+                allFieldsText.includes(term.toLowerCase())
+            );
+
+            if (!allTermsMatch) return false;
+        }
+
+        // Date filters - Reservation Date
+        if (activeFilters.reservationFrom && res.createdAt < activeFilters.reservationFrom) {
+            return false;
+        }
+        if (activeFilters.reservationTo && res.createdAt > activeFilters.reservationTo) {
+            return false;
+        }
+
+        // Date filters - Stay Date
+        if (activeFilters.stayFrom && res.checkIn < activeFilters.stayFrom) {
+            return false;
+        }
+        if (activeFilters.stayTo && res.checkOut > activeFilters.stayTo) {
+            return false;
+        }
+
+        // Status filter
+        // Status filter
+        if (!activeFilters.status.includes('all') && !activeFilters.status.includes(res.status)) {
+            return false;
+        }
+
+        // Customer Type filter
+        if (!activeFilters.customerType.includes('all') && !activeFilters.customerType.includes(res.customerType)) {
+            return false;
+        }
+
+        // Supplier filter
+        if (!activeFilters.supplier.includes('all')) {
+            const matches = activeFilters.supplier.some(selectedVal => res.supplier.includes(selectedVal));
+            if (!matches) return false;
+        }
+
+        // Workflow filter (OR logic: match any selected flag)
+        if (!activeFilters.workflow.includes('all')) {
+            const matchesWorkflow = activeFilters.workflow.some(filter => {
+                if (!filter.includes(':')) return (res as unknown as Record<string, unknown>)[filter] === true;
+                const [key, valStr] = filter.split(':');
+                const requiredVal = valStr === 'true';
+                return (!!(res as unknown as Record<string, unknown>)[key]) === requiredVal;
+            });
+            if (!matchesWorkflow) return false;
+        }
+
+        return true;
+    });
+
+    // Stats calculation based on FILTERED results
+    const stats = {
+        total: filteredReservations.length,
+        active: filteredReservations.filter(r => r.status === 'Active').length,
+        reservation: filteredReservations.filter(r => r.status === 'Reservation').length,
+        offer: filteredReservations.filter(r => r.status === 'Offer').length,
+        request: filteredReservations.filter(r => r.status === 'Request').length,
+        processing: filteredReservations.filter(r => r.status === 'Processing').length,
+        canceled: filteredReservations.filter(r => r.status === 'Canceled').length,
+        totalRevenue: filteredReservations.reduce((sum, r) => sum + r.totalPrice, 0),
+        totalPaid: filteredReservations.reduce((sum, r) => sum + r.paid, 0),
+        outstanding: filteredReservations.reduce((sum, r) => sum + (r.totalPrice - r.paid), 0)
+    };
+
+    const getStatusColor = (status: ResStatus) => {
+        const colors = {
+            'Active': '#10b981',
+            'Reservation': '#3b82f6',
+            'Canceled': '#ef4444',
+            'Offer': '#94a3b8',
+            'Request': '#a855f7',
+            'Processing': '#f59e0b'
+        };
+        return colors[status];
+    };
+
+    const getStatusIcon = (status: ResStatus) => {
+        switch (status) {
+            case 'Active': return <CheckCircle2 size={14} />;
+            case 'Canceled': return <XCircle size={14} />;
+            case 'Processing': return <Clock size={14} />;
+            default: return <AlertCircle size={14} />;
+        }
+    };
+
+    const getTripTypeIcon = (type: string) => {
+        const lowerType = type.toLowerCase();
+        if (lowerType.includes('smeštaj') || lowerType.includes('smestaj')) return <Building2 size={14} />;
+        if (lowerType.includes('avio')) return <Plane size={14} />;
+        if (lowerType.includes('paket')) return <Package size={14} />;
+        if (lowerType.includes('putovanja')) return <Globe size={14} />;
+        if (lowerType.includes('transfer')) return <Truck size={14} />;
+        return <FileText size={14} />;
+    };
+
+    // Automation Logic
+    const autoDetermineStatus = (res: Reservation): ResStatus => {
+        if (res.paid > 0) return 'Active';
+        if (res.totalPrice > 0 && res.paid === 0) return 'Reservation';
+        if (res.hotelNotified) return 'Processing';
+        return 'Request';
+    };
+
+    return (
+        <div className="reservations-dashboard">
+            {/* Header */}
+            <header className="dashboard-header">
+                <div className="header-left">
+                    <h1>Rezervacije</h1>
+                    <p className="subtitle">Centralni pregled i upravljanje statusima</p>
+                </div>
+                <button
+                    className="btn-icon"
+                    onClick={testDbConnection}
+                    style={{
+                        marginRight: '12px',
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '10px',
+                        border: '1px solid var(--border)',
+                        background: 'transparent',
+                        color: 'var(--text-primary)',
+                        cursor: 'pointer'
+                    }}
+                    title="Testiraj DB Konekciju"
+                >
+                    <RefreshCw size={20} />
+                </button>
+                <button
+                    className="btn-icon"
+                    onClick={() => setShowStats(!showStats)}
+                    style={{
+                        marginRight: '12px',
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '10px',
+                        border: '1px solid var(--border)',
+                        background: showStats ? 'var(--bg-secondary)' : 'transparent',
+                        color: 'var(--text-primary)',
+                        cursor: 'pointer'
+                    }}
+                    title={showStats ? "Sakrij statistiku" : "Prikaži statistiku"}
+                >
+                    {showStats ? <ChevronUp size={20} /> : <BarChart3 size={20} />}
+                </button>
+                <button className="btn-create-new" onClick={() => navigate('/reservations/architect')}>
+                    <Plus size={18} />
+                    Nova Rezervacija
+                </button>
+            </header>
+
+            {/* Stats Cards */}
+            {/* Stats Overview */}
+            {showStats && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+
+                    {/* Row 1: Statuses (Grid for better wrapping) */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+                        {/* Total */}
+                        <div className="stat-card" style={{ padding: '12px' }}>
+                            <div className="stat-icon total" style={{ width: '32px', height: '32px' }}><FileText size={16} /></div>
+                            <div className="stat-content">
+                                <span className="stat-label" style={{ fontSize: '11px' }}>Ukupno</span>
+                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.total}</span>
+                            </div>
+                        </div>
+
+                        {/* Active */}
+                        <div className="stat-card" style={{ padding: '12px' }}>
+                            <div className="stat-icon active" style={{ width: '32px', height: '32px' }}><CheckCircle2 size={16} /></div>
+                            <div className="stat-content">
+                                <span className="stat-label" style={{ fontSize: '11px' }}>Aktivne</span>
+                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.active}</span>
+                            </div>
+                        </div>
+
+                        {/* Reservations */}
+                        <div className="stat-card" style={{ padding: '12px' }}>
+                            <div className="stat-icon reservation" style={{ width: '32px', height: '32px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                                <Briefcase size={16} />
+                            </div>
+                            <div className="stat-content">
+                                <span className="stat-label" style={{ fontSize: '11px' }}>Rezervacije</span>
+                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.reservation}</span>
+                            </div>
+                        </div>
+
+                        {/* Offers */}
+                        <div className="stat-card" style={{ padding: '12px' }}>
+                            <div className="stat-icon offer" style={{ width: '32px', height: '32px', background: 'rgba(148, 163, 184, 0.1)', color: '#94a3b8' }}>
+                                <Tag size={16} />
+                            </div>
+                            <div className="stat-content">
+                                <span className="stat-label" style={{ fontSize: '11px' }}>Ponude</span>
+                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.offer}</span>
+                            </div>
+                        </div>
+
+                        {/* Requests */}
+                        <div className="stat-card" style={{ padding: '12px' }}>
+                            <div className="stat-icon requests" style={{ width: '32px', height: '32px', background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7' }}>
+                                <AlertCircle size={16} />
+                            </div>
+                            <div className="stat-content">
+                                <span className="stat-label" style={{ fontSize: '11px' }}>Zahtevi</span>
+                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.request}</span>
+                            </div>
+                        </div>
+
+                        {/* Processing */}
+                        <div className="stat-card" style={{ padding: '12px' }}>
+                            <div className="stat-icon processing" style={{ width: '32px', height: '32px', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+                                <Clock size={16} />
+                            </div>
+                            <div className="stat-content">
+                                <span className="stat-label" style={{ fontSize: '11px' }}>Obrada</span>
+                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.processing}</span>
+                            </div>
+                        </div>
+
+                        {/* Canceled */}
+                        <div className="stat-card" style={{ padding: '12px' }}>
+                            <div className="stat-icon canceled" style={{ width: '32px', height: '32px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+                                <XCircle size={16} />
+                            </div>
+                            <div className="stat-content">
+                                <span className="stat-label" style={{ fontSize: '11px' }}>Otkazano</span>
+                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.canceled}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Row 2: Financials (Right Aligned) */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+                        {/* Revenue */}
+                        <div className="stat-card" style={{ padding: '12px', flex: '1 1 0px', minWidth: '130px', maxWidth: '240px' }}>
+                            <div className="stat-icon revenue" style={{ width: '32px', height: '32px' }}><TrendingUp size={16} /></div>
+                            <div className="stat-content">
+                                <span className="stat-label" style={{ fontSize: '11px' }}>Ukupan Prihod</span>
+                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.totalRevenue.toLocaleString()} €</span>
+                            </div>
+                        </div>
+
+                        {/* Paid */}
+                        <div className="stat-card" style={{ padding: '12px', flex: '1 1 0px', minWidth: '130px', maxWidth: '240px' }}>
+                            <div className="stat-icon paid" style={{ width: '32px', height: '32px' }}><DollarSign size={16} /></div>
+                            <div className="stat-content">
+                                <span className="stat-label" style={{ fontSize: '11px' }}>Plaćeno</span>
+                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.totalPaid.toLocaleString()} €</span>
+                            </div>
+                        </div>
+
+                        {/* Outstanding */}
+                        <div className="stat-card" style={{ padding: '12px', flex: '1 1 0px', minWidth: '130px', maxWidth: '240px' }}>
+                            <div className="stat-icon outstanding" style={{ width: '32px', height: '32px' }}><TrendingDown size={16} /></div>
+                            <div className="stat-content">
+                                <span className="stat-label" style={{ fontSize: '11px' }}>Dugovanja</span>
+                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.outstanding.toLocaleString()} €</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            )}
+
+            {/* Advanced Search Module */}
+            <div className="search-command-center">
+                <div className="main-search-bar">
+                    <Search size={20} className="search-icon" />
+                    <input
+                        type="text"
+                        placeholder="Unesite pojam i pritisnite Enter da dodate filter..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={handleSearchKeyDown}
+                        className="search-input"
+                    />
+
+                    {(searchQuery || searchTerms.length > 0) && (
+                        <button className="clear-search" onClick={clearAllSearchTerms}>
+                            <XIcon size={16} />
+                        </button>
+                    )}
+                    <button
+                        className="advanced-toggle"
+                        onClick={() => setShowAdvancedSearch(true)}
+                        style={{
+                            height: '40px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '0 12px',
+                            background: 'transparent',
+                            border: '1px solid var(--border)',
+                            borderRadius: '8px',
+                            color: (activeFilters.status[0] !== 'all' || activeFilters.reservationFrom || activeFilters.stayFrom) ? 'var(--primary)' : 'var(--text-secondary)',
+                            fontWeight: 700,
+                            fontSize: '13px',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        <Filter size={16} />
+                        Filteri / Napredna Pretraga
+                    </button>
+                </div>
+
+                {/* Search Terms Chips */}
+                {searchTerms.length > 0 && (
+                    <div className="search-chips" style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '8px',
+                        marginTop: '12px',
+                        padding: '12px',
+                        background: 'var(--bg-sidebar)',
+                        borderRadius: '12px'
+                    }}>
+                        {searchTerms.map((term, index) => (
+                            <div
+                                key={index}
+                                className="search-chip"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '6px 12px',
+                                    background: 'var(--accent)',
+                                    color: 'white',
+                                    borderRadius: '20px',
+                                    fontSize: '12px',
+                                    fontWeight: 700
+                                }}
+                            >
+                                <Search size={12} />
+                                {term}
+                                <button
+                                    onClick={() => removeSearchTerm(term)}
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: 'white',
+                                        cursor: 'pointer',
+                                        padding: '2px',
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <XIcon size={14} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+
+            </div>
+
+            {/* Toolbar */}
+            <div className="results-toolbar">
+                <div className="results-count" style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ marginRight: '16px' }}>Pronađeno: <strong>{filteredReservations.length}</strong> rezervacija</span>
+
+                    {/* Payment Status Filters */}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                            onClick={() => setPaymentFilter(prev => ({ ...prev, paid: !prev.paid }))}
+                            style={{
+                                border: '1px solid #10b981',
+                                background: paymentFilter.paid ? '#10b981' : 'transparent',
+                                color: paymentFilter.paid ? 'white' : '#10b981',
+                                fontSize: '11px', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer',
+                                transition: 'all 0.2s', fontWeight: 600
+                            }}
+                        >
+                            Sve uplaćeno €
+                        </button>
+                        <button
+                            onClick={() => setPaymentFilter(prev => ({ ...prev, partial: !prev.partial }))}
+                            style={{
+                                border: '1px solid #f59e0b',
+                                background: paymentFilter.partial ? '#f59e0b' : 'transparent',
+                                color: paymentFilter.partial ? 'white' : '#f59e0b',
+                                fontSize: '11px', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer',
+                                transition: 'all 0.2s', fontWeight: 600
+                            }}
+                        >
+                            Delimično €
+                        </button>
+                        <button
+                            onClick={() => setPaymentFilter(prev => ({ ...prev, unpaid: !prev.unpaid }))}
+                            style={{
+                                border: '1px solid #ef4444',
+                                background: paymentFilter.unpaid ? '#ef4444' : 'transparent',
+                                color: paymentFilter.unpaid ? 'white' : '#ef4444',
+                                fontSize: '11px', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer',
+                                transition: 'all 0.2s', fontWeight: 600
+                            }}
+                        >
+                            Bez uplate €
+                        </button>
+                    </div>
+                </div>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    {/* Bulk Email Controls */}
+                    <div style={{ display: 'flex', gap: '8px', marginRight: '16px' }}>
+                        <button
+                            className={`advanced-toggle ${bulkEmailMode ? 'active' : ''}`}
+                            onClick={() => {
+                                setBulkEmailMode(!bulkEmailMode);
+                                if (bulkEmailMode) setSelectedReservations([]);
+                            }}
+                            title="Grupno slanje emaila"
+                        >
+                            <Mail size={16} />
+                            Grupni Email
+                        </button>
+
+                        {bulkEmailMode && selectedReservations.length > 0 && (
+                            <>
+                                <button
+                                    className="btn-create-new"
+                                    onClick={() => {
+                                        setEmailModalOpen(true);
+                                    }}
+                                    style={{ padding: '8px 16px', fontSize: '12px' }}
+                                >
+                                    <Send size={14} />
+                                    Pošalji za {selectedReservations.length}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setSelectedReservations([]);
+                                        setBulkEmailMode(false);
+                                    }}
+                                    style={{
+                                        padding: '0 12px',
+                                        height: '34px',
+                                        fontSize: '12px',
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        color: '#ef4444',
+                                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    title="Poništi izbor"
+                                >
+                                    <XIcon size={16} />
+                                </button>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Live Sync Status */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        marginRight: '16px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: syncStatus === 'syncing' ? '#f59e0b' : '#10b981',
+                        background: syncStatus === 'syncing' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                        padding: '4px 8px',
+                        borderRadius: '20px',
+                        border: `1px solid ${syncStatus === 'syncing' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
+                        transition: 'all 0.3s ease'
+                    }} title="Automatska sinhronizacija aktivna">
+                        {syncStatus === 'syncing' ? (
+                            <RefreshCw size={12} className="spin-animation" />
+                        ) : (
+                            <CloudLightning size={12} />
+                        )}
+                        {syncStatus === 'syncing' ? 'Syncing...' : 'Live Sync'}
+                    </div>
+
+                    <div className="export-wrapper" style={{ marginRight: '16px' }}>
+                        <button
+                            className="advanced-toggle"
+                            onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
+                            title="Export podataka"
+                            style={{ gap: '6px' }}
+                        >
+                            <Download size={16} />
+                            Export
+                            <ChevronDown size={14} style={{ opacity: 0.5 }} />
+                        </button>
+
+                        {isExportMenuOpen && (
+                            <div className="export-menu">
+                                <button onClick={() => handleExport('csv')}>
+                                    <Table size={14} style={{ marginRight: '8px', color: '#10b981' }} />
+                                    Excel (CSV)
+                                </button>
+                                <button onClick={() => handleExport('xml')}>
+                                    <Code size={14} style={{ marginRight: '8px', color: '#f59e0b' }} />
+                                    XML Format
+                                </button>
+                                <button onClick={() => handleExport('json')}>
+                                    <FileCode size={14} style={{ marginRight: '8px', color: '#8b5cf6' }} />
+                                    JSON Data
+                                </button>
+                                <button onClick={() => handleExport('html')}>
+                                    <Globe size={14} style={{ marginRight: '8px', color: '#3b82f6' }} />
+                                    HTML Report
+                                </button>
+                                <button onClick={() => handleExport('pdf')}>
+                                    <FileText size={14} style={{ marginRight: '8px', color: '#ef4444' }} />
+                                    PDF Document
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="view-switcher">
+                        <button
+                            className={viewMode === 'list' ? 'active' : ''}
+                            onClick={() => setViewMode('list')}
+                            title="Lista"
+                        >
+                            <List size={18} />
+                        </button>
+                        <button
+                            className={viewMode === 'grid' ? 'active' : ''}
+                            onClick={() => setViewMode('grid')}
+                            title="Kartice"
+                        >
+                            <LayoutGrid size={18} />
+                        </button>
+                        <button
+                            className={viewMode === 'calendar' ? 'active' : ''}
+                            onClick={() => setViewMode('calendar')}
+                            title="Kalendar"
+                        >
+                            <CalendarDays size={18} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Results */}
+            <div className={`reservations-container ${viewMode}-view`}>
+                {viewMode === 'list' && (
+                    <div className="list-view">
+                        {filteredReservations.map(res => (
+                            <div
+                                key={res.id}
+                                className={`reservation-row ${selectedReservations.includes(res.id) ? 'selected' : ''}`}
+                                onClick={() => navigate(`/reservations/architect?id=${res.id}`)}
+                            >
+                                {bulkEmailMode && (
+                                    <div
+                                        className="bulk-checkbox"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const newSelection = selectedReservations.includes(res.id)
+                                                ? selectedReservations.filter(id => id !== res.id)
+                                                : [...selectedReservations, res.id];
+                                            setSelectedReservations(newSelection);
+                                        }}
+                                        style={{
+                                            marginRight: '16px',
+                                            display: 'flex',
+                                            alignItems: 'center'
+                                        }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedReservations.includes(res.id)}
+                                            readOnly
+                                            style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                cursor: 'pointer',
+                                                accentColor: 'var(--accent)'
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                                <div className="row-main">
+                                    <div className="res-identity">
+                                        <div className="res-codes">
+                                            <span className="ref-code" style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>{res.refCode}</span>
+                                            <span className="cis-code" style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 400, marginTop: '2px' }}>{res.cisCode}</span>
+                                        </div>
+                                        <div className="horizontal-status-tags" style={{ marginTop: '4px' }}>
+                                            <div
+                                                className="status-badge"
+                                                style={{
+                                                    padding: '4px 10px',
+                                                    borderRadius: '6px',
+                                                    backgroundColor: `${getStatusColor(res.status)}15`,
+                                                    color: getStatusColor(res.status),
+                                                    fontSize: '10px',
+                                                    fontWeight: 700,
+                                                    textTransform: 'uppercase',
+                                                    border: `1px solid ${getStatusColor(res.status)}30`,
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px'
+                                                }}
+                                            >
+                                                {getStatusIcon(res.status)}
+                                                {res.status}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="res-customer">
+                                        <div className="customer-name">
+                                            <Users size={14} />
+                                            {res.customerName}
+                                        </div>
+                                        {/* Lead Passenger Info - Show for B2B/Legal or if explicitly defined */}
+                                        {(res.customerType === 'B2B-Subagent' || res.customerType === 'B2C-Legal' || (res.leadPassenger && res.leadPassenger !== res.customerName)) && res.leadPassenger && (
+                                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px', marginBottom: '2px' }}>
+                                                <User size={12} />
+                                                <span>Putnik: {res.leadPassenger}</span>
+                                            </div>
+                                        )}
+                                        <div className="customer-meta">
+                                            {res.customerType === 'B2B-Subagent' && <span className="type-badge b2b">B2B</span>}
+                                            {res.customerType === 'B2C-Legal' && <span className="type-badge legal">Firma</span>}
+                                            <span className="contact-info">
+                                                <Phone size={12} />
+                                                {res.phone}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="res-trip">
+                                        <div className="trip-destination">
+                                            <MapPin size={14} />
+                                            {res.destination}
+                                        </div>
+
+                                        {/* Multi-Item Display */}
+                                        {res.items && res.items.length > 0 ? (
+                                            <div className="res-items-list" style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                {res.items.map(item => (
+                                                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: '4px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-primary)', fontWeight: 600 }}>
+                                                            {getTripTypeIcon(item.type)}
+                                                            <span>{item.subject}</span>
+                                                        </div>
+                                                        <span className="supplier-badge" style={{ fontSize: '10px' }}>{item.supplier}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="accommodation-name" style={{
+                                                    fontSize: '12px',
+                                                    fontWeight: 600,
+                                                    color: 'var(--text-secondary)',
+                                                    marginTop: '4px',
+                                                    display: 'flex',
+                                                    alignItems: 'center'
+                                                }}>
+                                                    <Building2 size={12} style={{ marginRight: '4px' }} />
+                                                    {res.accommodationName}
+
+                                                    {/* Hotel Stars */}
+                                                    {res.hotelCategory && res.hotelCategory > 0 && (
+                                                        <div style={{ display: 'flex', gap: '1px', marginLeft: '6px' }}>
+                                                            {[...Array(res.hotelCategory)].map((_, i) => (
+                                                                <Star key={i} size={10} fill="#f59e0b" color="#f59e0b" />
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="trip-meta">
+                                                    <span className="trip-type">
+                                                        {getTripTypeIcon(res.tripType)}
+                                                        {res.tripType}
+                                                    </span>
+                                                    <span className="supplier-badge">{res.supplier}</span>
+                                                </div>
+                                            </>
+                                        )}
+
+                                    </div>
+
+                                    <div className="res-dates">
+                                        <div className="date-range">
+                                            <Calendar size={14} />
+                                            {new Date(res.checkIn).toLocaleDateString('sr-RS')} - {new Date(res.checkOut).toLocaleDateString('sr-RS')}
+                                        </div>
+                                        <div className="nights-pax">
+                                            <span>{res.nights} noći</span>
+                                            <span>•</span>
+                                            <span>{res.paxCount} putnika</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="res-finance">
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'min-content 1fr', rowGap: '4px', columnGap: '16px', alignItems: 'center' }}>
+
+                                            {/* Total */}
+                                            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Ukupno:</span>
+                                            <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                                                {res.totalPrice.toLocaleString()} {res.currency}
+                                                {/* Invisible placeholder for alignment consistency */}
+                                                <div style={{ width: '12px', height: '12px', visibility: 'hidden' }}></div>
+                                            </div>
+
+                                            {/* Paid */}
+                                            <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap' }}>Uplaćeno:</span>
+                                            <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                                {res.paid.toLocaleString()} {res.currency}
+                                                {/* Green Box if Fully Paid, otherwise Invisible Placeholder */}
+                                                <div style={{
+                                                    width: '12px', height: '12px',
+                                                    background: res.paid >= res.totalPrice ? '#10b981' : 'transparent',
+                                                    borderRadius: '2px', flexShrink: 0
+                                                }} title={res.paid >= res.totalPrice ? "Sve uplaćeno" : ""}></div>
+                                            </div>
+
+                                            {/* Balance */}
+                                            {res.totalPrice - res.paid > 0 && (
+                                                <>
+                                                    <div style={{ gridColumn: '1 / -1', height: '1px', background: 'var(--border)', margin: '2px 0' }}></div>
+                                                    <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 700, whiteSpace: 'nowrap' }}>Preostalo:</span>
+                                                    <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#ef4444', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                                        {(res.totalPrice - res.paid).toLocaleString()} {res.currency}
+                                                        {/* Yellow/Red Box */}
+                                                        <div style={{
+                                                            width: '12px', height: '12px',
+                                                            background: res.paid > 0 ? '#f59e0b' : '#ef4444',
+                                                            borderRadius: '2px', flexShrink: 0
+                                                        }} title={res.paid > 0 ? "Delimično plaćeno" : "Nije plaćeno"}></div>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="row-actions">
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+                                        {/* Action Buttons */}
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button className="action-btn view" title="Pregled">
+                                                <Eye size={16} />
+                                            </button>
+                                            <button className="action-btn edit" title="Izmeni">
+                                                <Edit size={16} />
+                                            </button>
+                                            <button
+                                                className="action-btn email"
+                                                title="Pošalji Email"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedReservation(res);
+                                                    setEmailModalOpen(true);
+                                                }}
+                                            >
+                                                <Mail size={16} />
+                                            </button>
+                                            <button className="action-btn download" title="Preuzmi">
+                                                <Download size={16} />
+                                            </button>
+                                        </div>
+
+                                        {/* Workflow Status Icons */}
+                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                            <div
+                                                title="Najavljeno hotelu"
+                                                style={{
+                                                    padding: '4px 8px',
+                                                    borderRadius: '6px',
+                                                    background: res.hotelNotified ? 'rgba(16, 185, 129, 0.1)' : 'rgba(148, 163, 184, 0.1)',
+                                                    color: res.hotelNotified ? '#10b981' : '#94a3b8',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    fontSize: '10px',
+                                                    fontWeight: 700,
+                                                    cursor: 'help'
+                                                }}
+                                            >
+                                                <Bell size={12} />
+                                            </div>
+                                            <div
+                                                title="Potvrđena rezervacija"
+                                                style={{
+                                                    padding: '4px 8px',
+                                                    borderRadius: '6px',
+                                                    background: res.reservationConfirmed ? 'rgba(16, 185, 129, 0.1)' : 'rgba(148, 163, 184, 0.1)',
+                                                    color: res.reservationConfirmed ? '#10b981' : '#94a3b8',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    fontSize: '10px',
+                                                    fontWeight: 700,
+                                                    cursor: 'help'
+                                                }}
+                                            >
+                                                <CheckCheck size={12} />
+                                            </div>
+                                            <div
+                                                title="Poslata profaktura"
+                                                style={{
+                                                    padding: '4px 8px',
+                                                    borderRadius: '6px',
+                                                    background: res.proformaInvoiceSent ? 'rgba(16, 185, 129, 0.1)' : 'rgba(148, 163, 184, 0.1)',
+                                                    color: res.proformaInvoiceSent ? '#10b981' : '#94a3b8',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    fontSize: '10px',
+                                                    fontWeight: 700,
+                                                    cursor: 'help'
+                                                }}
+                                            >
+                                                <FileCheck size={12} />
+                                            </div>
+                                            <div
+                                                title="Kreiran konačni račun"
+                                                style={{
+                                                    padding: '4px 8px',
+                                                    borderRadius: '6px',
+                                                    background: res.finalInvoiceCreated ? 'rgba(16, 185, 129, 0.1)' : 'rgba(148, 163, 184, 0.1)',
+                                                    color: res.finalInvoiceCreated ? '#10b981' : '#94a3b8',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    fontSize: '10px',
+                                                    fontWeight: 700,
+                                                    cursor: 'help'
+                                                }}
+                                            >
+                                                <Receipt size={12} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {viewMode === 'grid' && (
+                    <div className="grid-view">
+                        {filteredReservations.map(res => (
+                            <div
+                                key={res.id}
+                                className="reservation-card"
+                                onClick={() => navigate(`/reservations/architect?id=${res.id}`)}
+                            >
+                                <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span className="ref-code" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{res.refCode}</span>
+                                        <span className="cis-code" style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>{res.cisCode}</span>
+                                    </div>
+                                    <div
+                                        className="status-badge"
+                                        style={{
+                                            background: `${getStatusColor(res.status)}15`,
+                                            color: getStatusColor(res.status),
+                                            border: `1px solid ${getStatusColor(res.status)}30`,
+                                            padding: '4px 8px',
+                                            borderRadius: '6px',
+                                            fontSize: '10px',
+                                            fontWeight: 700,
+                                            textTransform: 'uppercase'
+                                        }}
+                                    >
+                                        {res.status}
+                                    </div>
+                                </div>
+                                <div className="card-customer">
+                                    <h3>{res.customerName}</h3>
+                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                        <MapPin size={12} style={{ marginRight: '4px' }} />
+                                        {res.destination}
+                                    </p>
+
+                                    {res.items && res.items.length > 0 ? (
+                                        <div style={{ marginTop: '8px', borderTop: '1px solid var(--border)', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            {res.items.map(item => (
+                                                <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-primary)' }}>
+                                                        {getTripTypeIcon(item.type)}
+                                                        <span style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.subject}</span>
+                                                    </div>
+                                                    <span style={{ fontSize: '9px', padding: '2px 6px', background: 'var(--bg-secondary)', borderRadius: '4px', color: 'var(--accent)' }}>{item.supplier}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                                            <Building2 size={10} style={{ marginRight: '4px' }} />
+                                            {res.accommodationName}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="card-dates">
+                                    <Calendar size={14} />
+                                    <span>{new Date(res.checkIn).toLocaleDateString('sr-RS')}</span>
+                                    <span>-</span>
+                                    <span>{new Date(res.checkOut).toLocaleDateString('sr-RS')}</span>
+                                </div>
+                                <div className="card-footer">
+                                    <span className="price">{res.totalPrice.toLocaleString()} {res.currency}</span>
+                                    <span className="pax">{res.paxCount} <Users size={12} /></span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {viewMode === 'calendar' && (
+                    <div className="calendar-view">
+                        {filteredReservations.length === 0 ? (
+                            <div className="calendar-placeholder">
+                                <CalendarDays size={64} style={{ color: 'var(--accent)' }} />
+                                <h3>Nema Rezervacija</h3>
+                                <p>Nema rezervacija koje odgovaraju filterima</p>
+                            </div>
+                        ) : (
+                            <div className="calendar-month-view">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                    <h3 style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '12px', margin: 0 }}>
+                                        <CalendarDays size={24} />
+                                        Rezervacije po Datumima
+                                    </h3>
+
+                                    {/* Calendar View Mode Toggle */}
+                                    <div style={{
+                                        display: 'flex',
+                                        background: 'var(--bg-card)',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '10px',
+                                        padding: '4px'
+                                    }}>
+                                        <button
+                                            onClick={() => setCalendarViewMode('checkIn')}
+                                            style={{
+                                                background: calendarViewMode === 'checkIn' ? 'var(--accent)' : 'transparent',
+                                                color: calendarViewMode === 'checkIn' ? 'white' : 'var(--text-secondary)',
+                                                border: 'none',
+                                                padding: '8px 16px',
+                                                borderRadius: '8px',
+                                                fontSize: '13px',
+                                                fontWeight: 700,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            Po datumu dolaska
+                                        </button>
+                                        <button
+                                            onClick={() => setCalendarViewMode('checkOut')}
+                                            style={{
+                                                background: calendarViewMode === 'checkOut' ? 'var(--accent)' : 'transparent',
+                                                color: calendarViewMode === 'checkOut' ? 'white' : 'var(--text-secondary)',
+                                                border: 'none',
+                                                padding: '8px 16px',
+                                                borderRadius: '8px',
+                                                fontSize: '13px',
+                                                fontWeight: 700,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            Po datumu odlaska
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Group reservations by check-in or check-out date */}
+                                {(() => {
+                                    // Group by date (checkIn or checkOut based on mode)
+                                    const reservationsByDate = filteredReservations.reduce((acc, res) => {
+                                        const date = calendarViewMode === 'checkIn' ? res.checkIn : res.checkOut;
+                                        if (!acc[date]) {
+                                            acc[date] = [];
+                                        }
+                                        acc[date].push(res);
+                                        return acc;
+                                    }, {} as Record<string, typeof filteredReservations>);
+
+                                    // Sort dates
+                                    const sortedDates = Object.keys(reservationsByDate).sort();
+
+                                    return (
+                                        <div className="calendar-grid" style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                                            gap: '16px'
+                                        }}>
+                                            {sortedDates.map(date => {
+                                                const dayReservations = reservationsByDate[date];
+                                                const totalRevenue = dayReservations.reduce((sum, r) => sum + r.totalPrice, 0);
+
+                                                // Count by type
+                                                const smestaj = dayReservations.filter(r => r.tripType === 'Smeštaj').length;
+                                                const avioKarte = dayReservations.filter(r => r.tripType === 'Avio karte').length;
+                                                const putovanja = dayReservations.filter(r => r.tripType === 'Putovanja').length;
+                                                const dinamickiPaketi = dayReservations.filter(r => r.tripType === 'Dinamički paket').length;
+                                                const transfer = dayReservations.filter(r => r.tripType === 'Transfer').length;
+
+                                                const dateObj = new Date(date);
+                                                const dayNum = dateObj.getDate();
+                                                const monthName = dateObj.toLocaleDateString('sr-RS', { month: 'short', year: 'numeric' });
+
+                                                return (
+                                                    <div
+                                                        key={date}
+                                                        className="calendar-day-card"
+                                                        onClick={() => {
+                                                            // Show modal or expand with list of reservations
+                                                            console.log('Show reservations for', date, dayReservations);
+                                                        }}
+                                                        style={{
+                                                            background: 'var(--bg-card)',
+                                                            border: '1px solid var(--border)',
+                                                            borderRadius: '16px',
+                                                            padding: '20px',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.transform = 'translateY(-4px)';
+                                                            e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
+                                                            e.currentTarget.style.borderColor = 'var(--accent)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.transform = 'translateY(0)';
+                                                            e.currentTarget.style.boxShadow = 'none';
+                                                            e.currentTarget.style.borderColor = 'var(--border)';
+                                                        }}
+                                                    >
+                                                        {/* Date Header */}
+                                                        <div style={{
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center',
+                                                            marginBottom: '16px',
+                                                            paddingBottom: '12px',
+                                                            borderBottom: '1px solid var(--border)'
+                                                        }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                                <div style={{
+                                                                    fontSize: '32px',
+                                                                    fontWeight: 900,
+                                                                    color: 'var(--accent)',
+                                                                    lineHeight: 1
+                                                                }}>
+                                                                    {dayNum}
+                                                                </div>
+                                                                <div>
+                                                                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                                                                        {monthName}
+                                                                    </div>
+                                                                    <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                                                                        {dayReservations.length} rezervacija
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div style={{
+                                                                background: 'var(--accent)',
+                                                                color: 'white',
+                                                                padding: '6px 12px',
+                                                                borderRadius: '8px',
+                                                                fontSize: '12px',
+                                                                fontWeight: 900
+                                                            }}>
+                                                                {totalRevenue.toLocaleString()} EUR
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Statistics */}
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                            {smestaj > 0 && (
+                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
+                                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+                                                                        <Building2 size={14} />
+                                                                        Smeštaj
+                                                                    </span>
+                                                                    <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{smestaj}</span>
+                                                                </div>
+                                                            )}
+                                                            {avioKarte > 0 && (
+                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
+                                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+                                                                        <Plane size={14} />
+                                                                        Avio karte
+                                                                    </span>
+                                                                    <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{avioKarte}</span>
+                                                                </div>
+                                                            )}
+                                                            {putovanja > 0 && (
+                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
+                                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+                                                                        <Globe size={14} />
+                                                                        Putovanja
+                                                                    </span>
+                                                                    <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{putovanja}</span>
+                                                                </div>
+                                                            )}
+                                                            {dinamickiPaketi > 0 && (
+                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
+                                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+                                                                        <Package size={14} />
+                                                                        Dinamički paketi
+                                                                    </span>
+                                                                    <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{dinamickiPaketi}</span>
+                                                                </div>
+                                                            )}
+                                                            {transfer > 0 && (
+                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
+                                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+                                                                        <Truck size={14} />
+                                                                        Transfer
+                                                                    </span>
+                                                                    <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{transfer}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Email Modal */}
+            {emailModalOpen && (
+                <ReservationEmailModal
+                    isOpen={emailModalOpen}
+                    onClose={() => {
+                        setEmailModalOpen(false);
+                        setSelectedReservation(null);
+                        // Don't clear selectedReservations yet so user doesn't lose selection if they cancel
+                    }}
+                    reservations={
+                        selectedReservation
+                            ? [{
+                                cisCode: selectedReservation.cisCode,
+                                customerName: selectedReservation.customerName,
+                                supplier: selectedReservation.supplier,
+                                email: selectedReservation.email
+                            }]
+                            : mockReservations
+                                .filter(res => selectedReservations.includes(res.id))
+                                .map(res => ({
+                                    cisCode: res.cisCode,
+                                    customerName: res.customerName,
+                                    supplier: res.supplier,
+                                    email: res.email
+                                }))
+                    }
+                    isBulk={selectedReservations.length > 1 || !selectedReservation}
+                />
+            )}
+
+
+            {/* Advanced Filter Modal */}
+            {showAdvancedSearch && (
+                <div className="modal-overlay" onClick={() => setShowAdvancedSearch(false)} style={{ overflow: 'hidden' }}>
+                    <div
+                        className="modal-content date-filter-modal"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            maxWidth: '1100px',
+                            width: '90%',
+                            minWidth: '950px',
+                            maxHeight: '85vh',
+                            transform: `translate(${modalPos.x}px, ${modalPos.y}px)`,
+                            resize: 'both',
+                            overflow: 'auto',
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}
+                    >
+                        <div
+                            className="modal-header"
+                            onMouseDown={handleHeaderMouseDown}
+                            style={{
+                                cursor: isDragging ? 'grabbing' : 'grab',
+                                userSelect: 'none',
+                                position: 'sticky',
+                                top: 0,
+                                background: 'var(--bg-dark)',
+                                zIndex: 10,
+                                padding: '20px 24px'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <Filter size={20} style={{ color: 'var(--accent)' }} />
+                                <h2 style={{ fontSize: '22px', fontWeight: 800 }}>Filteri i Napredna Pretraga</h2>
+                            </div>
+                            <button className="modal-close" onClick={() => setShowAdvancedSearch(false)}>×</button>
+                        </div>
+
+                        <div className="modal-body" style={{ padding: '30px', flex: 1 }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+
+                                {/* Date Sections - Wide Side by Side */}
+                                <div className="date-filter-section" style={{
+                                    marginBottom: 0,
+                                    padding: '20px',
+                                    background: 'rgba(59, 130, 246, 0.03)',
+                                    borderRadius: '16px',
+                                    border: '1px solid var(--border)'
+                                }}>
+                                    <h3 style={{ marginBottom: '16px', fontSize: '15px' }}><Calendar size={18} /> Datum Rezervacije</h3>
+                                    <DateRangeInput
+                                        label="Period Rezervacije"
+                                        startValue={activeFilters.reservationFrom}
+                                        endValue={activeFilters.reservationTo}
+                                        onChange={(start: string, end: string) => setActiveFilters({ ...activeFilters, reservationFrom: start, reservationTo: end })}
+                                    />
+                                </div>
+
+                                <div className="date-filter-section" style={{
+                                    marginBottom: 0,
+                                    padding: '20px',
+                                    background: 'rgba(16, 185, 129, 0.03)',
+                                    borderRadius: '16px',
+                                    border: '1px solid var(--border)'
+                                }}>
+                                    <h3 style={{ marginBottom: '16px', fontSize: '15px' }}><Calendar size={18} /> Datum Boravka</h3>
+                                    <DateRangeInput
+                                        label="Period Boravka"
+                                        startValue={activeFilters.stayFrom}
+                                        endValue={activeFilters.stayTo}
+                                        onChange={(start: string, end: string) => setActiveFilters({ ...activeFilters, stayFrom: start, stayTo: end })}
+                                    />
+                                </div>
+
+                                {/* Status and Customer Type Side by Side */}
+                                <div className="date-filter-section" style={{ marginBottom: 0 }}>
+                                    <h3><Tag size={18} /> Statusi</h3>
+                                    <MultiSelectDropdown
+                                        options={[
+                                            { value: 'all', label: 'Svi Statusi' },
+                                            { value: 'Active', label: 'Active' },
+                                            { value: 'Reservation', label: 'Reservation' },
+                                            { value: 'Request', label: 'Request' },
+                                            { value: 'Processing', label: 'Processing' },
+                                            { value: 'Offer', label: 'Offer' },
+                                            { value: 'Canceled', label: 'Canceled' }
+                                        ]}
+                                        selected={activeFilters.status}
+                                        onChange={(selected) => setActiveFilters({ ...activeFilters, status: selected })}
+                                        placeholder="Svi Statusi"
+                                    />
+                                </div>
+
+                                <div className="date-filter-section" style={{ marginBottom: 0 }}>
+                                    <h3><Users size={18} /> Tip Kupca</h3>
+                                    <MultiSelectDropdown
+                                        options={[
+                                            { value: 'all', label: 'Svi Tipovi' },
+                                            { value: 'B2C-Individual', label: 'Individualni' },
+                                            { value: 'B2B-Subagent', label: 'Subagent' },
+                                            { value: 'B2C-Legal', label: 'Pravno Lice' }
+                                        ]}
+                                        selected={activeFilters.customerType}
+                                        onChange={(selected) => setActiveFilters({ ...activeFilters, customerType: selected })}
+                                        placeholder="Svi Tipovi"
+                                    />
+                                </div>
+
+                                {/* Suppliers Full Width */}
+                                <div className="date-filter-section" style={{ marginBottom: 0, gridColumn: 'span 2' }}>
+                                    <h3><Building2 size={18} /> Dobavljači</h3>
+                                    <MultiSelectDropdown
+                                        options={[
+                                            { value: 'all', label: 'Svi Dobavljači' },
+                                            { value: 'TCT (Travelgate)', label: 'TCT (Travelgate)' },
+                                            { value: 'Open Greece', label: 'Open Greece' },
+                                            { value: 'Solvex', label: 'Solvex' },
+                                            { value: 'Amadeus', label: 'Amadeus' }
+                                        ]}
+                                        selected={activeFilters.supplier}
+                                        onChange={(selected) => setActiveFilters({ ...activeFilters, supplier: selected })}
+                                        placeholder="Svi Dobavljači"
+                                    />
+                                </div>
+
+                                {/* Workflow Status Section */}
+                                <div className="date-filter-section" style={{ gridColumn: 'span 2', marginBottom: 0 }}>
+                                    <h3><CheckCheck size={18} /> Workflow Faze</h3>
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: '1fr auto auto',
+                                        gap: '12px 60px',
+                                        padding: '12px 20px',
+                                        fontSize: '14px',
+                                        alignItems: 'center',
+                                        background: 'var(--bg-card)',
+                                        borderRadius: '12px',
+                                        border: '1px solid var(--border)'
+                                    }}>
+                                        <span style={{ fontWeight: 800, fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Faza</span>
+                                        <span style={{ fontWeight: 800, fontSize: '12px', color: '#10b981', textTransform: 'uppercase', letterSpacing: '1px' }}>Završeno</span>
+                                        <span style={{ fontWeight: 800, fontSize: '12px', color: '#ef4444', textTransform: 'uppercase', letterSpacing: '1px' }}>Čeka</span>
+
+                                        {[
+                                            { key: 'hotelNotified', label: 'Poslata najava hotelu' },
+                                            { key: 'reservationConfirmed', label: 'Rezervacija potvrđena' },
+                                            { key: 'proformaInvoiceSent', label: 'Profaktura poslata kupcu' },
+                                            { key: 'finalInvoiceCreated', label: 'Konačni račun kreiran' }
+                                        ].map(item => (
+                                            <React.Fragment key={item.key}>
+                                                <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{item.label}</span>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={activeFilters.workflow.includes(`${item.key}:true`)}
+                                                    onChange={() => toggleWorkflowFilter(item.key, true)}
+                                                    style={{ accentColor: '#10b981', cursor: 'pointer', width: '22px', height: '22px' }}
+                                                />
+                                                <input
+                                                    type="checkbox"
+                                                    checked={activeFilters.workflow.includes(`${item.key}:false`)}
+                                                    onChange={() => toggleWorkflowFilter(item.key, false)}
+                                                    style={{ accentColor: '#ef4444', cursor: 'pointer', width: '22px', height: '22px' }}
+                                                />
+                                            </React.Fragment>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="modal-footer" style={{
+                            position: 'sticky',
+                            bottom: 0,
+                            background: 'var(--bg-dark)',
+                            zIndex: 10,
+                            borderTop: '1px solid var(--border)',
+                            padding: '20px 24px',
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: '12px'
+                        }}>
+                            <button className="btn-secondary" style={{ padding: '0 24px', height: '44px' }} onClick={() => {
+                                setActiveFilters({
+                                    status: ['all'],
+                                    reservationFrom: '',
+                                    reservationTo: '',
+                                    stayFrom: '',
+                                    stayTo: '',
+                                    customerType: ['all'],
+                                    supplier: ['all'],
+                                    workflow: ['all']
+                                });
+                            }}>
+                                Poništi Sve
+                            </button>
+                            <button className="btn-primary" style={{ padding: '0 32px', height: '44px' }} onClick={() => setShowAdvancedSearch(false)}>
+                                Primeni Filtere
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default ReservationsDashboard;

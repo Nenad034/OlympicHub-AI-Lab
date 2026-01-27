@@ -1,0 +1,192 @@
+/* Guest Form Styles */
+
+.guest-form {
+    background: rgba(42, 42, 62, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.guest-form:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(42, 42, 62, 0.8);
+}
+
+.guest-form-header {
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.guest-form-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.guest-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+/* Form Fields */
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.form-field .required {
+    color: #ef4444;
+    font-size: 14px;
+}
+
+.form-field input,
+.form-field select {
+    background: rgba(30, 30, 46, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #f8fafc;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: rgba(30, 30, 46, 1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-field input::placeholder {
+    color: #64748b;
+}
+
+.form-field input.error,
+.form-field select.error {
+    border-color: #ef4444;
+    animation: shake 0.3s;
+}
+
+.form-field input.error:focus,
+.form-field select.error:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Error Messages */
+.error-message {
+    font-size: 12px;
+    color: #ef4444;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.error-message::before {
+    content: '⚠';
+    font-size: 14px;
+}
+
+/* Select Dropdown */
+.form-field select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23cbd5e1' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+.form-field select option {
+    background: #1e1e2e;
+    color: #f8fafc;
+    padding: 8px;
+}
+
+/* Date Input */
+.form-field input[type="date"] {
+    cursor: pointer;
+}
+
+.form-field input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+/* Animations */
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .guest-form {
+        padding: 16px;
+    }
+
+    .guest-form-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .guest-form-header h3 {
+        font-size: 14px;
+    }
+
+    .form-field input,
+    .form-field select {
+        font-size: 16px;
+        /* Prevent zoom on iOS */
+    }
+}
+
+/* Accessibility */
+.form-field input:disabled,
+.form-field select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Success State (optional) */
+.form-field input.success,
+.form-field select.success {
+    border-color: #10b981;
+}
+
+.form-field input.success:focus,
+.form-field select.success:focus {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}

@@ -1,0 +1,1763 @@
+{
+    "variable": [
+        {
+            "id": "baseUrl",
+            "key": "baseUrl",
+            "type": "string",
+            "name": "string",
+            "value": "https:\/\/imc-dev.tct.travel"
+        }
+    ],
+    "info": {
+        "name": "TCT-IMC Documentation",
+        "_postman_id": "c228459d-b73b-446b-8e93-6c9f1ba0179c",
+        "description": "Created by Travel Connection Technology",
+        "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
+    },
+    "item": [
+        {
+            "name": "Static Data \/ NBC",
+            "description": "\nThis folder's routes provide static data such as geography (countries, destinations, regions, or airports) and Non-Bookable Content (NBC). It is recommended to store this data locally on the integrator's side to reduce latency and minimize the number of API requests.",
+            "item": [
+                {
+                    "name": "Nationalities",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/nbc\/nationalities",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/nbc\/nationalities"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "This method provides a list of nationalities that are useful for hotel searches, as prices may vary depending on the passenger's nationality and country of residence.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"id\":\"324528\",\"nationality\":\"Afghanistan\",\"code\":\"AF\"},{\"id\":\"324529\",\"nationality\":\"Albania\",\"code\":\"AL\"},{\"id\":\"324530\",\"nationality\":\"Algeria\",\"code\":\"DZ\"},{\"id\":\"324531\",\"nationality\":\"American Samoa\",\"code\":\"AS\"},{\"id\":\"324532\",\"nationality\":\"Andorra\",\"code\":\"AD\"},{\"id\":\"324533\",\"nationality\":\"Angola\",\"code\":\"AO\"},{\"id\":\"324534\",\"nationality\":\"Anguilla\",\"code\":\"AI\"},{\"id\":\"324535\",\"nationality\":\"Antarctica\",\"code\":\"AQ\"},{\"id\":\"324536\",\"nationality\":\"Antigua and Barbuda\",\"code\":\"AG\"},{\"id\":\"324537\",\"nationality\":\"Argentina\",\"code\":\"AR\"}],\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        }
+                    ]
+                },
+                {
+                    "name": "Geography",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/nbc\/geography",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/nbc\/geography"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "This method returns the complete geography hierarchy, structured into countries, regions, and cities.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"location_id\":\"647124\",\"location_name\":\"Armenia\",\"country_id\":\"647124\",\"location_type\":\"country\",\"location_parent\":\"0\",\"code\":\"AM\"},{\"location_id\":\"647174\",\"location_name\":\"Angola\",\"country_id\":\"647174\",\"location_type\":\"country\",\"location_parent\":\"0\",\"code\":\"AO\"},{\"location_id\":\"647094\",\"location_name\":\"Zimbabwe\",\"country_id\":\"647094\",\"location_type\":\"country\",\"location_parent\":\"0\",\"code\":\"ZW\"},{\"location_id\":\"647099\",\"location_name\":\"Zambia\",\"country_id\":\"647099\",\"location_type\":\"country\",\"location_parent\":\"0\",\"code\":\"ZM\"},{\"location_id\":\"647189\",\"location_name\":\"Cura\u00e7ao\",\"country_id\":\"647189\",\"location_type\":\"country\",\"location_parent\":\"0\",\"code\":\"CW\"},{\"location_id\":\"647035\",\"location_name\":\"South Africa\",\"country_id\":\"647035\",\"location_type\":\"country\",\"location_parent\":\"0\",\"code\":\"ZA\"},{\"location_id\":\"184365066\",\"location_name\":\"Mayotte\",\"country_id\":\"184365066\",\"location_type\":\"country\",\"location_parent\":\"0\",\"code\":\"YT\"},{\"location_id\":\"647149\",\"location_name\":\"Yemen\",\"country_id\":\"647149\",\"location_type\":\"country\",\"location_parent\":\"0\",\"code\":\"YE\"},{\"location_id\":\"647194\",\"location_name\":\"Other Countries\",\"country_id\":\"647194\",\"location_type\":\"country\",\"location_parent\":\"0\",\"code\":\"XO\"},{\"location_id\":\"185366799\",\"location_name\":\"Kosovo\",\"country_id\":\"185366799\",\"location_type\":\"country\",\"location_parent\":\"0\",\"code\":\"XK\"}],\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        }
+                    ]
+                },
+                {
+                    "name": "Airports",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/nbc\/airports",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/nbc\/airports"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "This method returns a list of all airports, including their codes, countries, and continents, which may be used to perform availability requests based on an airport code, for various services, like hotels, packages, and so on.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"code\":\"AAA\",\"name\":\"Anaa\",\"country\":\"French Polynesia\",\"country_id\":\"647065\",\"continent\":\"OC\"},{\"code\":\"AAB\",\"name\":\"Arrabury (QL)\",\"country\":\"Australia\",\"country_id\":\"647037\",\"continent\":\"OC\"},{\"code\":\"AAC\",\"name\":\"El Arish\",\"country\":\"Egypt\",\"country_id\":\"646978\",\"continent\":\"AF\"},{\"code\":\"AAD\",\"name\":\"ADADO\",\"country\":\"Somalia\",\"country_id\":\"864522\",\"continent\":\"AF\"},{\"code\":\"AAE\",\"name\":\"Annaba\",\"country\":\"Algeria\",\"country_id\":\"647137\",\"continent\":\"AF\"},{\"code\":\"AAH\",\"name\":\"Aachen\",\"country\":\"Germany\",\"country_id\":\"647027\",\"continent\":\"EU\"},{\"code\":\"AAK\",\"name\":\"Aranuka\",\"country\":\"Kiribati\",\"country_id\":\"647186\",\"continent\":\"OC\"},{\"code\":\"AAL\",\"name\":\"Aalborg\",\"country\":\"Denmark\",\"country_id\":\"647030\",\"continent\":\"EU\"},{\"code\":\"AAM\",\"name\":\"Mala Mala\",\"country\":\"South Africa\",\"country_id\":\"647035\",\"continent\":\"AF\"},{\"code\":\"AAN\",\"name\":\"Al Ain\",\"country\":\"United Arab Emirates\",\"country_id\":\"647187\",\"continent\":\"AS\"}],\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        }
+                    ]
+                },
+                {
+                    "name": "Hotel Information",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/nbc\/hotelInformation",
+                            "query": [
+                                {
+                                    "key": "country",
+                                    "value": "EG",
+                                    "description": "The ISO country code.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "region",
+                                    "value": "Sinai",
+                                    "description": "The name of the region.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "city",
+                                    "value": "Dahab",
+                                    "description": "The name of the city.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "hotel%5B0%5D",
+                                    "value": "4279187",
+                                    "description": "First element from an array of hotel IDs.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "start",
+                                    "value": "0",
+                                    "description": "unsigned integer The offset for pagination.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "50",
+                                    "description": "unsigned integer The limit for pagination.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "detail",
+                                    "value": "full",
+                                    "description": "Describes the volume of returned information. Possible values: minimal, basic, standard, full.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/v1\/nbc\/hotelInformation?country=EG&region=Sinai&city=Dahab&hotel%5B0%5D=4279187&start=0&limit=50&detail=full"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "This method provides detailed information about hotels, including the hotel's name, category, geo-location, description, and other relevant details that can enhance a content-rich search results page. The data returned by this API should be used to consolidate initial search results into a single hotel profile. However, on the final booking page, the tour operator's information should be displayed.\n\nThe query for this endpoint can be based on country (using the 2-letter ISO code), region, city, or an array of hotel IDs (at least one of these parameters must be set). The response is limited to 2500 hotels per request."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"count\":2817,\"start\":\"0\",\"stop\":50,\"kind\":\"list\",\"items\":[{\"id\":\"18855162\",\"hotel_id\":\"18855162\",\"lastUpdate\":\"2021-10-30T06:49:24+02:00\",\"name\":\"Shehrazad Nile Floating Hotel\",\"alternativeNames\":\"[\\\"Aracan GTS Shehrazad\\\"]\",\"city\":\"Aswan\",\"destination\":\"Upper Egypt\",\"country\":\"EG\",\"category\":\"0\",\"airports\":\"[\\\"ASW\\\"]\",\"address\":\"81511 Aswan, EG\",\"phone\":\"\",\"fax\":\"\",\"email\":\"\",\"url\":\"\",\"geoCodes\":\"{\\\"lat\\\":\\\"24.0845\\\",\\\"long\\\":\\\"32.8918\\\"}\",\"chains\":\"\",\"wlan\":\"NO\",\"wifi\":\"NO\",\"restaurant\":\"NO\",\"parking\":\"NO\",\"aircon\":\"NO\",\"gym\":\"NO\",\"pool\":\"NO\",\"wheelchair\":\"NO\",\"year_construction\":\"-1\",\"year_renovation\":\"-1\",\"num_floors_main\":\"-1\",\"num_rooms_total\":\"-1\",\"num_suites\":\"-1\",\"has_entertainment\":\"NO\",\"hoteltype_adultsonly\":\"NO\",\"hoteltype_beachhotel\":\"NO\",\"hoteltype_business\":\"NO\",\"hoteltype_historic\":\"NO\",\"hoteltype_cityhotel\":\"NO\",\"description_en\":\"\",\"photos\":\"[{\\\"type\\\":\\\"ALTERNATIVE\\\",\\\"width\\\":\\\"800\\\",\\\"height\\\":\\\"600\\\",\\\"url\\\":\\\"https:\\\/\\\/i.travelapi.com\\\/hotels\\\/36000000\\\/35610000\\\/35606200\\\/35606200\\\/ea226d25_b.jpg\\\"}]\",\"beachInfo\":\"\",\"hotelFacilities\":\"\",\"roomFacilities\":\"\",\"meals\":\"\",\"sportsEntertainment\":\"\",\"distances\":\"\",\"hygiene\":\"\",\"payment\":\"\",\"string\":\"Shehrazad Nile Floating Hotel, Aswan, Upper Egypt, 0, EG, \"},{\"id\":\"19018665\",\"hotel_id\":\"19018665\",\"lastUpdate\":\"2021-12-18T04:06:13+01:00\",\"name\":\"Sataya Resort\",\"alternativeNames\":\"[\\\"Sataya Resort Marsa Alam\\\",\\\"Labranda Sataya Marsa Alam\\\"]\",\"city\":\"Marsa Alam\",\"destination\":\"Marsa Alam & surrounding area\",\"country\":\"EG\",\"category\":\"5\",\"airports\":\"[\\\"RMF\\\",\\\"HRG\\\"]\",\"address\":\"Marsa Alam, EG\",\"phone\":\"\",\"fax\":\"\",\"email\":\"\",\"url\":\"\",\"geoCodes\":\"{\\\"lat\\\":\\\"25.2167\\\",\\\"long\\\":\\\"34.8056\\\"}\",\"chains\":\"\",\"wlan\":\"YES\",\"wifi\":\"NO\",\"restaurant\":\"YES\",\"parking\":\"YES\",\"aircon\":\"YES\",\"gym\":\"YES\",\"pool\":\"YES\",\"wheelchair\":\"NO\",\"year_construction\":\"-1\",\"year_renovation\":\"-1\",\"num_floors_main\":\"-1\",\"num_rooms_total\":\"-1\",\"num_suites\":\"-1\",\"has_entertainment\":\"NO\",\"hoteltype_adultsonly\":\"NO\",\"hoteltype_beachhotel\":\"NO\",\"hoteltype_business\":\"NO\",\"hoteltype_historic\":\"NO\",\"hoteltype_cityhotel\":\"NO\",\"description_en\":\"Location: This hotel warmly welcomes guests in Marsa Alam. Facilities: The friendly staff at the reception desk in the lobby are happy to answer any questions. A playroom, a laundry service, a theatre hall and a hotel doctor are available. Wireless internet access allows guests to surf the internet and catch up on email. There are also a number of shops that make for great strolling and browsing. Children can enjoy the playground. Guests arriving by car can park their vehicles in the car park. Rooms: Rooms feature a living room, a kitchen and a bathroom. Air conditioning ensures comfortable temperatures. Guests have a sea view from the balcony or terrace, which are standard features of some rooms. Separate bedrooms can be booked. Children's beds can be requested for younger guests. A safe and, for a fee, a minibar are also available. Guests will also find a tea\/coffee station included among the standard features. A telephone, a flatscreen television with satellite channels and WiFi (for a fee) ensure optimal comfort. Bathrooms are equipped with a shower and a hairdryer. Family rooms are available for parents with children. Sports\/Entertainment: The outdoor pool complex includes a children's swimming area and is ideal for working out or just relaxing. Fun on the waterslide and a relaxing soak in the hot tub (no extra charge) offer the perfect way to unwind. Guests can relax and enjoy the sun loungers and parasols provided. For guests who wish to keep active, tennis, bocce and beach volleyball are available. Alternatively, guests can try out aquafit or, for a fee, diving. The hotel offers numerous indoor sports, including a gym, billiards and aerobics or, for a fee, table tennis. There is a wellness area with a sauna, a beauty salon and massage treatments and, for an additional fee, a spa, a steam bath and a hammam. Leisure facilities include a kids' club, a kids' disco and live music.  Meals: Various dining options are available, including a buffet restaurant, a caf\u00e9 and a bar. All-inclusive is offered as a catering option. Breakfast, lunch and dinner are available. The hotel also offers snacks. The hotel offers a selection of alcoholic and non-alcoholic beverages. Payment: The following credit cards are accepted: VISA and MasterCard. \",\"photos\":\"[{\\\"type\\\":\\\"A\\\",\\\"width\\\":\\\"800\\\",\\\"height\\\":\\\"530\\\",\\\"url\\\":\\\"https:\\\/\\\/i28.giatamedia.com\\\/s.php?uid=193596&source=xml&size=800&cid=21979&iid=73387606\\\"},{\\\"type\\\":\\\"W\\\",\\\"width\\\":\\\"800\\\",\\\"height\\\":\\\"533\\\",\\\"url\\\":\\\"https:\\\/\\\/i28.giatamedia.com\\\/s.php?uid=193596&source=xml&size=800&cid=21979&iid=74058117\\\"},{\\\"type\\\":\\\"L\\\",\\\"width\\\":\\\"800\\\",\\\"height\\\":\\\"525\\\",\\\"url\\\":\\\"https:\\\/\\\/i28.giatamedia.com\\\/s.php?uid=193596&source=xml&size=800&cid=21979&iid=73317665\\\"},{\\\"type\\\":\\\"R\\\",\\\"width\\\":\\\"800\\\",\\\"height\\\":\\\"533\\\",\\\"url\\\":\\\"https:\\\/\\\/i28.giatamedia.com\\\/s.php?uid=193596&source=xml&size=800&cid=21979&iid=74058118\\\"},{\\\"type\\\":\\\"WEL\\\",\\\"width\\\":\\\"800\\\",\\\"height\\\":\\\"499\\\",\\\"url\\\":\\\"https:\\\/\\\/i28.giatamedia.com\\\/s.php?uid=193596&source=xml&size=800&cid=21979&iid=72883960\\\"},{\\\"type\\\":\\\"A\\\",\\\"width\\\":\\\"800\\\",\\\"height\\\":\\\"500\\\",\\\"url\\\":\\\"https:\\\/\\\/i28.giatamedia.com\\\/s.php?uid=193596&source=xml&size=800&cid=21979&iid=72883954\\\"},{\\\"type\\\":\\\"A\\\",\\\"width\\\":\\\"800\\\",\\\"height\\\":\\\"533\\\",\\\"url\\\":\\\"https:\\\/\\\/i28.giatamedia.com\\\/s.php?uid=193596&source=xml&size=800&cid=21979&iid=74058119\\\"},{\\\"type\\\":\\\"P\\\",\\\"width\\\":\\\"800\\\",\\\"height\\\":\\\"533\\\",\\\"url\\\":\\\"https:\\\/\\\/i28.giatamedia.com\\\/s.php?uid=193596&source=xml&size=800&cid=21979&iid=74058120\\\"},{\\\"type\\\":\\\"P\\\",\\\"width\\\":\\\"800\\\",\\\"height\\\":\\\"533\\\",\\\"url\\\":\\\"https:\\\/\\\/i28.giatamedia.com\\\/s.php?uid=193596&source=xml&size=800&cid=21979&iid=74058121\\\"},{\\\"type\\\":\\\"A\\\",\\\"width\\\":\\\"800\\\",\\\"height\\\":\\\"533\\\",\\\"url\\\":\\\"https:\\\/\\\/i28.giatamedia.com\\\/s.php?uid=193596&source=xml&size=800&cid=21979&iid=74058122\\\"},{\\\"type\\\":\\\"BA\\\",\\\"width\\\":\\\"800\\\",\\\"height\\\":\\\"476\\\",\\\"url\\\":\\\"https:\\\/\\\/i28.giatamedia.com\\\/s.php?uid=193596&source=xml&size=800&cid=21979&iid=72883953\\\"},{\\\"type\\\":\\\"MOD\\\",\\\"width\\\":\\\"800\\\",\\\"height\\\":\\\"486\\\",\\\"url\\\":\\\"https:\\\/\\\/i28.giatamedia.com\\\/s.php?uid=193596&source=xml&size=800&cid=21979&iid=74192331\\\"}]\",\"beachInfo\":\"\",\"hotelFacilities\":\"{\\\"facility_foyer\\\":\\\"1\\\",\\\"facility_lifts\\\":\\\"1\\\",\\\"facility_cafe\\\":\\\"1\\\",\\\"facility_shops\\\":\\\"1\\\",\\\"facility_bars\\\":\\\"1\\\",\\\"facility_theatre\\\":\\\"1\\\",\\\"facility_gamesroom\\\":\\\"1\\\",\\\"facility_restaurants\\\":\\\"1\\\",\\\"facility_wlan\\\":\\\"true\\\",\\\"facility_laundryservice\\\":\\\"true\\\",\\\"facility_carpark\\\":\\\"true\\\",\\\"facility_miniclub\\\":\\\"true\\\",\\\"facility_playground\\\":\\\"true\\\",\\\"facility_waterslide\\\":\\\"true\\\"}\",\"roomFacilities\":\"{\\\"room_bath\\\":\\\"true\\\",\\\"room_shower\\\":\\\"true\\\",\\\"room_hairdryer\\\":\\\"true\\\",\\\"room_minibar\\\":\\\"true\\\",\\\"room_aircon\\\":\\\"true\\\",\\\"room_safe\\\":\\\"true\\\",\\\"room_balcony\\\":\\\"true\\\",\\\"room_tv\\\":\\\"true\\\",\\\"room_tea_coffee\\\":\\\"true\\\"}\",\"meals\":\"{\\\"meals_allinclusive\\\":\\\"true\\\"}\",\"sportsEntertainment\":\"{\\\"sports_pooloutdoor\\\":\\\"1\\\",\\\"sports_poolchildrens\\\":\\\"1\\\",\\\"sports_sunloungers\\\":\\\"1\\\",\\\"sports_parasols\\\":\\\"1\\\",\\\"sports_wateraerobics\\\":\\\"1\\\",\\\"sports_jacuzzi\\\":\\\"1\\\",\\\"sports_sauna\\\":\\\"1\\\",\\\"sports_steambath\\\":\\\"1\\\",\\\"sports_massage\\\":\\\"1\\\",\\\"sports_scuba\\\":\\\"1\\\",\\\"sports_tabletennis\\\":\\\"1\\\",\\\"sports_aerobics\\\":\\\"1\\\",\\\"sports_gym\\\":\\\"1\\\",\\\"sports_beachvolleyball\\\":\\\"1\\\",\\\"sports_billiards\\\":\\\"1\\\",\\\"sports_boccia\\\":\\\"1\\\",\\\"sports_tennis\\\":\\\"1\\\",\\\"sports_numberofpools\\\":\\\"1\\\"}\",\"distances\":\"\",\"hygiene\":\"\",\"payment\":\"{\\\"payment_visa\\\":\\\"true\\\",\\\"payment_master\\\":\\\"true\\\"}\",\"string\":\"Sataya Resort, Marsa Alam, Marsa Alam & surrounding area, 5, EG, \"},{\"id\":\"5123423\",\"hotel_id\":\"5123423\",\"lastUpdate\":\"2021-11-11T04:16:01+01:00\",\"name\":\"Riviera Plaza Abu Soma Hotel\",\"alternativeNames\":\"\",\"city\":\"Safaga\",\"destination\":\"Red Sea\",\"country\":\"EG\",\"category\":\"0\",\"airports\":\"[\\\"HRG\\\"]\",\"address\":\"Abu Soma Street, Safaga, EG\",\"phone\":\"\",\"fax\":\"\",\"email\":\"\",\"url\":\"\",\"geoCodes\":\"{\\\"lat\\\":\\\"26.797296773677\\\",\\\"long\\\":\\\"33.94127239679\\\"}\",\"chains\":\"\",\"wlan\":\"NO\",\"wifi\":\"NO\",\"restaurant\":\"NO\",\"parking\":\"NO\",\"aircon\":\"NO\",\"gym\":\"NO\",\"pool\":\"NO\",\"wheelchair\":\"NO\",\"year_construction\":\"-1\",\"year_renovation\":\"-1\",\"num_floors_main\":\"-1\",\"num_rooms_total\":\"-1\",\"num_suites\":\"-1\",\"has_entertainment\":\"NO\",\"hoteltype_adultsonly\":\"NO\",\"hoteltype_beachhotel\":\"NO\",\"hoteltype_business\":\"NO\",\"hoteltype_historic\":\"NO\",\"hoteltype_cityhotel\":\"NO\",\"description_en\":\"\",\"photos\":\"\",\"beachInfo\":\"\",\"hotelFacilities\":\"\",\"roomFacilities\":\"\",\"meals\":\"\",\"sportsEntertainment\":\"\",\"distances\":\"\",\"hygiene\":\"\",\"payment\":\"\",\"string\":\"Riviera Plaza Abu Soma Hotel, Safaga, Red Sea, 0, EG, \"}],\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"country\":[\"At least one of country, region, city or hotel must be provided.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Hotel Categories",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/nbc\/hotelCategories",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/nbc\/hotelCategories"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "This endpoint retrieves a list of hotel categories, ranging from \"Uncategorized\" to \"6 Stars\"\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"category\":0,\"category_description\":\"Uncategorized\"},{\"category\":1,\"category_description\":\"1 Star\"},{\"category\":2,\"category_description\":\"2 Stars\"},{\"category\":3,\"category_description\":\"3 Stars\"},{\"category\":4,\"category_description\":\"4 Stars\"},{\"category\":5,\"category_description\":\"5 Stars\"},{\"category\":6,\"category_description\":\"6 Stars\"}],\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        }
+                    ]
+                },
+                {
+                    "name": "Hotel Meal Plans",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/nbc\/hotelMealPlans",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/nbc\/hotelMealPlans"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "This endpoint returns a list of hotel meal plans available for accommodations.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"meal_plan\":\"RO\",\"meal_plan_description\":\"Room Only\"},{\"meal_plan\":\"BB\",\"meal_plan_description\":\"Bed and Breakfast\"},{\"meal_plan\":\"HB\",\"meal_plan_description\":\"Half Board\"},{\"meal_plan\":\"FB\",\"meal_plan_description\":\"Full Board\"},{\"meal_plan\":\"AI\",\"meal_plan_description\":\"All Inclusive\"},{\"meal_plan\":\"UN\",\"meal_plan_description\":\"Unmapped\"}],\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Hotel API",
+            "description": "\nThe Hotel Booking API facilitates real-time searching and booking of hotel rooms.",
+            "item": [
+                {
+                    "name": "Search Synchronous",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/hotel\/searchSync",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/hotel\/searchSync"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"search_type\":\"city\",\"location\":\"666933\",\"airport\":\"OTP\",\"hotel_ids\":[\"12345\",\"67890\"],\"checkin\":\"2025-12-01\",\"checkout\":\"2025-12-07\",\"rooms\":[{\"adults\":2,\"children\":2,\"children_ages\":[1,7]}],\"currency\":\"EUR\",\"nationality\":\"324667\",\"residence\":\"324667\",\"hotel_min_info\":true,\"only_giata\":1,\"solutions_nr\":15}"
+                        },
+                        "description": "This method combines the functionality of `search` and `results`, performing a synchronous hotel search.\n\nInstead of initiating a search session and polling for results separately, this method returns hotel results in a single API call.\n\nThe search process is executed as follows:\n1. A search request is made with the required parameters.\n2. The system waits for the search process to complete.\n3. The final hotel availability results are returned in the response.\n\nThis method follows the same request parameters as `search`, ensuring compatibility.\n\n<b>Important: When using this method, the separate `search` and `results` methods should not be used<\/b> \u2757\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"audit\":{\"hotels\":11,\"solutions\":122,\"rooms\":122},\"groups\":[{\"id\":\"17373\",\"hid\":\"4332015\",\"hid_undeduplicated\":\"20201939\",\"code\":\"zbVvKhPwdh\",\"onreq\":\"0\",\"isPromo\":\"0\",\"price\":10473.82,\"cur\":\"RON\",\"refundable\":\"0\",\"cxl_policy\":[{\"price\":10473.82,\"description\":\"\",\"from\":\"0000-00-00 00:00:00\",\"until\":\"0000-00-00 00:00:00\"}],\"rooms\":{\"1\":\"18970\"}},{\"id\":\"17375\",\"hid\":\"4332015\",\"hid_undeduplicated\":\"20201939\",\"code\":\"tR3NmxeOrZ\",\"onreq\":\"0\",\"isPromo\":\"0\",\"price\":10480.12,\"refundable\":\"1\",\"cxl_policy\":[{\"price\":0,\"description\":\"\",\"from\":\"0000-00-00 00:00:00\",\"until\":\"2025-03-16 11:08:00\"},{\"price\":10480.12,\"description\":\"\",\"from\":\"2025-03-16 11:08:00\",\"until\":\"0000-00-00 00:00:00\"}],\"cur\":\"RON\",\"rooms\":{\"1\":\"18972\"}}],\"rooms\":{\"18744\":{\"id\":\"18744\",\"name\":\"SUITE KING BED NON SMOKING\",\"meal\":\"BB\",\"meal_code\":\"BB\"},\"18746\":{\"id\":\"18746\",\"name\":\"DOUBLE STANDARD\",\"meal\":\"BB\",\"meal_code\":\"BB\"},\"18765\":{\"id\":\"18765\",\"name\":\"2 Queen Beds, Nonsmoking\",\"meal\":\"BED AND BREAKFAST\",\"meal_code\":\"BB\"}},\"status\":true,\"auditData\":{\"environment\":\"\",\"release\":\"\",\"node\":\"H01\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"H01\"},\"timeStamp\":\"2025-07-30 08:45:04 EEST\"},\"search_session\":493613,\"search_code\":\"b7dmMeNCAlj3EWyyAJfQ\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"status\":false,\"error\":{\"search_id\":[\"The search id field is required.\"],\"search_code\":[\"The search code field is required.\"],\"last_check\":[\"The last check field is required.\"],\"hotel_min_info\":[\"The hotel min info field is required.\"],\"only_giata\":[\"The only giata field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Search",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/hotel\/search",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/hotel\/search"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"search_type\":\"city\",\"location\":\"666933\",\"airport\":\"OTP\",\"hotel_ids\":[\"12345\",\"67890\"],\"checkin\":\"2025-12-01\",\"checkout\":\"2025-12-07\",\"rooms\":[{\"adults\":2,\"children\":2,\"children_ages\":[1,7]}],\"currency\":\"EUR\",\"nationality\":\"324667\",\"residence\":\"324667\"}"
+                        },
+                        "description": "Initiates a search for available hotels using the provided parameters and returns a unique session identifier called `search_session` and a `search code`.\n\nThis information will be included in the POST data for the remainder of the booking process.\n\nThe search results will be delivered through a polling process, where all results will be returned along with the search progress.\n\nThis route also returns a node called `auditData`, which includes a cookie name and value.\n\nFor all subsequent requests, the header must include the cookie returned from the initial search; otherwise, you may receive empty responses.\n\n<b>Important: When this method is used, `searchSync` method should not be integrated<\/b> \u2757\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"demapSource\":\"process\",\"status\":true,\"message\":\"Search started\",\"search_session\":493613,\"search_code\":\"b7dmMeNCAlj3EWyyAJfQ\",\"last_hour_searchs\":1,\"repetead_search\":false,\"auditData\":{\"environment\":\"string\",\"release\":\"string\",\"node\":\"H01\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"H01\"},\"timeStamp\":\"2025-03-29 09:15:57 EET\"},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"status\":false,\"error\":{\"search_type\":[\"The search type field is required.\"],\"checkin\":[\"The checkin field is required.\"],\"checkout\":[\"The checkout field is required.\"],\"rooms\":[\"The rooms field is required.\"],\"currency\":[\"The currency field is required.\"],\"nationality\":[\"Nationality must be a valid GIATA code.\"],\"residence\":[\"Residence must be a valid GIATA code.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Results",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/hotel\/results",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/hotel\/results"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "SESSIONID",
+                                "value": "H01"
+                            },
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"hid\":[\"12345\",\"67890\"],\"search_id\":493613,\"search_code\":\"b7dmMeNCAlj3EWyyAJfQ\",\"last_check\":1711714672,\"hotel_min_info\":true,\"only_giata\":1,\"solutions_nr\":15}"
+                        },
+                        "description": "This method retrieves the search results for a previously initiated hotel search.\n\nIt can be called repeatedly until the progress reaches 100%, with a 2-second delay between consecutive calls.\n\nIt requires the `search_session` and `search_code` obtained from the `search` method to identify and retrieve the corresponding results.\n\nImportant: The `refundable` property in each object within the groups array indicates whether an option is eligible for a refund. This property can have a value of `\"0\" (non-refundable)` or `\"1\" (refundable)`.\n\nOptions marked with `refundable: \"1\"` are considered refundable based on information provided by our partners. However, cancellation and refund policies may vary and are subject to change without notice.\n\nWe recommend reviewing the specific cancellation terms for each option before finalizing a reservation. We do not assume responsibility for any discrepancies regarding the refundability status of options.\n\n<b>Important: When this method is used, `searchSync` method should not be integrated<\/b> \u2757\n\nThe request must include the `SESSIONID` header, obtained from the `cookieValue` in the `search` method's response.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"audit\":{\"hotels\":11,\"solutions\":122,\"rooms\":122},\"groups\":[{\"id\":\"17373\",\"hid\":\"4332015\",\"hid_undeduplicated\":\"20201939\",\"code\":\"zbVvKhPwdh\",\"onreq\":\"0\",\"isPromo\":\"0\",\"price\":10473.82,\"cur\":\"RON\",\"refundable\":\"0\",\"cxl_policy\":[{\"price\":10473.82,\"description\":\"\",\"from\":\"0000-00-00 00:00:00\",\"until\":\"0000-00-00 00:00:00\"}],\"rooms\":{\"1\":\"18970\"}},{\"id\":\"17375\",\"hid\":\"4332015\",\"hid_undeduplicated\":\"20201939\",\"code\":\"tR3NmxeOrZ\",\"onreq\":\"0\",\"isPromo\":\"0\",\"price\":10480.12,\"refundable\":\"1\",\"cxl_policy\":[{\"price\":0,\"description\":\"\",\"from\":\"0000-00-00 00:00:00\",\"until\":\"2025-03-16 11:08:00\"},{\"price\":10480.12,\"description\":\"\",\"from\":\"2025-03-16 11:08:00\",\"until\":\"0000-00-00 00:00:00\"}],\"cur\":\"RON\",\"rooms\":{\"1\":\"18972\"}}],\"rooms\":{\"18744\":{\"id\":\"18744\",\"name\":\"SUITE KING BED NON SMOKING\",\"meal\":\"BB\",\"meal_code\":\"BB\"},\"18746\":{\"id\":\"18746\",\"name\":\"DOUBLE STANDARD\",\"meal\":\"BB\",\"meal_code\":\"BB\"},\"18765\":{\"id\":\"18765\",\"name\":\"2 Queen Beds, Nonsmoking\",\"meal\":\"BED AND BREAKFAST\",\"meal_code\":\"BB\"}},\"status\":true,\"auditData\":{\"environment\":\"\",\"release\":\"\",\"node\":\"H01\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"H01\"},\"timeStamp\":\"2025-07-30 08:45:04 EEST\"},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"status\":false,\"error\":{\"search_id\":[\"The search id field is required.\"],\"search_code\":[\"The search code field is required.\"],\"last_check\":[\"The last check field is required.\"],\"hotel_min_info\":[\"The hotel min info field is required.\"],\"only_giata\":[\"The only giata field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Valuation",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/hotel\/valuation",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/hotel\/valuation"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "SESSIONID",
+                                "value": "H01"
+                            },
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"id\":\"17373\",\"code\":\"zbVvKhPwdh\"}"
+                        },
+                        "description": "This request is used to verify availability and pricing, along with other solution details, and should be performed after the search and before confirming the booking.\n\nThe `id` and `code` properties are used to identify a single solution and are the same as those in the `results` response from the `groups` array.\n\nThe request must include the `SESSIONID` header, obtained from the `cookieValue` in the `search` method's response.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"error_code\":0,\"cxl_policy\":[{\"price\":0,\"description\":\"\",\"from\":\"0000-00-00 00:00:00\",\"until\":\"2025-08-02 03:00:00\"},{\"price\":10473.82,\"description\":\"\",\"from\":\"2025-08-02 03:00:00\",\"until\":\"0000-00-00 00:00:00\"}],\"cxl_deadline\":\"2025-11-24 23:59:59\",\"provider_cxl_deadline\": \"2025-11-27 23:59:59\",\"price_breakdown\":[[{\"date\":\"2025-08-07\",\"price\":952.16,\"comment\":\"\"},{\"date\":\"2025-08-08\",\"price\":952.16,\"comment\":\"\"},{\"date\":\"2025-08-09\",\"price\":952.16,\"comment\":\"\"},{\"date\":\"2025-08-10\",\"price\":952.16,\"comment\":\"\"},{\"date\":\"2025-08-11\",\"price\":952.16,\"comment\":\"\"},{\"date\":\"2025-08-12\",\"price\":952.16,\"comment\":\"\"},{\"date\":\"2025-08-13\",\"price\":952.16,\"comment\":\"\"},{\"date\":\"2025-08-14\",\"price\":952.16,\"comment\":\"\"},{\"date\":\"2025-08-15\",\"price\":952.16,\"comment\":\"\"},{\"date\":\"2025-08-16\",\"price\":952.16,\"comment\":\"\"},{\"date\":\"2025-08-17\",\"price\":952.16,\"comment\":\"\"}]],\"solution_price\":10473.76,\"currency\":\"RON\",\"notes\":[\"100.0%<br\/>ADDITIONAL INFO: PACKAGE<br\/>ADDITIONAL INFO: Extra-person charges may apply and vary depending on property policy Government-issued photo identification and a credit card, debit card, or cash deposit may be required at check-in for incidental charges Special requests are subject to availability upon check-in and may incur additional charges; special requests cannot be guaranteed This property accepts credit cards, debit cards, and cash This property doesn't offer after-hours check-in. Front desk staff will greet guests on arrival.<br\/>ADDITIONAL INFO: Pet fee: USD 75 per accommodation, per stay Service animals are exempt from fees Rollaway bed fee: USD 7.0 per night The above list may not be comprehensive. Fees and deposits may not include tax and are subject to change.<br\/>ADDITIONAL INFO: The property has connecting\/adjoining rooms, which are subject to availability and can be requested by contacting the property using the number on the booking confirmation. Contactless check-in and contactless check-out are available. This property welcomes guests of all sexual orientations and gender identities (LGBTQ+ friendly).<br\/>RESORT FEE: There is a Resort  fee, it will be charged directly to the clients in the hotel.<br\/><br\/>CITY TAX: Hotel prices do not include room taxes established by local entities. These room taxes vary according to the city and hotel category and are charged directly by the hotel upon client\u2019s arrival.<br\/><br\/>true PVP \/ Retail Price<br\/>100.0% NO SHOW<br\/>2287.35 PVP \/ Binding retail price amount\"],\"restrictions\":\"\",\"statusOngroup\":\"0\",\"search_id\":\"16698\",\"auditData\":{\"environment\":\"\",\"release\":\"\",\"node\":\"H01\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"H01\"},\"timeStamp\":\"2025-07-30 09:11:00 EEST\"},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"id\":[\"The id field is required.\"],\"code\":[\"The code field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Hotel Details",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/hotel\/hotelDetails",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/hotel\/hotelDetails"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "SESSIONID",
+                                "value": "H01"
+                            },
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"hid_undeduplicated\":\"11673011\",\"availsearch_id\":879184}"
+                        },
+                        "description": "This method retrieves detailed information about a specific hotel.\n\nIt should be used alongside the valuation method to obtain the tour operator's hotel details, as the initial search results are grouped under a unique hotel profile that may not fully reflect the evaluated offer.\n\nThe request must include the `SESSIONID` header, obtained from the `cookieValue` in the `search` method's response.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"hotelImages\":[{\"hotelimage_id\":\"5752915021\",\"hotel_id\":\"20201939\",\"provider_id\":null,\"hotelimage_url\":\"http:\/\/images.xtravelsystem.com\/slide\/files\/public\/498\/4\/6\/3\/Images\/PRX-HAM-9.jpg\"},{\"hotelimage_id\":\"5752915020\",\"hotel_id\":\"20201939\",\"provider_id\":null,\"hotelimage_url\":\"http:\/\/images.xtravelsystem.com\/slide\/files\/public\/498\/4\/6\/3\/Images\/PRX-HAM-14.jpg\"},{\"hotelimage_id\":\"5752915019\",\"hotel_id\":\"20201939\",\"provider_id\":null,\"hotelimage_url\":\"http:\/\/images.xtravelsystem.com\/slide\/files\/public\/498\/4\/6\/3\/Images\/PRX-HAM-13.jpg\"}],\"hotelfacilities\":{\"101\":{\"facilityprovider_id\":\"7775\",\"facilityprovider_code\":\"46\",\"facilityprovider_name\":\"Business center\",\"facilityprovider_description\":null,\"provider_id\":\"5\",\"facility_id\":\"101\",\"language_code\":\"en\",\"facilityprovider_type\":\"hotel\",\"facility_name\":\"Business Centre\",\"facility_type\":\"hotel\",\"ro_alias\":null}},\"hotel\":[{\"hotel_id\":\"20201939\",\"hotel_name\":\"HAMPTON INN PARIS TX\",\"provider_id\":\"5\",\"hotel_code\":\"498463\",\"hotel_giata_code\":\"\",\"hotel_address\":\"3563 NE LOOP 286 - PARIS, TX\",\"location_id\":\"140337\",\"location_group\":\"\",\"hotel_phone\":\"19037846536\",\"hotel_fax\":\"1-903-784-6546\",\"hotel_email\":\"PARIS_HAMPTON@HILTON.COM\",\"hotel_website\":null,\"hotel_stars\":\"3\",\"hotel_latitude\":\"0.00000\",\"hotel_longitude\":\"0.00000\",\"hotel_enabled\":\"1\",\"hotel_featured\":\"0\",\"hotel_preview_image\":\"http:\/\/images.xtravelsystem.com\/slide\/files\/public\/498\/4\/6\/3\/Images\/PRX-HAM-2.jpg\",\"hotel_currency\":null,\"hotel_date_modified\":\"2022-08-22 19:41:20\",\"date_added\":\"2022-01-12 18:43:28\",\"hoteldetail_id\":\"274352067\",\"hotel_description\":\"by. All rooms of our Hampton Inn hotel are equipped with complimentary wired and wireless high-speed internet access coffeemakers a micro-fridge iron ironing board and hair dryer. Our Hampton Inn hotel offers 3 HBO and 3 SHOWTIME channels including SHOWTIME EXTREME. We also offer a complimentary hot breakfast business center fitness center outdoor pool and a whirlpool. We love having you here in Texas at the Hampton Inn Paris.\",\"hotel_location_description\":null,\"language_code\":\"EN\"}],\"solutions4hotel\":[],\"auditData\":{\"environment\":\"\",\"release\":\"\",\"node\":\"H01\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"H01\"},\"timeStamp\":\"2025-07-30 09:03:58 EEST\"},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"hid_undeduplicated\":[\"The hid undeduplicated field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Book",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/hotel\/book",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/hotel\/book"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "SESSIONID",
+                                "value": "H01"
+                            },
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"id\":\"7890\",\"code\":\"abc123\",\"cemail\":\"client@example.com\",\"quote\":0,\"blockquote\":1,\"persons\":[[{\"leader\":true,\"fname\":\"John\",\"lname\":\"Doe\",\"salutation\":0},{\"leader\":false,\"fname\":\"Jane\",\"lname\":\"Doe\",\"salutation\":1,\"child_year\":2010,\"child_month\":5,\"child_day\":15,\"children\":[5]}],[{\"leader\":false,\"fname\":\"Alice\",\"lname\":\"Smith\",\"salutation\":2}]],\"payment_method\":0,\"client_return_url\":\"http:\\\/\\\/example.com\\\/return\",\"invoiceDetails\":{\"clientType\":\"pj\",\"firmName\":\"Example Firm\",\"cui\":\"123456789\",\"jNo\":\"AB123\",\"iban\":\"RO49AAAA1B31007593840000\",\"bank\":\"Example Bank\",\"city\":\"City\",\"legalAgent\":\"Agent Name\",\"legalAgentCNP\":\"1234567890123\",\"newsletter\":true,\"firstName\":\"\\\"John\\\"\",\"lastName\":\"\\\"Doe\\\"\",\"address\":\"\\\"123 Main St\\\"\",\"country\":\"\\\"Country\\\"\",\"email\":\"\\\"john.doe@example.com\\\"\",\"phone\":\"\\\"+1234567890\\\"\"},\"external_reference\":\"ext123\"}"
+                        },
+                        "description": "This request is the final step to complete a room booking.\n\nThe request must include the `SESSIONID` header, obtained from the `cookieValue` in the `search` method's response.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"error_code\":0,\"code\":\"18363H20160324\",\"message\":\"The rooms have been booked\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"id\":[\"The id field is required.\"],\"code\":[\"The code field is required.\"],\"cemail\":[\"The cemail field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Booking Details",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/hotel\/bookingDetails",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/hotel\/bookingDetails"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"code\":\"BC123456\",\"external_reference\":\"ext123\"}"
+                        },
+                        "description": "Method used to get the booking's information based on its code\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"code\":\"XXXXXXX\",\"currency\":\"EUR\",\"checkin\":1725138000,\"checkout\":1725570000,\"price\":\"XXX.XX\",\"converted_price\":\"XXX.XX\",\"client_currency\":\"USD\",\"provider_status\":\"cancelled\",\"provider_reference\":\"XXXXXXX\",\"location_name\":\"Elounda\",\"hotel_name\":\"Aristea Hotel\",\"rooms\":[{\"name\":\"Single\",\"passengers\":[\"Anonim\"]}],\"external_reference\":\"XXXXXXXXXXXXXX\",\"booking_id\":\"XXXXXXX\",\"booking_creation_date\":\"2024-08-14 15:38:07\",\"meal_plan\":\"Bed and Breakfast\",\"cxl_policies\":[{\"from\":\"0000-00-00 00:00:00\",\"until\":\"2024-08-24 23:59:59\",\"price\":0,\"description\":\"\"},{\"from\":\"2024-08-25 00:00:00\",\"until\":\"2024-08-30 23:59:59\",\"price\":\"XXX.XX\",\"description\":\"\"},{\"from\":\"2024-08-31 00:00:00\",\"until\":\"0000-00-00 00:00:00\",\"price\":\"XXX.XX\",\"description\":\"\"}],\"hotel\":{\"hotel_code\":\"XXXX\",\"hotel_name\":\"Aristea Hotel\",\"hotel_stars\":\"3\",\"hotel_address\":\"Elounda, 720 53\",\"hotel_phone\":\"\",\"hotel_latitude\":\"XX.XXXXX\",\"hotel_longitude\":\"XX.XXXXX\"},\"aditional_info\":\"Check-in starts at 0:00 o'clock. Check-out ends at 0:00 o'clock. Pets are not allowed. Wi-Fi free of charge (reception area). Accommodation tax to be paid directly by guests on the spot. Air conditioning - 5.00 euro per day, per room. Safe box - 2.00 euro per day. Cancellation Policy: Cancellation 7-1 day prior to arrival - 50% of total cost will be charged. No show or early departure - 50% of total cost will be charged. Payment policy: Before cancellation policy is valid, except reservations with early booking which must be paid according to the requested date. If early booking payments are not settled as requested, the discount will not be valid. Property Rules: From 01-Apr-2024 until 31-Oct-2024 - Minimum Stay 3 Nights.\",\"auditData\":{\"environment\":\"\",\"release\":\"\",\"node\":\"XXXX\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"XXXX\"},\"timeStamp\":\"2025-02-07 17:25:48 EET\"},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"code\":[\"The code field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Cancel",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/hotel\/cancel",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/hotel\/cancel"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"code\":\"BC123456\"}"
+                        },
+                        "description": "This request is used to cancel a booking.\n\nIf the cancellation is made within the cancellation policy period, a penalty may be charged.\n\nIf the cancellation is made outside the policy period, no charge will be applied.\n\nThe `code` property must match the reference received in the booking response.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"message\":\"The booking has been cancelled\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"code\":[\"The code field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Package API",
+            "description": "\nThe Package Booking API enables searching and booking complete travel packages.",
+            "item": [
+                {
+                    "name": "Package Departures",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/package\/getPackageDepartures",
+                            "query": [
+                                {
+                                    "key": "query",
+                                    "value": "all",
+                                    "description": "The query must be either `all` or one or more of: `sk, tour, cruise, circuit ..` All will return all available packages, while filtering by circuit, for instance, will return only the departures for the circuit packages. .",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/v1\/package\/getPackageDepartures?query=all"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Retrieves departures for the available travel packages. Every departure consists in a set of departure dates with price per person, for a departure airport \/ arival airport pair.\n\nFor the same departure airport \/ arival airport pair, there could be multiple length of stay.\n\nThe method might help in populating search forms or adding the pricing in a calendar like view.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"code\":0,\"packageDepartures\":{\"OTP\":{\"BCN\":{\"2025-07-19\":{\"price\":\"503.483466667\",\"durations\":[\"7\"]},\"2025-08-16\":{\"price\":\"542.2504\",\"durations\":[\"7\"]},\"2025-08-23\":{\"price\":\"439.794933333\",\"durations\":[\"7\"]}},\"AGP\":{\"2025-07-28\":{\"price\":\"614.4045\",\"durations\":[\"7\"]},\"2025-08-18\":{\"price\":\"513.17875\",\"durations\":[\"7\"]}}},\"CLJ\":{\"LCA\":{\"2025-07-08\":{\"price\":\"318.10495\",\"durations\":[\"7\"]},\"2025-07-15\":{\"price\":\"421.54495\",\"durations\":[\"7\"]}}}},\"packageDeparturesWithCities\":{\"OTP\":{\"AGP\":{\"661862\":{\"2025-07-28\":{\"price\":\"614.4045\",\"durations\":[\"7\"]},\"2025-08-18\":{\"price\":\"703.972333333\",\"durations\":[\"7\"]}},\"661895\":{\"2025-07-28\":{\"price\":\"638.706875\",\"durations\":[\"7\"]},\"2025-08-18\":{\"price\":\"513.17875\",\"durations\":[\"7\"]}}},\"BCN\":{\"662396\":{\"2025-07-19\":{\"price\":\"606.2996\",\"durations\":[\"7\"]},\"2025-08-16\":{\"price\":\"547.466\",\"durations\":[\"7\"]},\"2025-08-23\":{\"price\":\"472.555666667\",\"durations\":[\"7\"]}},\"663054\":{\"2025-07-19\":{\"price\":\"503.483466667\",\"durations\":[\"7\"]},\"2025-08-16\":{\"price\":\"542.2504\",\"durations\":[\"7\"]},\"2025-08-23\":{\"price\":\"439.794933333\",\"durations\":[\"7\"]}}}},\"CLJ\":{\"LCA\":{\"665523\":{\"2025-07-08\":{\"price\":\"318.10495\",\"durations\":[\"7\"]},\"2025-07-15\":{\"price\":\"421.54495\",\"durations\":[\"7\"]}}}}},\"departureCountries\":{\"RO\":{\"countryName\":\"Romania\",\"countryId\":647044,\"countryIso\":\"RO\"}},\"departureAirports\":{\"OTP\":{\"airportName\":\"Henri Coanda Arpt\",\"airportCode\":\"OTP\",\"cityName\":\"Bucharest\",\"countryName\":\"Romania\",\"countryId\":647044,\"countryIso\":\"RO\"},\"CLJ\":{\"airportName\":\"Cluj\",\"airportCode\":\"CLJ\",\"cityName\":\"Cluj\",\"countryName\":\"Romania\",\"countryId\":647044,\"countryIso\":\"RO\"}},\"arrivalCountries\":{\"ES\":{\"countryName\":\"Spain\",\"countryId\":647010,\"countryIso\":\"ES\"},\"CY\":{\"countryName\":\"Cyprus\",\"countryId\":647017,\"countryIso\":\"CY\"}},\"arrivalAirports\":{\"BCN\":{\"airportName\":\"Barcelona\",\"airportCode\":\"BCN\",\"cityName\":\"Barcelona\",\"countryName\":\"Spain\",\"countryId\":647010,\"countryIso\":\"ES\"},\"AGP\":{\"airportName\":\"Malaga\",\"airportCode\":\"AGP\",\"cityName\":\"Malaga\",\"countryName\":\"Spain\",\"countryId\":647010,\"countryIso\":\"ES\"},\"LCA\":{\"airportName\":\"Larnaca\",\"airportCode\":\"LCA\",\"cityName\":\"Larnaca\",\"countryName\":\"Cyprus\",\"countryId\":647017,\"countryIso\":\"CY\"}},\"arrivalCities\":{\"661862\":{\"nearbyAirports\":\"AGP\",\"cityId\":661862,\"cityName\":\"Marbella\",\"countryId\":647010,\"countryName\":\"Spain\",\"regionId\":946835,\"regionName\":\"Andalucia\",\"countryIso\":\"ES\"},\"661895\":{\"nearbyAirports\":\"AGP\",\"cityId\":661895,\"cityName\":\"Estepona\",\"countryId\":647010,\"countryName\":\"Spain\",\"regionId\":946835,\"regionName\":\"Andalucia\",\"countryIso\":\"ES\"},\"662396\":{\"nearbyAirports\":null,\"cityId\":662396,\"cityName\":\"Pineda de Mar\",\"countryId\":647010,\"countryName\":\"Spain\",\"regionId\":946878,\"regionName\":\"Costa Barcelona\",\"countryIso\":\"ES\"},\"663054\":{\"nearbyAirports\":null,\"cityId\":663054,\"cityName\":\"L'Hospitalet de Llobregat\",\"countryId\":647010,\"countryName\":\"Spain\",\"regionId\":946849,\"regionName\":\"Barcelona & surrounding area\",\"countryIso\":\"ES\"},\"665523\":{\"nearbyAirports\":\"LCA\",\"cityId\":665523,\"cityName\":\"Larnaca\",\"countryId\":647017,\"countryName\":\"Cyprus\",\"regionId\":946583,\"regionName\":\"South Cyprus\",\"countryIso\":\"CY\"}},\"processTime\":2,\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"query\":[\"The query field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Search",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/package\/search",
+                            "query": [
+                                {
+                                    "key": "st",
+                                    "value": "P",
+                                    "description": "Search type must be one of the following values:",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "nights",
+                                    "value": "7",
+                                    "description": "The number of nights of the offer `e.g. \"4,5,6,7,8,9\"` .",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "brand",
+                                    "value": "1%2C2%2C3",
+                                    "description": "Brand must be provided as a comma-separated list of unsigned integers, defining the desired brands ID `e.g. \"1,2,3\"` .",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "rm_1",
+                                    "value": "2-0%2C5",
+                                    "description": "Room 1 - for adults only, use `X`. For adults with kids, use `X-Y,Y,Y,Y` where `X` is the number of adults (1-4) and `Y` are the ages of kids (0-18).",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "subTp",
+                                    "value": "tour%2Ccruise",
+                                    "description": "Subtype must be a comma-separated list of subtypes: `sky,cruise,circuit,tour`.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "avail",
+                                    "description": "Status must be one of the following values:",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "sm",
+                                    "value": "all",
+                                    "description": "Search method must be one of the following values:",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "hName",
+                                    "value": "Hilton",
+                                    "description": "Hotel name `e.g. Hilton` .",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "hCode",
+                                    "value": "12345",
+                                    "description": "Hotel code `e.g. 12345` .",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "hGiataCode",
+                                    "value": "54321",
+                                    "description": "Hotel giata code `e.g. 54321` .",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "stars",
+                                    "value": "3%2C4",
+                                    "description": "Stars represent the hotel rating and must be provided as a comma-separated list of unsigned integers `(e.g. 2,3,4,5,...)`.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "depArpt",
+                                    "value": "LAX%2CCDG",
+                                    "description": "Departure Airport must be provided as a comma-separated list of IATA airport codes `(e.g. PRG,LAX,CDG,...)`.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "depCtry",
+                                    "value": "US%2CFR",
+                                    "description": "Departure Country must be provided as a comma-separated list of ISO country codes `(e.g. FR,US,SI,...)`.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "depRegId",
+                                    "value": "123",
+                                    "description": "Departure Region Ids must be provided as a comma-separated list of unsigned integers `(e.g. 123)`.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "depCityId",
+                                    "value": "123",
+                                    "description": "Departure City Ids must be provided as a comma-separated list of unsigned integers `(e.g. 123)`.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "arrCtry",
+                                    "value": "IT%2CES",
+                                    "description": "Arrival Country must be provided as a comma-separated list of ISO country codes `(e.g. FR,US,SI,...)`.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "arrArpt",
+                                    "value": "FCO%2CBCN",
+                                    "description": "Arrival Airport must be provided as a comma-separated list of IATA airport codes `(e.g. PRG,LAX,CDG,...)`.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "arrRegId",
+                                    "value": "123",
+                                    "description": "Arrival Region Ids must be provided as a comma-separated list of unsigned integers `(e.g. 123)`.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "arrCityId",
+                                    "value": "123",
+                                    "description": "Arrival City Ids must be provided as a comma-separated list of unsigned integers `(e.g. 123)`.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "directFlight",
+                                    "value": "1",
+                                    "description": "Direct flight must be `true` or `false` .",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "offCkinSDate",
+                                    "value": "2025-08-01",
+                                    "description": "Offer Interval START From - must match the format `Y-m-d`",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "offCkinEDate",
+                                    "value": "2025-08-15",
+                                    "description": "Offer Interval START To - must match the format `Y-m-d`",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "offCkoutSDate",
+                                    "value": "2025-08-16",
+                                    "description": "Offer Interval END From - must match the format `Y-m-d`",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "offCkoutEDate",
+                                    "value": "2025-08-30",
+                                    "description": "Offer Interval END To - must match the format `Y-m-d`",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "accCkinSDate",
+                                    "value": "2025-08-01",
+                                    "description": "Accommodation Interval START From - must match the format `Y-m-d`",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "accCkinEDate",
+                                    "value": "2025-08-15",
+                                    "description": "Accommodation Interval START To - must match the format `Y-m-d`",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "accCkoutSDate",
+                                    "value": "2025-08-16",
+                                    "description": "Accommodation Interval END From - must match the format `Y-m-d`",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "accCkoutEDate",
+                                    "value": "2025-08-30",
+                                    "description": "Accommodation Interval END To - must match the format `Y-m-d`",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "trptCkinSDate",
+                                    "value": "2025-08-01",
+                                    "description": "Transport Interval START From - must match the format `Y-m-d`",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "trptCkinEDate",
+                                    "value": "2025-08-15",
+                                    "description": "Transport Interval START To - must match the format `Y-m-d`",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "trptCkoutSDate",
+                                    "value": "2025-08-16",
+                                    "description": "Transport Interval END From - must match the format `Y-m-d`",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "trptCkoutEDate",
+                                    "value": "2025-08-30",
+                                    "description": "Transport Interval END To - must match the format `Y-m-d`",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "minPrice",
+                                    "value": "1000",
+                                    "description": "Min price (offer) `e.g. 1000` .",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "maxPrice",
+                                    "value": "5000",
+                                    "description": "Max price (offer) `e.g. 5000` .",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "minPricePax",
+                                    "value": "500",
+                                    "description": "Min price (per pax) `e.g. 500` .",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "maxPricePax",
+                                    "value": "2500",
+                                    "description": "Max price (per pax) `e.g. 2500` .",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "accNights",
+                                    "value": "7",
+                                    "description": "The number of nights of the accommodation `e.g. 7` .",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "supplierCode",
+                                    "value": "10%2C20",
+                                    "description": "Supplier Code must be provided as a comma-separated list of unsigned integers `e.g. 10,20` .",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "meals",
+                                    "value": "BB%2CHB",
+                                    "description": "Meals must be provided as a comma-separated list of meal plans `RO, BB, HB, FB, AI, OTH`.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "hasPromo",
+                                    "value": "1",
+                                    "description": "Has promo must be `true` or `false` .",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "rm_2",
+                                    "value": "1-2%2C4",
+                                    "description": "Room 2 - for adults only, use `X`. For adults with kids, use `X-Y,Y,Y,Y` where `X` is the number of adults (1-4) and `Y` are the ages of kids (0-18).",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "start",
+                                    "value": "",
+                                    "description": "Start - pagination parameter `e.g 0` .",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "3000",
+                                    "description": "Limit - pagination parameter `e.g 3000` .",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/v1\/package\/search?st=P&nights=7&brand=1%2C2%2C3&rm_1=2-0%2C5&subTp=tour%2Ccruise&status=avail&sm=all&hName=Hilton&hCode=12345&hGiataCode=54321&stars=3%2C4&depArpt=LAX%2CCDG&depCtry=US%2CFR&depRegId=123&depCityId=123&arrCtry=IT%2CES&arrArpt=FCO%2CBCN&arrRegId=123&arrCityId=123&directFlight=1&offCkinSDate=2025-08-01&offCkinEDate=2025-08-15&offCkoutSDate=2025-08-16&offCkoutEDate=2025-08-30&accCkinSDate=2025-08-01&accCkinEDate=2025-08-15&accCkoutSDate=2025-08-16&accCkoutEDate=2025-08-30&trptCkinSDate=2025-08-01&trptCkinEDate=2025-08-15&trptCkoutSDate=2025-08-16&trptCkoutEDate=2025-08-30&minPrice=1000&maxPrice=5000&minPricePax=500&maxPricePax=2500&accNights=7&supplierCode=10%2C20&meals=BB%2CHB&hasPromo=1&rm_2=1-2%2C4&start=&limit=3000"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "This method searches for travel packages based on specified criteria.\n\nThe search results include available offers that match the search criteria.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"offersNo\":243,\"pagesNo\":49,\"actualPage\":1,\"pageSize\":5,\"offers\":[\"{\\\"tp\\\":\\\"P\\\",\\\"subTp\\\":\\\"tour\\\",\\\"startDate\\\":\\\"2025-10-04\\\",\\\"endDate\\\":\\\"2025-10-11\\\",\\\"stay\\\":7,\\\"price\\\":\\\"1564.2936\\\",\\\"pricePerPax\\\":782.1468,\\\"currency\\\":\\\"EUR\\\",\\\"onReq\\\":\\\"available\\\",\\\"serviceId\\\":\\\"4088313\\\",\\\"accom\\\":{\\\"startDate\\\":\\\"2025-10-04\\\",\\\"endDate\\\":\\\"2025-10-11\\\",\\\"stay\\\":\\\"7\\\",\\\"hotelId\\\":\\\"12780622\\\",\\\"hotelCode\\\":\\\"1064195\\\",\\\"hotelName\\\":\\\"Iris Boutique Hotel\\\",\\\"giataId\\\":\\\"4322887\\\",\\\"room\\\":[{\\\"code\\\":\\\"201398240|206914837$37341^^1^^201398240|206914837|37341|141\\\",\\\"name\\\":\\\"Economy Room (Semi Basement),2 Twin Beds,NonSmoking\\\",\\\"price\\\":\\\"460.5100\\\",\\\"avail\\\":null,\\\"board\\\":\\\"BB\\\",\\\"discount\\\":null,\\\"occ\\\":[{\\\"age\\\":30,\\\"price\\\":230.255},{\\\"age\\\":30,\\\"price\\\":230.255}],\\\"pricePerPax\\\":230.255}]},\\\"transport\\\":{\\\"price\\\":688,\\\"pricePerPax\\\":344,\\\"routes\\\":[{\\\"depApt\\\":\\\"LJU\\\",\\\"arrApt\\\":\\\"JTR\\\",\\\"depDate\\\":\\\"2025-10-04\\\",\\\"depTime\\\":\\\"12:50\\\",\\\"arrDate\\\":\\\"2025-10-04\\\",\\\"arrTime\\\":\\\"17:35\\\",\\\"carrier\\\":\\\"C3\\\",\\\"flNo\\\":\\\"C3163\\\"},{\\\"depApt\\\":\\\"JTR\\\",\\\"arrApt\\\":\\\"LJU\\\",\\\"depDate\\\":\\\"2025-10-11\\\",\\\"depTime\\\":\\\"18:20\\\",\\\"arrDate\\\":\\\"2025-10-11\\\",\\\"arrTime\\\":\\\"19:40\\\",\\\"carrier\\\":\\\"C3\\\",\\\"flNo\\\":\\\"C3163\\\"}]}}\",\"{\\\"tp\\\":\\\"P\\\",\\\"subTp\\\":\\\"tour\\\",\\\"startDate\\\":\\\"2025-10-10\\\",\\\"endDate\\\":\\\"2025-10-17\\\",\\\"stay\\\":7,\\\"price\\\":\\\"1649.6000\\\",\\\"pricePerPax\\\":824.8,\\\"currency\\\":\\\"EUR\\\",\\\"onReq\\\":\\\"available\\\",\\\"serviceId\\\":\\\"13033890\\\",\\\"accom\\\":{\\\"startDate\\\":\\\"2025-10-10\\\",\\\"endDate\\\":\\\"2025-10-17\\\",\\\"stay\\\":\\\"7\\\",\\\"hotelId\\\":\\\"4284854\\\",\\\"hotelCode\\\":\\\"7237\\\",\\\"hotelName\\\":\\\"Alaiye Kleopatra Hotel\\\",\\\"giataId\\\":\\\"4284854\\\",\\\"room\\\":[{\\\"code\\\":\\\"DZ\\\",\\\"name\\\":\\\"Doppelzimmer Bad o.Dusche - 10.10 - 7 nights\\\",\\\"price\\\":\\\"664.0000\\\",\\\"avail\\\":null,\\\"board\\\":\\\"HB\\\",\\\"discount\\\":null,\\\"occ\\\":[{\\\"age\\\":30,\\\"price\\\":332},{\\\"age\\\":30,\\\"price\\\":332}],\\\"pricePerPax\\\":332}]},\\\"transport\\\":{\\\"price\\\":580,\\\"pricePerPax\\\":290,\\\"routes\\\":[{\\\"depApt\\\":\\\"LJU\\\",\\\"arrApt\\\":\\\"AYT\\\",\\\"depDate\\\":\\\"2025-10-10\\\",\\\"depTime\\\":\\\"06:00\\\",\\\"arrDate\\\":\\\"2025-10-10\\\",\\\"arrTime\\\":\\\"09:35\\\",\\\"carrier\\\":\\\"C3\\\",\\\"flNo\\\":\\\"C3151\\\"},{\\\"depApt\\\":\\\"AYT\\\",\\\"arrApt\\\":\\\"LJU\\\",\\\"depDate\\\":\\\"2025-10-17\\\",\\\"depTime\\\":\\\"10:35\\\",\\\"arrDate\\\":\\\"2025-10-17\\\",\\\"arrTime\\\":\\\"12:25\\\",\\\"carrier\\\":\\\"C3\\\",\\\"flNo\\\":\\\"C3152\\\"}]}}\",\"{\\\"tp\\\":\\\"P\\\",\\\"subTp\\\":\\\"tour\\\",\\\"startDate\\\":\\\"2025-10-04\\\",\\\"endDate\\\":\\\"2025-10-11\\\",\\\"stay\\\":7,\\\"price\\\":\\\"1942.3600\\\",\\\"pricePerPax\\\":971.18,\\\"currency\\\":\\\"EUR\\\",\\\"onReq\\\":\\\"available\\\",\\\"serviceId\\\":\\\"4088631\\\",\\\"accom\\\":{\\\"startDate\\\":\\\"2025-10-04\\\",\\\"endDate\\\":\\\"2025-10-11\\\",\\\"stay\\\":\\\"7\\\",\\\"hotelId\\\":\\\"186785406\\\",\\\"hotelCode\\\":\\\"7149492\\\",\\\"hotelName\\\":\\\"Zephyros Hotel\\\",\\\"giataId\\\":\\\"4280208\\\",\\\"room\\\":[{\\\"code\\\":\\\"2025_16_62_4\\\",\\\"name\\\":\\\"Double\\\/Twin Superior Room Pool View\\\",\\\"price\\\":\\\"738.5000\\\",\\\"avail\\\":null,\\\"board\\\":\\\"BB\\\",\\\"discount\\\":null,\\\"occ\\\":[{\\\"age\\\":30,\\\"price\\\":369.25},{\\\"age\\\":30,\\\"price\\\":369.25}],\\\"pricePerPax\\\":369.25}]},\\\"transport\\\":{\\\"price\\\":688,\\\"pricePerPax\\\":344,\\\"routes\\\":[{\\\"depApt\\\":\\\"LJU\\\",\\\"arrApt\\\":\\\"JTR\\\",\\\"depDate\\\":\\\"2025-10-04\\\",\\\"depTime\\\":\\\"12:50\\\",\\\"arrDate\\\":\\\"2025-10-04\\\",\\\"arrTime\\\":\\\"17:35\\\",\\\"carrier\\\":\\\"C3\\\",\\\"flNo\\\":\\\"C3163\\\"},{\\\"depApt\\\":\\\"JTR\\\",\\\"arrApt\\\":\\\"LJU\\\",\\\"depDate\\\":\\\"2025-10-11\\\",\\\"depTime\\\":\\\"18:20\\\",\\\"arrDate\\\":\\\"2025-10-11\\\",\\\"arrTime\\\":\\\"19:40\\\",\\\"carrier\\\":\\\"C3\\\",\\\"flNo\\\":\\\"C3163\\\"}]}}\",\"{\\\"tp\\\":\\\"P\\\",\\\"subTp\\\":\\\"tour\\\",\\\"startDate\\\":\\\"2025-10-10\\\",\\\"endDate\\\":\\\"2025-10-17\\\",\\\"stay\\\":7,\\\"price\\\":\\\"1862.5960\\\",\\\"pricePerPax\\\":931.298,\\\"currency\\\":\\\"EUR\\\",\\\"onReq\\\":\\\"available\\\",\\\"serviceId\\\":\\\"13034430\\\",\\\"accom\\\":{\\\"startDate\\\":\\\"2025-10-10\\\",\\\"endDate\\\":\\\"2025-10-17\\\",\\\"stay\\\":\\\"7\\\",\\\"hotelId\\\":\\\"12916139\\\",\\\"hotelCode\\\":\\\"1149488\\\",\\\"hotelName\\\":\\\"Alaaddin Beach Hotel\\\",\\\"giataId\\\":\\\"4283208\\\",\\\"room\\\":[{\\\"code\\\":\\\"DBL.EY_1_20251010|20251017|W|76|130158|DBL.EY|FIT EUR|HB||1~2~0||N^^20251010|20251017|W|76|130158|DBL.EY|FIT EUR|HB||1~2~0||N^#^1\\\",\\\"name\\\":\\\"Double Economy\\\",\\\"price\\\":\\\"816.1400\\\",\\\"avail\\\":null,\\\"board\\\":\\\"HB\\\",\\\"discount\\\":null,\\\"occ\\\":[{\\\"age\\\":30,\\\"price\\\":408.07},{\\\"age\\\":30,\\\"price\\\":408.07}],\\\"pricePerPax\\\":408.07}]},\\\"transport\\\":{\\\"price\\\":580,\\\"pricePerPax\\\":290,\\\"routes\\\":[{\\\"depApt\\\":\\\"LJU\\\",\\\"arrApt\\\":\\\"AYT\\\",\\\"depDate\\\":\\\"2025-10-10\\\",\\\"depTime\\\":\\\"06:00\\\",\\\"arrDate\\\":\\\"2025-10-10\\\",\\\"arrTime\\\":\\\"09:35\\\",\\\"carrier\\\":\\\"C3\\\",\\\"flNo\\\":\\\"C3151\\\"},{\\\"depApt\\\":\\\"AYT\\\",\\\"arrApt\\\":\\\"LJU\\\",\\\"depDate\\\":\\\"2025-10-17\\\",\\\"depTime\\\":\\\"10:35\\\",\\\"arrDate\\\":\\\"2025-10-17\\\",\\\"arrTime\\\":\\\"12:25\\\",\\\"carrier\\\":\\\"C3\\\",\\\"flNo\\\":\\\"C3152\\\"}]}}\",\"{\\\"tp\\\":\\\"P\\\",\\\"subTp\\\":\\\"tour\\\",\\\"startDate\\\":\\\"2025-10-10\\\",\\\"endDate\\\":\\\"2025-10-17\\\",\\\"stay\\\":7,\\\"price\\\":\\\"1826.0000\\\",\\\"pricePerPax\\\":913,\\\"currency\\\":\\\"EUR\\\",\\\"onReq\\\":\\\"available\\\",\\\"serviceId\\\":\\\"13034401\\\",\\\"accom\\\":{\\\"startDate\\\":\\\"2025-10-10\\\",\\\"endDate\\\":\\\"2025-10-17\\\",\\\"stay\\\":\\\"7\\\",\\\"hotelId\\\":\\\"4283257\\\",\\\"hotelCode\\\":\\\"4584\\\",\\\"hotelName\\\":\\\"Grand Kaptan Hotel\\\",\\\"giataId\\\":\\\"4283257\\\",\\\"room\\\":[{\\\"code\\\":\\\"DZ\\\",\\\"name\\\":\\\"Double Standard Room - 10.10 - 7 nights\\\",\\\"price\\\":\\\"790.0000\\\",\\\"avail\\\":null,\\\"board\\\":\\\"AI\\\",\\\"discount\\\":null,\\\"occ\\\":[{\\\"age\\\":30,\\\"price\\\":395},{\\\"age\\\":30,\\\"price\\\":395}],\\\"pricePerPax\\\":395}]},\\\"transport\\\":{\\\"price\\\":580,\\\"pricePerPax\\\":290,\\\"routes\\\":[{\\\"depApt\\\":\\\"LJU\\\",\\\"arrApt\\\":\\\"AYT\\\",\\\"depDate\\\":\\\"2025-10-10\\\",\\\"depTime\\\":\\\"06:00\\\",\\\"arrDate\\\":\\\"2025-10-10\\\",\\\"arrTime\\\":\\\"09:35\\\",\\\"carrier\\\":\\\"C3\\\",\\\"flNo\\\":\\\"C3151\\\"},{\\\"depApt\\\":\\\"AYT\\\",\\\"arrApt\\\":\\\"LJU\\\",\\\"depDate\\\":\\\"2025-10-17\\\",\\\"depTime\\\":\\\"10:35\\\",\\\"arrDate\\\":\\\"2025-10-17\\\",\\\"arrTime\\\":\\\"12:25\\\",\\\"carrier\\\":\\\"C3\\\",\\\"flNo\\\":\\\"C3152\\\"}]}}\"],\"processTime\":0,\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"st\":[\"The st field is required.\"],\"nights\":[\"The nights field is required.\"],\"brand\":[\"The brand field is required.\"],\"rm_1\":[\"The rm 1 field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Offer",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/package\/offer\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/package\/offer\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "12345",
+                                    "description": "It represents the unique offer identifier, provided as `serviceId` in the offers array from the `search` method's response `e.g. 12345`."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "This method retrieves a single offer based on the `serviceId`, which is obtained from the response of the `search` method.\n\nIt is used to get the complete details of the respective offer.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"offers\":[{\"status\":\"available\",\"depCityId\":\"661734\",\"arrCtry\":\"GR\",\"cur\":\"EUR\",\"direct\":\"1\",\"trspSDateUx\":\"1728046200\",\"arrRegId\":\"1\",\"brandId\":\"10012200\",\"giataId\":\"4322887\",\"pricePax\":\"782.1468\",\"offStay\":\"7\",\"occupancy\":\"R12\",\"price\":\"1564.2936\",\"updatedUx\":\"1721670877\",\"board\":\"BB\",\"arrArpt\":\"JTR\",\"offId\":\"4088313\",\"accStars\":\"3\",\"accEDateUx\":\"1728604800\",\"depCtry\":\"SI\",\"tp\":\"P\",\"arrCityId\":\"653288\",\"offEDateUx\":\"1728670800\",\"offSDateUx\":\"1728046200\",\"offSDate\":\"2025-10-04\",\"hName\":\"Iris Boutique Hotel\",\"trspEDateUx\":\"1728670800\",\"accStay\":\"7\",\"creatUx\":\"1721670877\",\"depArpt\":\"LJU\",\"brandName\":\"BookBlu\",\"accSDateUx\":\"1728000000\",\"sCode\":\"121\",\"subTp\":\"tour\",\"processedOffer\":\"{\\\"tp\\\":\\\"P\\\",\\\"subTp\\\":\\\"tour\\\",\\\"startDate\\\":\\\"2025-10-04\\\",\\\"endDate\\\":\\\"2025-10-11\\\",\\\"stay\\\":7,\\\"price\\\":\\\"1564.2936\\\",\\\"pricePerPax\\\":782.1468,\\\"currency\\\":\\\"EUR\\\",\\\"onReq\\\":\\\"available\\\",\\\"serviceId\\\":\\\"4088313\\\",\\\"accom\\\":{\\\"startDate\\\":\\\"2025-10-04\\\",\\\"endDate\\\":\\\"2025-10-11\\\",\\\"stay\\\":\\\"7\\\",\\\"hotelId\\\":\\\"12780622\\\",\\\"hotelCode\\\":\\\"1064195\\\",\\\"hotelName\\\":\\\"Iris Boutique Hotel\\\",\\\"giataId\\\":\\\"4322887\\\",\\\"room\\\":[{\\\"code\\\":\\\"201398240|206914837$37341^^1^^201398240|206914837|37341|141\\\",\\\"name\\\":\\\"Economy Room (Semi Basement),2 Twin Beds,NonSmoking\\\",\\\"price\\\":\\\"460.5100\\\",\\\"avail\\\":null,\\\"board\\\":\\\"BB\\\",\\\"discount\\\":null,\\\"occ\\\":[{\\\"age\\\":30,\\\"price\\\":230.255},{\\\"age\\\":30,\\\"price\\\":230.255}],\\\"pricePerPax\\\":230.255}]},\\\"transport\\\":{\\\"price\\\":688,\\\"pricePerPax\\\":344,\\\"routes\\\":[{\\\"depApt\\\":\\\"LJU\\\",\\\"arrApt\\\":\\\"JTR\\\",\\\"depDate\\\":\\\"2025-10-04\\\",\\\"depTime\\\":\\\"12:50\\\",\\\"arrDate\\\":\\\"2025-10-04\\\",\\\"arrTime\\\":\\\"17:35\\\",\\\"carrier\\\":\\\"C3\\\",\\\"flNo\\\":\\\"C3163\\\"},{\\\"depApt\\\":\\\"JTR\\\",\\\"arrApt\\\":\\\"LJU\\\",\\\"depDate\\\":\\\"2025-10-11\\\",\\\"depTime\\\":\\\"18:20\\\",\\\"arrDate\\\":\\\"2025-10-11\\\",\\\"arrTime\\\":\\\"19:40\\\",\\\"carrier\\\":\\\"C3\\\",\\\"flNo\\\":\\\"C3163\\\"}]}}\",\"depRegId\":\"1\",\"extradataInfo\":\"{\\\"from_extranet\\\":0,\\\"with_transfer\\\":1,\\\"transport_type\\\":\\\"charter\\\",\\\"provider_id\\\":\\\"188\\\",\\\"flight_number\\\":\\\"C3163*C3163\\\",\\\"id\\\":\\\"90*90\\\",\\\"destination_city\\\":\\\"654214\\\"}\",\"disscount\":\"0\",\"offEDate\":\"2025-10-11\",\"hId\":\"12780622\"}],\"offersNo\":1,\"pagesNo\":1,\"actualPage\":1,\"pageSize\":1,\"processTime\":0,\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"id\":[\"The id field must be an integer.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Verify",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/package\/verify",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/package\/verify"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"serviceId\":\"12345\",\"rooms\":[{\"adults\":2,\"children\":[1,7]}]}"
+                        },
+                        "description": "This method triggers a double-check mechanism, reconfirming the price and availability for the selected offer\n\nAdditionally, it returns the cancellation policies for the package, under the form of an array of policies, where the price coming in the `charge` property is represented in the same currency like the initial offer price.\n\nIt can optionally be continued with an Extra Services method call to retrieve the list of optional services which could be booked together with the package (like parking, insurance, ski-pass, etc).\n\nIn case the solution is not available anymore, the method will return a message stating that the solution couldn't have been matched.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"availability\":\"available\",\"newSolution\":687400,\"grossPrice\":3267,\"comission\":32,\"cancelationPolicies\":[{\"from\":\"2025-07-07 00:00:01\",\"until\":\"2025-07-08 00:00:00\",\"charge\":\"2157.0000\"},{\"from\":\"2025-07-08 00:00:01\",\"until\":\"2025-08-04 00:00:00\",\"charge\":\"2157.0000\"},{\"from\":\"2025-08-04 00:00:01\",\"until\":\"2025-08-12 00:00:00\",\"charge\":\"2772.0000\"},{\"from\":\"2025-08-12 00:00:01\",\"until\":\"2025-08-19 00:00:00\",\"charge\":\"2970.0000\"},{\"from\":\"2025-08-19 00:00:01\",\"until\":\"2025-09-02 00:00:00\",\"charge\":\"3069.0000\"},{\"from\":\"2025-09-02 00:00:01\",\"until\":\"2025-09-03 23:59:59\",\"charge\":\"3267.0000\"}],\"notes\":[],\"extras\":[],\"includedServices\":[[{\"service_type\":7,\"service_code\":\"88\",\"service_seats\":10,\"service_name\":\"Ljubljana - Zakinthos\",\"departureTerminal\":\"LJU\",\"arrivalTerminal\":\"ZTH\",\"company_name\":\"Trade Air\",\"company_code\":\"C3\",\"flight_number\":\"C3131\",\"direction\":\"IN\",\"service_availability\":\"IM\",\"service_periodstay_start\":\"2025-09-03 05:05:00\",\"service_periodstay_end\":\"2025-09-03 07:55:00\",\"segments\":[],\"price\":615},{\"service_type\":7,\"service_code\":\"88\",\"service_seats\":10,\"service_name\":\"Zakinthos - Ljubljana\",\"company_name\":\"Trade Air\",\"company_code\":\"C3\",\"flight_number\":\"C3132\",\"departureTerminal\":\"ZTH\",\"arrivalTerminal\":\"LJU\",\"direction\":\"OUT\",\"service_availability\":\"IM\",\"service_periodstay_start\":\"2025-09-10 09:00:00\",\"service_periodstay_end\":\"2025-09-10 09:50:00\",\"segments\":[],\"price\":615},{\"service_code\":\"TR\",\"service_type\":6,\"service_name\":\"Transfer letali\u0161\u010de - hotel - letali\u0161\u010de\",\"service_availability\":\"IM\"}]],\"hotel_details\":{\"hotel_name\":\"MARELEN\",\"hotel_stars\":\"4\",\"board\":\"HB\",\"rooms\":[\"Suite 1 bedroom\"],\"startDate\":\"2025-09-03\",\"endDate\":\"2025-09-10\",\"cityName\":\"ZAKYNTHOS (ZANTE) - ALL LOCATIONS\",\"countryName\":\"GREECE\"},\"auditData\":{\"environment\":\"\",\"release\":\"\",\"node\":\"H01\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"H01\"},\"timeStamp\":\"2025-07-08 12:54:45 EEST\"},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success <br\/> The `newSolution` property represents the new `serviceId` useful for the Extra Services and Book methods. It stays for the double-checked solution ID and the booking will be commited based on this ID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"serviceId\":[\"The service id field is required.\"],\"rooms\":[\"The rooms field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Hotel Details",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/package\/hotelDetails",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/package\/hotelDetails"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"serviceId\":\"12345\",\"hotelId\":12780622}"
+                        },
+                        "description": "This method provides detailed information about the hotel.\n\nIt should be used in conjunction with the Verify method to retrieve the tour operator's specific hotel details, since the initial search results are grouped under a unique hotel profile that may have slight variations from the tour operator's information.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"message\":\"ok\",\"hotel\":{\"name\":\"Iris Boutique Hotel\",\"adress\":\"Kamari 847 00 Kamari, Santorini\",\"classification\":\"3\",\"phone\":\"30-22860-31390\",\"latitude\":\"36.37427\",\"longitude\":\"25.48152\",\"description\":\"<p>HeadLine: Near Kamari Beach<\/p><p>Location: When you stay at Iris Boutique Hotel in Santorini, you'll be near the beach, a 1-minute drive from Kamari Beach and 6 minutes from Ancient Thira. This hotel is 6.1 mi (9.8 km) from Athinios Port and 8 mi (13 km) from Perissa Beach.<\/p><p>Rooms: Make yourself at home in one of the 44 air-conditioned rooms featuring refrigerators and flat-screen televisions. Complimentary wireless internet access keeps you connected, and digital programming is available for your entertainment. Private bathrooms with showers feature complimentary toiletries and hair dryers. Conveniences include safes, housekeeping is provided daily, and cribs\/infant beds (complimentary) can be requested.<\/p><p>Dining: Grab a bite from the snack bar\/deli serving guests of Iris Boutique Hotel. Unwind at the end of the day with a drink at the bar\/lounge or the poolside bar. A complimentary buffet breakfast is served daily from 8 AM to 10:30 AM.<\/p><p>Renovations: The property is closed between October 23 and April 30.<\/p><p>CheckIn Instructions: <ul><li>Extra-person charges may apply and vary depending on property policy<\/li><li>Government-issued photo identification and a credit card, debit card, or cash deposit may be required at check-in for incidental charges<\/li><li>Special requests are subject to availability upon check-in and may incur additional charges; special requests cannot be guaranteed<\/li><li>This property accepts major credit cards; cash is not accepted<\/li><\/ul><\/p><p>Special Instructions: This property doesn\u2019t offer after-hours check-in. Front desk staff will greet guests on arrival.<\/p>\",\"images\":[\"https:\/\/www.tboholidays.com\/\/imageresource.aspx?img=FbrGPTrju5e5v0qrAGTD8pPBsj8\/wYA5F3wAmN3NGLWAczbLhiFmOodTkoKHgG6luF+vuDQRmT7yu1ZljDLgLzsmbFRrDG8D+qdnpNcVE6E=\",\"https:\/\/www.tboholidays.com\/\/imageresource.aspx?img=FbrGPTrju5e5v0qrAGTD8pPBsj8\/wYA5F3wAmN3NGLWAczbLhiFmOodTkoKHgG6luF+vuDQRmT7yu1ZljDLgL0KIfqjQmdA2QteEoo9zNmE=\"]},\"auditData\":{\"environment\":\"\",\"release\":\"\",\"node\":\"H01\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"H01\"},\"timeStamp\":\"2025-07-25 15:12:29 EEST\"},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The service id field is required. (and 6 more errors)\",\"errors\":{\"serviceId\":[\"The service id field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Extra Services",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/package\/extraServices",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/package\/extraServices"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"serviceId\":\"12345\",\"outbound\":\"OTP\",\"inbound\":\"CDG\",\"hotel\":54321,\"stay\":8,\"checkIn\":\"2025-01-05\",\"rooms\":[{\"adults\":2,\"children\":[1,7]}]}"
+                        },
+                        "description": "This method returns information about additional services offered by the agency.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"message\":\"ok\",\"orderdServices\":[{\"type\":\"adult\",\"no\":1,\"age\":\"\",\"services\":[{\"serviceId\":\"1\",\"serviceName\":\"Name\",\"serviceStatus\":\"onRequest\",\"serviceDescription\":\"Description\",\"direction\":\"service\",\"price\":4.469}]},{\"type\":\"adult\",\"no\":2,\"age\":\"\",\"services\":[{\"serviceId\":\"2\",\"serviceName\":\"Name\",\"serviceStatus\":\"onRequest\",\"serviceDescription\":\"Description\",\"direction\":\"service\",\"price\":2.469}]}],\"auditData\":{\"environment\":\"\",\"release\":\"\",\"node\":\"H01\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"H01\"},\"timeStamp\":\"2025-07-25 15:15:22 EEST\"},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The service id field is required. (and 6 more errors)\",\"errors\":{\"serviceId\":[\"The service id field is required.\"],\"outbound\":[\"The outbound field is required.\"],\"inbound\":[\"The inbound field is required.\"],\"hotel\":[\"The hotel field is required.\"],\"stay\":[\"The stay field is required.\"],\"checkIn\":[\"The check in field is required.\"],\"rooms\":[\"The rooms field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Book",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/package\/book",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/package\/book"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"serviceId\":\"12345\",\"rooms\":[{\"persons\":[{\"salutation\":\"0\",\"first\":\"Test\",\"last\":\"User\",\"pax_type\":\"adult\",\"dob_year\":1995,\"dob_month\":6,\"dob_day\":15}]}],\"phone\":\"+40744123123\",\"price\":100.34,\"customerNotes\":\"Please provide a crib for the child.\",\"extra_services\":[{\"paxNo\":\"1\",\"serviceId\":\"2\",\"direction\":\"inbound\"},{\"paxNo\":\"1\",\"serviceId\":\"7\",\"direction\":\"outbound\"},{\"paxNo\":\"2\",\"serviceId\":\"12\",\"direction\":\"service\"}]}"
+                        },
+                        "description": "This method is used for commiting the booking and it returns the status of the operation and not the status of the booking. In case the booking was sucessfully closed, the response includes a `code` property, which is useful for the Cancel and Booking Details methods\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"message\":\"Success\",\"code\":\"Reservation code\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"serviceId\":[\"The service id field is required.\"],\"rooms\":[\"The rooms field is required.\"],\"phone\":[\"The phone field is required.\"],\"price\":[\"The price field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Cancel",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/package\/cancel",
+                            "query": [
+                                {
+                                    "key": "reference",
+                                    "value": "architecto",
+                                    "description": "Represents a unique identifier generated during the `booking process`. It identifies the specific reservation that is to be canceled.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/v1\/package\/cancel?reference=architecto"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "This method cancels an existing reservation using the provided reference and returns the status and a message. If the status in the result is true, it means the booking was successfully canceled.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"message\":\"The booking has been cancelled\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The reference field is required.\",\"errors\":{\"reference\":[\"The reference field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Booking Details",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/package\/getBooking",
+                            "query": [
+                                {
+                                    "key": "reference",
+                                    "value": "architecto",
+                                    "description": "Represents a unique identifier generated during the `booking process` and used to retrieve specific details of the reservation.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/v1\/package\/getBooking?reference=architecto"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns information about an existing reservation.\n\nIt includes details about the reservation such as travel dates, passenger information, room details, prices, cancellation policies and additional services.\n\nIf the response status is cancelled_after_cxl, we have cancellationCharge, which shows the cost of canceling the reservation after the deadline.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"message\":\"OK\",\"data\":{\"reference\":\"105P20250715\",\"bookingStatus\":\"confirmed\",\"price\":1599.2,\"currency\":\"EUR\",\"hotelName\":\"Alaiye Kleopatra Hotel\",\"hotelCode\":\"7237\",\"board\":\"HB\",\"checkin\":\"2025-10-17\",\"checkout\":\"2025-10-24\",\"customerNotes\":\"Test. This is a customerNotes test\",\"includedServices\":[{\"type\":\"charter\",\"name\":\"Dus:Avion 8803 Ljubljana Joze Pucnik Airport - Antalya Airport<br\/>flight_information: C3151. <br\/>number_of_seats_available_on_departure 9+\",\"startDate\":\"2025-10-17 06:00:00\",\"endDate\":\"2025-10-17 09:35:00\"},{\"type\":\"charter\",\"name\":\"Retur:Avion 8806 Antalya Airport - Ljubljana Joze Pucnik Airport<br\/>flight_information: C3152. <br\/>number_of_seats_available_on_return 9+\",\"startDate\":\"2025-10-24 10:35:00\",\"endDate\":\"2025-10-24 12:25:00\"},{\"type\":\"transfer\",\"name\":\"Transfer - letali\u0161\u010de - hotel - letali\u0161\u010de\"}],\"rooms\":[{\"roomName\":\"Doppelzimmer,Klimaanlage,Bad oder Dusche,Balkon - 17.10 - 7 nights\",\"roomCode\":\"DZ\",\"passengers\":[{\"salutation\":\"mrs\",\"firstName\":\"Cris\",\"lastName\":\"Test\",\"type\":\"adult\"},{\"salutation\":\"mrs\",\"firstName\":\"Test\",\"lastName\":\"Test\",\"type\":\"adult\"}]}],\"cancellationPolicies\":[{\"from\":\"2025-07-15 00:00:01\",\"to\":\"2025-07-17 00:00:00\",\"charge\":\"0.0000\"},{\"from\":\"2025-07-17 00:00:01\",\"to\":\"2025-09-17 00:00:00\",\"charge\":\"0.0000\"},{\"from\":\"2025-09-17 00:00:01\",\"to\":\"2025-09-25 00:00:00\",\"charge\":\"430.0000\"},{\"from\":\"2025-09-25 00:00:01\",\"to\":\"2025-10-02 00:00:00\",\"charge\":\"546.0000\"},{\"from\":\"2025-10-02 00:00:01\",\"to\":\"2025-10-16 00:00:00\",\"charge\":\"604.0000\"},{\"from\":\"2025-10-16 00:00:01\",\"to\":\"2025-10-17 23:59:59\",\"charge\":\"720.0000\"}]},\"auditData\":{\"environment\":\"\",\"release\":\"\",\"node\":\"H01\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"H01\"},\"timeStamp\":\"2025-08-13 11:12:45 EEST\"},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The reference field is required.\",\"errors\":{\"reference\":[\"The reference field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Charter Departures",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/package\/getCharterDepartures",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/package\/getCharterDepartures"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "<b>Will be released soon.<\/b> \ud83d\udea7\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"message\":\"Success\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        }
+                    ]
+                },
+                {
+                    "name": "TBM XML",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/package\/tbm",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/package\/tbm"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "This method processes hotel-related actions via XML requests. The TBM XML request allows performing various actions, including checking availability, making bookings, canceling reservations, issuing vouchers, and displaying booking details.\n\n<b>Structure of the TbmXmlRequest:<\/b>\n\nThe root element of the XML request is <TbmXmlRequest>, which contains various attributes:\n- `ver`: The version of the request.\n- `usr`: The username of the operator making the request.\n- `typ`: The type of user (e.g., admin).\n- `enc`: The encoding type (e.g., text).\n- `rip`, `sid`, `svr`, `lng`: Additional parameters related to the request (e.g., language, server).\n\n`<admin>`: The primary node under which all operations are defined. This node holds all the important actions that need to be performed. It includes the following attributes:\n\n- `typ`: Type of admin request:through,soft.\n- `prd`: Defines whether the action is refundable or not, valid values are \"yes\" or \"no\".\n- `sub`: Optional subtype for the request.\n- `opt`: Optional additional options for the request.\n- `rem`: Optional note for analysis purposes, e.g., \"user id 1234\".\n\nThe `<admin>` node contains one <operator> element, with attributes such as:\n\n- `act`: The action type (e.g., OA, BA, O, S, F, D).\n- `knd`, `toc`, `psn`, `bst`: Additional parameters for the specific operation.\n- `mst`: Any additional settings, like membership status.\n\n<b>Available actions:<\/b>\n- `OA` (Availability Check - Refundable) \u2192 Checks if a reservation can be made with a refundable option.\n- `BA` (Availability Check - Non-refundable) \u2192 Checks if a reservation can be made, without considering the refundable option.\n- `O` (Book Confirmed) \u2192 Creates a confirmed reservation.\n- `B` (Book OK2Buy) \u2192 Creates a reservation that is ready for purchase (OK2Buy).\n- `S` (Cancel) \u2192 Cancels an existing reservation.\n- `F` (Issue Voucher) \u2192 Issues a voucher for a confirmed reservation.\n- `D` (Display Booking) \u2192 Retrieves booking details.\n- `I` (Info) \u2192 Tests if the system is alive.\n\nThe `<admin>` element may also include following elements:\n\n- `<services>`: A list of services associated with the booking. It contains `<service>` nodes that specify service details.\n- `<customer>`: Information about the customer making the booking (e.g., name, address, phone number).\n- `<travellers>`: A list of travellers involved in the booking, with details such as name, age, nationality, and other personal information.\n- `<inkasso>`: Content of the debt collection mask.\n- `<cacheprices>`: Prices from cache, for statistical purposes and possible corrections.\n- `<mask>`: Contents of the partial mask.\n- `<customerauthentication>`: Details of Strong Customer Authentication.\n\nThe request is structured in XML format and must be valid to be processed successfully.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Back Office API",
+            "description": "\nProvides tools for managing bookings and invoices.",
+            "item": [
+                {
+                    "name": "Rebook",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/backOffice\/rebook",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/backOffice\/rebook"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "SESSIONID",
+                                "value": "H01"
+                            },
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"id\":\"7890\",\"code\":\"abc123\",\"cemail\":\"client@example.com\",\"quote\":0,\"blockquote\":1,\"rebook\":{\"bookingId\":1230302,\"cancelVoucherIssued\":\"1\"},\"persons\":[[{\"leader\":true,\"fname\":\"John\",\"lname\":\"Doe\",\"salutation\":0},{\"leader\":false,\"fname\":\"Jane\",\"lname\":\"Doe\",\"salutation\":1,\"child_year\":2010,\"child_month\":5,\"child_day\":15,\"children\":[5]}],[{\"leader\":false,\"fname\":\"Alice\",\"lname\":\"Smith\",\"salutation\":2}]],\"payment_method\":0,\"client_return_url\":\"http:\\\/\\\/example.com\\\/return\",\"invoiceDetails\":{\"clientType\":\"pj\",\"firmName\":\"Example Firm\",\"cui\":\"123456789\",\"jNo\":\"AB123\",\"iban\":\"RO49AAAA1B31007593840000\",\"bank\":\"Example Bank\",\"city\":\"City\",\"legalAgent\":\"Agent Name\",\"legalAgentCNP\":\"1234567890123\",\"newsletter\":true},\"external_reference\":\"ext123\"}"
+                        },
+                        "description": "This request is used to rebook a room.\n\nThe request must include the `SESSIONID` header, obtained from the `cookieValue` in the `search` method's response.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"error_code\":0,\"book_response\":{\"status\":true,\"error_code\":0,\"code\":\"1231777H20251204\",\"message\":\"The rooms have been booked\",\"search_id\":\"38160\"},\"message\":\"The new booking has been made. The cancel process has been started and it can take up to minute. Check the booking details to be sure that the old booking has been cancelled. \",\"auditData\":{\"environment\":\"\",\"release\":\"\",\"node\":\"H01\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"H01\"},\"timeStamp\":\"2025-12-04 14:29:18 EET\"},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"id\":[\"The id field is required.\"],\"code\":[\"The code field is required.\"],\"cemail\":[\"The cemail field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Bookings",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/backOffice\/bookings",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/backOffice\/bookings"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"from\":\"2025-01-01\",\"to\":\"2025-12-31\",\"from_updated\":\"2025-01-01\",\"to_updated\":\"2025-12-31\",\"booking_ids\":[1,2,3]}"
+                        },
+                        "description": "This method retrieves a list of bookings within a specified date range, based on specific booking IDs, or by their last update date.\n\nYou can use either a date range (`from` - `to`), an update date range (`from_updated` - `to_updated`), or an array of booking IDs to filter the results.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"bookings\":[{\"booking_id\":\"1XXXXX4\",\"root_id\":\"4XX\",\"booking_b2b_code\":\"1XXXXXXXXXXXX1\",\"booking_extranet_code\":\"TEMP_PRV_CODE\",\"extranet_supplier_id\":\"0\",\"group_booking_id\":\"-1\",\"booking_city_name\":\"ROME\",\"booking_country_name\":\"ITALY\",\"hotel_id\":\"4XXXXX7\",\"hotel_name\":\"HOTEL_A\",\"undeduplicated_hotel_id\":\"3XXXXX3\",\"extranet_hotel_code\":\"2XXXXX6\",\"extranet_hotel_name\":\"HOTEL_A\",\"hbooking_board_name\":\"roomonly\",\"booking_date_added\":\"2025-01-01 17:04:25\",\"booking_checkin\":\"2025-01-03\",\"booking_checkout\":\"2025-01-04\",\"booking_prv_cxl_deadline\":\"2025-01-01 00:00:00\",\"booking_extra_cxl_deadline\":\"2024-12-30 00:00:00\",\"booking_service\":\"hotel\",\"booking_status\":\"rejected\",\"booking_price_net0\":\"66.3756\",\"booking_price_net1\":\"68.8979\",\"booking_price_client\":\"75.7877\",\"booking_root_currency\":\"EUR\",\"booking_client_currency\":\"EUR\",\"booking_exchange_rate\":\"1.00000\",\"booking_rooms\":[{\"bookingroom_id\":\"1XXXXX6\",\"bookingroom_typecode\":\"1XXXXX5\",\"bookingroom_name\":\"Standard Single room\",\"bookingroom_price_net0\":\"66.3756\",\"bookingroom_price_net1\":\"68.8979\",\"bookingroom_price_client\":\"75.7877\",\"booking_passengers\":[{\"is_leader\":\"1\",\"is_child\":false,\"salutation\":\"mr\",\"first_name\":\"FIRST_NAME_1\",\"last_name\":\"LAST_NAME_1\"}]}]}],\"auditData\":{\"environment\":\"\",\"release\":\"\",\"node\":\"H01\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"H01\"},\"timeStamp\":\"2025-04-07 14:02:23 EEST\"},\"responseToken\":\"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The from field is required. (and 1 more error)\",\"errors\":{\"from\":[\"The from field is required.\"],\"to\":[\"The to field is required.\"]},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unprocessable Content"
+                        }
+                    ]
+                },
+                {
+                    "name": "Invoices",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/backOffice\/invoices",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/backOffice\/invoices"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"agencyId\":[1,2],\"invoiceId\":\">,123456\",\"invoiceAgencyOperatorId\":[201,202],\"bookingAgencyOperatorId\":[301,302],\"invoiceDate\":{\"from\":\"2025-01-01\",\"to\":\"2025-01-31\"},\"invoiceNumber\":[\"INV-001\",\"INV-002\"],\"bookingId\":[1001,1002],\"bookingReference\":[\"BR-001\",\"BR-002\"],\"bookingPrvReference\":[\"PBR-001\",\"PBR-002\"],\"bookingService\":[\"hotel\",\"flight\"],\"bookingCheckin\":{\"from\":\"2025-05-01\",\"to\":\"2025-05-15\"},\"bookingCheckout\":{\"from\":\"2025-05-15\",\"to\":\"2025-05-20\"},\"invoiceValue\":{\"from\":100,\"to\":500},\"invoiceCurrency\":[\"USD\",\"EUR\"],\"invoiceCountryId\":[1,2,3],\"invoiceCountryName\":[\"Greece\",\"Romania\"],\"invoiceCountryIso\":[\"GR\",\"RO\"],\"invoiceDueDate\":{\"from\":\"2025-02-01\",\"to\":\"2025-02-28\"},\"invoiceTvaCode\":[\"TVA-001\",\"TVA-002\"],\"providerId\":[1001,1002],\"furnizorId\":[2001,2002],\"hasPair\":[1,0],\"isOverturned\":true,\"isNotOverturned\":true,\"stornoInvoices\":true}"
+                        },
+                        "description": "This method retrieves a list of invoices based on various criteria provided in the request body.\n\n### Response: Possible values for next fields:\n\n- serviceType, reservationService: `hotel`, `transfer`, `flight`, `rentcar`, `activity`, `entryfee`, `guide`, `bus`, `restaurant`, `nova`, `charter`, `sport_events`, `groups`, `experience`, `insurance`, `din_package`, `visaandinsurance`, `cruise`, `bus_charter`, `offline_product`\n- reservationStatus: `pending`, `pending_quote`, `confirmed`, `oktobuy`, `waiting_cancellation`, `waiting_cancellation_after_cxl`, `cancelled`, `rejected`, `errordetails`, `temporary`, `cancelled_after_cxl`\n- furnizorId > 0: means the reservation is considered **offline**\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"resultsCount\":2,\"results\":[{\"header\":{\"generalInformation\":{\"invoiceNumber\":\"INV001\",\"invoiceDate\":\"2025-05-05\",\"invoiceDueDate\":\"2025-05-05\",\"invoiceCurrency\":\"EUR\",\"invoiceDeliveryDate\":\"2025-05-05\",\"invoiceTypeCode\":\"380\",\"invoiceVatPayingDate\":null,\"invoiceContractReference\":null,\"invoiceOrderReference\":null,\"invoicePreviousInvoiceReference\":null,\"invoiceNotes\":null},\"sellerInformation\":{\"sellerName\":\"COMPANY A SRL\",\"sellerStreetAndNr\":\"Street X, Nr. 1\",\"sellerCity\":\"City A\",\"sellerCounty\":\"COUNTY\",\"sellerCountyIsoCode\":\"X\",\"sellerPostalCode\":\"000000\",\"sellerCountryCode\":\"RO\",\"sellerUniqueIdentificationCode\":\"RO00000000\",\"sellerVATidentifier\":\"RO00000000\",\"sellerAdditionalLegalInformation\":null,\"sellerPaymentType\":null,\"sellerIBAN\":null,\"sellerPaymentNotice\":null,\"sellerCantactPerson\":null,\"sellerPhoneNumber\":null,\"sellerEmail\":null},\"buyerInformation\":{\"buyerName\":\"COMPANY B SRL\",\"buyerStreetAndNr\":\"Street Y, nr. 2\",\"buyerCity\":\"City B\",\"buyerCounty\":\"County\",\"buyerCountyIsoCode\":\"XX\",\"buyerPostalCode\":\"000000\",\"buyerCountryCode\":\"RO\",\"buyerUniqueIdentificationCode\":\"00000000\",\"buyerVATidentifier\":\"00000000\",\"buyerDeliveryStreetAndNr\":null,\"buyerDeliveryCity\":null,\"buyerDeliveryCounty\":null,\"buyerDeliveryPostalCode\":null,\"buyerDeliveryCountryCode\":null,\"buyerCantactPerson\":null,\"buyerPhoneNumber\":null,\"buyerEmail\":null},\"totalWithoutVAT\":120.14,\"totalVAT\":0,\"totalWithVAT\":120.14,\"dueInformations\":[{\"index\":\"0\",\"date\":\"2025-05-08\",\"value\":\"120.14\"}],\"pairInvoice\":\"0\"},\"body\":[{\"productName\":\"Booking 0000000F20250505\",\"productDescription\":\"Booking 0000000F20250505\",\"productAmount\":1,\"productUnitType\":\"H87\",\"productType\":\"FB\",\"productNetPrice\":110.48,\"productNetValue\":110.48,\"productVATCategory\":\"E\",\"productVATCode\":\"SDD\",\"productVATValue\":0,\"productVATFlatValue\":0,\"productExceptVATReason\":\"VATEX-EU-309\",\"productExceptVATReasonText\":\"SDD\",\"productAccountingReference\":null,\"productNotes\":null,\"bookingId\":\"0000000\"},{\"productName\":\"Taxe de aeroport\",\"productDescription\":\"Taxe de aeroport\",\"productAmount\":1,\"productUnitType\":\"H87\",\"productType\":\"F_TA\",\"productNetPrice\":1.66,\"productNetValue\":1.66,\"productVATCategory\":\"E\",\"productVATCode\":\"SDD\",\"productVATValue\":0,\"productVATFlatValue\":0,\"productExceptVATReason\":null,\"productAccountingReference\":null,\"bookingId\":\"0000000\"},{\"productName\":\"Taxa de serviciu\",\"productDescription\":\"Taxa de serviciu\",\"productAmount\":1,\"productUnitType\":\"H87\",\"productType\":\"F_TS\",\"productNetPrice\":8,\"productNetValue\":8,\"productVATCategory\":\"E\",\"productVATCode\":\"SDD\",\"productVATValue\":0,\"productVATFlatValue\":0,\"productExceptVATReason\":null,\"productAccountingReference\":null,\"bookingId\":\"0000000\"}],\"extraData\":[{\"rootId\":\"00000000\",\"buyerId\":\"00000000\",\"buyerName\":\"COMPANY B SRL\",\"providerId\":\"00\",\"providerName\":\"ProviderX\",\"bookingAgentId\":\"00000\",\"bookingAgentName\":\"Agent Name\",\"bookingMasterAgentId\":\"00000\",\"bookingMasterAgentName\":\"Master Agent Name\",\"providerReference\":\"REF00000\",\"offlineReference\":\"\",\"internalReference\":\"0000000F20250505\",\"reservationService\":\"flight\",\"reservationStatus\":\"oktobuy\",\"checkin\":\"2025-06-15\",\"checkout\":\"2025-06-15\",\"lastDateNoCharges\":\"2025-05-05\",\"reservationDateAdded\":\"2025-05-05 12:33:53\",\"reservationCancelDate\":\"\",\"reservationCountry\":\"Country\",\"reservationCountryIsoCode\":\"XX\",\"reservationCity\":\"City\",\"reservationLeaderName\":\"PASSENGER NAME\",\"reservationPassengersNames\":\"PASSENGER NAME | \",\"reservationAdults\":1,\"reservationChildren\":0,\"reservationInfants\":0,\"flightTickets\":\"\",\"flightCarrier\":\"XX1\",\"flightItineraryDeparture\":\"XXX,XXX\",\"flightItineraryReturn\":\"\",\"reservationHotelName\":\"\",\"reservationHotelStars\":\"\",\"reservationHotelRoomName\":\"\",\"reservationHotelMealPlan\":\"\",\"reservationCarRentalCompany\":\"\",\"reservationCarRentalCarClass\":\"\",\"reservationCarRentalCarType\":\"\",\"reservationSportType\":\"\",\"reservationActivityType\":\"\",\"reservationTransferType\":\"\",\"reservationDepartureBusStation\":\"\",\"reservationReturnBusStation\":\"\",\"furnizorId\":\"-1\",\"bookingId\":\"0000000\",\"serviceType\":\"flight\"}],\"invoiceId\":\"0000000\"},{\"header\":{\"generalInformation\":{\"invoiceNumber\":\"INV002\",\"invoiceDate\":\"2025-05-05\",\"invoiceDueDate\":\"2025-05-05\",\"invoiceCurrency\":\"EUR\",\"invoiceDeliveryDate\":\"2025-05-05\",\"invoiceTypeCode\":\"380\",\"invoiceVatPayingDate\":null,\"invoiceContractReference\":null,\"invoiceOrderReference\":null,\"invoicePreviousInvoiceReference\":null,\"invoiceNotes\":null},\"sellerInformation\":{\"sellerName\":\"COMPANY A SRL\",\"sellerStreetAndNr\":\"Street X, Nr. 1\",\"sellerCity\":\"City A\",\"sellerCounty\":\"COUNTY\",\"sellerCountyIsoCode\":\"X\",\"sellerPostalCode\":\"000000\",\"sellerCountryCode\":\"RO\",\"sellerUniqueIdentificationCode\":\"RO00000000\",\"sellerVATidentifier\":\"RO00000000\",\"sellerAdditionalLegalInformation\":null,\"sellerPaymentType\":null,\"sellerIBAN\":null,\"sellerPaymentNotice\":null,\"sellerCantactPerson\":null,\"sellerPhoneNumber\":null,\"sellerEmail\":null},\"buyerInformation\":{\"buyerName\":\"COMPANY B SRL\",\"buyerStreetAndNr\":\"Street Y, nr. 2\",\"buyerCity\":\"City B\",\"buyerCounty\":\"County\",\"buyerCountyIsoCode\":\"XX\",\"buyerPostalCode\":\"000000\",\"buyerCountryCode\":\"RO\",\"buyerUniqueIdentificationCode\":\"00000000\",\"buyerVATidentifier\":\"00000000\",\"buyerDeliveryStreetAndNr\":null,\"buyerDeliveryCity\":null,\"buyerDeliveryCounty\":null,\"buyerDeliveryPostalCode\":null,\"buyerDeliveryCountryCode\":null,\"buyerCantactPerson\":null,\"buyerPhoneNumber\":null,\"buyerEmail\":null},\"totalWithoutVAT\":139.84,\"totalVAT\":0,\"totalWithVAT\":139.84,\"dueInformations\":[{\"index\":\"0\",\"date\":\"2025-05-08\",\"value\":\"139.84\"}],\"pairInvoice\":\"0\"},\"body\":[{\"productName\":\"Booking 0000000F20250505\",\"productDescription\":\"Booking 0000000F20250505\",\"productAmount\":1,\"productUnitType\":\"H87\",\"productType\":\"FB\",\"productNetPrice\":85,\"productNetValue\":85,\"productVATCategory\":\"E\",\"productVATCode\":\"SDD\",\"productVATValue\":0,\"productVATFlatValue\":0,\"productExceptVATReason\":\"VATEX-EU-309\",\"productExceptVATReasonText\":\"SDD\",\"productAccountingReference\":null,\"productNotes\":null,\"bookingId\":\"0000000\"},{\"productName\":\"Taxe de aeroport\",\"productDescription\":\"Taxe de aeroport\",\"productAmount\":1,\"productUnitType\":\"H87\",\"productType\":\"F_TA\",\"productNetPrice\":52.84,\"productNetValue\":52.84,\"productVATCategory\":\"E\",\"productVATCode\":\"SDD\",\"productVATValue\":0,\"productVATFlatValue\":0,\"productExceptVATReason\":null,\"productAccountingReference\":null,\"bookingId\":\"0000000\"},{\"productName\":\"Taxa de serviciu\",\"productDescription\":\"Taxa de serviciu\",\"productAmount\":1,\"productUnitType\":\"H87\",\"productType\":\"F_TS\",\"productNetPrice\":2,\"productNetValue\":2,\"productVATCategory\":\"E\",\"productVATCode\":\"SDD\",\"productVATValue\":0,\"productVATFlatValue\":0,\"productExceptVATReason\":null,\"productAccountingReference\":null,\"bookingId\":\"0000000\"}],\"extraData\":[{\"rootId\":\"00000000\",\"buyerId\":\"00000000\",\"buyerName\":\"COMPANY B SRL\",\"providerId\":\"00\",\"providerName\":\"ProviderY\",\"bookingAgentId\":\"00000\",\"bookingAgentName\":\"Agent Name\",\"bookingMasterAgentId\":\"00000\",\"bookingMasterAgentName\":\"Master Agent Name\",\"providerReference\":\"REF00000\",\"offlineReference\":\"REF00000\",\"internalReference\":\"0000000F20250505\",\"reservationService\":\"flight\",\"reservationStatus\":\"oktobuy\",\"checkin\":\"2025-06-15\",\"checkout\":\"2025-06-15\",\"lastDateNoCharges\":\"2025-05-05\",\"reservationDateAdded\":\"2025-05-05 12:37:19\",\"reservationCancelDate\":\"\",\"reservationCountry\":\"Country\",\"reservationCountryIsoCode\":\"XX\",\"reservationCity\":\"City\",\"reservationLeaderName\":\"PASSENGER NAME\",\"reservationPassengersNames\":\"PASSENGER NAME | \",\"reservationAdults\":1,\"reservationChildren\":0,\"reservationInfants\":0,\"flightTickets\":\" 0000000000000\",\"flightCarrier\":\"XX\",\"flightItineraryDeparture\":\"XXX,XXX\",\"flightItineraryReturn\":\"\",\"reservationHotelName\":\"\",\"reservationHotelStars\":\"\",\"reservationHotelRoomName\":\"\",\"reservationHotelMealPlan\":\"\",\"reservationCarRentalCompany\":\"\",\"reservationCarRentalCarClass\":\"\",\"reservationCarRentalCarType\":\"\",\"reservationSportType\":\"\",\"reservationActivityType\":\"\",\"reservationTransferType\":\"\",\"reservationDepartureBusStation\":\"\",\"reservationReturnBusStation\":\"\",\"furnizorId\":\"-1\",\"bookingId\":\"0000000\",\"serviceType\":\"flight\"}],\"invoiceId\":\"0000000\"}],\"auditData\":{\"environment\":\"\",\"release\":\"\",\"node\":\"H02\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"H02\"},\"timeStamp\":\"2025-05-07 10:08:21 EEST\"},\"responseToken\":\"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        }
+                    ]
+                },
+                {
+                    "name": "Providers",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "v1\/backOffice\/providers",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/v1\/backOffice\/providers"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "API-SOURCE",
+                                "value": "B2B"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "This method retrieves a list of providers available to the agency.\n\nThe optional `API-SOURCE` header can be either `B2B` (default) or `B2C`, specifying the system source of the data."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"status\":true,\"providers\":[{\"provider_name\":\"A\",\"provider_id\":\"1\"},{\"provider_name\":\"B\",\"provider_id\":\"2\"}],\"auditData\":{\"environment\":\"\",\"release\":\"\",\"node\":\"H01\",\"cookie\":{\"cookieName\":\"SESSIONID\",\"cookieValue\":\"H01\"},\"timeStamp\":\"2025-02-17 16:11:56 EET\"},\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"status\": false, \"message\":\"Invalid credentials.\",\"responseToken\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"}",
+                            "name": "Unauthorized"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "auth": {
+        "type": "basic"
+    }
+}

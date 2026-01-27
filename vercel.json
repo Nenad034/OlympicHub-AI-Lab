@@ -1,0 +1,57 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/opengreece/(.*)",
+      "destination": "https://online.open-greece.com/$1"
+    },
+    {
+      "source": "/api/solvex/(.*)",
+      "destination": "https://evaluation.solvex.bg/$1"
+    },
+    {
+      "source": "/api/ors/(.*)",
+      "destination": "https://api.ors.si/crs/v2/$1"
+    },
+    {
+      "source": "/api/mars/(.*)",
+      "destination": "https://stoplight.io/mocks/marsapi/mars-api-v1/73778095/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    }
+  ],
+  "env": {}
+}

@@ -1,0 +1,262 @@
+.booking-flow-container {
+    padding: 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.booking-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 40px;
+}
+
+.step-item {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    border-radius: 20px;
+}
+
+.step-item.active {
+    background: var(--accent);
+    color: white;
+}
+
+.step-line {
+    flex: 0 0 40px;
+    height: 2px;
+    background: var(--border);
+}
+
+.step-line.active {
+    background: var(--accent);
+}
+
+.booking-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 32px;
+}
+
+.booking-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 22px;
+}
+
+/* Guest Entry */
+.guest-entry-v4 {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.guest-header {
+    margin-bottom: 20px;
+}
+
+.main-badge {
+    font-size: 10px;
+    background: #10b981;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.guest-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.input-group input,
+.input-group select {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text-primary);
+}
+
+/* Sections */
+.contact-details-section,
+.special-requests-section {
+    margin-top: 40px;
+}
+
+.special-requests-section textarea {
+    width: 100%;
+    height: 100px;
+    padding: 16px;
+    margin-top: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text-primary);
+    resize: none;
+}
+
+/* Actions */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-primary {
+    padding: 14px 32px;
+    background: #1e88e5;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary.finalize {
+    background: var(--gradient-indigo, linear-gradient(135deg, #4f46e5, #7c3aed));
+}
+
+.btn-secondary {
+    padding: 14px 32px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+/* Sidebar Summary */
+.summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 24px;
+    position: sticky;
+    top: 32px;
+}
+
+.hotel-brief {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.brief-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.brief-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.summary-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.summary-total {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.total-val {
+    font-size: 24px;
+    font-weight: 800;
+    color: #10b981;
+}
+
+/* Success Card */
+.success-card {
+    text-align: center;
+    padding: 60px 40px;
+}
+
+.success-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 32px;
+}
+
+.btn-print {
+    padding: 14px 24px;
+    background: rgba(30, 136, 229, 0.1);
+    border: 1px solid #1e88e5;
+    color: #1e88e5;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-print.html {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid #10b981;
+    color: #10b981;
+}
+
+/* Error State */
+.booking-error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 100px;
+    text-align: center;
+    gap: 20px;
+}

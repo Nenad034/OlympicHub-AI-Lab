@@ -1,0 +1,507 @@
+﻿<StartPushProcessRS xmlns="http://www.opentravel.org/OTA/2003/05">
+  <Success />
+  <Hotels>
+    <Hotel HotelCode="3" HotelName="ANTHEMUS SEA BEACH HOTEL AND SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="4" HotelName="THERMAE SYLLA SPA Wellness Hotel " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="5" HotelName="ARISTOTELIS HOTEL FOURKA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="6" HotelName="TOSCA BEACH HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="8" HotelName="GOLD STERN HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="9" HotelName="AQUA MARE HOTEL " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="12" HotelName="OUZAS LUXURY HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="13" HotelName="CHRISTINA HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="15" HotelName="YAKINTHOS HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="23" HotelName="COSMOPOLITAN HOTEL &amp;amp; SPA Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="25" HotelName="SEA LEVEL HOTEL (Adults Only 16+) " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="29" HotelName="EAGLES PALACE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="30" HotelName="AQUA MARE SEA SIDE " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="32" HotelName="EAGLES VILLAS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="36" HotelName="ALKYONIS HOTEL Mykoniati Group Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="37" HotelName="SERENITY SUITES (Adults only 12+) Mykoniati Group Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="38" HotelName="PORTES BEACH HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="39" HotelName="AKRATHOS BEACH HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="40" HotelName="SECRET PARADISE HOTEL and SPA Mykoniati Group Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="41" HotelName="CHROUSSO VILLAGE HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="44" HotelName="RODON HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="49" HotelName="HARMONY RETHYMNO BEACH HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="50" HotelName="MEDITERRANEAN PRINCESS Adult Only 16+ " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="51" HotelName="MEDITERRANEAN RESORT HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="52" HotelName="MEDITERRANEAN VILLAGE HOTEL and SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="55" HotelName="ARISTOTELES HOLIDAY RESORT &amp;amp; SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="57" HotelName="REGINA MARE HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="60" HotelName="PANORAMA VILLAGE HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="62" HotelName="ATLANTIS HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="63" HotelName="GRECOTEL LUX ME WHITE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1799" HotelName="KASSANDRA PALACE SEASIDE RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="66" HotelName="PORTO CARRAS GRAND RESORT MELITON HOTEL  " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="67" HotelName="GRECOTEL VILLA OLIVA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="8629" HotelName="MIRAGGIO THERMAL SPA RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="69" HotelName="GRECOTEL PALLAS ATHENA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="70" HotelName="GRAND PLATON HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="72" HotelName="CAPE SOUNIO A GRECOTEL RESORT TO LIVE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="74" HotelName="CLUB LYDA HOTEL CHC Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="80" HotelName="GRECOTEL CASA ADELE  " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="86" HotelName="MARIRENA HOTEL CHC Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="89" HotelName="PERLA APARTMENTS CHC Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="94" HotelName="ROYAL MARMIN BAY BOUTIQUE and ART HOTEL (Adult Only 16+) by CHC Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="96" HotelName="BELLA BEACH HOTEL Hersotels Group" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="98" HotelName="HORIZON BEACH HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="102" HotelName="GRECOTEL PLAZA BEACH HOUSE " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="111" HotelName="MYKONOS BLU A GRECOTEL RESORT TO LIVE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="110" HotelName="PANORAMA SIDARI " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="118" HotelName="COOK&amp;apos;S CLUB CORFU (Adult Only 16+) " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="122" HotelName="HERSONISSOS MARIS Hersotels Group" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="701" HotelName="HERSONISSOS PALACE Hersotels Group" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="702" HotelName="HERSONISSOS VILLAGE HOTEL and BUNGALOWS Hersotels Group" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="125" HotelName="GRECOTEL ASTIR PALACE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="128" HotelName="GRECOTEL EGNATIA ALEXANDROUPOLIS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="131" HotelName="CARAMEL A GRECOTEL RESORT TO LIVE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="130" HotelName="MARILENA HOTEL CHC Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="140" HotelName="GOLDEN BAY BOUTIQUE HOTEL and BUNGALOWS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="145" HotelName="MR and MRS WHITE COUPLES RETREAT CORFU (Adult Only 16+) Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="148" HotelName="CORFU HOLIDAY PALACE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="149" HotelName="AEOLOS BEACH RESORT Voulgaris Hospitality Group" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="150" HotelName="THE OLIVAR SUITES Voulgaris Hospitality Group" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="151" HotelName="KONTOKALI BAY RESORT and SPA Voulgaris Hospitality Group" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="324" HotelName="KASAPAKIS HOTEL and APARTMENTS CHC Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="325" HotelName="ELIROS MARE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="329" HotelName="MYTHOS PALACE RESORT and SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="331" HotelName="GRECOTEL LARISSA IMPERIAL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="333" HotelName="CORFU IMPERIAL A GRECOTEL RESORT TO LIVE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="335" HotelName="GRECOTEL LUX ME DAMA DAMA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="337" HotelName="ANEMOS LUXURY GRAND RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="339" HotelName="SANI CLUB " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="340" HotelName="AMADA COLOSSOS RESORT Louis Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="345" HotelName="GRECOTEL LUX ME DAPHNILA BAY " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="346" HotelName="GRECOTEL EVA PALACE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="347" HotelName="GRECOTEL CASA PARADISO " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="348" HotelName="GRECOTEL LA RIVIERA at Riviera Olympia &amp;amp; Aqua Park " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="350" HotelName="GRECOTEL LUX ME OASIS at Riviera Olympia &amp;amp; Aqua Park " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="352" HotelName="AEGEAN MELATHRON THALASSO SPA HOTEL AEGEAN STAR" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="353" HotelName="CRETA STAR HOTEL (Adults Only 16+) AEGEAN STAR" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="354" HotelName="CRETA ROYAL HOTEL (Adults Only 16+) AEGEAN STAR" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="356" HotelName="GRECOTEL MARINE PALACE &amp;amp; AQUA PARK " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="359" HotelName="GRECOTEL MELI PALACE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="360" HotelName="GRECOTEL CRETA PALACE  " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="362" HotelName="GREEK PRIDE VILLA ELLADA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="704" HotelName="GREEK PRIDE BEACH VILLA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="364" HotelName="EVIA RIVIERA RESORT  Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="366" HotelName="EVILION STILVI SEA and SUN HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="368" HotelName="GRECOTEL FILOXENIA KALAMATA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="370" HotelName="AMIRANDES A GRECOTEL RESORT TO LIVE " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="372" HotelName="GRECOTEL LUX ME COSTA BOTANICA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="442" HotelName="OLYMPION MELATHRON RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17152" HotelName="ZEUS ELEVA MIRABELLO BAY  " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="444" HotelName="GRECOTEL CASA MARRON " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="446" HotelName="AMMOA LUXURY HOTEL and  SPA RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="448" HotelName="VOZINA HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="469" HotelName="SANI ASTERIAS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="470" HotelName="SANI BEACH " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16413" HotelName="KRIOPIGI HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="473" HotelName="ACROTEL ATHENA PALLAS and RESIDENCE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="475" HotelName="ACROTEL ELEA BEACH " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="476" HotelName="ACROTEL LILY ANN BOUTIQUE HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="477" HotelName="ACROTEL LILY ANN VILLAGE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="478" HotelName="ACROTEL PORTO BRAVA LUXURY VILLAS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="488" HotelName="IKOS ARIA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="490" HotelName="RACHONI BAY RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="491" HotelName="IKOS OCEANIA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="530" HotelName="MAREBLUE BEACH RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="547" HotelName="IKOS OLIVIA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="549" HotelName="IKOS DASSIA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="550" HotelName="PORTO SANI " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="551" HotelName="SANI DUNES " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="552" HotelName="GRECOTEL PALMS  at Riviera Olympia &amp;amp; Aqua Park " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="563" HotelName="DIONYSOS HOTEL and SUITES " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="564" HotelName="OLYMPIAN BAY GRAND RESORT Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="565" HotelName="BLUE DOLPHIN RESORT HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="567" HotelName="DREAMS CORFU RESORT and SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="573" HotelName="GRECOTEL LUX ME KOS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="575" HotelName="MYTHIC SUMMER HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="593" HotelName="COSTA NAVARINO THE ROMANOS A LUXURY COLLECTION RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="616" HotelName="KERNOS BEACH HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="618" HotelName="PALMARIVA BEACH HOTEL Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="620" HotelName="POSEIDON SEA RESORT CHALKIDIKI " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="707" HotelName="PHILOXENIA HOTEL Psakoudia " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="622" HotelName="NANA GOLDEN BEACH RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="629" HotelName="MITSIS SELECTION ALILA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="632" HotelName="ZEUS DOLCE ATHENS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="639" HotelName="ZEUS ERETRIA RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="642" HotelName="LYTTOS MARE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="645" HotelName="KNOSSOS BEACH BUNGALOWS SUITES RESORT &amp;amp; SPA  " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="653" HotelName="MITSIS RODOS MARIS HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="709" HotelName="MITSIS RODOS VILLAGE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="656" HotelName="DOMES ZEEN CHANIA Domes Resorts" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="657" HotelName="DOMES NORUZ CHANIA (Adults Only 16+), AUTOGRAPH COLLECTION Domes Resorts" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="661" HotelName="COSTA NAVARINO THE WESTIN RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="666" HotelName="DOMES OF ELOUNDA, AUTOGRAPH COLLECTION Domes Resorts" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="669" HotelName="IBEROSTAR WAVES CRETA PANORAMA &amp;amp; MARE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="671" HotelName="DOMES OF CORFU, AUTOGRAPH COLLECTION Domes Resorts" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="673" HotelName="DOMES AULUS ZANTE, AUTOGRAPH COLLECTION Domes Resorts" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="678" HotelName="OUT of the BLUE RESORT and SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="679" HotelName="STAR BEACH VILLAGE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="682" HotelName="PILOT BEACH RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="683" HotelName="NANA PRINCESS SUITES, VILLAS and SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="684" HotelName="KALIMERA KRITI HOTEL and VILLAGE RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="695" HotelName="DOMES MIRAMARE, A LUXURY COLLECTION RESORT (Adults Only 16+) Domes Resorts" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="698" HotelName="AQUILA RITHYMNA BEACH " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="699" HotelName="AQUILA PORTO RETHYMNO  " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="700" HotelName="AQUILA ELOUNDA VILLAGE (Adults Only16+) " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="613" HotelName="OLYMPIC KOSMA HOTEL and  VILLAS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="828" HotelName="POTIDEA PALACE HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="830" HotelName="HYATT REGENCY THESSALONIKI HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="852" HotelName="AMMON ZEUS LUXURY BEACH HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="858" HotelName="GRAND RESORT LAGONISSI " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="859" HotelName="ATHINA PALACE RESORT and SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="873" HotelName="PORTO ELOUNDA GOLF and SPA RESORT Elounda SA" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="874" HotelName="ELOUNDA MARE Relais &amp;amp; Chateaux Elounda SA" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="875" HotelName="ELOUNDA PENINSULA LUXURY RESORT Elounda SA" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="876" HotelName="IOLI VILLAGE HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="881" HotelName="ZEUS ESSENCE RAMADA  ATHENS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="884" HotelName="ELOUNDA BEACH HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="883" HotelName="ELOUNDA BAY PALACE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="882" HotelName="DAIOS COVE LUXURY RESORT and VILLAS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="898" HotelName="POMEGRANATE WELLNESS SPA HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="980" HotelName="SIMEON HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="887" HotelName="WELLNESS SANTA HOTEL - THESSALONIKI " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="994" HotelName="CRETA AQUAMARINE HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="995" HotelName="CORFU AQUA NISAKI " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="996" HotelName="PILIO SEA HORIZON HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="998" HotelName="ARINA BEACH RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1173" HotelName="ZEUS THESSALONIKI LAZART " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1174" HotelName="ZEUS ESSENCE WYNDHAM ATHENS RESIDENCE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1175" HotelName="ZEUS WYNDHAM GRAND ATHENS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1177" HotelName="ADELE BEACH HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1178" HotelName="MINOS IMPERIAL LUXURY BEACH RESORT MILATOS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1181" HotelName="AMADA COLOSSOS RESORT ELITE COLLECTION Louis Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1185" HotelName="RETHYMNO MARE and WATER PARK HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1186" HotelName="RETHYMNO MARE ROYAL and WATER PARK " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1188" HotelName="DAFNI PLUS HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1190" HotelName="PALLADIUM HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1192" HotelName="BLUE CARPET LUXURY SUITES " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1193" HotelName="AGNES DELUXE HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1638" HotelName="IKOS ODISIA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1643" HotelName="CHC CORIVA BEACH by CHC Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1652" HotelName="SUN BOUTIQUE HOTEL (Adults Only 16+) CHC Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1654" HotelName="GEORGALAS SUN BEACH HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1655" HotelName="GEORGALAS SUN BEACH VILLA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1656" HotelName="GEORGALAS REST APARTMENTS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1658" HotelName="MARYS RESIDENCE and SUITE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1659" HotelName="HOTEL VILLA NATASSA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1660" HotelName="ALKYON HOTEL THASSOS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1665" HotelName="SUNRISE BEACH " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1742" HotelName="ZEUS ELEVA AJUL RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1744" HotelName="ALEXANDER BEACH HOTEL and VILLAGE RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1747" HotelName="KRITI BEACH HOTEL OK Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1748" HotelName="KYMA SUITES BEACH HOTEL OK Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1751" HotelName="ANEMOS LUXURY VILLA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1752" HotelName="ANEMOLI LUXURY VILLA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1754" HotelName="MARYS  LUXURY " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1761" HotelName="MANDOLA ROSA A GRECOTEL RESORT TO LIVE at Riviera Olympia " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1762" HotelName="BIANCO OLYMPICO BEACH RESORT Hotel Brain Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1763" HotelName="OLYMPIOS ZEUS HOTEL and BUNGALOWS Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="212" HotelName="ATRIUM HOTEL THASSOS Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1765" HotelName="ILIO MARE HOTELS and RESORTS Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1770" HotelName="ARITI GRAND HOTEL CORFU Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1779" HotelName="ANAIS COLLECTION Hotels and Suites Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1787" HotelName="CRETA MARIS RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1788" HotelName="ZEUS ESSENCE ATHENS CENTRAL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1789" HotelName="W COSTA NAVARINO " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1796" HotelName="ISLA BROWN CORINTHIA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1804" HotelName="BROWN BEACH Evia Island " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1815" HotelName="DOMES NORUZ KASSANDRA (Adults Only 16+) Domes Resorts" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1817" HotelName="IKOS ANDALUSIA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1818" HotelName="IKOS PORTO PETRO " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1826" HotelName="AMMOS SEASIDE LUXURY HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1828" HotelName="KING JASON PAPHOS (Adults Only 17+) Louis Hotels Elegant Collection" ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="1829" HotelName="LOUIS ALTHEA BEACH Louis Hotels Family Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1831" HotelName="LOUIS ALTHEA KALAMIES Luxury Villas Louis Hotels Villa Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1832" HotelName="LOUIS LEDRA BEACH Louis Hotels Family Collection" ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="16322" HotelName="NISSIBLU BEACH RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16317" HotelName="MEDITERRANEAN BEACH CYPRUS " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="1934" HotelName="GRECIAN BAY HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="2516" HotelName="ADAMS BEACH HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16315" HotelName="AMARA CYPRUS " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="1472" HotelName="GRECIAN PARK HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="2628" HotelName="FOUR SEASONS HOTEL CYPRUS " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="2714" HotelName="PARKLANE LUXURY COLLECTION RESORT &amp;amp; SPA " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="2725" HotelName="GRECIAN SANDS HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="2880" HotelName="ANASSA HOTEL Cyprus Thanos Hotels and Resorts" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16319" HotelName="ALMYRA HOTEL Cyprus Thanos Hotels and Resorts" ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="16320" HotelName="ANNABELLE Cyprus Thanos Hotels and Resorts" ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="1418" HotelName="MITSIS ROYAL MARE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3052" HotelName="SEA COAST RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3053" HotelName="SAINT JOHN HOTEL VILLAS and SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="2809" HotelName="NESTOR HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3096" HotelName="MENDI HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3120" HotelName="ANGSANA CORFU RESORT &amp;amp; SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3142" HotelName="4U BOUTIQUE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3143" HotelName="4U APARTMENTS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3144" HotelName="4U FAMILY " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3163" HotelName="PRINCIPAL LEISURE HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3167" HotelName="TORONI BLUE SEA HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="2564" HotelName="KAPPA RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3276" HotelName="ANNA APARTHOTEL KOKKINI HANI  " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3130" HotelName="I RESORT BEACH HOTEL and SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3277" HotelName="AQUA BEACHFRONT HOTEL  " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3298" HotelName="SEASIDE A LIFESTYLE RESORT (Adults Only 16+) " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3313" HotelName="MOMI SLOW LIVING HOTEL (Adults Only 12+) " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1172" HotelName="MARBELLA Mar-Bella Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3412" HotelName="ELIX Mar-Bella Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3413" HotelName="NIDO (Adults Only 16+) Mar-Bella Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3605" HotelName="ST NICOLAS BAY RESORT HOTEL and VILLAS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3453" HotelName="THALASSA VILLAS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3456" HotelName="APHEA VILLAGE Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3510" HotelName="HARMONY E ROCK HOTEL (Adults Only 16+) " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3512" HotelName="AKTI TORONI BOUTIQUE HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3559" HotelName="AKASHA BEACH HOTEL and SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3566" HotelName="THE NINES " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3603" HotelName="MINOS PALACE RESORT ( Adults Only 18+) Bluegr Hotels and Resorts" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="8657" HotelName="ELYSIUM CYPRUS " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="16435" HotelName="ALEXANDRA ELEGANCE BRIDGING GENERATIONS Xenios Gate" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="4044" HotelName="ALEXANDRA BEACH THASSOS SPA RESORT Xenios Gate" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="9702" HotelName="A FOR ART Desing Hotel Xenios Gate" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16788" HotelName="COLUMBIA BEACH RESORT PISSOURI BAY " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="16301" HotelName="ST RAPHAEL RESORT and MARINA " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="16312" HotelName="AMATHUS BEACH HOTEL Limassol " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="16225" HotelName="MYKONOS LOLITA A GRECOTEL RESORT TO LIVE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="2588" HotelName="SANTO MINE OIA SUITES " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="2587" HotelName="SANTO PURE OIA SUITES and VILLAS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16289" HotelName="ROBINSON CYPRUS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16845" HotelName="CAP ST GEORGES HOTEL and RESORT " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="16349" HotelName="ALEA HOTEL and SUITES " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16388" HotelName="TORRI E MERLI BOUTIQUE HOTEL Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16389" HotelName="ANASSA MARE VILLAS &amp;amp; RESIDENCES Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16390" HotelName="LOUIS ST ELIAS RESORT Louis Hotels Family Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="2830" HotelName="POLIS 1907 Louis Hotels Family Collection" ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="16393" HotelName="CALI RESORT and SPA (Adults only 16+) Louis Hotels Elegant Collection" ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="16394" HotelName="ROYAL APOLLONIA Louis Hotels Family Collection" ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="7218" HotelName="MALTEZOS HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="2841" HotelName="SOFIANNA RESORT &amp;amp; SPA Louis Hotels Family Collection" ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="1481" HotelName="CHRIS LE MARE GOLD LUXURY VILLA Louis Hotels Villa Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1458" HotelName="CHRIS LE MARE LUXURY VILLA Louis Hotels Villa Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1486" HotelName="LORA PEARL LUXURY VILLA Louis Hotels Villa Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16430" HotelName="THE IVI MARE (Adults Only 16+) Louis Hotels Family Collection" ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="16431" HotelName="LOUIS PAPHOS BREEZE Louis Hotels Family Collection" ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="16785" HotelName="LOUIS PHAETHON BEACH Louis Hotels Family Collection" ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="16440" HotelName="IBEROSTAR SELECTION CRETA MARINE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17282" HotelName="ELYSIUM RESORT &amp;amp; SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3099" HotelName="LYTTOS BEACH " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="4823" HotelName="CITY MARINA HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="202" HotelName="AQUILA ATLANTIS HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="816" HotelName="MITSIS SELECTION LAGUNA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="820" HotelName="MITSIS SELECTION RINELA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3581" HotelName="LUUKS LUXURY ACCOMODATION " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16528" HotelName="CASALE PANAYIOTIS " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="16574" HotelName="HARMONY BAY HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16674" HotelName="BLUE SEA BEACH RESORT KBS" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="1245" HotelName="ANTIGON URBAN CHIC HOTEL Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16925" HotelName="IKAROS BEACH LUXURY RESORT &amp;amp; SPA (Adults Only 16+) " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16877" HotelName="STELLA PALACE AQUA PARK RESORT Stella Hotels Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="2739" HotelName="STELLA VILLAGE SEASIDE HOTEL Stella Hotels Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16879" HotelName="STELLA ISLAND LUXURY RESORT AND SPA (Adults Only 15+) Stella Hotels  Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="2392" HotelName="SUNNY DAYS HOTEL and RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16948" HotelName="ELENI HOTEL AMMOUDIA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="300" HotelName="ONOMA HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="192" HotelName="ANATOLIA HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16981" HotelName="DOMES LAKE ALGARVE, AUTOGRAPH COLLECTION Domes Resorts" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="5344" HotelName="VOULA HOTEL Danotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16982" HotelName="CITY PEARL BOUTIQUE HOTEL Danotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16983" HotelName="ARISTO APARTMENTS Danotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16984" HotelName="HELLINIS HOTEL Corfu Golden Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16987" HotelName="KALISUN POOL HOUSE by Georgalas " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17503" HotelName="91 ATHENS RIVIERA Domes Resorts" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17014" HotelName="ARYA HOTEL HANIOTI " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="7396" HotelName="CASTELLO INFINITY SUITES (Adults Only 16+) " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17024" HotelName="CROWNE PLAZA LIMASSOL an IHG Hotel" ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="4069" HotelName="CASTELLO BOUTIQUE RESORT &amp;amp; SPA (Adults Only 16+) " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="4393" HotelName="CASTELLO VILLAGE RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17028" HotelName="LURIA HOMES " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="216" HotelName="BLUE BAY BEACH HOTEL KBS" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="218" HotelName="BLUE SEA BEACH HOTEL KBS" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="219" HotelName="BLUE SKY APARTMENTS KBS" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17029" HotelName="CAPTAINS BEACH APARTMENTS KBS" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17030" HotelName="ROYAL BEACH HOTEL by CHC Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17032" HotelName="THE NOVERIAN ANTAMA ORGANIC BEACH RESORT CHANIA  (Adults Only 16+) CHC Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17033" HotelName="THE NOVERIAN BIOS SANTORINI BOUTIQUE HOTEL  (Adults Only 16+) CHC Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17034" HotelName="THE NOVERIAN SCENIC CRETE  HILLTOP VILLA RESORT &amp;amp; SPA CHC Hotels" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17220" HotelName="BLUE SKY VILLAS KBS" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="7605" HotelName="THEMIS BEACH HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17042" HotelName="AMMOS KORALI HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17043" HotelName="HORIZON BLU BOUTIQUE HOTEL " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="17044" HotelName="CANVAS BY MITSIS MESSONGHI " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17045" HotelName="CANVAS BY MITSIS BELVEDERE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17046" HotelName="CANVAS BY MITSIS ALEXANDER THE GREAT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17047" HotelName="EONA BEACH RESORT BY GREEK PRIDE " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3357" HotelName="STEFANIA BEACH RESORT Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17059" HotelName="AVALI  Mar-Bella Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17066" HotelName="ACE HOTEL and SWIM CLUB ATHENS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17074" HotelName="SEPTEMBER CITY RESORT SPA and CONFERENCE Hotel Brain" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17077" HotelName="L&amp;apos;ARTISTA BELLE VIEW intertrip" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17078" HotelName="MOURIA COUNTRY HOUSE intertrip" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17080" HotelName="TOP VIEW VILLA intertrip" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17081" HotelName="NATURE VILLAS MYRTHIOS intertrip" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17082" HotelName="DEMAR EXCLUSIVE VILLA intertrip" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17083" HotelName="FELIX VILLA WITH MAGIC VIEW intertrip" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17086" HotelName="TERRA DIVINA VILLA intertrip" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17087" HotelName="AGORASTOS HOTEL " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17088" HotelName="AMARLIA VILLA intertrip" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17090" HotelName="O-CYANEA VILLA intertrip" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17217" HotelName="CRETAN DREAM RESORT &amp;amp; SPA " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17132" HotelName="ESSENTIA LUXURY " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17134" HotelName="STELLA BLUE SEASIDE RESORT (Adults Only 12+) Stella Hotels Collection" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17156" HotelName="SIMON KING " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17280" HotelName="AELI VISTA APARTMENTS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17281" HotelName="THE ICON Limassol " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17283" HotelName="SUNSET GARDENS Limassol " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="3489" HotelName="YOMA COVE SUITES " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17301" HotelName="ZANTE PARK RESORT and SPA Zante Hospitality Group" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17302" HotelName="GALAXY BEACH RESORT Zante Hospitality Group" ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="16668" HotelName="VENTALE ISLAND BREEZE RESORT " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="17673" HotelName="CITY OF DREAMS MEDITERRANEAN " ContractEndDate="31-01-2026" Status="UPDATED" />
+    <Hotel HotelCode="18153" HotelName="OLYMPUS SEASIDE LUXURY POOL VILLAS " ContractEndDate="31-01-2026" Status="DELETED" />
+    <Hotel HotelCode="11" HotelName="LITOHORO OLYMPUS RESORT VILLAS &amp;amp; SPA " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17" HotelName="OLYMPUS THALASSEA BOUTIQUE HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="25" HotelName="SEA LEVEL HOTEL (Adults Only 16+) " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="16306" HotelName="SIMANTRO RESORT " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="58" HotelName="VILLAGE MARE HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="60" HotelName="PANORAMA VILLAGE HOTEL " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="61" HotelName="ISTION CLUB &amp;amp; SPA " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="106" HotelName="MOLFETTA BEACH HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="133" HotelName="SILVA BEACH HOTEL Hersotels Group" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="144" HotelName="POTAMAKI BEACH HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="326" HotelName="KAHLUA BOUTIQUE HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="339" HotelName="SANI CLUB " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="351" HotelName="CAVO OLYMPO LUXURY HOTEL and SPA (Adult Only 16+) " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="355" HotelName="MALLAS HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="470" HotelName="SANI BEACH " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="488" HotelName="IKOS ARIA " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="491" HotelName="IKOS OCEANIA " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="533" HotelName="LINDOS ROYAL RESORT LINDOS HOTELS" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="547" HotelName="IKOS OLIVIA " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="549" HotelName="IKOS DASSIA " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="550" HotelName="PORTO SANI " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="551" HotelName="SANI DUNES " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="17233" HotelName="LESANTE CLASSIC LUXURY HOTEL and SPA " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="609" HotelName="LINDOS VILLAGE RESORT AND SPA (Adult Only 16+) LINDOS HOTELS" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="617" HotelName="LINDOS GRAND RESORT AND SPA (Adult Only 16+)  LINDOS HOTELS" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="621" HotelName="ATLANTICA IMPERIAL RESORT (Adults Only 16+) Atlantica Hotels Resorts" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="655" HotelName="GENNADI GRAND RESORT LINDOS HOTELS" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="658" HotelName="LINDOS IMPERIAL RESORT AND SPA LINDOS HOTELS" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="672" HotelName="DOMES AULUS ELOUNDA, Curio Collection by Hilton (Adults Only 16+) Domes Resorts" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="679" HotelName="STAR BEACH VILLAGE " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="688" HotelName="CORALI HOTEL and APARTMENTS KOS " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="693" HotelName="AMIRA LUXURY RESORT and SPA (Adults Only 16+) " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="853" HotelName="TYLISSOS BEACH HOTEL (Adults Only 16+) by  CHC Hotels" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="866" HotelName="ATLANTICA CALDERA PALACE " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="872" HotelName="CANDIA PARK VILLAGE Bluegr Hotels and Resorts" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="887" HotelName="WELLNESS SANTA HOTEL - THESSALONIKI " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="992" HotelName="VILLAGE MARE RESIDENCES " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="999" HotelName="ONIRO BOUTIQUE HOTEL Toroni " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1173" HotelName="ZEUS THESSALONIKI LAZART " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="104" HotelName="SIRENA BEACH HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1184" HotelName="KERKYRA BLUE HOTEL and SPA Louis Hotels Elegant Collection" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1628" HotelName="ATRIUM HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1638" HotelName="IKOS ODISIA " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="1645" HotelName="GALINI SEA VIEW CHC Hotels" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1646" HotelName="KITRO BEACH HOTEL (Adults Only 16+) by CHC Hotels" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1663" HotelName="GIANNOULIS HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1745" HotelName="CORFU MARIS HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1746" HotelName="ALYSSIUM (ex  CORFU  BELLOS) " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="836" HotelName="VILLAGE MARE  METAXIA " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1805" HotelName="RENAISSANCE HANIOTI RESORT " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1816" HotelName="MIRUM ELOUNDA VILLAS " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1817" HotelName="IKOS ANDALUSIA " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="1818" HotelName="IKOS PORTO PETRO " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="2516" HotelName="ADAMS BEACH HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="2517" HotelName="MONASTY AUTOGRAPH COLLECTION " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="2628" HotelName="FOUR SEASONS HOTEL CYPRUS " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="2700" HotelName="FRIDAY MOOD VILLAS " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="2712" HotelName="MOUNT ATHOS RESORT " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="2990" HotelName="ATLANTICA BAY HOTEL (Adults Only 16+) " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="3073" HotelName="GALAXY HOTEL HERAKLION " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="3109" HotelName="FODELE BEACH and WATER PARK HOLIDAY RESORT " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="3112" HotelName="ALMYROS BEACH RESORT and SPA " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="3278" HotelName="ACRO SUITES A WELLBEING RESORT (Adults Only 16+) " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="3497" HotelName="JO AN BEACH HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="307" HotelName="PRINCESS GOLDEN BEACH " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="3566" HotelName="THE NINES " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="3603" HotelName="MINOS PALACE RESORT ( Adults Only 18+) Bluegr Hotels and Resorts" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="3604" HotelName="MINOS BEACH ART HOTEL Bluegr Hotels and Resorts" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="8625" HotelName="SENSEANA SEA SIDE RESORT and AQUADVENTURE Golden Hotels and Resorts" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="8626" HotelName="HARIS HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="16312" HotelName="AMATHUS BEACH HOTEL Limassol " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="16281" HotelName="DOMES NOVOS SANTORINI Domes Resorts" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="16290" HotelName="MYCONIAN ROYAL Leading Hotels " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17276" HotelName="MYCONIAN O (Adults Only 16+) " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="16304" HotelName="MYCONIAN VILLA COLLECTION " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="16307" HotelName="MYCONIAN UTOPIA " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="16310" HotelName="PORTO ZANTE VILLAS &amp;amp; SPA " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="425" HotelName="MYCONIAN AMBASSADOR Relais &amp;amp; Chateaux " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="16311" HotelName="MYCONIAN AVATON A member of the “Design Hotels” " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="16326" HotelName="MYCONIAN DEOS (Adults Only 12+) " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="4206" HotelName="MYCONIAN IMPERIAL Leading Hotels " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="16529" HotelName="MYCONIAN PANOPTIS ESCAPE " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="2830" HotelName="POLIS 1907 Louis Hotels Family Collection" ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="16425" HotelName="BLUE SEA HOTEL Corfu " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="6054" HotelName="LESANTE BLU (Adults Only 16+) " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="16874" HotelName="WYNDHAM LOUTRAKI POSEIDON RESORT Comer Group Hotels" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="16875" HotelName="VALMAR CORFU  Louis Hotels Elegant Collection" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="4019" HotelName="KRONOS HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="300" HotelName="ONOMA HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="192" HotelName="ANATOLIA HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="4398" HotelName="ANGELINA HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17011" HotelName="ATLANTICA MIRAMARE BEACH " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17503" HotelName="91 ATHENS RIVIERA Domes Resorts" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="4444" HotelName="OLYMPIC STAR BEACH HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="2178" HotelName="ATLANTICA KALLISTON RESORT (Adults Only 16+) " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1970" HotelName="ATLANTICA AMALTHIA BEACH (Adults Only 16+) " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="2149" HotelName="ATLANTICA GRAND MEDITERRANEO (Adults Only 16+) " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1955" HotelName="ATLANTICA AKTI ZEUS " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17028" HotelName="LURIA HOMES " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1089" HotelName="LESANTE CAPE " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17062" HotelName="CROWN HOTEL Nea Skioni " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="4061" HotelName="ANTICA DIMORA SUITES " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17277" HotelName="JO AN PALACE HOTEL Rethymno " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17069" HotelName="MYCONIAN KORALI " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17070" HotelName="KOVE MYKONOS " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17071" HotelName="MYCONIAN KYMA " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17072" HotelName="MYCONIAN NAIA (Adults Only 18+) " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17073" HotelName="MYCONIAN SUNRISE " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17217" HotelName="CRETAN DREAM RESORT &amp;amp; SPA " ContractEndDate="31-05-2027" Status="DELETED" />
+    <Hotel HotelCode="6704" HotelName="LAGUNA RESORT " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="16827" HotelName="ATLANTICA OASIS HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17303" HotelName="ATLANTICA PANTHEA RESORT " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17362" HotelName="NEFELI &amp;amp; DINA VILLAS " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17366" HotelName="VILLA BORA-BORA " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17368" HotelName="TWIN VILLAS " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17370" HotelName="RAHONI CRONWELL HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="17684" HotelName="CAPO BAY HOTEL " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="3060" HotelName="PHAEA BLUE " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="3461" HotelName="PENINSULA RESORT and SPA " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="18570" HotelName="LAMBI RESORT  " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="18571" HotelName="ONEIRO BOUTIGUE HOTEL (Adults Friendly 16+) " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="18595" HotelName="NANA ROYAL PREMIUM RESORT &amp;amp; SPA " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="18766" HotelName="CONRAD CORFU Numo Hotels and Resorts" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="18768" HotelName="MEDITE KASSANDRA RESORT " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="18769" HotelName="ZEUS ELEVA MIRAYA " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="8536" HotelName="THIRTYNINE URBAN STAY THESSALONIKI " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="3587" HotelName="PIETRA E MARE - MYKONOS MOMENTS Hotel Brain" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="2094" HotelName="ELECTRA PALACE RHODES " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="8616" HotelName="AZUR HOTEL VOLOS Hotel Brain" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="3128" HotelName="PHAEA CRETAN MALIA " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="1521" HotelName="PARADISE ART HOTEL ANDROS Hotel Brain" ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="18835" HotelName="AULUS LINDOS RHODES, CURIO COLLECTION BY HILTON (ex. Lindian Village Rhodes Beach ) Domes Resorts " ContractEndDate="31-05-2027" Status="NEW" />
+    <Hotel HotelCode="339" HotelName="SANI CLUB " ContractEndDate="31-05-2027" Status="UPDATED" />
+    <Hotel HotelCode="469" HotelName="SANI ASTERIAS " ContractEndDate="31-05-2027" Status="UPDATED" />
+    <Hotel HotelCode="470" HotelName="SANI BEACH " ContractEndDate="31-05-2027" Status="UPDATED" />
+    <Hotel HotelCode="488" HotelName="IKOS ARIA " ContractEndDate="31-05-2027" Status="UPDATED" />
+    <Hotel HotelCode="491" HotelName="IKOS OCEANIA " ContractEndDate="31-05-2027" Status="UPDATED" />
+    <Hotel HotelCode="547" HotelName="IKOS OLIVIA " ContractEndDate="31-05-2027" Status="UPDATED" />
+    <Hotel HotelCode="549" HotelName="IKOS DASSIA " ContractEndDate="31-05-2027" Status="UPDATED" />
+    <Hotel HotelCode="550" HotelName="PORTO SANI " ContractEndDate="31-05-2027" Status="UPDATED" />
+    <Hotel HotelCode="551" HotelName="SANI DUNES " ContractEndDate="31-05-2027" Status="UPDATED" />
+    <Hotel HotelCode="1638" HotelName="IKOS ODISIA " ContractEndDate="31-05-2027" Status="UPDATED" />
+    <Hotel HotelCode="1817" HotelName="IKOS ANDALUSIA " ContractEndDate="31-05-2027" Status="UPDATED" />
+    <Hotel HotelCode="1818" HotelName="IKOS PORTO PETRO " ContractEndDate="31-05-2027" Status="UPDATED" />
+  </Hotels>
+</StartPushProcessRS>

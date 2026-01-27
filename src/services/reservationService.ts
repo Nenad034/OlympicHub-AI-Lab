@@ -1,0 +1,208 @@
+// Reservation Service
+// Handles saving and retrieving reservations from Supabase
+
+import { supabase } from '../supabaseClient';
+import type { BookingRequest, BookingResponse } from '../types/booking.types';
+
+/**
+ * Database reservation type
+ */
+export interface DatabaseReservation {
+    id?: string;
+    cis_code: string;
+    ref_code: string;
+    status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+    customer_name: string;
+    customer_type: 'B2C-Individual' | 'B2C-Legal' | 'B2B-Subagent';
+    destination: string;
+    accommodation_name: string;
+    check_in: string;
+    check_out: string;
+    nights: number;
+    pax_count: number;
+    total_price: number;
+    paid: number;
+    currency: string;
+    created_at?: string;
+    supplier: string;
+    trip_type: string;
+    phone: string;
+    email: string;
+    hotel_notified?: boolean;
+    reservation_confirmed?: boolean;
+    proforma_invoice_sent?: boolean;
+    final_invoice_created?: boolean;
+    hotel_category?: number;
+    lead_passenger?: string;
+    booking_id?: string; // Provider booking ID (e.g., Solvex booking ID)
+    provider: 'solvex' | 'tct' | 'opengreece';
+    guests_data?: Record<string, unknown>; // JSON field for all guest information
+}
+
+/**
+ * Save a booking to the database
+ */
+export async function saveBookingToDatabase(
+    bookingRequest: BookingRequest,
+    bookingResponse: BookingResponse
+): Promise<{ success: boolean; error?: string; data?: DatabaseReservation }> {
+    try {
+        // Generate CIS code (format: CIS-YYYYMMDD-XXXX)
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        const cisCode = `CIS-${dateStr}-${randomNum}`;
+
+        // Generate REF code (format: REF-XXXX)
+        const refCode = `REF-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+
+        // Extract main guest info
+        const mainGuest = bookingRequest.guests[0];
+
+        // Calculate nights
+        const checkInDate = new Date(bookingRequest.checkIn);
+        const checkOutDate = new Date(bookingRequest.checkOut);
+        const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        // Determine supplier based on provider
+        const supplierMap = {
+            'solvex': 'Solvex (Bulgaria)',
+            'tct': 'TCT',
+            'opengreece': 'Open Greece'
+        };
+
+        // Create reservation object
+        const reservation: DatabaseReservation = {
+            cis_code: cisCode,
+            ref_code: refCode,
+            status: bookingResponse.status === 'confirmed' ? 'confirmed' : 'pending',
+            customer_name: `${mainGuest.firstName} ${mainGuest.lastName}`,
+            customer_type: 'B2C-Individual',
+            destination: bookingRequest.providerSpecificData?.hotel?.city?.name || 'Unknown',
+            accommodation_name: bookingRequest.providerSpecificData?.hotel?.name || 'Unknown Hotel',
+            check_in: bookingRequest.checkIn,
+            check_out: bookingRequest.checkOut,
+            nights: nights,
+            pax_count: bookingRequest.guests.length,
+            total_price: bookingRequest.totalPrice,
+            paid: 0, // Initially unpaid
+            currency: bookingRequest.currency,
+            supplier: supplierMap[bookingRequest.provider],
+            trip_type: 'Smeštaj',
+            phone: mainGuest.phone || '',
+            email: mainGuest.email || '',
+            hotel_notified: false,
+            reservation_confirmed: bookingResponse.status === 'confirmed',
+            proforma_invoice_sent: false,
+            final_invoice_created: false,
+            hotel_category: bookingRequest.providerSpecificData?.hotel?.starRating || 0,
+            lead_passenger: `${mainGuest.firstName} ${mainGuest.lastName}`,
+            booking_id: bookingResponse.bookingId,
+            provider: bookingRequest.provider,
+            guests_data: {
+                guests: bookingRequest.guests,
+                specialRequests: bookingRequest.specialRequests
+            }
+        };
+
+        console.log('[Reservation Service] Saving reservation:', reservation);
+
+        // Insert into Supabase
+        const { data, error } = await supabase
+            .from('reservations')
+            .insert([reservation])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[Reservation Service] Error saving reservation:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+
+        console.log('[Reservation Service] Reservation saved successfully:', data);
+
+        return {
+            success: true,
+            data: data
+        };
+    } catch (error) {
+        console.error('[Reservation Service] Unexpected error:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+
+/**
+ * Get all reservations for a user
+ */
+export async function getUserReservations(userEmail?: string): Promise<{ success: boolean; data?: DatabaseReservation[]; error?: string }> {
+    try {
+        let query = supabase
+            .from('reservations')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        // Filter by email if provided
+        if (userEmail) {
+            query = query.eq('email', userEmail);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error('[Reservation Service] Error fetching reservations:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+
+        return {
+            success: true,
+            data: data || []
+        };
+    } catch (error) {
+        console.error('[Reservation Service] Unexpected error:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+
+/**
+ * Get a single reservation by ID
+ */
+export async function getReservationById(id: string): Promise<{ success: boolean; data?: DatabaseReservation; error?: string }> {
+    try {
+        const { data, error } = await supabase
+            .from('reservations')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) {
+            console.error('[Reservation Service] Error fetching reservation:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+
+        return {
+            success: true,
+            data: data
+        };
+    } catch (error) {
+        console.error('[Reservation Service] Unexpected error:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
