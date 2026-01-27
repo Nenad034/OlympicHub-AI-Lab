@@ -15,7 +15,7 @@ import { ModernCalendar } from '../components/ModernCalendar';
 import { GoogleAddressAutocomplete } from '../components/GoogleAddressAutocomplete';
 import { NATIONALITIES } from '../constants/nationalities';
 import ReservationEmailModal from '../components/ReservationEmailModal';
-import { saveDossierToDatabase, getNextReservationNumber } from '../services/reservationService';
+import { saveDossierToDatabase, getNextReservationNumber, getReservationById } from '../services/reservationService';
 import '../components/GoogleAddressAutocomplete.css';
 import './ReservationArchitect.css';
 
@@ -220,23 +220,191 @@ const ReservationArchitect: React.FC = () => {
     const [isAdminMode, setIsAdminMode] = useState(false);
     const [isNotepadView, setIsNotepadView] = useState(false);
 
-    // --- PERSISTENCE --- (Load once on mount, Save on every change)
+    // --- INITIAL DATA LOAD ---
     const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
-        const saved = localStorage.getItem('active_reservation_dossier');
-        if (saved) {
-            try {
-                setDossier(JSON.parse(saved));
-            } catch (e) {
-                console.error('Failed to load dossier', e);
-            }
-        }
-        setIsInitialized(true);
-    }, []);
+        async function initialize() {
+            const urlParams = new URLSearchParams(location.search);
+            const resId = urlParams.get('id');
+            const loadFrom = urlParams.get('loadFrom');
 
+            // 1. Prioritet: Učitavanje iz baze po ID-u (Edit režim)
+            if (resId) {
+                try {
+                    // Simulate API call
+                    const getReservationById = async (id: string) => {
+                        const saved = localStorage.getItem('active_reservation_dossier');
+                        if (saved && JSON.parse(saved).resCode === id) {
+                            return { success: true, data: { guests_data: JSON.parse(saved) } };
+                        }
+                        // In a real app, this would be an actual API call
+                        return { success: false, data: null };
+                    };
+
+                    const result = await getReservationById(resId);
+                    if (result.success && result.data && result.data.guests_data) {
+                        setDossier(result.data.guests_data);
+                        setIsInitialized(true);
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Failed to load reservation by ID', e);
+                }
+            }
+
+            // 2. Prioritet: Učitavanje nove rezervacije iz pretrage (Search režim)
+            let loadData: any = null;
+            if (location.state && location.state.selectedResult) {
+                loadData = location.state;
+            } else if (loadFrom === 'pending_booking') {
+                const pending = localStorage.getItem('pending_booking');
+                if (pending) {
+                    try {
+                        loadData = JSON.parse(pending);
+                    } catch (e) {
+                        console.error('Failed to parse pending booking', e);
+                    }
+                }
+            }
+
+            if (loadData && loadData.selectedResult) {
+                const res = loadData.selectedResult;
+                const searchParams = loadData.searchParams;
+                const prefilled = loadData.prefilledGuests || [];
+                const leadPassenger = prefilled.find((p: any) => p.isLeadPassenger) || prefilled[0];
+
+                const calculatedPassengers = prefilled.length > 0 ? prefilled.map((pg: any, i: number) => ({
+                    id: 'p-' + i,
+                    firstName: pg.firstName || '',
+                    lastName: pg.lastName || '',
+                    idNumber: pg.passportNumber || '',
+                    birthDate: pg.dateOfBirth || '',
+                    type: i < (searchParams.adults || 2) ? 'Adult' : 'Child',
+                    address: pg.address || '',
+                    city: pg.city || '',
+                    country: pg.country || '',
+                    phone: pg.phone || '',
+                    email: pg.email || ''
+                })) : Array.from({ length: (searchParams.adults || 2) + (searchParams.children || 0) }).map((_, i) => ({
+                    id: 'p-' + i,
+                    firstName: '',
+                    lastName: '',
+                    idNumber: '',
+                    birthDate: '',
+                    type: i < (searchParams.adults || 2) ? 'Adult' : 'Child'
+                }));
+
+                // Helper to map room codes
+                const getRoomDescription = (code: string) => {
+                    const c = code.toUpperCase().trim();
+                    if (c === 'DBL') return 'Dvokrevetna soba (DBL)';
+                    if (c === 'SGL') return 'Jednokrevetna soba (SGL)';
+                    if (c === 'TRP') return 'Trokrevetna soba (TRP)';
+                    if (c === 'QDPL') return 'Četvorokrevetna soba (QDPL)';
+                    if (c === 'APP') return 'Apartman (APP)';
+                    if (c === 'STUDIO') return 'Studio';
+                    if (c === 'FAM') return 'Porodična soba (FAM)';
+                    return code; // Fallback to original
+                };
+
+                // Helper to map meal plan codes
+                const getMealPlanDescription = (plan: string) => {
+                    if (!plan) return '';
+                    const p = plan.toUpperCase().trim();
+
+                    // If it already follows the pattern "CODE - Name", keep it but maybe standardise
+                    if (p.includes(' - ')) return p;
+
+                    if (p === 'HB' || p === 'POLUPANSION') return 'HB - Polupansion';
+                    if (p === 'BB' || p === 'NOĆENJE SA DORUČKOM') return 'BB - Noćenje sa Doručkom';
+                    if (p === 'FB' || p === 'PUN PANSION') return 'FB - Pun Pansion';
+                    if (p === 'AI' || p === 'ALL INCLUSIVE') return 'AI - All Inclusive';
+                    if (p === 'UAI' || p === 'ULTRA ALL INCLUSIVE') return 'UAI - Ultra All Inclusive';
+                    if (p === 'RO' || p === 'NAJAM') return 'RO - Najam (Bez Ishrane)';
+                    if (p === 'PA') return 'PA - Pun Pansion';
+                    if (p === 'PP') return 'PP - Polupansion';
+                    if (p === 'ND') return 'ND - Noćenje sa Doručkom';
+
+                    // Fallback: Check if it's a long name and try to prepend code
+                    if (p.includes('POLU') || p.includes('HALF')) return 'HB - Polupansion';
+                    if (p.includes('DORU') || p.includes('BREAKFAST')) return 'BB - Noćenje sa Doručkom';
+                    if (p.includes('ALL') || p.includes('SVE')) return 'AI - All Inclusive';
+
+                    return p;
+                };
+
+                setDossier(prev => ({
+                    ...prev,
+                    cisCode: 'CIS-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                    resCode: null, // OBAVEZNO null za novi dosije
+                    tripItems: [
+                        {
+                            id: 't-' + Date.now(),
+                            type: 'Smestaj',
+                            supplier: res.source,
+                            country: res.location.includes('Grčka') ? 'Grčka' : (res.location.includes(',') ? res.location.split(',').pop()?.trim() : res.location),
+                            city: res.location.split(',')[0].trim(),
+                            // Clean hotel name - remove city name in parentheses, underscores, and 'Not defined' text
+                            subject: res.name
+                                .replace(/\s*\(.*?\)\s*/g, ' ') // Remove (Sunny Beach)
+                                .replace(/Not defined/gi, '')    // Remove "Not defined"
+                                .replace(/_{1,}/g, ' ')         // Replace underscores with spaces
+                                .replace(/\s+/g, ' ')           // Collapse spaces
+                                .trim(),
+                            // Store stars separately, handle "Not defined" or non-numeric values
+                            stars: typeof res.stars === 'number' ? res.stars : (isNaN(parseInt(res.stars)) ? 0 : parseInt(res.stars)),
+                            // Map room code to full description
+                            details: getRoomDescription(loadData.selectedRoom?.name || 'Standard Room'),
+                            mealPlan: getMealPlanDescription((res.mealPlan || loadData.selectedRoom?.mealPlan || '').replace('Standard Room', '')),
+                            checkIn: searchParams.checkIn,
+                            checkOut: searchParams.checkOut,
+                            netPrice: Math.round((loadData.selectedRoom?.price || res.price) * 100) / 100,
+                            bruttoPrice: Math.round((loadData.selectedRoom?.price || res.price) * 100) / 100,
+                            passengers: [...calculatedPassengers]
+                        }
+                    ],
+                    booker: leadPassenger ? {
+                        fullName: `${leadPassenger.firstName} ${leadPassenger.lastName}`.trim(),
+                        address: leadPassenger.address || '',
+                        city: leadPassenger.city || '',
+                        country: leadPassenger.country || '',
+                        idNumber: leadPassenger.passportNumber || '',
+                        phone: leadPassenger.phone || '',
+                        email: leadPassenger.email || '',
+                        companyPib: '',
+                        companyName: ''
+                    } : prev.booker,
+                    passengers: calculatedPassengers,
+                    notes: {
+                        ...prev.notes,
+                        general: loadData.specialRequests || ''
+                    }
+                }));
+                setIsInitialized(true);
+                // Go directly to Passengers tab
+                setActiveSection('parties');
+                return;
+            }
+
+            // 3. Prioritet: Učitavanje iz LocalStorage (samo ako nema ID-a i nema pretrage)
+            const saved = localStorage.getItem('active_reservation_dossier');
+            if (saved && !resId) {
+                try {
+                    setDossier(JSON.parse(saved));
+                } catch (e) {
+                    console.error('Failed to load dossier from Storage', e);
+                }
+            }
+            setIsInitialized(true);
+        }
+
+        initialize();
+    }, [location.search, location.state]);
+
+    // Save to LocalStorage on changes (only if it's NOT a saved reservation by ID)
     useEffect(() => {
-        if (isInitialized) {
+        if (isInitialized && !dossier.resCode) {
             localStorage.setItem('active_reservation_dossier', JSON.stringify(dossier));
         }
     }, [dossier, isInitialized]);
@@ -249,154 +417,6 @@ const ReservationArchitect: React.FC = () => {
 
     const totalPaid = dossier.finance.payments.reduce((sum, p) => p.status === 'deleted' ? sum : sum + (p.amount || 0), 0);
     const balance = totalBrutto - totalPaid;
-
-    // --- INITIAL DATA LOAD FROM SEARCH ---
-    // --- INITIAL DATA LOAD FROM SEARCH ---
-    useEffect(() => {
-        let loadData: any = null;
-
-        // 1. Try reading from navigation state (Same tab navigation)
-        if (location.state && location.state.selectedResult) {
-            loadData = location.state;
-        }
-        // 2. Try reading from LocalStorage (New tab handover)
-        else {
-            const urlParams = new URLSearchParams(location.search);
-            if (urlParams.get('loadFrom') === 'pending_booking') {
-                const pending = localStorage.getItem('pending_booking');
-                if (pending) {
-                    try {
-                        loadData = JSON.parse(pending);
-                        // Optional: Clear it so it doesn't reload on refresh (if desired, but keeping it is safer for refresh)
-                        // localStorage.removeItem('pending_booking'); 
-                    } catch (e) {
-                        console.error('Failed to parse pending booking', e);
-                    }
-                }
-            }
-        }
-
-        if (loadData && loadData.selectedResult) {
-            const res = loadData.selectedResult;
-            const searchParams = loadData.searchParams;
-            const prefilled = loadData.prefilledGuests || [];
-            const leadPassenger = prefilled.find((p: any) => p.isLeadPassenger) || prefilled[0];
-
-            const calculatedPassengers = prefilled.length > 0 ? prefilled.map((pg: any, i: number) => ({
-                id: 'p-' + i,
-                firstName: pg.firstName || '',
-                lastName: pg.lastName || '',
-                idNumber: pg.passportNumber || '',
-                birthDate: pg.dateOfBirth || '',
-                type: i < (searchParams.adults || 2) ? 'Adult' : 'Child',
-                address: pg.address || '',
-                city: pg.city || '',
-                country: pg.country || '',
-                phone: pg.phone || '',
-                email: pg.email || ''
-            })) : Array.from({ length: (searchParams.adults || 2) + (searchParams.children || 0) }).map((_, i) => ({
-                id: 'p-' + i,
-                firstName: '',
-                lastName: '',
-                idNumber: '',
-                birthDate: '',
-                type: i < (searchParams.adults || 2) ? 'Adult' : 'Child',
-                address: '',
-                city: '',
-                country: '',
-                phone: '',
-                email: ''
-            }));
-
-            // Helper to map room codes
-            const getRoomDescription = (code: string) => {
-                const c = code.toUpperCase().trim();
-                if (c === 'DBL') return 'Dvokrevetna soba (DBL)';
-                if (c === 'SGL') return 'Jednokrevetna soba (SGL)';
-                if (c === 'TRP') return 'Trokrevetna soba (TRP)';
-                if (c === 'QDPL') return 'Četvorokrevetna soba (QDPL)';
-                if (c === 'APP') return 'Apartman (APP)';
-                if (c === 'STUDIO') return 'Studio';
-                if (c === 'FAM') return 'Porodična soba (FAM)';
-                return code; // Fallback to original
-            };
-
-            // Helper to map meal plan codes
-            const getMealPlanDescription = (plan: string) => {
-                if (!plan) return '';
-                const p = plan.toUpperCase().trim();
-
-                // If it already follows the pattern "CODE - Name", keep it but maybe standardise
-                if (p.includes(' - ')) return p;
-
-                if (p === 'HB' || p === 'POLUPANSION') return 'HB - Polupansion';
-                if (p === 'BB' || p === 'NOĆENJE SA DORUČKOM') return 'BB - Noćenje sa Doručkom';
-                if (p === 'FB' || p === 'PUN PANSION') return 'FB - Pun Pansion';
-                if (p === 'AI' || p === 'ALL INCLUSIVE') return 'AI - All Inclusive';
-                if (p === 'UAI' || p === 'ULTRA ALL INCLUSIVE') return 'UAI - Ultra All Inclusive';
-                if (p === 'RO' || p === 'NAJAM') return 'RO - Najam (Bez Ishrane)';
-                if (p === 'PA') return 'PA - Pun Pansion';
-                if (p === 'PP') return 'PP - Polupansion';
-                if (p === 'ND') return 'ND - Noćenje sa Doručkom';
-
-                // Fallback: Check if it's a long name and try to prepend code
-                if (p.includes('POLU') || p.includes('HALF')) return 'HB - Polupansion';
-                if (p.includes('DORU') || p.includes('BREAKFAST')) return 'BB - Noćenje sa Doručkom';
-                if (p.includes('ALL') || p.includes('SVE')) return 'AI - All Inclusive';
-
-                return p;
-            };
-
-            setDossier(prev => ({
-                ...prev,
-                tripItems: [
-                    {
-                        id: 't-' + Date.now(),
-                        type: 'Smestaj',
-                        supplier: res.source,
-                        country: res.location.includes('Grčka') ? 'Grčka' : (res.location.includes(',') ? res.location.split(',').pop()?.trim() : res.location),
-                        city: res.location.split(',')[0].trim(),
-                        // Clean hotel name - remove city name in parentheses, underscores, and 'Not defined' text
-                        subject: res.name
-                            .replace(/\s*\(.*?\)\s*/g, ' ') // Remove (Sunny Beach)
-                            .replace(/Not defined/gi, '')    // Remove "Not defined"
-                            .replace(/_{1,}/g, ' ')         // Replace underscores with spaces
-                            .replace(/\s+/g, ' ')           // Collapse spaces
-                            .trim(),
-                        // Store stars separately, handle "Not defined" or non-numeric values
-                        stars: typeof res.stars === 'number' ? res.stars : (isNaN(parseInt(res.stars)) ? 0 : parseInt(res.stars)),
-                        // Map room code to full description
-                        details: getRoomDescription(loadData.selectedRoom?.name || 'Standard Room'),
-                        mealPlan: getMealPlanDescription((res.mealPlan || loadData.selectedRoom?.mealPlan || '').replace('Standard Room', '')),
-                        checkIn: searchParams.checkIn,
-                        checkOut: searchParams.checkOut,
-                        netPrice: Math.round((loadData.selectedRoom?.price || res.price) * 100) / 100,
-                        bruttoPrice: Math.round((loadData.selectedRoom?.price || res.price) * 100) / 100,
-                        passengers: [...calculatedPassengers]
-                    }
-                ],
-                booker: leadPassenger ? {
-                    fullName: `${leadPassenger.firstName} ${leadPassenger.lastName}`.trim(),
-                    address: leadPassenger.address || '',
-                    city: leadPassenger.city || '',
-                    country: leadPassenger.country || '',
-                    idNumber: leadPassenger.passportNumber || '',
-                    phone: leadPassenger.phone || '',
-                    email: leadPassenger.email || '',
-                    companyPib: '',
-                    companyName: ''
-                } : prev.booker,
-                passengers: calculatedPassengers,
-                notes: {
-                    ...prev.notes,
-                    general: loadData.specialRequests || ''
-                }
-            }));
-
-            // Go directly to Passengers tab
-            setActiveSection('parties');
-        }
-    }, [location.state, location.search]);
 
     // --- EXCHANGE RATE SIMULATION --- (To be replaced by API)
     const NBS_RATES = {

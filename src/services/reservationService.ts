@@ -285,46 +285,52 @@ export async function getNextReservationNumber(): Promise<string> {
     try {
         const currentYear = new Date().getFullYear();
 
-        // 1. Primarni način: Tražimo najveći već postojeći broj za ovu godinu
+        // 1. Primarni način: Tražimo najveći broj koji prati naš format (7 cifara / godina)
+        // Koristimo pattern koji obezbeđuje da kod počinje ciframa i ima kosu crtu
         const { data, error } = await supabase
             .from('reservations')
             .select('ref_code')
-            .like('ref_code', '%/202%') // Tražimo bilo šta što se završava na godinu
+            .filter('ref_code', 'match', '^[0-9]{7}/202[0-9]$') // Regex filter za format
             .order('ref_code', { ascending: false })
             .limit(1);
 
-        if (error) {
-            console.error('[Reservation Service] Database error fetching latest number:', error);
-            // Nastavljamo na fallback
+        // Ako 'match' filter nije podržan na ovom Supabase setupu (zavisi od verzije),
+        // koristimo 'ilike' kao rezervu ali filtriramo u JS-u
+        let latestRecord = data && data.length > 0 ? data[0] : null;
+
+        if (error || !latestRecord) {
+            const { data: altData } = await supabase
+                .from('reservations')
+                .select('ref_code')
+                .ilike('ref_code', '%/202%')
+                .order('ref_code', { ascending: false });
+
+            // Pronađi prvi koji zaista odgovara formatu
+            latestRecord = (altData || []).find((r: any) => /^[0-9]{7}\/202[0-9]$/.test(r.ref_code)) || null;
         }
 
-        if (data && data.length > 0) {
-            const latestCode = data[0].ref_code;
-            console.log('[Reservation Service] Found latest code in DB:', latestCode);
+        if (latestRecord) {
+            const latestCode = latestRecord.ref_code;
+            console.log('[Reservation Service] Found latest valid code:', latestCode);
 
-            if (latestCode && latestCode.includes('/')) {
-                const parts = latestCode.split('/');
-                const currentNum = parseInt(parts[0]);
-                if (!isNaN(currentNum)) {
-                    const nextNum = currentNum + 1;
-                    return nextNum.toString().padStart(7, '0') + `/${currentYear}`;
-                }
+            const parts = latestCode.split('/');
+            const currentNum = parseInt(parts[0]);
+            if (!isNaN(currentNum)) {
+                const nextNum = currentNum + 1;
+                return nextNum.toString().padStart(7, '0') + `/${currentYear}`;
             }
         }
 
-        // 2. Fallback način: Ako nema rezultata ili je format čudan, brojimo ukupno za ovu godinu
-        const { count, error: countError } = await supabase
+        // 2. Fallback: Prebroj sve koji liče na naše rezervacije
+        const { data: countData } = await supabase
             .from('reservations')
-            .select('*', { count: 'exact', head: true })
-            .like('ref_code', `%/${currentYear}`);
+            .select('ref_code')
+            .ilike('ref_code', '%/202%');
 
-        if (!countError && typeof count === 'number') {
-            const nextNum = count + 1;
-            return nextNum.toString().padStart(7, '0') + `/${currentYear}`;
-        }
+        const validCount = (countData || []).filter((r: any) => /^[0-9]{7}\/202[0-9]$/.test(r.ref_code)).length;
+        const nextNum = validCount + 1;
+        return nextNum.toString().padStart(7, '0') + `/${currentYear}`;
 
-        // 3. Poslednja opcija: Vrati broj 1
-        return `0000001/${currentYear}`;
     } catch (error) {
         console.error('[Reservation Service] Unexpected error in number generation:', error);
         return `0000001/${new Date().getFullYear()}`;
