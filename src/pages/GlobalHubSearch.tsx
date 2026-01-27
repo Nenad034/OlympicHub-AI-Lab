@@ -1413,7 +1413,7 @@ const GlobalHubSearch: React.FC = () => {
                                                             selectedRoom: null // Default room (cheapest/base)
                                                         };
                                                         localStorage.setItem('pending_booking', JSON.stringify(payload));
-                                                        window.open('/reservations/architect?loadFrom=pending_booking', '_blank');
+                                                        window.open('/reservation-architect?loadFrom=pending_booking', '_blank');
                                                     }}
                                                 >
                                                     Detalji <ArrowRight size={16} />

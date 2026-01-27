@@ -368,7 +368,7 @@ export const router = createBrowserRouter([
                 element: <ReservationsDashboard />,
             },
             {
-                path: 'reservations/architect',
+                path: 'reservation-architect',
                 element: <ReservationArchitect />,
             },
             {
