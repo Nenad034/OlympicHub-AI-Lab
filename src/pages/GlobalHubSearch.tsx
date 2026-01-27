@@ -32,7 +32,7 @@ export interface RoomDetails {
 
 export interface CombinedResult {
     id: string;
-    source: 'TCT' | 'OpenGreece' | 'Solvex' | 'ORS';
+    source: 'TCT' | 'OpenGreece' | 'Solvex' | 'ORS' | 'Solvex AI';
     name: string;
     location: string;
     price: number;
@@ -44,8 +44,9 @@ export interface CombinedResult {
     rooms: RoomDetails[];
     originalData: any;
     softZoneScore?: number;
+    aiScore?: number;
     otherOffers?: Array<{
-        source: 'TCT' | 'OpenGreece' | 'Solvex' | 'ORS';
+        source: string;
         price: number;
         currency: string;
         mealPlan: string;
@@ -154,6 +155,7 @@ const GlobalHubSearch: React.FC = () => {
         tct: true,
         opengreece: true,
         solvex: true,
+        solvexai: false,
         ors: true
     });
 
@@ -554,7 +556,13 @@ const GlobalHubSearch: React.FC = () => {
 
         const activeProviderNames = Object.entries(enabledProviders)
             .filter(([_, enabled]) => enabled)
-            .map(([name]) => name === 'opengreece' ? 'OpenGreece' : name === 'tct' ? 'TCT' : name === 'solvex' ? 'Solvex' : 'ORS');
+            .map(([name]) => {
+                if (name === 'opengreece') return 'OpenGreece';
+                if (name === 'tct') return 'TCT';
+                if (name === 'solvex') return 'Solvex';
+                if (name === 'solvexai') return 'Solvex AI';
+                return 'ORS';
+            });
 
         activeProviderNames.forEach(providerName => {
             const searchPromise = manager.searchByProvider(providerName, searchParams)
@@ -579,6 +587,7 @@ const GlobalHubSearch: React.FC = () => {
                             availability: r.availability === 'available' ? 'available' : r.availability === 'on_request' ? 'on_request' : 'stop_sale',
                             capacity: String(r.capacity || '')
                         })),
+                        aiScore: (h as any).aiScore,
                         originalData: h.originalData
                     }));
                 });
@@ -727,6 +736,17 @@ const GlobalHubSearch: React.FC = () => {
                         <Building2 size={20} />
                         <span>Solvex</span>
                         {enabledProviders.solvex && <CheckCircle2 size={16} className="check-icon" />}
+                    </button>
+
+                    <button
+                        className={`provider-toggle ai-lab ${enabledProviders.solvexai ? 'active' : ''}`}
+                        onClick={() => apiConnectionsEnabled && setEnabledProviders(prev => ({ ...prev, solvexai: !prev.solvexai }))}
+                        disabled={!apiConnectionsEnabled}
+                        title="Solvex AI Lab (Agoda Engine)"
+                    >
+                        <Sparkles size={20} className="ai-icon" />
+                        <span>Solvex AI</span>
+                        {enabledProviders.solvexai && <CheckCircle2 size={16} className="check-icon" />}
                     </button>
 
                     <button
@@ -1163,6 +1183,18 @@ const GlobalHubSearch: React.FC = () => {
                     </div>
                 )}
 
+                {enabledProviders.solvexai && searchPerformed && results.length > 0 && (
+                    <div className="ai-lab-insights-banner animate-slide-down">
+                        <div className="insight-glow"></div>
+                        <Sparkles className="insight-icon" size={24} />
+                        <div className="insight-text">
+                            <h4>AI Lab: Agoda Intelligence Engine Aktivan</h4>
+                            <p>Analizirali smo {results.length} ponuda i primenili "Value-for-Money" scoring algoritam. Top 3 rezultata su označena kao <strong>Smart Choice</strong>.</p>
+                        </div>
+                        <div className="insight-badge">Agoda Agent Pattern v1.0</div>
+                    </div>
+                )}
+
                 {!searchPerformed && (
                     <div className="zen-placeholder">
                         <div className="unified-icon-display">
@@ -1279,15 +1311,20 @@ const GlobalHubSearch: React.FC = () => {
                         ) : (
                             <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`}>
                                 {filteredResults.map(hotel => (
-                                    <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.source.toLowerCase()} ${viewMode === 'list' ? 'horizontal' : ''}`}>
+                                    <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.source.toLowerCase().replace(/\s+/g, '-')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
                                         <div className="hotel-card-image">
                                             <img src={hotel.image} alt={hotel.name} />
                                             <div className="source-badge">
                                                 {hotel.source === 'TCT' ? 'TCT' : hotel.source}
                                             </div>
-                                            {hotel.softZoneScore && hotel.softZoneScore > 0 && (
+                                            {hotel.source === 'Solvex AI' && (
+                                                <div className="intelligence-boost-badge ai-lab animate-pulse">
+                                                    <Sparkles size={10} /> {hotel.aiScore ? `AI Optimized (${hotel.aiScore}%)` : 'AI Engine Optimized'}
+                                                </div>
+                                            )}
+                                            {hotel.source !== 'Solvex AI' && hotel.softZoneScore && hotel.softZoneScore > 0 && (
                                                 <div className="intelligence-boost-badge animate-pulse">
-                                                    <Sparkles size={10} /> {activeTriggers[0]?.label || 'Smart Choice'}
+                                                    <Zap size={10} /> {activeTriggers[0]?.label || 'Smart Choice'}
                                                 </div>
                                             )}
                                             <div className="image-overlay">

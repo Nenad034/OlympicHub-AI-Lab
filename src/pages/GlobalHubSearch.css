@@ -2392,3 +2392,145 @@
     color: #2563eb !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
+
+/* AI Lab Specialized Styles */
+.provider-toggle.ai-lab {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.provider-toggle.ai-lab.active {
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+    border-color: #a78bfa !important;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4) !important;
+    color: white !important;
+}
+
+.ai-icon {
+    color: #c4b5fd;
+    transition: all 0.3s;
+}
+
+.provider-toggle.ai-lab.active .ai-icon {
+    color: white;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.8));
+    animation: sparkle-spin 3s infinite linear;
+}
+
+@keyframes sparkle-spin {
+    0% {
+        transform: scale(1) rotate(0deg);
+    }
+
+    50% {
+        transform: scale(1.2) rotate(180deg);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1) rotate(360deg);
+    }
+}
+
+.intelligence-boost-badge.ai-lab {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hotel-result-card-premium.solvex-ai {
+    border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.hotel-result-card-premium.solvex-ai:hover {
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.2) !important;
+}
+
+.hotel-result-card-premium.solvex-ai .source-badge {
+    background: rgba(124, 58, 237, 0.2);
+    color: #c4b5fd;
+    border-color: rgba(124, 58, 237, 0.3);
+}
+
+/* AI Lab Insights Banner */
+.ai-lab-insights-banner {
+    position: relative;
+    margin: 20px 0 30px 0;
+    padding: 24px;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    overflow: hidden;
+    animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.insight-glow {
+    position: absolute;
+    top: -50%;
+    left: -20%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.2) 0%, transparent 70%);
+    filter: blur(30px);
+    pointer-events: none;
+}
+
+.insight-icon {
+    color: #a78bfa;
+    background: rgba(124, 58, 237, 0.2);
+    padding: 12px;
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+    flex-shrink: 0;
+}
+
+.insight-text {
+    flex: 1;
+}
+
+.insight-text h4 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    color: #e0e7ff;
+    letter-spacing: 0.5px;
+}
+
+.insight-text p {
+    margin: 0;
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.5;
+}
+
+.insight-badge {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #6366f1;
+    text-transform: uppercase;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+}
+
+.light-theme .ai-lab-insights-banner,
+.tokyo-light-theme .ai-lab-insights-banner {
+    background: #f5f3ff;
+    border-color: #ddd6fe;
+}
+
+.light-theme .insight-text h4,
+.tokyo-light-theme .insight-text h4 {
+    color: #5b21b6;
+}
+
+.light-theme .insight-text p,
+.tokyo-light-theme .insight-text p {
+    color: #6d28d2;
+}

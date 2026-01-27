@@ -39,6 +39,7 @@ import type {
 import { apiCache } from '../../utils/apiCache';
 import { sentinelEvents } from '../../utils/sentinelEvents';
 import { SolvexProvider } from './SolvexProvider';
+import { SolvexAiProvider } from './SolvexAiProvider';
 import { OpenGreeceProvider } from './OpenGreeceProvider';
 import { TCTProvider } from './TCTProvider';
 import { searchHistory } from '../../utils/searchHistory';
@@ -75,6 +76,17 @@ export class HotelProviderManager {
             }
         } catch (error) {
             console.error('❌ Failed to register Solvex provider:', error);
+        }
+
+        // Register Solvex AI provider (Lab Experiment)
+        try {
+            const solvexAiProvider = new SolvexAiProvider();
+            if (solvexAiProvider.isConfigured()) {
+                this.registerProvider(solvexAiProvider);
+                console.log('✨ Solvex AI provider registered');
+            }
+        } catch (error) {
+            console.error('❌ Failed to register Solvex AI provider:', error);
         }
 
         // Register OpenGreece provider

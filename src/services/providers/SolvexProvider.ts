@@ -27,7 +27,7 @@ import { sentinelEvents } from '../../utils/sentinelEvents';
  * Solvex Hotel Provider Bridge implementation
  */
 export class SolvexProvider implements HotelProvider {
-    readonly name = 'Solvex';
+    readonly name: string = 'Solvex';
     readonly isActive = true;
 
     /**
