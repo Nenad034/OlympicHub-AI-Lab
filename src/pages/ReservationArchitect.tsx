@@ -15,6 +15,7 @@ import { ModernCalendar } from '../components/ModernCalendar';
 import { GoogleAddressAutocomplete } from '../components/GoogleAddressAutocomplete';
 import { NATIONALITIES } from '../constants/nationalities';
 import ReservationEmailModal from '../components/ReservationEmailModal';
+import { saveDossierToDatabase } from '../services/reservationService';
 import '../components/GoogleAddressAutocomplete.css';
 import './ReservationArchitect.css';
 
@@ -687,7 +688,7 @@ const ReservationArchitect: React.FC = () => {
         }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         // Obavezni podaci nosioca (Booker)
         if (!dossier.booker.fullName || dossier.booker.fullName.trim() === '') {
             alert('Molimo unesite podatke nosioca putovanja pre čuvanja.');
@@ -695,17 +696,37 @@ const ReservationArchitect: React.FC = () => {
             return;
         }
 
-        // Generisanje broja rezervacije ako već ne postoji
-        if (!dossier.resCode) {
-            // Logika za serijski broj (u realnoj aplikaciji ovo bi dolazilo sa servera)
-            // Ovde simuliramo početak od 0000001/2026
-            const nextNum = '0000001/2026';
-            setDossier(prev => ({ ...prev, resCode: nextNum }));
-            addLog('Čuvanje Dosijea', `Dossier je prvi put sačuvan. Dodeljen broj: ${nextNum}`, 'success');
-            alert(`Dosije uspešno sačuvan! Dodeljen broj rezervacije: ${nextNum}`);
-        } else {
-            addLog('Izmena Dosijea', 'Podaci o dosijeu su ažurirani i sačuvani.', 'info');
-            alert('Izmene na dosijeu su sačuvane.');
+        try {
+            // Generisanje broja rezervacije ako već ne postoji
+            let currentDossier = { ...dossier };
+            let isInitialSave = false;
+
+            if (!dossier.resCode) {
+                // Generisanje broja (u realnom sistemu ovo obično radi baza, ali zadržavamo logiku)
+                const nextNum = '0000001/2026';
+                currentDossier.resCode = nextNum;
+                isInitialSave = true;
+                setDossier(currentDossier);
+            }
+
+            // Save to Supabase
+            const result = await saveDossierToDatabase(currentDossier);
+
+            if (result.success) {
+                if (isInitialSave) {
+                    addLog('Čuvanje Dosijea', `Dossier je prvi put sačuvan u bazu. Dodeljen broj: ${currentDossier.resCode}`, 'success');
+                    alert(`Dosije uspešno sačuvan u bazu! Dodeljen broj rezervacije: ${currentDossier.resCode}`);
+                } else {
+                    addLog('Izmena Dosijea', 'Podaci o dosijeu su ažurirani u bazi.', 'info');
+                    alert('Izmene na dosijeu su uspešno sačuvane u bazu.');
+                }
+            } else {
+                console.error('Save failed:', result.error);
+                alert(`Greška pri čuvanju u bazu: ${result.error || 'Nepoznata greška'}`);
+            }
+        } catch (err) {
+            console.error('Unexpected error during save:', err);
+            alert('Došlo je do neočekivane greške prilikom čuvanja.');
         }
     };
 

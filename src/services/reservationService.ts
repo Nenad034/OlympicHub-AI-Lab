@@ -206,3 +206,65 @@ export async function getReservationById(id: string): Promise<{ success: boolean
         };
     }
 }
+
+/**
+ * Save a complete Dossier (from ReservationArchitect) to Supabase
+ */
+export async function saveDossierToDatabase(dossier: any): Promise<{ success: boolean; error?: string; data?: any }> {
+    try {
+        console.log('[Reservation Service] Upserting dossier:', dossier.cisCode);
+
+        // Map dossier to DatabaseReservation for the dashboard
+        // We take the search data from the first trip item if available
+        const firstItem = dossier.tripItems[0];
+        const totalBrutto = dossier.tripItems.reduce((sum: number, item: any) => sum + (item.bruttoPrice || 0), 0);
+        const totalPaid = (dossier.finance.payments || []).reduce((sum: number, p: any) => p.status === 'deleted' ? sum : sum + (p.amount || 0), 0);
+
+        const dbRes: DatabaseReservation = {
+            cis_code: dossier.cisCode,
+            ref_code: dossier.resCode || dossier.clientReference,
+            status: dossier.status.toLowerCase() as any, // Map 'Request' -> 'request' etc if needed, or keeping it
+            customer_name: dossier.booker.fullName,
+            customer_type: dossier.customerType,
+            destination: firstItem?.city + ', ' + firstItem?.country || 'Unknown',
+            accommodation_name: firstItem?.subject || 'Unknown',
+            check_in: firstItem?.checkIn || '',
+            check_out: firstItem?.checkOut || '',
+            nights: firstItem ? Math.ceil((new Date(firstItem.checkOut).getTime() - new Date(firstItem.checkIn).getTime()) / (1000 * 60 * 60 * 24)) : 0,
+            pax_count: dossier.passengers.length,
+            total_price: totalBrutto,
+            paid: totalPaid,
+            currency: dossier.finance.currency,
+            supplier: firstItem?.supplier || 'Various',
+            trip_type: firstItem?.type || 'Various',
+            phone: dossier.booker.phone || '',
+            email: dossier.booker.email || '',
+            hotel_notified: dossier.hotelNotified || false,
+            reservation_confirmed: dossier.status === 'Reservation' || dossier.status === 'Active',
+            proforma_invoice_sent: !!dossier.proformaSent,
+            final_invoice_created: !!dossier.invoiceCreated,
+            hotel_category: firstItem?.stars || 0,
+            lead_passenger: dossier.passengers[0] ? `${dossier.passengers[0].firstName} ${dossier.passengers[0].lastName}` : dossier.booker.fullName,
+            provider: firstItem?.supplier?.toLowerCase().includes('solvex') ? 'solvex' : (firstItem?.supplier?.toLowerCase().includes('tct') ? 'tct' : 'opengreece'),
+            guests_data: dossier // Store entire dossier object for full restoration later
+        };
+
+        // Use upsert based on cis_code
+        const { data, error } = await supabase
+            .from('reservations')
+            .upsert([dbRes], { onConflict: 'cis_code' })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[Reservation Service] Error upserting dossier:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log('[Reservation Service] Dossier saved successfully:', data);
+        return { success: true, data };
+    } catch (error) {
+        console.error('[Reservation Service] Unexpected error in saveDossierToDatabase:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+}
