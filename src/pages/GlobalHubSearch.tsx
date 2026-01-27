@@ -1537,6 +1537,7 @@ const GlobalHubSearch: React.FC = () => {
                         children: children,
                         totalPrice: selectedRoomForBooking.price || expandedHotel.price,
                         currency: expandedHotel.currency,
+                        stars: expandedHotel.stars,
                         providerData: expandedHotel.originalData || {}
                     }}
                     onSuccess={() => { }} // Success is handled by navigation inside modal

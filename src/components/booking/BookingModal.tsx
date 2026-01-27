@@ -104,6 +104,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     location: bookingData.location,
                     source: provider.toUpperCase(),
                     price: bookingData.totalPrice,
+                    stars: bookingData.stars,
                     mealPlan: bookingData.mealPlan || '',
                     originalData: bookingData.providerData
                 },

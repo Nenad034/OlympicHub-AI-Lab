@@ -78,6 +78,7 @@ export interface BookingData {
     children: number;
     totalPrice: number;
     currency: string;
+    stars?: number;
     // Provider-specific data (e.g., Solvex guid, hotel keys)
     providerData: any;
 }

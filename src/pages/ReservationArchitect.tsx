@@ -352,7 +352,7 @@ const ReservationArchitect: React.FC = () => {
                         id: 't-' + Date.now(),
                         type: 'Smestaj',
                         supplier: res.source,
-                        country: res.location.includes('Grčka') ? 'Grčka' : res.location,
+                        country: res.location.includes('Grčka') ? 'Grčka' : (res.location.includes(',') ? res.location.split(',').pop()?.trim() : res.location),
                         city: res.location.split(',')[0].trim(),
                         // Add stars to name
                         subject: `${res.name} ${res.stars ? '⭐'.repeat(Math.round(res.stars)) : ''}`.trim(),
