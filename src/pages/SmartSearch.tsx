@@ -305,7 +305,9 @@ const SmartSearch: React.FC = () => {
                         })()}
                         {showSuggestions && suggestions.length > 0 && (
                             <div className="autocomplete-dropdown">
-
+                                <div style={{ color: 'white', fontSize: '20px', padding: '20px', background: 'blue' }}>
+                                    DEBUG: {suggestions.length} suggestions found!
+                                </div>
                                 {suggestions.map(suggestion => (
                                     <div
                                         key={suggestion.id}
