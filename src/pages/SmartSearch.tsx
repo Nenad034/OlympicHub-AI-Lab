@@ -92,25 +92,17 @@ const SmartSearch: React.FC = () => {
 
     // SIMPLIFIED Autocomplete - samo lokalni podaci, bez API poziva
     useEffect(() => {
-        console.log('[SmartSearch] useEffect triggered, input:', destinationInput);
-
         if (destinationInput.length >= 2) {
             const searchTerm = destinationInput.toLowerCase();
-            console.log('[SmartSearch] Searching for:', searchTerm);
 
             const matches = mockDestinations.filter(dest =>
                 dest.name.toLowerCase().includes(searchTerm) &&
                 !selectedDestinations.find(selected => selected.id === dest.id)
             );
 
-            console.log('[SmartSearch] Matches found:', matches.length, matches.map(m => m.name));
-
             setSuggestions(matches.slice(0, 10));
             setShowSuggestions(matches.length > 0);
-
-            console.log('[SmartSearch] Set showSuggestions to:', matches.length > 0);
         } else {
-            console.log('[SmartSearch] Input too short, clearing suggestions');
             setSuggestions([]);
             setShowSuggestions(false);
         }
@@ -279,13 +271,9 @@ const SmartSearch: React.FC = () => {
                                     type="text"
                                     placeholder={selectedDestinations.length === 0 ? "Npr: Crna Gora, Hurghada, Hotel Splendid..." : "Dodaj još..."}
                                     value={destinationInput}
-                                    onChange={(e) => {
-                                        console.log('[SmartSearch onChange] New value:', e.target.value);
-                                        setDestinationInput(e.target.value);
-                                    }}
+                                    onChange={(e) => setDestinationInput(e.target.value)}
                                     onKeyDown={handleKeyDown}
                                     onFocus={() => {
-                                        console.log('[SmartSearch] Input focused, current value:', destinationInput);
                                         if (destinationInput.length >= 2 && suggestions.length > 0) {
                                             setShowSuggestions(true);
                                         }
@@ -297,46 +285,40 @@ const SmartSearch: React.FC = () => {
 
 
                         {/* Autocomplete Suggestions */}
-                        {(() => {
-                            console.log('[SmartSearch Render] showSuggestions:', showSuggestions);
-                            console.log('[SmartSearch Render] suggestions.length:', suggestions.length);
-                            console.log('[SmartSearch Render] suggestions:', suggestions.map(s => s.name));
-                            console.log('[SmartSearch Render] ABOUT TO RENDER DROPDOWN:', showSuggestions && suggestions.length > 0);
-                            console.log('[SmartSearch Render] Condition check:', {
-                                showSuggestions,
-                                length: suggestions.length,
-                                result: showSuggestions && suggestions.length > 0
-                            });
-                            return null;
-                        })()}
-
-                        {/* ALWAYS RENDER - Remove condition for debugging */}
-                        {true && (
+                        {showSuggestions && suggestions.length > 0 && (
                             <div className="autocomplete-dropdown">
-                                <div style={{ color: 'white', fontSize: '20px', padding: '20px', background: 'blue' }}>
-                                    DEBUG: showSuggestions={String(showSuggestions)}, length={suggestions.length}
-                                </div>
-                                {suggestions.length > 0 ? (
-                                    suggestions.map(suggestion => (
-                                        <div
-                                            key={suggestion.id}
-                                            className="suggestion-item"
-                                            onClick={() => handleAddDestination(suggestion)}
-                                            style={{ color: 'white', padding: '10px', background: 'green' }}
-                                        >
-                                            <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                                                {suggestion.name}
-                                            </div>
-                                            <div style={{ fontSize: '14px' }}>
-                                                {suggestion.country}
-                                            </div>
+                                {suggestions.map(suggestion => (
+                                    <div
+                                        key={suggestion.id}
+                                        className="suggestion-item"
+                                        onClick={() => handleAddDestination(suggestion)}
+                                    >
+                                        {suggestion.type === 'hotel' ? (
+                                            <Hotel size={16} className="suggestion-icon hotel" />
+                                        ) : (
+                                            <MapPin size={16} className="suggestion-icon destination" />
+                                        )}
+                                        <div className="suggestion-content">
+                                            <span className="suggestion-name">{suggestion.name}</span>
+                                            <span className="suggestion-meta">
+                                                {suggestion.type === 'hotel' ? (
+                                                    <>
+                                                        {suggestion.stars && (
+                                                            <span className="stars">
+                                                                {Array.from({ length: suggestion.stars }).map((_, i) => (
+                                                                    <Star key={i} size={10} fill="#fbbf24" color="#fbbf24" />
+                                                                ))}
+                                                            </span>
+                                                        )}
+                                                        <span className="provider">{suggestion.provider}</span>
+                                                    </>
+                                                ) : (
+                                                    <span className="country">{suggestion.country}</span>
+                                                )}
+                                            </span>
                                         </div>
-                                    ))
-                                ) : (
-                                    <div style={{ color: 'white', padding: '20px' }}>
-                                        No suggestions yet
                                     </div>
-                                )}
+                                ))}
                             </div>
                         )}
                     </div>
