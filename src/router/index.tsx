@@ -328,6 +328,10 @@ export const router = createBrowserRouter([
                 element: <B2BSearch />,
             },
             {
+                path: 'my-reservations',
+                element: <ReservationsDashboard />,
+            },
+            {
                 path: 'flights',
                 element: <FlightSearch />,
             },

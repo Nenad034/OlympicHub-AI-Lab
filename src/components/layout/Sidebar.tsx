@@ -67,21 +67,6 @@ const Sidebar: React.FC = () => {
                     >
                         <Search size={20} /> {!isSidebarCollapsed && 'Master Pretraga'}
                     </NavLink>
-                    {userLevel < 6 && (
-                        <NavLink
-                            to="/b2b-search"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="B2B Partner Search"
-                            style={({ isActive }) => ({
-                                borderLeft: isActive ? '4px solid #ff9800' : 'none',
-                                background: isActive ? 'rgba(255, 152, 0, 0.1)' : 'transparent'
-                            })}
-                        >
-                            <Search size={20} color="#ff9800" /> {!isSidebarCollapsed && (
-                                <span style={{ color: '#ff9800', fontWeight: 700 }}>B2B Search</span>
-                            )}
-                        </NavLink>
-                    )}
                     <div
                         className="nav-item"
                         title="AI Chat"
@@ -151,6 +136,46 @@ const Sidebar: React.FC = () => {
                         </NavLink>
                     )}
                 </div>
+
+                {/* B2B Partners Section - Only for Subagents */}
+                {userLevel < 6 && (
+                    <div className="nav-group" style={{
+                        background: 'rgba(255, 152, 0, 0.05)',
+                        borderRadius: '12px',
+                        padding: '12px 8px',
+                        border: '1px solid rgba(255, 152, 0, 0.2)'
+                    }}>
+                        <h3 className="nav-label" style={{ color: '#ff9800', fontWeight: 800 }}>
+                            {!isSidebarCollapsed && '🤝 B2B PARTNER'}
+                        </h3>
+                        <NavLink
+                            to="/b2b-search"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="B2B Search & Booking"
+                            style={({ isActive }) => ({
+                                borderLeft: isActive ? '4px solid #ff9800' : 'none',
+                                background: isActive ? 'rgba(255, 152, 0, 0.15)' : 'transparent'
+                            })}
+                        >
+                            <Search size={20} color="#ff9800" /> {!isSidebarCollapsed && (
+                                <span style={{ color: '#ff9800', fontWeight: 700 }}>Pretraga & Rezervacije</span>
+                            )}
+                        </NavLink>
+                        <NavLink
+                            to="/my-reservations"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="My Reservations"
+                            style={({ isActive }) => ({
+                                borderLeft: isActive ? '4px solid #ff9800' : 'none',
+                                background: isActive ? 'rgba(255, 152, 0, 0.15)' : 'transparent'
+                            })}
+                        >
+                            <ClipboardList size={20} color="#ff9800" /> {!isSidebarCollapsed && (
+                                <span style={{ color: '#ff9800', fontWeight: 700 }}>Moje Rezervacije</span>
+                            )}
+                        </NavLink>
+                    </div>
+                )}
 
 
 
