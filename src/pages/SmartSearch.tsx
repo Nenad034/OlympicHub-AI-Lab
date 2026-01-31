@@ -54,6 +54,15 @@ const SmartSearch: React.FC = () => {
         { id: 'd11', name: 'Turska', type: 'destination', country: 'Turkey' },
         { id: 'd12', name: 'Antalya', type: 'destination', country: 'Turkey' },
         { id: 'd13', name: 'Dubai', type: 'destination', country: 'UAE' },
+        { id: 'd14', name: 'Bugarska', type: 'destination', country: 'Bulgaria' },
+        { id: 'd15', name: 'Golden Sands (Zlatni Pjasci)', type: 'destination', country: 'Bulgaria' },
+        { id: 'd16', name: 'Sunny Beach (Sunčev Breg)', type: 'destination', country: 'Bulgaria' },
+        { id: 'd17', name: 'Bansko', type: 'destination', country: 'Bulgaria' },
+        { id: 'd18', name: 'Borovets', type: 'destination', country: 'Bulgaria' },
+        { id: 'd19', name: 'Pamporovo', type: 'destination', country: 'Bulgaria' },
+        { id: 'd20', name: 'Nesebar', type: 'destination', country: 'Bulgaria' },
+        { id: 'd21', name: 'Varna', type: 'destination', country: 'Bulgaria' },
+        { id: 'd22', name: 'Burgas', type: 'destination', country: 'Bulgaria' },
 
         // Hoteli
         { id: 'h1', name: 'Hotel Splendid', type: 'hotel', country: 'Montenegro', stars: 5, provider: 'Solvex' },
