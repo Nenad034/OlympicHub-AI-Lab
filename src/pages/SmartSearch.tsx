@@ -18,6 +18,7 @@ import './SmartSearch.css';
 import './SmartSearchFix2.css';
 import './SmartSearchStylesFix.css';
 import './SmartSearchLightMode.css';
+import './SmartSearchRedesign.css';
 import './SmartSearchGridFix.css';
 
 /**
@@ -373,16 +374,37 @@ const SmartSearch: React.FC = () => {
 
     const getPriceWithMargin = (price: number) => Math.round(price * 1.15);
 
+    const handleQuickFilter = (type: string) => {
+        if (type === 'last-minute') {
+            const today = new Date();
+            const nextWeek = new Date();
+            nextWeek.setDate(today.getDate() + 7);
+            setCheckIn(today.toISOString().split('T')[0]);
+            setCheckOut(nextWeek.toISOString().split('T')[0]);
+            setNights(7);
+        } else if (type === '5-stars') {
+            setSelectedStars(['5']);
+            // Trigger search with 5 stars? Or just set filter.
+            // Ideally we'd set the filter state.
+        } else if (type === 'early-bird') {
+            const nextMonth = new Date();
+            nextMonth.setMonth(nextMonth.getMonth() + 3);
+            const nextWeek = new Date(nextMonth);
+            nextWeek.setDate(nextMonth.getDate() + 7);
+            setCheckIn(nextMonth.toISOString().split('T')[0]);
+            setCheckOut(nextWeek.toISOString().split('T')[0]);
+        }
+    };
+
     return (
-        <div className="smart-search-container">
-            {/* Header */}
+        <div className="smart-search-container-v2">
+            {/* Minimal Header */}
             <header className="smart-search-header">
                 <div className="header-brand">
                     <div className="logo-olympic">
-                        <Shield size={32} className="logo-icon" />
+                        <Shield size={28} className="logo-icon" />
                         <div className="logo-text">
-                            <h1>OLYMPIC HUB</h1>
-                            <p>Jedan klik, svi dobavljači</p>
+                            <h1 style={{ fontSize: '1.5rem' }}>OLYMPIC HUB</h1>
                         </div>
                     </div>
                 </div>
@@ -394,22 +416,28 @@ const SmartSearch: React.FC = () => {
                 )}
             </header>
 
-            {/* Tab Navigation */}
-            <div className="search-tabs">
+            {/* TAB NAVIGATION */}
+            <div className="tabs-nav-container">
                 {tabs.map(tab => (
-                    <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
-                        <tab.icon size={20} />
+                    <button
+                        key={tab.id}
+                        className={`nav-tab-item ${activeTab === tab.id ? 'active' : ''}`}
+                        onClick={() => setActiveTab(tab.id)}
+                    >
+                        <tab.icon size={18} />
                         <span>{tab.label}</span>
                     </button>
                 ))}
             </div>
 
-            {/* Search Form */}
-            <div className="search-form-smart">
-                <div className="form-grid">
-                    <div className="form-field" ref={autocompleteRef}>
-                        <label><MapPin size={16} /> <span>Destinacija</span></label>
-                        <div className="multi-destination-input premium">
+            {/* MAIN SEARCH CARD */}
+            <div className="search-card-frame">
+
+                {/* ROW 1: DESTINATION */}
+                <div className="destination-row">
+                    <div className="field-label"><MapPin size={14} /> Destinacija ili Smeštaj (do 3)</div>
+                    <div className="destination-input-wrapper" ref={autocompleteRef}>
+                        <div className="multi-destination-input premium" style={{ border: 'none', padding: 0, height: 'auto', background: 'transparent' }}>
                             {selectedDestinations.map(dest => (
                                 <div key={dest.id} className="destination-chip">
                                     {dest.type === 'hotel' ? <Hotel size={14} /> : <MapPin size={14} />}
@@ -421,16 +449,18 @@ const SmartSearch: React.FC = () => {
                                 <input
                                     ref={inputRef}
                                     type="text"
-                                    placeholder={selectedDestinations.length === 0 ? "Npr: Crna Gora, Golden Sands..." : "Dodaj još..."}
+                                    placeholder={selectedDestinations.length === 0 ? "npr. Golden Sands, Hotel Park..." : "Dodaj još..."}
                                     value={destinationInput}
                                     onChange={(e) => setDestinationInput(e.target.value)}
                                     className="smart-input-inline"
                                     onFocus={() => { if (destinationInput.length >= 2) setShowSuggestions(true); }}
+                                    style={{ background: 'transparent', border: 'none', width: '100%', height: '100%', fontSize: '1rem' }}
                                 />
                             )}
                         </div>
+                        {/* Suggestions Dropdown */}
                         {showSuggestions && suggestions.length > 0 && (
-                            <div className="autocomplete-dropdown premium">
+                            <div className="autocomplete-dropdown premium" style={{ top: '100%', left: 0, right: 0, width: '100%' }}>
                                 {suggestions.map(s => (
                                     <div key={s.id} className="suggestion-item" onClick={() => handleAddDestination(s)}>
                                         {s.type === 'hotel' ? <Hotel size={16} className="suggestion-icon hotel" /> : <MapPin size={16} className="suggestion-icon destination" />}
@@ -445,50 +475,75 @@ const SmartSearch: React.FC = () => {
                             </div>
                         )}
                     </div>
+                </div>
 
-                    <div className="form-field" onClick={() => setActiveCalendar('in')} style={{ cursor: 'pointer' }}>
-                        <label><CalendarIcon size={16} /> <span>Check-in</span></label>
-                        <div className="smart-input premium">{formatDate(checkIn) || 'ODABERI'}</div>
-                    </div>
-
-                    <div className="form-field" onClick={() => setActiveCalendar('out')} style={{ cursor: 'pointer' }}>
-                        <label><CalendarIcon size={16} /> <span>Check-out</span></label>
-                        <div className="smart-input premium">{formatDate(checkOut) || 'ODABERI'}</div>
-                    </div>
-
-                    <div className="form-field">
-                        <label><Users size={16} /> <span>Odrasli</span></label>
-                        <div className="guest-selector premium">
-                            <button onClick={() => setAdults(Math.max(1, adults - 1))}>−</button>
-                            <span>{adults}</span>
-                            <button onClick={() => setAdults(adults + 1)}>+</button>
+                {/* ROW 2: PARAMETERS GRID */}
+                <div className="params-grid">
+                    {/* Check In */}
+                    <div className="col-checkin param-item">
+                        <div className="field-label"><CalendarIcon size={14} /> Check-in</div>
+                        <div className="input-box" onClick={() => setActiveCalendar('in')} style={{ cursor: 'pointer' }}>
+                            {checkIn ? formatDate(checkIn) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
                         </div>
                     </div>
 
-                    <div className="form-field">
-                        <label><Users size={16} /> <span>Deca {children > 0 ? '& Godine' : ''}</span></label>
-                        <div className="guest-selector premium" style={{ justifyContent: 'flex-start', gap: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0 4px', marginRight: children > 0 ? '8px' : '0' }}>
-                                <button onClick={() => {
-                                    const newCount = Math.max(0, children - 1);
-                                    setChildren(newCount);
-                                    setChildrenAges(prev => prev.slice(0, newCount));
-                                }}>−</button>
-                                <span style={{ minWidth: '20px' }}>{children}</span>
-                                <button onClick={() => {
-                                    const newCount = Math.min(4, children + 1);
-                                    setChildren(newCount);
-                                    setChildrenAges(prev => [...prev, 7].slice(0, newCount));
-                                }}>+</button>
-                            </div>
+                    {/* Check Out */}
+                    <div className="col-checkout param-item">
+                        <div className="field-label"><CalendarIcon size={14} /> Check-out</div>
+                        <div className="input-box" onClick={() => setActiveCalendar('out')} style={{ cursor: 'pointer' }}>
+                            {checkOut ? formatDate(checkOut) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
+                        </div>
+                    </div>
 
-                            <div className="children-inputs-container">
-                                {children > 0 && childrenAges.map((age, idx) => (
+                    {/* Flexibility */}
+                    <div className="col-flex param-item">
+                        <div className="field-label"><ArrowDownWideNarrow size={14} /> Fleksibilnost</div>
+                        <div className="flex-toggle-group">
+                            {[0, 1, 3, 5].map(day => (
+                                <button
+                                    key={day}
+                                    className={`flex-btn ${flexibleDays === day ? 'active' : ''}`}
+                                    onClick={() => setFlexibleDays(day)}
+                                >
+                                    {day === 0 ? 'Tačno' : `+${day}`}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Adults */}
+                    <div className="col-adults param-item">
+                        <div className="field-label"><Users size={14} /> Odrasli</div>
+                        <div className="counter-box">
+                            <button className="btn-counter" onClick={() => setAdults(Math.max(1, adults - 1))}>−</button>
+                            <span className="counter-val">{adults}</span>
+                            <button className="btn-counter" onClick={() => setAdults(adults + 1)}>+</button>
+                        </div>
+                    </div>
+
+                    {/* Children */}
+                    <div className="col-children param-item">
+                        <div className="field-label"><Users2 size={14} /> Deca</div>
+                        <div className="counter-box">
+                            <button className="btn-counter" onClick={() => {
+                                const newCount = Math.max(0, children - 1);
+                                setChildren(newCount);
+                                setChildrenAges(prev => prev.slice(0, newCount));
+                            }}>−</button>
+                            <span className="counter-val">{children}</span>
+                            <button className="btn-counter" onClick={() => {
+                                const newCount = Math.min(4, children + 1);
+                                setChildren(newCount);
+                                setChildrenAges(prev => [...prev, 7].slice(0, newCount));
+                            }}>+</button>
+                        </div>
+                        {children > 0 && (
+                            <div style={{ position: 'absolute', marginTop: '8px', display: 'flex', gap: '4px' }}>
+                                {childrenAges.map((age, idx) => (
                                     <input
                                         key={idx}
                                         type="number"
-                                        min="0"
-                                        max="17"
+                                        min="0" max="17"
                                         value={age}
                                         onChange={e => {
                                             const val = parseInt(e.target.value);
@@ -498,32 +553,91 @@ const SmartSearch: React.FC = () => {
                                                 setChildrenAges(newAges);
                                             }
                                         }}
-                                        className="smart-input premium age-input"
-                                        title={`Dete ${idx + 1} godina`}
+                                        className="smart-input premium"
+                                        style={{ width: '36px', height: '24px', padding: 0, textAlign: 'center', fontSize: '12px' }}
+                                        title={`Dete ${idx + 1}`}
                                     />
                                 ))}
                             </div>
+                        )}
+                    </div>
+
+                    {/* Meal Plan */}
+                    <div className="col-meal param-item">
+                        <div className="field-label"><UtensilsCrossed size={14} /> Ishrana</div>
+                        <div className="input-box" style={{ padding: 0, overflow: 'hidden' }}>
+                            <select
+                                value={mealPlan}
+                                onChange={(e) => setMealPlan(e.target.value)}
+                                style={{
+                                    width: '100%', height: '100%', background: 'transparent',
+                                    border: 'none', color: 'white', padding: '0 1rem',
+                                    cursor: 'pointer', outline: 'none'
+                                }}
+                            >
+                                <option value="" style={{ background: '#1e293b' }}>Sve Usluge</option>
+                                <option value="AI" style={{ background: '#1e293b' }}>All Inclusive</option>
+                                <option value="UAI" style={{ background: '#1e293b' }}>Ultra All Inclusive</option>
+                                <option value="HB" style={{ background: '#1e293b' }}>Polupansion</option>
+                                <option value="BB" style={{ background: '#1e293b' }}>Noćenje sa doručkom</option>
+                                <option value="RO" style={{ background: '#1e293b' }}>Najam</option>
+                            </select>
                         </div>
                     </div>
+
                 </div>
 
-                <button className="search-btn-smart premium" onClick={handleSearch} disabled={isSearching}>
-                    {isSearching ? <Loader2 size={20} className="spin" /> : <Search size={20} />}
-                    <span>{isSearching ? 'Pretražujem...' : 'Pretraži Sve Dobavljače'}</span>
-                </button>
+                {/* SEARCH BUTTON */}
+                <div className="action-row">
+                    <button className="btn-search-main" onClick={handleSearch} disabled={isSearching}>
+                        {isSearching ? <Loader2 size={24} className="spin" /> : <Search size={24} />}
+                        <span>{isSearching ? 'Pretražujem...' : 'Pretraži Sve Dobavljače'}</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* QUICK FILTERS */}
+            <div className="quick-filters-section">
+                <div className="section-title fire"><Zap size={18} fill="currentColor" /> Brzi Filteri</div>
+                <div className="filter-chips-row">
+                    <button className="quick-filter-chip" onClick={() => handleQuickFilter('last-minute')}><Clock size={16} /> Last Minute</button>
+                    <button className="quick-filter-chip" onClick={() => handleQuickFilter('early-bird')}><TrendingUp size={16} /> Early Bird</button>
+                    <button className="quick-filter-chip" onClick={() => handleQuickFilter('5-stars')}><Star size={16} fill="currentColor" /> 5★ Hoteli</button>
+                </div>
+            </div>
+
+            {/* POPULAR DESTINATIONS */}
+            <div className="popular-dests-section">
+                <div className="section-title globe"><MapIcon size={18} /> Popularne Destinacije</div>
+                <div className="popular-dests-grid">
+                    {[
+                        { code: 'GR', name: 'Grčka', count: 234, id: 'd4' },
+                        { code: 'EG', name: 'Egipat', count: 189, id: 'd8' },
+                        { code: 'TR', name: 'Turska', count: 156, id: 'd11' },
+                        { code: 'AE', name: 'Dubai', count: 98, id: 'd13' }
+                    ].map(dest => (
+                        <div key={dest.code} className="pop-dest-card" onClick={() => handleAddDestination(mockDestinations.find(d => d.id === dest.id) || mockDestinations[0])}>
+                            <div className="pop-bg-code">{dest.code}</div>
+                            <div className="pop-content">
+                                <span className="pop-name">{dest.name}</span>
+                                <span className="pop-count">{dest.count} ponuda</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* ERROR ALERT */}
             {searchError && (
-                <div className="search-error animate-fade-in">
+                <div className="search-error animate-fade-in" style={{ marginTop: '2rem' }}>
                     <Info size={18} />
                     <span>{searchError}</span>
                 </div>
             )}
 
-            {/* Results Section */}
+            {/* RESULTS SECTION (EXISTING LOGIC) */}
             {searchPerformed && (
-                <div className="content-workflow animate-fade-in">
+                <div className="content-workflow animate-fade-in" style={{ marginTop: '3rem' }}>
                     {/* Force Single Row Toolbar */}
                     <div className="filters-toolbar-v4 premium" style={{ display: 'flex', flexWrap: 'nowrap', gap: '16px', alignItems: 'center' }}>
                         <div className="name-filter-wrapper" style={{ flex: 1, minWidth: '0' }}>
