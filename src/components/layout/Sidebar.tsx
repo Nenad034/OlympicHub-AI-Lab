@@ -171,6 +171,19 @@ const Sidebar: React.FC = () => {
                             )}
                         </NavLink>
                         <NavLink
+                            to="/smart-search"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Smart Search (New)"
+                            style={({ isActive }) => ({
+                                borderLeft: isActive ? '4px solid #ff9800' : 'none',
+                                background: isActive ? 'rgba(255, 152, 0, 0.15)' : 'transparent'
+                            })}
+                        >
+                            <Sparkles size={20} color="#ff9800" /> {!isSidebarCollapsed && (
+                                <span style={{ color: '#ff9800', fontWeight: 700 }}>Smart Search ✨</span>
+                            )}
+                        </NavLink>
+                        <NavLink
                             to="/my-reservations"
                             className={({ isActive }) => navItemClass(isActive)}
                             title="My Reservations"

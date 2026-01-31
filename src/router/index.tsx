@@ -57,6 +57,7 @@ const TCTTest = React.lazy(() => import('../pages/TCTTest'));
 const MasterSearch = React.lazy(() => import('../pages/MasterSearch'));
 const SubagentAdmin = React.lazy(() => import('../pages/SubagentAdmin'));
 const B2BSearch = React.lazy(() => import('../pages/B2BSearch'));
+const SmartSearch = React.lazy(() => import('../pages/SmartSearch'));
 
 
 // Stores
@@ -328,6 +329,10 @@ export const router = createBrowserRouter([
             {
                 path: 'b2b-search',
                 element: <B2BSearch />,
+            },
+            {
+                path: 'smart-search',
+                element: <SmartSearch />,
             },
             {
                 path: 'my-reservations',
