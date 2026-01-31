@@ -561,28 +561,7 @@ const SmartSearch: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Meal Plan */}
-                    <div className="col-meal param-item">
-                        <div className="field-label"><UtensilsCrossed size={14} /> Ishrana</div>
-                        <div className="input-box" style={{ padding: 0, overflow: 'hidden' }}>
-                            <select
-                                value={mealPlan}
-                                onChange={(e) => setMealPlan(e.target.value)}
-                                style={{
-                                    width: '100%', height: '100%', background: 'transparent',
-                                    border: 'none', color: 'white', padding: '0 1rem',
-                                    cursor: 'pointer', outline: 'none'
-                                }}
-                            >
-                                <option value="" style={{ background: '#1e293b' }}>Sve Usluge</option>
-                                <option value="AI" style={{ background: '#1e293b' }}>All Inclusive</option>
-                                <option value="UAI" style={{ background: '#1e293b' }}>Ultra All Inclusive</option>
-                                <option value="HB" style={{ background: '#1e293b' }}>Polupansion</option>
-                                <option value="BB" style={{ background: '#1e293b' }}>Noćenje sa doručkom</option>
-                                <option value="RO" style={{ background: '#1e293b' }}>Najam</option>
-                            </select>
-                        </div>
-                    </div>
+
 
                 </div>
 
