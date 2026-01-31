@@ -553,8 +553,8 @@
 /* Autocomplete Dropdown */
 .autocomplete-dropdown {
     position: absolute;
-    top: calc(100% - 1.5rem);
-    /* Pozicioniraj ga unutar field-a ali ispod inputa */
+    top: calc(100% + 0.5rem);
+    /* Prikaži ISPOD multi-destination-input kontejnera */
     left: 0;
     right: 0;
     max-height: 400px;

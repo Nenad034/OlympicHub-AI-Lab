@@ -6,7 +6,7 @@
 import { OpenGreeceAPI } from './opengreeceApiService';
 import * as TCTApi from './tctApiService';
 import { getAmadeusApi } from './flight/providers/amadeus/amadeusApiService';
-import solvexSearchService from './solvex/solvexSearchService';
+import { SolvexAiProvider } from './providers/SolvexAiProvider';
 
 // Provider mapping by search type
 export const PROVIDER_MAPPING = {
@@ -191,43 +191,45 @@ export async function searchHotels(
         console.error('[SmartSearch] TCT error:', error);
     }
 
-    // Search Solvex
+    // Search Solvex AI (Agoda Engine Model)
     try {
+        const solvexAi = new SolvexAiProvider();
         for (const dest of destinations) {
-            // Solvex is primarily for Bulgaria
             const isBulgaria = dest.country?.toLowerCase() === 'bulgaria' ||
                 dest.name.toLowerCase().includes('bulgaria') ||
                 ['bansa', 'borovets', 'sunny beach', 'golden sands', 'varna', 'burgas', 'sofia', 'pamporovo'].some(city => dest.name.toLowerCase().includes(city));
 
-            if (isBulgaria || dest.provider === 'solvex') {
-                const solvexResponse = await solvexSearchService.searchHotels({
-                    dateFrom: checkIn,
-                    dateTo: checkOut,
+            if (isBulgaria || dest.provider === 'Solvex' || dest.provider === 'solvex') {
+                const aiResults = await solvexAi.search({
+                    destination: dest.name,
+                    checkIn: new Date(checkIn),
+                    checkOut: new Date(checkOut),
                     adults,
                     children: children || 0,
                     childrenAges: params.childrenAges || [],
-                    cityId: dest.type === 'destination' ? parseInt(dest.id) : undefined,
-                    hotelId: dest.type === 'hotel' ? parseInt(dest.id) : undefined,
+                    providerId: dest.id.startsWith('solvex-h-') ? dest.id.replace('solvex-h-', '') : dest.id,
+                    providerType: dest.type === 'destination' ? 'city' : 'hotel',
+                    targetProvider: 'Solvex'
                 });
 
-                if (solvexResponse.success && solvexResponse.data) {
-                    results.push(...solvexResponse.data.map(h => ({
-                        provider: 'Solvex',
+                if (aiResults && aiResults.length > 0) {
+                    results.push(...aiResults.map((h: any) => ({
+                        provider: 'Solvex AI',
                         type: 'hotel' as const,
-                        id: String(h.hotel.id),
-                        name: h.hotel.name,
-                        location: h.hotel.city.name,
-                        price: h.totalCost,
-                        currency: 'EUR',
-                        stars: h.hotel.starRating,
-                        mealPlan: h.pansion.name,
-                        originalData: h,
+                        id: h.id,
+                        name: h.hotelName,
+                        location: h.location,
+                        price: h.price,
+                        currency: h.currency,
+                        stars: h.stars,
+                        mealPlan: h.mealPlan,
+                        originalData: h.originalData,
                     })));
                 }
             }
         }
     } catch (error) {
-        console.error('[SmartSearch] Solvex error:', error);
+        console.error('[SmartSearch] Solvex AI error:', error);
     }
 
     return results;

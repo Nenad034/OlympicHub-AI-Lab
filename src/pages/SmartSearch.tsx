@@ -102,6 +102,9 @@ const SmartSearch: React.FC = () => {
                     !selectedDestinations.find(selected => selected.id === dest.id)
                 );
 
+                console.log('[SmartSearch AI] Search term:', searchTerm);
+                console.log('[SmartSearch AI] Local matches found:', localMatches.length, localMatches.map(m => m.name));
+
                 setSuggestions(localMatches.slice(0, 10));
                 setShowSuggestions(localMatches.length > 0);
 
@@ -311,7 +314,12 @@ const SmartSearch: React.FC = () => {
                                     value={destinationInput}
                                     onChange={(e) => setDestinationInput(e.target.value)}
                                     onKeyDown={handleKeyDown}
-                                    onFocus={() => destinationInput.length >= 3 && setShowSuggestions(true)}
+                                    onFocus={() => {
+                                        console.log('[SmartSearch] Input focused, current value:', destinationInput);
+                                        if (destinationInput.length >= 2 && suggestions.length > 0) {
+                                            setShowSuggestions(true);
+                                        }
+                                    }}
                                     className="smart-input-inline"
                                 />
                             )}
