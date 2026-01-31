@@ -655,11 +655,13 @@
 
 .grid-view {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)) !important;
     grid-auto-flow: row !important;
-    gap: 16px !important;
+    gap: 20px !important;
     width: 100% !important;
     max-width: 100% !important;
+    padding-bottom: 40px;
+    /* Add some space at bottom */
 }
 
 /* Ensure cards don't force vertical layout */
@@ -741,7 +743,33 @@
     color: var(--text-primary);
 }
 
-.card-finance .pax {
+.card-finance {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.finance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.finance-row.total {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+}
+
+.finance-row.total .price {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--text-primary);
+}
+
+.finance-row.total .pax {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -749,11 +777,35 @@
     color: var(--text-secondary);
 }
 
+.finance-row.detail {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.paid-label {
+    color: var(--text-secondary);
+}
+
+.paid-value {
+    color: #10b981;
+}
+
+.due-label {
+    color: var(--text-secondary);
+    font-weight: 700;
+}
+
+.due-value {
+    color: #ef4444;
+    font-weight: 800;
+}
+
 .card-actions-wrapper {
     display: flex;
     flex-direction: column;
     gap: 10px;
     align-items: flex-end;
+    margin-left: 20px;
 }
 
 .workflow-dot.mini {
@@ -846,8 +898,10 @@
 @media (max-width: 1100px) {
     .list-view {
         display: grid !important;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)) !important;
         gap: 20px !important;
+        height: auto !important;
+        overflow: visible !important;
     }
 
     .reservation-row {

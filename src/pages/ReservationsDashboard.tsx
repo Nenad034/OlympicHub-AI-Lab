@@ -1568,8 +1568,20 @@ ${data.map(r => `  <reservation>
                                 </div>
                                 <div className="card-footer">
                                     <div className="card-finance">
-                                        <span className="price">{res.totalPrice.toLocaleString()} {res.currency}</span>
-                                        <span className="pax">{res.paxCount} <Users size={12} /></span>
+                                        <div className="finance-row total">
+                                            <span className="price">{res.totalPrice.toLocaleString()} {res.currency}</span>
+                                            <span className="pax">{res.paxCount} <Users size={12} /></span>
+                                        </div>
+                                        <div className="finance-row detail">
+                                            <span className="paid-label">Uplaćeno:</span>
+                                            <span className="paid-value">{res.paid.toLocaleString()} {res.currency}</span>
+                                        </div>
+                                        {res.totalPrice - res.paid > 0 && (
+                                            <div className="finance-row detail remaining">
+                                                <span className="due-label">Preostalo:</span>
+                                                <span className="due-value">{(res.totalPrice - res.paid).toLocaleString()} {res.currency}</span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="card-actions-wrapper">
