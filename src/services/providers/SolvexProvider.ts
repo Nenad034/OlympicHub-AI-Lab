@@ -104,12 +104,19 @@ export class SolvexProvider implements HotelProvider {
 
         } catch (error) {
             console.error('[SolvexBridge] Search failure:', error);
-            sentinelEvents.emit({
-                title: 'Solvex Bridge Kritična Greška',
-                message: `Kritičan prekid u Solvex mostu: ${error instanceof Error ? error.message : 'Nepoznata greška'}.`,
-                type: 'critical',
-                provider: 'Solvex'
-            });
+            const errStr = String(error);
+
+            // Suppress network errors from UI
+            if (errStr.includes('Failed to fetch') || errStr.includes('Konekcija sa Solvex sistemom nije uspela')) {
+                console.warn('[SolvexBridge] Solvex system unreachable. Ignoring.');
+            } else {
+                sentinelEvents.emit({
+                    title: 'Solvex Bridge Kritična Greška',
+                    message: `Kritičan prekid u Solvex mostu: ${error instanceof Error ? error.message : 'Nepoznata greška'}.`,
+                    type: 'critical',
+                    provider: 'Solvex'
+                });
+            }
             return [];
         }
     }

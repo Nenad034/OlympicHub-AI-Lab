@@ -191,6 +191,13 @@
     box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
 }
 
+.smart-select option {
+    background-color: #1e1b4b;
+    /* Dark background for options */
+    color: #ffffff;
+    padding: 12px;
+}
+
 .smart-input::placeholder {
     color: var(--text-secondary);
 }

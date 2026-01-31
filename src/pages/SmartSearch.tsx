@@ -3,7 +3,7 @@ import { useAuthStore } from '../stores';
 import {
     Sparkles, Hotel, Plane, Package, Bus, Compass,
     MapPin, Calendar, CalendarDays, Users, UtensilsCrossed, Star,
-    Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2
+    Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown
 } from 'lucide-react';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
 import solvexDictionaryService from '../services/solvex/solvexDictionaryService';
@@ -40,7 +40,7 @@ const SmartSearch: React.FC = () => {
     const [adults, setAdults] = useState(2);
     const [children, setChildren] = useState(0);
     const [childrenAges, setChildrenAges] = useState<number[]>([]);
-    const [mealPlan, setMealPlan] = useState('all-inclusive');
+    const [mealPlan, setMealPlan] = useState('');
 
     // Helper to sync nights when dates change
     const syncNightsFromDates = (start: string, end: string) => {
@@ -664,16 +664,36 @@ const SmartSearch: React.FC = () => {
                             <UtensilsCrossed size={16} />
                             <span>Ishrana</span>
                         </label>
-                        <select
-                            value={mealPlan}
-                            onChange={(e) => setMealPlan(e.target.value)}
-                            className="smart-select"
-                        >
-                            <option value="all-inclusive">All Inclusive</option>
-                            <option value="half-board">Polupansion</option>
-                            <option value="breakfast">Doručak</option>
-                            <option value="room-only">Samo Soba</option>
-                        </select>
+                        <div style={{ position: 'relative' }}>
+                            <select
+                                value={mealPlan}
+                                onChange={(e) => setMealPlan(e.target.value)}
+                                className="smart-select"
+                                style={{
+                                    width: '100%',
+                                    appearance: 'none',
+                                    paddingRight: '36px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <option value="">Sve opcije</option>
+                                <option value="all-inclusive">All Inclusive</option>
+                                <option value="half-board">Polupansion</option>
+                                <option value="breakfast">Doručak</option>
+                                <option value="room-only">Samo Soba</option>
+                            </select>
+                            <ChevronDown
+                                size={16}
+                                style={{
+                                    position: 'absolute',
+                                    right: '12px',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    pointerEvents: 'none',
+                                    color: 'rgba(255,255,255,0.5)'
+                                }}
+                            />
+                        </div>
                     </div>
                 </div>
 
