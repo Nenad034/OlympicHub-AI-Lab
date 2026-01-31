@@ -36,7 +36,10 @@
 
 import { XMLParser, XMLBuilder } from 'fast-xml-parser';
 
-const SOLVEX_API_URL = import.meta.env.VITE_SOLVEX_API_URL || '/api/solvex/iservice/integrationservice.asmx';
+const isDev = import.meta.env.MODE === 'development';
+const SOLVEX_API_URL = isDev
+    ? '/api/solvex/iservice/integrationservice.asmx'
+    : (import.meta.env.VITE_SOLVEX_API_URL || 'https://evaluation.solvex.bg/iservice/integrationservice.asmx');
 
 // XML Parser options
 const parserOptions = {
