@@ -18,6 +18,7 @@ import './SmartSearch.css';
 import './SmartSearchFix2.css';
 import './SmartSearchStylesFix.css';
 import './SmartSearchLightMode.css';
+import './SmartSearchGridFix.css';
 
 /**
  * Constants for filtering
