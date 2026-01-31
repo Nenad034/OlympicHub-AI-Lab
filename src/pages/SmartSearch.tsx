@@ -301,8 +301,26 @@ const SmartSearch: React.FC = () => {
                             console.log('[SmartSearch Render] showSuggestions:', showSuggestions);
                             console.log('[SmartSearch Render] suggestions.length:', suggestions.length);
                             console.log('[SmartSearch Render] suggestions:', suggestions.map(s => s.name));
+                            console.log('[SmartSearch Render] ABOUT TO RENDER DROPDOWN:', showSuggestions && suggestions.length > 0);
                             return null;
                         })()}
+
+                        {/* FORCE RENDER - Always show dropdown for debugging */}
+                        <div style={{
+                            position: 'absolute',
+                            top: 'calc(100% + 0.5rem)',
+                            left: 0,
+                            right: 0,
+                            background: 'lime',
+                            color: 'black',
+                            padding: '20px',
+                            zIndex: 99999,
+                            border: '5px solid magenta'
+                        }}>
+                            FORCED DROPDOWN - showSuggestions: {showSuggestions ? 'TRUE' : 'FALSE'},
+                            suggestions: {suggestions.length}
+                        </div>
+
                         {showSuggestions && suggestions.length > 0 && (
                             <div className="autocomplete-dropdown">
                                 <div style={{ color: 'white', fontSize: '20px', padding: '20px', background: 'blue' }}>
