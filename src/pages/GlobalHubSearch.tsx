@@ -180,6 +180,11 @@ const GlobalHubSearch: React.FC = () => {
     const [selectedArrivalDate, setSelectedArrivalDate] = useState<string | null>(null);
     const [expandedHotel, setExpandedHotel] = useState<CombinedResult | null>(null);
 
+    // Advanced autocomplete state
+    const [selectedIndex, setSelectedIndex] = useState(-1); // For keyboard navigation
+    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false); // Loading state
+    const [recentSearches, setRecentSearches] = useState<Array<{ id: number | string, name: string, type: 'city' | 'hotel', source: 'TCT' | 'Solvex' | 'OpenGreece' | 'ORS', stars?: number, location?: string }>>([]);
+
     // B2B Segment States
     const { userLevel } = useAuthStore();
     const isSubagent = userLevel < 6; // Simulation: any non-admin is treated as subagent for UI 
@@ -230,95 +235,117 @@ const GlobalHubSearch: React.FC = () => {
         const checkOutDate = new Date(tomorrow);
         checkOutDate.setDate(checkOutDate.getDate() + nights);
         setCheckOut(checkOutDate.toISOString().split('T')[0]);
+
+        // Load recent searches from localStorage
+        const stored = localStorage.getItem('globalHubRecentSearches');
+        if (stored) {
+            try {
+                setRecentSearches(JSON.parse(stored));
+            } catch (e) {
+                console.warn('Failed to parse recent searches:', e);
+            }
+        }
     }, []);
 
     const [activeCalendar, setActiveCalendar] = useState<'in' | 'out' | null>(null);
     const [apiConnectionsEnabled, setApiConnectionsEnabled] = useState(true);
 
-    // Handle destination input changes for autocomplete
-    const handleLocationInputChange = async (value: string) => {
+    // Advanced autocomplete with debounce and loading state
+    const handleLocationInputChange = (value: string) => {
         setLocationInput(value);
+        setSelectedIndex(-1); // Reset keyboard selection
+
         if (value.length < 2) {
             setSuggestions([]);
             setShowSuggestions(false);
+            setIsLoadingSuggestions(false);
             return;
         }
 
-        const searchTerm = value.toLowerCase();
-        const allSuggestions: Array<{ id: string | number, name: string, type: 'city' | 'hotel', source: 'Solvex' | 'TCT' | 'OpenGreece' | 'ORS', stars?: number, location?: string }> = [];
+        setIsLoadingSuggestions(true);
 
-        // Static popular destinations (for instant results)
-        const popularDestinations = [
-            // Solvex Cities
-            { id: 9, name: 'Bansko', type: 'city' as const, source: 'Solvex' as const, location: 'Bulgaria' },
-            { id: 6, name: 'Borovets', type: 'city' as const, source: 'Solvex' as const, location: 'Bulgaria' },
-            { id: 10, name: 'Pamporovo', type: 'city' as const, source: 'Solvex' as const, location: 'Bulgaria' },
-            { id: 33, name: 'Golden Sands', type: 'city' as const, source: 'Solvex' as const, location: 'Bulgaria' },
-            { id: 68, name: 'Sunny Beach', type: 'city' as const, source: 'Solvex' as const, location: 'Bulgaria' },
-            { id: 1, name: 'Nesebar', type: 'city' as const, source: 'Solvex' as const, location: 'Bulgaria' },
+        // Debounce: wait 300ms after user stops typing
+        const timer = setTimeout(async () => {
+            const searchTerm = value.toLowerCase();
+            const allSuggestions: Array<{ id: string | number, name: string, type: 'city' | 'hotel', source: 'Solvex' | 'TCT' | 'OpenGreece' | 'ORS', stars?: number, location?: string }> = [];
 
-            // TCT / Global Cities
-            { id: 'HRG', name: 'Hurghada', type: 'city' as const, source: 'TCT' as const, location: 'Egypt' },
-            { id: 'SSH', name: 'Sharm El Sheikh', type: 'city' as const, source: 'TCT' as const, location: 'Egypt' },
-            { id: 'ANT', name: 'Antalya', type: 'city' as const, source: 'TCT' as const, location: 'Turkey' },
-            { id: 'DXB', name: 'Dubai', type: 'city' as const, source: 'TCT' as const, location: 'UAE' },
+            // Static popular destinations (for instant results)
+            const popularDestinations = [
+                // Solvex Cities
+                { id: 9, name: 'Bansko', type: 'city' as const, source: 'Solvex' as const, location: 'Bulgaria' },
+                { id: 6, name: 'Borovets', type: 'city' as const, source: 'Solvex' as const, location: 'Bulgaria' },
+                { id: 10, name: 'Pamporovo', type: 'city' as const, source: 'Solvex' as const, location: 'Bulgaria' },
+                { id: 33, name: 'Golden Sands', type: 'city' as const, source: 'Solvex' as const, location: 'Bulgaria' },
+                { id: 68, name: 'Sunny Beach', type: 'city' as const, source: 'Solvex' as const, location: 'Bulgaria' },
+                { id: 1, name: 'Nesebar', type: 'city' as const, source: 'Solvex' as const, location: 'Bulgaria' },
 
-            // Greece / OpenGreece
-            { id: 'ATH', name: 'Atina', type: 'city' as const, source: 'OpenGreece' as const, location: 'Grčka' },
-            { id: 'CFU', name: 'Krf (Corfu)', type: 'city' as const, source: 'OpenGreece' as const, location: 'Grčka' },
-            { id: 'RHO', name: 'Rodos (Rhodes)', type: 'city' as const, source: 'OpenGreece' as const, location: 'Grčka' },
-            { id: 'HER', name: 'Heraklion (Crete)', type: 'city' as const, source: 'OpenGreece' as const, location: 'Grčka' },
-        ];
+                // TCT / Global Cities
+                { id: 'HRG', name: 'Hurghada', type: 'city' as const, source: 'TCT' as const, location: 'Egypt' },
+                { id: 'SSH', name: 'Sharm El Sheikh', type: 'city' as const, source: 'TCT' as const, location: 'Egypt' },
+                { id: 'ANT', name: 'Antalya', type: 'city' as const, source: 'TCT' as const, location: 'Turkey' },
+                { id: 'DXB', name: 'Dubai', type: 'city' as const, source: 'TCT' as const, location: 'UAE' },
 
-        // Add matching popular destinations first
-        const popularMatches = popularDestinations.filter(d =>
-            d.name.toLowerCase().includes(searchTerm)
-        );
-        allSuggestions.push(...popularMatches);
+                // Greece / OpenGreece
+                { id: 'ATH', name: 'Atina', type: 'city' as const, source: 'OpenGreece' as const, location: 'Grčka' },
+                { id: 'CFU', name: 'Krf (Corfu)', type: 'city' as const, source: 'OpenGreece' as const, location: 'Grčka' },
+                { id: 'RHO', name: 'Rodos (Rhodes)', type: 'city' as const, source: 'OpenGreece' as const, location: 'Grčka' },
+                { id: 'HER', name: 'Heraklion (Crete)', type: 'city' as const, source: 'OpenGreece' as const, location: 'Grčka' },
+            ];
 
-        // Dynamically search Solvex hotels if enabled
-        if (enabledProviders.solvex && apiConnectionsEnabled) {
-            try {
-                // Search across all major Solvex cities
-                const solvexCities = [33, 68, 9, 6, 10, 1]; // Golden Sands, Sunny Beach, Bansko, Borovets, Pamporovo, Nesebar
+            // Add matching popular destinations first
+            const popularMatches = popularDestinations.filter(d =>
+                d.name.toLowerCase().includes(searchTerm)
+            );
+            allSuggestions.push(...popularMatches);
 
-                for (const cityId of solvexCities) {
-                    const hotelsResponse = await import('../services/solvex/solvexDictionaryService').then(m => m.getHotels(cityId));
+            // Dynamically search Solvex hotels if enabled
+            if (enabledProviders.solvex) {
+                try {
+                    // Search across all major Solvex cities
+                    const solvexCities = [33, 68, 9, 6, 10, 1]; // Golden Sands, Sunny Beach, Bansko, Borovets, Pamporovo, Nesebar
 
-                    if (hotelsResponse.success && hotelsResponse.data) {
-                        const matchingHotels = hotelsResponse.data
-                            .filter((h: any) => h.name.toLowerCase().includes(searchTerm))
-                            .slice(0, 5) // Limit to 5 hotels per city
-                            .map((h: any) => ({
-                                id: h.id,
-                                name: h.name,
-                                type: 'hotel' as const,
-                                source: 'Solvex' as const,
-                                stars: h.stars,
-                                location: cityId === 33 ? 'Golden Sands' : cityId === 68 ? 'Sunny Beach' : cityId === 9 ? 'Bansko' : 'Bulgaria'
-                            }));
+                    for (const cityId of solvexCities) {
+                        const hotelsResponse = await import('../services/solvex/solvexDictionaryService').then(m => m.getHotels(cityId));
 
-                        allSuggestions.push(...matchingHotels);
+                        if (hotelsResponse.success && hotelsResponse.data) {
+                            const matchingHotels = hotelsResponse.data
+                                .filter((h: any) => h.name.toLowerCase().includes(searchTerm))
+                                .slice(0, 5) // Limit to 5 hotels per city
+                                .map((h: any) => ({
+                                    id: h.id,
+                                    name: h.name,
+                                    type: 'hotel' as const,
+                                    source: 'Solvex' as const,
+                                    stars: h.stars,
+                                    location: cityId === 33 ? 'Golden Sands' : cityId === 68 ? 'Sunny Beach' : cityId === 9 ? 'Bansko' : 'Bulgaria'
+                                }));
+
+                            allSuggestions.push(...matchingHotels);
+                        }
                     }
+                } catch (error) {
+                    console.warn('[Autocomplete] Solvex hotel search failed:', error);
                 }
-            } catch (error) {
-                console.warn('[Autocomplete] Solvex hotel search failed:', error);
             }
-        }
 
-        // Remove duplicates by name
-        const uniqueSuggestions = allSuggestions.filter((item, index, self) =>
-            index === self.findIndex((t) => t.name.toLowerCase() === item.name.toLowerCase())
-        );
+            // Remove duplicates by name
+            const uniqueSuggestions = allSuggestions.filter((item, index, self) =>
+                index === self.findIndex((t) => t.name.toLowerCase() === item.name.toLowerCase())
+            );
 
-        // Sort: cities first, then hotels, alphabetically within each group
-        uniqueSuggestions.sort((a, b) => {
-            if (a.type !== b.type) return a.type === 'city' ? -1 : 1;
-            return a.name.localeCompare(b.name);
-        });
+            // Sort: cities first, then hotels, alphabetically within each group
+            uniqueSuggestions.sort((a, b) => {
+                if (a.type !== b.type) return a.type === 'city' ? -1 : 1;
+                return a.name.localeCompare(b.name);
+            });
 
-        setSuggestions(uniqueSuggestions.slice(0, 15)); // Limit to 15 total suggestions
-        setShowSuggestions(uniqueSuggestions.length > 0);
+            setSuggestions(uniqueSuggestions.slice(0, 15)); // Limit to 15 total suggestions
+            setShowSuggestions(uniqueSuggestions.length > 0);
+            setIsLoadingSuggestions(false);
+        }, 300);
+
+        // Cleanup timeout on unmount or new input
+        return () => clearTimeout(timer);
     };
 
     const handleSelectSuggestion = (suggestion: any) => {
@@ -330,6 +357,12 @@ const GlobalHubSearch: React.FC = () => {
         setSelectedDestination({ id: suggestion.id, source: suggestion.source, type: suggestion.type });
         setSuggestions([]);
         setShowSuggestions(false);
+        setSelectedIndex(-1);
+
+        // Save to recent searches
+        const updated = [suggestion, ...recentSearches.filter((r: any) => r.id !== suggestion.id)].slice(0, 5);
+        setRecentSearches(updated);
+        localStorage.setItem('globalHubRecentSearches', JSON.stringify(updated));
     };
 
     const handleSearch = async () => {
