@@ -559,13 +559,18 @@
     right: 0;
     max-height: 400px;
     overflow-y: auto;
-    background: rgba(15, 23, 42, 0.95);
+    background: red !important;
+    /* DEBUG: Jarko crvena da vidimo gde je */
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 5px solid yellow !important;
+    /* DEBUG: Žuti border */
     border-radius: 16px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    z-index: 9999;
+    z-index: 99999 !important;
+    /* Maksimalan z-index */
     animation: dropdownFadeIn 0.2s ease-out;
+    min-height: 100px;
+    /* DEBUG: Minimalna visina da vidimo čak i ako je prazan */
 }
 
 @keyframes dropdownFadeIn {
