@@ -1,23 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '../stores';
 import {
     Sparkles, Hotel, Plane, Package, Bus, Compass,
     MapPin, Calendar, Users, UtensilsCrossed, Star,
-    Search, Bot, TrendingUp, Zap, Shield
+    Search, Bot, TrendingUp, Zap, Shield, X
 } from 'lucide-react';
 import './SmartSearch.css';
+
+interface Destination {
+    id: string;
+    name: string;
+    type: 'destination' | 'hotel';
+    country?: string;
+    stars?: number;
+    provider?: string;
+}
 
 const SmartSearch: React.FC = () => {
     const { userLevel } = useAuthStore();
     const isSubagent = userLevel < 6;
 
     const [activeTab, setActiveTab] = useState<'hotel' | 'flight' | 'package' | 'transfer' | 'tour'>('hotel');
-    const [destination, setDestination] = useState('');
+    const [selectedDestinations, setSelectedDestinations] = useState<Destination[]>([]);
+    const [destinationInput, setDestinationInput] = useState('');
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [suggestions, setSuggestions] = useState<Destination[]>([]);
     const [checkIn, setCheckIn] = useState('');
     const [checkOut, setCheckOut] = useState('');
     const [adults, setAdults] = useState(2);
     const [children, setChildren] = useState(0);
     const [mealPlan, setMealPlan] = useState('all-inclusive');
+
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Mock data - u realnoj aplikaciji ovo bi dolazilo iz API-ja
+    const mockDestinations: Destination[] = [
+        // Destinacije
+        { id: 'd1', name: 'Crna Gora', type: 'destination', country: 'Montenegro' },
+        { id: 'd2', name: 'Budva', type: 'destination', country: 'Montenegro' },
+        { id: 'd3', name: 'Kotor', type: 'destination', country: 'Montenegro' },
+        { id: 'd4', name: 'Grčka', type: 'destination', country: 'Greece' },
+        { id: 'd5', name: 'Krf (Corfu)', type: 'destination', country: 'Greece' },
+        { id: 'd6', name: 'Rodos', type: 'destination', country: 'Greece' },
+        { id: 'd7', name: 'Krit', type: 'destination', country: 'Greece' },
+        { id: 'd8', name: 'Egipat', type: 'destination', country: 'Egypt' },
+        { id: 'd9', name: 'Hurghada', type: 'destination', country: 'Egypt' },
+        { id: 'd10', name: 'Sharm El Sheikh', type: 'destination', country: 'Egypt' },
+        { id: 'd11', name: 'Turska', type: 'destination', country: 'Turkey' },
+        { id: 'd12', name: 'Antalya', type: 'destination', country: 'Turkey' },
+        { id: 'd13', name: 'Dubai', type: 'destination', country: 'UAE' },
+
+        // Hoteli
+        { id: 'h1', name: 'Hotel Splendid', type: 'hotel', country: 'Montenegro', stars: 5, provider: 'Solvex' },
+        { id: 'h2', name: 'Hotel Budva Riviera', type: 'hotel', country: 'Montenegro', stars: 4, provider: 'Solvex' },
+        { id: 'h3', name: 'Corfu Palace Hotel', type: 'hotel', country: 'Greece', stars: 5, provider: 'OpenGreece' },
+        { id: 'h4', name: 'Rodos Princess', type: 'hotel', country: 'Greece', stars: 4, provider: 'OpenGreece' },
+        { id: 'h5', name: 'Hurghada Marriott Beach Resort', type: 'hotel', country: 'Egypt', stars: 5, provider: 'TCT' },
+        { id: 'h6', name: 'Sharm Grand Plaza', type: 'hotel', country: 'Egypt', stars: 4, provider: 'TCT' },
+        { id: 'h7', name: 'Antalya Lara Beach', type: 'hotel', country: 'Turkey', stars: 5, provider: 'TCT' },
+        { id: 'h8', name: 'Dubai Marina Hotel', type: 'hotel', country: 'UAE', stars: 5, provider: 'TCT' },
+    ];
 
     const tabs = [
         { id: 'hotel' as const, label: 'Smeštaj', icon: Hotel },
@@ -39,6 +81,57 @@ const SmartSearch: React.FC = () => {
         { label: 'Early Bird', icon: TrendingUp, color: '#10b981' },
         { label: '5★ Hoteli', icon: Star, color: '#fbbf24' },
     ];
+
+    // Smart autocomplete - prikazuje sugestije nakon 3 karaktera
+    useEffect(() => {
+        if (destinationInput.length >= 3) {
+            const filtered = mockDestinations.filter(dest =>
+                dest.name.toLowerCase().includes(destinationInput.toLowerCase()) &&
+                !selectedDestinations.find(selected => selected.id === dest.id)
+            );
+            setSuggestions(filtered.slice(0, 8)); // Prikaži max 8 sugestija
+            setShowSuggestions(true);
+        } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
+        }
+    }, [destinationInput, selectedDestinations]);
+
+    const handleAddDestination = (destination: Destination) => {
+        if (selectedDestinations.length < 3) {
+            setSelectedDestinations([...selectedDestinations, destination]);
+            setDestinationInput('');
+            setSuggestions([]);
+            setShowSuggestions(false);
+            inputRef.current?.focus();
+        }
+    };
+
+    const handleRemoveDestination = (id: string) => {
+        setSelectedDestinations(selectedDestinations.filter(dest => dest.id !== id));
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && destinationInput.trim()) {
+            // Ako ima tačno jedno poklapanje, dodaj ga
+            if (suggestions.length === 1) {
+                handleAddDestination(suggestions[0]);
+            } else if (suggestions.length > 1) {
+                // Ako ima više poklapanja, dodaj prvo
+                handleAddDestination(suggestions[0]);
+            }
+        } else if (e.key === 'Backspace' && !destinationInput && selectedDestinations.length > 0) {
+            // Ako je input prazan i pritisne backspace, ukloni poslednju destinaciju
+            handleRemoveDestination(selectedDestinations[selectedDestinations.length - 1].id);
+        }
+    };
+
+    const handlePopularClick = (destName: string) => {
+        const destination = mockDestinations.find(d => d.name === destName);
+        if (destination && selectedDestinations.length < 3) {
+            handleAddDestination(destination);
+        }
+    };
 
     return (
         <div className="smart-search-container">
@@ -81,19 +174,86 @@ const SmartSearch: React.FC = () => {
             {/* Search Form */}
             <div className="search-form-smart">
                 <div className="form-grid">
-                    {/* Destination */}
+                    {/* Multi-Destination Input */}
                     <div className="form-field full-width">
                         <label>
                             <MapPin size={16} />
-                            <span>Destinacija</span>
+                            <span>Destinacija ili Smeštaj (do 3)</span>
                         </label>
-                        <input
-                            type="text"
-                            placeholder="Npr: Hurghada, Grčka, Rodos..."
-                            value={destination}
-                            onChange={(e) => setDestination(e.target.value)}
-                            className="smart-input"
-                        />
+                        <div className="multi-destination-input">
+                            {/* Selected Destinations as Chips */}
+                            {selectedDestinations.map(dest => (
+                                <div key={dest.id} className={`destination-chip ${dest.type}`}>
+                                    {dest.type === 'hotel' ? <Hotel size={14} /> : <MapPin size={14} />}
+                                    <span>{dest.name}</span>
+                                    {dest.stars && (
+                                        <span className="chip-stars">
+                                            {Array.from({ length: dest.stars }).map((_, i) => (
+                                                <Star key={i} size={10} fill="#fbbf24" color="#fbbf24" />
+                                            ))}
+                                        </span>
+                                    )}
+                                    <button
+                                        className="chip-remove"
+                                        onClick={() => handleRemoveDestination(dest.id)}
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ))}
+
+                            {/* Input Field */}
+                            {selectedDestinations.length < 3 && (
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    placeholder={selectedDestinations.length === 0 ? "Npr: Crna Gora, Hurghada, Hotel Splendid..." : "Dodaj još..."}
+                                    value={destinationInput}
+                                    onChange={(e) => setDestinationInput(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    onFocus={() => destinationInput.length >= 3 && setShowSuggestions(true)}
+                                    className="smart-input-inline"
+                                />
+                            )}
+                        </div>
+
+                        {/* Autocomplete Suggestions */}
+                        {showSuggestions && suggestions.length > 0 && (
+                            <div className="autocomplete-dropdown">
+                                {suggestions.map(suggestion => (
+                                    <div
+                                        key={suggestion.id}
+                                        className="suggestion-item"
+                                        onClick={() => handleAddDestination(suggestion)}
+                                    >
+                                        {suggestion.type === 'hotel' ? (
+                                            <Hotel size={16} className="suggestion-icon hotel" />
+                                        ) : (
+                                            <MapPin size={16} className="suggestion-icon destination" />
+                                        )}
+                                        <div className="suggestion-content">
+                                            <span className="suggestion-name">{suggestion.name}</span>
+                                            <span className="suggestion-meta">
+                                                {suggestion.type === 'hotel' ? (
+                                                    <>
+                                                        {suggestion.stars && (
+                                                            <span className="stars">
+                                                                {Array.from({ length: suggestion.stars }).map((_, i) => (
+                                                                    <Star key={i} size={10} fill="#fbbf24" color="#fbbf24" />
+                                                                ))}
+                                                            </span>
+                                                        )}
+                                                        <span className="provider">{suggestion.provider}</span>
+                                                    </>
+                                                ) : (
+                                                    <span className="country">{suggestion.country}</span>
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Dates */}
@@ -170,7 +330,12 @@ const SmartSearch: React.FC = () => {
                 {/* Search Button */}
                 <button className="search-btn-smart">
                     <Search size={20} />
-                    <span>Pretraži Sve Dobavljače</span>
+                    <span>
+                        {selectedDestinations.length > 0
+                            ? `Pretraži ${selectedDestinations.length} ${selectedDestinations.length === 1 ? 'Destinaciju' : 'Destinacije'}`
+                            : 'Pretraži Sve Dobavljače'
+                        }
+                    </span>
                 </button>
             </div>
 
@@ -195,7 +360,11 @@ const SmartSearch: React.FC = () => {
                 <h3>🌍 Popularne Destinacije</h3>
                 <div className="destination-grid">
                     {popularDestinations.map((dest, idx) => (
-                        <button key={idx} className="destination-card">
+                        <button
+                            key={idx}
+                            className="destination-card"
+                            onClick={() => handlePopularClick(dest.name)}
+                        >
                             <span className="dest-flag">{dest.flag}</span>
                             <div className="dest-info">
                                 <h4>{dest.name}</h4>
