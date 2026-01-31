@@ -17,6 +17,7 @@ import { useConfig } from '../context/ConfigContext';
 import './SmartSearch.css';
 import './SmartSearchFix2.css';
 import './SmartSearchStylesFix.css';
+import './SmartSearchLightMode.css';
 
 /**
  * Constants for filtering
