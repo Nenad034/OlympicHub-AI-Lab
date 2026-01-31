@@ -158,19 +158,6 @@ const Sidebar: React.FC = () => {
                             {!isSidebarCollapsed && '🤝 B2B PARTNER'}
                         </h3>
                         <NavLink
-                            to="/b2b-search"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="B2B Search & Booking"
-                            style={({ isActive }) => ({
-                                borderLeft: isActive ? '4px solid #ff9800' : 'none',
-                                background: isActive ? 'rgba(255, 152, 0, 0.15)' : 'transparent'
-                            })}
-                        >
-                            <Search size={20} color="#ff9800" /> {!isSidebarCollapsed && (
-                                <span style={{ color: '#ff9800', fontWeight: 700 }}>Pretraga & Rezervacije</span>
-                            )}
-                        </NavLink>
-                        <NavLink
                             to="/smart-search"
                             className={({ isActive }) => navItemClass(isActive)}
                             title="Smart Search (New)"

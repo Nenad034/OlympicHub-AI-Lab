@@ -115,12 +115,6 @@ const HorizontalNav: React.FC = () => {
                 {isSubagent && (
                     <>
                         <NavLink
-                            to="/b2b-search"
-                            className={({ isActive }) => navItemClass(isActive)}
-                        >
-                            <Search size={18} /> Pretraga & Rezervacije
-                        </NavLink>
-                        <NavLink
                             to="/smart-search"
                             className={({ isActive }) => navItemClass(isActive)}
                         >
