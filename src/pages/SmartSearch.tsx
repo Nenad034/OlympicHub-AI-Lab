@@ -403,12 +403,22 @@ const SmartSearch: React.FC = () => {
                 </div>
 
                 {/* Search Button */}
-                <button className="search-btn-smart">
-                    <Search size={20} />
+                <button
+                    className="search-btn-smart"
+                    onClick={handleSearch}
+                    disabled={isSearching}
+                >
+                    {isSearching ? (
+                        <Loader2 size={20} className="animate-spin" />
+                    ) : (
+                        <Search size={20} />
+                    )}
                     <span>
-                        {selectedDestinations.length > 0
-                            ? `Pretraži ${selectedDestinations.length} ${selectedDestinations.length === 1 ? 'Destinaciju' : 'Destinacije'}`
-                            : 'Pretraži Sve Dobavljače'
+                        {isSearching
+                            ? 'Pretražujem...'
+                            : (selectedDestinations.length > 0
+                                ? `Pretraži ${selectedDestinations.length} ${selectedDestinations.length === 1 ? 'Destinaciju' : 'Destinacije'}`
+                                : 'Pretraži Sve Dobavljače')
                         }
                     </span>
                 </button>
