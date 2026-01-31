@@ -58,6 +58,9 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
     const solvexAi = new SolvexAiProvider();
 
     try {
+        // ESSENTIAL: Initialize/Authenticate the provider first
+        await solvexAi.authenticate();
+
         for (const dest of params.destinations) {
             console.log(`[SmartSearchService] Querying Solvex for: ${dest.name}`);
 
