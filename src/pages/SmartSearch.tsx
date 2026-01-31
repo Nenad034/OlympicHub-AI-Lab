@@ -326,6 +326,7 @@ const SmartSearch: React.FC = () => {
                 checkOut,
                 adults,
                 children,
+                childrenAges,
                 mealPlan,
                 currency: 'EUR',
                 nationality: 'RS',
@@ -601,36 +602,43 @@ const SmartSearch: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="form-field">
+                    <div className="form-field" style={{ gridColumn: children > 0 ? 'span 2' : 'auto' }}>
                         <label>
                             <Users size={16} />
-                            <span>Deca</span>
+                            <span>Deca {children > 0 ? '& Godine' : ''}</span>
                         </label>
-                        <div className="guest-selector">
-                            <button onClick={() => {
-                                const newCount = Math.max(0, children - 1);
-                                setChildren(newCount);
-                                setChildrenAges(prev => prev.slice(0, newCount));
-                            }}>−</button>
-                            <span>{children}</span>
-                            <button onClick={() => {
-                                const newCount = Math.min(4, children + 1);
-                                setChildren(newCount);
-                                setChildrenAges(prev => {
-                                    const newAges = [...prev];
-                                    while (newAges.length < newCount) newAges.push(7);
-                                    return newAges;
-                                });
-                            }}>+</button>
-                        </div>
-                    </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                            <div className="guest-selector">
+                                <button onClick={() => {
+                                    const newCount = Math.max(0, children - 1);
+                                    setChildren(newCount);
+                                    setChildrenAges(prev => prev.slice(0, newCount));
+                                }}>−</button>
+                                <span>{children}</span>
+                                <button onClick={() => {
+                                    const newCount = Math.min(4, children + 1);
+                                    setChildren(newCount);
+                                    setChildrenAges(prev => {
+                                        const newAges = [...prev];
+                                        while (newAges.length < newCount) newAges.push(7);
+                                        return newAges;
+                                    });
+                                }}>+</button>
+                            </div>
 
-                    {/* Children Ages */}
-                    {children > 0 && (
-                        <div className="children-ages-container" style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '-10px', marginBottom: '10px', flexWrap: 'wrap' }}>
-                            {childrenAges.map((age, idx) => (
-                                <div key={idx} className="age-input-field" style={{ flex: 1, minWidth: '80px' }}>
-                                    <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginBottom: '4px', display: 'block' }}>Dete {idx + 1} (god.)</label>
+                            {children > 0 && childrenAges.map((age, idx) => (
+                                <div key={idx} className="age-input-field" style={{ width: '70px', position: 'relative' }}>
+                                    <span style={{
+                                        position: 'absolute',
+                                        top: '-18px',
+                                        left: '0',
+                                        width: '100%',
+                                        fontSize: '10px',
+                                        textAlign: 'center',
+                                        color: 'rgba(255,255,255,0.5)'
+                                    }}>
+                                        Dete {idx + 1}
+                                    </span>
                                     <input
                                         type="number"
                                         min="0"
@@ -643,12 +651,12 @@ const SmartSearch: React.FC = () => {
                                             setChildrenAges(newAges);
                                         }}
                                         className="smart-input"
-                                        style={{ padding: '8px', textAlign: 'center' }}
+                                        style={{ padding: '4px', textAlign: 'center', height: '36px' }}
                                     />
                                 </div>
                             ))}
                         </div>
-                    )}
+                    </div>
 
                     {/* Meal Plan */}
                     <div className="form-field">
