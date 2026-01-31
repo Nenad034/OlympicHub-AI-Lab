@@ -6,7 +6,8 @@
 import { OpenGreeceAPI } from './opengreeceApiService';
 import * as TCTApi from './tctApiService';
 import { getAmadeusApi } from './flight/providers/amadeus/amadeusApiService';
-import { SolvexAiProvider } from './providers/SolvexAiProvider';
+import { getHotelProviderManager } from './providers/HotelProviderManager';
+import type { HotelSearchResult } from './providers/HotelProviderInterface';
 
 // Provider mapping by search type
 export const PROVIDER_MAPPING = {
@@ -110,31 +111,41 @@ export async function searchHotels(
     })(), 'TCT'));
     */
 
-    // Search Solvex AI - ACTIVE
+    // Search Solvex AI - ACTIVE (Using the Hub's Logic)
     promises.push(withTimeout((async () => {
         try {
-            console.log('[SmartSearch] Solvex Search Started with params:', { destinations, checkIn, checkOut, adults, children });
-            const solvexAi = new SolvexAiProvider();
-            for (const dest of destinations) {
-                // Ensure we have valid dates
-                const startDate = checkIn ? new Date(checkIn) : new Date();
-                const endDate = checkOut ? new Date(checkOut) : new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const manager = getHotelProviderManager();
+            const solvexAi = manager.getProvider('Solvex AI');
 
-                const aiResults = await solvexAi.search({
+            if (!solvexAi) {
+                console.error('[SmartSearch] Solvex AI provider not found in Manager');
+                return;
+            }
+
+            for (const dest of destinations) {
+                console.log(`[SmartSearch] Searching Solvex AI for: ${dest.name}`);
+
+                // Map to HotelSearchParams expected by the manager/interface
+                const searchParams = {
                     destination: dest.name,
-                    checkIn: startDate,
-                    checkOut: endDate,
+                    checkIn: checkIn ? new Date(checkIn) : new Date(),
+                    checkOut: checkOut ? new Date(checkOut) : new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
                     adults,
                     children: children || 0,
                     childrenAges: params.childrenAges || [],
                     providerId: dest.id.startsWith('solvex-h-') ? dest.id.replace('solvex-h-', '') : dest.id,
-                    providerType: dest.type === 'destination' ? 'city' : 'hotel',
+                    providerType: dest.type === 'destination' ? 'city' : 'hotel' as 'city' | 'hotel',
                     targetProvider: 'Solvex'
-                });
+                };
+
+                // Use the manager's search provider method (handles auth & cache)
+                // We use private searchProvider or just call solvexAi.search directly after auth
+                await solvexAi.authenticate();
+                const aiResults = await solvexAi.search(searchParams);
 
                 if (aiResults && aiResults.length > 0) {
-                    console.log(`[SmartSearch] Solvex found ${aiResults.length} results.`);
-                    results.push(...aiResults.map((h: any) => ({
+                    console.log(`[SmartSearch] Solvex AI found ${aiResults.length} results.`);
+                    results.push(...aiResults.map((h: HotelSearchResult) => ({
                         provider: 'Solvex AI',
                         type: 'hotel' as const,
                         id: h.id,
@@ -144,16 +155,17 @@ export async function searchHotels(
                         currency: h.currency,
                         stars: h.stars,
                         mealPlan: h.mealPlan,
+                        images: h.image ? [h.image] : [],
                         originalData: h.originalData,
                     })));
                 } else {
-                    console.warn(`[SmartSearch] Solvex returned 0 results for ${dest.name}`);
+                    console.warn(`[SmartSearch] Solvex AI returned 0 results for ${dest.name}`);
                 }
             }
         } catch (error) {
             console.error('[SmartSearch] Solvex AI error:', error);
         }
-    })(), 'Solvex'));
+    })(), 'Solvex AI'));
 
     await Promise.all(promises);
     console.log(`[SmartSearch] All providers done. Total results: ${results.length}`);
