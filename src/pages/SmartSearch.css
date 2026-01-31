@@ -595,8 +595,28 @@
     border-bottom: none;
 }
 
-.suggestion-item:hover {
+.suggestion-item:hover,
+.suggestion-item.selected {
     background: rgba(124, 58, 237, 0.15);
+}
+
+.suggestion-item.selected {
+    border-left: 3px solid #7c3aed;
+}
+
+/* Spinner animation for loading state */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
 }
 
 .suggestion-icon {

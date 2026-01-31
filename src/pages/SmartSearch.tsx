@@ -27,6 +27,9 @@ const SmartSearch: React.FC = () => {
     const [destinationInput, setDestinationInput] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [suggestions, setSuggestions] = useState<Destination[]>([]);
+    const [selectedIndex, setSelectedIndex] = useState(-1); // For keyboard navigation
+    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false); // Loading state
+    const [recentSearches, setRecentSearches] = useState<Destination[]>([]); // Recent searches
     const [checkIn, setCheckIn] = useState('');
     const [checkOut, setCheckOut] = useState('');
     const [flexibleDays, setFlexibleDays] = useState(0);
@@ -90,22 +93,83 @@ const SmartSearch: React.FC = () => {
         { label: '5★ Hoteli', icon: Star, color: '#fbbf24' },
     ];
 
-    // SIMPLIFIED Autocomplete - samo lokalni podaci, bez API poziva
+    // Load recent searches from localStorage on mount
     useEffect(() => {
-        if (destinationInput.length >= 2) {
-            const searchTerm = destinationInput.toLowerCase();
-
-            const matches = mockDestinations.filter(dest =>
-                dest.name.toLowerCase().includes(searchTerm) &&
-                !selectedDestinations.find(selected => selected.id === dest.id)
-            );
-
-            setSuggestions(matches.slice(0, 10));
-            setShowSuggestions(matches.length > 0);
-        } else {
-            setSuggestions([]);
-            setShowSuggestions(false);
+        const stored = localStorage.getItem('smartSearchRecent');
+        if (stored) {
+            try {
+                setRecentSearches(JSON.parse(stored));
+            } catch (e) {
+                console.warn('Failed to parse recent searches:', e);
+            }
         }
+    }, []);
+
+    // Advanced Autocomplete with Solvex API, debounce, and loading state
+    useEffect(() => {
+        const fetchSuggestions = async () => {
+            if (destinationInput.length >= 2) {
+                setIsLoadingSuggestions(true);
+                setSelectedIndex(-1); // Reset keyboard selection
+                const searchTerm = destinationInput.toLowerCase();
+
+                // 1. Local/Static matches - show immediately
+                const localMatches = mockDestinations.filter(dest =>
+                    dest.name.toLowerCase().includes(searchTerm) &&
+                    !selectedDestinations.find(selected => selected.id === dest.id)
+                );
+
+                setSuggestions(localMatches.slice(0, 10));
+                setShowSuggestions(localMatches.length > 0);
+
+                // 2. Dynamic Solvex hotels - fetch asynchronously
+                try {
+                    const citiesToSearch = [33, 68, 9]; // Golden Sands, Sunny Beach, Bansko
+                    const dynamicResults: Destination[] = [];
+
+                    for (const cityId of citiesToSearch) {
+                        const hotelsRes = await solvexDictionaryService.getHotels(cityId);
+                        if (hotelsRes.success && hotelsRes.data) {
+                            const matching = (hotelsRes.data as any[])
+                                .filter(h => h.name.toLowerCase().includes(searchTerm))
+                                .map(h => ({
+                                    id: `solvex-h-${h.id}`,
+                                    name: h.name,
+                                    type: 'hotel' as const,
+                                    country: 'Bulgaria',
+                                    provider: 'Solvex',
+                                    stars: h.stars
+                                }));
+                            dynamicResults.push(...matching);
+                        }
+                    }
+
+                    if (dynamicResults.length > 0) {
+                        setSuggestions(prev => {
+                            const combined = [...prev, ...dynamicResults];
+                            // Remove duplicates by name
+                            return combined.filter((item, index, self) =>
+                                index === self.findIndex((t) => t.name === item.name)
+                            ).slice(0, 12);
+                        });
+                        setShowSuggestions(true);
+                    }
+                } catch (err) {
+                    console.warn('[SmartSearch] Solvex API failed:', err);
+                } finally {
+                    setIsLoadingSuggestions(false);
+                }
+            } else {
+                setSuggestions([]);
+                setShowSuggestions(false);
+                setIsLoadingSuggestions(false);
+                setSelectedIndex(-1);
+            }
+        };
+
+        // Debounce: wait 300ms after user stops typing
+        const timer = setTimeout(fetchSuggestions, 300);
+        return () => clearTimeout(timer);
     }, [destinationInput, selectedDestinations]);
 
     const handleAddDestination = (destination: Destination) => {
@@ -114,6 +178,13 @@ const SmartSearch: React.FC = () => {
             setDestinationInput('');
             setSuggestions([]);
             setShowSuggestions(false);
+            setSelectedIndex(-1);
+
+            // Save to recent searches
+            const updated = [destination, ...recentSearches.filter(r => r.id !== destination.id)].slice(0, 5);
+            setRecentSearches(updated);
+            localStorage.setItem('smartSearchRecent', JSON.stringify(updated));
+
             inputRef.current?.focus();
         }
     };
@@ -123,18 +194,59 @@ const SmartSearch: React.FC = () => {
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && destinationInput.trim()) {
-            // Ako ima tačno jedno poklapanje, dodaj ga
-            if (suggestions.length === 1) {
-                handleAddDestination(suggestions[0]);
-            } else if (suggestions.length > 1) {
-                // Ako ima više poklapanja, dodaj prvo
-                handleAddDestination(suggestions[0]);
+        if (!showSuggestions || suggestions.length === 0) {
+            // No suggestions - handle backspace to remove last chip
+            if (e.key === 'Backspace' && !destinationInput && selectedDestinations.length > 0) {
+                handleRemoveDestination(selectedDestinations[selectedDestinations.length - 1].id);
             }
-        } else if (e.key === 'Backspace' && !destinationInput && selectedDestinations.length > 0) {
-            // Ako je input prazan i pritisne backspace, ukloni poslednju destinaciju
-            handleRemoveDestination(selectedDestinations[selectedDestinations.length - 1].id);
+            return;
         }
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                setSelectedIndex(prev =>
+                    prev < suggestions.length - 1 ? prev + 1 : prev
+                );
+                break;
+
+            case 'ArrowUp':
+                e.preventDefault();
+                setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+                break;
+
+            case 'Enter':
+                e.preventDefault();
+                if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+                    handleAddDestination(suggestions[selectedIndex]);
+                } else if (suggestions.length > 0) {
+                    handleAddDestination(suggestions[0]);
+                }
+                break;
+
+            case 'Escape':
+                e.preventDefault();
+                setShowSuggestions(false);
+                setSelectedIndex(-1);
+                break;
+
+            case 'Backspace':
+                if (!destinationInput && selectedDestinations.length > 0) {
+                    handleRemoveDestination(selectedDestinations[selectedDestinations.length - 1].id);
+                }
+                break;
+        }
+    };
+
+    // Highlight matching text in suggestions
+    const highlightMatch = (text: string, query: string) => {
+        if (!query) return text;
+        const parts = text.split(new RegExp(`(${query})`, 'gi'));
+        return parts.map((part, index) =>
+            part.toLowerCase() === query.toLowerCase()
+                ? <strong key={index} style={{ color: '#3b82f6', fontWeight: 600 }}>{part}</strong>
+                : part
+        );
     };
 
     const handlePopularClick = (destName: string) => {
@@ -276,7 +388,13 @@ const SmartSearch: React.FC = () => {
                                     onFocus={() => {
                                         if (destinationInput.length >= 2 && suggestions.length > 0) {
                                             setShowSuggestions(true);
+                                        } else if (destinationInput.length === 0 && recentSearches.length > 0) {
+                                            setShowSuggestions(true);
                                         }
+                                    }}
+                                    onBlur={() => {
+                                        // Delay to allow click on suggestion
+                                        setTimeout(() => setShowSuggestions(false), 200);
                                     }}
                                     className="smart-input-inline"
                                 />
@@ -284,14 +402,81 @@ const SmartSearch: React.FC = () => {
                         </div>
 
 
+
                         {/* Autocomplete Suggestions */}
-                        {showSuggestions && suggestions.length > 0 && (
+                        {showSuggestions && (suggestions.length > 0 || isLoadingSuggestions || (destinationInput.length < 2 && recentSearches.length > 0)) && (
                             <div className="autocomplete-dropdown">
-                                {suggestions.map(suggestion => (
+                                {/* Loading State */}
+                                {isLoadingSuggestions && (
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '12px 16px',
+                                        color: 'rgba(255,255,255,0.6)',
+                                        fontSize: '13px'
+                                    }}>
+                                        <Loader2 size={14} className="spin" />
+                                        <span>Pretraživanje...</span>
+                                    </div>
+                                )}
+
+                                {/* Recent Searches */}
+                                {destinationInput.length < 2 && recentSearches.length > 0 && (
+                                    <>
+                                        <div style={{
+                                            padding: '8px 16px',
+                                            fontSize: '11px',
+                                            color: 'rgba(255,255,255,0.4)',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.5px',
+                                            fontWeight: 600
+                                        }}>
+                                            Nedavne pretrage
+                                        </div>
+                                        {recentSearches.map(recent => (
+                                            <div
+                                                key={recent.id}
+                                                className="suggestion-item"
+                                                onClick={() => handleAddDestination(recent)}
+                                                style={{ opacity: 0.8 }}
+                                            >
+                                                {recent.type === 'hotel' ? (
+                                                    <Hotel size={16} className="suggestion-icon hotel" />
+                                                ) : (
+                                                    <MapPin size={16} className="suggestion-icon destination" />
+                                                )}
+                                                <div className="suggestion-content">
+                                                    <span className="suggestion-name">{recent.name}</span>
+                                                    <span className="suggestion-meta">
+                                                        {recent.type === 'hotel' ? (
+                                                            <>
+                                                                {recent.stars && (
+                                                                    <span className="stars">
+                                                                        {Array.from({ length: recent.stars }).map((_, i) => (
+                                                                            <Star key={i} size={10} fill="#fbbf24" color="#fbbf24" />
+                                                                        ))}
+                                                                    </span>
+                                                                )}
+                                                                <span className="provider">{recent.provider}</span>
+                                                            </>
+                                                        ) : (
+                                                            <span className="country">{recent.country}</span>
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </>
+                                )}
+
+                                {/* Main Suggestions */}
+                                {suggestions.map((suggestion, index) => (
                                     <div
                                         key={suggestion.id}
-                                        className="suggestion-item"
+                                        className={`suggestion-item ${selectedIndex === index ? 'selected' : ''}`}
                                         onClick={() => handleAddDestination(suggestion)}
+                                        onMouseEnter={() => setSelectedIndex(index)}
                                     >
                                         {suggestion.type === 'hotel' ? (
                                             <Hotel size={16} className="suggestion-icon hotel" />
@@ -299,7 +484,9 @@ const SmartSearch: React.FC = () => {
                                             <MapPin size={16} className="suggestion-icon destination" />
                                         )}
                                         <div className="suggestion-content">
-                                            <span className="suggestion-name">{suggestion.name}</span>
+                                            <span className="suggestion-name">
+                                                {highlightMatch(suggestion.name, destinationInput)}
+                                            </span>
                                             <span className="suggestion-meta">
                                                 {suggestion.type === 'hotel' ? (
                                                     <>
