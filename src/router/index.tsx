@@ -48,6 +48,7 @@ const SolvexHotelDetail = React.lazy(() => import('../pages/SolvexHotelDetail'))
 const OrsTest = React.lazy(() => import('../pages/OrsTest'));
 const MarsTest = React.lazy(() => import('../pages/MarsTest'));
 const SoftZoneDashboard = React.lazy(() => import('../components/SoftZoneDashboard'));
+const SmartSearch = React.lazy(() => import('../pages/SmartSearch'));
 const ReservationArchitect = React.lazy(() => import('../pages/ReservationArchitect'));
 const ReservationsDashboard = React.lazy(() => import('../pages/ReservationsDashboard'));
 const AdminHotelImport = React.lazy(() => import('../pages/AdminHotelImport'));
@@ -57,7 +58,6 @@ const TCTTest = React.lazy(() => import('../pages/TCTTest'));
 const MasterSearch = React.lazy(() => import('../pages/MasterSearch'));
 const SubagentAdmin = React.lazy(() => import('../pages/SubagentAdmin'));
 const B2BSearch = React.lazy(() => import('../pages/B2BSearch'));
-const SmartSearch = React.lazy(() => import('../pages/SmartSearch'));
 
 
 // Stores
@@ -393,6 +393,10 @@ export const router = createBrowserRouter([
             {
                 path: 'soft-zone',
                 element: <SoftZoneDashboard />,
+            },
+            {
+                path: 'smart-search',
+                element: <SmartSearch />,
             },
             {
                 path: 'reservations',
