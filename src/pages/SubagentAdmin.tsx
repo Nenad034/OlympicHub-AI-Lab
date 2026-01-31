@@ -571,10 +571,10 @@ const SubagentAdmin: React.FC = () => {
                                     </div>
 
                                     <div className="detail-section">
-                                        <h3>Dozvole i Marže</h3>
+                                        <h3>Dozvole i Marže (%)</h3>
                                         <div className="margin-settings-grid">
                                             <div className="margin-input">
-                                                <label>Smeštaj %</label>
+                                                <label>Smeštaj</label>
                                                 <input
                                                     type="number"
                                                     value={editData?.commissionRates.accommodation}
@@ -582,11 +582,35 @@ const SubagentAdmin: React.FC = () => {
                                                 />
                                             </div>
                                             <div className="margin-input">
-                                                <label>Letovi %</label>
+                                                <label>Letovi</label>
                                                 <input
                                                     type="number"
                                                     value={editData?.commissionRates.flights}
                                                     onChange={(e) => setEditData(prev => prev ? { ...prev, commissionRates: { ...prev.commissionRates, flights: Number(e.target.value) } } : null)}
+                                                />
+                                            </div>
+                                            <div className="margin-input">
+                                                <label>Transferi</label>
+                                                <input
+                                                    type="number"
+                                                    value={editData?.commissionRates.transfers}
+                                                    onChange={(e) => setEditData(prev => prev ? { ...prev, commissionRates: { ...prev.commissionRates, transfers: Number(e.target.value) } } : null)}
+                                                />
+                                            </div>
+                                            <div className="margin-input">
+                                                <label>Usluge</label>
+                                                <input
+                                                    type="number"
+                                                    value={editData?.commissionRates.services}
+                                                    onChange={(e) => setEditData(prev => prev ? { ...prev, commissionRates: { ...prev.commissionRates, services: Number(e.target.value) } } : null)}
+                                                />
+                                            </div>
+                                            <div className="margin-input">
+                                                <label>Putovanja</label>
+                                                <input
+                                                    type="number"
+                                                    value={editData?.commissionRates.tours}
+                                                    onChange={(e) => setEditData(prev => prev ? { ...prev, commissionRates: { ...prev.commissionRates, tours: Number(e.target.value) } } : null)}
                                                 />
                                             </div>
                                         </div>
@@ -607,7 +631,7 @@ const SubagentAdmin: React.FC = () => {
                                                             setEditData(prev => prev ? { ...prev, allowedSuppliers: next } : null);
                                                         }}
                                                     />
-                                                    {sup}
+                                                    <span>{sup}</span>
                                                 </label>
                                             ))}
                                         </div>
