@@ -3,10 +3,12 @@ import { useAuthStore } from '../stores';
 import {
     Sparkles, Hotel, Plane, Package, Bus, Compass,
     MapPin, Calendar, CalendarDays, Users, UtensilsCrossed, Star,
-    Search, Bot, TrendingUp, Zap, Shield, X, Loader2
+    Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2
 } from 'lucide-react';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
 import solvexDictionaryService from '../services/solvex/solvexDictionaryService';
+import { ModernCalendar } from '../components/ModernCalendar';
+import { formatDate } from '../utils/dateUtils';
 import './SmartSearch.css';
 
 interface Destination {
@@ -32,10 +34,33 @@ const SmartSearch: React.FC = () => {
     const [recentSearches, setRecentSearches] = useState<Destination[]>([]); // Recent searches
     const [checkIn, setCheckIn] = useState('');
     const [checkOut, setCheckOut] = useState('');
+    const [nights, setNights] = useState(7); // Default 7 nights
+    const [activeCalendar, setActiveCalendar] = useState<'in' | 'out' | null>(null);
     const [flexibleDays, setFlexibleDays] = useState(0);
     const [adults, setAdults] = useState(2);
     const [children, setChildren] = useState(0);
+    const [childrenAges, setChildrenAges] = useState<number[]>([]);
     const [mealPlan, setMealPlan] = useState('all-inclusive');
+
+    // Helper to sync nights when dates change
+    const syncNightsFromDates = (start: string, end: string) => {
+        if (!start || !end) return;
+        const s = new Date(start);
+        const e = new Date(end);
+        const diffTime = Math.abs(e.getTime() - s.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        setNights(diffDays);
+    };
+
+    // Helper to update dates when nights change
+    const handleNightsChange = (newNights: number) => {
+        setNights(newNights);
+        if (checkIn) {
+            const date = new Date(checkIn);
+            date.setDate(date.getDate() + newNights);
+            setCheckOut(date.toISOString().split('T')[0]);
+        }
+    };
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<SmartSearchResult[]>([]);
     const [searchError, setSearchError] = useState<string | null>(null);
@@ -93,7 +118,7 @@ const SmartSearch: React.FC = () => {
         { label: '5★ Hoteli', icon: Star, color: '#fbbf24' },
     ];
 
-    // Load recent searches from localStorage on mount
+    // Load recent searches and initialize dates on mount
     useEffect(() => {
         const stored = localStorage.getItem('smartSearchRecent');
         if (stored) {
@@ -103,6 +128,19 @@ const SmartSearch: React.FC = () => {
                 console.warn('Failed to parse recent searches:', e);
             }
         }
+
+        // Initialize dates
+        const today = new Date();
+        const tomorrow = new Date();
+        tomorrow.setDate(today.getDate() + 1);
+
+        const checkInDate = tomorrow.toISOString().split('T')[0];
+        setCheckIn(checkInDate);
+
+        const checkOutDate = new Date(tomorrow);
+        checkOutDate.setDate(checkOutDate.getDate() + 7); // Default 7 nights
+        setCheckOut(checkOutDate.toISOString().split('T')[0]);
+        setNights(7);
     }, []);
 
     // Advanced Autocomplete with Solvex API, debounce, and loading state
@@ -511,30 +549,24 @@ const SmartSearch: React.FC = () => {
                     </div>
 
                     {/* Dates */}
-                    <div className="form-field">
+                    <div className="form-field" onClick={() => setActiveCalendar('in')} style={{ cursor: 'pointer' }}>
                         <label>
                             <Calendar size={16} />
                             <span>Check-in</span>
                         </label>
-                        <input
-                            type="date"
-                            value={checkIn}
-                            onChange={(e) => setCheckIn(e.target.value)}
-                            className="smart-input"
-                        />
+                        <div className="smart-input" style={{ display: 'flex', alignItems: 'center' }}>
+                            {formatDate(checkIn) || 'Odaberite datum'}
+                        </div>
                     </div>
 
-                    <div className="form-field">
+                    <div className="form-field" onClick={() => setActiveCalendar('out')} style={{ cursor: 'pointer' }}>
                         <label>
                             <Calendar size={16} />
                             <span>Check-out</span>
                         </label>
-                        <input
-                            type="date"
-                            value={checkOut}
-                            onChange={(e) => setCheckOut(e.target.value)}
-                            className="smart-input"
-                        />
+                        <div className="smart-input" style={{ display: 'flex', alignItems: 'center' }}>
+                            {formatDate(checkOut) || 'Odaberite datum'}
+                        </div>
                     </div>
 
                     {/* Flexibility */}
@@ -575,11 +607,48 @@ const SmartSearch: React.FC = () => {
                             <span>Deca</span>
                         </label>
                         <div className="guest-selector">
-                            <button onClick={() => setChildren(Math.max(0, children - 1))}>−</button>
+                            <button onClick={() => {
+                                const newCount = Math.max(0, children - 1);
+                                setChildren(newCount);
+                                setChildrenAges(prev => prev.slice(0, newCount));
+                            }}>−</button>
                             <span>{children}</span>
-                            <button onClick={() => setChildren(children + 1)}>+</button>
+                            <button onClick={() => {
+                                const newCount = Math.min(4, children + 1);
+                                setChildren(newCount);
+                                setChildrenAges(prev => {
+                                    const newAges = [...prev];
+                                    while (newAges.length < newCount) newAges.push(7);
+                                    return newAges;
+                                });
+                            }}>+</button>
                         </div>
                     </div>
+
+                    {/* Children Ages */}
+                    {children > 0 && (
+                        <div className="children-ages-container" style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '-10px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                            {childrenAges.map((age, idx) => (
+                                <div key={idx} className="age-input-field" style={{ flex: 1, minWidth: '80px' }}>
+                                    <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginBottom: '4px', display: 'block' }}>Dete {idx + 1} (god.)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="17"
+                                        value={age}
+                                        onChange={e => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            const newAges = [...childrenAges];
+                                            newAges[idx] = Math.min(17, Math.max(0, val));
+                                            setChildrenAges(newAges);
+                                        }}
+                                        className="smart-input"
+                                        style={{ padding: '8px', textAlign: 'center' }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Meal Plan */}
                     <div className="form-field">
@@ -707,6 +776,37 @@ const SmartSearch: React.FC = () => {
                 </div>
                 <Sparkles size={16} className="ai-sparkle" />
             </button>
+            {/* Active Calendar Modal */}
+            {activeCalendar === 'in' && (
+                <ModernCalendar
+                    startDate={checkIn}
+                    endDate={checkOut}
+                    onChange={(s, e) => {
+                        setCheckIn(s);
+                        if (e) {
+                            setCheckOut(e);
+                            syncNightsFromDates(s, e);
+                        }
+                        setActiveCalendar(null);
+                    }}
+                    onClose={() => setActiveCalendar(null)}
+                />
+            )}
+            {activeCalendar === 'out' && (
+                <ModernCalendar
+                    startDate={checkIn}
+                    endDate={checkOut}
+                    onChange={(s, e) => {
+                        setCheckIn(s);
+                        if (e) {
+                            setCheckOut(e);
+                            syncNightsFromDates(s, e);
+                        }
+                        setActiveCalendar(null);
+                    }}
+                    onClose={() => setActiveCalendar(null)}
+                />
+            )}
         </div>
     );
 };
