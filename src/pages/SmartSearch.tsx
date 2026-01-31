@@ -302,62 +302,41 @@ const SmartSearch: React.FC = () => {
                             console.log('[SmartSearch Render] suggestions.length:', suggestions.length);
                             console.log('[SmartSearch Render] suggestions:', suggestions.map(s => s.name));
                             console.log('[SmartSearch Render] ABOUT TO RENDER DROPDOWN:', showSuggestions && suggestions.length > 0);
+                            console.log('[SmartSearch Render] Condition check:', {
+                                showSuggestions,
+                                length: suggestions.length,
+                                result: showSuggestions && suggestions.length > 0
+                            });
                             return null;
                         })()}
 
-                        {/* FORCE RENDER - Always show dropdown for debugging */}
-                        <div style={{
-                            position: 'absolute',
-                            top: 'calc(100% + 0.5rem)',
-                            left: 0,
-                            right: 0,
-                            background: 'lime',
-                            color: 'black',
-                            padding: '20px',
-                            zIndex: 99999,
-                            border: '5px solid magenta'
-                        }}>
-                            FORCED DROPDOWN - showSuggestions: {showSuggestions ? 'TRUE' : 'FALSE'},
-                            suggestions: {suggestions.length}
-                        </div>
-
-                        {showSuggestions && suggestions.length > 0 && (
+                        {/* ALWAYS RENDER - Remove condition for debugging */}
+                        {true && (
                             <div className="autocomplete-dropdown">
                                 <div style={{ color: 'white', fontSize: '20px', padding: '20px', background: 'blue' }}>
-                                    DEBUG: {suggestions.length} suggestions found!
+                                    DEBUG: showSuggestions={String(showSuggestions)}, length={suggestions.length}
                                 </div>
-                                {suggestions.map(suggestion => (
-                                    <div
-                                        key={suggestion.id}
-                                        className="suggestion-item"
-                                        onClick={() => handleAddDestination(suggestion)}
-                                    >
-                                        {suggestion.type === 'hotel' ? (
-                                            <Hotel size={16} className="suggestion-icon hotel" />
-                                        ) : (
-                                            <MapPin size={16} className="suggestion-icon destination" />
-                                        )}
-                                        <div className="suggestion-content">
-                                            <span className="suggestion-name">{suggestion.name}</span>
-                                            <span className="suggestion-meta">
-                                                {suggestion.type === 'hotel' ? (
-                                                    <>
-                                                        {suggestion.stars && (
-                                                            <span className="stars">
-                                                                {Array.from({ length: suggestion.stars }).map((_, i) => (
-                                                                    <Star key={i} size={10} fill="#fbbf24" color="#fbbf24" />
-                                                                ))}
-                                                            </span>
-                                                        )}
-                                                        <span className="provider">{suggestion.provider}</span>
-                                                    </>
-                                                ) : (
-                                                    <span className="country">{suggestion.country}</span>
-                                                )}
-                                            </span>
+                                {suggestions.length > 0 ? (
+                                    suggestions.map(suggestion => (
+                                        <div
+                                            key={suggestion.id}
+                                            className="suggestion-item"
+                                            onClick={() => handleAddDestination(suggestion)}
+                                            style={{ color: 'white', padding: '10px', background: 'green' }}
+                                        >
+                                            <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                                                {suggestion.name}
+                                            </div>
+                                            <div style={{ fontSize: '14px' }}>
+                                                {suggestion.country}
+                                            </div>
                                         </div>
+                                    ))
+                                ) : (
+                                    <div style={{ color: 'white', padding: '20px' }}>
+                                        No suggestions yet
                                     </div>
-                                ))}
+                                )}
                             </div>
                         )}
                     </div>
