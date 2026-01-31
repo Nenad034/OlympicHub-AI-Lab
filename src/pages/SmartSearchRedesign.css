@@ -119,35 +119,25 @@
 /* Secondary Inputs Row */
 .params-grid {
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.25rem;
     align-items: flex-start;
     margin-bottom: 2rem;
     position: relative;
     z-index: 10;
-    /* Lower z-index than destination row */
 }
 
-/* Col Spans */
-.col-checkin {
-    grid-column: span 2;
-}
-
-.col-checkout {
-    grid-column: span 2;
-}
-
-.col-flex {
-    grid-column: span 3;
-}
-
-.col-adults {
-    grid-column: span 2;
+/* Equal Width Columns */
+.col-checkin,
+.col-checkout,
+.col-flex,
+.col-adults,
+.col-children {
+    grid-column: auto;
+    /* Reset explicit spans */
 }
 
 .col-children {
-    grid-column: span 3;
-    /* Expanded to make room for age inputs */
     position: relative;
 }
 
