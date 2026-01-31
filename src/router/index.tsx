@@ -426,7 +426,57 @@ export const router = createBrowserRouter([
                     </ProtectedRoute>
                 ),
             },
+            {
+                path: '*',
+                element: <Navigate to="/" replace />,
+            },
         ],
+        errorElement: (
+            <div style={{
+                padding: '40px',
+                textAlign: 'center',
+                background: '#1a1a2e',
+                color: 'white',
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'sans-serif'
+            }}>
+                <h1 style={{ fontSize: '4rem', margin: '0', color: '#ff9800' }}>404 / Greška</h1>
+                <p style={{ fontSize: '1.5rem', opacity: 0.8 }}>Došlo je do neočekivane greške ili stranica ne postoji.</p>
+                <div style={{ marginTop: '20px', display: 'flex', gap: '15px' }}>
+                    <button
+                        onClick={() => window.location.href = '/'}
+                        style={{
+                            padding: '12px 24px',
+                            background: '#ff9800',
+                            border: 'none',
+                            borderRadius: '5px',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        Vrati se na Početnu
+                    </button>
+                    <button
+                        onClick={() => window.location.reload()}
+                        style={{
+                            padding: '12px 24px',
+                            background: 'rgba(255,255,255,0.1)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            borderRadius: '5px',
+                            color: 'white',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Osveži stranicu
+                    </button>
+                </div>
+            </div>
+        )
     },
 ]);
 
