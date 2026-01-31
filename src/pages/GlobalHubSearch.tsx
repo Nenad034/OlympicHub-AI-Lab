@@ -704,81 +704,83 @@ const GlobalHubSearch: React.FC = () => {
             </header>
 
 
-            {/* API Provider Toggles */}
-            <div className="provider-toggles-section">
-                <div className="provider-toggles-header">
-                    <div className="header-left">
-                        <Database size={18} />
-                        <span>API Provajderi</span>
+            {/* API Provider Toggles - Hidden for Subagents */}
+            {!isSubagent && (
+                <div className="provider-toggles-section">
+                    <div className="provider-toggles-header">
+                        <div className="header-left">
+                            <Database size={18} />
+                            <span>API Provajderi</span>
+                        </div>
+                        <div className="master-api-toggle-wrapper">
+                            <span className="toggle-label-v4">
+                                Konekcije: {apiConnectionsEnabled ? 'AKTIVNE' : 'ISKLJUČENE'}
+                            </span>
+                            <button
+                                className={`master-power-btn ${apiConnectionsEnabled ? 'on' : 'off'}`}
+                                onClick={() => setApiConnectionsEnabled(!apiConnectionsEnabled)}
+                                title={apiConnectionsEnabled ? "Isključi sve konekcije" : "Uključi sve konekcije"}
+                            >
+                                <Power size={20} />
+                            </button>
+                        </div>
                     </div>
-                    <div className="master-api-toggle-wrapper">
-                        <span className="toggle-label-v4">
-                            Konekcije: {apiConnectionsEnabled ? 'AKTIVNE' : 'ISKLJUČENE'}
-                        </span>
+                    <div className={`provider-toggles ${!apiConnectionsEnabled ? 'disabled-section' : ''}`}>
                         <button
-                            className={`master-power-btn ${apiConnectionsEnabled ? 'on' : 'off'}`}
-                            onClick={() => setApiConnectionsEnabled(!apiConnectionsEnabled)}
-                            title={apiConnectionsEnabled ? "Isključi sve konekcije" : "Uključi sve konekcije"}
+                            className={`provider-toggle ${enabledProviders.opengreece ? 'active' : ''}`}
+                            onClick={() => apiConnectionsEnabled && setEnabledProviders(prev => ({ ...prev, opengreece: !prev.opengreece }))}
+                            disabled={!apiConnectionsEnabled}
                         >
-                            <Power size={20} />
+                            <Globe size={20} />
+                            <span>OpenGreece</span>
+                            {enabledProviders.opengreece && <CheckCircle2 size={16} className="check-icon" />}
+                        </button>
+
+                        <button
+                            className={`provider-toggle ${enabledProviders.tct ? 'active' : ''}`}
+                            onClick={() => apiConnectionsEnabled && setEnabledProviders(prev => ({ ...prev, tct: !prev.tct }))}
+                            disabled={!apiConnectionsEnabled}
+                        >
+                            <Database size={20} />
+                            <span>TCT</span>
+                            {enabledProviders.tct && <CheckCircle2 size={16} className="check-icon" />}
+                        </button>
+
+                        <button
+                            className={`provider-toggle ${enabledProviders.solvex ? 'active' : ''}`}
+                            onClick={() => apiConnectionsEnabled && setEnabledProviders(prev => ({ ...prev, solvex: !prev.solvex }))}
+                            disabled={!apiConnectionsEnabled}
+                            title="Solvex Bulgaria"
+                        >
+                            <Building2 size={20} />
+                            <span>Solvex</span>
+                            {enabledProviders.solvex && <CheckCircle2 size={16} className="check-icon" />}
+                        </button>
+
+                        <button
+                            className={`provider-toggle ai-lab ${enabledProviders.solvexai ? 'active' : ''}`}
+                            onClick={() => apiConnectionsEnabled && setEnabledProviders(prev => ({ ...prev, solvexai: !prev.solvexai }))}
+                            disabled={!apiConnectionsEnabled}
+                            title="Solvex AI Lab (Agoda Engine)"
+                        >
+                            <Sparkles size={20} className="ai-icon" />
+                            <span>Solvex AI</span>
+                            {enabledProviders.solvexai && <CheckCircle2 size={16} className="check-icon" />}
+                        </button>
+
+                        <button
+                            className={`provider-toggle ${enabledProviders.ors ? 'active' : ''}`}
+                            onClick={() => apiConnectionsEnabled && setEnabledProviders(prev => ({ ...prev, ors: !prev.ors }))}
+                            disabled={!apiConnectionsEnabled}
+                            title="ORS Multi-Operator"
+                        >
+                            <Globe size={20} />
+                            <span>ORS</span>
+                            {enabledProviders.ors && <CheckCircle2 size={16} className="check-icon" />}
                         </button>
                     </div>
                 </div>
-                <div className={`provider-toggles ${!apiConnectionsEnabled ? 'disabled-section' : ''}`}>
-                    <button
-                        className={`provider-toggle ${enabledProviders.opengreece ? 'active' : ''}`}
-                        onClick={() => apiConnectionsEnabled && setEnabledProviders(prev => ({ ...prev, opengreece: !prev.opengreece }))}
-                        disabled={!apiConnectionsEnabled}
-                    >
-                        <Globe size={20} />
-                        <span>OpenGreece</span>
-                        {enabledProviders.opengreece && <CheckCircle2 size={16} className="check-icon" />}
-                    </button>
-
-                    <button
-                        className={`provider-toggle ${enabledProviders.tct ? 'active' : ''}`}
-                        onClick={() => apiConnectionsEnabled && setEnabledProviders(prev => ({ ...prev, tct: !prev.tct }))}
-                        disabled={!apiConnectionsEnabled}
-                    >
-                        <Database size={20} />
-                        <span>TCT</span>
-                        {enabledProviders.tct && <CheckCircle2 size={16} className="check-icon" />}
-                    </button>
-
-                    <button
-                        className={`provider-toggle ${enabledProviders.solvex ? 'active' : ''}`}
-                        onClick={() => apiConnectionsEnabled && setEnabledProviders(prev => ({ ...prev, solvex: !prev.solvex }))}
-                        disabled={!apiConnectionsEnabled}
-                        title="Solvex Bulgaria"
-                    >
-                        <Building2 size={20} />
-                        <span>Solvex</span>
-                        {enabledProviders.solvex && <CheckCircle2 size={16} className="check-icon" />}
-                    </button>
-
-                    <button
-                        className={`provider-toggle ai-lab ${enabledProviders.solvexai ? 'active' : ''}`}
-                        onClick={() => apiConnectionsEnabled && setEnabledProviders(prev => ({ ...prev, solvexai: !prev.solvexai }))}
-                        disabled={!apiConnectionsEnabled}
-                        title="Solvex AI Lab (Agoda Engine)"
-                    >
-                        <Sparkles size={20} className="ai-icon" />
-                        <span>Solvex AI</span>
-                        {enabledProviders.solvexai && <CheckCircle2 size={16} className="check-icon" />}
-                    </button>
-
-                    <button
-                        className={`provider-toggle ${enabledProviders.ors ? 'active' : ''}`}
-                        onClick={() => apiConnectionsEnabled && setEnabledProviders(prev => ({ ...prev, ors: !prev.ors }))}
-                        disabled={!apiConnectionsEnabled}
-                        title="ORS Multi-Operator"
-                    >
-                        <Globe size={20} />
-                        <span>ORS</span>
-                        {enabledProviders.ors && <CheckCircle2 size={16} className="check-icon" />}
-                    </button>
-                </div>
-            </div>
+            )}
 
             <div className="trip-builder-console">
                 <div className="search-form-complex unified">
