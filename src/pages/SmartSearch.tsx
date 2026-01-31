@@ -90,63 +90,30 @@ const SmartSearch: React.FC = () => {
         { label: '5★ Hoteli', icon: Star, color: '#fbbf24' },
     ];
 
-    // Smart autocomplete - dinamički povlači podatke iz Solvex-a i TCT-a (Agoda Engine stil)
+    // SIMPLIFIED Autocomplete - samo lokalni podaci, bez API poziva
     useEffect(() => {
-        const fetchSuggestions = async () => {
-            if (destinationInput.length >= 2) {
-                const searchTerm = destinationInput.toLowerCase();
+        console.log('[SmartSearch] useEffect triggered, input:', destinationInput);
 
-                // 1. Static/Popular (Local) - Prikazujemo odmah!
-                const localMatches = mockDestinations.filter(dest =>
-                    dest.name.toLowerCase().includes(searchTerm) &&
-                    !selectedDestinations.find(selected => selected.id === dest.id)
-                );
+        if (destinationInput.length >= 2) {
+            const searchTerm = destinationInput.toLowerCase();
+            console.log('[SmartSearch] Searching for:', searchTerm);
 
-                console.log('[SmartSearch AI] Search term:', searchTerm);
-                console.log('[SmartSearch AI] Local matches found:', localMatches.length, localMatches.map(m => m.name));
+            const matches = mockDestinations.filter(dest =>
+                dest.name.toLowerCase().includes(searchTerm) &&
+                !selectedDestinations.find(selected => selected.id === dest.id)
+            );
 
-                setSuggestions(localMatches.slice(0, 10));
-                setShowSuggestions(localMatches.length > 0);
+            console.log('[SmartSearch] Matches found:', matches.length, matches.map(m => m.name));
 
-                // 2. Dinamički Solvex (Bugarska) hotele - Dopunjujemo asinhrono
-                try {
-                    const citiesToSearch = [33, 68, 9]; // Golden Sands, Sunny Beach, Bansko
-                    for (const cityId of citiesToSearch) {
-                        const hotelsRes = await solvexDictionaryService.getHotels(cityId);
-                        if (hotelsRes.success && hotelsRes.data) {
-                            const matching = (hotelsRes.data as any[])
-                                .filter(h => h.name.toLowerCase().includes(searchTerm))
-                                .map(h => ({
-                                    id: `solvex-h-${h.id}`,
-                                    name: h.name,
-                                    type: 'hotel' as const,
-                                    country: 'Bulgaria',
-                                    provider: 'Solvex',
-                                    stars: h.stars
-                                }));
+            setSuggestions(matches.slice(0, 10));
+            setShowSuggestions(matches.length > 0);
 
-                            if (matching.length > 0) {
-                                setSuggestions(prev => {
-                                    const combined = [...prev, ...matching];
-                                    return combined.filter((item, index, self) =>
-                                        index === self.findIndex((t) => t.name === item.name)
-                                    ).slice(0, 12);
-                                });
-                                setShowSuggestions(true);
-                            }
-                        }
-                    }
-                } catch (err) {
-                    console.warn('[SmartSearch AI] Dynamic fetch failed:', err);
-                }
-            } else {
-                setSuggestions([]);
-                setShowSuggestions(false);
-            }
-        };
-
-        const timer = setTimeout(fetchSuggestions, 150);
-        return () => clearTimeout(timer);
+            console.log('[SmartSearch] Set showSuggestions to:', matches.length > 0);
+        } else {
+            console.log('[SmartSearch] Input too short, clearing suggestions');
+            setSuggestions([]);
+            setShowSuggestions(false);
+        }
     }, [destinationInput, selectedDestinations]);
 
     const handleAddDestination = (destination: Destination) => {
