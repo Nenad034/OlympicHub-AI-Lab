@@ -404,7 +404,11 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'subagent-admin',
-                element: <SubagentAdmin />,
+                element: (
+                    <ProtectedRoute minLevel={6}>
+                        <SubagentAdmin />
+                    </ProtectedRoute>
+                ),
             },
         ],
     },

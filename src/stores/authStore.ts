@@ -11,6 +11,7 @@ interface UserPermissions {
 interface AuthState {
     userLevel: number;
     userName: string;
+    userEmail?: string;
     permissions: UserPermissions;
     login: (name: string, pass: string) => boolean;
     logout: () => void;
@@ -41,6 +42,7 @@ export const useAuthStore = create<AuthState>()(
                     set({
                         userLevel: 6,
                         userName: 'Nenad',
+                        userEmail: 'nenad@olympic.rs',
                         permissions: defaultPermissions[6]
                     });
                     return true;
@@ -52,6 +54,7 @@ export const useAuthStore = create<AuthState>()(
                 set({
                     userLevel: 0,
                     userName: '',
+                    userEmail: undefined,
                     permissions: defaultPermissions[0]
                 });
             },

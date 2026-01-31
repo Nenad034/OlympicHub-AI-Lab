@@ -118,7 +118,7 @@ interface TrainingRule {
     documents?: TrainingDocument[]; // Attached learning documents
 }
 
-type TabType = 'chat' | 'training';
+type TabType = 'chat' | 'training' | 'security';
 
 export default function MasterOrchestrator({ onBack, userLevel }: Props) {
     const [messages, setMessages] = useState<Message[]>([]);
@@ -133,6 +133,8 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
     const [chatFiles, setChatFiles] = useState<File[]>([]);
     const [fileHistory, setFileHistory] = useState<{ name: string; type: string; size: number; timestamp: Date; fileObj?: File }[]>([]);
     const [isLoadingRules, setIsLoadingRules] = useState(false);
+    const [securityEvents, setSecurityEvents] = useState<any[]>([]);
+    const [isLoadingSecurity, setIsLoadingSecurity] = useState(false);
     const [networkSpeed, setNetworkSpeed] = useState<any>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -342,48 +344,62 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
         setTimeout(() => {
             const query = input.toLowerCase();
             let identifiedAgents: string[] = [];
+            const isCapabilityQuery = query.includes('zadaci') ||
+                query.includes('šta možeš') ||
+                query.includes('sta možeš') ||
+                query.includes('sta mozes') ||
+                query.includes('mogućnosti') ||
+                query.includes('uloga') ||
+                query.includes('pomoć') ||
+                query.includes('help') ||
+                query.includes('ko ste');
 
             // Ako korisnik NIJE ručno izabrao agente, koristi automatsku detekciju
             if (selectedAgentIds.length === 0) {
-                if (query.includes('hotel') || query.includes('smeštaj') || query.includes('soba')) {
-                    identifiedAgents.push('hotel-agent');
-                }
-                if (query.includes('cena') || query.includes('popust') || query.includes('price')) {
-                    identifiedAgents.push('pricing-agent');
-                }
-                if (query.includes('email') || query.includes('mail') || query.includes('poruka')) {
-                    identifiedAgents.push('mail-agent');
-                }
-                if (query.includes('kupac') || query.includes('customer') || query.includes('gost')) {
-                    identifiedAgents.push('customer-agent');
-                }
-                if (query.includes('security') || query.includes('napad') || query.includes('bezbednost')) {
-                    identifiedAgents.push('fortress-agent');
-                }
-                if (query.includes('data') || query.includes('podatak') || query.includes('report')) {
-                    identifiedAgents.push('data-agent');
-                }
-                if (query.includes('api') || query.includes('konekcij') || query.includes('status') || query.includes('limit') || query.includes('cache') || query.includes('sentinel')) {
-                    identifiedAgents.push('sentinel-agent');
-                }
+                if (isCapabilityQuery) {
+                    // Activate all agents to introduce themselves
+                    identifiedAgents = agents.map(a => a.id);
+                } else {
+                    if (query.includes('hotel') || query.includes('smeštaj') || query.includes('soba')) {
+                        identifiedAgents.push('hotel-agent');
+                    }
+                    if (query.includes('cena') || query.includes('popust') || query.includes('price')) {
+                        identifiedAgents.push('pricing-agent');
+                    }
+                    if (query.includes('email') || query.includes('mail') || query.includes('poruka')) {
+                        identifiedAgents.push('mail-agent');
+                    }
+                    if (query.includes('kupac') || query.includes('customer') || query.includes('gost')) {
+                        identifiedAgents.push('customer-agent');
+                    }
+                    if (query.includes('security') || query.includes('napad') || query.includes('bezbednost')) {
+                        identifiedAgents.push('fortress-agent');
+                    }
+                    if (query.includes('data') || query.includes('podatak') || query.includes('report')) {
+                        identifiedAgents.push('data-agent');
+                    }
+                    if (query.includes('api') || query.includes('konekcij') || query.includes('status') || query.includes('limit') || query.includes('cache') || query.includes('sentinel')) {
+                        identifiedAgents.push('sentinel-agent');
+                    }
 
-                // Auto-activate based on file types
-                if (currentFiles.some(f => f.name.endsWith('.xlsx') || f.name.endsWith('.csv') || f.name.endsWith('.html') || f.name.endsWith('.htm'))) {
-                    if (!identifiedAgents.includes('data-agent')) identifiedAgents.push('data-agent');
-                    if (!identifiedAgents.includes('pricing-agent')) identifiedAgents.push('pricing-agent');
-                }
-                if (currentFiles.some(f => f.type.includes('image') || f.name.endsWith('.pdf'))) {
-                    if (!identifiedAgents.includes('hotel-agent')) identifiedAgents.push('hotel-agent');
-                }
+                    // Auto-activate based on file types
+                    if (currentFiles.some(f => f.name.endsWith('.xlsx') || f.name.endsWith('.csv') || f.name.endsWith('.html') || f.name.endsWith('.htm'))) {
+                        if (!identifiedAgents.includes('data-agent')) identifiedAgents.push('data-agent');
+                        if (!identifiedAgents.includes('pricing-agent')) identifiedAgents.push('pricing-agent');
+                    }
+                    if (currentFiles.some(f => f.type.includes('image') || f.name.endsWith('.pdf'))) {
+                        if (!identifiedAgents.includes('hotel-agent')) identifiedAgents.push('hotel-agent');
+                    }
 
-                // New Intelligence Agent is always activated for file analysis
-                if (currentFiles.length > 0) {
-                    if (!identifiedAgents.includes('insight-agent')) identifiedAgents.push('insight-agent');
-                }
+                    // New Intelligence Agent is always activated for file analysis
+                    if (currentFiles.length > 0) {
+                        if (!identifiedAgents.includes('insight-agent')) identifiedAgents.push('insight-agent');
+                    }
 
-                // Ako nijedan agent nije identifikovan, koristi opšti pristup
-                if (identifiedAgents.length === 0) {
-                    identifiedAgents.push('hotel-agent', 'data-agent');
+                    // Ako nijedan agent nije identifikovan, koristi opšti pristup
+                    if (identifiedAgents.length === 0) {
+                        identifiedAgents.push('hotel-agent', 'data-agent');
+                    }
                 }
             } else {
                 // Koristi ručno izabrane agente
@@ -405,7 +421,10 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                 agents.find(a => a.id === id)?.name
             ).join(', ');
 
-            let orchestratorContent = `Aktiviram sledeće agente: ${agentNames}`;
+            let orchestratorContent = isCapabilityQuery
+                ? `Razumem. Ja sam Master Orchestrator i upravljam mrežom specijalizovanih AI agenata. Evo njihovih uloga:`
+                : `Aktiviram sledeće agente: ${agentNames}`;
+
             if (currentFiles.length > 0) {
                 orchestratorContent += `\n\nIdentifikovao sam ${currentFiles.length} priloga. Agenti vrše analizu sadržaja...`;
             }
@@ -527,8 +546,27 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
     };
 
     const generateAgentResponse = (agentId: string, query: string, files: File[] = []): string => {
-        // Proveri da li postoji specifično pravilo za ovog agenta koje se aktivira
         const queryLower = query.toLowerCase();
+
+        // Provera da li korisnik pita o mogućnostima/zadacima agenata
+        const isCapabilityQuery = queryLower.includes('zadaci') ||
+            queryLower.includes('šta možeš') ||
+            queryLower.includes('sta možeš') ||
+            queryLower.includes('sta mozes') ||
+            queryLower.includes('mogućnosti') ||
+            queryLower.includes('uloga') ||
+            queryLower.includes('pomoć') ||
+            queryLower.includes('help') ||
+            queryLower.includes('ko ste');
+
+        if (isCapabilityQuery) {
+            const agent = agents.find(a => a.id === agentId);
+            if (agent) {
+                return `Zdravo! Ja sam ${agent.name} iz modula "${agent.module}". Moji zadaci uključuju: ${agent.capabilities.map(c => c.replace(/_/g, ' ')).join(', ')}. Kako mogu da vam pomognem?`;
+            }
+        }
+
+        // Proveri da li postoji specifično pravilo za ovog agenta koje se aktivira
         const relevantRule = trainingRules.find(rule =>
             rule.enabled &&
             rule.agentId === agentId &&
@@ -859,6 +897,30 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
         }));
     };
 
+    const fetchSecurityEvents = async () => {
+        setIsLoadingSecurity(true);
+        try {
+            const { data, error } = await supabase
+                .from('sentinel_events')
+                .select('*')
+                .eq('title', 'DETEKTOVAN PROMPT INJECTION')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setSecurityEvents(data || []);
+        } catch (err) {
+            console.error('Error fetching security events:', err);
+        } finally {
+            setIsLoadingSecurity(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'security') {
+            fetchSecurityEvents();
+        }
+    }, [activeTab]);
+
     return (
         <div style={{
             height: '100vh',
@@ -981,6 +1043,26 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                 >
                     <BookOpen size={16} />
                     Training Rules ({trainingRules.length})
+                </button>
+                <button
+                    onClick={() => setActiveTab('security')}
+                    style={{
+                        padding: '12px 24px',
+                        background: activeTab === 'security' ? 'var(--bg-main)' : 'transparent',
+                        border: 'none',
+                        borderBottom: activeTab === 'security' ? '2px solid var(--accent)' : '2px solid transparent',
+                        color: activeTab === 'security' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    <Shield size={16} color={securityEvents.length > 0 ? '#ef4444' : 'inherit'} />
+                    Security Shield ({securityEvents.length})
                 </button>
             </div>
 
@@ -1494,8 +1576,7 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                                 </div>
                             </div>
                         </>
-                    ) : (
-                        // Training Rules Tab
+                    ) : activeTab === 'training' ? (
                         <div style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
                             <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
                                 <div style={{ marginBottom: '30px' }}>
@@ -1513,15 +1594,16 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                                     border: '1px solid var(--border)',
                                     borderRadius: '16px',
                                     padding: '24px',
-                                    marginBottom: '24px'
+                                    marginBottom: '30px',
+                                    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
                                 }}>
-                                    <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <Plus size={18} />
-                                        Dodaj Novo Pravilo
+                                    <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <Plus size={18} color="var(--accent)" />
+                                        Novo Pravilo
                                     </h3>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                                         <input
-                                            placeholder="Naziv pravila"
+                                            placeholder="Naziv pravila (npr: Email Automatizacija)"
                                             value={editingRule?.title || ''}
                                             onChange={e => setEditingRule({ ...editingRule, title: e.target.value })}
                                             style={{
@@ -1545,21 +1627,19 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                                                 fontSize: '14px'
                                             }}
                                         >
-                                            <option value="" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Izaberi agenta...</option>
+                                            <option value="" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Izaberi Agenta...</option>
                                             {agents.map(agent => (
-                                                <option key={agent.id} value={agent.id} style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-                                                    {agent.name}
-                                                </option>
+                                                <option key={agent.id} value={agent.id} style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>{agent.name}</option>
                                             ))}
                                         </select>
                                     </div>
                                     <textarea
-                                        placeholder="Opis pravila"
+                                        placeholder="Opis pravila i instrukcije..."
                                         value={editingRule?.description || ''}
                                         onChange={e => setEditingRule({ ...editingRule, description: e.target.value })}
-                                        rows={2}
                                         style={{
                                             width: '100%',
+                                            height: '100px',
                                             padding: '12px 16px',
                                             borderRadius: '10px',
                                             background: 'var(--bg-main)',
@@ -1917,6 +1997,90 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                                     )}
                                 </div>
                             </div>
+                        </div>
+                    ) : (
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                <div>
+                                    <h2 style={{ fontSize: '24px', fontWeight: 900, color: 'var(--text-primary)', margin: 0 }}>
+                                        <Shield size={24} color="#ef4444" style={{ marginRight: '10px' }} />
+                                        AI Security Shield
+                                    </h2>
+                                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '4px' }}>Logovi detektovanih pretnji i pokušaja manipulacije</p>
+                                </div>
+                                <button
+                                    onClick={fetchSecurityEvents}
+                                    className="btn-secondary"
+                                    style={{ height: '40px', padding: '0 16px', gap: '8px' }}
+                                >
+                                    <RefreshCcw size={16} className={isLoadingSecurity ? 'spin' : ''} />
+                                    Osveži Logove
+                                </button>
+                            </div>
+
+                            {securityEvents.length === 0 ? (
+                                <div style={{
+                                    height: '400px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    background: 'var(--bg-card)',
+                                    borderRadius: '24px',
+                                    border: '1px dashed var(--border)',
+                                    gap: '20px',
+                                    color: 'var(--text-secondary)'
+                                }}>
+                                    <Shield size={64} style={{ opacity: 0.1 }} />
+                                    <p>Nisu detektovane bezbednosne pretnje u poslednjih 30 dana.</p>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    {securityEvents.map((event) => (
+                                        <div key={event.id} style={{
+                                            background: 'var(--bg-card)',
+                                            border: '1px solid var(--border)',
+                                            borderRadius: '16px',
+                                            padding: '20px',
+                                            display: 'flex',
+                                            gap: '20px',
+                                            transition: 'all 0.2s',
+                                            borderLeft: '4px solid #ef4444'
+                                        }}>
+                                            <div style={{
+                                                width: '40px',
+                                                height: '40px',
+                                                borderRadius: '12px',
+                                                background: 'rgba(239, 68, 68, 0.1)',
+                                                color: '#ef4444',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                flexShrink: 0
+                                            }}>
+                                                <AlertCircle size={24} />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                    <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#ef4444', margin: 0 }}>{event.title}</h3>
+                                                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                                        {new Date(event.created_at).toLocaleString('sr-RS')}
+                                                    </span>
+                                                </div>
+                                                <p style={{ fontSize: '14px', color: 'var(--text-primary)', lineHeight: '1.6', margin: '0 0 12px 0' }}>{event.message}</p>
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <span style={{ fontSize: '11px', padding: '4px 10px', background: 'var(--bg-main)', borderRadius: '6px', color: 'var(--text-secondary)', fontWeight: 700 }}>
+                                                        SEVERITY: CRITICAL
+                                                    </span>
+                                                    <span style={{ fontSize: '11px', padding: '4px 10px', background: 'var(--bg-main)', borderRadius: '6px', color: 'var(--text-secondary)', fontWeight: 700 }}>
+                                                        ACTION: BLOCKED
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

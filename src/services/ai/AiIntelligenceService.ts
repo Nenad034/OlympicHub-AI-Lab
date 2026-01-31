@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { sentinelEvents } from '../../utils/sentinelEvents';
+import { aiSecurity } from '../../utils/aiSecurity';
 
 export interface ScoredResult {
     id: string;
@@ -89,6 +90,40 @@ export class AiIntelligenceService {
         }
 
         return { score: Math.min(score, 100), reasons };
+    }
+
+    /**
+     * Safely processes content from external/untrusted sources
+     */
+    public async processExternalContent(rawContent: string, task: string): Promise<string> {
+        if (!this.genAI || !this.checkLimits()) return "AI is unavailable or limits reached.";
+
+        // 1. Sanitize input
+        const securityCheck = aiSecurity.sanitizeUntrustedText(rawContent);
+
+        // 2. Wrap in safety layer
+        const securedData = aiSecurity.wrapInSafetyLayer(securityCheck.safeText);
+
+        // 3. Prepare system prompt with Shield
+        const finalPrompt = `
+${aiSecurity.getSystemShieldPrompt()}
+
+TASK: ${task}
+
+DATA FOR ANALYSIS:
+${securedData}
+`;
+
+        try {
+            this.callCount++;
+            const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const result = await model.generateContent(finalPrompt);
+            const response = await result.response;
+            return response.text();
+        } catch (error) {
+            console.error('[AiLab Security] External content analysis failed:', error);
+            return "Bezbednosna greška pri analizi sadržaja.";
+        }
     }
 
     /**

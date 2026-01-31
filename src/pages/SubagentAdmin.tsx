@@ -135,6 +135,8 @@ const SubagentAdmin: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState<'all' | 'Active' | 'Suspended' | 'Pending'>('all');
     const [selectedSubagent, setSelectedSubagent] = useState<Subagent | null>(null);
     const [showModal, setShowModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editData, setEditData] = useState<Subagent | null>(null);
     const [showDateFilterModal, setShowDateFilterModal] = useState(false);
     const [dateFilters, setDateFilters] = useState({
         reservationFrom: '',
@@ -179,8 +181,19 @@ const SubagentAdmin: React.FC = () => {
     };
 
     const handleEdit = (subagent: Subagent) => {
-        // TODO: Open edit modal
-        alert(`Edit subagent: ${subagent.name}`);
+        setSelectedSubagent(subagent);
+        setEditData({ ...subagent });
+        setIsEditing(true);
+        setShowModal(true);
+    };
+
+    const handleSave = () => {
+        if (editData) {
+            setSubagents(subagents.map(s => s.id === editData.id ? editData : s));
+            setSelectedSubagent(editData);
+            setIsEditing(false);
+            alert('Promene uspešno sačuvane!');
+        }
     };
 
     const handleDelete = (id: string) => {
@@ -517,107 +530,209 @@ const SubagentAdmin: React.FC = () => {
                         </div>
 
                         <div className="modal-body">
-                            {/* Basic Info */}
-                            <div className="detail-section">
-                                <h3>Osnovni Podaci</h3>
-                                <div className="detail-grid">
-                                    <div className="detail-item">
-                                        <span className="detail-label">Kompanija:</span>
-                                        <span className="detail-value">{selectedSubagent.companyName}</span>
+                            {isEditing ? (
+                                <div className="edit-form">
+                                    <div className="detail-section">
+                                        <h3>Osnovni Podaci</h3>
+                                        <div className="input-grid">
+                                            <div className="input-field">
+                                                <label>Ime i Prezime</label>
+                                                <input
+                                                    type="text"
+                                                    value={editData?.name}
+                                                    onChange={(e) => setEditData(prev => prev ? { ...prev, name: e.target.value } : null)}
+                                                />
+                                            </div>
+                                            <div className="input-field">
+                                                <label>Kompanija</label>
+                                                <input
+                                                    type="text"
+                                                    value={editData?.companyName}
+                                                    onChange={(e) => setEditData(prev => prev ? { ...prev, companyName: e.target.value } : null)}
+                                                />
+                                            </div>
+                                            <div className="input-field">
+                                                <label>Email</label>
+                                                <input
+                                                    type="email"
+                                                    value={editData?.email}
+                                                    onChange={(e) => setEditData(prev => prev ? { ...prev, email: e.target.value } : null)}
+                                                />
+                                            </div>
+                                            <div className="input-field">
+                                                <label>Telefon</label>
+                                                <input
+                                                    type="text"
+                                                    value={editData?.phone}
+                                                    onChange={(e) => setEditData(prev => prev ? { ...prev, phone: e.target.value } : null)}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Email:</span>
-                                        <span className="detail-value">{selectedSubagent.email}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Telefon:</span>
-                                        <span className="detail-value">{selectedSubagent.phone}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Status:</span>
-                                        <span
-                                            className="status-badge"
-                                            style={{ background: getStatusColor(selectedSubagent.status) }}
-                                        >
-                                            {selectedSubagent.status}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
 
-                            {/* API Access */}
-                            <div className="detail-section">
-                                <h3><Shield size={18} /> API Pristup</h3>
-                                <div className="api-chips">
-                                    {selectedSubagent.allowedAPIs.length > 0 ? (
-                                        selectedSubagent.allowedAPIs.map(api => (
-                                            <span key={api} className="api-chip">{api}</span>
-                                        ))
-                                    ) : (
-                                        <p className="no-data">Nema dodeljenih API-ja</p>
-                                    )}
-                                </div>
-                            </div>
+                                    <div className="detail-section">
+                                        <h3>Dozvole i Marže</h3>
+                                        <div className="margin-settings-grid">
+                                            <div className="margin-input">
+                                                <label>Smeštaj %</label>
+                                                <input
+                                                    type="number"
+                                                    value={editData?.commissionRates.accommodation}
+                                                    onChange={(e) => setEditData(prev => prev ? { ...prev, commissionRates: { ...prev.commissionRates, accommodation: Number(e.target.value) } } : null)}
+                                                />
+                                            </div>
+                                            <div className="margin-input">
+                                                <label>Letovi %</label>
+                                                <input
+                                                    type="number"
+                                                    value={editData?.commissionRates.flights}
+                                                    onChange={(e) => setEditData(prev => prev ? { ...prev, commissionRates: { ...prev.commissionRates, flights: Number(e.target.value) } } : null)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
 
-                            {/* Commission Rates */}
-                            <div className="detail-section">
-                                <h3><DollarSign size={18} /> Provizije</h3>
-                                <div className="commission-grid">
-                                    <div className="commission-item">
-                                        <span>Smeštaj:</span>
-                                        <strong>{selectedSubagent.commissionRates.accommodation}%</strong>
-                                    </div>
-                                    <div className="commission-item">
-                                        <span>Letovi:</span>
-                                        <strong>{selectedSubagent.commissionRates.flights}%</strong>
-                                    </div>
-                                    <div className="commission-item">
-                                        <span>Transferi:</span>
-                                        <strong>{selectedSubagent.commissionRates.transfers}%</strong>
-                                    </div>
-                                    <div className="commission-item">
-                                        <span>Usluge:</span>
-                                        <strong>{selectedSubagent.commissionRates.services}%</strong>
-                                    </div>
-                                    <div className="commission-item">
-                                        <span>Putovanja:</span>
-                                        <strong>{selectedSubagent.commissionRates.tours}%</strong>
+                                    <div className="detail-section">
+                                        <h3>Pristup Dobavljačima</h3>
+                                        <div className="supplier-toggles">
+                                            {['Solvex', 'TCT', 'Open Greece', 'Amadeus', 'Kiwi'].map(sup => (
+                                                <label key={sup} className="toggle-label">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={editData?.allowedSuppliers.includes(sup.toLowerCase())}
+                                                        onChange={(e) => {
+                                                            const val = sup.toLowerCase();
+                                                            const current = editData?.allowedSuppliers || [];
+                                                            const next = e.target.checked ? [...current, val] : current.filter(c => c !== val);
+                                                            setEditData(prev => prev ? { ...prev, allowedSuppliers: next } : null);
+                                                        }}
+                                                    />
+                                                    {sup}
+                                                </label>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <>
+                                    {/* Existing Detail View Content */}
+                                    <div className="detail-section">
+                                        <h3>Osnovni Podaci</h3>
+                                        {/* ... rest of existing code ... */}
+                                        <div className="detail-grid">
+                                            <div className="detail-item">
+                                                <span className="detail-label">Kompanija:</span>
+                                                <span className="detail-value">{selectedSubagent.companyName}</span>
+                                            </div>
+                                            <div className="detail-item">
+                                                <span className="detail-label">Email:</span>
+                                                <span className="detail-value">{selectedSubagent.email}</span>
+                                            </div>
+                                            <div className="detail-item">
+                                                <span className="detail-label">Telefon:</span>
+                                                <span className="detail-value">{selectedSubagent.phone}</span>
+                                            </div>
+                                            <div className="detail-item">
+                                                <span className="detail-label">Status:</span>
+                                                <span
+                                                    className="status-badge"
+                                                    style={{ background: getStatusColor(selectedSubagent.status) }}
+                                                >
+                                                    {selectedSubagent.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                            {/* Financials */}
-                            <div className="detail-section">
-                                <h3><Euro size={18} /> Finansije</h3>
-                                <div className="financial-grid">
-                                    <div className="financial-item">
-                                        <span>Ukupan Promet:</span>
-                                        <strong className="revenue">{selectedSubagent.financials.totalRevenue.toLocaleString()} €</strong>
+                                    {/* API Access */}
+                                    <div className="detail-section">
+                                        <h3><Shield size={18} /> API Pristup</h3>
+                                        <div className="api-chips">
+                                            {selectedSubagent.allowedAPIs.length > 0 ? (
+                                                selectedSubagent.allowedAPIs.map(api => (
+                                                    <span key={api} className="api-chip">{api}</span>
+                                                ))
+                                            ) : (
+                                                <p className="no-data">Nema dodeljenih API-ja</p>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="financial-item">
-                                        <span>Ukupna Provizija:</span>
-                                        <strong className="commission">{selectedSubagent.financials.totalCommission.toLocaleString()} €</strong>
+
+                                    {/* Commission Rates */}
+                                    <div className="detail-section">
+                                        <h3><DollarSign size={18} /> Provizije</h3>
+                                        <div className="commission-grid">
+                                            <div className="commission-item">
+                                                <span>Smeštaj:</span>
+                                                <strong>{selectedSubagent.commissionRates.accommodation}%</strong>
+                                            </div>
+                                            <div className="commission-item">
+                                                <span>Letovi:</span>
+                                                <strong>{selectedSubagent.commissionRates.flights}%</strong>
+                                            </div>
+                                            <div className="commission-item">
+                                                <span>Transferi:</span>
+                                                <strong>{selectedSubagent.commissionRates.transfers}%</strong>
+                                            </div>
+                                            <div className="commission-item">
+                                                <span>Usluge:</span>
+                                                <strong>{selectedSubagent.commissionRates.services}%</strong>
+                                            </div>
+                                            <div className="commission-item">
+                                                <span>Putovanja:</span>
+                                                <strong>{selectedSubagent.commissionRates.tours}%</strong>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="financial-item">
-                                        <span>Trenutno Stanje:</span>
-                                        <strong className="balance">{selectedSubagent.financials.balance.toLocaleString()} €</strong>
+
+                                    {/* Financials */}
+                                    <div className="detail-section">
+                                        <h3><Euro size={18} /> Finansije</h3>
+                                        <div className="financial-grid">
+                                            <div className="financial-item">
+                                                <span>Ukupan Promet:</span>
+                                                <strong className="revenue">{selectedSubagent.financials.totalRevenue.toLocaleString()} €</strong>
+                                            </div>
+                                            <div className="financial-item">
+                                                <span>Ukupna Provizija:</span>
+                                                <strong className="commission">{selectedSubagent.financials.totalCommission.toLocaleString()} €</strong>
+                                            </div>
+                                            <div className="financial-item">
+                                                <span>Trenutno Stanje:</span>
+                                                <strong className="balance">{selectedSubagent.financials.balance.toLocaleString()} €</strong>
+                                            </div>
+                                            <div className="financial-item">
+                                                <span>Dugovanje:</span>
+                                                <strong className="outstanding">{selectedSubagent.financials.outstanding.toLocaleString()} €</strong>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="financial-item">
-                                        <span>Dugovanje:</span>
-                                        <strong className="outstanding">{selectedSubagent.financials.outstanding.toLocaleString()} €</strong>
-                                    </div>
-                                </div>
-                            </div>
+                                </>
+                            )}
                         </div>
 
                         <div className="modal-footer">
-                            <button className="btn-secondary" onClick={() => setShowModal(false)}>
-                                Zatvori
-                            </button>
-                            <button className="btn-primary" onClick={() => handleEdit(selectedSubagent)}>
-                                <Edit size={16} />
-                                Izmeni
-                            </button>
+                            {isEditing ? (
+                                <>
+                                    <button className="btn-secondary" onClick={() => setIsEditing(false)}>
+                                        Odustani
+                                    </button>
+                                    <button className="btn-primary" onClick={handleSave}>
+                                        <CheckCircle size={16} />
+                                        Sačuvaj Promene
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button className="btn-secondary" onClick={() => setShowModal(false)}>
+                                        Zatvori
+                                    </button>
+                                    <button className="btn-primary" onClick={() => handleEdit(selectedSubagent)}>
+                                        <Edit size={16} />
+                                        Izmeni
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

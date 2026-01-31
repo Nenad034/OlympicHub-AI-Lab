@@ -16,6 +16,7 @@ import { GoogleAddressAutocomplete } from '../components/GoogleAddressAutocomple
 import { NATIONALITIES } from '../constants/nationalities';
 import ReservationEmailModal from '../components/ReservationEmailModal';
 import { saveDossierToDatabase, getNextReservationNumber, getReservationById } from '../services/reservationService';
+import { useAuthStore } from '../stores';
 import '../components/GoogleAddressAutocomplete.css';
 import './ReservationArchitect.css';
 
@@ -120,9 +121,13 @@ const ReservationArchitect: React.FC = () => {
     const [activeSection, setActiveSection] = useState('parties');
 
     const [advisorType, setAdvisorType] = useState('accomodation');
-    const [activeCalendar, setActiveCalendar] = useState<{ id: string, type: 'checkIn' | 'checkOut' } | null>(null);
-    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
     const [expandedPassengers, setExpandedPassengers] = useState<string[]>([]);
+
+    // B2B Segment States
+    const { userLevel } = useAuthStore();
+    const isSubagent = userLevel < 6;
+    const [commsSubject, setCommsSubject] = useState('');
+    const [commsMessage, setCommsMessage] = useState('');
 
 
     // Central State
@@ -132,7 +137,6 @@ const ReservationArchitect: React.FC = () => {
         status: 'Request' as ResStatus,
         customerType: 'B2C-Individual' as CustomerType,
         clientReference: 'REF-' + Math.floor(Math.random() * 10000),
-
 
         // 1. Ugovarač (Payer/Main Booker)
         booker: {
@@ -869,6 +873,11 @@ const ReservationArchitect: React.FC = () => {
                         <button className={activeSection === 'finance' ? 'active' : ''} onClick={() => setActiveSection('finance')}>
                             <Banknote size={18} /> Uplate & Finansije
                         </button>
+                        {isSubagent && (
+                            <button className={`comms-btn ${activeSection === 'communication' ? 'active' : ''}`} onClick={() => setActiveSection('communication')}>
+                                <Mail size={18} /> B2B Komunikacija
+                            </button>
+                        )}
                         <button className={activeSection === 'notes' ? 'active' : ''} onClick={() => setActiveSection('notes')}>
                             <FileText size={18} /> Napomene
                         </button>
@@ -933,9 +942,9 @@ const ReservationArchitect: React.FC = () => {
                                         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Podaci o ugovaraču (nalagodavcu) i svim učesnicima putovanja</p>
                                     </div>
                                     <div className="type-toggle">
-                                        <button className={dossier.customerType === 'B2C-Individual' ? 'selected' : ''} onClick={() => { setDossier({ ...dossier, customerType: 'B2C-Individual' }); addLog('Tip Klijenta', 'Tip klijenta promenjen u "Individualni".', 'info'); }}>Individualni</button>
-                                        <button className={dossier.customerType === 'B2B-Subagent' ? 'selected' : ''} onClick={() => { setDossier({ ...dossier, customerType: 'B2B-Subagent' }); addLog('Tip Klijenta', 'Tip klijenta promenjen u "Subagent".', 'info'); }}>Subagent</button>
-                                        <button className={dossier.customerType === 'B2C-Legal' ? 'selected' : ''} onClick={() => { setDossier({ ...dossier, customerType: 'B2C-Legal' }); addLog('Tip Klijenta', 'Tip klijenta promenjen u "Pravno Lice".', 'info'); }}>Pravno Lice</button>
+                                        <button className={dossier.customerType === 'B2C-Individual' ? 'selected' : ''} disabled={isSubagent} onClick={() => { setDossier({ ...dossier, customerType: 'B2C-Individual' }); addLog('Tip Klijenta', 'Tip klijenta promenjen u "Individualni".', 'info'); }}>Individualni</button>
+                                        <button className={dossier.customerType === 'B2B-Subagent' ? 'selected' : ''} disabled={isSubagent} onClick={() => { setDossier({ ...dossier, customerType: 'B2B-Subagent' }); addLog('Tip Klijenta', 'Tip klijenta promenjen u "Subagent".', 'info'); }}>Subagent</button>
+                                        <button className={dossier.customerType === 'B2C-Legal' ? 'selected' : ''} disabled={isSubagent} onClick={() => { setDossier({ ...dossier, customerType: 'B2C-Legal' }); addLog('Tip Klijenta', 'Tip klijenta promenjen u "Pravno Lice".', 'info'); }}>Pravno Lice</button>
                                     </div>
                                 </div>
 
@@ -2118,6 +2127,89 @@ const ReservationArchitect: React.FC = () => {
                                 </div>
                             </section>
                         )}
+                        {/* SECTION: B2B COMMUNICATION CENTER */}
+                        {activeSection === 'communication' && isSubagent && (
+                            <section className="res-section fade-in b2b-comms-center">
+                                <div className="section-title">
+                                    <h3><Mail size={20} color="#ff9800" style={{ marginRight: '10px' }} /> B2B Centar za Komunikaciju</h3>
+                                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Direktni upiti centrali (inf@olympic.rs) vezani za ovu rezervaciju</p>
+                                </div>
+
+                                <div className="b2b-comms-grid">
+                                    <div className="comms-form-card">
+                                        <div className="quick-subjects">
+                                            <label>Brzi Predmeti:</label>
+                                            <div className="subject-chips">
+                                                {[
+                                                    `Promena imena putnika - REZ: ${dossier.resCode || dossier.clientReference}`,
+                                                    `Otkaz rezervacije - REZ: ${dossier.resCode || dossier.clientReference}`,
+                                                    `Dodatne usluge / Napomene - REZ: ${dossier.resCode || dossier.clientReference}`,
+                                                    `Pitanje oko plaćanja - REZ: ${dossier.resCode || dossier.clientReference}`,
+                                                    `Problem sa vaučerom - REZ: ${dossier.resCode || dossier.clientReference}`
+                                                ].map((subj, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        className={`subject-chip ${commsSubject === subj ? 'active' : ''}`}
+                                                        onClick={() => setCommsSubject(subj)}
+                                                    >
+                                                        {subj.split(' - ')[0]}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="input-field full-width">
+                                            <label>Predmet poruke</label>
+                                            <input
+                                                type="text"
+                                                value={commsSubject}
+                                                onChange={(e) => setCommsSubject(e.target.value)}
+                                                placeholder="Npr: Hitna promena u rezervaciji..."
+                                            />
+                                        </div>
+
+                                        <div className="input-field full-width">
+                                            <label>Vaša poruka / Upit</label>
+                                            <textarea
+                                                value={commsMessage}
+                                                onChange={(e) => setCommsMessage(e.target.value)}
+                                                placeholder="Detaljno opišite šta je potrebno..."
+                                                style={{ minHeight: '150px' }}
+                                            />
+                                        </div>
+
+                                        <button
+                                            className="send-b2b-query-btn"
+                                            onClick={() => {
+                                                addLog('B2B Upit Poslat', `Poslat upit centrali: ${commsSubject}`, 'success');
+                                                alert(`Upit uspešno poslat na inf@olympic.rs!\n\nPredmet: ${commsSubject}\n\nOdgovor možete očekivati u roku od 15 minuta u "History" sekciji ili na Vaš email.`);
+                                                setCommsMessage('');
+                                            }}
+                                            disabled={!commsSubject || !commsMessage}
+                                        >
+                                            <Mail size={18} /> Pošalji Upit Centrali
+                                        </button>
+                                    </div>
+
+                                    <div className="comms-info-card">
+                                        <div className="support-info">
+                                            <h4>Direktna Podrška</h4>
+                                            <p>Radno vreme: Pon-Pet 09-20h, Sub 09-15h</p>
+                                            <div className="support-phone">
+                                                <History size={16} /> 011/33-33-333
+                                            </div>
+                                        </div>
+                                        <div className="comms-history-preview">
+                                            <h5>Poslednji statusi Komunikacije</h5>
+                                            <div className="p-mini-log">
+                                                <div className="log-line success">✓ Rezervacija potvrđena od strane dobavljača (sistem)</div>
+                                                <div className="log-line info">ℹ Upit primljen i dodeljen operateru (sistem)</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        )}
 
                         {/* SECTION: DOCUMENTS */}
                         {activeSection === 'documents' && (
@@ -2262,9 +2354,9 @@ const ReservationArchitect: React.FC = () => {
                         <span>Operater: <strong>Nenad</strong> (Office Belgrade)</span>
                     </div>
 
-                    {/* Suppliers in Footer Center */}
+                    {/* Suppliers in Footer Center - HIDDEN FOR SUBAGENTS */}
                     <div className="footer-suppliers-center">
-                        {Array.from(new Set(dossier.tripItems.map(item => `${item.supplier}|${item.type}`))).map((providerKey, idx) => {
+                        {!isSubagent && Array.from(new Set(dossier.tripItems.map(item => `${item.supplier}|${item.type}`))).map((providerKey, idx) => {
                             const [supplier, type] = providerKey.split('|');
                             if (!supplier) return null;
                             return (
@@ -2278,11 +2370,17 @@ const ReservationArchitect: React.FC = () => {
                                 </div>
                             );
                         })}
+                        {isSubagent && (
+                            <div className="b2b-footer-notice">
+                                <ShieldCheck size={14} />
+                                <span>Verifikovana B2B Rezervacija</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="footer-actions">
                         <button className="btn-print-contract outline"><Printer size={16} /> Štampaj Ugovor</button>
-                        <button className="btn-save-master" onClick={handleSave}><Save size={16} /> Sačuvaj Dossier</button>
+                        {!isSubagent && <button className="btn-save-master" onClick={handleSave}><Save size={16} /> Sačuvaj Dossier</button>}
                     </div>
                 </footer>
             </div>

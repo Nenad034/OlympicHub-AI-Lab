@@ -16,6 +16,7 @@ import DateRangeInput from '../components/DateRangeInput.tsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getUserReservations, type DatabaseReservation } from '../services/reservationService';
+import { useAuthStore } from '../stores';
 
 // Types
 type ResStatus = 'Active' | 'Reservation' | 'Canceled' | 'Offer' | 'Request' | 'Processing';
@@ -70,6 +71,8 @@ import { MultiSelectDropdown } from '../components/MultiSelectDropdown';
 
 const ReservationsDashboard: React.FC = () => {
     const navigate = useNavigate();
+    const { userLevel } = useAuthStore();
+    const isSubagent = userLevel < 6;
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [showStats, setShowStats] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -84,6 +87,7 @@ const ReservationsDashboard: React.FC = () => {
         customerType: string[];
         supplier: string[];
         workflow: string[];
+        b2bSource: string[];
     }>({
         status: ['all'],
         reservationFrom: '',
@@ -92,7 +96,8 @@ const ReservationsDashboard: React.FC = () => {
         stayTo: '',
         customerType: ['all'],
         supplier: ['all'],
-        workflow: ['all']
+        workflow: ['all'],
+        b2bSource: ['all']
     });
     const toggleWorkflowFilter = (key: string, val: boolean) => {
         const filterStr = `${key}:${val}`;
@@ -393,7 +398,9 @@ const ReservationsDashboard: React.FC = () => {
             setSyncStatus('syncing');
 
             try {
-                const result = await getUserReservations();
+                // If subagent, filter by their email
+                const userEmail = useAuthStore.getState().userEmail;
+                const result = await getUserReservations(isSubagent ? userEmail : undefined);
 
                 if (result.success && result.data && result.data.length > 0) {
                     // Mapiranje database rezervacija u UI format
@@ -743,6 +750,13 @@ ${data.map(r => `  <reservation>
                 return (!!(res as unknown as Record<string, unknown>)[key]) === requiredVal;
             });
             if (!matchesWorkflow) return false;
+        }
+
+        // B2B Source Filter
+        if (!activeFilters.b2bSource.includes('all')) {
+            const isB2B = res.customerType === 'B2B-Subagent';
+            const b2bMatch = activeFilters.b2bSource.includes(isB2B ? 'B2B' : 'B2C');
+            if (!b2bMatch) return false;
         }
 
         return true;
@@ -1105,6 +1119,31 @@ ${data.map(r => `  <reservation>
                             Bez uplate €
                         </button>
                     </div>
+
+                    {/* B2B Source Filter Dropdown - ONLY FOR STAFF */}
+                    {!isSubagent && (
+                        <div style={{ marginLeft: '16px' }}>
+                            <select
+                                value={activeFilters.b2bSource[0]}
+                                onChange={(e) => setActiveFilters(prev => ({ ...prev, b2bSource: [e.target.value] }))}
+                                style={{
+                                    background: 'var(--bg-card)',
+                                    border: '1px solid var(--border)',
+                                    color: 'var(--text-primary)',
+                                    padding: '4px 12px',
+                                    borderRadius: '6px',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    outline: 'none'
+                                }}
+                            >
+                                <option value="all">Svi Izvori Prodaje</option>
+                                <option value="B2C">B2C (Direktna prodaja)</option>
+                                <option value="B2B">B2B (Subagenti)</option>
+                            </select>
+                        </div>
+                    )}
                 </div>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                     {/* Bulk Email Controls */}
@@ -1328,7 +1367,7 @@ ${data.map(r => `  <reservation>
                                             </div>
                                         )}
                                         <div className="customer-meta">
-                                            {res.customerType === 'B2B-Subagent' && <span className="type-badge b2b">B2B</span>}
+                                            {res.customerType === 'B2B-Subagent' && <span className="type-badge b2b">B2B: {res.customerName}</span>}
                                             {res.customerType === 'B2C-Legal' && <span className="type-badge legal">Firma</span>}
                                             <span className="contact-info">
                                                 <Phone size={12} />
@@ -1336,6 +1375,17 @@ ${data.map(r => `  <reservation>
                                             </span>
                                         </div>
                                     </div>
+
+                                    {/* Agency Column - ONLY FOR STAFF */}
+                                    {!isSubagent && (
+                                        <div className="res-agency" style={{ width: '150px' }}>
+                                            <div className="agency-label" style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 800 }}>Agencija / Izvor</div>
+                                            <div className="agency-name" style={{ fontSize: '13px', fontWeight: 600, color: '#ff9800', marginTop: '4px' }}>
+                                                <Building2 size={12} style={{ marginRight: '6px' }} />
+                                                {res.customerType === 'B2B-Subagent' ? res.customerName : 'Direct Sales'}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="res-trip">
                                         <div className="trip-destination">

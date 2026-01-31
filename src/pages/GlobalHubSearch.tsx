@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Search, MapPin, Calendar, Users, Sparkles,
-    Loader2, CheckCircle2, Hotel,
+    Loader2, CheckCircle2, Hotel, DollarSign,
     Info, Users2, Moon, Zap, ShieldCheck, MoveRight, MoveLeft,
     Globe, Database, ArrowRight, Star,
     LayoutGrid, List as ListIcon, Map as MapIcon,
@@ -10,7 +10,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getHotelProviderManager } from '../services/providers/HotelProviderManager';
-import { useThemeStore } from '../stores';
+// Stores
+import { useThemeStore, useAuthStore } from '../stores';
 import { useIntelligenceStore } from '../stores/intelligenceStore';
 import { softZoneService } from '../services/softZoneService';
 import { translations } from '../translations';
@@ -178,6 +179,12 @@ const GlobalHubSearch: React.FC = () => {
     const [selectedArrivalDate, setSelectedArrivalDate] = useState<string | null>(null);
     const [expandedHotel, setExpandedHotel] = useState<CombinedResult | null>(null);
 
+    // B2B Segment States
+    const { userLevel } = useAuthStore();
+    const isSubagent = userLevel < 6; // Simulation: any non-admin is treated as subagent for UI 
+    const [b2bMargin, setB2bMargin] = useState({ value: 10, type: 'percentage' as 'percentage' | 'fixed' });
+    const [showStaffOnline, setShowStaffOnline] = useState(false);
+
     // Booking modal state
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [selectedRoomForBooking, setSelectedRoomForBooking] = useState<any>(null);
@@ -202,8 +209,13 @@ const GlobalHubSearch: React.FC = () => {
         setIsBookingModalOpen(true);
     };
 
-    const handleBookingError = (error: string) => {
-        console.error('Booking failed:', error);
+    const getPriceWithMargin = (price: number) => {
+        if (!isSubagent) return price;
+        if (b2bMargin.type === 'percentage') {
+            return Math.ceil(price * (1 + b2bMargin.value / 100));
+        } else {
+            return price + b2bMargin.value;
+        }
     };
 
     React.useEffect(() => {
@@ -672,7 +684,7 @@ const GlobalHubSearch: React.FC = () => {
     });
 
     return (
-        <div className="total-trip-container global-hub-search">
+        <div className={`total-trip-container global-hub-search ${isSubagent ? 'b2b-active-mode' : ''}`}>
             <header className="total-trip-header">
                 <div className="header-content">
                     <h1><Globe className="icon-main" /> Global Search Hub</h1>
@@ -682,6 +694,12 @@ const GlobalHubSearch: React.FC = () => {
                     <Database size={16} />
                     <span>Cross-Provider Analytics</span>
                 </div>
+                {isSubagent && (
+                    <div className="b2b-status-badge">
+                        <ShieldCheck size={14} />
+                        <span>B2B PARTNER MODE</span>
+                    </div>
+                )}
             </header>
 
 
@@ -932,6 +950,32 @@ const GlobalHubSearch: React.FC = () => {
                             <span>Pretraži Sve</span>
                         </button>
                     </div>
+
+                    {isSubagent && (
+                        <div className="b2b-margin-control-row animate-fade-in">
+                            <div className="margin-input-group">
+                                <label><DollarSign size={14} /> Vaša Marža</label>
+                                <div className="margin-toggle-inputs">
+                                    <input
+                                        type="number"
+                                        value={b2bMargin.value}
+                                        onChange={(e) => setB2bMargin({ ...b2bMargin, value: parseFloat(e.target.value) || 0 })}
+                                    />
+                                    <select
+                                        value={b2bMargin.type}
+                                        onChange={(e) => setB2bMargin({ ...b2bMargin, type: e.target.value as 'percentage' | 'fixed' })}
+                                    >
+                                        <option value="percentage">%</option>
+                                        <option value="fixed">EUR</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="commission-preview">
+                                <Info size={14} />
+                                <span>Predviđena osnovna provizija: <strong>8% - 12%</strong></span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -1313,9 +1357,11 @@ const GlobalHubSearch: React.FC = () => {
                                     <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.source.toLowerCase().replace(/\s+/g, '-')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
                                         <div className="hotel-card-image">
                                             <img src={hotel.image} alt={hotel.name} />
-                                            <div className="source-badge">
-                                                {hotel.source === 'TCT' ? 'TCT' : hotel.source}
-                                            </div>
+                                            {!isSubagent && (
+                                                <div className="source-badge">
+                                                    {hotel.source === 'TCT' ? 'TCT' : hotel.source}
+                                                </div>
+                                            )}
                                             {hotel.source === 'Solvex AI' && (
                                                 <div className="intelligence-boost-badge ai-lab animate-pulse">
                                                     <Sparkles size={10} /> {hotel.aiScore ? `AI Optimized (${hotel.aiScore}%)` : 'AI Engine Optimized'}
@@ -1370,11 +1416,24 @@ const GlobalHubSearch: React.FC = () => {
 
                                             <div className="price-action-section">
                                                 <div className="lowest-price-tag">
-                                                    <span className="from-label">Najbolja cena od</span>
-                                                    <span className="price-val">{hotel.price} {hotel.currency}</span>
+                                                    {isSubagent ? (
+                                                        <div className="b2b-price-stack">
+                                                            <div className="net-price-badge">NET: {hotel.price} {hotel.currency}</div>
+                                                            <div className="preview-price-main">
+                                                                <span className="from-label">PREVIEW CENA:</span>
+                                                                <span className="price-val">{getPriceWithMargin(hotel.price)} {hotel.currency}</span>
+                                                            </div>
+                                                            <div className="commission-hint">Zarada: {getPriceWithMargin(hotel.price) - hotel.price} {hotel.currency}</div>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <span className="from-label">Najbolja cena od</span>
+                                                            <span className="price-val">{hotel.price} {hotel.currency}</span>
+                                                        </>
+                                                    )}
                                                     {activeTriggers.some(t => t.id === 'economy_reflex') && (
                                                         <div className="installment-label animate-fade-in">
-                                                            ili 12 rata po <strong>{Math.round(hotel.price / 12)} {hotel.currency}</strong>
+                                                            ili 12 rata po <strong>{Math.round((isSubagent ? getPriceWithMargin(hotel.price) : hotel.price) / 12)} {hotel.currency}</strong>
                                                         </div>
                                                     )}
                                                 </div>
@@ -1474,9 +1533,11 @@ const GlobalHubSearch: React.FC = () => {
                             </div>
 
                             <div className="modal-footer-v4">
-                                <div className="provider-tag">
-                                    Izvor podataka: <strong>{expandedHotel.source}</strong>
-                                </div>
+                                {!isSubagent && (
+                                    <div className="provider-tag">
+                                        Izvor podataka: <strong>{expandedHotel.source}</strong>
+                                    </div>
+                                )}
                                 <p>Cene su informativnog karaktera i podložne su promeni do potvrde rezervacije.</p>
                             </div>
                         </div>

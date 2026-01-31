@@ -1944,3 +1944,181 @@
     background: #10b981;
     border-color: #10b981;
 }
+/* ==========================================================================
+   B2B Communication Center Styles
+   ========================================================================== */
+
+.b2b-comms-center .section-title h3 {
+    color: #ff9800 !important;
+}
+
+.b2b-comms-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    margin-top: 24px;
+}
+
+.comms-form-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 30px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.quick-subjects {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.quick-subjects label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.subject-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.subject-chip {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.subject-chip:hover {
+    border-color: #ff9800;
+    color: #ff9800;
+    background: rgba(255, 152, 0, 0.05);
+}
+
+.subject-chip.active {
+    background: #ff9800;
+    color: white;
+    border-color: #ff9800;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+.send-b2b-query-btn {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    color: white;
+    padding: 16px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+
+.send-b2b-query-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(255, 152, 0, 0.4);
+}
+
+.send-b2b-query-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
+
+.comms-info-card {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.support-info {
+    background: rgba(255, 152, 0, 0.05);
+    border: 1px solid rgba(255, 152, 0, 0.2);
+    padding: 24px;
+    border-radius: 16px;
+}
+
+.support-info h4 {
+    margin: 0 0 8px 0;
+    color: #ff9800;
+}
+
+.support-info p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.support-phone {
+    margin-top: 16px;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.comms-history-preview {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 20px;
+    border-radius: 16px;
+    flex: 1;
+}
+
+.comms-history-preview h5 {
+    margin: 0 0 16px 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.p-mini-log {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.log-line {
+    font-size: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.02);
+    border-left: 3px solid var(--border);
+}
+
+.log-line.success { border-left-color: #10b981; color: #10b981; }
+.log-line.info { border-left-color: #3b82f6; color: #3b82f6; }
+
+.b2b-footer-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(16, 185, 129, 0.1);
+    padding: 6px 14px;
+    border-radius: 20px;
+    color: #10b981;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}

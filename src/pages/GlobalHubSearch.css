@@ -2534,3 +2534,119 @@
 .tokyo-light-theme .insight-text p {
     color: #6d28d2;
 }
+/* ==========================================================================
+   B2B Segment Specific Styles (Olympic Hub B2B)
+   ========================================================================== */
+
+.b2b-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(255, 152, 0, 0.1);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+    border-radius: 20px;
+    color: #ff9800;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 15px rgba(255, 152, 0, 0.15);
+}
+
+.b2b-margin-control-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+    padding: 16px;
+    background: rgba(255, 152, 0, 0.05);
+    border: 1px dashed rgba(255, 152, 0, 0.3);
+    border-radius: 12px;
+}
+
+.margin-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.margin-input-group label {
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: #ff9800;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.margin-toggle-inputs {
+    display: flex;
+    background: var(--bg-input);
+    border: 1px solid rgba(255, 152, 0, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    height: 40px;
+}
+
+.margin-toggle-inputs input {
+    width: 60px;
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 0 10px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.margin-toggle-inputs select {
+    background: rgba(255, 152, 0, 0.1);
+    border: none;
+    border-left: 1px solid rgba(255, 152, 0, 0.2);
+    color: #ff9800;
+    padding: 0 8px;
+    font-weight: 800;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.commission-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #94a3b8;
+    font-size: 13px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    padding-left: 20px;
+}
+
+.commission-preview strong {
+    color: #10b981;
+}
+
+/* The requested B2B Frame (Orange glow) */
+.global-hub-search.b2b-active-mode {
+    position: relative;
+}
+
+/* Apply border to the main console area */
+.global-hub-search.b2b-active-mode .trip-builder-console {
+    border: 1px solid rgba(255, 152, 0, 0.3) !important;
+    box-shadow: 0 0 30px rgba(255, 152, 0, 0.1) !important;
+}
+
+.global-hub-search.b2b-active-mode .hotel-result-card-premium {
+    border-color: rgba(255, 152, 0, 0.2);
+}
+
+.global-hub-search.b2b-active-mode .hotel-result-card-premium:hover {
+    border-color: #ff9800;
+    box-shadow: 0 10px 30px rgba(255, 152, 0, 0.2);
+}
+
+/* Hide Suppliers in results */
+.global-hub-search.b2b-active-mode .source-badge,
+.global-hub-search.b2b-active-mode .provider-comparison-list {
+    display: none !important;
+}
