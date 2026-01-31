@@ -3,8 +3,9 @@ import { useAuthStore } from '../stores';
 import {
     Sparkles, Hotel, Plane, Package, Bus, Compass,
     MapPin, Calendar, Users, UtensilsCrossed, Star,
-    Search, Bot, TrendingUp, Zap, Shield, X
+    Search, Bot, TrendingUp, Zap, Shield, X, Loader2
 } from 'lucide-react';
+import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
 import './SmartSearch.css';
 
 interface Destination {
@@ -30,6 +31,9 @@ const SmartSearch: React.FC = () => {
     const [adults, setAdults] = useState(2);
     const [children, setChildren] = useState(0);
     const [mealPlan, setMealPlan] = useState('all-inclusive');
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchResults, setSearchResults] = useState<SmartSearchResult[]>([]);
+    const [searchError, setSearchError] = useState<string | null>(null);
 
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -130,6 +134,57 @@ const SmartSearch: React.FC = () => {
         const destination = mockDestinations.find(d => d.name === destName);
         if (destination && selectedDestinations.length < 3) {
             handleAddDestination(destination);
+        }
+    };
+
+    const handleSearch = async () => {
+        if (selectedDestinations.length === 0) {
+            setSearchError('Molimo odaberite najmanje jednu destinaciju');
+            return;
+        }
+
+        if (!checkIn || !checkOut) {
+            setSearchError('Molimo unesite datume');
+            return;
+        }
+
+        setIsSearching(true);
+        setSearchError(null);
+        setSearchResults([]);
+
+        try {
+            console.log('[SmartSearch] Starting search...', {
+                searchType: activeTab,
+                destinations: selectedDestinations,
+                checkIn,
+                checkOut,
+                adults,
+                children,
+            });
+
+            const results = await performSmartSearch({
+                searchType: activeTab,
+                destinations: selectedDestinations,
+                checkIn,
+                checkOut,
+                adults,
+                children,
+                mealPlan,
+                currency: 'EUR',
+                nationality: 'RS',
+            });
+
+            console.log('[SmartSearch] Search results:', results);
+            setSearchResults(results);
+
+            if (results.length === 0) {
+                setSearchError('Nema dostupnih rezultata za izabrane parametre');
+            }
+        } catch (error) {
+            console.error('[SmartSearch] Search error:', error);
+            setSearchError(error instanceof Error ? error.message : 'Greška pri pretrazi');
+        } finally {
+            setIsSearching(false);
         }
     };
 
@@ -375,6 +430,46 @@ const SmartSearch: React.FC = () => {
                 </div>
             </div>
 
+            {/* Search Results */}
+            {searchResults.length > 0 && (
+                <div className="search-results">
+                    <h3>✨ Pronađeno {searchResults.length} {searchResults.length === 1 ? 'rezultat' : 'rezultata'}</h3>
+                    <div className="results-grid">
+                        {searchResults.map((result, idx) => (
+                            <div key={idx} className="result-card">
+                                <div className="result-header">
+                                    <h4 className="result-name">{result.name}</h4>
+                                    <span className="result-provider">{result.provider}</span>
+                                </div>
+
+                                <div className="result-location">
+                                    <MapPin size={14} />
+                                    <span>{result.location}</span>
+                                </div>
+
+                                {result.stars && (
+                                    <div className="result-stars">
+                                        {Array.from({ length: result.stars }).map((_, i) => (
+                                            <Star key={i} size={14} fill="#fbbf24" color="#fbbf24" />
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="result-price">
+                                    <div>
+                                        <span className="price-amount">{result.price.toFixed(2)}</span>
+                                        <span className="price-currency">{result.currency}</span>
+                                    </div>
+                                    {result.mealPlan && (
+                                        <span className="result-meal">{result.mealPlan}</span>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* AI Assistant Button */}
             <button className="ai-assistant-btn">
                 <Bot size={24} />
@@ -389,3 +484,4 @@ const SmartSearch: React.FC = () => {
 };
 
 export default SmartSearch;
+
