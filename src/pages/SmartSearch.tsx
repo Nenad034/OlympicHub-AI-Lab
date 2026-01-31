@@ -6,6 +6,7 @@ import {
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2
 } from 'lucide-react';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
+import solvexDictionaryService from '../services/solvex/solvexDictionaryService';
 import './SmartSearch.css';
 
 interface Destination {
@@ -89,19 +90,60 @@ const SmartSearch: React.FC = () => {
         { label: '5★ Hoteli', icon: Star, color: '#fbbf24' },
     ];
 
-    // Smart autocomplete - prikazuje sugestije nakon 3 karaktera
+    // Smart autocomplete - dinamički povlači podatke iz Solvex-a i TCT-a (Agoda Engine stil)
     useEffect(() => {
-        if (destinationInput.length >= 3) {
-            const filtered = mockDestinations.filter(dest =>
-                dest.name.toLowerCase().includes(destinationInput.toLowerCase()) &&
-                !selectedDestinations.find(selected => selected.id === dest.id)
-            );
-            setSuggestions(filtered.slice(0, 8)); // Prikaži max 8 sugestija
-            setShowSuggestions(true);
-        } else {
-            setSuggestions([]);
-            setShowSuggestions(false);
-        }
+        const fetchSuggestions = async () => {
+            if (destinationInput.length >= 2) {
+                const searchTerm = destinationInput.toLowerCase();
+
+                // 1. Static/Popular (Local) - Prikazujemo odmah!
+                const localMatches = mockDestinations.filter(dest =>
+                    dest.name.toLowerCase().includes(searchTerm) &&
+                    !selectedDestinations.find(selected => selected.id === dest.id)
+                );
+
+                setSuggestions(localMatches.slice(0, 10));
+                setShowSuggestions(localMatches.length > 0);
+
+                // 2. Dinamički Solvex (Bugarska) hotele - Dopunjujemo asinhrono
+                try {
+                    const citiesToSearch = [33, 68, 9]; // Golden Sands, Sunny Beach, Bansko
+                    for (const cityId of citiesToSearch) {
+                        const hotelsRes = await solvexDictionaryService.getHotels(cityId);
+                        if (hotelsRes.success && hotelsRes.data) {
+                            const matching = (hotelsRes.data as any[])
+                                .filter(h => h.name.toLowerCase().includes(searchTerm))
+                                .map(h => ({
+                                    id: `solvex-h-${h.id}`,
+                                    name: h.name,
+                                    type: 'hotel' as const,
+                                    country: 'Bulgaria',
+                                    provider: 'Solvex',
+                                    stars: h.stars
+                                }));
+
+                            if (matching.length > 0) {
+                                setSuggestions(prev => {
+                                    const combined = [...prev, ...matching];
+                                    return combined.filter((item, index, self) =>
+                                        index === self.findIndex((t) => t.name === item.name)
+                                    ).slice(0, 12);
+                                });
+                                setShowSuggestions(true);
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.warn('[SmartSearch AI] Dynamic fetch failed:', err);
+                }
+            } else {
+                setSuggestions([]);
+                setShowSuggestions(false);
+            }
+        };
+
+        const timer = setTimeout(fetchSuggestions, 150);
+        return () => clearTimeout(timer);
     }, [destinationInput, selectedDestinations]);
 
     const handleAddDestination = (destination: Destination) => {
