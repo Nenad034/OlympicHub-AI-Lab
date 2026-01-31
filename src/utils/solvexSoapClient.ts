@@ -227,11 +227,14 @@ export async function makeSoapRequest<T>(
     } catch (error) {
         clearTimeout(timeoutId);
         console.error(`[Solvex SOAP] Error in ${method}:`, error);
-        // If it's already a formatted debug error, rethrow it
-        if (error instanceof Error && error.message.includes('--- REQUEST ---')) {
+        console.error('[Solvex SOAP] Failed Request Payload:', soapEnvelope);
+
+        // If it's already a clean error, rethrow it
+        if (error instanceof Error && !error.message.includes('--- REQUEST ---')) {
             throw error;
         }
-        throw new Error(`Request failed: ${error instanceof Error ? error.message : String(error)}\n\n--- REQUEST ---\n${soapEnvelope}`);
+
+        throw new Error(`Konekcija sa Solvex sistemom nije uspela (${error instanceof Error ? error.message : 'Network Error'}). Proverite internet konekciju ili VPN.`);
     }
 }
 
