@@ -1,0 +1,90 @@
+/* FIX: guest selector buttons */
+.guest-selector.premium button {
+    background: transparent !important;
+    border: none !important;
+    color: #4f46e5 !important;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.guest-selector.premium button:hover {
+    background: rgba(79, 70, 229, 0.1) !important;
+}
+
+/* FIX: Filters Toolbar V4 */
+.filters-toolbar-v4.premium {
+    display: flex !important;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.name-filter-wrapper {
+    position: relative;
+    flex: 2;
+    min-width: 250px;
+}
+
+.name-filter-wrapper .filter-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    z-index: 10;
+}
+
+.name-filter-wrapper input {
+    width: 100%;
+    padding-left: 36px !important;
+    height: 48px;
+}
+
+/* Dropdowns in toolbar */
+.filters-toolbar-v4.premium .multi-select-dropdown {
+    flex: 1;
+    min-width: 180px;
+}
+
+/* View switcher in toolbar */
+.view-mode-switcher {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-left: auto;
+    /* Push to right if space permits */
+}
+
+/* Summary Bar V4 */
+.results-summary-bar-v4.premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.summary-info span {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.summary-info strong {
+    color: white;
+    font-size: 1.1rem;
+}
+
+.sort-actions {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 4px;
+    border-radius: 10px;
+}

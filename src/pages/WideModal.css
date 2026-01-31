@@ -1,0 +1,11 @@
+/* WIDE MODAL FIX */
+.modern-calendar-popup.wide.hotel-details-wide {
+    max-width: 1200px !important;
+    /* 30% wider than 900px */
+    width: 95% !important;
+}
+
+/* Ensure the table inside stretches */
+.rooms-comparison-table {
+    width: 100%;
+}

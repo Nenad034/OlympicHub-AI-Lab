@@ -3,13 +3,89 @@ import { useAuthStore } from '../stores';
 import {
     Sparkles, Hotel, Plane, Package, Bus, Compass,
     MapPin, Calendar, CalendarDays, Users, UtensilsCrossed, Star,
-    Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown
+    Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
+    LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
+    CheckCircle2, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon
 } from 'lucide-react';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
 import solvexDictionaryService from '../services/solvex/solvexDictionaryService';
 import { ModernCalendar } from '../components/ModernCalendar';
+import { MultiSelectDropdown } from '../components/MultiSelectDropdown';
+import { BookingModal } from '../components/booking/BookingModal';
 import { formatDate } from '../utils/dateUtils';
+import { useConfig } from '../context/ConfigContext';
 import './SmartSearch.css';
+import './SmartSearchFix2.css';
+import './SmartSearchStylesFix.css';
+
+/**
+ * Constants for filtering
+ */
+const CATEGORY_OPTIONS = [
+    { value: 'all', label: 'Sve Kategorije' },
+    { value: '5', label: '5 Zvezdica' },
+    { value: '4', label: '4 Zvezdice' },
+    { value: '3', label: '3 Zvezdice' },
+    { value: '2', label: '2 Zvezdice' }
+];
+
+const MEAL_PLAN_OPTIONS = [
+    { value: 'all', label: 'Sve Usluge' },
+    { value: 'RO', label: 'Najam (RO)' },
+    { value: 'BB', label: 'Noćenje sa doručkom (BB)' },
+    { value: 'HB', label: 'Polupansion (HB)' },
+    { value: 'FB', label: 'Pun pansion (FB)' },
+    { value: 'AI', label: 'All Inclusive (AI)' },
+    { value: 'UAI', label: 'Ultra All Inclusive (UAI)' },
+];
+
+/**
+ * Normalize meal plan code to standard types
+ */
+const normalizeMealPlan = (plan: string): string => {
+    if (!plan) return 'RO';
+    let p = plan.toUpperCase().trim();
+
+    if (p === 'UAI') return 'UAI';
+    if (p === 'AI' || p === 'ALL') return 'AI';
+    if (p === 'FB' || p === 'PA') return 'FB';
+    if (p === 'HB' || p === 'PP' || p === 'НВ' || p === 'ПП') return 'HB';
+    if (p === 'BB' || p === 'ND') return 'BB';
+    if (p === 'RO' || p === 'RR' || p === 'OB' || p === 'SC' || p === 'NA' || p === 'NM') return 'RO';
+
+    if (p.includes('ULTRA')) return 'UAI';
+    if (p.includes('ALL INCL') || p.includes('SVE UKLJ')) return 'AI';
+    if ((p.includes('FULL') || p.includes('PUN') || p.includes('PANSION')) && !p.includes('POLU') && !p.includes('HALF')) return 'FB';
+    if (p.includes('HALF') || p.includes('POLU') || p.includes('HB') || p.includes('DORUCAK I VECERA') || p.includes('DORUČAK I VEČERA')) return 'HB';
+    if (p.includes('BED') || p.includes('BREAKFAST') || p.includes('DORUCAK') || p.includes('DORUČAK') || p.includes('NOCENJE') || p.includes('NOĆENJE') || p.includes('BB')) return 'BB';
+    if (p.includes('ROOM') || p.includes('NAJAM') || p.includes('ONLY') || p.includes('BEZ USLUGE')) return 'RO';
+
+    return 'RO';
+};
+
+/**
+ * Get full meal plan display name in Serbian
+ */
+const getMealPlanDisplayName = (code: string | undefined): string => {
+    if (!code) return 'Samo Smeštaj';
+    const normalized = normalizeMealPlan(code);
+
+    const mealPlanNames: Record<string, string> = {
+        'RO': 'Samo Smeštaj',
+        'BB': 'Noćenje sa Doručkom',
+        'HB': 'Polupansion',
+        'FB': 'Pun Pansion',
+        'AI': 'All Inclusive',
+        'UAI': 'Ultra All Inclusive',
+        'NM': 'Bez Obroka',
+        'SC': 'Samo Smeštaj',
+        'ND': 'Noćenje sa Doručkom',
+        'PP': 'Polupansion',
+        'PA': 'Pun Pansion'
+    };
+
+    return mealPlanNames[normalized] || mealPlanNames[code.toUpperCase()] || code;
+};
 
 interface Destination {
     id: string;
@@ -21,10 +97,7 @@ interface Destination {
 }
 
 const SmartSearch: React.FC = () => {
-    const deployTime = '21:40 (31.01.2026)';
-    console.log(`[SmartSearch] 🔥 DEPLOYED AT: ${deployTime}`);
     const { userLevel } = useAuthStore();
-    console.log('[SmartSearch] Current User Level:', userLevel);
     const isSubagent = userLevel < 6;
 
     const [activeTab, setActiveTab] = useState<'hotel' | 'flight' | 'package' | 'transfer' | 'tour'>('hotel');
@@ -32,12 +105,14 @@ const SmartSearch: React.FC = () => {
     const [destinationInput, setDestinationInput] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [suggestions, setSuggestions] = useState<Destination[]>([]);
-    const [selectedIndex, setSelectedIndex] = useState(-1); // For keyboard navigation
-    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false); // Loading state
-    const [recentSearches, setRecentSearches] = useState<Destination[]>([]); // Recent searches
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+    // Recent searches state kept but not used for display anymore
+    const [recentSearches, setRecentSearches] = useState<Destination[]>([]);
+
     const [checkIn, setCheckIn] = useState('');
     const [checkOut, setCheckOut] = useState('');
-    const [nights, setNights] = useState(7); // Default 7 nights
+    const [nights, setNights] = useState(7);
     const [activeCalendar, setActiveCalendar] = useState<'in' | 'out' | null>(null);
     const [flexibleDays, setFlexibleDays] = useState(0);
     const [adults, setAdults] = useState(2);
@@ -45,34 +120,28 @@ const SmartSearch: React.FC = () => {
     const [childrenAges, setChildrenAges] = useState<number[]>([]);
     const [mealPlan, setMealPlan] = useState('');
 
-    // Helper to sync nights when dates change
-    const syncNightsFromDates = (start: string, end: string) => {
-        if (!start || !end) return;
-        const s = new Date(start);
-        const e = new Date(end);
-        const diffTime = Math.abs(e.getTime() - s.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        setNights(diffDays);
-    };
-
-    // Helper to update dates when nights change
-    const handleNightsChange = (newNights: number) => {
-        setNights(newNights);
-        if (checkIn) {
-            const date = new Date(checkIn);
-            date.setDate(date.getDate() + newNights);
-            setCheckOut(date.toISOString().split('T')[0]);
-        }
-    };
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<SmartSearchResult[]>([]);
     const [searchError, setSearchError] = useState<string | null>(null);
+    const [searchPerformed, setSearchPerformed] = useState(false);
+
+    // Filter & UI States
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [sortBy, setSortBy] = useState<'smart' | 'price_low' | 'price_high'>('smart');
+    const [hotelNameFilter, setHotelNameFilter] = useState('');
+    const [selectedStars, setSelectedStars] = useState<string[]>(['all']);
+    const [selectedMealPlans, setSelectedMealPlans] = useState<string[]>(['all']);
+
+    // Booking states
+    const [expandedHotel, setExpandedHotel] = useState<SmartSearchResult | null>(null);
+    const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+    const [selectedRoomForBooking, setSelectedRoomForBooking] = useState<any>(null);
 
     const inputRef = useRef<HTMLInputElement>(null);
+    const autocompleteRef = useRef<HTMLDivElement>(null);
 
-    // Mock data - u realnoj aplikaciji ovo bi dolazilo iz API-ja
+    // Mock data
     const mockDestinations: Destination[] = [
-        // Destinacije
         { id: 'd1', name: 'Crna Gora', type: 'destination', country: 'Montenegro' },
         { id: 'd2', name: 'Budva', type: 'destination', country: 'Montenegro' },
         { id: 'd3', name: 'Kotor', type: 'destination', country: 'Montenegro' },
@@ -91,13 +160,7 @@ const SmartSearch: React.FC = () => {
         { id: 'solvex-c-68', name: 'Sunny Beach', type: 'destination', country: 'Bulgaria' },
         { id: 'solvex-c-9', name: 'Bansko', type: 'destination', country: 'Bulgaria' },
         { id: 'h1', name: 'Hotel Splendid', type: 'hotel', country: 'Montenegro', stars: 5, provider: 'Solvex' },
-        { id: 'h2', name: 'Hotel Budva Riviera', type: 'hotel', country: 'Montenegro', stars: 4, provider: 'Solvex' },
-        { id: 'h3', name: 'Corfu Palace Hotel', type: 'hotel', country: 'Greece', stars: 5, provider: 'OpenGreece' },
-        { id: 'h4', name: 'Rodos Princess', type: 'hotel', country: 'Greece', stars: 4, provider: 'OpenGreece' },
-        { id: 'h5', name: 'Hurghada Marriott Beach Resort', type: 'hotel', country: 'Egypt', stars: 5, provider: 'TCT' },
-        { id: 'h6', name: 'Sharm Grand Plaza', type: 'hotel', country: 'Egypt', stars: 4, provider: 'TCT' },
-        { id: 'h7', name: 'Antalya Lara Beach', type: 'hotel', country: 'Turkey', stars: 5, provider: 'TCT' },
-        { id: 'h8', name: 'Dubai Marina Hotel', type: 'hotel', country: 'UAE', stars: 5, provider: 'TCT' },
+        { id: 'h2', name: 'Hotel Budva Riviera', type: 'hotel', country: 'Montenegro', stars: 4, provider: 'Solvex' }
     ];
 
     const tabs = [
@@ -108,20 +171,17 @@ const SmartSearch: React.FC = () => {
         { id: 'tour' as const, label: 'Ture', icon: Compass },
     ];
 
-    const popularDestinations = [
-        { name: 'Grčka', flag: '🇬🇷', deals: 234 },
-        { name: 'Egipat', flag: '🇪🇬', deals: 189 },
-        { name: 'Turska', flag: '🇹🇷', deals: 156 },
-        { name: 'Dubai', flag: '🇦🇪', deals: 98 },
-    ];
+    // Helper to sync nights when dates change
+    const syncNightsFromDates = (start: string, end: string) => {
+        if (!start || !end) return;
+        const s = new Date(start);
+        const e = new Date(end);
+        if (isNaN(s.getTime()) || isNaN(e.getTime())) return;
+        const diffTime = Math.abs(e.getTime() - s.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        setNights(diffDays);
+    };
 
-    const quickFilters = [
-        { label: 'Last Minute', icon: Zap, color: '#ef4444' },
-        { label: 'Early Bird', icon: TrendingUp, color: '#10b981' },
-        { label: '5★ Hoteli', icon: Star, color: '#fbbf24' },
-    ];
-
-    // Load recent searches and initialize dates on mount
     useEffect(() => {
         const stored = localStorage.getItem('smartSearchRecent');
         if (stored) {
@@ -132,7 +192,6 @@ const SmartSearch: React.FC = () => {
             }
         }
 
-        // Initialize dates
         const today = new Date();
         const tomorrow = new Date();
         tomorrow.setDate(today.getDate() + 1);
@@ -141,31 +200,41 @@ const SmartSearch: React.FC = () => {
         setCheckIn(checkInDate);
 
         const checkOutDate = new Date(tomorrow);
-        checkOutDate.setDate(checkOutDate.getDate() + 7); // Default 7 nights
+        checkOutDate.setDate(checkOutDate.getDate() + 7);
         setCheckOut(checkOutDate.toISOString().split('T')[0]);
         setNights(7);
+
+        // Click outside handler
+        const handleClickOutside = (event: MouseEvent) => {
+            if (autocompleteRef.current && !autocompleteRef.current.contains(event.target as Node)) {
+                setShowSuggestions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, []);
 
-    // Advanced Autocomplete with Solvex API, debounce, and loading state
     useEffect(() => {
         const fetchSuggestions = async () => {
+            // ONLY search if input length >= 2. NO RECENT SEARCHES ON EMPTY INPUT.
             if (destinationInput.length >= 2) {
                 setIsLoadingSuggestions(true);
-                setSelectedIndex(-1); // Reset keyboard selection
+                setSelectedIndex(-1);
                 const searchTerm = destinationInput.toLowerCase();
 
-                // 1. Local/Static matches - show immediately
                 const localMatches = mockDestinations.filter(dest =>
                     dest.name.toLowerCase().includes(searchTerm) &&
                     !selectedDestinations.find(selected => selected.id === dest.id)
                 );
 
                 setSuggestions(localMatches.slice(0, 10));
-                setShowSuggestions(localMatches.length > 0);
+                setShowSuggestions(true);
 
-                // 2. Dynamic Solvex hotels - fetch asynchronously
                 try {
-                    const citiesToSearch = [33, 68, 9]; // Golden Sands, Sunny Beach, Bansko
+                    const citiesToSearch = [33, 68, 9];
                     const dynamicResults: Destination[] = [];
 
                     for (const cityId of citiesToSearch) {
@@ -188,10 +257,9 @@ const SmartSearch: React.FC = () => {
                     if (dynamicResults.length > 0) {
                         setSuggestions(prev => {
                             const combined = [...prev, ...dynamicResults];
-                            // Remove duplicates by name
                             return combined.filter((item, index, self) =>
-                                index === self.findIndex((t) => t.name === item.name)
-                            ).slice(0, 12);
+                                index === self.findIndex((t) => t.id === item.id)
+                            ).slice(0, 15);
                         });
                         setShowSuggestions(true);
                     }
@@ -201,6 +269,7 @@ const SmartSearch: React.FC = () => {
                     setIsLoadingSuggestions(false);
                 }
             } else {
+                // If input is short or empty, HIDE EVERYTHING.
                 setSuggestions([]);
                 setShowSuggestions(false);
                 setIsLoadingSuggestions(false);
@@ -208,10 +277,9 @@ const SmartSearch: React.FC = () => {
             }
         };
 
-        // Debounce: wait 300ms after user stops typing
         const timer = setTimeout(fetchSuggestions, 300);
         return () => clearTimeout(timer);
-    }, [destinationInput, selectedDestinations]);
+    }, [destinationInput, selectedDestinations]); // recentSearches REMOVED from dependency array
 
     const handleAddDestination = (destination: Destination) => {
         if (selectedDestinations.length < 3) {
@@ -221,79 +289,10 @@ const SmartSearch: React.FC = () => {
             setShowSuggestions(false);
             setSelectedIndex(-1);
 
-            // Save to recent searches
             const updated = [destination, ...recentSearches.filter(r => r.id !== destination.id)].slice(0, 5);
             setRecentSearches(updated);
             localStorage.setItem('smartSearchRecent', JSON.stringify(updated));
-
             inputRef.current?.focus();
-        }
-    };
-
-    const handleRemoveDestination = (id: string) => {
-        setSelectedDestinations(selectedDestinations.filter(dest => dest.id !== id));
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (!showSuggestions || suggestions.length === 0) {
-            // No suggestions - handle backspace to remove last chip
-            if (e.key === 'Backspace' && !destinationInput && selectedDestinations.length > 0) {
-                handleRemoveDestination(selectedDestinations[selectedDestinations.length - 1].id);
-            }
-            return;
-        }
-
-        switch (e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                setSelectedIndex(prev =>
-                    prev < suggestions.length - 1 ? prev + 1 : prev
-                );
-                break;
-
-            case 'ArrowUp':
-                e.preventDefault();
-                setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
-                break;
-
-            case 'Enter':
-                e.preventDefault();
-                if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
-                    handleAddDestination(suggestions[selectedIndex]);
-                } else if (suggestions.length > 0) {
-                    handleAddDestination(suggestions[0]);
-                }
-                break;
-
-            case 'Escape':
-                e.preventDefault();
-                setShowSuggestions(false);
-                setSelectedIndex(-1);
-                break;
-
-            case 'Backspace':
-                if (!destinationInput && selectedDestinations.length > 0) {
-                    handleRemoveDestination(selectedDestinations[selectedDestinations.length - 1].id);
-                }
-                break;
-        }
-    };
-
-    // Highlight matching text in suggestions
-    const highlightMatch = (text: string, query: string) => {
-        if (!query) return text;
-        const parts = text.split(new RegExp(`(${query})`, 'gi'));
-        return parts.map((part, index) =>
-            part.toLowerCase() === query.toLowerCase()
-                ? <strong key={index} style={{ color: '#3b82f6', fontWeight: 600 }}>{part}</strong>
-                : part
-        );
-    };
-
-    const handlePopularClick = (destName: string) => {
-        const destination = mockDestinations.find(d => d.name === destName);
-        if (destination && selectedDestinations.length < 3) {
-            handleAddDestination(destination);
         }
     };
 
@@ -311,17 +310,9 @@ const SmartSearch: React.FC = () => {
         setIsSearching(true);
         setSearchError(null);
         setSearchResults([]);
+        setSearchPerformed(false);
 
         try {
-            console.log('[SmartSearch] Starting search...', {
-                searchType: activeTab,
-                destinations: selectedDestinations,
-                checkIn,
-                checkOut,
-                adults,
-                children,
-            });
-
             const results = await performSmartSearch({
                 searchType: activeTab,
                 destinations: selectedDestinations,
@@ -335,9 +326,8 @@ const SmartSearch: React.FC = () => {
                 nationality: 'RS',
             });
 
-            console.log('[SmartSearch] Search results:', results);
             setSearchResults(results);
-
+            setSearchPerformed(true);
             if (results.length === 0) {
                 setSearchError('Nema dostupnih rezultata za izabrane parametre');
             }
@@ -348,6 +338,38 @@ const SmartSearch: React.FC = () => {
             setIsSearching(false);
         }
     };
+
+    const filteredResults = searchResults.filter(hotel => {
+        if (hotelNameFilter && !hotel.name.toLowerCase().includes(hotelNameFilter.toLowerCase())) {
+            return false;
+        }
+
+        if (!selectedStars.includes('all')) {
+            if (!selectedStars.includes(String(hotel.stars))) {
+                return false;
+            }
+        }
+
+        if (!selectedMealPlans.includes('all')) {
+            const normalized = normalizeMealPlan(hotel.mealPlan || '');
+            if (!selectedMealPlans.includes(normalized)) {
+                return false;
+            }
+        }
+
+        return true;
+    }).sort((a, b) => {
+        if (sortBy === 'price_low') return a.price - b.price;
+        if (sortBy === 'price_high') return b.price - a.price;
+        return 0;
+    });
+
+    const handleReserveClick = (room: any) => {
+        setSelectedRoomForBooking(room);
+        setIsBookingModalOpen(true);
+    };
+
+    const getPriceWithMargin = (price: number) => Math.round(price * 1.15);
 
     return (
         <div className="smart-search-container">
@@ -372,178 +394,48 @@ const SmartSearch: React.FC = () => {
 
             {/* Tab Navigation */}
             <div className="search-tabs">
-                {tabs.map(tab => {
-                    const Icon = tab.icon;
-                    return (
-                        <button
-                            key={tab.id}
-                            className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-                            onClick={() => setActiveTab(tab.id)}
-                        >
-                            <Icon size={20} />
-                            <span>{tab.label}</span>
-                        </button>
-                    );
-                })}
+                {tabs.map(tab => (
+                    <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
+                        <tab.icon size={20} />
+                        <span>{tab.label}</span>
+                    </button>
+                ))}
             </div>
 
             {/* Search Form */}
             <div className="search-form-smart">
                 <div className="form-grid">
-                    {/* Multi-Destination Input */}
-                    <div className="form-field full-width">
-                        <label>
-                            <MapPin size={16} />
-                            <span>Destinacija ili Smeštaj (do 3)</span>
-                        </label>
-                        <div className="multi-destination-input">
-                            {/* Selected Destinations as Chips */}
+                    <div className="form-field" ref={autocompleteRef}>
+                        <label><MapPin size={16} /> <span>Destinacija</span></label>
+                        <div className="multi-destination-input premium">
                             {selectedDestinations.map(dest => (
-                                <div key={dest.id} className={`destination-chip ${dest.type}`}>
+                                <div key={dest.id} className="destination-chip">
                                     {dest.type === 'hotel' ? <Hotel size={14} /> : <MapPin size={14} />}
                                     <span>{dest.name}</span>
-                                    {dest.stars && (
-                                        <span className="chip-stars">
-                                            {Array.from({ length: dest.stars }).map((_, i) => (
-                                                <Star key={i} size={10} fill="#fbbf24" color="#fbbf24" />
-                                            ))}
-                                        </span>
-                                    )}
-                                    <button
-                                        className="chip-remove"
-                                        onClick={() => handleRemoveDestination(dest.id)}
-                                    >
-                                        <X size={14} />
-                                    </button>
+                                    <button className="chip-remove" onClick={() => setSelectedDestinations(selectedDestinations.filter(d => d.id !== dest.id))}><X size={14} /></button>
                                 </div>
                             ))}
-
-                            {/* Input Field */}
                             {selectedDestinations.length < 3 && (
                                 <input
                                     ref={inputRef}
                                     type="text"
-                                    placeholder={selectedDestinations.length === 0 ? "Npr: Crna Gora, Hurghada, Hotel Splendid..." : "Dodaj još..."}
+                                    placeholder={selectedDestinations.length === 0 ? "Npr: Crna Gora, Golden Sands..." : "Dodaj još..."}
                                     value={destinationInput}
                                     onChange={(e) => setDestinationInput(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    onFocus={() => {
-                                        if (destinationInput.length >= 2 && suggestions.length > 0) {
-                                            setShowSuggestions(true);
-                                        } else if (destinationInput.length === 0 && recentSearches.length > 0) {
-                                            setShowSuggestions(true);
-                                        }
-                                    }}
-                                    onBlur={() => {
-                                        // Delay to allow click on suggestion
-                                        setTimeout(() => setShowSuggestions(false), 200);
-                                    }}
                                     className="smart-input-inline"
+                                    onFocus={() => { if (destinationInput.length >= 2) setShowSuggestions(true); }}
                                 />
                             )}
                         </div>
-
-
-
-                        {/* Autocomplete Suggestions */}
-                        {showSuggestions && (suggestions.length > 0 || isLoadingSuggestions || (destinationInput.length < 2 && recentSearches.length > 0)) && (
-                            <div className="autocomplete-dropdown">
-                                {/* Loading State */}
-                                {isLoadingSuggestions && (
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        padding: '12px 16px',
-                                        color: 'rgba(255,255,255,0.6)',
-                                        fontSize: '13px'
-                                    }}>
-                                        <Loader2 size={14} className="spin" />
-                                        <span>Pretraživanje...</span>
-                                    </div>
-                                )}
-
-                                {/* Recent Searches */}
-                                {destinationInput.length < 2 && recentSearches.length > 0 && (
-                                    <>
-                                        <div style={{
-                                            padding: '8px 16px',
-                                            fontSize: '11px',
-                                            color: 'rgba(255,255,255,0.4)',
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '0.5px',
-                                            fontWeight: 600
-                                        }}>
-                                            Nedavne pretrage
-                                        </div>
-                                        {recentSearches.map(recent => (
-                                            <div
-                                                key={recent.id}
-                                                className="suggestion-item"
-                                                onClick={() => handleAddDestination(recent)}
-                                                style={{ opacity: 0.8 }}
-                                            >
-                                                {recent.type === 'hotel' ? (
-                                                    <Hotel size={16} className="suggestion-icon hotel" />
-                                                ) : (
-                                                    <MapPin size={16} className="suggestion-icon destination" />
-                                                )}
-                                                <div className="suggestion-content">
-                                                    <span className="suggestion-name">{recent.name}</span>
-                                                    <span className="suggestion-meta">
-                                                        {recent.type === 'hotel' ? (
-                                                            <>
-                                                                {recent.stars && (
-                                                                    <span className="stars">
-                                                                        {Array.from({ length: recent.stars }).map((_, i) => (
-                                                                            <Star key={i} size={10} fill="#fbbf24" color="#fbbf24" />
-                                                                        ))}
-                                                                    </span>
-                                                                )}
-                                                                <span className="provider">{recent.provider}</span>
-                                                            </>
-                                                        ) : (
-                                                            <span className="country">{recent.country}</span>
-                                                        )}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </>
-                                )}
-
-                                {/* Main Suggestions */}
-                                {suggestions.map((suggestion, index) => (
-                                    <div
-                                        key={suggestion.id}
-                                        className={`suggestion-item ${selectedIndex === index ? 'selected' : ''}`}
-                                        onClick={() => handleAddDestination(suggestion)}
-                                        onMouseEnter={() => setSelectedIndex(index)}
-                                    >
-                                        {suggestion.type === 'hotel' ? (
-                                            <Hotel size={16} className="suggestion-icon hotel" />
-                                        ) : (
-                                            <MapPin size={16} className="suggestion-icon destination" />
-                                        )}
+                        {showSuggestions && suggestions.length > 0 && (
+                            <div className="autocomplete-dropdown premium">
+                                {suggestions.map(s => (
+                                    <div key={s.id} className="suggestion-item" onClick={() => handleAddDestination(s)}>
+                                        {s.type === 'hotel' ? <Hotel size={16} className="suggestion-icon hotel" /> : <MapPin size={16} className="suggestion-icon destination" />}
                                         <div className="suggestion-content">
-                                            <span className="suggestion-name">
-                                                {highlightMatch(suggestion.name, destinationInput)}
-                                            </span>
+                                            <span className="suggestion-name">{s.name}</span>
                                             <span className="suggestion-meta">
-                                                {suggestion.type === 'hotel' ? (
-                                                    <>
-                                                        {suggestion.stars && (
-                                                            <span className="stars">
-                                                                {Array.from({ length: suggestion.stars }).map((_, i) => (
-                                                                    <Star key={i} size={10} fill="#fbbf24" color="#fbbf24" />
-                                                                ))}
-                                                            </span>
-                                                        )}
-                                                        <span className="provider">{suggestion.provider}</span>
-                                                    </>
-                                                ) : (
-                                                    <span className="country">{suggestion.country}</span>
-                                                )}
+                                                {s.type === 'hotel' ? (s.stars ? `${s.stars}★ ${s.provider}` : s.provider) : s.country}
                                             </span>
                                         </div>
                                     </div>
@@ -552,295 +444,219 @@ const SmartSearch: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Dates */}
                     <div className="form-field" onClick={() => setActiveCalendar('in')} style={{ cursor: 'pointer' }}>
-                        <label>
-                            <Calendar size={16} />
-                            <span>Check-in</span>
-                        </label>
-                        <div className="smart-input" style={{ display: 'flex', alignItems: 'center' }}>
-                            {formatDate(checkIn) || 'Odaberite datum'}
-                        </div>
+                        <label><CalendarIcon size={16} /> <span>Check-in</span></label>
+                        <div className="smart-input premium">{formatDate(checkIn) || 'ODABERI'}</div>
                     </div>
 
                     <div className="form-field" onClick={() => setActiveCalendar('out')} style={{ cursor: 'pointer' }}>
-                        <label>
-                            <Calendar size={16} />
-                            <span>Check-out</span>
-                        </label>
-                        <div className="smart-input" style={{ display: 'flex', alignItems: 'center' }}>
-                            {formatDate(checkOut) || 'Odaberite datum'}
-                        </div>
+                        <label><CalendarIcon size={16} /> <span>Check-out</span></label>
+                        <div className="smart-input premium">{formatDate(checkOut) || 'ODABERI'}</div>
                     </div>
 
-                    {/* Flexibility */}
                     <div className="form-field">
-                        <label>
-                            <CalendarDays size={16} />
-                            <span>Fleksibilnost</span>
-                        </label>
-                        <div className="flex-pill-selection">
-                            {[0, 1, 3, 5].map(days => (
-                                <button
-                                    key={days}
-                                    className={`flex-pill ${flexibleDays === days ? 'active' : ''}`}
-                                    onClick={() => setFlexibleDays(days)}
-                                >
-                                    {days === 0 ? 'Tačno' : `± ${days}`}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Guests */}
-                    <div className="form-field">
-                        <label>
-                            <Users size={16} />
-                            <span>Odrasli</span>
-                        </label>
-                        <div className="guest-selector">
+                        <label><Users size={16} /> <span>Odrasli</span></label>
+                        <div className="guest-selector premium">
                             <button onClick={() => setAdults(Math.max(1, adults - 1))}>−</button>
                             <span>{adults}</span>
                             <button onClick={() => setAdults(adults + 1)}>+</button>
                         </div>
                     </div>
 
-                    <div className="form-field" style={{ gridColumn: children > 0 ? 'span 2' : 'auto' }}>
-                        <label>
-                            <Users size={16} />
-                            <span>Deca {children > 0 ? '& Godine' : ''}</span>
-                        </label>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                            <div className="guest-selector">
+                    <div className="form-field">
+                        <label><Users size={16} /> <span>Deca {children > 0 ? '& Godine' : ''}</span></label>
+                        <div className="guest-selector premium" style={{ justifyContent: 'flex-start', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0 4px', marginRight: children > 0 ? '8px' : '0' }}>
                                 <button onClick={() => {
                                     const newCount = Math.max(0, children - 1);
                                     setChildren(newCount);
                                     setChildrenAges(prev => prev.slice(0, newCount));
                                 }}>−</button>
-                                <span>{children}</span>
+                                <span style={{ minWidth: '20px' }}>{children}</span>
                                 <button onClick={() => {
                                     const newCount = Math.min(4, children + 1);
                                     setChildren(newCount);
-                                    setChildrenAges(prev => {
-                                        const newAges = [...prev];
-                                        while (newAges.length < newCount) newAges.push(7);
-                                        return newAges;
-                                    });
+                                    setChildrenAges(prev => [...prev, 7].slice(0, newCount));
                                 }}>+</button>
                             </div>
 
-                            {children > 0 && childrenAges.map((age, idx) => (
-                                <div key={idx} className="age-input-field" style={{ width: '70px', position: 'relative' }}>
-                                    <span style={{
-                                        position: 'absolute',
-                                        top: '-18px',
-                                        left: '0',
-                                        width: '100%',
-                                        fontSize: '10px',
-                                        textAlign: 'center',
-                                        color: 'rgba(255,255,255,0.5)'
-                                    }}>
-                                        Dete {idx + 1}
-                                    </span>
+                            <div className="children-inputs-container">
+                                {children > 0 && childrenAges.map((age, idx) => (
                                     <input
+                                        key={idx}
                                         type="number"
                                         min="0"
                                         max="17"
                                         value={age}
                                         onChange={e => {
-                                            const val = parseInt(e.target.value) || 0;
-                                            const newAges = [...childrenAges];
-                                            newAges[idx] = Math.min(17, Math.max(0, val));
-                                            setChildrenAges(newAges);
+                                            const val = parseInt(e.target.value);
+                                            if (!isNaN(val)) {
+                                                const newAges = [...childrenAges];
+                                                newAges[idx] = Math.min(17, Math.max(0, val));
+                                                setChildrenAges(newAges);
+                                            }
                                         }}
-                                        className="smart-input"
-                                        style={{ padding: '4px', textAlign: 'center', height: '36px' }}
+                                        className="smart-input premium age-input"
+                                        title={`Dete ${idx + 1} godina`}
                                     />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button className="search-btn-smart premium" onClick={handleSearch} disabled={isSearching}>
+                    {isSearching ? <Loader2 size={20} className="spin" /> : <Search size={20} />}
+                    <span>{isSearching ? 'Pretražujem...' : 'Pretraži Sve Dobavljače'}</span>
+                </button>
+            </div>
+
+            {/* ERROR ALERT */}
+            {searchError && (
+                <div className="search-error animate-fade-in">
+                    <Info size={18} />
+                    <span>{searchError}</span>
+                </div>
+            )}
+
+            {/* Results Section */}
+            {searchPerformed && (
+                <div className="content-workflow animate-fade-in">
+                    {/* Force Single Row Toolbar */}
+                    <div className="filters-toolbar-v4 premium" style={{ display: 'flex', flexWrap: 'nowrap', gap: '16px', alignItems: 'center' }}>
+                        <div className="name-filter-wrapper" style={{ flex: 1, minWidth: '0' }}>
+                            <Search size={14} className="filter-icon" />
+                            <input
+                                type="text"
+                                className="smart-input premium"
+                                style={{ width: '100%', paddingLeft: '40px', height: '48px' }}
+                                placeholder="Traži po nazivu..."
+                                value={hotelNameFilter}
+                                onChange={(e) => setHotelNameFilter(e.target.value)}
+                            />
+                        </div>
+                        <div style={{ flex: 1, minWidth: '0' }}>
+                            <MultiSelectDropdown options={CATEGORY_OPTIONS} selected={selectedStars} onChange={setSelectedStars} placeholder="Kategorija" />
+                        </div>
+                        <div style={{ flex: 1, minWidth: '0' }}>
+                            <MultiSelectDropdown options={MEAL_PLAN_OPTIONS} selected={selectedMealPlans} onChange={setSelectedMealPlans} placeholder="Ishrana" />
+                        </div>
+                        <div className="view-mode-switcher" style={{ flexShrink: 0 }}>
+                            <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}><LayoutGrid size={18} /></button>
+                            <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}><ListIcon size={18} /></button>
+                        </div>
+                    </div>
+
+                    <div className="results-summary-bar-v4 premium">
+                        <div className="summary-info">
+                            <span>REZULTATA: <strong>{filteredResults.length}</strong></span>
+                        </div>
+                        <div className="sort-actions">
+                            <button className={`view-btn ${sortBy === 'smart' ? 'active' : ''}`} onClick={() => setSortBy('smart')}>Smart</button>
+                            <button className={`view-btn ${sortBy === 'price_low' ? 'active' : ''}`} onClick={() => setSortBy('price_low')}>Cena ↓</button>
+                        </div>
+                    </div>
+
+                    <div className={`results-container ${viewMode}-view`}>
+                        <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`}>
+                            {filteredResults.map(hotel => (
+                                <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase()} ${viewMode === 'list' ? 'horizontal' : ''}`}>
+                                    <div className="hotel-card-image">
+                                        <img src={hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
+                                        <div className="source-badge">{hotel.provider} AI</div>
+                                        <div className="hotel-stars-badge">
+                                            {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
+                                        </div>
+                                    </div>
+                                    <div className="hotel-card-content">
+                                        <div className="hotel-info-text">
+                                            <div className="hotel-title-row">
+                                                <h3>{hotel.name}</h3>
+                                                <div className="hotel-location-tag"><MapPin size={14} /> <span>{hotel.location}</span></div>
+                                                <div className="hotel-date-badge"><CalendarDays size={14} /> <span>{formatDate(checkIn)} - {formatDate(checkOut)}</span></div>
+                                            </div>
+                                        </div>
+                                        <div className="price-action-section">
+                                            <div className="lowest-price-tag">
+                                                <span className="price-val">{isSubagent ? getPriceWithMargin(hotel.price) : hotel.price}€</span>
+                                            </div>
+                                            <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji <ArrowRight size={16} /></button>
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
+                </div>
+            )}
 
-                    {/* Meal Plan */}
-                    <div className="form-field">
-                        <label>
-                            <UtensilsCrossed size={16} />
-                            <span>Ishrana</span>
-                        </label>
-                        <div style={{ position: 'relative' }}>
-                            <select
-                                value={mealPlan}
-                                onChange={(e) => setMealPlan(e.target.value)}
-                                className="smart-select"
-                                style={{
-                                    width: '100%',
-                                    appearance: 'none',
-                                    paddingRight: '36px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                <option value="">Sve opcije</option>
-                                <option value="all-inclusive">All Inclusive</option>
-                                <option value="half-board">Polupansion</option>
-                                <option value="breakfast">Doručak</option>
-                                <option value="room-only">Samo Soba</option>
-                            </select>
-                            <ChevronDown
-                                size={16}
-                                style={{
-                                    position: 'absolute',
-                                    right: '12px',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    pointerEvents: 'none',
-                                    color: 'rgba(255,255,255,0.5)'
-                                }}
-                            />
+            {/* Hotel Details Modal */}
+            {expandedHotel && (
+                <div className="modern-calendar-overlay" onClick={() => setExpandedHotel(null)}>
+                    {/* WIDE MODAL CLASS ADDED HERE */}
+                    <div className="modern-calendar-popup wide hotel-details-wide animate-fade-in" onClick={e => e.stopPropagation()}>
+                        <div className="hotel-rooms-modal-header">
+                            <div className="modal-title-zone">
+                                <h2>{expandedHotel.name}</h2>
+                                <div className="modal-meta"><MapPin size={14} /> {expandedHotel.location}</div>
+                            </div>
+                            <button className="close-modal-btn" onClick={() => setExpandedHotel(null)}><X size={20} /></button>
+                        </div>
+                        <div className="modal-body-v4">
+                            <div className="rooms-comparison-table">
+                                <div className="table-header">
+                                    <div>Tip Smeštaja</div>
+                                    <div>Kapacitet</div>
+                                    <div>Cena</div>
+                                    <div>Akcija</div>
+                                </div>
+                                <div className="room-row-v4">
+                                    <div className="r-name"><strong>Standardna Ponuda</strong><p>{getMealPlanDisplayName(expandedHotel.mealPlan)}</p></div>
+                                    <div className="r-cap"><Users size={14} /> {adults}+{children}</div>
+                                    <div className="r-price">{isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price}€</div>
+                                    <div><button className="select-room-btn" onClick={() => handleReserveClick({ name: 'Standardna Ponuda', price: isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price })}>Rezerviši</button></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                {/* Search Button */}
-                <button
-                    className="search-btn-smart"
-                    onClick={handleSearch}
-                    disabled={isSearching}
-                >
-                    {isSearching ? (
-                        <Loader2 size={20} className="animate-spin" />
-                    ) : (
-                        <Search size={20} />
-                    )}
-                    <span>
-                        {isSearching
-                            ? 'Pretražujem...'
-                            : (selectedDestinations.length > 0
-                                ? `Pretraži ${selectedDestinations.length} ${selectedDestinations.length === 1 ? 'Destinaciju' : 'Destinacije'}`
-                                : 'Pretraži Sve Dobavljače')
-                        }
-                    </span>
-                </button>
-            </div>
-
-            {/* Quick Filters */}
-            <div className="quick-filters">
-                <h3>🔥 Brzi Filteri</h3>
-                <div className="filter-chips">
-                    {quickFilters.map((filter, idx) => {
-                        const Icon = filter.icon;
-                        return (
-                            <button key={idx} className="filter-chip" style={{ borderColor: filter.color }}>
-                                <Icon size={16} style={{ color: filter.color }} />
-                                <span>{filter.label}</span>
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Popular Destinations */}
-            <div className="popular-destinations">
-                <h3>🌍 Popularne Destinacije</h3>
-                <div className="destination-grid">
-                    {popularDestinations.map((dest, idx) => (
-                        <button
-                            key={idx}
-                            className="destination-card"
-                            onClick={() => handlePopularClick(dest.name)}
-                        >
-                            <span className="dest-flag">{dest.flag}</span>
-                            <div className="dest-info">
-                                <h4>{dest.name}</h4>
-                                <p>{dest.deals} ponuda</p>
-                            </div>
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Search Results */}
-            {searchResults.length > 0 && (
-                <div className="search-results">
-                    <h3>✨ Pronađeno {searchResults.length} {searchResults.length === 1 ? 'rezultat' : 'rezultata'}</h3>
-                    <div className="results-grid">
-                        {searchResults.map((result, idx) => (
-                            <div key={idx} className="result-card">
-                                <div className="result-header">
-                                    <h4 className="result-name">{result.name}</h4>
-                                    <span className="result-provider">{result.provider}</span>
-                                </div>
-
-                                <div className="result-location">
-                                    <MapPin size={14} />
-                                    <span>{result.location}</span>
-                                </div>
-
-                                {result.stars && (
-                                    <div className="result-stars">
-                                        {Array.from({ length: result.stars }).map((_, i) => (
-                                            <Star key={i} size={14} fill="#fbbf24" color="#fbbf24" />
-                                        ))}
-                                    </div>
-                                )}
-
-                                <div className="result-price">
-                                    <div>
-                                        <span className="price-amount">{result.price.toFixed(2)}</span>
-                                        <span className="price-currency">{result.currency}</span>
-                                    </div>
-                                    {result.mealPlan && (
-                                        <span className="result-meal">{result.mealPlan}</span>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
             )}
 
-            {/* AI Assistant Button */}
-            <button className="ai-assistant-btn">
-                <Bot size={24} />
-                <div className="ai-text">
-                    <strong>Olympic Asistent</strong>
-                    <span>Pomozi mi da pronađem...</span>
-                </div>
-                <Sparkles size={16} className="ai-sparkle" />
-            </button>
-            {/* Active Calendar Modal */}
-            {activeCalendar === 'in' && (
+            {/* Booking Modal */}
+            {isBookingModalOpen && expandedHotel && selectedRoomForBooking && (
+                <BookingModal
+                    isOpen={isBookingModalOpen}
+                    onClose={() => setIsBookingModalOpen(false)}
+                    provider={expandedHotel.provider.toLowerCase() as any}
+                    bookingData={{
+                        hotelName: expandedHotel.name, location: expandedHotel.location,
+                        checkIn, checkOut, nights, roomType: selectedRoomForBooking.name,
+                        mealPlan: getMealPlanDisplayName(expandedHotel.mealPlan),
+                        adults, children, totalPrice: selectedRoomForBooking.price,
+                        currency: 'EUR', stars: expandedHotel.stars, providerData: expandedHotel.originalData
+                    }}
+                    onSuccess={() => setIsBookingModalOpen(false)}
+                    onError={err => console.error(err)}
+                />
+            )}
+
+            {/* Calendars */}
+            {activeCalendar && (
                 <ModernCalendar
-                    startDate={checkIn}
-                    endDate={checkOut}
+                    startDate={checkIn} endDate={checkOut}
                     onChange={(s, e) => {
                         setCheckIn(s);
-                        if (e) {
-                            setCheckOut(e);
-                            syncNightsFromDates(s, e);
-                        }
+                        if (e) { setCheckOut(e); syncNightsFromDates(s, e); }
                         setActiveCalendar(null);
                     }}
                     onClose={() => setActiveCalendar(null)}
                 />
             )}
-            {activeCalendar === 'out' && (
-                <ModernCalendar
-                    startDate={checkIn}
-                    endDate={checkOut}
-                    onChange={(s, e) => {
-                        setCheckIn(s);
-                        if (e) {
-                            setCheckOut(e);
-                            syncNightsFromDates(s, e);
-                        }
-                        setActiveCalendar(null);
-                    }}
-                    onClose={() => setActiveCalendar(null)}
-                />
-            )}
+
+            {/* AI Assistant */}
+            <button className="ai-assistant-btn"><Bot size={24} /> <span>Olympic Asistent</span><Sparkles size={16} /></button>
         </div>
     );
 };
 
 export default SmartSearch;
-

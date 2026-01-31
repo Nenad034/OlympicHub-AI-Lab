@@ -872,9 +872,10 @@ ${data.map(r => `  <reservation>
             {/* Stats Cards */}
             {/* Stats Overview */}
             {showStats && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+                <div className="stats-overview-container">
 
-                    <div className="stats-grid">
+                    <div style={{ marginBottom: '4px', fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status Rezervacija</div>
+                    <div className="stats-row-7">
                         {/* Total */}
                         <div className="stat-card">
                             <div className="stat-icon total"><FileText size={20} /></div>
@@ -940,7 +941,8 @@ ${data.map(r => `  <reservation>
                     </div>
 
                     {/* Row 2: Financials (Right Aligned) */}
-                    <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+                    <div style={{ marginBottom: '4px', marginTop: '12px', fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Finansijski Pregled</div>
+                    <div className="stats-row-3">
                         {/* Revenue */}
                         <div className="stat-card">
                             <div className="stat-icon revenue"><TrendingUp size={24} /></div>
@@ -2078,7 +2080,8 @@ ${data.map(r => `  <reservation>
                                     stayTo: '',
                                     customerType: ['all'],
                                     supplier: ['all'],
-                                    workflow: ['all']
+                                    workflow: ['all'],
+                                    b2bSource: ['all']
                                 });
                             }}>
                                 Poništi Sve

@@ -1,0 +1,67 @@
+/* FORCED GRID LAYOUT FIX */
+.results-mosaic.grid-layout {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    gap: 20px !important;
+    width: 100% !important;
+    padding-bottom: 40px;
+}
+
+.results-mosaic.list-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+}
+
+/* Card Sizing Fixes */
+.hotel-result-card-premium.unified {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    /* Ensure overlapping elements allow relative positioning context */
+}
+
+/* Force image container to be relative to contain badges */
+.hotel-result-card-premium.unified .hotel-card-image {
+    width: 100% !important;
+    height: 200px !important;
+    position: relative !important;
+}
+
+.hotel-result-card-premium.unified .hotel-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hotel-result-card-premium.unified .hotel-card-content {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+    /* Grow to fill height */
+}
+
+/* Horizontal overrides */
+.hotel-result-card-premium.unified.horizontal {
+    flex-direction: row !important;
+    height: 220px !important;
+}
+
+.hotel-result-card-premium.unified.horizontal .hotel-card-image {
+    width: 280px !important;
+    height: 100% !important;
+}
+
+.hotel-result-card-premium.unified.horizontal .hotel-card-content {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}

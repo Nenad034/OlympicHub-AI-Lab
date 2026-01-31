@@ -1,0 +1,31 @@
+/* --- AI Assistant Floating Button --- */
+.ai-assistant-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: #ffd700;
+    color: #000;
+    border: none;
+    border-radius: 99px;
+    font-weight: 800;
+    font-size: 1rem;
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid white;
+}
+
+.ai-assistant-btn:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 15px 40px rgba(255, 215, 0, 0.5);
+    background: #ffed4e;
+}
+
+.ai-assistant-btn svg {
+    stroke-width: 2.5px;
+}

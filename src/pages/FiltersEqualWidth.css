@@ -1,0 +1,35 @@
+/* EQUAL WIDTH FILTERS FIX */
+.filters-toolbar-v4.premium {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    /* Ensure wrapping on very small screens */
+    flex-wrap: wrap;
+}
+
+/* Make Search Input Wrapper take equal space (flex: 1 instead of 2) */
+.name-filter-wrapper {
+    flex: 1 !important;
+    min-width: 200px;
+}
+
+/* Dropdowns also take equal space */
+.filters-toolbar-v4.premium .multi-select-dropdown {
+    flex: 1 !important;
+    min-width: 200px;
+    width: auto !important;
+    /* Override potential fixed widths */
+}
+
+/* Ensure inner input fills the wrapper */
+.name-filter-wrapper input {
+    width: 100% !important;
+}
+
+/* Keep view switcher compact */
+.view-mode-switcher {
+    flex: 0 0 auto;
+    /* Don't grow or shrink */
+    margin-left: 0;
+    /* Remove auto margin if we want uniform spacing, or keep it to push right */
+}
