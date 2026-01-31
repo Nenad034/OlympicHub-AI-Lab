@@ -325,9 +325,17 @@ const SmartSearch: React.FC = () => {
                             )}
                         </div>
 
+
                         {/* Autocomplete Suggestions */}
+                        {(() => {
+                            console.log('[SmartSearch Render] showSuggestions:', showSuggestions);
+                            console.log('[SmartSearch Render] suggestions.length:', suggestions.length);
+                            console.log('[SmartSearch Render] suggestions:', suggestions.map(s => s.name));
+                            return null;
+                        })()}
                         {showSuggestions && suggestions.length > 0 && (
                             <div className="autocomplete-dropdown">
+
                                 {suggestions.map(suggestion => (
                                     <div
                                         key={suggestion.id}
