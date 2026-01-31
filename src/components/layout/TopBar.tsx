@@ -99,7 +99,7 @@ const TopBar: React.FC = () => {
             </div>
 
             {/* Controls */}
-            <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginLeft: 'auto' }}>
+            <div className="top-bar-controls">
                 <button
                     onClick={toggleNavMode}
                     title="Promeni raspored menija"

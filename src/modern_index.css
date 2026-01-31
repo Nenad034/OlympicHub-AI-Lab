@@ -283,28 +283,42 @@ h3,
   display: flex;
   align-items: center;
   padding: 0 40px;
-  gap: 24px;
+  gap: 20px;
   backdrop-filter: blur(20px);
   z-index: 1000;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.horizontal-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-horizontal-items {
   display: flex;
-  gap: 8px;
-  flex: 1;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .h-nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
-  border-radius: 12px;
-  font-size: 14px;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
   transition: 0.2s;
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .horizontal-nav {
+    padding: 0 15px;
+    gap: 12px;
+  }
 }
 
 .h-nav-item:hover {
@@ -347,11 +361,12 @@ h3,
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 100px;
-  padding: 12px 20px 12px 48px;
+  padding: 10px 16px 10px 42px !important;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 13px;
   outline: none;
   transition: 0.2s;
+  width: 100%;
 }
 
 .search-input:focus {
@@ -395,6 +410,7 @@ h3,
   background: var(--gradient-purple);
 }
 
+/* Status Indicators */
 /* Status Indicators */
 .status-indicator {
   display: flex;
@@ -462,6 +478,44 @@ h3,
 .status-indicator:hover {
   background: var(--glass-border);
   transform: translateY(-1px);
+}
+
+.top-bar-status-group {
+  display: flex !important;
+  gap: 12px !important;
+  align-items: center !important;
+  margin-left: 20px !important;
+  flex-shrink: 0 !important;
+}
+
+.top-bar-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
+}
+
+@media (max-width: 1300px) {
+  .status-text {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .top-bar {
+    padding: 10px 15px;
+    height: auto;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .top-bar-controls {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
 }
 
 /* Dashboard Grid */

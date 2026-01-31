@@ -1879,8 +1879,7 @@ ${data.map(r => `  <reservation>
                         onClick={(e) => e.stopPropagation()}
                         style={{
                             maxWidth: '1100px',
-                            width: '90%',
-                            minWidth: '950px',
+                            width: 'min(1100px, 95vw)',
                             maxHeight: '85vh',
                             transform: `translate(${modalPos.x}px, ${modalPos.y}px)`,
                             resize: 'both',
@@ -1999,7 +1998,7 @@ ${data.map(r => `  <reservation>
                                 {/* Workflow Status Section */}
                                 <div className="date-filter-section" style={{ gridColumn: 'span 2', marginBottom: 0 }}>
                                     <h3><CheckCheck size={18} /> Workflow Faze</h3>
-                                    <div style={{
+                                    <div className="workflow-grid-mobile" style={{
                                         display: 'grid',
                                         gridTemplateColumns: '1fr auto auto',
                                         gap: '12px 60px',

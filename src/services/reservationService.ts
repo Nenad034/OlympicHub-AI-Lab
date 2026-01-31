@@ -279,60 +279,50 @@ export async function saveDossierToDatabase(dossier: any): Promise<{ success: bo
 }
 
 /**
- * Get the next sequential reservation number (e.g., 0000002/2026)
+ * Get the next sequential reservation number (e.g., Ref - 0000001/2026)
  */
 export async function getNextReservationNumber(): Promise<string> {
     try {
         const currentYear = new Date().getFullYear();
 
-        // 1. Primarni način: Tražimo najveći broj koji prati naš format (7 cifara / godina)
-        // Koristimo pattern koji obezbeđuje da kod počinje ciframa i ima kosu crtu
+        // 1. Primarni način: Tražimo najveći broj koji prati naš format (Ref - 7 cifara / godina)
+        // Koristimo ilike kao sigurniju varijantu za pretragu prefiksa
         const { data, error } = await supabase
             .from('reservations')
             .select('ref_code')
-            .filter('ref_code', 'match', '^[0-9]{7}/202[0-9]$') // Regex filter za format
-            .order('ref_code', { ascending: false })
+            .ilike('ref_code', 'Ref - %/202%')
+            .order('created_at', { ascending: false })
             .limit(1);
 
-        // Ako 'match' filter nije podržan na ovom Supabase setupu (zavisi od verzije),
-        // koristimo 'ilike' kao rezervu ali filtriramo u JS-u
         let latestRecord = data && data.length > 0 ? data[0] : null;
-
-        if (error || !latestRecord) {
-            const { data: altData } = await supabase
-                .from('reservations')
-                .select('ref_code')
-                .ilike('ref_code', '%/202%')
-                .order('ref_code', { ascending: false });
-
-            // Pronađi prvi koji zaista odgovara formatu
-            latestRecord = (altData || []).find((r: any) => /^[0-9]{7}\/202[0-9]$/.test(r.ref_code)) || null;
-        }
 
         if (latestRecord) {
             const latestCode = latestRecord.ref_code;
             console.log('[Reservation Service] Found latest valid code:', latestCode);
 
-            const parts = latestCode.split('/');
+            // Format: "Ref - 0000001/2026"
+            // Split by "Ref - " and then by "/"
+            const prefixRemoved = latestCode.replace('Ref - ', '');
+            const parts = prefixRemoved.split('/');
             const currentNum = parseInt(parts[0]);
+
             if (!isNaN(currentNum)) {
                 const nextNum = currentNum + 1;
-                return nextNum.toString().padStart(7, '0') + `/${currentYear}`;
+                return `Ref - ${nextNum.toString().padStart(7, '0')}/${currentYear}`;
             }
         }
 
-        // 2. Fallback: Prebroj sve koji liče na naše rezervacije
+        // 2. Fallback: Prebroj sve koji liče na naše rezervacije (čak i one bez Ref prefixa ako smo u tranziciji)
         const { data: countData } = await supabase
             .from('reservations')
-            .select('ref_code')
-            .ilike('ref_code', '%/202%');
+            .select('ref_code');
 
-        const validCount = (countData || []).filter((r: any) => /^[0-9]{7}\/202[0-9]$/.test(r.ref_code)).length;
+        const validCount = (countData || []).length;
         const nextNum = validCount + 1;
-        return nextNum.toString().padStart(7, '0') + `/${currentYear}`;
+        return `Ref - ${nextNum.toString().padStart(7, '0')}/${currentYear}`;
 
     } catch (error) {
         console.error('[Reservation Service] Unexpected error in number generation:', error);
-        return `0000001/${new Date().getFullYear()}`;
+        return `Ref - 0000001/${new Date().getFullYear()}`;
     }
 }

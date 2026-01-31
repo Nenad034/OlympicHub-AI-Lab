@@ -103,16 +103,10 @@ const HorizontalNav: React.FC = () => {
             </div>
 
             {/* Search in Horizontal Nav */}
-            <div style={{ position: 'relative', marginLeft: 'auto' }}>
+            <div className="h-nav-search-wrapper">
                 <Search
                     size={20}
-                    style={{
-                        position: 'absolute',
-                        left: '16px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: 'var(--text-secondary)'
-                    }}
+                    className="h-nav-search-icon"
                 />
                 <input
                     type="text"
@@ -120,7 +114,6 @@ const HorizontalNav: React.FC = () => {
                     className="search-input"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ width: '300px', padding: '10px 20px 10px 48px' }}
                 />
             </div>
         </div>

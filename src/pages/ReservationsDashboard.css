@@ -925,6 +925,22 @@
     .res-trip svg {
         display: none;
     }
+
+    /* Stack filter modal sections */
+    .date-filter-modal .modal-body>div {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+
+    .date-filter-modal .date-filter-section {
+        grid-column: span 1 !important;
+    }
+
+    .workflow-grid-mobile {
+        grid-template-columns: 1fr auto auto !important;
+        gap: 8px 20px !important;
+        overflow-x: auto;
+    }
 }
 
 /* ===== BULK SELECTION ===== */
@@ -1053,7 +1069,7 @@
 }
 
 .date-filter-modal {
-    min-width: 400px;
+    width: min(1100px, 95vw);
     min-height: 300px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
