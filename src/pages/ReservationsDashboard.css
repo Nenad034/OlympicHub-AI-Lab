@@ -723,21 +723,47 @@
 .card-footer {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-end;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
 }
 
-.card-footer .price {
+.card-finance {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.card-finance .price {
     font-size: 18px;
     font-weight: 900;
     color: var(--text-primary);
 }
 
-.card-footer .pax {
+.card-finance .pax {
     display: flex;
     align-items: center;
     gap: 4px;
     font-size: 13px;
     color: var(--text-secondary);
+}
+
+.card-actions-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.workflow-dot.mini {
+    padding: 3px 6px;
+    border-radius: 5px;
+}
+
+.workflow-dot.mini svg {
+    width: 10px;
+    height: 10px;
 }
 
 /* ===== CALENDAR VIEW ===== */
@@ -816,129 +842,119 @@
 
 /* ===== RESPONSIVE DESIGN ===== */
 
-/* Laptop / Large Tablet (max-width: 1200px) */
-@media (max-width: 1200px) {
-    .row-main {
-        gap: 12px;
-        /* Tighten columns slightly */
-        grid-template-columns: 100px 1fr 1fr 150px 200px;
+/* SWITCH TO CARDS AT 1100px */
+@media (max-width: 1100px) {
+    .list-view {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+        gap: 20px !important;
     }
 
-    .cis-code {
-        font-size: 12px;
-    }
-
-    .status-badge {
-        padding: 2px 6px;
-        font-size: 10px;
-    }
-}
-
-/* Tablet (max-width: 900px) */
-@media (max-width: 900px) {
     .reservation-row {
-        flex-direction: column;
-        gap: 12px;
-        padding: 12px;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 24px !important;
+        height: auto !important;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
     }
 
     .row-main {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-        width: 100%;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px !important;
+        width: 100% !important;
     }
 
-    /* Stack sections vertically but keep some grouped */
     .res-identity {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 8px;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: flex-start !important;
+        width: 100% !important;
+        border-bottom: 2px solid var(--border);
+        padding-bottom: 15px;
+        margin-bottom: 5px;
     }
 
     .res-identity .res-codes {
-        flex-direction: row;
-        align-items: center;
-        gap: 12px;
+        flex-direction: column !important;
+        gap: 4px !important;
     }
 
     .res-customer,
-    .res-trip {
-        width: 100%;
-    }
-
+    .res-trip,
     .res-dates {
-        flex-direction: row;
-        justify-content: space-between;
-        width: 100%;
-        background: var(--bg-secondary);
-        padding: 8px;
-        border-radius: 6px;
+        width: 100% !important;
+        min-width: 0 !important;
+        margin-bottom: 10px;
     }
 
     .res-finance {
-        width: 100%;
-        border-top: 1px solid var(--border);
-        padding-top: 8px;
+        width: 100% !important;
+        border-top: 2px solid var(--border);
+        padding-top: 15px !important;
+        align-items: flex-start !important;
+        justify-self: start !important;
+        margin-top: 10px;
     }
 
-    /* Adjust Finance Grid for Mobile */
     .res-finance>div {
-        grid-template-columns: 1fr auto !important;
-        column-gap: 12px !important;
-    }
-
-    .res-finance div[style*="justify-self: end"] {
-        justify-self: end !important;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
     }
 
     .row-actions {
-        border-left: none;
-        border-top: 1px solid var(--border);
-        padding: 16px 0 0 0;
-        width: 100%;
-        min-width: 0;
+        border-left: none !important;
+        border-top: 2px solid var(--border);
+        padding: 18px 0 0 0 !important;
+        width: 100% !important;
+        justify-content: space-between !important;
+        margin-top: 10px;
     }
 
     .actions-stack {
-        flex-direction: row;
-        justify-content: space-between;
-        width: 100%;
+        flex-direction: row !important;
+        width: 100% !important;
+        justify-content: space-between !important;
+        align-items: center !important;
     }
 
-    .action-buttons-group,
+    .action-buttons-group {
+        order: 1;
+        gap: 10px !important;
+    }
+
     .workflow-status-group {
-        width: auto;
+        order: 2;
+        gap: 8px !important;
     }
 
-    /* Ensure action buttons are accessible */
     .action-btn {
-        width: 40px;
-        height: 40px;
+        width: 38px !important;
+        height: 38px !important;
     }
+}
 
+/* Tablet refinements for other elements */
+@media (max-width: 900px) {
     .results-toolbar {
         flex-direction: column;
-        gap: 12px;
-        height: auto;
-        padding: 12px;
+        gap: 15px;
+        align-items: stretch;
     }
 
     .results-count {
-        flex-direction: column;
-        align-items: flex-start !important;
-        gap: 8px;
         width: 100%;
+        justify-content: space-between;
     }
 
-    .results-count>div {
-        /* Payment filters */
+    .payment-filters {
         width: 100%;
-        justify-content: space-between !important;
+        overflow-x: auto;
+        padding-bottom: 5px;
     }
 }
 

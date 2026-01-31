@@ -1567,8 +1567,44 @@ ${data.map(r => `  <reservation>
                                     <span>{new Date(res.checkOut).toLocaleDateString('sr-RS')}</span>
                                 </div>
                                 <div className="card-footer">
-                                    <span className="price">{res.totalPrice.toLocaleString()} {res.currency}</span>
-                                    <span className="pax">{res.paxCount} <Users size={12} /></span>
+                                    <div className="card-finance">
+                                        <span className="price">{res.totalPrice.toLocaleString()} {res.currency}</span>
+                                        <span className="pax">{res.paxCount} <Users size={12} /></span>
+                                    </div>
+
+                                    <div className="card-actions-wrapper">
+                                        <div className="action-buttons-group">
+                                            <button className="action-btn view" title="Pregled" onClick={(e) => { e.stopPropagation(); navigate(`/reservations/architect?id=${res.id}`); }}>
+                                                <Eye size={14} />
+                                            </button>
+                                            <button className="action-btn edit" title="Izmeni" onClick={(e) => { e.stopPropagation(); navigate(`/reservations/architect?id=${res.id}`); }}>
+                                                <Edit size={14} />
+                                            </button>
+                                            <button
+                                                className="action-btn email"
+                                                title="Pošalji Email"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedReservation(res);
+                                                    setEmailModalOpen(true);
+                                                }}
+                                            >
+                                                <Mail size={14} />
+                                            </button>
+                                        </div>
+
+                                        <div className="workflow-status-group">
+                                            <div title="Najavljeno" className={`workflow-dot mini ${res.hotelNotified ? 'completed' : 'pending'}`}>
+                                                <Bell size={10} />
+                                            </div>
+                                            <div title="Potvrđeno" className={`workflow-dot mini ${res.reservationConfirmed ? 'completed' : 'pending'}`}>
+                                                <CheckCheck size={10} />
+                                            </div>
+                                            <div title="Račun" className={`workflow-dot mini ${res.finalInvoiceCreated ? 'completed' : 'pending'}`}>
+                                                <Receipt size={10} />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}
