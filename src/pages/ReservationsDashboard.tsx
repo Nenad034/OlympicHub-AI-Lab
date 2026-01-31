@@ -1331,21 +1331,14 @@ ${data.map(r => `  <reservation>
                                             <span className="ref-code" style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>{res.refCode}</span>
                                             <span className="cis-code" style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 400, marginTop: '2px' }}>{res.cisCode}</span>
                                         </div>
-                                        <div className="horizontal-status-tags" style={{ marginTop: '4px' }}>
+                                        <div className="horizontal-status-tags" style={{ marginTop: '6px' }}>
+                                            <span style={{ color: 'var(--text-secondary)', fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '2px', display: 'block' }}>Status</span>
                                             <div
                                                 className="status-badge"
                                                 style={{
-                                                    padding: '4px 10px',
-                                                    borderRadius: '6px',
                                                     backgroundColor: `${getStatusColor(res.status)}15`,
                                                     color: getStatusColor(res.status),
-                                                    fontSize: '10px',
-                                                    fontWeight: 700,
-                                                    textTransform: 'uppercase',
                                                     border: `1px solid ${getStatusColor(res.status)}30`,
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: '4px'
                                                 }}
                                             >
                                                 {getStatusIcon(res.status)}
@@ -1378,118 +1371,118 @@ ${data.map(r => `  <reservation>
 
                                     {/* Agency Column - ONLY FOR STAFF */}
                                     {!isSubagent && (
-                                        <div className="res-agency" style={{ width: '150px' }}>
-                                            <div className="agency-label" style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 800 }}>Agencija / Izvor</div>
-                                            <div className="agency-name" style={{ fontSize: '13px', fontWeight: 600, color: '#ff9800', marginTop: '4px' }}>
-                                                <Building2 size={12} style={{ marginRight: '6px' }} />
+                                        <div className="res-agency" style={{ borderLeft: '1px solid var(--border)', paddingLeft: '16px' }}>
+                                            <div className="agency-label" style={{ fontSize: '9px', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 800, letterSpacing: '0.5px' }}>Izvor Prodaje</div>
+                                            <div className="agency-name" style={{
+                                                fontSize: '11px',
+                                                fontWeight: 700,
+                                                color: res.customerType === 'B2B-Subagent' ? '#a855f7' : '#ff9800',
+                                                marginTop: '6px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                background: res.customerType === 'B2B-Subagent' ? 'rgba(168, 85, 247, 0.1)' : 'rgba(255, 152, 0, 0.1)',
+                                                padding: '4px 8px',
+                                                borderRadius: '6px',
+                                                border: `1px solid ${res.customerType === 'B2B-Subagent' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255, 152, 0, 0.2)'}`
+                                            }}>
+                                                {res.customerType === 'B2B-Subagent' ? <Users size={12} /> : <Building2 size={12} />}
                                                 {res.customerType === 'B2B-Subagent' ? res.customerName : 'Direct Sales'}
                                             </div>
                                         </div>
                                     )}
 
                                     <div className="res-trip">
-                                        <div className="trip-destination">
-                                            <MapPin size={14} />
+                                        <div className="trip-destination" style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <MapPin size={14} style={{ color: 'var(--accent)' }} />
                                             {res.destination}
                                         </div>
 
-                                        {/* Multi-Item Display */}
+                                        {/* Display Multiple Items or Single Accommodation */}
                                         {res.items && res.items.length > 0 ? (
-                                            <div className="res-items-list" style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                                {res.items.map(item => (
-                                                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: '4px' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-primary)', fontWeight: 600 }}>
-                                                            {getTripTypeIcon(item.type)}
-                                                            <span>{item.subject}</span>
-                                                        </div>
-                                                        <span className="supplier-badge" style={{ fontSize: '10px' }}>{item.supplier}</span>
+                                            <div className="res-items-compact" style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                {res.items.map((item: TripItem) => (
+                                                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                                                        {getTripTypeIcon(item.type)}
+                                                        <span style={{ fontWeight: 600, maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.subject}</span>
                                                     </div>
                                                 ))}
                                             </div>
                                         ) : (
-                                            <>
-                                                <div className="accommodation-name" style={{
-                                                    fontSize: '12px',
-                                                    fontWeight: 600,
-                                                    color: 'var(--text-secondary)',
-                                                    marginTop: '4px',
-                                                    display: 'flex',
-                                                    alignItems: 'center'
-                                                }}>
-                                                    <Building2 size={12} style={{ marginRight: '4px' }} />
-                                                    {res.accommodationName}
+                                            <div className="accommodation-name" style={{
+                                                fontSize: '11px',
+                                                fontWeight: 600,
+                                                color: 'var(--text-secondary)',
+                                                marginTop: '4px',
+                                                display: 'flex',
+                                                alignItems: 'center'
+                                            }}>
+                                                <Building2 size={12} style={{ marginRight: '4px', opacity: 0.7 }} />
+                                                <span style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{res.accommodationName}</span>
 
-                                                    {/* Hotel Stars */}
-                                                    {res.hotelCategory && res.hotelCategory > 0 && (
-                                                        <div style={{ display: 'flex', gap: '1px', marginLeft: '6px' }}>
-                                                            {[...Array(res.hotelCategory)].map((_, i) => (
-                                                                <Star key={i} size={10} fill="#f59e0b" color="#f59e0b" />
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="trip-meta">
-                                                    <span className="trip-type">
-                                                        {getTripTypeIcon(res.tripType)}
-                                                        {res.tripType}
-                                                    </span>
-                                                    <span className="supplier-badge">{res.supplier}</span>
-                                                </div>
-                                            </>
+                                                {res.hotelCategory && res.hotelCategory > 0 && (
+                                                    <div style={{ display: 'flex', gap: '1px', marginLeft: '6px' }}>
+                                                        {[...Array(res.hotelCategory)].map((_, i) => (
+                                                            <Star key={i} size={8} fill="#f59e0b" color="#f59e0b" />
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         )}
 
+                                        <div className="trip-meta" style={{ marginTop: '6px' }}>
+                                            <span className="supplier-badge" style={{
+                                                fontSize: '9px',
+                                                background: 'rgba(56, 189, 248, 0.08)',
+                                                border: '1px solid rgba(56, 189, 248, 0.2)',
+                                                padding: '2px 8px',
+                                                borderRadius: '4px',
+                                                fontWeight: 800,
+                                                color: '#38bdf8'
+                                            }}>
+                                                {res.supplier}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div className="res-dates">
-                                        <div className="date-range">
-                                            <Calendar size={14} />
-                                            {new Date(res.checkIn).toLocaleDateString('sr-RS')} - {new Date(res.checkOut).toLocaleDateString('sr-RS')}
+                                        <div className="date-range" style={{ fontSize: '12px', fontWeight: 700 }}>
+                                            <Calendar size={12} style={{ color: 'var(--text-secondary)' }} />
+                                            <span>{new Date(res.checkIn).toLocaleDateString('sr-RS').replace(/\.$/, '')} - {new Date(res.checkOut).toLocaleDateString('sr-RS').replace(/\.$/, '')}</span>
                                         </div>
-                                        <div className="nights-pax">
-                                            <span>{res.nights} noći</span>
-                                            <span>•</span>
-                                            <span>{res.paxCount} putnika</span>
+                                        <div className="nights-pax" style={{ fontSize: '11px', opacity: 0.8, marginTop: '4px' }}>
+                                            <strong>{res.nights}</strong> noći • <strong>{res.paxCount}</strong> putnika
                                         </div>
                                     </div>
 
                                     <div className="res-finance">
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'min-content 1fr', rowGap: '4px', columnGap: '16px', alignItems: 'center' }}>
-
-                                            {/* Total */}
-                                            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Ukupno:</span>
-                                            <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                                                {res.totalPrice.toLocaleString()} {res.currency}
-                                                {/* Invisible placeholder for alignment consistency */}
-                                                <div style={{ width: '12px', height: '12px', visibility: 'hidden' }}></div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-end' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 600 }}>UKUPNO:</span>
+                                                <span style={{ fontSize: '15px', fontWeight: 900, color: 'var(--text-primary)' }}>{res.totalPrice.toLocaleString()} {res.currency}</span>
                                             </div>
 
-                                            {/* Paid */}
-                                            <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap' }}>Uplaćeno:</span>
-                                            <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                                                {res.paid.toLocaleString()} {res.currency}
-                                                {/* Green Box if Fully Paid, otherwise Invisible Placeholder */}
-                                                <div style={{
-                                                    width: '12px', height: '12px',
-                                                    background: res.paid >= res.totalPrice ? '#10b981' : 'transparent',
-                                                    borderRadius: '2px', flexShrink: 0
-                                                }} title={res.paid >= res.totalPrice ? "Sve uplaćeno" : ""}></div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 600 }}>PLAĆENO:</span>
+                                                <span style={{ fontSize: '12px', fontWeight: 700, color: '#10b981' }}>{res.paid.toLocaleString()} {res.currency}</span>
                                             </div>
 
-                                            {/* Balance */}
                                             {res.totalPrice - res.paid > 0 && (
-                                                <>
-                                                    <div style={{ gridColumn: '1 / -1', height: '1px', background: 'var(--border)', margin: '2px 0' }}></div>
-                                                    <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 700, whiteSpace: 'nowrap' }}>Preostalo:</span>
-                                                    <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#ef4444', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                                <div style={{
+                                                    marginTop: '4px',
+                                                    padding: '4px 8px',
+                                                    background: res.paid > 0 ? 'rgba(245, 158, 11, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                                                    borderRadius: '6px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    border: `1px solid ${res.paid > 0 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+                                                }}>
+                                                    <span style={{ fontSize: '9px', color: res.paid > 0 ? '#f59e0b' : '#ef4444', fontWeight: 800 }}>DUG:</span>
+                                                    <span style={{ fontSize: '12px', fontWeight: 900, color: res.paid > 0 ? '#f59e0b' : '#ef4444' }}>
                                                         {(res.totalPrice - res.paid).toLocaleString()} {res.currency}
-                                                        {/* Yellow/Red Box */}
-                                                        <div style={{
-                                                            width: '12px', height: '12px',
-                                                            background: res.paid > 0 ? '#f59e0b' : '#ef4444',
-                                                            borderRadius: '2px', flexShrink: 0
-                                                        }} title={res.paid > 0 ? "Delimično plaćeno" : "Nije plaćeno"}></div>
-                                                    </div>
-                                                </>
+                                                    </span>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
