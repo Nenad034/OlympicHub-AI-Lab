@@ -57,16 +57,10 @@ const TopBar: React.FC = () => {
         <div className="top-bar">
             {/* Show search only in sidebar mode */}
             {navMode === 'sidebar' && (
-                <div style={{ position: 'relative', flexShrink: 0 }}>
+                <div className="top-bar-search-wrapper">
                     <Search
                         size={20}
-                        style={{
-                            position: 'absolute',
-                            left: '16px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            color: 'var(--text-secondary)'
-                        }}
+                        className="top-bar-search-icon"
                     />
                     <input
                         type="text"
@@ -74,7 +68,6 @@ const TopBar: React.FC = () => {
                         className="search-input"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        style={{ width: '100%', maxWidth: '300px' }}
                     />
                 </div>
             )}
