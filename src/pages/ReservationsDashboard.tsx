@@ -874,108 +874,97 @@ ${data.map(r => `  <reservation>
             {showStats && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
 
-                    {/* Row 1: Statuses (Grid for better wrapping) */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+                    <div className="stats-grid">
                         {/* Total */}
-                        <div className="stat-card" style={{ padding: '12px' }}>
-                            <div className="stat-icon total" style={{ width: '32px', height: '32px' }}><FileText size={16} /></div>
+                        <div className="stat-card">
+                            <div className="stat-icon total"><FileText size={20} /></div>
                             <div className="stat-content">
-                                <span className="stat-label" style={{ fontSize: '11px' }}>Ukupno</span>
-                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.total}</span>
+                                <span className="stat-label">Ukupno</span>
+                                <span className="stat-value">{stats.total}</span>
                             </div>
                         </div>
 
                         {/* Active */}
-                        <div className="stat-card" style={{ padding: '12px' }}>
-                            <div className="stat-icon active" style={{ width: '32px', height: '32px' }}><CheckCircle2 size={16} /></div>
+                        <div className="stat-card">
+                            <div className="stat-icon active"><CheckCircle2 size={20} /></div>
                             <div className="stat-content">
-                                <span className="stat-label" style={{ fontSize: '11px' }}>Aktivne</span>
-                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.active}</span>
+                                <span className="stat-label">Aktivne</span>
+                                <span className="stat-value">{stats.active}</span>
                             </div>
                         </div>
 
                         {/* Reservations */}
-                        <div className="stat-card" style={{ padding: '12px' }}>
-                            <div className="stat-icon reservation" style={{ width: '32px', height: '32px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
-                                <Briefcase size={16} />
-                            </div>
+                        <div className="stat-card">
+                            <div className="stat-icon reservation"><Briefcase size={20} /></div>
                             <div className="stat-content">
-                                <span className="stat-label" style={{ fontSize: '11px' }}>Rezervacije</span>
-                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.reservation}</span>
+                                <span className="stat-label">Rezervacije</span>
+                                <span className="stat-value">{stats.reservation}</span>
                             </div>
                         </div>
 
                         {/* Offers */}
-                        <div className="stat-card" style={{ padding: '12px' }}>
-                            <div className="stat-icon offer" style={{ width: '32px', height: '32px', background: 'rgba(148, 163, 184, 0.1)', color: '#94a3b8' }}>
-                                <Tag size={16} />
-                            </div>
+                        <div className="stat-card">
+                            <div className="stat-icon offer"><Tag size={20} /></div>
                             <div className="stat-content">
-                                <span className="stat-label" style={{ fontSize: '11px' }}>Ponude</span>
-                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.offer}</span>
+                                <span className="stat-label">Ponude</span>
+                                <span className="stat-value">{stats.offer}</span>
                             </div>
                         </div>
 
                         {/* Requests */}
-                        <div className="stat-card" style={{ padding: '12px' }}>
-                            <div className="stat-icon requests" style={{ width: '32px', height: '32px', background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7' }}>
-                                <AlertCircle size={16} />
-                            </div>
+                        <div className="stat-card">
+                            <div className="stat-icon requests"><AlertCircle size={20} /></div>
                             <div className="stat-content">
-                                <span className="stat-label" style={{ fontSize: '11px' }}>Zahtevi</span>
-                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.request}</span>
+                                <span className="stat-label">Zahtevi</span>
+                                <span className="stat-value">{stats.request}</span>
                             </div>
                         </div>
 
                         {/* Processing */}
-                        <div className="stat-card" style={{ padding: '12px' }}>
-                            <div className="stat-icon processing" style={{ width: '32px', height: '32px', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
-                                <Clock size={16} />
-                            </div>
+                        <div className="stat-card">
+                            <div className="stat-icon processing"><Clock size={20} /></div>
                             <div className="stat-content">
-                                <span className="stat-label" style={{ fontSize: '11px' }}>Obrada</span>
-                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.processing}</span>
+                                <span className="stat-label">Obrada</span>
+                                <span className="stat-value">{stats.processing}</span>
                             </div>
                         </div>
 
                         {/* Canceled */}
-                        <div className="stat-card" style={{ padding: '12px' }}>
-                            <div className="stat-icon canceled" style={{ width: '32px', height: '32px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
-                                <XCircle size={16} />
-                            </div>
+                        <div className="stat-card">
+                            <div className="stat-icon canceled"><XCircle size={20} /></div>
                             <div className="stat-content">
-                                <span className="stat-label" style={{ fontSize: '11px' }}>Otkazano</span>
-                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.canceled}</span>
+                                <span className="stat-label">Otkazano</span>
+                                <span className="stat-value">{stats.canceled}</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Row 2: Financials (Right Aligned) */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+                    <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
                         {/* Revenue */}
-                        <div className="stat-card" style={{ padding: '12px', flex: '1 1 0px', minWidth: '130px', maxWidth: '240px' }}>
-                            <div className="stat-icon revenue" style={{ width: '32px', height: '32px' }}><TrendingUp size={16} /></div>
+                        <div className="stat-card">
+                            <div className="stat-icon revenue"><TrendingUp size={24} /></div>
                             <div className="stat-content">
-                                <span className="stat-label" style={{ fontSize: '11px' }}>Ukupan Prihod</span>
-                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.totalRevenue.toLocaleString()} €</span>
+                                <span className="stat-label">Ukupan Prihod</span>
+                                <span className="stat-value">{stats.totalRevenue.toLocaleString()} €</span>
                             </div>
                         </div>
 
                         {/* Paid */}
-                        <div className="stat-card" style={{ padding: '12px', flex: '1 1 0px', minWidth: '130px', maxWidth: '240px' }}>
-                            <div className="stat-icon paid" style={{ width: '32px', height: '32px' }}><DollarSign size={16} /></div>
+                        <div className="stat-card">
+                            <div className="stat-icon paid"><CheckCircle2 size={24} /></div>
                             <div className="stat-content">
-                                <span className="stat-label" style={{ fontSize: '11px' }}>Plaćeno</span>
-                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.totalPaid.toLocaleString()} €</span>
+                                <span className="stat-label">Ukupno Naplaćeno</span>
+                                <span className="stat-value">{stats.totalPaid.toLocaleString()} €</span>
                             </div>
                         </div>
 
                         {/* Outstanding */}
-                        <div className="stat-card" style={{ padding: '12px', flex: '1 1 0px', minWidth: '130px', maxWidth: '240px' }}>
-                            <div className="stat-icon outstanding" style={{ width: '32px', height: '32px' }}><TrendingDown size={16} /></div>
+                        <div className="stat-card">
+                            <div className="stat-icon outstanding"><TrendingDown size={24} /></div>
                             <div className="stat-content">
-                                <span className="stat-label" style={{ fontSize: '11px' }}>Dugovanja</span>
-                                <span className="stat-value" style={{ fontSize: '18px' }}>{stats.outstanding.toLocaleString()} €</span>
+                                <span className="stat-label">Preostalo za Naplatu</span>
+                                <span className="stat-value">{stats.outstanding.toLocaleString()} €</span>
                             </div>
                         </div>
                     </div>
@@ -1550,65 +1539,58 @@ ${data.map(r => `  <reservation>
 
                 {viewMode === 'grid' && (
                     <div className="grid-view">
-                        {filteredReservations.map(res => (
+                        {filteredReservations.map((res: Reservation) => (
                             <div
                                 key={res.id}
                                 className="reservation-card"
                                 onClick={() => navigate(`/reservation-architect?id=${res.id}`)}
                             >
-                                <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <span className="ref-code" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{res.refCode}</span>
-                                        <span className="cis-code" style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>{res.cisCode}</span>
+                                <div className="card-header">
+                                    <div className="res-codes">
+                                        <span className="ref-code">{res.refCode}</span>
+                                        <span className="cis-code">{res.cisCode}</span>
                                     </div>
-                                    <div
-                                        className="status-badge"
-                                        style={{
-                                            background: `${getStatusColor(res.status)}15`,
-                                            color: getStatusColor(res.status),
-                                            border: `1px solid ${getStatusColor(res.status)}30`,
-                                            padding: '4px 8px',
-                                            borderRadius: '6px',
-                                            fontSize: '10px',
-                                            fontWeight: 700,
-                                            textTransform: 'uppercase'
-                                        }}
-                                    >
-                                        {res.status}
+                                    <div className="res-identity">
+                                        <div className={`status-badge ${res.status.toLowerCase()}`}>
+                                            {res.status}
+                                        </div>
                                     </div>
                                 </div>
+
                                 <div className="card-customer">
                                     <h3>{res.customerName}</h3>
-                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                        <MapPin size={12} style={{ marginRight: '4px' }} />
+                                    <p>
+                                        <MapPin size={14} style={{ color: 'var(--accent)' }} />
                                         {res.destination}
                                     </p>
 
                                     {res.items && res.items.length > 0 ? (
-                                        <div style={{ marginTop: '8px', borderTop: '1px solid var(--border)', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                            {res.items.map(item => (
-                                                <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-primary)' }}>
+                                        <div className="res-items-compact" style={{ marginTop: '8px', borderTop: '1px solid var(--border)', paddingTop: '8px' }}>
+                                            {res.items.map((item: TripItem) => (
+                                                <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
                                                         {getTripTypeIcon(item.type)}
-                                                        <span style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.subject}</span>
+                                                        <span>{item.subject}</span>
                                                     </div>
-                                                    <span style={{ fontSize: '9px', padding: '2px 6px', background: 'var(--bg-secondary)', borderRadius: '4px', color: 'var(--accent)' }}>{item.supplier}</span>
+                                                    <span className="supplier-badge" style={{ fontSize: '9px', padding: '2px 6px' }}>{item.supplier}</span>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
-                                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                                            <Building2 size={10} style={{ marginRight: '4px' }} />
+                                        <div className="accommodation-name" style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <Building2 size={12} />
                                             {res.accommodationName}
-                                        </p>
+                                        </div>
                                     )}
                                 </div>
+
                                 <div className="card-dates">
                                     <Calendar size={14} />
                                     <span>{new Date(res.checkIn).toLocaleDateString('sr-RS')}</span>
-                                    <span>-</span>
+                                    <ArrowUpDown size={10} style={{ opacity: 0.5 }} />
                                     <span>{new Date(res.checkOut).toLocaleDateString('sr-RS')}</span>
                                 </div>
+
                                 <div className="card-footer">
                                     <div className="card-finance">
                                         <div className="finance-row total">
@@ -1628,27 +1610,7 @@ ${data.map(r => `  <reservation>
                                     </div>
 
                                     <div className="card-actions-wrapper">
-                                        <div className="action-buttons-group">
-                                            <button className="action-btn view" title="Pregled" onClick={(e) => { e.stopPropagation(); navigate(`/reservation-architect?id=${res.id}`); }}>
-                                                <Eye size={14} />
-                                            </button>
-                                            <button className="action-btn edit" title="Izmeni" onClick={(e) => { e.stopPropagation(); navigate(`/reservation-architect?id=${res.id}`); }}>
-                                                <Edit size={14} />
-                                            </button>
-                                            <button
-                                                className="action-btn email"
-                                                title="Pošalji Email"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setSelectedReservation(res);
-                                                    setEmailModalOpen(true);
-                                                }}
-                                            >
-                                                <Mail size={14} />
-                                            </button>
-                                        </div>
-
-                                        <div className="workflow-status-group">
+                                        <div className="workflow-status-group" style={{ marginBottom: '8px' }}>
                                             <div title="Najavljeno" className={`workflow-dot mini ${res.hotelNotified ? 'completed' : 'pending'}`}>
                                                 <Bell size={10} />
                                             </div>
@@ -1658,6 +1620,15 @@ ${data.map(r => `  <reservation>
                                             <div title="Račun" className={`workflow-dot mini ${res.finalInvoiceCreated ? 'completed' : 'pending'}`}>
                                                 <Receipt size={10} />
                                             </div>
+                                        </div>
+
+                                        <div className="action-buttons-group">
+                                            <button className="action-btn" title="Pregled" onClick={(e) => { e.stopPropagation(); navigate(`/reservation-architect?id=${res.id}`); }}>
+                                                <Eye size={14} />
+                                            </button>
+                                            <button className="action-btn" title="Email" onClick={(e) => { e.stopPropagation(); setSelectedReservation(res); setEmailModalOpen(true); }}>
+                                                <Mail size={14} />
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
