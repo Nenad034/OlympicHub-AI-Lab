@@ -849,7 +849,7 @@ ${data.map(r => `  <reservation>
                 >
                     {showStats ? <ChevronUp size={20} /> : <BarChart3 size={20} />}
                 </button>
-                <button className="btn-create-new" onClick={() => navigate('/reservations/architect')}>
+                <button className="btn-create-new" onClick={() => navigate('/reservation-architect')}>
                     <Plus size={18} />
                     Nova Rezervacija
                 </button>
@@ -1248,7 +1248,7 @@ ${data.map(r => `  <reservation>
             </div>
 
             {/* Results */}
-            <div className={`reservations-container ${viewMode}-view`}>
+            <div className={`reservations-container view-${viewMode}`}>
                 {viewMode === 'list' && (
                     <div className="list-view">
                         {filteredReservations.map(res => (
@@ -1511,7 +1511,7 @@ ${data.map(r => `  <reservation>
                             <div
                                 key={res.id}
                                 className="reservation-card"
-                                onClick={() => navigate(`/reservations/architect?id=${res.id}`)}
+                                onClick={() => navigate(`/reservation-architect?id=${res.id}`)}
                             >
                                 <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1586,10 +1586,10 @@ ${data.map(r => `  <reservation>
 
                                     <div className="card-actions-wrapper">
                                         <div className="action-buttons-group">
-                                            <button className="action-btn view" title="Pregled" onClick={(e) => { e.stopPropagation(); navigate(`/reservations/architect?id=${res.id}`); }}>
+                                            <button className="action-btn view" title="Pregled" onClick={(e) => { e.stopPropagation(); navigate(`/reservation-architect?id=${res.id}`); }}>
                                                 <Eye size={14} />
                                             </button>
-                                            <button className="action-btn edit" title="Izmeni" onClick={(e) => { e.stopPropagation(); navigate(`/reservations/architect?id=${res.id}`); }}>
+                                            <button className="action-btn edit" title="Izmeni" onClick={(e) => { e.stopPropagation(); navigate(`/reservation-architect?id=${res.id}`); }}>
                                                 <Edit size={14} />
                                             </button>
                                             <button
