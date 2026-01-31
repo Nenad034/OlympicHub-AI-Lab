@@ -80,158 +80,166 @@ export async function searchHotels(
 ): Promise<SmartSearchResult[]> {
     const results: SmartSearchResult[] = [];
     const { destinations, checkIn, checkOut, adults, children } = params;
+    const promises: Promise<void>[] = [];
 
     // Search OpenGreece
-    try {
-        for (const dest of destinations) {
-            if (dest.type === 'hotel' && dest.provider === 'OpenGreece') {
-                // Search specific hotel
-                const response = await OpenGreeceAPI.checkAvailability({
-                    hotelCode: dest.id,
-                    checkIn,
-                    checkOut,
-                    adults,
-                    children: children || 0,
-                });
-
-                if (response.success && response.data) {
-                    // Map OpenGreece results to unified format
-                    results.push({
-                        provider: 'OpenGreece',
-                        type: 'hotel',
-                        id: dest.id,
-                        name: dest.name,
-                        location: dest.country || '',
-                        price: 0, // Extract from response
-                        currency: 'EUR',
-                        originalData: response.data,
+    promises.push((async () => {
+        try {
+            for (const dest of destinations) {
+                if (dest.type === 'hotel' && dest.provider === 'OpenGreece') {
+                    // Search specific hotel
+                    const response = await OpenGreeceAPI.checkAvailability({
+                        hotelCode: dest.id,
+                        checkIn,
+                        checkOut,
+                        adults,
+                        children: children || 0,
                     });
-                }
-            } else if (dest.type === 'destination') {
-                // Search by destination
-                const response = await OpenGreeceAPI.searchHotels();
-                if (response.success && response.data) {
-                    // Filter by destination and map results
-                    const filtered = response.data.filter((hotel: any) =>
-                        hotel.location?.toLowerCase().includes(dest.name.toLowerCase())
-                    );
 
-                    results.push(...filtered.map((hotel: any) => ({
-                        provider: 'OpenGreece',
-                        type: 'hotel' as const,
-                        id: hotel.hotelCode,
-                        name: hotel.name,
-                        location: hotel.location || '',
-                        price: 0,
-                        currency: 'EUR',
-                        stars: hotel.stars,
-                        originalData: hotel,
-                    })));
+                    if (response.success && response.data) {
+                        // Map OpenGreece results to unified format
+                        results.push({
+                            provider: 'OpenGreece',
+                            type: 'hotel',
+                            id: dest.id,
+                            name: dest.name,
+                            location: dest.country || '',
+                            price: 0, // Extract from response
+                            currency: 'EUR',
+                            originalData: response.data,
+                        });
+                    }
+                } else if (dest.type === 'destination') {
+                    // Search by destination
+                    const response = await OpenGreeceAPI.searchHotels();
+                    if (response.success && response.data) {
+                        // Filter by destination and map results
+                        const filtered = response.data.filter((hotel: any) =>
+                            hotel.location?.toLowerCase().includes(dest.name.toLowerCase())
+                        );
+
+                        results.push(...filtered.map((hotel: any) => ({
+                            provider: 'OpenGreece',
+                            type: 'hotel' as const,
+                            id: hotel.hotelCode,
+                            name: hotel.name,
+                            location: hotel.location || '',
+                            price: 0,
+                            currency: 'EUR',
+                            stars: hotel.stars,
+                            originalData: hotel,
+                        })));
+                    }
                 }
             }
+        } catch (error) {
+            console.error('[SmartSearch] OpenGreece error:', error);
         }
-    } catch (error) {
-        console.error('[SmartSearch] OpenGreece error:', error);
-    }
+    })());
 
     // Search TCT
-    try {
-        for (const dest of destinations) {
-            const searchParams: any = {
-                search_type: dest.type === 'hotel' ? 'hotel' : 'city',
-                location: dest.name,
-                checkin: checkIn,
-                checkout: checkOut,
-                adults,
-                children: children || 0,
-                currency: params.currency || 'EUR',
-                nationality: params.nationality || 'RS',
-                residence: 'RS',
-                rooms: [{
+    promises.push((async () => {
+        try {
+            for (const dest of destinations) {
+                const searchParams: any = {
+                    search_type: dest.type === 'hotel' ? 'hotel' : 'city',
+                    location: dest.name,
+                    checkin: checkIn,
+                    checkout: checkOut,
                     adults,
                     children: children || 0,
-                    children_ages: params.childrenAges || [],
-                }],
-            };
+                    currency: params.currency || 'EUR',
+                    nationality: params.nationality || 'RS',
+                    residence: 'RS',
+                    rooms: [{
+                        adults,
+                        children: children || 0,
+                        children_ages: params.childrenAges || [],
+                    }],
+                };
 
-            if (dest.type === 'hotel') {
-                searchParams.hotel_ids = [dest.id];
-            }
+                if (dest.type === 'hotel') {
+                    searchParams.hotel_ids = [dest.id];
+                }
 
-            const searchResponse = await TCTApi.searchHotels(searchParams);
+                const searchResponse = await TCTApi.searchHotels(searchParams);
 
-            if (searchResponse.success && searchResponse.data) {
-                const { search_id, search_code } = searchResponse.data as any;
+                if (searchResponse.success && searchResponse.data) {
+                    const { search_id, search_code } = searchResponse.data as any;
 
-                // Poll for results
-                const resultsResponse = await TCTApi.getHotelResults({
-                    search_id,
-                    search_code,
-                    last_check: 0,
-                });
+                    // Poll for results
+                    const resultsResponse = await TCTApi.getHotelResults({
+                        search_id,
+                        search_code,
+                        last_check: 0,
+                    });
 
-                if (resultsResponse.success && (resultsResponse.data as any)?.hotels) {
-                    results.push(...(resultsResponse.data as any).hotels.map((hotel: any) => ({
-                        provider: 'TCT',
-                        type: 'hotel' as const,
-                        id: hotel.hid,
-                        name: hotel.name,
-                        location: hotel.location || dest.name,
-                        price: hotel.price?.amount || 0,
-                        currency: hotel.price?.currency || 'EUR',
-                        stars: hotel.stars,
-                        mealPlan: hotel.meal_plan,
-                        images: hotel.images || [],
-                        originalData: hotel,
-                    })));
+                    if (resultsResponse.success && (resultsResponse.data as any)?.hotels) {
+                        results.push(...(resultsResponse.data as any).hotels.map((hotel: any) => ({
+                            provider: 'TCT',
+                            type: 'hotel' as const,
+                            id: hotel.hid,
+                            name: hotel.name,
+                            location: hotel.location || dest.name,
+                            price: hotel.price?.amount || 0,
+                            currency: hotel.price?.currency || 'EUR',
+                            stars: hotel.stars,
+                            mealPlan: hotel.meal_plan,
+                            images: hotel.images || [],
+                            originalData: hotel,
+                        })));
+                    }
                 }
             }
+        } catch (error) {
+            console.error('[SmartSearch] TCT error:', error);
         }
-    } catch (error) {
-        console.error('[SmartSearch] TCT error:', error);
-    }
+    })());
 
     // Search Solvex AI (Agoda Engine Model)
-    try {
-        const solvexAi = new SolvexAiProvider();
-        for (const dest of destinations) {
-            const isBulgaria = dest.country?.toLowerCase() === 'bulgaria' ||
-                dest.name.toLowerCase().includes('bulgaria') ||
-                ['bansa', 'borovets', 'sunny beach', 'golden sands', 'varna', 'burgas', 'sofia', 'pamporovo'].some(city => dest.name.toLowerCase().includes(city));
+    promises.push((async () => {
+        try {
+            const solvexAi = new SolvexAiProvider();
+            for (const dest of destinations) {
+                const isBulgaria = dest.country?.toLowerCase() === 'bulgaria' ||
+                    dest.name.toLowerCase().includes('bulgaria') ||
+                    ['bansa', 'borovets', 'sunny beach', 'golden sands', 'varna', 'burgas', 'sofia', 'pamporovo'].some(city => dest.name.toLowerCase().includes(city));
 
-            if (isBulgaria || dest.provider === 'Solvex' || dest.provider === 'solvex') {
-                const aiResults = await solvexAi.search({
-                    destination: dest.name,
-                    checkIn: new Date(checkIn),
-                    checkOut: new Date(checkOut),
-                    adults,
-                    children: children || 0,
-                    childrenAges: params.childrenAges || [],
-                    providerId: dest.id.startsWith('solvex-h-') ? dest.id.replace('solvex-h-', '') : dest.id,
-                    providerType: dest.type === 'destination' ? 'city' : 'hotel',
-                    targetProvider: 'Solvex'
-                });
+                if (isBulgaria || dest.provider === 'Solvex' || dest.provider === 'solvex') {
+                    const aiResults = await solvexAi.search({
+                        destination: dest.name,
+                        checkIn: new Date(checkIn),
+                        checkOut: new Date(checkOut),
+                        adults,
+                        children: children || 0,
+                        childrenAges: params.childrenAges || [],
+                        providerId: dest.id.startsWith('solvex-h-') ? dest.id.replace('solvex-h-', '') : dest.id,
+                        providerType: dest.type === 'destination' ? 'city' : 'hotel',
+                        targetProvider: 'Solvex'
+                    });
 
-                if (aiResults && aiResults.length > 0) {
-                    results.push(...aiResults.map((h: any) => ({
-                        provider: 'Solvex AI',
-                        type: 'hotel' as const,
-                        id: h.id,
-                        name: h.hotelName,
-                        location: h.location,
-                        price: h.price,
-                        currency: h.currency,
-                        stars: h.stars,
-                        mealPlan: h.mealPlan,
-                        originalData: h.originalData,
-                    })));
+                    if (aiResults && aiResults.length > 0) {
+                        results.push(...aiResults.map((h: any) => ({
+                            provider: 'Solvex AI',
+                            type: 'hotel' as const,
+                            id: h.id,
+                            name: h.hotelName,
+                            location: h.location,
+                            price: h.price,
+                            currency: h.currency,
+                            stars: h.stars,
+                            mealPlan: h.mealPlan,
+                            originalData: h.originalData,
+                        })));
+                    }
                 }
             }
+        } catch (error) {
+            console.error('[SmartSearch] Solvex AI error:', error);
         }
-    } catch (error) {
-        console.error('[SmartSearch] Solvex AI error:', error);
-    }
+    })());
 
+    await Promise.all(promises);
     return results;
 }
 

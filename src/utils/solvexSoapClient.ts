@@ -190,7 +190,7 @@ export async function makeSoapRequest<T>(
     console.log('[Solvex SOAP] Request:', soapEnvelope);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // Increased to 45 seconds for slow SOAP backend
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout per request
 
     try {
         const response = await fetch(SOLVEX_API_URL, {
