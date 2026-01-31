@@ -71,9 +71,9 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                 adults: params.adults,
                 children: params.children || 0,
                 childrenAges: params.childrenAges || [],
-                providerId: dest.id.startsWith('solvex-h-') ? dest.id.replace('solvex-h-', '') : dest.id,
+                providerId: dest.id.startsWith('solvex-') ? dest.id.split('-').pop() : dest.id,
                 providerType: dest.type === 'destination' ? 'city' : 'hotel',
-                targetProvider: 'Solvex'
+                targetProvider: dest.id.startsWith('solvex-') || dest.provider === 'Solvex' ? 'Solvex' : undefined
             });
 
             if (aiResults && aiResults.length > 0) {
