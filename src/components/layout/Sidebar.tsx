@@ -50,23 +50,31 @@ const Sidebar: React.FC = () => {
             </div>
 
             <nav className="nav-section">
+                {/* Main Section - Only for Staff */}
+                {userLevel >= 6 && (
+                    <div className="nav-group">
+                        <h3 className="nav-label">{!isSidebarCollapsed && 'Main'}</h3>
+                        <NavLink
+                            to="/"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title={t.dashboard}
+                            end
+                        >
+                            <LayoutDashboard size={20} /> {!isSidebarCollapsed && t.dashboard}
+                        </NavLink>
+                        <NavLink
+                            to="/master-search"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Master Pretraga"
+                        >
+                            <Search size={20} /> {!isSidebarCollapsed && 'Master Pretraga'}
+                        </NavLink>
+                    </div>
+                )}
+
+                {/* AI Chat - Available for Everyone */}
                 <div className="nav-group">
-                    <h3 className="nav-label">{!isSidebarCollapsed && 'Main'}</h3>
-                    <NavLink
-                        to="/"
-                        className={({ isActive }) => navItemClass(isActive)}
-                        title={t.dashboard}
-                        end
-                    >
-                        <LayoutDashboard size={20} /> {!isSidebarCollapsed && t.dashboard}
-                    </NavLink>
-                    <NavLink
-                        to="/master-search"
-                        className={({ isActive }) => navItemClass(isActive)}
-                        title="Master Pretraga"
-                    >
-                        <Search size={20} /> {!isSidebarCollapsed && 'Master Pretraga'}
-                    </NavLink>
+                    {userLevel >= 6 && <h3 className="nav-label">{!isSidebarCollapsed && 'AI'}</h3>}
                     <div
                         className="nav-item"
                         title="AI Chat"
@@ -77,51 +85,52 @@ const Sidebar: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="nav-group">
-                    <h3 className="nav-label">{!isSidebarCollapsed && t.sectors}</h3>
-                    <NavLink
-                        to="/production"
-                        className={({ isActive }) => navItemClass(isActive)}
-                        title={t.production}
-                    >
-                        <Package size={20} /> {!isSidebarCollapsed && t.production}
-                    </NavLink>
-                    <NavLink
-                        to="/mail"
-                        className={({ isActive }) => navItemClass(isActive)}
-                        title="Olympic Mail"
-                    >
-                        <Mail size={20} /> {!isSidebarCollapsed && 'Olympic Mail'}
-                    </NavLink>
-                    <NavLink
-                        to="/total-trip"
-                        className={({ isActive }) => navItemClass(isActive)}
-                        title="Total Trip"
-                    >
-                        <Compass size={20} /> {!isSidebarCollapsed && 'Total Trip'}
-                    </NavLink>
-                    <NavLink
-                        to="/suppliers"
-                        className={({ isActive }) => navItemClass(isActive)}
-                        title="Dobavljači"
-                    >
-                        <Truck size={20} /> {!isSidebarCollapsed && 'Dobavljači'}
-                    </NavLink>
-                    <NavLink
-                        to="/customers"
-                        className={({ isActive }) => navItemClass(isActive)}
-                        title="Kupci"
-                    >
-                        <Users size={20} /> {!isSidebarCollapsed && 'Kupci'}
-                    </NavLink>
-                    <NavLink
-                        to="/reservations"
-                        className={({ isActive }) => navItemClass(isActive)}
-                        title={t.reservations}
-                    >
-                        <ClipboardList size={20} /> {!isSidebarCollapsed && t.reservations}
-                    </NavLink>
-                    {userLevel >= 6 && (
+                {/* Sectors Section - Only for Staff */}
+                {userLevel >= 6 && (
+                    <div className="nav-group">
+                        <h3 className="nav-label">{!isSidebarCollapsed && t.sectors}</h3>
+                        <NavLink
+                            to="/production"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title={t.production}
+                        >
+                            <Package size={20} /> {!isSidebarCollapsed && t.production}
+                        </NavLink>
+                        <NavLink
+                            to="/mail"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Olympic Mail"
+                        >
+                            <Mail size={20} /> {!isSidebarCollapsed && 'Olympic Mail'}
+                        </NavLink>
+                        <NavLink
+                            to="/total-trip"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Total Trip"
+                        >
+                            <Compass size={20} /> {!isSidebarCollapsed && 'Total Trip'}
+                        </NavLink>
+                        <NavLink
+                            to="/suppliers"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Dobavljači"
+                        >
+                            <Truck size={20} /> {!isSidebarCollapsed && 'Dobavljači'}
+                        </NavLink>
+                        <NavLink
+                            to="/customers"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Kupci"
+                        >
+                            <Users size={20} /> {!isSidebarCollapsed && 'Kupci'}
+                        </NavLink>
+                        <NavLink
+                            to="/reservations"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title={t.reservations}
+                        >
+                            <ClipboardList size={20} /> {!isSidebarCollapsed && t.reservations}
+                        </NavLink>
                         <NavLink
                             to="/subagent-admin"
                             className={({ isActive }) => navItemClass(isActive)}
@@ -134,8 +143,8 @@ const Sidebar: React.FC = () => {
                                 <span style={{ color: '#ff9800', fontWeight: 700 }}>Subagent Admin</span>
                             )}
                         </NavLink>
-                    )}
-                </div>
+                    </div>
+                )}
 
                 {/* B2B Partners Section - Only for Subagents */}
                 {userLevel < 6 && (
@@ -178,24 +187,27 @@ const Sidebar: React.FC = () => {
                 )}
 
 
+                {/* Intelligence Section - Only for Staff */}
+                {userLevel >= 6 && (
+                    <div className="nav-group">
+                        <h3 className="nav-label">{!isSidebarCollapsed && 'Intelligence'}</h3>
+                        <NavLink
+                            to="/soft-zone"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Vajckin Soft Zone"
+                            style={({ isActive }) => ({
+                                borderLeft: isActive ? '4px solid #3b82f6' : 'none',
+                            })}
+                        >
+                            <Sparkles size={20} color="#3b82f6" /> {!isSidebarCollapsed && 'Meka Zona'}
+                        </NavLink>
+                    </div>
+                )}
 
-                <div className="nav-group">
-                    <h3 className="nav-label">{!isSidebarCollapsed && 'Intelligence'}</h3>
-                    <NavLink
-                        to="/soft-zone"
-                        className={({ isActive }) => navItemClass(isActive)}
-                        title="Vajckin Soft Zone"
-                        style={({ isActive }) => ({
-                            borderLeft: isActive ? '4px solid #3b82f6' : 'none',
-                        })}
-                    >
-                        <Sparkles size={20} color="#3b82f6" /> {!isSidebarCollapsed && 'Meka Zona'}
-                    </NavLink>
-                </div>
-
-                <div className="nav-group" style={{ marginTop: 'auto', paddingBottom: '10px' }}>
-                    <h3 className="nav-label">{!isSidebarCollapsed && t.system}</h3>
-                    {userLevel >= 6 && (
+                {/* System Section - Only for Staff */}
+                {userLevel >= 6 && (
+                    <div className="nav-group" style={{ marginTop: 'auto', paddingBottom: '10px' }}>
+                        <h3 className="nav-label">{!isSidebarCollapsed && t.system}</h3>
                         <NavLink
                             to="/orchestrator"
                             className={({ isActive }) => navItemClass(isActive)}
@@ -203,15 +215,15 @@ const Sidebar: React.FC = () => {
                         >
                             <Brain size={20} /> {!isSidebarCollapsed && 'Master Orchestrator'}
                         </NavLink>
-                    )}
-                    <NavLink
-                        to="/settings"
-                        className={({ isActive }) => navItemClass(isActive)}
-                        title={t.settings}
-                    >
-                        <SettingsIcon size={20} /> {!isSidebarCollapsed && t.settings}
-                    </NavLink>
-                </div>
+                        <NavLink
+                            to="/settings"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title={t.settings}
+                        >
+                            <SettingsIcon size={20} /> {!isSidebarCollapsed && t.settings}
+                        </NavLink>
+                    </div>
+                )}
             </nav>
         </aside>
     );
