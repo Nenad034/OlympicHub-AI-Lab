@@ -175,9 +175,11 @@ export const router = createBrowserRouter([
     {
         path: '/reservation-architect',
         element: (
-            <React.Suspense fallback={<LoadingFallback />}>
-                <ReservationArchitect />
-            </React.Suspense>
+            <AuthGuard>
+                <React.Suspense fallback={<LoadingFallback />}>
+                    <ReservationArchitect />
+                </React.Suspense>
+            </AuthGuard>
         ),
         errorElement: (
             <div style={{ padding: '20px', color: 'white', background: '#1a1a2e', height: '100vh' }}>
