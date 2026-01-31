@@ -82,12 +82,25 @@ export async function searchHotels(
     const { destinations, checkIn, checkOut, adults, children } = params;
     const promises: Promise<void>[] = [];
 
+    // Helper to wrap promise with timeout
+    const withTimeout = (promise: Promise<void>, providerName: string) => {
+        return Promise.race([
+            promise,
+            new Promise<void>((_, reject) =>
+                setTimeout(() => reject(new Error(`${providerName} timeout`)), 15000)
+            )
+        ]).catch(err => {
+            console.warn(`[SmartSearch] ${providerName} failed or timed out:`, err.message);
+        });
+    };
+
+    console.log(`[SmartSearch] Starting parallel search for ${destinations.length} destinations...`);
+
     // Search OpenGreece
-    promises.push((async () => {
+    promises.push(withTimeout((async () => {
         try {
             for (const dest of destinations) {
                 if (dest.type === 'hotel' && dest.provider === 'OpenGreece') {
-                    // Search specific hotel
                     const response = await OpenGreeceAPI.checkAvailability({
                         hotelCode: dest.id,
                         checkIn,
@@ -97,23 +110,20 @@ export async function searchHotels(
                     });
 
                     if (response.success && response.data) {
-                        // Map OpenGreece results to unified format
                         results.push({
                             provider: 'OpenGreece',
                             type: 'hotel',
                             id: dest.id,
                             name: dest.name,
                             location: dest.country || '',
-                            price: 0, // Extract from response
+                            price: 0,
                             currency: 'EUR',
                             originalData: response.data,
                         });
                     }
                 } else if (dest.type === 'destination') {
-                    // Search by destination
                     const response = await OpenGreeceAPI.searchHotels();
                     if (response.success && response.data) {
-                        // Filter by destination and map results
                         const filtered = response.data.filter((hotel: any) =>
                             hotel.location?.toLowerCase().includes(dest.name.toLowerCase())
                         );
@@ -132,13 +142,14 @@ export async function searchHotels(
                     }
                 }
             }
+            console.log('[SmartSearch] OpenGreece completed.');
         } catch (error) {
             console.error('[SmartSearch] OpenGreece error:', error);
         }
-    })());
+    })(), 'OpenGreece'));
 
     // Search TCT
-    promises.push((async () => {
+    promises.push(withTimeout((async () => {
         try {
             for (const dest of destinations) {
                 const searchParams: any = {
@@ -167,7 +178,6 @@ export async function searchHotels(
                 if (searchResponse.success && searchResponse.data) {
                     const { search_id, search_code } = searchResponse.data as any;
 
-                    // Poll for results
                     const resultsResponse = await TCTApi.getHotelResults({
                         search_id,
                         search_code,
@@ -191,13 +201,14 @@ export async function searchHotels(
                     }
                 }
             }
+            console.log('[SmartSearch] TCT completed.');
         } catch (error) {
             console.error('[SmartSearch] TCT error:', error);
         }
-    })());
+    })(), 'TCT'));
 
-    // Search Solvex AI (Agoda Engine Model)
-    promises.push((async () => {
+    // Search Solvex AI
+    promises.push(withTimeout((async () => {
         try {
             const solvexAi = new SolvexAiProvider();
             for (const dest of destinations) {
@@ -234,12 +245,14 @@ export async function searchHotels(
                     }
                 }
             }
+            console.log('[SmartSearch] Solvex completed.');
         } catch (error) {
             console.error('[SmartSearch] Solvex AI error:', error);
         }
-    })());
+    })(), 'Solvex'));
 
     await Promise.all(promises);
+    console.log(`[SmartSearch] All providers done. Total results: ${results.length}`);
     return results;
 }
 
@@ -359,7 +372,7 @@ export function getProvidersForSearchType(searchType: SearchType): readonly stri
  * Check if a provider supports a search type
  */
 export function isProviderSupported(searchType: SearchType, provider: string): boolean {
-    return PROVIDER_MAPPING[searchType].providers.includes(provider as any);
+    return (PROVIDER_MAPPING[searchType].providers as readonly string[]).includes(provider);
 }
 
 export default {

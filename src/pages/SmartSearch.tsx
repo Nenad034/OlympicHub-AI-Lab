@@ -21,6 +21,7 @@ interface Destination {
 }
 
 const SmartSearch: React.FC = () => {
+    console.log('[SmartSearch] Component Initialized - Ver 2.1.0 (Parallel Search + Modern Calendar)');
     const { userLevel } = useAuthStore();
     const isSubagent = userLevel < 6;
 
