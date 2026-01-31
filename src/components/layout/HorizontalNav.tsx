@@ -8,7 +8,9 @@ import {
     Search,
     Mail,
     Compass,
-    Brain
+    Brain,
+    ClipboardList,
+    Sparkles
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useThemeStore, useAppStore, useAuthStore } from '../../stores';
@@ -22,6 +24,9 @@ const HorizontalNav: React.FC = () => {
 
     const navItemClass = (isActive: boolean) =>
         `h-nav-item ${isActive ? 'active' : ''}`;
+
+    const isStaff = userLevel >= 6;
+    const isSubagent = userLevel < 6;
 
     return (
         <div className="horizontal-nav">
@@ -37,6 +42,7 @@ const HorizontalNav: React.FC = () => {
             </div>
 
             <div className="nav-horizontal-items">
+                {/* Dashboard - Always visible */}
                 <NavLink
                     to="/"
                     className={({ isActive }) => navItemClass(isActive)}
@@ -44,56 +50,92 @@ const HorizontalNav: React.FC = () => {
                 >
                     <LayoutDashboard size={18} /> {t.dashboard}
                 </NavLink>
-                <NavLink
-                    to="/master-search"
-                    className={({ isActive }) => navItemClass(isActive)}
-                >
-                    <Search size={18} /> Master Pretraga
-                </NavLink>
-                <NavLink
-                    to="/production"
-                    className={({ isActive }) => navItemClass(isActive)}
-                >
-                    <Package size={18} /> {t.production}
-                </NavLink>
-                <NavLink
-                    to="/mail"
-                    className={({ isActive }) => navItemClass(isActive)}
-                >
-                    <Mail size={18} /> Olympic Mail
-                </NavLink>
-                <NavLink
-                    to="/total-trip"
-                    className={({ isActive }) => navItemClass(isActive)}
-                >
-                    <Compass size={18} /> {t.tripCounselorShort}
-                </NavLink>
-                <NavLink
-                    to="/packages"
-                    className={({ isActive }) => navItemClass(isActive)}
-                >
-                    <Package size={18} /> Paketi
-                </NavLink>
-                <NavLink
-                    to="/suppliers"
-                    className={({ isActive }) => navItemClass(isActive)}
-                >
-                    <Truck size={18} /> Dobavljači
-                </NavLink>
-                <NavLink
-                    to="/customers"
-                    className={({ isActive }) => navItemClass(isActive)}
-                >
-                    <Users size={18} /> Kupci
-                </NavLink>
-                {userLevel >= 6 && (
-                    <NavLink
-                        to="/orchestrator"
-                        className={({ isActive }) => navItemClass(isActive)}
-                    >
-                        <Brain size={18} /> Master Orchestrator
-                    </NavLink>
+
+                {/* Staff-only items */}
+                {isStaff && (
+                    <>
+                        <NavLink
+                            to="/master-search"
+                            className={({ isActive }) => navItemClass(isActive)}
+                        >
+                            <Search size={18} /> Master Pretraga
+                        </NavLink>
+                        <NavLink
+                            to="/production"
+                            className={({ isActive }) => navItemClass(isActive)}
+                        >
+                            <Package size={18} /> {t.production}
+                        </NavLink>
+                        <NavLink
+                            to="/mail"
+                            className={({ isActive }) => navItemClass(isActive)}
+                        >
+                            <Mail size={18} /> Olympic Mail
+                        </NavLink>
+                        <NavLink
+                            to="/total-trip"
+                            className={({ isActive }) => navItemClass(isActive)}
+                        >
+                            <Compass size={18} /> Total Trip
+                        </NavLink>
+                        <NavLink
+                            to="/suppliers"
+                            className={({ isActive }) => navItemClass(isActive)}
+                        >
+                            <Truck size={18} /> Dobavljači
+                        </NavLink>
+                        <NavLink
+                            to="/customers"
+                            className={({ isActive }) => navItemClass(isActive)}
+                        >
+                            <Users size={18} /> Kupci
+                        </NavLink>
+                        <NavLink
+                            to="/reservations"
+                            className={({ isActive }) => navItemClass(isActive)}
+                        >
+                            <ClipboardList size={18} /> {t.reservations}
+                        </NavLink>
+                        <NavLink
+                            to="/subagent-admin"
+                            className={({ isActive }) => navItemClass(isActive)}
+                        >
+                            <Users size={18} /> Subagent Admin
+                        </NavLink>
+                        <NavLink
+                            to="/orchestrator"
+                            className={({ isActive }) => navItemClass(isActive)}
+                        >
+                            <Brain size={18} /> Master Orchestrator
+                        </NavLink>
+                    </>
                 )}
+
+                {/* B2B Subagent-only items */}
+                {isSubagent && (
+                    <>
+                        <NavLink
+                            to="/b2b-search"
+                            className={({ isActive }) => navItemClass(isActive)}
+                        >
+                            <Search size={18} /> Pretraga & Rezervacije
+                        </NavLink>
+                        <NavLink
+                            to="/smart-search"
+                            className={({ isActive }) => navItemClass(isActive)}
+                        >
+                            <Sparkles size={18} /> Smart Search ✨
+                        </NavLink>
+                        <NavLink
+                            to="/my-reservations"
+                            className={({ isActive }) => navItemClass(isActive)}
+                        >
+                            <ClipboardList size={18} /> Moje Rezervacije
+                        </NavLink>
+                    </>
+                )}
+
+                {/* Settings - Always visible */}
                 <NavLink
                     to="/settings"
                     className={({ isActive }) => navItemClass(isActive)}
