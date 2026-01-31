@@ -312,7 +312,10 @@ const SmartSearch: React.FC = () => {
                                     type="text"
                                     placeholder={selectedDestinations.length === 0 ? "Npr: Crna Gora, Hurghada, Hotel Splendid..." : "Dodaj još..."}
                                     value={destinationInput}
-                                    onChange={(e) => setDestinationInput(e.target.value)}
+                                    onChange={(e) => {
+                                        console.log('[SmartSearch onChange] New value:', e.target.value);
+                                        setDestinationInput(e.target.value);
+                                    }}
                                     onKeyDown={handleKeyDown}
                                     onFocus={() => {
                                         console.log('[SmartSearch] Input focused, current value:', destinationInput);

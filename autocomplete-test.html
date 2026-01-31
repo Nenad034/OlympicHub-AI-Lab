@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartSearch Autocomplete Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            background: #0f172a;
+            color: white;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .form-field {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .multi-destination-input {
+            position: relative;
+            padding: 12px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            min-height: 48px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            outline: none;
+        }
+        .autocomplete-dropdown {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            left: 0;
+            right: 0;
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+        }
+        .suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .suggestion-item:hover {
+            background: rgba(124, 58, 237, 0.2);
+        }
+        .debug-info {
+            margin-top: 20px;
+            padding: 16px;
+            background: #1e293b;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 SmartSearch Autocomplete Test</h1>
+        <p>Ukucajte "golden" ili "sunny" da testirate autocomplete:</p>
+        
+        <div class="form-field">
+            <div class="multi-destination-input">
+                <input 
+                    type="text" 
+                    id="testInput" 
+                    placeholder="Ukucajte destinaciju..."
+                    autocomplete="off"
+                />
+            </div>
+            <div id="dropdown" class="autocomplete-dropdown" style="display: none;"></div>
+        </div>
+
+        <div class="debug-info">
+            <strong>Debug Info:</strong>
+            <div id="debugOutput">Čekam unos...</div>
+        </div>
+    </div>
+
+    <script>
+        const mockDestinations = [
+            { id: 'd15', name: 'Golden Sands', type: 'destination', country: 'Bulgaria' },
+            { id: 'd16', name: 'Sunny Beach', type: 'destination', country: 'Bulgaria' },
+            { id: 'd17', name: 'Bansko', type: 'destination', country: 'Bulgaria' },
+            { id: 'd1', name: 'Crna Gora', type: 'destination', country: 'Montenegro' },
+            { id: 'd4', name: 'Grčka', type: 'destination', country: 'Greece' },
+        ];
+
+        const input = document.getElementById('testInput');
+        const dropdown = document.getElementById('dropdown');
+        const debugOutput = document.getElementById('debugOutput');
+
+        input.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            debugOutput.innerHTML = `
+                <strong>Search term:</strong> "${searchTerm}"<br>
+                <strong>Length:</strong> ${searchTerm.length}<br>
+            `;
+
+            if (searchTerm.length >= 2) {
+                const matches = mockDestinations.filter(dest =>
+                    dest.name.toLowerCase().includes(searchTerm)
+                );
+
+                debugOutput.innerHTML += `<strong>Matches found:</strong> ${matches.length}<br>`;
+                matches.forEach(m => {
+                    debugOutput.innerHTML += `- ${m.name}<br>`;
+                });
+
+                if (matches.length > 0) {
+                    dropdown.innerHTML = matches.map(m => `
+                        <div class="suggestion-item">${m.name} (${m.country})</div>
+                    `).join('');
+                    dropdown.style.display = 'block';
+                } else {
+                    dropdown.style.display = 'none';
+                }
+            } else {
+                dropdown.style.display = 'none';
+                debugOutput.innerHTML += `<em>Potrebno je minimum 2 karaktera</em>`;
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.form-field')) {
+                dropdown.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
