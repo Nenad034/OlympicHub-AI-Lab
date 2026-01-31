@@ -56,6 +56,7 @@ const AmadeusTest = React.lazy(() => import('../pages/AmadeusTest'));
 const TCTTest = React.lazy(() => import('../pages/TCTTest'));
 const MasterSearch = React.lazy(() => import('../pages/MasterSearch'));
 const SubagentAdmin = React.lazy(() => import('../pages/SubagentAdmin'));
+const B2BSearch = React.lazy(() => import('../pages/B2BSearch'));
 
 
 // Stores
@@ -321,6 +322,10 @@ export const router = createBrowserRouter([
             {
                 path: 'hub',
                 element: <GlobalHubSearch />,
+            },
+            {
+                path: 'b2b-search',
+                element: <B2BSearch />,
             },
             {
                 path: 'flights',

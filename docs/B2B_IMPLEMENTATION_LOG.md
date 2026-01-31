@@ -29,6 +29,8 @@
 - **Margin Management**: Added interactive margin inputs (Amount and Percentage) to the search console.
 - **Supplier Masking**: Implemented automatic hiding of provider sources (`TCT`, `Solvex`, etc.) and comparison lists for subagents.
 - **Contextual UI**: Added "B2B Partner Mode" indicator and prediction of basic commission.
+- **Dedicated Route**: Created `/b2b-search` route exclusively for subagents with automatic redirect for staff users.
+- **Sidebar Integration**: Added orange-highlighted "B2B Search" link in sidebar (visible only to subagents).
 
 ---
 

@@ -67,6 +67,21 @@ const Sidebar: React.FC = () => {
                     >
                         <Search size={20} /> {!isSidebarCollapsed && 'Master Pretraga'}
                     </NavLink>
+                    {userLevel < 6 && (
+                        <NavLink
+                            to="/b2b-search"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="B2B Partner Search"
+                            style={({ isActive }) => ({
+                                borderLeft: isActive ? '4px solid #ff9800' : 'none',
+                                background: isActive ? 'rgba(255, 152, 0, 0.1)' : 'transparent'
+                            })}
+                        >
+                            <Search size={20} color="#ff9800" /> {!isSidebarCollapsed && (
+                                <span style={{ color: '#ff9800', fontWeight: 700 }}>B2B Search</span>
+                            )}
+                        </NavLink>
+                    )}
                     <div
                         className="nav-item"
                         title="AI Chat"
