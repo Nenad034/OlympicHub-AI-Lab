@@ -122,7 +122,13 @@ const Login = () => {
         e.preventDefault();
         const success = login(username, password);
         if (success) {
-            navigate('/');
+            // Check user level for redirect
+            const user = useAuthStore.getState();
+            if (user.userLevel < 6) {
+                navigate('/smart-search');
+            } else {
+                navigate('/');
+            }
         } else {
             setError('Pogrešni akreditivi. Pokušajte ponovo.');
         }
