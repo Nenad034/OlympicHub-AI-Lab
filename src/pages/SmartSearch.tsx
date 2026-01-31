@@ -21,8 +21,10 @@ interface Destination {
 }
 
 const SmartSearch: React.FC = () => {
-    console.log('[SmartSearch] Component Initialized - Ver 2.1.0 (Parallel Search + Modern Calendar)');
+    const deployTime = '21:40 (31.01.2026)';
+    console.log(`[SmartSearch] 🔥 DEPLOYED AT: ${deployTime}`);
     const { userLevel } = useAuthStore();
+    console.log('[SmartSearch] Current User Level:', userLevel);
     const isSubagent = userLevel < 6;
 
     const [activeTab, setActiveTab] = useState<'hotel' | 'flight' | 'package' | 'transfer' | 'tour'>('hotel');
