@@ -42,18 +42,16 @@ const HorizontalNav: React.FC = () => {
             </div>
 
             <div className="nav-horizontal-items">
-                {/* Dashboard - Always visible */}
-                <NavLink
-                    to="/"
-                    className={({ isActive }) => navItemClass(isActive)}
-                    end
-                >
-                    <LayoutDashboard size={18} /> {t.dashboard}
-                </NavLink>
-
                 {/* Staff-only items */}
                 {isStaff && (
                     <>
+                        <NavLink
+                            to="/"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            end
+                        >
+                            <LayoutDashboard size={18} /> {t.dashboard}
+                        </NavLink>
                         <NavLink
                             to="/master-search"
                             className={({ isActive }) => navItemClass(isActive)}
@@ -108,6 +106,12 @@ const HorizontalNav: React.FC = () => {
                         >
                             <Brain size={18} /> Master Orchestrator
                         </NavLink>
+                        <NavLink
+                            to="/settings"
+                            className={({ isActive }) => navItemClass(isActive)}
+                        >
+                            <SettingsIcon size={18} /> {t.settings}
+                        </NavLink>
                     </>
                 )}
 
@@ -129,13 +133,6 @@ const HorizontalNav: React.FC = () => {
                     </>
                 )}
 
-                {/* Settings - Always visible */}
-                <NavLink
-                    to="/settings"
-                    className={({ isActive }) => navItemClass(isActive)}
-                >
-                    <SettingsIcon size={18} /> {t.settings}
-                </NavLink>
             </div>
 
             {/* Search in Horizontal Nav */}
