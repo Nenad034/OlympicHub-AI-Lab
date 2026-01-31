@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '../stores';
 import {
     Sparkles, Hotel, Plane, Package, Bus, Compass,
-    MapPin, Calendar, Users, UtensilsCrossed, Star,
+    MapPin, Calendar, CalendarDays, Users, UtensilsCrossed, Star,
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2
 } from 'lucide-react';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
@@ -28,6 +28,7 @@ const SmartSearch: React.FC = () => {
     const [suggestions, setSuggestions] = useState<Destination[]>([]);
     const [checkIn, setCheckIn] = useState('');
     const [checkOut, setCheckOut] = useState('');
+    const [flexibleDays, setFlexibleDays] = useState(0);
     const [adults, setAdults] = useState(2);
     const [children, setChildren] = useState(0);
     const [mealPlan, setMealPlan] = useState('all-inclusive');
@@ -336,6 +337,25 @@ const SmartSearch: React.FC = () => {
                             onChange={(e) => setCheckOut(e.target.value)}
                             className="smart-input"
                         />
+                    </div>
+
+                    {/* Flexibility */}
+                    <div className="form-field">
+                        <label>
+                            <CalendarDays size={16} />
+                            <span>Fleksibilnost</span>
+                        </label>
+                        <div className="flex-pill-selection">
+                            {[0, 1, 3, 5].map(days => (
+                                <button
+                                    key={days}
+                                    className={`flex-pill ${flexibleDays === days ? 'active' : ''}`}
+                                    onClick={() => setFlexibleDays(days)}
+                                >
+                                    {days === 0 ? 'Tačno' : `± ${days}`}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Guests */}
