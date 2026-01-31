@@ -21,6 +21,7 @@ import { BookingModal } from '../components/booking/BookingModal';
 import { BookingSuccess } from '../components/booking/BookingSuccess';
 import '../modules/pricing/TotalTripSearch.css';
 import './GlobalHubSearch.css';
+import './B2BPriceDisplay.css';
 import { MultiSelectDropdown } from '../components/MultiSelectDropdown';
 export interface RoomDetails {
     id: string;
@@ -1602,7 +1603,7 @@ const GlobalHubSearch: React.FC = () => {
                         providerData: expandedHotel.originalData || {}
                     }}
                     onSuccess={() => { }} // Success is handled by navigation inside modal
-                    onError={handleBookingError}
+                    onError={(error: string) => console.error('Booking failed:', error)}
                 />
             )}
         </div>

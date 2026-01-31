@@ -1,0 +1,65 @@
+/* B2B Price Stack Styling */
+.b2b-price-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.net-price-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(255, 152, 0, 0.1);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #ff9800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: fit-content;
+}
+
+.preview-price-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.preview-price-main .from-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.preview-price-main .price-val {
+    font-size: 28px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.commission-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #10b981;
+    width: fit-content;
+}
+
+.commission-hint::before {
+    content: '💰';
+    font-size: 14px;
+}
