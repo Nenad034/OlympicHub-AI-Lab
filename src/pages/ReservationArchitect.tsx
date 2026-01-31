@@ -15,7 +15,7 @@ import { ModernCalendar } from '../components/ModernCalendar';
 import { GoogleAddressAutocomplete } from '../components/GoogleAddressAutocomplete';
 import { NATIONALITIES } from '../constants/nationalities';
 import ReservationEmailModal from '../components/ReservationEmailModal';
-import { saveDossierToDatabase, getNextReservationNumber, getReservationById } from '../services/reservationService';
+import { saveDossierToDatabase, getNextReservationNumber, getReservationById as apiGetReservationById } from '../services/reservationService';
 import { useAuthStore } from '../stores';
 import '../components/GoogleAddressAutocomplete.css';
 import './ReservationArchitect.css';
@@ -223,6 +223,8 @@ const ReservationArchitect: React.FC = () => {
     });
     const [isAdminMode, setIsAdminMode] = useState(false);
     const [isNotepadView, setIsNotepadView] = useState(false);
+    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+    const [activeCalendar, setActiveCalendar] = useState<{ id: string; type?: string } | null>(null);
 
     // --- INITIAL DATA LOAD ---
     const [isInitialized, setIsInitialized] = useState(false);
@@ -234,24 +236,36 @@ const ReservationArchitect: React.FC = () => {
             const loadFrom = urlParams.get('loadFrom');
 
             // 1. Prioritet: Učitavanje iz baze po ID-u (Edit režim)
+            // 1. Prioritet: Učitavanje iz baze po ID-u (Edit režim)
             if (resId) {
                 try {
-                    // Simulate API call
-                    const getReservationById = async (id: string) => {
-                        const saved = localStorage.getItem('active_reservation_dossier');
-                        if (saved && JSON.parse(saved).resCode === id) {
-                            return { success: true, data: { guests_data: JSON.parse(saved) } };
-                        }
-                        // In a real app, this would be an actual API call
-                        return { success: false, data: null };
-                    };
+                    // Try to load from localStorage first (simulation)
+                    const saved = localStorage.getItem('active_reservation_dossier');
+                    let loadedData = null;
 
-                    const result = await getReservationById(resId);
-                    if (result.success && result.data && result.data.guests_data) {
-                        setDossier(result.data.guests_data);
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        if (parsed.resCode === resId) {
+                            loadedData = parsed;
+                        }
+                    }
+
+                    if (loadedData) {
+                        setDossier(loadedData);
                         setIsInitialized(true);
                         return;
                     }
+
+                    // Fallback to API call if not in local storage or ID mismatch
+                    // In a real app, you would use apiGetReservationById here
+                    /*
+                    const result = await apiGetReservationById(resId);
+                    if (result && result.guests_data) {
+                        setDossier(result.guests_data);
+                        setIsInitialized(true);
+                        return;
+                    } 
+                    */
                 } catch (e) {
                     console.error('Failed to load reservation by ID', e);
                 }
