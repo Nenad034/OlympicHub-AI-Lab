@@ -538,7 +538,7 @@ const SmartSearch: React.FC = () => {
                             }}>+</button>
                         </div>
                         {children > 0 && (
-                            <div style={{ position: 'absolute', marginTop: '8px', display: 'flex', gap: '4px' }}>
+                            <div className="children-ages-row">
                                 {childrenAges.map((age, idx) => (
                                     <input
                                         key={idx}
@@ -553,8 +553,7 @@ const SmartSearch: React.FC = () => {
                                                 setChildrenAges(newAges);
                                             }
                                         }}
-                                        className="smart-input premium"
-                                        style={{ width: '36px', height: '24px', padding: 0, textAlign: 'center', fontSize: '12px' }}
+                                        className="child-age-input"
                                         title={`Dete ${idx + 1}`}
                                     />
                                 ))}

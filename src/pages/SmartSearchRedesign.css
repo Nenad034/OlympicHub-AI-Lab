@@ -92,6 +92,10 @@
 /* Destination Row */
 .destination-row {
     margin-bottom: 2rem;
+    position: relative;
+    /* Fix stacking context */
+    z-index: 50;
+    /* Ensure destination dropdown is above other inputs */
 }
 
 .destination-input-wrapper {
@@ -103,6 +107,8 @@
     display: flex;
     align-items: center;
     transition: all 0.2s;
+    position: relative;
+    /* CRITICAL: For dropdown absolute positioning */
 }
 
 .destination-input-wrapper:focus-within {
@@ -117,6 +123,9 @@
     gap: 1.5rem;
     align-items: flex-start;
     margin-bottom: 2rem;
+    position: relative;
+    z-index: 10;
+    /* Lower z-index than destination row */
 }
 
 /* Col Spans */
@@ -138,9 +147,10 @@
 
 .col-children {
     grid-column: span 1;
+    position: relative;
 }
 
-/* Smaller */
+/* Added relative pos for children inputs */
 .col-meal {
     grid-column: span 2;
 }
@@ -246,6 +256,39 @@
     min-width: 20px;
     text-align: center;
 }
+
+/* Children Inputs Layout */
+.children-ages-row {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    display: flex;
+    gap: 4px;
+    background: var(--bg-card);
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    z-index: 20;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.child-age-input {
+    width: 36px;
+    height: 32px;
+    padding: 0;
+    text-align: center;
+    font-size: 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: white;
+}
+
+.child-age-input:focus {
+    border-color: #6366f1;
+    outline: none;
+}
+
 
 /* Search Button Row */
 .action-row {
