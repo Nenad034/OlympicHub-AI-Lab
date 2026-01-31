@@ -136,6 +136,20 @@ const Sidebar: React.FC = () => {
                     >
                         <ClipboardList size={20} /> {!isSidebarCollapsed && t.reservations}
                     </NavLink>
+                    {userLevel >= 6 && (
+                        <NavLink
+                            to="/subagent-admin"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Subagent Admin"
+                            style={({ isActive }) => ({
+                                borderLeft: isActive ? '4px solid #ff9800' : 'none',
+                            })}
+                        >
+                            <Users size={20} color="#ff9800" /> {!isSidebarCollapsed && (
+                                <span style={{ color: '#ff9800', fontWeight: 700 }}>Subagent Admin</span>
+                            )}
+                        </NavLink>
+                    )}
                 </div>
 
 

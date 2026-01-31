@@ -47,6 +47,16 @@ export const useAuthStore = create<AuthState>()(
                     });
                     return true;
                 }
+                // Test Subagent Account
+                if (name.toLowerCase() === 'subagent' && pass === 'test') {
+                    set({
+                        userLevel: 3,
+                        userName: 'Test Subagent',
+                        userEmail: 'subagent@partner.com',
+                        permissions: defaultPermissions[3]
+                    });
+                    return true;
+                }
                 return false;
             },
 
