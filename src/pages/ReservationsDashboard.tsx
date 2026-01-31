@@ -1446,9 +1446,9 @@ ${data.map(r => `  <reservation>
                                 </div>
 
                                 <div className="row-actions">
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+                                    <div className="actions-stack">
                                         {/* Action Buttons */}
-                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                        <div className="action-buttons-group">
                                             <button className="action-btn view" title="Pregled">
                                                 <Eye size={16} />
                                             </button>
@@ -1472,72 +1472,28 @@ ${data.map(r => `  <reservation>
                                         </div>
 
                                         {/* Workflow Status Icons */}
-                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                        <div className="workflow-status-group">
                                             <div
                                                 title="Najavljeno hotelu"
-                                                style={{
-                                                    padding: '4px 8px',
-                                                    borderRadius: '6px',
-                                                    background: res.hotelNotified ? 'rgba(16, 185, 129, 0.1)' : 'rgba(148, 163, 184, 0.1)',
-                                                    color: res.hotelNotified ? '#10b981' : '#94a3b8',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '4px',
-                                                    fontSize: '10px',
-                                                    fontWeight: 700,
-                                                    cursor: 'help'
-                                                }}
+                                                className={`workflow-dot ${res.hotelNotified ? 'completed' : 'pending'}`}
                                             >
                                                 <Bell size={12} />
                                             </div>
                                             <div
                                                 title="Potvrđena rezervacija"
-                                                style={{
-                                                    padding: '4px 8px',
-                                                    borderRadius: '6px',
-                                                    background: res.reservationConfirmed ? 'rgba(16, 185, 129, 0.1)' : 'rgba(148, 163, 184, 0.1)',
-                                                    color: res.reservationConfirmed ? '#10b981' : '#94a3b8',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '4px',
-                                                    fontSize: '10px',
-                                                    fontWeight: 700,
-                                                    cursor: 'help'
-                                                }}
+                                                className={`workflow-dot ${res.reservationConfirmed ? 'completed' : 'pending'}`}
                                             >
                                                 <CheckCheck size={12} />
                                             </div>
                                             <div
                                                 title="Poslata profaktura"
-                                                style={{
-                                                    padding: '4px 8px',
-                                                    borderRadius: '6px',
-                                                    background: res.proformaInvoiceSent ? 'rgba(16, 185, 129, 0.1)' : 'rgba(148, 163, 184, 0.1)',
-                                                    color: res.proformaInvoiceSent ? '#10b981' : '#94a3b8',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '4px',
-                                                    fontSize: '10px',
-                                                    fontWeight: 700,
-                                                    cursor: 'help'
-                                                }}
+                                                className={`workflow-dot ${res.proformaInvoiceSent ? 'completed' : 'pending'}`}
                                             >
                                                 <FileCheck size={12} />
                                             </div>
                                             <div
                                                 title="Kreiran konačni račun"
-                                                style={{
-                                                    padding: '4px 8px',
-                                                    borderRadius: '6px',
-                                                    background: res.finalInvoiceCreated ? 'rgba(16, 185, 129, 0.1)' : 'rgba(148, 163, 184, 0.1)',
-                                                    color: res.finalInvoiceCreated ? '#10b981' : '#94a3b8',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '4px',
-                                                    fontSize: '10px',
-                                                    fontWeight: 700,
-                                                    cursor: 'help'
-                                                }}
+                                                className={`workflow-dot ${res.finalInvoiceCreated ? 'completed' : 'pending'}`}
                                             >
                                                 <Receipt size={12} />
                                             </div>
