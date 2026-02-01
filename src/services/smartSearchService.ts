@@ -36,6 +36,7 @@ export interface SmartSearchResult {
     mealPlan?: string;
     images?: string[];
     description?: string;
+    rooms?: any[];
     originalData: any;
 }
 
@@ -88,6 +89,7 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                     stars: h.stars,
                     mealPlan: h.mealPlan,
                     images: h.image ? [h.image] : [],
+                    rooms: h.rooms,
                     originalData: h.originalData,
                 })));
             }

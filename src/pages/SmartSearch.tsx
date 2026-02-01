@@ -776,12 +776,36 @@ const SmartSearch: React.FC = () => {
                                         <div>Cena</div>
                                         <div>Akcija</div>
                                     </div>
-                                    <div className="room-row-v4">
-                                        <div className="r-name"><strong>Standardna Ponuda</strong><p>{getMealPlanDisplayName(expandedHotel.mealPlan)}</p></div>
-                                        <div className="r-cap"><Users size={14} /> {adults}+{children}</div>
-                                        <div className="r-price">{isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price}€</div>
-                                        <div><button className="select-room-btn" onClick={() => handleReserveClick({ name: 'Standardna Ponuda', price: isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price })}>Rezerviši</button></div>
-                                    </div>
+                                    {expandedHotel.rooms && expandedHotel.rooms.length > 0 ? (
+                                        expandedHotel.rooms.map((room, idx) => (
+                                            <div key={room.id || idx} className="room-row-v4">
+                                                <div className="r-name">
+                                                    <strong>{room.name || 'Standardna Soba'}</strong>
+                                                    <p>{room.description || getMealPlanDisplayName(expandedHotel.mealPlan)}</p>
+                                                </div>
+                                                <div className="r-cap"><Users size={14} /> {room.capacity || `${adults}+${children}`}</div>
+                                                <div className="r-price">{isSubagent ? getPriceWithMargin(room.price) : room.price}€</div>
+                                                <div>
+                                                    <button
+                                                        className="select-room-btn"
+                                                        onClick={() => handleReserveClick({
+                                                            name: room.name || 'Standardna Ponuda',
+                                                            price: isSubagent ? getPriceWithMargin(room.price) : room.price
+                                                        })}
+                                                    >
+                                                        Rezerviši
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="room-row-v4">
+                                            <div className="r-name"><strong>Standardna Ponuda</strong><p>{getMealPlanDisplayName(expandedHotel.mealPlan)}</p></div>
+                                            <div className="r-cap"><Users size={14} /> {adults}+{children}</div>
+                                            <div className="r-price">{isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price}€</div>
+                                            <div><button className="select-room-btn" onClick={() => handleReserveClick({ name: 'Standardna Ponuda', price: isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price })}>Rezerviši</button></div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
