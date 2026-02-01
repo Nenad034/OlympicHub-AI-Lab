@@ -231,12 +231,206 @@
     box-shadow: 0 0 10px rgba(207, 181, 59, 0.2);
 }
 
-.star-rating-filter {
+/* Room Picker Dropdown */
+.room-picker-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 320px;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    overflow: hidden;
+    padding: 0;
+}
+
+.room-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.room-picker-header h4 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+}
+
+.room-list-scrollable {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.room-config-item {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.room-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.counter-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    color: #cbd5e1;
+    font-size: 0.85rem;
+}
+
+.mini-counter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mini-counter button {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mini-ages-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.mini-age-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.mini-age-item small {
+    font-size: 0.6rem;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.mini-age-item input {
+    width: 100%;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: white;
+    padding: 2px 4px;
+    font-size: 0.75rem;
+}
+
+.remove-room-link {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 0.7rem;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 8px;
+}
+
+.room-picker-footer {
+    padding: 12px;
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-add-room {
+    flex: 1;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid #6366f1;
+    color: white;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-confirm-rooms {
+    flex: 1;
+    background: #6366f1;
+    border: none;
+    color: white;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.room-summary-text {
+    font-size: 0.9rem;
+    color: white;
+    font-weight: 600;
+}
+
+/* Modal Table Extensions */
+.r-meal {
     display: flex;
     align-items: center;
 }
 
-/* Flexible Dates Ribbon Styles (Ported from Hub) */
+.meal-tag-mini {
+    background: rgba(99, 102, 241, 0.1);
+    color: #818cf8;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    text-transform: uppercase;
+}
+
+.rooms-comparison-table .table-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 16px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px 8px 0 0;
+    color: #64748b;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.room-row-v4 {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 16px;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    align-items: center;
+    transition: all 0.2s;
+}
+
 .flexible-dates-ribbon-container {
     background: #0f172a;
     border: 1px solid rgba(255, 255, 255, 0.1);

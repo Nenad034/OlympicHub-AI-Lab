@@ -5,7 +5,8 @@ import {
     MapPin, Calendar, CalendarDays, Users, UtensilsCrossed, Star,
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
     LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
-    CheckCircle2, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon
+    CheckCircle2, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
+    Plus
 } from 'lucide-react';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
 import solvexDictionaryService from '../services/solvex/solvexDictionaryService';
@@ -99,6 +100,12 @@ interface Destination {
     provider?: string;
 }
 
+interface RoomAllocation {
+    adults: number;
+    children: number;
+    childrenAges: number[];
+}
+
 const SmartSearch: React.FC = () => {
     const { userLevel } = useAuthStore();
     const isSubagent = userLevel < 6;
@@ -118,9 +125,14 @@ const SmartSearch: React.FC = () => {
     const [nights, setNights] = useState(7);
     const [activeCalendar, setActiveCalendar] = useState<'in' | 'out' | null>(null);
     const [flexibleDays, setFlexibleDays] = useState(0);
-    const [adults, setAdults] = useState(2);
-    const [children, setChildren] = useState(0);
-    const [childrenAges, setChildrenAges] = useState<number[]>([]);
+
+    // Multi-room state
+    const [rooms, setRooms] = useState(1);
+    const [roomAllocations, setRoomAllocations] = useState<RoomAllocation[]>([
+        { adults: 2, children: 0, childrenAges: [] }
+    ]);
+    const [showRoomPicker, setShowRoomPicker] = useState(false);
+
     const [mealPlan, setMealPlan] = useState('');
 
     const [isSearching, setIsSearching] = useState(false);
@@ -336,14 +348,15 @@ const SmartSearch: React.FC = () => {
         setSelectedArrivalDate(checkIn);
 
         try {
+            // Mapping for service (currently uses first room or sum for simplicity)
             const results = await performSmartSearch({
                 searchType: activeTab,
                 destinations: selectedDestinations,
                 checkIn,
                 checkOut,
-                adults,
-                children,
-                childrenAges,
+                adults: roomAllocations.reduce((sum, r) => sum + r.adults, 0),
+                children: roomAllocations.reduce((sum, r) => sum + r.children, 0),
+                childrenAges: roomAllocations.flatMap(r => r.childrenAges),
                 mealPlan,
                 currency: 'EUR',
                 nationality: 'RS',
@@ -549,57 +562,103 @@ const SmartSearch: React.FC = () => {
                         </div>
                     </div >
 
-                    {/* Adults */}
-                    < div className="col-adults param-item" >
-                        <div className="field-label"><Users size={14} /> Odrasli</div>
-                        <div className="counter-box">
-                            <button className="btn-counter" onClick={() => setAdults(Math.max(1, adults - 1))}>−</button>
-                            <span className="counter-val">{adults}</span>
-                            <button className="btn-counter" onClick={() => setAdults(adults + 1)}>+</button>
+                    {/* Room & Passenger Picker */}
+                    <div className="col-rooms param-item" style={{ position: 'relative' }}>
+                        <div className="field-label"><Users size={14} /> Putnici i Sobe</div>
+                        <div className="input-box" onClick={() => setShowRoomPicker(!showRoomPicker)} style={{ cursor: 'pointer' }}>
+                            <span className="room-summary-text">
+                                {roomAllocations.length} {roomAllocations.length === 1 ? 'soba' : 'sobe'}, {roomAllocations.reduce((a, b) => a + b.adults, 0)} odr.
+                            </span>
+                            <ChevronDown size={14} />
                         </div>
-                    </div >
 
-                    {/* Children */}
-                    < div className="col-children param-item" >
-                        <div className="field-label"><Users2 size={14} /> Deca</div>
-                        <div className="counter-box">
-                            <button className="btn-counter" onClick={() => {
-                                const newCount = Math.max(0, children - 1);
-                                setChildren(newCount);
-                                setChildrenAges(prev => prev.slice(0, newCount));
-                            }}>−</button>
-                            <span className="counter-val">{children}</span>
-                            <button className="btn-counter" onClick={() => {
-                                const newCount = Math.min(4, children + 1);
-                                setChildren(newCount);
-                                setChildrenAges(prev => [...prev, 7].slice(0, newCount));
-                            }}>+</button>
-                        </div>
-                        {
-                            children > 0 && (
-                                <div className="children-ages-row">
-                                    {childrenAges.map((age, idx) => (
-                                        <input
-                                            key={idx}
-                                            type="number"
-                                            min="0" max="17"
-                                            value={age}
-                                            onChange={e => {
-                                                const val = parseInt(e.target.value);
-                                                if (!isNaN(val)) {
-                                                    const newAges = [...childrenAges];
-                                                    newAges[idx] = Math.min(17, Math.max(0, val));
-                                                    setChildrenAges(newAges);
-                                                }
-                                            }}
-                                            className="child-age-input"
-                                            title={`Dete ${idx + 1}`}
-                                        />
+                        {showRoomPicker && (
+                            <div className="room-picker-dropdown animate-fade-in">
+                                <div className="room-picker-header">
+                                    <h4>Konfiguracija Smeštaja</h4>
+                                    <button className="close-mini" onClick={() => setShowRoomPicker(false)}><X size={14} /></button>
+                                </div>
+                                <div className="room-list-scrollable">
+                                    {roomAllocations.map((room, idx) => (
+                                        <div key={idx} className="room-config-item">
+                                            <div className="room-label">Soba {idx + 1}</div>
+                                            <div className="room-counters">
+                                                <div className="counter-row">
+                                                    <span>Odrasli</span>
+                                                    <div className="mini-counter">
+                                                        <button onClick={() => {
+                                                            const newAlloc = [...roomAllocations];
+                                                            newAlloc[idx].adults = Math.max(1, newAlloc[idx].adults - 1);
+                                                            setRoomAllocations(newAlloc);
+                                                        }}>−</button>
+                                                        <span>{room.adults}</span>
+                                                        <button onClick={() => {
+                                                            const newAlloc = [...roomAllocations];
+                                                            newAlloc[idx].adults += 1;
+                                                            setRoomAllocations(newAlloc);
+                                                        }}>+</button>
+                                                    </div>
+                                                </div>
+                                                <div className="counter-row">
+                                                    <span>Deca</span>
+                                                    <div className="mini-counter">
+                                                        <button onClick={() => {
+                                                            const newAlloc = [...roomAllocations];
+                                                            newAlloc[idx].children = Math.max(0, newAlloc[idx].children - 1);
+                                                            newAlloc[idx].childrenAges.pop();
+                                                            setRoomAllocations(newAlloc);
+                                                        }}>−</button>
+                                                        <span>{room.children}</span>
+                                                        <button onClick={() => {
+                                                            if (room.children < 4) {
+                                                                const newAlloc = [...roomAllocations];
+                                                                newAlloc[idx].children += 1;
+                                                                newAlloc[idx].childrenAges.push(7);
+                                                                setRoomAllocations(newAlloc);
+                                                            }
+                                                        }}>+</button>
+                                                    </div>
+                                                </div>
+                                                {room.children > 0 && (
+                                                    <div className="mini-ages-grid">
+                                                        {room.childrenAges.map((age, cIdx) => (
+                                                            <div key={cIdx} className="mini-age-item">
+                                                                <small>Dete {cIdx + 1}</small>
+                                                                <input
+                                                                    type="number"
+                                                                    min="0" max="17"
+                                                                    value={age}
+                                                                    onChange={(e) => {
+                                                                        const val = parseInt(e.target.value) || 0;
+                                                                        const newAlloc = [...roomAllocations];
+                                                                        newAlloc[idx].childrenAges[cIdx] = Math.min(17, val);
+                                                                        setRoomAllocations(newAlloc);
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {roomAllocations.length > 1 && (
+                                                <button className="remove-room-link" onClick={() => setRoomAllocations(roomAllocations.filter((_, i) => i !== idx))}>Ukloni sobu</button>
+                                            )}
+                                        </div>
                                     ))}
                                 </div>
-                            )
-                        }
-                    </div >
+                                <div className="room-picker-footer">
+                                    <button
+                                        className="btn-add-room"
+                                        disabled={roomAllocations.length >= 5}
+                                        onClick={() => setRoomAllocations([...roomAllocations, { adults: 2, children: 0, childrenAges: [] }])}
+                                    >
+                                        <Plus size={14} /> Dodaj Sobu
+                                    </button>
+                                    <button className="btn-confirm-rooms" onClick={() => setShowRoomPicker(false)}>Potvrdi</button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
 
 
@@ -772,6 +831,7 @@ const SmartSearch: React.FC = () => {
                                 <div className="rooms-comparison-table">
                                     <div className="table-header">
                                         <div>Tip Smeštaja</div>
+                                        <div>Usluga</div>
                                         <div>Kapacitet</div>
                                         <div>Cena</div>
                                         <div>Akcija</div>
@@ -781,9 +841,12 @@ const SmartSearch: React.FC = () => {
                                             <div key={room.id || idx} className="room-row-v4">
                                                 <div className="r-name">
                                                     <strong>{room.name || 'Standardna Soba'}</strong>
-                                                    <p>{room.description || getMealPlanDisplayName(expandedHotel.mealPlan)}</p>
+                                                    <p>{room.description || 'Standardna Ponuda'}</p>
                                                 </div>
-                                                <div className="r-cap"><Users size={14} /> {room.capacity || `${adults}+${children}`}</div>
+                                                <div className="r-meal">
+                                                    <div className="meal-tag-mini">{getMealPlanDisplayName(expandedHotel.mealPlan)}</div>
+                                                </div>
+                                                <div className="r-cap"><Users size={14} /> {room.capacity || `${roomAllocations[0].adults}+${roomAllocations[0].children}`}</div>
                                                 <div className="r-price">{isSubagent ? getPriceWithMargin(room.price) : room.price}€</div>
                                                 <div>
                                                     <button
@@ -800,8 +863,11 @@ const SmartSearch: React.FC = () => {
                                         ))
                                     ) : (
                                         <div className="room-row-v4">
-                                            <div className="r-name"><strong>Standardna Ponuda</strong><p>{getMealPlanDisplayName(expandedHotel.mealPlan)}</p></div>
-                                            <div className="r-cap"><Users size={14} /> {adults}+{children}</div>
+                                            <div className="r-name"><strong>Standardna Ponuda</strong><p>{expandedHotel.name}</p></div>
+                                            <div className="r-meal">
+                                                <div className="meal-tag-mini">{getMealPlanDisplayName(expandedHotel.mealPlan)}</div>
+                                            </div>
+                                            <div className="r-cap"><Users size={14} /> {roomAllocations[0].adults}+{roomAllocations[0].children}</div>
                                             <div className="r-price">{isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price}€</div>
                                             <div><button className="select-room-btn" onClick={() => handleReserveClick({ name: 'Standardna Ponuda', price: isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price })}>Rezerviši</button></div>
                                         </div>
@@ -824,7 +890,9 @@ const SmartSearch: React.FC = () => {
                             hotelName: expandedHotel.name, location: expandedHotel.location,
                             checkIn, checkOut, nights, roomType: selectedRoomForBooking.name,
                             mealPlan: getMealPlanDisplayName(expandedHotel.mealPlan),
-                            adults, children, totalPrice: selectedRoomForBooking.price,
+                            adults: roomAllocations.reduce((sum, r) => sum + r.adults, 0),
+                            children: roomAllocations.reduce((sum, r) => sum + r.children, 0),
+                            totalPrice: selectedRoomForBooking.price,
                             currency: 'EUR', stars: expandedHotel.stars, providerData: expandedHotel.originalData
                         }}
                         onSuccess={() => setIsBookingModalOpen(false)}
