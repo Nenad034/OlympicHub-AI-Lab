@@ -5,6 +5,12 @@
 
 import { SolvexAiProvider } from './providers/SolvexAiProvider';
 
+export interface RoomAllocation {
+    adults: number;
+    children: number;
+    childrenAges: number[];
+}
+
 export interface SmartSearchParams {
     searchType: 'hotel' | 'flight' | 'package' | 'transfer' | 'tour';
     destinations: Array<{
@@ -16,9 +22,7 @@ export interface SmartSearchParams {
     }>;
     checkIn: string;
     checkOut: string;
-    adults: number;
-    children: number;
-    childrenAges?: number[];
+    rooms: RoomAllocation[];
     mealPlan?: string;
     currency?: string;
     nationality?: string;
@@ -37,6 +41,7 @@ export interface SmartSearchResult {
     images?: string[];
     description?: string;
     rooms?: any[];
+    allocationResults?: Record<number, any[]>; // Maps room index to its specific available rooms
     originalData: any;
 }
 
@@ -49,57 +54,109 @@ export const PROVIDER_MAPPING = {
 };
 
 export async function performSmartSearch(params: SmartSearchParams): Promise<SmartSearchResult[]> {
-    console.log('[SmartSearchService] Starting search...', params);
+    console.log('[SmartSearchService] Starting multi-room search...', params);
 
     if (params.searchType !== 'hotel') {
         return [];
     }
 
-    const results: SmartSearchResult[] = [];
     const solvexAi = new SolvexAiProvider();
+    const finalResultsMap = new Map<string, SmartSearchResult>();
 
     try {
-        // ESSENTIAL: Initialize/Authenticate the provider first
         await solvexAi.authenticate();
 
-        for (const dest of params.destinations) {
-            console.log(`[SmartSearchService] Querying Solvex for: ${dest.name}`);
+        // STEP 1: Identify unique room configurations to minimize API calls
+        const uniqueConfigs = new Map<string, { adults: number, children: number, ages: number[], indices: number[] }>();
+        params.rooms.forEach((room, idx) => {
+            const key = `${room.adults}-${room.children}-${[...room.childrenAges].sort().join(',')}`;
+            if (!uniqueConfigs.has(key)) {
+                uniqueConfigs.set(key, { ...room, ages: room.childrenAges, indices: [idx] });
+            } else {
+                uniqueConfigs.get(key)!.indices.push(idx);
+            }
+        });
 
-            const aiResults = await solvexAi.search({
-                destination: dest.name,
-                checkIn: params.checkIn ? new Date(params.checkIn) : new Date(),
-                checkOut: params.checkOut ? new Date(params.checkOut) : new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
-                adults: params.adults,
-                children: params.children || 0,
-                childrenAges: params.childrenAges || [],
-                providerId: dest.id.startsWith('solvex-') ? dest.id.split('-').pop() : dest.id,
-                providerType: dest.type === 'destination' ? 'city' : 'hotel',
-                targetProvider: dest.id.startsWith('solvex-') || dest.provider === 'Solvex' ? 'Solvex' : undefined
+        // STEP 2: Perform searches for each unique configuration
+        for (const dest of params.destinations) {
+            console.log(`[SmartSearchService] Querying for destination: ${dest.name}`);
+
+            const configSearchPromises = Array.from(uniqueConfigs.values()).map(async (config) => {
+                const results = await solvexAi.search({
+                    destination: dest.name,
+                    checkIn: new Date(params.checkIn),
+                    checkOut: new Date(params.checkOut),
+                    adults: config.adults,
+                    children: config.children,
+                    childrenAges: config.ages,
+                    providerId: dest.id.startsWith('solvex-') ? dest.id.split('-').pop() : dest.id,
+                    providerType: dest.type === 'destination' ? 'city' : 'hotel',
+                    targetProvider: dest.id.startsWith('solvex-') || dest.provider === 'Solvex' ? 'Solvex' : undefined
+                });
+                return { config, results };
             });
 
-            if (aiResults && aiResults.length > 0) {
-                results.push(...aiResults.map(h => ({
-                    provider: 'Solvex AI',
-                    type: 'hotel' as const,
-                    id: h.id,
-                    name: h.hotelName,
-                    location: h.location,
-                    price: h.price,
-                    currency: h.currency,
-                    stars: h.stars,
-                    mealPlan: h.mealPlan,
-                    images: h.image ? [h.image] : [],
-                    rooms: h.rooms,
-                    originalData: h.originalData,
-                })));
+            const configResults = await Promise.all(configSearchPromises);
+
+            // STEP 3: Merge results - a hotel must be available for ALL unique configurations
+            // We group results by hotel name (case-insensitive) for merging
+            const hotelsInAllConfigs = new Set<string>();
+
+            // Prime the set with hotels from the first configuration's results
+            if (configResults.length > 0) {
+                configResults[0].results.forEach(r => hotelsInAllConfigs.add(r.hotelName.toLowerCase()));
             }
+
+            // Intersect with remaining configurations
+            for (let i = 1; i < configResults.length; i++) {
+                const currentHotelNames = new Set(configResults[i].results.map(r => r.hotelName.toLowerCase()));
+                for (const name of hotelsInAllConfigs) {
+                    if (!currentHotelNames.has(name)) {
+                        hotelsInAllConfigs.delete(name);
+                    }
+                }
+            }
+
+            // STEP 4: Build final merged results for hotels available in ALL configs
+            configResults.forEach(({ config, results }) => {
+                results.forEach(h => {
+                    const hotelKey = h.hotelName.toLowerCase();
+                    if (hotelsInAllConfigs.has(hotelKey)) {
+                        if (!finalResultsMap.has(hotelKey)) {
+                            finalResultsMap.set(hotelKey, {
+                                provider: 'Solvex AI',
+                                type: 'hotel',
+                                id: h.id,
+                                name: h.hotelName,
+                                location: h.location,
+                                price: 0, // Will sum up later
+                                currency: h.currency,
+                                stars: h.stars,
+                                mealPlan: h.mealPlan,
+                                images: h.image ? [h.image] : [],
+                                rooms: [], // Legacy, will be empty in multi-room
+                                allocationResults: {},
+                                originalData: h.originalData
+                            });
+                        }
+
+                        const existing = finalResultsMap.get(hotelKey)!;
+                        config.indices.forEach(roomIdx => {
+                            if (!existing.allocationResults) existing.allocationResults = {};
+                            existing.allocationResults[roomIdx] = h.rooms || [];
+                            // Add price of the cheapest room for this allocation to the total price
+                            const minRoomPrice = Math.min(...(h.rooms?.map(r => r.price) || [h.price]));
+                            existing.price += minRoomPrice;
+                        });
+                    }
+                });
+            });
         }
     } catch (error) {
-        console.error('[SmartSearchService] Solvex error:', error);
+        console.error('[SmartSearchService] Search failed:', error);
     }
 
-    console.log(`[SmartSearchService] Finished. Found ${results.length} results.`);
-    return results;
+    return Array.from(finalResultsMap.values());
 }
 
 export function getProvidersForSearchType(searchType: string): readonly string[] {

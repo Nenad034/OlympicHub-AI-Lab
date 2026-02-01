@@ -365,9 +365,7 @@ const SmartSearch: React.FC = () => {
                 destinations: selectedDestinations,
                 checkIn,
                 checkOut,
-                adults: activeAllocations.reduce((sum, r) => sum + r.adults, 0),
-                children: activeAllocations.reduce((sum, r) => sum + r.children, 0),
-                childrenAges: activeAllocations.flatMap(r => r.childrenAges),
+                rooms: activeAllocations,
                 mealPlan,
                 currency: 'EUR',
                 nationality: 'RS',
@@ -862,32 +860,63 @@ const SmartSearch: React.FC = () => {
                                             <span>PONUDA ZA SOBU {rIdx + 1} ({alloc.adults} odr. {alloc.children > 0 ? `+ ${alloc.children} det.` : ''})</span>
                                         </div>
                                         <div className="rooms-comparison-table">
-                                            <div className="table-header">
-                                                <div>Tip Smeštaja</div>
-                                                <div>Usluga</div>
-                                                <div>Kapacitet</div>
-                                                <div>Cena</div>
-                                                <div>Akcija</div>
+                                            <div className="room-header-v4">
+                                                <div className="h-room">TIP SMEŠTAJA</div>
+                                                <div className="h-servis">USLUGA</div>
+                                                <div className="h-cap">KAPACITET</div>
+                                                <div className="h-price">CENA (UKUPNO)</div>
+                                                <div className="h-action">AKCIJA</div>
                                             </div>
-                                            {expandedHotel.rooms && expandedHotel.rooms.length > 0 ? (
+
+                                            {/* Use allocation-specific rooms if we have them from multi-room search */}
+                                            {(expandedHotel.allocationResults && expandedHotel.allocationResults[rIdx]) ? (
+                                                expandedHotel.allocationResults[rIdx].map((room: any, idx: number) => (
+                                                    <div key={room.id || idx} className="room-row-v4">
+                                                        <div className="r-name">
+                                                            <span className="room-type-tag">{room.name}</span>
+                                                            <span className="room-desc-mini">{room.description}</span>
+                                                        </div>
+                                                        <div className="r-servis">
+                                                            <span className="meal-tag-v4">{expandedHotel.mealPlan || 'BB'}</span>
+                                                        </div>
+                                                        <div className="r-cap"><Users size={14} /> {room.capacity || `${alloc.adults}+${alloc.children}`}</div>
+                                                        <div className="r-price">
+                                                            <span className="p-val">{room.price} {expandedHotel.currency}</span>
+                                                        </div>
+                                                        <div className="r-action">
+                                                            <button
+                                                                className="btn-book-v4"
+                                                                onClick={() => {
+                                                                    setSelectedRoomForBooking({ ...room, allocationIndex: rIdx });
+                                                                    setIsBookingModalOpen(true);
+                                                                }}
+                                                            >
+                                                                Rezerviši
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : expandedHotel.rooms && expandedHotel.rooms.length > 0 ? (
                                                 expandedHotel.rooms.map((room, idx) => (
                                                     <div key={room.id || idx} className="room-row-v4">
                                                         <div className="r-name">
-                                                            <strong>{room.name || 'Standardna Soba'}</strong>
-                                                            <p>{room.description || 'Standardna Ponuda'}</p>
+                                                            <span className="room-type-tag">{room.name}</span>
+                                                            <span className="room-desc-mini">{room.description}</span>
                                                         </div>
-                                                        <div className="r-meal">
-                                                            <div className="meal-tag-mini">{getMealPlanDisplayName(expandedHotel.mealPlan)}</div>
+                                                        <div className="r-servis">
+                                                            <span className="meal-tag-v4">{expandedHotel.mealPlan || 'BB'}</span>
                                                         </div>
                                                         <div className="r-cap"><Users size={14} /> {room.capacity || `${alloc.adults}+${alloc.children}`}</div>
-                                                        <div className="r-price">{isSubagent ? getPriceWithMargin(room.price) : room.price}€</div>
-                                                        <div>
+                                                        <div className="r-price">
+                                                            <span className="p-val">{room.price} {expandedHotel.currency}</span>
+                                                        </div>
+                                                        <div className="r-action">
                                                             <button
-                                                                className="select-room-btn"
-                                                                onClick={() => handleReserveClick({
-                                                                    name: room.name || 'Standardna Ponuda',
-                                                                    price: isSubagent ? getPriceWithMargin(room.price) : room.price
-                                                                })}
+                                                                className="btn-book-v4"
+                                                                onClick={() => {
+                                                                    setSelectedRoomForBooking({ ...room, allocationIndex: rIdx });
+                                                                    setIsBookingModalOpen(true);
+                                                                }}
                                                             >
                                                                 Rezerviši
                                                             </button>
@@ -896,13 +925,32 @@ const SmartSearch: React.FC = () => {
                                                 ))
                                             ) : (
                                                 <div className="room-row-v4">
-                                                    <div className="r-name"><strong>Standardna Ponuda</strong><p>{expandedHotel.name}</p></div>
-                                                    <div className="r-meal">
-                                                        <div className="meal-tag-mini">{getMealPlanDisplayName(expandedHotel.mealPlan)}</div>
+                                                    <div className="r-name">
+                                                        <span className="room-type-tag">Standardna Soba</span>
+                                                    </div>
+                                                    <div className="r-servis">
+                                                        <span className="meal-tag-v4">{expandedHotel.mealPlan || 'BB'}</span>
                                                     </div>
                                                     <div className="r-cap"><Users size={14} /> {alloc.adults}+{alloc.children}</div>
-                                                    <div className="r-price">{isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price}€</div>
-                                                    <div><button className="select-room-btn" onClick={() => handleReserveClick({ name: 'Standardna Ponuda', price: isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price })}>Rezerviši</button></div>
+                                                    <div className="r-price">
+                                                        <span className="p-val">{expandedHotel.price} {expandedHotel.currency}</span>
+                                                    </div>
+                                                    <div className="r-action">
+                                                        <button
+                                                            className="btn-book-v4"
+                                                            onClick={() => {
+                                                                setSelectedRoomForBooking({
+                                                                    id: 'default',
+                                                                    name: 'Standardna Soba',
+                                                                    price: expandedHotel.price,
+                                                                    allocationIndex: rIdx
+                                                                });
+                                                                setIsBookingModalOpen(true);
+                                                            }}
+                                                        >
+                                                            Rezerviši
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
