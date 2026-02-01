@@ -129,7 +129,11 @@ const SmartSearch: React.FC = () => {
     // Multi-room state
     const [activeRoomTab, setActiveRoomTab] = useState(0);
     const [roomAllocations, setRoomAllocations] = useState<RoomAllocation[]>([
-        { adults: 2, children: 0, childrenAges: [] }
+        { adults: 2, children: 0, childrenAges: [] },
+        { adults: 0, children: 0, childrenAges: [] },
+        { adults: 0, children: 0, childrenAges: [] },
+        { adults: 0, children: 0, childrenAges: [] },
+        { adults: 0, children: 0, childrenAges: [] }
     ]);
     const [showRoomPicker, setShowRoomPicker] = useState(false); // Legacy, will remove if needed, but unused for tabs
 
@@ -348,15 +352,22 @@ const SmartSearch: React.FC = () => {
         setSelectedArrivalDate(checkIn);
 
         try {
+            const activeAllocations = roomAllocations.filter(r => r.adults > 0);
+            if (activeAllocations.length === 0) {
+                setSearchError('Molimo definišite bar jednu sobu sa odraslim putnicima.');
+                setIsSearching(false);
+                return;
+            }
+
             // Mapping for service (currently uses first room or sum for simplicity)
             const results = await performSmartSearch({
                 searchType: activeTab,
                 destinations: selectedDestinations,
                 checkIn,
                 checkOut,
-                adults: roomAllocations.reduce((sum, r) => sum + r.adults, 0),
-                children: roomAllocations.reduce((sum, r) => sum + r.children, 0),
-                childrenAges: roomAllocations.flatMap(r => r.childrenAges),
+                adults: activeAllocations.reduce((sum, r) => sum + r.adults, 0),
+                children: activeAllocations.reduce((sum, r) => sum + r.children, 0),
+                childrenAges: activeAllocations.flatMap(r => r.childrenAges),
                 mealPlan,
                 currency: 'EUR',
                 nationality: 'RS',
@@ -564,83 +575,93 @@ const SmartSearch: React.FC = () => {
 
                     {/* Room Tabs & Pax Configuration */}
                     <div className="col-rooms-tabs param-item-wide" style={{ gridColumn: 'span 3', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '15px' }}>
-                        <div className="room-tabs-header" style={{ display: 'flex', gap: '8px', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '10px' }}>
-                            {[0, 1, 2, 3, 4].map(idx => (
+                        <div className="room-tabs-header" style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px' }}>
+                            {roomAllocations.map((room, idx) => (
                                 <button
                                     key={idx}
-                                    className={`room-tab-btn ${activeRoomTab === idx ? 'active' : ''} ${idx >= roomAllocations.length ? 'inactive' : ''}`}
-                                    onClick={() => {
-                                        if (idx < roomAllocations.length) {
-                                            setActiveRoomTab(idx);
-                                        } else if (idx === roomAllocations.length) {
-                                            // Add new room
-                                            setRoomAllocations([...roomAllocations, { adults: 2, children: 0, childrenAges: [] }]);
-                                            setActiveRoomTab(idx);
-                                        }
-                                    }}
+                                    className={`room-tab-btn ${activeRoomTab === idx ? 'active' : ''} ${room.adults > 0 ? 'is-searching' : 'inactive'}`}
+                                    onClick={() => setActiveRoomTab(idx)}
                                 >
+                                    <div className={`status-dot ${room.adults > 0 ? 'enabled' : ''}`}></div>
                                     Soba {idx + 1}
-                                    {idx > 0 && idx < roomAllocations.length && (
-                                        <X
-                                            size={12}
-                                            className="close-tab"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                const newAlloc = roomAllocations.filter((_, i) => i !== idx);
-                                                setRoomAllocations(newAlloc);
-                                                setActiveRoomTab(Math.max(0, idx - 1));
-                                            }}
-                                        />
-                                    )}
-                                    {idx === roomAllocations.length && <Plus size={12} style={{ marginLeft: '4px' }} />}
+                                    {room.adults > 0 && <span className="tab-pax-hint">{room.adults}+{room.children}</span>}
                                 </button>
                             ))}
                         </div>
 
-                        <div className="active-room-config animate-fade-in" key={activeRoomTab} style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
-                            <div className="pax-counter-group" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                <div className="field-label-mini"><Users size={14} /> Odrasli</div>
-                                <div className="counter-box mini">
-                                    <button className="btn-counter" onClick={() => {
-                                        const newAlloc = [...roomAllocations];
-                                        newAlloc[activeRoomTab].adults = Math.max(1, newAlloc[activeRoomTab].adults - 1);
-                                        setRoomAllocations(newAlloc);
-                                    }}>−</button>
-                                    <span className="counter-val">{roomAllocations[activeRoomTab].adults}</span>
-                                    <button className="btn-counter" onClick={() => {
-                                        const newAlloc = [...roomAllocations];
-                                        newAlloc[activeRoomTab].adults += 1;
-                                        setRoomAllocations(newAlloc);
-                                    }}>+</button>
-                                </div>
-                            </div>
-
-                            <div className="pax-counter-group" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                <div className="field-label-mini"><Users2 size={14} /> Deca</div>
-                                <div className="counter-box mini">
-                                    <button className="btn-counter" onClick={() => {
-                                        const newAlloc = [...roomAllocations];
-                                        newAlloc[activeRoomTab].children = Math.max(0, newAlloc[activeRoomTab].children - 1);
-                                        newAlloc[activeRoomTab].childrenAges.pop();
-                                        setRoomAllocations(newAlloc);
-                                    }}>−</button>
-                                    <span className="counter-val">{roomAllocations[activeRoomTab].children}</span>
-                                    <button className="btn-counter" onClick={() => {
-                                        if (roomAllocations[activeRoomTab].children < 4) {
+                        <div className="active-room-config full-width animate-fade-in" key={activeRoomTab}>
+                            <div className="config-row-main">
+                                <div className="pax-counter-group">
+                                    <div className="field-label-mini"><Users size={14} /> Odrasli</div>
+                                    <div className="counter-box mini">
+                                        <button className="btn-counter" onClick={() => {
                                             const newAlloc = [...roomAllocations];
-                                            newAlloc[activeRoomTab].children += 1;
-                                            newAlloc[activeRoomTab].childrenAges.push(7);
+                                            newAlloc[activeRoomTab].adults = Math.max(0, newAlloc[activeRoomTab].adults - 1);
                                             setRoomAllocations(newAlloc);
-                                        }
-                                    }}>+</button>
+                                        }}>−</button>
+                                        <input
+                                            type="number"
+                                            className="counter-val-input"
+                                            value={roomAllocations[activeRoomTab].adults}
+                                            onChange={e => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                const newAlloc = [...roomAllocations];
+                                                newAlloc[activeRoomTab].adults = Math.max(0, Math.min(10, val));
+                                                setRoomAllocations(newAlloc);
+                                            }}
+                                        />
+                                        <button className="btn-counter" onClick={() => {
+                                            const newAlloc = [...roomAllocations];
+                                            newAlloc[activeRoomTab].adults += 1;
+                                            setRoomAllocations(newAlloc);
+                                        }}>+</button>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {roomAllocations[activeRoomTab].children > 0 && (
-                                <div className="children-ages-row tabs-version">
+                                <div className="pax-counter-group">
+                                    <div className="field-label-mini"><Users2 size={14} /> Deca</div>
+                                    <div className="counter-box mini">
+                                        <button className="btn-counter" onClick={() => {
+                                            const newAlloc = [...roomAllocations];
+                                            if (newAlloc[activeRoomTab].children > 0) {
+                                                newAlloc[activeRoomTab].children -= 1;
+                                                newAlloc[activeRoomTab].childrenAges.pop();
+                                                setRoomAllocations(newAlloc);
+                                            }
+                                        }}>−</button>
+                                        <input
+                                            type="number"
+                                            className="counter-val-input"
+                                            value={roomAllocations[activeRoomTab].children}
+                                            onChange={e => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                const newAlloc = [...roomAllocations];
+                                                const count = Math.max(0, Math.min(4, val));
+                                                newAlloc[activeRoomTab].children = count;
+                                                // Sync ages array length
+                                                while (newAlloc[activeRoomTab].childrenAges.length < count) {
+                                                    newAlloc[activeRoomTab].childrenAges.push(7);
+                                                }
+                                                while (newAlloc[activeRoomTab].childrenAges.length > count) {
+                                                    newAlloc[activeRoomTab].childrenAges.pop();
+                                                }
+                                                setRoomAllocations(newAlloc);
+                                            }}
+                                        />
+                                        <button className="btn-counter" onClick={() => {
+                                            if (roomAllocations[activeRoomTab].children < 4) {
+                                                const newAlloc = [...roomAllocations];
+                                                newAlloc[activeRoomTab].children += 1;
+                                                newAlloc[activeRoomTab].childrenAges.push(7);
+                                                setRoomAllocations(newAlloc);
+                                            }
+                                        }}>+</button>
+                                    </div>
+                                </div>
+
+                                <div className="children-ages-inline">
                                     {roomAllocations[activeRoomTab].childrenAges.map((age, idx) => (
-                                        <div key={idx} className="age-input-wrapper">
-                                            <span style={{ fontSize: '0.6rem', color: '#64748b', display: 'block', textAlign: 'center' }}>{idx + 1}. dete</span>
+                                        <div key={idx} className="age-input-compact">
                                             <input
                                                 type="number"
                                                 min="0" max="17"
@@ -652,9 +673,16 @@ const SmartSearch: React.FC = () => {
                                                     setRoomAllocations(newAlloc);
                                                 }}
                                                 className="child-age-input mini"
+                                                title={`${idx + 1}. dete`}
                                             />
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+
+                            {roomAllocations[activeRoomTab].adults === 0 && (
+                                <div className="room-inactive-hint">
+                                    <Info size={12} /> Definišite broj osoba za aktivaciju pretrage ove sobe
                                 </div>
                             )}
                         </div>
@@ -828,7 +856,7 @@ const SmartSearch: React.FC = () => {
                                 <button className="close-modal-btn" onClick={() => setExpandedHotel(null)}><X size={20} /></button>
                             </div>
                             <div className="modal-body-v4">
-                                {roomAllocations.map((alloc, rIdx) => (
+                                {roomAllocations.filter(a => a.adults > 0).map((alloc, rIdx) => (
                                     <div key={rIdx} className="room-allocation-section" style={{ marginTop: rIdx > 0 ? '30px' : '0' }}>
                                         <div className="section-divider-premium">
                                             <span>PONUDA ZA SOBU {rIdx + 1} ({alloc.adults} odr. {alloc.children > 0 ? `+ ${alloc.children} det.` : ''})</span>

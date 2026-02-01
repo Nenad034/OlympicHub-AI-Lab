@@ -530,20 +530,23 @@
     color: rgba(255, 255, 255, 0.8);
 }
 
-/* Room Tabs Redesign */
+/* Room Tabs & Config Styling */
 .room-tab-btn {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #94a3b8;
-    padding: 6px 16px;
+    padding: 8px 16px;
     border-radius: 8px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
     transition: all 0.2s;
+    position: relative;
+    min-width: 100px;
+    justify-content: center;
 }
 
 .room-tab-btn.active {
@@ -554,67 +557,133 @@
 }
 
 .room-tab-btn.inactive {
-    opacity: 0.5;
-    border-style: dashed;
-}
-
-.room-tab-btn:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.close-tab {
     opacity: 0.6;
-    transition: opacity 0.2s;
 }
 
-.close-tab:hover {
-    opacity: 1;
-    color: #ef4444;
+.room-tab-btn.is-searching {
+    border-color: rgba(16, 185, 129, 0.6);
+    background: rgba(16, 185, 129, 0.05);
 }
 
-.field-label-mini {
-    font-size: 0.75rem;
-    color: #94a3b8;
-    font-weight: 700;
-    text-transform: uppercase;
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #475569;
 }
 
-.counter-box.mini {
-    padding: 4px 8px;
-    background: rgba(15, 23, 42, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+.status-dot.enabled {
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
 }
 
-.age-input-wrapper {
+.tab-pax-hint {
+    font-size: 0.65rem;
+    color: #818cf8;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin-left: 6px;
+}
+
+.active .tab-pax-hint {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.config-row-main {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.children-ages-inline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 20px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 48px;
+}
+
+.age-input-compact {
+    position: relative;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 4px;
 }
 
-.child-age-input.mini {
-    width: 45px;
-    height: 30px;
-    text-align: center;
-    padding: 0;
-}
-
-.section-divider-premium {
-    width: 100%;
-    text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    line-height: 0.1em;
-    margin: 20px 0 30px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    color: #6366f1;
+.age-input-compact::before {
+    content: attr(title);
+    font-size: 0.6rem;
+    color: #94a3b8;
+    white-space: nowrap;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    font-weight: 700;
 }
 
-.section-divider-premium span {
-    background: #0f172a;
-    padding: 0 15px;
+.room-inactive-hint {
+    margin-top: 20px;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 8px 16px;
+    border-radius: 8px;
+    border-left: 3px solid #64748b;
+}
+
+.pax-counter-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.field-label-mini {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.counter-box.mini {
+    height: 40px;
+    padding: 0 6px;
+    gap: 10px;
+}
+
+.counter-box.mini .btn-counter {
+    width: 28px;
+    height: 28px;
+}
+
+.counter-val-input {
+    width: 35px;
+    background: transparent;
+    border: none;
+    color: white;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.counter-val-input::-webkit-outer-spin-button,
+.counter-val-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.counter-val-input:focus {
+    outline: none;
+    color: #818cf8;
 }
 
 /* Flexibility Toggle */
