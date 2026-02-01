@@ -1,17 +1,44 @@
-/* GRID LAYOUT DEFINITIVE FIX */
+/* GRID LAYOUT DEFINITIVE FIX V2 */
+
+/* Force main container width */
 .results-container {
     width: 100% !important;
-    max-width: 100% !important;
+    box-sizing: border-box !important;
 }
 
+/* Force Grid Layout with Explicit Media Queries for Stability */
 .results-mosaic.grid-layout {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+    grid-template-columns: 1fr !important;
+    /* Mobile default */
     gap: 20px !important;
     width: 100% !important;
+    box-sizing: border-box !important;
     padding-bottom: 40px !important;
 }
 
+/* Tablet */
+@media (min-width: 640px) {
+    .results-mosaic.grid-layout {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+    .results-mosaic.grid-layout {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+/* Large Desktop */
+@media (min-width: 1400px) {
+    .results-mosaic.grid-layout {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+}
+
+/* LIST LAYOUT */
 .results-mosaic.list-layout {
     display: flex !important;
     flex-direction: column !important;
@@ -19,36 +46,41 @@
     width: 100% !important;
 }
 
-/* Ensure cards take full space of grid cell */
+/* CARD FIXES */
 .hotel-result-card-premium.unified {
     width: 100% !important;
+    max-width: none !important;
+    /* Prevent cards from being constrained */
     display: flex !important;
     flex-direction: column;
     min-width: 0 !important;
-    /* Fix flex/grid overflow issues */
+    box-sizing: border-box !important;
 }
 
-/* Ensure images have height */
+/* Image Height Force */
 .hotel-card-image {
     height: 200px !important;
+    width: 100% !important;
 }
 
-/* Ensure horizontal mode is preserved */
-.grid-layout .hotel-result-card-premium.unified.horizontal {
-    /* If horizontal class is accidentally on grid items, reset it */
-    flex-direction: column !important;
-    height: auto !important;
-}
-
-/* List layout force horizontal */
+/* Horizontal / List View Specifics */
 .list-layout .hotel-result-card-premium.unified {
     flex-direction: row !important;
     height: 240px !important;
 }
 
-/* Fix image width in list layout */
 .list-layout .hotel-card-image {
     width: 350px !important;
     height: 100% !important;
     flex-shrink: 0 !important;
+}
+
+/* Reset for Grid View to prevent horizontal styles bleeding */
+.grid-layout .hotel-result-card-premium.unified.horizontal {
+    flex-direction: column !important;
+    height: auto !important;
+}
+
+.grid-layout .hotel-card-image {
+    width: 100% !important;
 }
