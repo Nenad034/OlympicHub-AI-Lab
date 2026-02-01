@@ -291,3 +291,7 @@
     border-color: #e2e8f0;
     color: #0f172a;
 }
+
+.light-theme .brand-text {
+    color: #800020 !important;
+}
