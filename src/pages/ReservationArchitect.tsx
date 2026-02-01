@@ -198,7 +198,9 @@ const ReservationArchitect: React.FC = () => {
             insurerContact: '+381 11 333 444',
             insurerEmail: 'pomoć@triglav.rs',
             cancellationOffered: true,
-            healthOffered: true
+            healthOffered: true,
+            confirmationText: '',
+            confirmationTimestamp: ''
         },
 
         // 6. Logovi
@@ -397,6 +399,11 @@ const ReservationArchitect: React.FC = () => {
                     notes: {
                         ...prev.notes,
                         general: loadData.specialRequests || ''
+                    },
+                    insurance: {
+                        ...prev.insurance,
+                        confirmationText: loadData.confirmationText || '',
+                        confirmationTimestamp: loadData.confirmationTimestamp || ''
                     }
                 }));
                 setIsInitialized(true);
@@ -457,6 +464,11 @@ const ReservationArchitect: React.FC = () => {
             ...prev,
             logs: [newLog, ...prev.logs]
         }));
+    };
+
+    const handlePrint = () => {
+        addLog('Štampa Dokumenta', 'Pokrenuta štampa Ugovora o Putovanju.', 'info');
+        window.print();
     };
 
     const generateDocument = (type: string) => {
@@ -896,7 +908,7 @@ const ReservationArchitect: React.FC = () => {
                             <FileText size={18} /> Napomene
                         </button>
                         <button className={activeSection === 'legal' ? 'active' : ''} onClick={() => setActiveSection('legal')}>
-                            <Scale size={18} /> Prava & Garancije
+                            <Scale size={18} /> Prava, Garancije i Obaveze
                         </button>
                         <button className={activeSection === 'documents' ? 'active' : ''} onClick={() => setActiveSection('documents')}>
                             <FileText size={18} /> Dokumenta
@@ -2111,7 +2123,33 @@ const ReservationArchitect: React.FC = () => {
                         {/* SECTION 4: LEGAL & INSURANCE */}
                         {activeSection === 'legal' && (
                             <section className="res-section fade-in">
-                                <div className="section-title"><h3>Legalne Garancije & Usklađenost</h3></div>
+                                <div className="section-title"><h3>Prava, Garancije i Obaveze</h3></div>
+
+                                {dossier.insurance.confirmationText && (
+                                    <div className="confirmation-consent-box" style={{
+                                        background: 'rgba(59, 130, 246, 0.05)',
+                                        border: '1px solid #3b82f6',
+                                        borderRadius: '12px',
+                                        padding: '20px',
+                                        marginBottom: '24px',
+                                        position: 'relative',
+                                        overflow: 'hidden'
+                                    }}>
+                                        <div style={{ position: 'absolute', top: 0, right: 0, padding: '8px 12px', background: '#3b82f6', color: 'white', fontSize: '10px', fontWeight: 800, borderBottomLeftRadius: '12px' }}>
+                                            SNIMLJENA SAGLASNOST
+                                        </div>
+                                        <h4 style={{ margin: '0 0 10px 0', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <ShieldCheck size={20} /> Elektronska Potvrda Putnika
+                                        </h4>
+                                        <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.5', color: 'var(--text-primary)', fontStyle: 'italic' }}>
+                                            "{dossier.insurance.confirmationText}"
+                                        </p>
+                                        <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <Clock size={14} /> Vreme potvrde: <strong>{dossier.insurance.confirmationTimestamp}</strong>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="insurance-card v4">
                                     <div className="card-top">
                                         <ShieldCheck size={32} color="#eab308" />
@@ -2393,12 +2431,89 @@ const ReservationArchitect: React.FC = () => {
                     </div>
 
                     <div className="footer-actions">
-                        <button className="btn-print-contract outline"><Printer size={16} /> Štampaj Ugovor</button>
+                        <button className="btn-print-contract outline" onClick={handlePrint}><Printer size={16} /> Štampaj Ugovor</button>
                         {!isSubagent && <button className="btn-save-master" onClick={handleSave}><Save size={16} /> Sačuvaj Dossier</button>}
                     </div>
                 </footer>
+
+                {/* --- PRINTABLE CONTRACT SECTION (Hidden in UI, visible in Print) --- */}
+                <div className="printable-contract">
+                    <div className="print-header">
+                        <h1>Olympic Travel - Ugovor o Putovanju</h1>
+                        <p>Dossier: {dossier.resCode || dossier.cisCode}</p>
+                    </div>
+
+                    <div className="print-grid">
+                        <section>
+                            <h4>Ugovarač / Nosilac</h4>
+                            <p><strong>{dossier.booker.fullName}</strong></p>
+                            <p>{dossier.booker.address}, {dossier.booker.city}</p>
+                            <p>{dossier.booker.phone} | {dossier.booker.email}</p>
+                        </section>
+
+                        <section>
+                            <h4>Program Putovanja</h4>
+                            {dossier.tripItems.map((item, i) => (
+                                <div key={i} className="print-item">
+                                    <p><strong>{item.subject}</strong> ({item.details})</p>
+                                    <p>{formatDate(item.checkIn)} - {formatDate(item.checkOut)}</p>
+                                    <p>{item.city}, {item.country} | {item.mealPlan}</p>
+                                </div>
+                            ))}
+                        </section>
+                    </div>
+
+                    <section className="print-passengers">
+                        <h4>Putnici</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Br.</th>
+                                    <th>Ime i Prezime</th>
+                                    <th>Br. Pasoša</th>
+                                    <th>Datum Rođenja</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {dossier.passengers.map((p, i) => (
+                                    <tr key={i}>
+                                        <td>{i + 1}.</td>
+                                        <td>{p.firstName} {p.lastName}</td>
+                                        <td>{p.idNumber}</td>
+                                        <td>{formatDate(p.birthDate)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <div className="print-legal-section">
+                        <h4>Prava, Garancije i Obaveze</h4>
+                        {dossier.insurance.confirmationText ? (
+                            <div className="print-confirmation-text">
+                                <p><strong>ELEKTRONSKA POTVRDA SAGLASNOSTI:</strong></p>
+                                <p>"{dossier.insurance.confirmationText}"</p>
+                                <p>Datum i vreme potvrde: <strong>{dossier.insurance.confirmationTimestamp}</strong></p>
+                            </div>
+                        ) : (
+                            <p>Nije zabeležena elektronska potvrda.</p>
+                        )}
+                        <p className="general-terms-notice">Potpisivanjem ovog ugovora/plaćanjem akontacije, putnik potvrđuje da je upoznat sa Opštim uslovima putovanja agencije Olympic Travel i programom putovanja.</p>
+                    </div>
+
+                    <div className="print-signatures">
+                        <div className="sig">
+                            <p>Za Agenciju:</p>
+                            <div className="line"></div>
+                        </div>
+                        <div className="sig">
+                            <p>Putnik / Ugovarač:</p>
+                            <div className="line"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div >
+        </div>
     );
 };
 

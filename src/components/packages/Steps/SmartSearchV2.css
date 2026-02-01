@@ -1,0 +1,412 @@
+/* ==========================================================================
+   SMART SEARCH V2 - PREMIUM DESIGN SYSTEM
+   ========================================================================== */
+
+:root {
+    --ss-bg-card: #0f172a;
+    --ss-bg-inner: #1e293b;
+    --ss-accent: #6366f1;
+    --ss-accent-glow: rgba(99, 102, 241, 0.4);
+    --ss-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    --ss-text-main: #f8fafc;
+    --ss-text-muted: #94a3b8;
+    --ss-border: rgba(255, 255, 255, 0.1);
+}
+
+/* --- Main Frame --- */
+.search-card-frame {
+    background: var(--ss-bg-card);
+    border: 1px solid var(--ss-border);
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    position: relative;
+    max-width: 1800px;
+    margin: 0 auto;
+}
+
+/* --- Field Labels --- */
+.field-label-ss {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--ss-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+}
+
+/* --- Inputs --- */
+.ss-input-box {
+    background: var(--ss-bg-inner);
+    border: 1px solid var(--ss-border);
+    border-radius: 12px;
+    height: 56px;
+    width: 100%;
+    color: white;
+    padding: 0 1.25rem;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.ss-input-box:focus-within {
+    border-color: var(--ss-accent);
+    box-shadow: 0 0 0 2px var(--ss-accent-glow);
+}
+
+/* --- Multi Destination Chips --- */
+.ss-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.ss-chip {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #e0e7ff;
+    padding: 0.3rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ss-chip-remove {
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+.ss-chip-remove:hover {
+    opacity: 1;
+}
+
+/* --- Params Grid --- */
+.ss-params-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1.2fr 1.2fr;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+/* --- Flexibility Toggle --- */
+.flex-toggle-ss {
+    display: flex;
+    background: var(--ss-bg-inner);
+    border: 1px solid var(--ss-border);
+    border-radius: 12px;
+    padding: 4px;
+    height: 56px;
+    align-items: center;
+}
+
+.flex-opt {
+    flex: 1;
+    height: 100%;
+    border: none;
+    background: transparent;
+    color: var(--ss-text-muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.flex-opt.active {
+    background: var(--ss-accent);
+    color: white;
+}
+
+/* --- Room Tabs --- */
+.room-tabs-ss {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-bottom: 0.5rem;
+}
+
+.room-tab-ss {
+    padding: 0.6rem 1.2rem;
+    background: var(--ss-bg-inner);
+    border: 1px solid var(--ss-border);
+    border-radius: 99px;
+    color: var(--ss-text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.room-tab-ss.active {
+    border-color: var(--ss-accent);
+    color: white;
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.room-tab-ss .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 8px #4ade80;
+}
+
+/* --- Pax Counters --- */
+.pax-container-ss {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+.pax-field-ss {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.pax-label-ss {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--ss-text-muted);
+    text-transform: uppercase;
+}
+
+.counter-box-ss {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--ss-bg-inner);
+    border: 1px solid var(--ss-border);
+    padding: 6px;
+    border-radius: 10px;
+}
+
+.btn-ss-mini {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--ss-accent);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: 900;
+}
+
+.pax-val-ss {
+    font-weight: 800;
+    color: white;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* --- MAIN CTA BUTTON --- */
+.btn-search-ss {
+    width: 100%;
+    height: 70px;
+    margin-top: 2.5rem;
+    border-radius: 16px;
+    background: var(--ss-gradient);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-search-ss:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 25px 50px -10px rgba(99, 102, 241, 0.6);
+}
+
+.btn-search-ss .icon-aura {
+    background: #ff3c00;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px #ff3c00;
+}
+
+/* --- New Search Link --- */
+.new-search-ss {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--ss-text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-decoration: none;
+    margin-top: 2.5rem;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.new-search-ss:hover {
+    color: white;
+}
+
+/* --- Layout Utils --- */
+.grid-cols-ss {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+/* === WIZARD PROGRESS BAR === */
+.ss-glass-bar {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 1.5rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.progress-steps-ss {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 0 4rem;
+}
+
+.p-step-ss {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.p-step-ss.active {
+    opacity: 1;
+}
+
+.p-step-ss.complete {
+    opacity: 0.8;
+}
+
+.s-num-ss {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--ss-bg-inner);
+    border: 1px solid var(--ss-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 900;
+    color: var(--ss-text-muted);
+}
+
+.p-step-ss.active .s-num-ss {
+    background: var(--ss-accent);
+    color: white;
+    box-shadow: 0 0 20px var(--ss-accent-glow);
+    border-color: transparent;
+}
+
+.p-step-ss.complete .s-num-ss {
+    background: #10b981;
+    color: white;
+    border-color: transparent;
+}
+
+.s-title-ss {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.s-desc-ss {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--ss-text-muted);
+    text-transform: uppercase;
+}
+
+/* === FLOATING NAVIGATION === */
+.ss-floating-nav {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 96%;
+    max-width: 1800px;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(20px);
+    padding: 1.25rem 2.5rem;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+}
+
+.ss-glow-indigo {
+    background: var(--ss-gradient) !important;
+    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5) !important;
+}
+
+.ss-glow-muted {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: var(--ss-text-muted) !important;
+}
+
+.ss-glow-muted:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+}
+
+/* === ANIMATIONS === */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+} 
+ 

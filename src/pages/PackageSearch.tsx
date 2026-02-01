@@ -12,11 +12,13 @@ import type {
     FlightSelectionData,
     HotelSelectionData,
     TransferSelectionData,
-    ExtraSelectionData
+    ExtraSelectionData,
+    DestinationInput
 } from '../types/packageSearch.types';
 import './PackageSearch.css';
+import '../components/packages/Steps/SmartSearchV2.css';
 
-// Step components (to be created)
+// Step components
 import Step1_BasicInfo from '../components/packages/Steps/Step1_BasicInfo';
 import Step2_FlightSelection from '../components/packages/Steps/Step2_FlightSelection';
 import Step3_HotelSelection from '../components/packages/Steps/Step3_HotelSelection';
@@ -26,416 +28,150 @@ import Step6_ReviewConfirm from '../components/packages/Steps/Step6_ReviewConfir
 import { dynamicPackageService } from '../services/dynamicPackageService';
 
 const WIZARD_STEPS: WizardStep[] = [
-    {
-        id: 1,
-        name: 'basic-info',
-        title: 'Osnovne Informacije',
-        description: 'Destinacije, datumi i putnici',
-        isComplete: false,
-        isActive: true
-    },
-    {
-        id: 2,
-        name: 'flights',
-        title: 'Letovi',
-        description: 'Izaberite letove',
-        isComplete: false,
-        isActive: false
-    },
-    {
-        id: 3,
-        name: 'hotels',
-        title: 'Hoteli',
-        description: 'Izaberite smeštaj',
-        isComplete: false,
-        isActive: false
-    },
-    {
-        id: 4,
-        name: 'transfers',
-        title: 'Transferi',
-        description: 'Prevoz između lokacija',
-        isComplete: false,
-        isActive: false
-    },
-    {
-        id: 5,
-        name: 'extras',
-        title: 'Dodatne Usluge',
-        description: 'Ture, ulaznice, aktivnosti',
-        isComplete: false,
-        isActive: false
-    },
-    {
-        id: 6,
-        name: 'review',
-        title: 'Pregled i Potvrda',
-        description: 'Finalizujte paket',
-        isComplete: false,
-        isActive: false
-    }
+    { id: 1, name: 'basic-info', title: 'Destinacije', description: 'Plan i putnici', isComplete: false, isActive: true },
+    { id: 2, name: 'flights', title: 'Letovi', description: 'Avio karte', isComplete: false, isActive: false },
+    { id: 3, name: 'hotels', title: 'Hoteli', description: 'Smeštaj', isComplete: false, isActive: false },
+    { id: 4, name: 'transfers', title: 'Transferi', description: 'Prevoz', isComplete: false, isActive: false },
+    { id: 5, name: 'extras', title: 'Dodaci', description: 'Atrakcije', isComplete: false, isActive: false },
+    { id: 6, name: 'review', title: 'Potvrda', description: 'Finalni rezime', isComplete: false, isActive: false }
 ];
 
-const PackageSearch: React.FC = () => {
-    const navigate = useNavigate();
+interface PackageSearchProps {
+    initialDestinations?: any[];
+    initialCheckIn?: string;
+    initialCheckOut?: string;
+    initialTravelers?: { adults: number; children: number; childrenAges: number[] }[];
+}
 
-    // Wizard state
+const PackageSearch: React.FC<PackageSearchProps> = ({
+    initialDestinations,
+    initialCheckIn,
+    initialCheckOut,
+    initialTravelers
+}) => {
+    const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState<number>(1);
     const [steps, setSteps] = useState<WizardStep[]>(WIZARD_STEPS);
-
-    // Search data
     const [basicInfo, setBasicInfo] = useState<BasicInfoData | null>(null);
     const [selectedFlights, setSelectedFlights] = useState<FlightSelectionData | null>(null);
     const [selectedHotels, setSelectedHotels] = useState<HotelSelectionData[]>([]);
     const [selectedTransfers, setSelectedTransfers] = useState<TransferSelectionData[]>([]);
     const [selectedExtras, setSelectedExtras] = useState<ExtraSelectionData[]>([]);
-
-    // AI mode
     const [isAIMode, setIsAIMode] = useState<boolean>(false);
 
-    // Calculate total price
-    const calculateTotalPrice = (): number => {
-        let total = 0;
-
-        if (selectedFlights) {
-            total += selectedFlights.totalPrice;
+    // Initial Data Effect
+    useEffect(() => {
+        if (!basicInfo && initialDestinations && initialDestinations.length > 0) {
+            let totalAdults = 0, totalChildren = 0, allAges: number[] = [];
+            if (initialTravelers) {
+                initialTravelers.forEach(room => {
+                    totalAdults += room.adults;
+                    totalChildren += room.children;
+                    allAges = [...allAges, ...room.childrenAges];
+                });
+            }
+            const mappedDestinations: DestinationInput[] = initialDestinations.map((d, index) => ({
+                id: d.id || String(index + 1),
+                city: d.name,
+                country: '',
+                countryCode: '',
+                airportCode: '',
+                checkIn: initialCheckIn || '',
+                checkOut: initialCheckOut || '',
+                nights: 0
+            }));
+            setBasicInfo({
+                destinations: mappedDestinations,
+                travelers: { adults: totalAdults || 2, children: totalChildren || 0, childrenAges: allAges },
+                currency: 'EUR',
+                startDate: initialCheckIn || '',
+                endDate: initialCheckOut || '',
+                totalDays: 0
+            });
         }
+    }, [initialDestinations, initialCheckIn, initialCheckOut]);
 
-        selectedHotels.forEach(hotel => {
-            total += hotel.totalPrice;
-        });
-
-        selectedTransfers.forEach(transfer => {
-            total += transfer.totalPrice;
-        });
-
-        selectedExtras.forEach(extra => {
-            total += extra.totalPrice;
-        });
-
-        return total;
-    };
-
-    const totalPrice = calculateTotalPrice();
-
-    // Navigation handlers
-    const goToStep = (stepId: number) => {
-        if (stepId >= 1 && stepId <= 6) {
-            setCurrentStep(stepId);
-            updateStepStatus(stepId);
-        }
-    };
-
-    const goBack = () => {
-        if (currentStep > 1) {
-            goToStep(currentStep - 1);
-        }
-    };
+    const totalPrice = (selectedFlights?.totalPrice || 0) +
+        selectedHotels.reduce((s, h) => s + h.totalPrice, 0) +
+        selectedTransfers.reduce((s, t) => s + t.totalPrice, 0) +
+        selectedExtras.reduce((s, e) => s + e.totalPrice, 0);
 
     const goNext = () => {
         if (currentStep < 6) {
-            // Mark current step as complete
-            markStepComplete(currentStep);
-            goToStep(currentStep + 1);
+            setSteps(prev => prev.map(s => s.id === currentStep ? { ...s, isComplete: true } : s));
+            setCurrentStep(currentStep + 1);
         }
     };
 
-    const updateStepStatus = (activeStepId: number) => {
-        setSteps(prevSteps =>
-            prevSteps.map(step => ({
-                ...step,
-                isActive: step.id === activeStepId
-            }))
-        );
-    };
+    const goBack = () => currentStep > 1 && setCurrentStep(currentStep - 1);
 
-    const markStepComplete = (stepId: number) => {
-        setSteps(prevSteps =>
-            prevSteps.map(step =>
-                step.id === stepId
-                    ? { ...step, isComplete: true }
-                    : step
-            )
-        );
-    };
-
-    // Save draft
-    const saveDraft = () => {
-        const draft: PackageSearchState = {
-            currentStep,
-            steps,
-            basicInfo,
-            selectedFlights: selectedFlights ? [selectedFlights as any] : [],
-            selectedHotels: selectedHotels as any,
-            selectedTransfers: selectedTransfers as any,
-            selectedExtras: selectedExtras as any,
-            totalPrice,
-            isDraft: true
-        };
-
-        localStorage.setItem('package-search-draft', JSON.stringify(draft));
-        alert('Draft saved successfully!');
-    };
-
-    // Load draft on mount
-    useEffect(() => {
-        const savedDraft = localStorage.getItem('package-search-draft');
-        if (savedDraft) {
-            try {
-                const draft: PackageSearchState = JSON.parse(savedDraft);
-                // Restore state
-                setCurrentStep(draft.currentStep);
-                setSteps(draft.steps);
-                setBasicInfo(draft.basicInfo);
-                // ... restore other fields
-            } catch (error) {
-                console.error('Failed to load draft:', error);
-            }
-        }
-    }, []);
-
-    // Render current step
     const renderStep = () => {
         switch (currentStep) {
-            case 1:
-                return (
-                    <Step1_BasicInfo
-                        data={basicInfo}
-                        onUpdate={setBasicInfo}
-                        onNext={goNext}
-                    />
-                );
-            case 2:
-                return (
-                    <Step2_FlightSelection
-                        basicInfo={basicInfo}
-                        data={selectedFlights}
-                        onUpdate={setSelectedFlights}
-                        onNext={goNext}
-                        onBack={goBack}
-                    />
-                );
-            case 3:
-                return (
-                    <Step3_HotelSelection
-                        basicInfo={basicInfo}
-                        data={selectedHotels}
-                        onUpdate={setSelectedHotels}
-                        onNext={goNext}
-                        onBack={goBack}
-                    />
-                );
-            case 4:
-                return (
-                    <Step4_TransferSelection
-                        basicInfo={basicInfo}
-                        flights={selectedFlights}
-                        hotels={selectedHotels}
-                        data={selectedTransfers}
-                        onUpdate={setSelectedTransfers}
-                        onNext={goNext}
-                        onBack={goBack}
-                    />
-                );
-            case 5:
-                return (
-                    <Step5_ExtrasSelection
-                        basicInfo={basicInfo}
-                        data={selectedExtras}
-                        onUpdate={setSelectedExtras}
-                        onNext={goNext}
-                        onBack={goBack}
-                    />
-                );
-            case 6:
-                return (
-                    <Step6_ReviewConfirm
-                        basicInfo={basicInfo}
-                        flights={selectedFlights}
-                        hotels={selectedHotels}
-                        transfers={selectedTransfers}
-                        extras={selectedExtras}
-                        totalPrice={totalPrice}
-                        onBack={goBack}
-                        onConfirm={async () => {
-                            try {
-                                if (!basicInfo) return;
-
-                                const draftName = `${basicInfo.destinations.map(d => d.city).join(' / ')} - ${new Date().toLocaleDateString()}`;
-
-                                await dynamicPackageService.saveDraft({
-                                    name: draftName,
-                                    basicInfo,
-                                    flights: selectedFlights,
-                                    hotels: selectedHotels,
-                                    transfers: selectedTransfers,
-                                    extras: selectedExtras,
-                                    totalPrice,
-                                    status: 'draft'
-                                });
-
-                                // Navigate to success or created list
-                                navigate('/packages/created');
-                            } catch (error) {
-                                console.error('Error saving package:', error);
-                                navigate('/packages/created'); // Still navigate for demo, but log error
-                            }
-                        }}
-                        onEditStep={(step) => setCurrentStep(step)}
-                    />
-                );
-            default:
-                return null;
+            case 1: return <Step1_BasicInfo basicInfo={basicInfo} onUpdate={setBasicInfo} onNext={goNext} />;
+            case 2: return <Step2_FlightSelection basicInfo={basicInfo} data={selectedFlights} onUpdate={setSelectedFlights} onNext={goNext} onBack={goBack} />;
+            case 3: return <Step3_HotelSelection basicInfo={basicInfo} data={selectedHotels} onUpdate={setSelectedHotels} onNext={goNext} onBack={goBack} />;
+            case 4: return <Step4_TransferSelection basicInfo={basicInfo} flights={selectedFlights} hotels={selectedHotels} data={selectedTransfers} onUpdate={setSelectedTransfers} onNext={goNext} onBack={goBack} />;
+            case 5: return <Step5_ExtrasSelection basicInfo={basicInfo} data={selectedExtras} onUpdate={setSelectedExtras} onNext={goNext} onBack={goBack} />;
+            case 6: return <Step6_ReviewConfirm basicInfo={basicInfo} flights={selectedFlights} hotels={selectedHotels} transfers={selectedTransfers} extras={selectedExtras} totalPrice={totalPrice} onBack={goBack} onConfirm={() => navigate('/packages/created')} onEditStep={setCurrentStep} />;
+            default: return null;
         }
     };
 
     return (
-        <div className="package-search-page">
-            {/* Header */}
+        <div className="package-search-page ss-dark-theme">
+            {/* 1. PREMIUM HEADER */}
             <div className="search-header">
                 <div className="search-header-content">
                     <div className="header-left">
-                        <Map size={32} />
-                        <div>
-                            <h1>Kreiraj Dinamički Paket</h1>
-                            <p>Kombinujte letove, hotele, transfere i dodatne usluge</p>
+                        <div className="bg-indigo-600/20 p-3 rounded-2xl border border-indigo-500/30">
+                            <Sparkles size={32} className="text-indigo-400" />
                         </div>
-                    </div>
-                    <div className="header-right">
-                        <button
-                            className={`mode-toggle ${isAIMode ? 'active' : ''}`}
-                            onClick={() => setIsAIMode(!isAIMode)}
-                        >
-                            <Sparkles size={18} />
-                            AI Asistent
-                        </button>
+                        <div>
+                            <h1 className="text-2xl font-black text-white uppercase tracking-tight">Dynamic Package Builder</h1>
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Smart Search AI Experience</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Progress Steps */}
-            <div className="wizard-progress">
-                <div className="progress-steps">
+            {/* 2. PROGRESS STEPS (SMART STYLE) */}
+            <div className="wizard-progress ss-glass-bar">
+                <div className="progress-steps-ss">
                     {steps.map((step, index) => (
-                        <div
-                            key={step.id}
-                            className={`progress-step ${step.isActive ? 'active' : ''} ${step.isComplete ? 'complete' : ''}`}
-                            onClick={() => goToStep(step.id)}
-                        >
-                            <div className="step-number">
-                                {step.isComplete ? <Check size={16} /> : step.id}
+                        <div key={step.id} className={`p-step-ss ${currentStep === step.id ? 'active' : ''} ${step.isComplete ? 'complete' : ''}`} onClick={() => setCurrentStep(step.id)}>
+                            <div className="s-num-ss">{step.isComplete ? <Check size={14} /> : step.id}</div>
+                            <div className="s-info-ss">
+                                <div className="s-title-ss">{step.title}</div>
+                                <div className="s-desc-ss">{step.description}</div>
                             </div>
-                            <div className="step-info">
-                                <div className="step-title">{step.title}</div>
-                                <div className="step-desc">{step.description}</div>
-                            </div>
-                            {index < steps.length - 1 && (
-                                <div className="step-connector"></div>
-                            )}
                         </div>
                     ))}
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="search-content">
-                <div className="step-container">
-                    {renderStep()}
-                </div>
-
-                {/* Sticky Summary Sidebar */}
-                <div className="package-summary-sidebar">
-                    <h3>Sažetak Paketa</h3>
-
-                    <div className="summary-section">
-                        <div className="summary-item">
-                            <Plane size={18} />
-                            <span>Letovi</span>
-                            <span className="summary-count">
-                                {selectedFlights ? '✓' : '0'}
-                            </span>
-                            <span className="summary-price">
-                                {selectedFlights ? `${selectedFlights.totalPrice.toFixed(2)} €` : '0.00 €'}
-                            </span>
-                        </div>
-
-                        <div className="summary-item">
-                            <Hotel size={18} />
-                            <span>Hoteli</span>
-                            <span className="summary-count">{selectedHotels.length}</span>
-                            <span className="summary-price">
-                                {selectedHotels.reduce((sum, h) => sum + h.totalPrice, 0).toFixed(2)} €
-                            </span>
-                        </div>
-
-                        <div className="summary-item">
-                            <Car size={18} />
-                            <span>Transferi</span>
-                            <span className="summary-count">{selectedTransfers.length}</span>
-                            <span className="summary-price">
-                                {selectedTransfers.reduce((sum, t) => sum + t.totalPrice, 0).toFixed(2)} €
-                            </span>
-                        </div>
-
-                        <div className="summary-item">
-                            <Ticket size={18} />
-                            <span>Dodatne Usluge</span>
-                            <span className="summary-count">{selectedExtras.length}</span>
-                            <span className="summary-price">
-                                {selectedExtras.reduce((sum, e) => sum + e.totalPrice, 0).toFixed(2)} €
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="summary-total">
-                        <span>UKUPNO:</span>
-                        <span className="total-price">{totalPrice.toFixed(2)} €</span>
-                    </div>
-
-                    {basicInfo && (
-                        <div className="summary-per-person">
-                            Po osobi: {(totalPrice / (basicInfo.travelers.adults + basicInfo.travelers.children)).toFixed(2)} €
-                        </div>
-                    )}
-
-                    <button className="save-draft-btn" onClick={saveDraft}>
-                        <Save size={18} />
-                        Sačuvaj Draft
-                    </button>
-                </div>
+            {/* 3. MAIN AREA */}
+            <div className="search-content py-12 px-8">
+                {renderStep()}
             </div>
 
-            {/* Navigation Footer */}
-            <div className="wizard-navigation">
-                <button
-                    className="nav-btn secondary"
-                    onClick={goBack}
-                    disabled={currentStep === 1}
-                >
-                    <ChevronLeft size={18} />
-                    Nazad
+            {/* 4. FLOATING FOOTER NAV */}
+            <div className="wizard-navigation ss-floating-nav">
+                <button className="nav-btn secondary ss-glow-muted" onClick={goBack} disabled={currentStep === 1}>
+                    <ChevronLeft size={20} /> NAZAD
                 </button>
 
-                <div className="nav-right-actions">
-                    <div className="nav-info">
-                        Korak {currentStep} od {steps.length}
+                <div className="flex items-center gap-10">
+                    <div className="text-right hidden md:block">
+                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Trenutni Total</div>
+                        <div className="text-2xl font-black text-indigo-400 tracking-tighter">{totalPrice.toFixed(2)}€</div>
                     </div>
-
                     {currentStep < 6 ? (
-                        <button
-                            className="nav-btn primary"
-                            onClick={goNext}
-                        >
-                            Sledeći Korak
-                            <ChevronRight size={18} />
+                        <button className="nav-btn primary ss-glow-indigo min-w-[200px]" onClick={goNext}>
+                            SLEDEĆI KORAK <ChevronRight size={20} />
                         </button>
                     ) : (
-                        <button
-                            className="nav-btn success"
-                            onClick={() => navigate('/packages/created')}
-                        >
-                            <Check size={18} />
-                            Kreiraj Paket
+                        <button className="nav-btn primary ss-glow-indigo min-w-[200px]" onClick={() => navigate('/packages/created')}>
+                            <Check size={20} /> KREIRAJ PAKET
                         </button>
                     )}
                 </div>

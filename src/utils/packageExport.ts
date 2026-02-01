@@ -1,5 +1,5 @@
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import type {
     UnifiedFlightOffer,
     HotelSelectionData,
@@ -26,7 +26,7 @@ export interface ExportData {
  * Generate PDF Report
  */
 export const generatePackagePDF = (data: ExportData) => {
-    const doc = new jsPDF() as any;
+    const doc = new jsPDF();
     const { basicInfo, flights, hotels, transfers, extras, totalPrice } = data;
 
     // Header
@@ -51,7 +51,7 @@ export const generatePackagePDF = (data: ExportData) => {
         ['Ukupna Cena:', `${totalPrice.toFixed(2)} €`]
     ];
 
-    (doc as any).autoTable({
+    autoTable(doc, {
         startY: 50,
         body: infoRows,
         theme: 'plain',
@@ -59,7 +59,7 @@ export const generatePackagePDF = (data: ExportData) => {
         columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } }
     });
 
-    let currentY = (doc as any).lastAutoTable.finalY + 15;
+    let currentY = doc.lastAutoTable?.finalY ?? 65;
 
     // Flights
     if (flights) {
@@ -84,13 +84,13 @@ export const generatePackagePDF = (data: ExportData) => {
             });
         }
 
-        (doc as any).autoTable({
+        autoTable(doc, {
             startY: currentY + 5,
             head: [['Tip', 'Od', 'Do', 'Datum']],
             body: flightRows,
             headStyles: { fillColor: [102, 126, 234] }
         });
-        currentY = (doc as any).lastAutoTable.finalY + 15;
+        currentY = doc.lastAutoTable?.finalY ?? currentY + 15;
     }
 
     // Hotels
@@ -107,13 +107,13 @@ export const generatePackagePDF = (data: ExportData) => {
             `${h.totalPrice.toFixed(2)} €`
         ]);
 
-        (doc as any).autoTable({
+        autoTable(doc, {
             startY: currentY + 5,
             head: [['Hotel', 'Grad', 'Period', 'Noći', 'Usluga', 'Cena']],
             body: hotelRows,
             headStyles: { fillColor: [102, 126, 234] }
         });
-        currentY = (doc as any).lastAutoTable.finalY + 15;
+        currentY = doc.lastAutoTable?.finalY ?? currentY + 15;
     }
 
     // Transfers & Extras
@@ -129,7 +129,7 @@ export const generatePackagePDF = (data: ExportData) => {
             otherRows.push(['Usluga', e.extra.name, e.date, `${e.totalPrice.toFixed(2)} €`]);
         });
 
-        (doc as any).autoTable({
+        autoTable(doc, {
             startY: currentY + 5,
             head: [['Tip', 'Opis', 'Datum', 'Cena']],
             body: otherRows,

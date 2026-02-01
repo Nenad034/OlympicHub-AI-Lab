@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { X, ShieldCheck } from 'lucide-react';
 import { GuestForm } from './GuestForm';
 import { BookingSummary } from './BookingSummary';
 import type { BookingData, GenericGuest, BookingState } from '../../types/booking.types';
@@ -42,6 +42,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         validationErrors: {}
     });
 
+    const [currentStep, setCurrentStep] = useState<'details' | 'confirmation'>('details');
+
     // Initialize additional guests when modal opens
     useEffect(() => {
         if (isOpen && bookingData) {
@@ -82,14 +84,22 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     };
 
     const handleSubmit = async () => {
-        const errors = validateAllGuests(state.mainGuest, state.additionalGuests, bookingData.children);
-        if (hasValidationErrors(errors)) {
-            setState(prev => ({ ...prev, validationErrors: errors }));
-            return;
-        }
+        if (currentStep === 'details') {
+            const errors = validateAllGuests(state.mainGuest, state.additionalGuests, bookingData.children);
+            if (hasValidationErrors(errors)) {
+                setState(prev => ({ ...prev, validationErrors: errors }));
+                return;
+            }
 
-        if (!state.termsAccepted) {
-            alert('Morate prihvatiti uslove rezervacije');
+            if (!state.termsAccepted) {
+                alert('Morate prihvatiti uslove rezervacije');
+                return;
+            }
+
+            setCurrentStep('confirmation');
+            // Scroll to top of modal content
+            const content = document.querySelector('.booking-modal-content');
+            if (content) content.scrollTop = 0;
             return;
         }
 
@@ -120,7 +130,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     children: bookingData.children
                 },
                 prefilledGuests: guests,
-                specialRequests: state.specialRequests
+                specialRequests: state.specialRequests,
+                confirmationText: 'Putnik je saglasan sa uslovima otkaza i promene aranžmana kao i sa Opštim Uslovima agencije.',
+                confirmationTimestamp: new Date().toLocaleString('sr-RS')
             };
 
             // Save to localStorage for the new tab to pick up
@@ -153,56 +165,122 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 </div>
 
                 <div className="booking-modal-content">
-                    <BookingSummary
-                        bookingData={bookingData}
-                        guests={[state.mainGuest, ...state.additionalGuests]}
-                        specialRequests={state.specialRequests}
-                    />
+                    {currentStep === 'details' ? (
+                        <>
+                            <BookingSummary
+                                bookingData={bookingData}
+                                guests={[state.mainGuest, ...state.additionalGuests]}
+                                specialRequests={state.specialRequests}
+                            />
 
-                    <GuestForm
-                        guestNumber={1}
-                        isMainGuest={true}
-                        isChild={false}
-                        guestData={state.mainGuest}
-                        onChange={handleMainGuestChange}
-                        errors={state.validationErrors[0]}
-                    />
+                            <GuestForm
+                                guestNumber={1}
+                                isMainGuest={true}
+                                isChild={false}
+                                guestData={state.mainGuest}
+                                onChange={handleMainGuestChange}
+                                errors={state.validationErrors[0]}
+                            />
 
-                    {state.additionalGuests.map((guest, index) => (
-                        <GuestForm
-                            key={index}
-                            guestNumber={index + 2}
-                            isMainGuest={false}
-                            isChild={index + 2 > bookingData.adults}
-                            guestData={guest}
-                            onChange={(data) => handleAdditionalGuestChange(index, data)}
-                            errors={state.validationErrors[index + 1]}
-                        />
-                    ))}
+                            {state.additionalGuests.map((guest, index) => (
+                                <GuestForm
+                                    key={index}
+                                    guestNumber={index + 2}
+                                    isMainGuest={false}
+                                    isChild={index + 2 > bookingData.adults}
+                                    guestData={guest}
+                                    onChange={(data) => handleAdditionalGuestChange(index, data)}
+                                    errors={state.validationErrors[index + 1]}
+                                />
+                            ))}
 
-                    <div className="special-requests-section">
-                        <label>📝 Napomene (opciono)</label>
-                        <textarea
-                            value={state.specialRequests}
-                            onChange={(e) => setState({ ...state, specialRequests: e.target.value })}
-                            placeholder="Dodatni zahtevi..."
-                            rows={3}
-                        />
-                    </div>
+                            <div className="special-requests-section">
+                                <label>📝 Napomene (opciono)</label>
+                                <textarea
+                                    value={state.specialRequests}
+                                    onChange={(e) => setState({ ...state, specialRequests: e.target.value })}
+                                    placeholder="Dodatni zahtevi..."
+                                    rows={3}
+                                />
+                            </div>
 
-                    <div className="terms-section">
-                        <label className="terms-checkbox">
-                            <input type="checkbox" checked={state.termsAccepted} onChange={(e) => setState({ ...state, termsAccepted: e.target.checked })} />
-                            <span>Prihvatam uslove rezervacije i politiku privatnosti</span>
-                        </label>
-                    </div>
+                            <div className="terms-section">
+                                <label className="terms-checkbox">
+                                    <input type="checkbox" checked={state.termsAccepted} onChange={(e) => setState({ ...state, termsAccepted: e.target.checked })} />
+                                    <span>Prihvatam uslove rezervacije i politiku privatnosti</span>
+                                </label>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="confirmation-step animate-fade-in">
+                            <div className="ferrari-confirmation-card">
+                                <div className="cf-header">
+                                    <ShieldCheck size={32} className="shield-icon" />
+                                    <h3>Finalna Potvrda Rezervacije</h3>
+                                </div>
+
+                                <p className="cf-main-text">
+                                    Potvrđujem da želim da izvršim rezervaciju i saglasan sam sa uslovima otkaza i promene putovanja
+                                    kao i <strong>Opštim uslovima agencije Olympic Travel</strong>.
+                                </p>
+
+                                <div className="cancellation-policy-box">
+                                    <h4>POLITIKA OTKAZA I PROMENE:</h4>
+                                    <table className="policy-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Period otkazivanja</th>
+                                                <th>Trošak (od ukupne cene)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>30 ili više dana pre puta</td>
+                                                <td>10%</td>
+                                            </tr>
+                                            <tr>
+                                                <td>29 - 21 dan pre puta</td>
+                                                <td>20%</td>
+                                            </tr>
+                                            <tr>
+                                                <td>20 - 15 dana pre puta</td>
+                                                <td>30%</td>
+                                            </tr>
+                                            <tr>
+                                                <td>14 - 8 dana pre puta</td>
+                                                <td>50%</td>
+                                            </tr>
+                                            <tr>
+                                                <td>7 - 0 dana pre puta</td>
+                                                <td>100%</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <p className="policy-note">* Promena datuma ili imena putnika se tretira kao otkaz rezervacije ukoliko je do polaska ostalo manje od 30 dana.</p>
+                                </div>
+
+                                <a href="https://www.olympictravel.rs/opsti-uslovi-putovanja" target="_blank" rel="noopener noreferrer" className="terms-link-v4">
+                                    Pročitajte kompletne Opšte Uslove Putovanja →
+                                </a>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="booking-modal-footer">
-                    <button className="btn-cancel" onClick={onClose}>Otkaži</button>
-                    <button className="btn-submit" onClick={handleSubmit} disabled={state.isSubmitting}>
-                        {state.isSubmitting ? 'Slanje...' : 'Potvrdi i idi u Dosije'}
-                    </button>
+                    {currentStep === 'details' ? (
+                        <>
+                            <button className="btn-cancel" onClick={onClose}>Otkaži</button>
+                            <button className="btn-submit" onClick={handleSubmit}>Nastavi na Potvrdu</button>
+                        </>
+                    ) : (
+                        <>
+                            <button className="btn-cancel" onClick={() => setCurrentStep('details')}>Vrati se na unos</button>
+                            <button className="btn-submit btn-confirm-final" onClick={handleSubmit} disabled={state.isSubmitting}>
+                                {state.isSubmitting ? 'Procesuiram...' : 'Potvrđujem Rezervaciju'}
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

@@ -1391,7 +1391,7 @@ const GlobalHubSearch: React.FC = () => {
                             <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`}>
                                 {filteredResults.map(hotel => (
                                     <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.source.toLowerCase().replace(/\s+/g, '-')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
-                                        <div className="hotel-card-image">
+                                        <a href={`/hotel-view/${hotel.id}`} target="_blank" rel="noopener noreferrer" className="hotel-card-image">
                                             <img src={hotel.image} alt={hotel.name} />
                                             {!isSubagent && (
                                                 <div className="source-badge">
@@ -1415,11 +1415,13 @@ const GlobalHubSearch: React.FC = () => {
                                                     ))}
                                                 </div>
                                             </div>
-                                        </div>
+                                        </a>
                                         <div className="hotel-card-content">
                                             <div className="hotel-info-text">
                                                 <div className="hotel-title-row">
-                                                    <h3>{hotel.name}</h3>
+                                                    <a href={`/hotel-view/${hotel.id}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                                        <h3 style={{ margin: 0 }}>{hotel.name}</h3>
+                                                    </a>
                                                     <div className="hotel-location-tag">
                                                         <MapPin size={14} />
                                                         <span>{hotel.location}</span>
@@ -1496,7 +1498,7 @@ const GlobalHubSearch: React.FC = () => {
                                                     className="view-more-btn"
                                                     onClick={() => setExpandedHotel(hotel)}
                                                 >
-                                                    Detalji <ArrowRight size={16} />
+                                                    Detalji ponude <ArrowRight size={16} />
                                                 </button>
                                             </div>
                                         </div>

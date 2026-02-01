@@ -43,6 +43,7 @@ export interface DestinationInput {
     checkIn: string;  // ISO date
     checkOut: string; // ISO date
     nights: number;
+    travelers: TravelerCount;
     includedGuide?: {
         title: string;
         desc: string;

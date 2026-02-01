@@ -45,7 +45,7 @@
 }
 
 .form-field label {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     color: #cbd5e1;
     display: flex;
@@ -63,8 +63,8 @@
     background: rgba(30, 30, 46, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 14px;
+    padding: 14px 16px;
+    font-size: 1rem;
     color: #f8fafc;
     transition: all 0.2s ease;
     font-family: 'Inter', sans-serif;

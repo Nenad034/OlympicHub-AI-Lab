@@ -110,7 +110,7 @@ export const rateLimiter = new RateLimiter();
 // Default configurations (conservative, can be adjusted based on provider SLA)
 rateLimiter.registerLimit({
     identifier: 'solvex',
-    maxRequests: 10,        // 10 requests per minute (conservative)
+    maxRequests: 20,        // 20 requests per minute
     windowMs: 60 * 1000     // 1 minute
 });
 

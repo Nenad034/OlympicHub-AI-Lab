@@ -292,26 +292,7 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
 
     return (
         <AnimatePresence>
-            {!isOpen ? (
-                <motion.div
-                    key="chat-bubble"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={onOpen}
-                    style={{
-                        position: 'fixed', bottom: '30px', right: '30px',
-                        width: '64px', height: '64px', borderRadius: '24px',
-                        background: 'var(--gradient-blue)', color: '#fff',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', zIndex: 99999, boxShadow: '0 10px 30px rgba(0,92,197,0.4)',
-                        border: '2px solid rgba(255,255,255,0.2)'
-                    }}
-                >
-                    <GeometricBrain size={32} color="#FFD700" />
-                </motion.div>
-            ) : (
+            {isOpen && (
                 <motion.div
                     key="chat-window"
                     drag dragMomentum={false}
@@ -319,7 +300,7 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 100 }}
                     style={{
-                        position: 'fixed', bottom: '30px', right: '30px',
+                        position: 'fixed', bottom: '30px', left: '30px',
                         width: `${dimensions.width}px`, height: `${dimensions.height}px`,
                         background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '40px',
                         boxShadow: '0 30px 60px rgba(0,0,0,0.4)', display: 'flex', flexDirection: 'column',

@@ -1,559 +1,387 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Calendar, Users, Euro, Plus, X, Sparkles } from 'lucide-react';
-import type { BasicInfoData, DestinationInput, TravelerCount } from '../../../types/packageSearch.types';
+import {
+    MapPin, Calendar, Users, Star,
+    Settings2, Search, Plus, X,
+    Minus, ChevronDown, Check
+} from 'lucide-react';
+import { ModernCalendar } from '../../../components/ModernCalendar';
+import { formatDate } from '../../../utils/dateUtils';
+import './SmartSearchV2.css';
+import './Step1Additions.css';
+import type {
+    BasicInfoData,
+    DestinationInput,
+    TravelerCount
+} from '../../../types/packageSearch.types';
 
 interface Step1Props {
-    data: BasicInfoData | null;
+    basicInfo: BasicInfoData | null;
     onUpdate: (data: BasicInfoData) => void;
     onNext: () => void;
 }
 
-// --- MOCK AI KNOWLEDGE BASE ---
-const DESTINATION_GUIDES: Record<string, { title: string, desc: string, tip: string, image: string }> = {
-    'tasos': {
-        title: 'Tasos: Smaragdno Ostrvo',
-        desc: 'Izgubljeni biser Egeja gde se borove šume spuštaju direktno u tirkizno more. Ostrvo mermera, meda i netaknute prirode koje nudi savršen balans između avanture i potpunog mira.',
-        tip: 'Posetite Giola prirodni bazen rano ujutru pre gužve, a zatim ručajte u selu Theologos (probajte jaretinu!).',
-        image: 'https://images.unsplash.com/photo-1596316891636-f09b55589688?q=80&w=2070&auto=format&fit=crop'
-    },
-    'milano': {
-        title: 'Milano: Prestonica Stila',
-        desc: 'Više od mode – Milano je grad gde se istorija susreće sa futurizmom. Od gotičke katedrale Duomo do modernih nebodera Porta Nuova dizajnerskog distrikta.',
-        tip: 'Preskočite redove za Duomo kupovinom "Fast Track" karte online. Obavezno idite na aperitivo u Navigli distriktu posle 18h.',
-        image: 'https://images.unsplash.com/photo-1513581166391-887a96ddeafd?q=80&w=2070&auto=format&fit=crop'
-    },
-    'santorini': {
-        title: 'Santorini: Vulkanska Magija',
-        desc: 'Najfotogeničnije ostrvo sveta. Bele kuće sa plavim kupolama na liticama Kaldera kratera nude prizore koji oduzimaju dah, posebno tokom zalaska sunca.',
-        tip: 'Izbegnite gužvu u Oiji tokom zalaska sunca – idite u Imerovigli ("Skaros Rock") za podjednako lep, ali mnogo privatniji pogled.',
-        image: 'https://images.unsplash.com/photo-1613395877344-13d4c79e4284?q=80&w=2070&auto=format&fit=crop'
-    },
-    'pariz': {
-        title: 'Pariz: Grad Svetlosti',
-        desc: 'Večna inspiracija umetnika i ljubavnika. Grad muzeja, bulevara, kafea i neodoljivog šarma koji se mora doživeti bar jednom (ili sto puta) u životu.',
-        tip: 'Umesto penjanja na Ajfelov toranj, popnite se na Trijumfalnu kapiju – odatle imate najbolji pogled NA Ajfelov toranj.',
-        image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=2073&auto=format&fit=crop'
-    },
-    'rim': {
-        title: 'Rim: Večni Grad',
-        desc: 'Muzej na otvorenom. Svaki kamen priča priču staru hiljadama godina. Haotičan, strastven i apsolutno prelep u svojoj nesavršenosti.',
-        tip: 'Kupite kartu za Koloseum koja uključuje i Palatin i Rimski forum. Najbolja pasta Carbonara nije u turističkom centru, već u delu Trastevere.',
-        image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=1996&auto=format&fit=crop'
-    }
-};
+const CATEGORY_OPTIONS = ["Sve kategorije", "5 Zvezdica", "4 Zvezdice", "3 Zvezdice"];
+const SERVICE_OPTIONS = ["Sve usluge", "Najam (RO)", "Noćenje/Doručak (BB)", "Polupansion (HB)", "Pun pansion (FB)", "All Inclusive (AI)"];
 
-const Step1_BasicInfo: React.FC<Step1Props> = ({ data, onUpdate, onNext }) => {
-    // ... (existing state code) ...
+const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) => {
+    // Local State
     const [destinations, setDestinations] = useState<DestinationInput[]>(
-        data?.destinations || [{
-            id: '1',
-            city: '',
-            country: '',
-            countryCode: '',
-            airportCode: '',
-            checkIn: '',
-            checkOut: '',
-            nights: 0
-        }]
-    );
-    const [travelers, setTravelers] = useState<TravelerCount>(
-        data?.travelers || {
-            adults: 2,
-            children: 0,
-            childrenAges: []
-        }
-    );
-    const [budget, setBudget] = useState<number | undefined>(data?.budget);
-
-    // --- AI GUIDE STATE ---
-    // Stores array of { index, guideData } for matched cities
-    const [availableGuides, setAvailableGuides] = useState<Array<{ index: number, city: string, data: any }>>([]);
-    const [selectedGuideIndex, setSelectedGuideIndex] = useState<number>(0); // Index within availableGuides array
-    const [showGuideModal, setShowGuideModal] = useState(false);
-
-    // Check for guide availability when ANY destination changes
-    useEffect(() => {
-        const matches: Array<{ index: number, city: string, data: any }> = [];
-
-        destinations.forEach((dest, idx) => {
-            const cityKey = dest.city?.toLowerCase().trim();
-            if (cityKey && DESTINATION_GUIDES[cityKey]) {
-                matches.push({
-                    index: idx,
-                    city: dest.city,
-                    data: DESTINATION_GUIDES[cityKey]
-                });
-            }
-        });
-
-        setAvailableGuides(matches);
-        // Reset selection if out of bounds (though typically we want to keep current selection if possible, but for simplicity reset to 0 or clamp)
-        if (selectedGuideIndex >= matches.length) {
-            setSelectedGuideIndex(0);
-        }
-    }, [destinations]); // Re-run whenever destinations change
-
-    const currentGuide = availableGuides[selectedGuideIndex];
-
-    // ... (existing helper functions: calculateNights, updateDestination, etc.) ...
-
-    // Calculate nights when dates change
-    const calculateNights = (checkIn: string, checkOut: string): number => {
-        if (!checkIn || !checkOut) return 0;
-        const start = new Date(checkIn);
-        const end = new Date(checkOut);
-        const diff = end.getTime() - start.getTime();
-        return Math.ceil(diff / (1000 * 60 * 60 * 24));
-    };
-
-    // Update destination
-    const updateDestination = (index: number, field: keyof DestinationInput, value: any) => {
-        const updated = [...destinations];
-        updated[index] = { ...updated[index], [field]: value };
-
-        // Auto-calculate nights if dates changed
-        if (field === 'checkIn' || field === 'checkOut') {
-            updated[index].nights = calculateNights(updated[index].checkIn, updated[index].checkOut);
-        }
-
-        setDestinations(updated);
-    };
-
-    // Add destination
-    const addDestination = () => {
-        setDestinations([
-            ...destinations,
+        basicInfo?.destinations.map(d => ({
+            ...d,
+            travelers: d.travelers || { adults: 2, children: 0, childrenAges: [] }
+        })) || [
             {
-                id: String(destinations.length + 1),
+                id: '1',
                 city: '',
                 country: '',
                 countryCode: '',
                 airportCode: '',
                 checkIn: '',
                 checkOut: '',
-                nights: 0
+                nights: 0,
+                travelers: { adults: 2, children: 0, childrenAges: [] }
             }
-        ]);
-    };
+        ]
+    );
 
-    // Remove destination
-    const removeDestination = (index: number) => {
-        if (destinations.length > 1) {
-            setDestinations(destinations.filter((_, i) => i !== index));
-        }
-    };
+    const [selectedCategory, setSelectedCategory] = useState(CATEGORY_OPTIONS[0]);
+    const [selectedService, setSelectedService] = useState(SERVICE_OPTIONS[0]);
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+    const [showServiceDropdown, setShowServiceDropdown] = useState(false);
+    const [activeCalendar, setActiveCalendar] = useState<{ index: number } | null>(null);
 
-    // Update travelers
-    const updateTravelers = (field: keyof TravelerCount, value: number) => {
-        const updated = { ...travelers, [field]: value };
-
-        // Update children ages array
-        if (field === 'children') {
-            updated.childrenAges = Array(value).fill(0);
-        }
-
-        setTravelers(updated);
-    };
-
-    // Effect to update parent when state changes
+    // Sync with parent
     useEffect(() => {
-        const startDate = destinations[0]?.checkIn || '';
-        const endDate = destinations[destinations.length - 1]?.checkOut || '';
-        const totalDays = calculateNights(startDate, endDate);
-
-        const basicInfo: BasicInfoData = {
+        onUpdate({
             destinations,
-            travelers,
-            budget,
-            currency: 'EUR',
-            startDate,
-            endDate,
-            totalDays
+            travelers: destinations[0]?.travelers || { adults: 2, children: 0, childrenAges: [] }, // Use first as primary for legacy compat
+            budget: basicInfo?.budget,
+            currency: basicInfo?.currency || 'EUR',
+            startDate: destinations[0]?.checkIn || '',
+            endDate: destinations[destinations.length - 1]?.checkOut || '',
+            totalDays: destinations.reduce((sum, d) => sum + (d.nights || 0), 0)
+        });
+    }, [destinations]);
+
+    const addDestination = () => {
+        if (destinations.length >= 3) return;
+        const lastDest = destinations[destinations.length - 1];
+        const newDest: DestinationInput = {
+            id: String(Date.now()),
+            city: '',
+            country: '',
+            countryCode: '',
+            airportCode: '',
+            checkIn: lastDest?.checkOut || '',
+            checkOut: '',
+            nights: 0,
+            travelers: { ...lastDest.travelers } // Inherit previous destination's travelers
         };
-        onUpdate(basicInfo);
-    }, [destinations, travelers, budget]);
+        setDestinations([...destinations, newDest]);
+    };
+
+    const removeDestination = (idx: number) => {
+        if (destinations.length <= 1) return;
+        setDestinations(destinations.filter((_, i) => i !== idx));
+    };
+
+    const updateTravelersPerDest = (idx: number, field: 'adults' | 'children', val: number) => {
+        const updated = [...destinations];
+        const dest = updated[idx];
+        const currentCount = dest.travelers;
+        const newVal = Math.max(field === 'adults' ? 1 : 0, val);
+
+        const newTravelers = { ...currentCount, [field]: newVal };
+
+        if (field === 'children') {
+            const currentAges = Array.isArray(currentCount.childrenAges) ? currentCount.childrenAges : [];
+            if (newVal > currentCount.children) {
+                newTravelers.childrenAges = [...currentAges, ...Array(newVal - currentCount.children).fill(0)];
+            } else {
+                newTravelers.childrenAges = currentAges.slice(0, newVal);
+            }
+        }
+
+        updated[idx] = { ...dest, travelers: newTravelers };
+        setDestinations(updated);
+    };
+
+    const updateChildAgePerDest = (destIdx: number, childIdx: number, age: number) => {
+        const updated = [...destinations];
+        const dest = updated[destIdx];
+        const ages = dest.travelers.childrenAges ? [...dest.travelers.childrenAges] : [];
+        ages[childIdx] = age;
+        updated[destIdx] = { ...dest, travelers: { ...dest.travelers, childrenAges: ages } };
+        setDestinations(updated);
+    };
+
+    const updateDestination = (idx: number, field: keyof DestinationInput, value: any) => {
+        const updated = [...destinations];
+        updated[idx] = { ...updated[idx], [field]: value };
+        setDestinations(updated);
+    };
+
+    const handleDateChange = (idx: number, start: string, end: string) => {
+        const updated = [...destinations];
+        updated[idx].checkIn = start;
+        updated[idx].checkOut = end;
+
+        if (start && end) {
+            const s = new Date(start);
+            const e = new Date(end);
+            const nights = Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24));
+            updated[idx].nights = nights;
+        }
+
+        setDestinations(updated);
+        setActiveCalendar(null);
+    };
 
     return (
-        <div className="step-content" style={{ position: 'relative' }}>
-            <div className="step-header">
-                <h2>Osnovne Informacije</h2>
-                <p>Unesite destinacije, datume i broj putnika</p>
-            </div>
+        <div className="step-content">
+            <div className="search-card-frame animate-fade-in">
 
-            {/* AI GUIDE TOAST - MULTI SUPPORT */}
-            {availableGuides.length > 0 && !showGuideModal && (
-                <div style={{
-                    position: 'absolute',
-                    top: '20px',
-                    right: '20px',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    borderRadius: '12px',
-                    padding: '12px 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    boxShadow: '0 10px 25px rgba(118, 75, 162, 0.4)',
-                    zIndex: 10,
-                    animation: 'slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    maxWidth: '300px',
-                    cursor: 'pointer'
-                }} onClick={() => setShowGuideModal(true)}>
-                    <div style={{
-                        background: 'rgba(255,255,255,0.2)',
-                        borderRadius: '50%',
-                        width: '32px', height: '32px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <Sparkles size={16} color="white" />
-                    </div>
-                    <div>
-                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', fontWeight: 600, textTransform: 'uppercase' }}>
-                            {availableGuides.length > 1 ? 'AI ASISTENT' : 'AI VODIČ DOSTUPAN'}
-                        </div>
-                        <div style={{ fontSize: '13px', color: 'white', fontWeight: 700 }}>
-                            {availableGuides.length > 1
-                                ? `Saznajte više o ${availableGuides.length} destinacije`
-                                : `Saznajte više o ${availableGuides[0].city}`}
-                        </div>
-                    </div>
-                    <X size={14} color="rgba(255,255,255,0.6)" style={{ marginLeft: 'auto' }}
-                        onClick={(e) => { e.stopPropagation(); setAvailableGuides([]); }} />
-                </div>
-            )}
-
-            {/* AI GUIDE MODAL - MULTI DESTINATION */}
-            {showGuideModal && currentGuide && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.8)',
-                    zIndex: 1000,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    backdropFilter: 'blur(8px)'
-                }} onClick={() => setShowGuideModal(false)}>
-
-                    <div style={{
-                        width: '700px',
-                        background: '#1e293b',
-                        borderRadius: '24px',
-                        overflow: 'hidden',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        animation: 'scaleIn 0.3s ease-out',
-                        display: 'flex',
-                        height: '500px'
-                    }} onClick={e => e.stopPropagation()}>
-
-                        {/* LEFT SIDEBAR - NAVIGATION */}
-                        <div style={{
-                            width: '200px',
-                            background: '#0f172a',
-                            borderRight: '1px solid rgba(255,255,255,0.1)',
-                            padding: '20px',
-                            display: 'flex', flexDirection: 'column', gap: '8px'
-                        }}>
-                            <div style={{ fontSize: '12px', fontWeight: 700, color: '#94a3b8', marginBottom: '12px', textTransform: 'uppercase' }}>
-                                Dostupni Vodiči
-                            </div>
-                            {availableGuides.map((g, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => setSelectedGuideIndex(i)}
-                                    style={{
-                                        textAlign: 'left',
-                                        background: i === selectedGuideIndex ? '#334155' : 'transparent',
-                                        color: i === selectedGuideIndex ? 'white' : '#94a3b8',
-                                        border: 'none',
-                                        padding: '10px 12px',
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        fontWeight: 600,
-                                        fontSize: '13px',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-                                    }}
-                                >
-                                    {g.city}
-                                    {destinations[g.index].includedGuide && <Sparkles size={10} color="#10b981" />}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* RIGHT SIDE - CONTENT */}
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-                            {/* Image Header */}
-                            <div style={{
-                                height: '180px',
-                                background: `url(${currentGuide.data.image}) center/cover no-repeat`,
-                                position: 'relative',
-                                flexShrink: 0
-                            }}>
-                                <div style={{
-                                    position: 'absolute', inset: 0,
-                                    background: 'linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(30,41,59,1))'
-                                }}></div>
-                                <button style={{
-                                    position: 'absolute', top: '15px', right: '15px',
-                                    background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white',
-                                    borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                }} onClick={() => setShowGuideModal(false)}>
-                                    <X size={18} />
-                                </button>
-                                <div style={{
-                                    position: 'absolute', bottom: '20px', left: '24px'
-                                }}>
-                                    <div style={{
-                                        display: 'flex', alignItems: 'center', gap: '6px',
-                                        marginBottom: '6px', color: '#a78bfa', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase'
-                                    }}>
-                                        <Sparkles size={12} /> Olympic AI Experience
-                                    </div>
-                                    <h3 style={{ fontSize: '22px', fontWeight: 800, color: 'white', margin: 0 }}>{currentGuide.data.title}</h3>
-                                </div>
+                {/* MULTI-DESTINATION ROWS */}
+                <div className="space-y-4 mb-8">
+                    {destinations.map((dest, idx) => (
+                        <div key={dest.id} className="destination-row-ss">
+                            <div className="destination-header-ss">
+                                <div className="destination-number-badge">{idx + 1}</div>
+                                <h3 className="text-indigo-300 font-extrabold text-xs uppercase tracking-[2px]">
+                                    Destinacija {idx + 1}
+                                </h3>
+                                {destinations.length > 1 && (
+                                    <button
+                                        className="ml-auto w-8 h-8 rounded-full flex items-center justify-center bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all duration-300"
+                                        onClick={() => removeDestination(idx)}
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
                             </div>
 
-                            {/* Content */}
-                            <div style={{ padding: '24px', flex: 1 }}>
-                                <p style={{ fontSize: '14px', lineHeight: '1.6', color: '#cbd5e1', marginBottom: '20px' }}>
-                                    {currentGuide.data.desc}
-                                </p>
-
-                                <div style={{
-                                    background: 'rgba(124, 58, 237, 0.1)',
-                                    borderLeft: '4px solid #7c3aed',
-                                    padding: '12px 16px',
-                                    borderRadius: '0 8px 8px 0',
-                                    marginBottom: '20px'
-                                }}>
-                                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', marginBottom: '4px' }}>
-                                        EXPERT PRO TIP
-                                    </div>
-                                    <p style={{ fontSize: '13px', color: 'white', margin: 0, fontStyle: 'italic' }}>
-                                        "{currentGuide.data.tip}"
-                                    </p>
-                                </div>
-
-                                {/* INCLUDE IN OFFER OPTION - FOR CURRENT DESTINATION */}
-                                <div style={{
-                                    marginTop: 'auto',
-                                    padding: '12px 16px',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    borderRadius: '12px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '12px',
-                                    border: destinations[currentGuide.index].includedGuide ? '1px solid #10b981' : '1px solid rgba(255,255,255,0.1)'
-                                }}>
+                            <div className="destination-grid-ss">
+                                {/* Destination Input */}
+                                <div className="form-field">
+                                    <label className="field-label-ss">
+                                        <MapPin size={12} /> GRAD / SMEŠTAJ
+                                    </label>
                                     <input
-                                        type="checkbox"
-                                        id={`includeGuideCheck-${currentGuide.index}`}
-                                        checked={!!destinations[currentGuide.index].includedGuide}
-                                        onChange={(e) => {
-                                            if (e.target.checked) {
-                                                updateDestination(currentGuide.index, 'includedGuide', currentGuide.data);
-                                            } else {
-                                                updateDestination(currentGuide.index, 'includedGuide', undefined);
-                                            }
-                                        }}
-                                        style={{ width: '18px', height: '18px', accentColor: '#10b981', cursor: 'pointer' }}
+                                        type="text"
+                                        className="ss-input-box !bg-slate-900/40"
+                                        placeholder="Gde putujete?"
+                                        value={dest.city}
+                                        onChange={(e) => updateDestination(idx, 'city', e.target.value)}
                                     />
-                                    <div>
-                                        <label htmlFor={`includeGuideCheck-${currentGuide.index}`} style={{ color: 'white', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'block' }}>
-                                            Uključi opis za {currentGuide.city}
-                                        </label>
-                                        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
-                                            Dodaj ovaj sadržaj u finalnu ponudu za klijenta.
+                                </div>
+
+                                {/* Date Range */}
+                                <div className="form-field relative">
+                                    <label className="field-label-ss">
+                                        <Calendar size={12} /> TERMIN
+                                    </label>
+                                    <div
+                                        className="ss-input-box !bg-slate-900/40 cursor-pointer hover:border-indigo-500/50 transition-colors flex items-center gap-2"
+                                        onClick={() => setActiveCalendar({ index: idx })}
+                                    >
+                                        <Calendar size={14} className="text-indigo-400" />
+                                        <span className={`text-[13px] font-bold ${dest.checkIn && dest.checkOut ? 'text-white' : 'text-slate-500'}`}>
+                                            {dest.checkIn && dest.checkOut
+                                                ? `${formatDate(dest.checkIn)} - ${formatDate(dest.checkOut)}`
+                                                : 'Odaberite datume'
+                                            }
                                         </span>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
-            {/* Destinations */}
-            <div className="form-section">
-                <div className="section-header">
-                    <h3><MapPin size={20} /> Destinacije</h3>
-                    <button className="add-btn" onClick={addDestination}>
-                        <Plus size={16} />
-                        Dodaj Destinaciju
-                    </button>
-                </div>
+                                {/* Nights Display */}
+                                <div className="form-field">
+                                    <label className="field-label-ss">
+                                        <Star size={12} /> NOĆI
+                                    </label>
+                                    <div className="ss-input-box !bg-indigo-500/10 !border-indigo-500/20 cursor-default flex items-center justify-center">
+                                        <span className="text-lg font-black text-indigo-400">
+                                            {dest.nights || 0}
+                                        </span>
+                                    </div>
+                                </div>
 
-                {destinations.map((dest, index) => (
-                    <div key={dest.id} className="destination-card">
-                        <div className="card-header">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <span>Destinacija {index + 1}</span>
-                                {dest.includedGuide && (
-                                    <span style={{
-                                        fontSize: '10px',
-                                        background: '#10b981',
-                                        color: 'white',
-                                        padding: '2px 6px',
-                                        borderRadius: '4px',
-                                        display: 'flex', alignItems: 'center', gap: '4px'
-                                    }}>
-                                        <Sparkles size={8} /> AI OPIS UKLJUČEN
-                                    </span>
-                                )}
+                                {/* Adults Counter */}
+                                <div className="form-field">
+                                    <label className="field-label-ss"><Users size={12} /> ODRASLI</label>
+                                    <div className="row-counter-ss">
+                                        <button className="row-counter-btn" onClick={() => updateTravelersPerDest(idx, 'adults', dest.travelers.adults - 1)}>
+                                            <Minus size={14} />
+                                        </button>
+                                        <span className="row-counter-val">{dest.travelers.adults}</span>
+                                        <button className="row-counter-btn" onClick={() => updateTravelersPerDest(idx, 'adults', dest.travelers.adults + 1)}>
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Children Counter */}
+                                <div className="form-field relative">
+                                    <label className="field-label-ss"><Users size={12} /> DECA</label>
+                                    <div className="row-counter-ss">
+                                        <button className="row-counter-btn" onClick={() => updateTravelersPerDest(idx, 'children', dest.travelers.children - 1)}>
+                                            <Minus size={14} />
+                                        </button>
+                                        <span className="row-counter-val">{dest.travelers.children}</span>
+                                        <button className="row-counter-btn" onClick={() => updateTravelersPerDest(idx, 'children', dest.travelers.children + 1)}>
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            {destinations.length > 1 && (
-                                <button
-                                    className="remove-btn"
-                                    onClick={() => removeDestination(index)}
-                                >
-                                    <X size={16} />
-                                </button>
+
+                            {/* Child Ages row */}
+                            {dest.travelers.children > 0 && (
+                                <div className="child-ages-row-ss animate-fade-in">
+                                    {dest.travelers.childrenAges?.map((age, cIdx) => (
+                                        <div key={cIdx} className="child-age-item-ss">
+                                            <label className="text-[9px] font-black text-slate-500 uppercase">Dete {cIdx + 1}</label>
+                                            <select
+                                                className="age-select-ss"
+                                                value={age}
+                                                onChange={(e) => updateChildAgePerDest(idx, cIdx, parseInt(e.target.value))}
+                                            >
+                                                {Array.from({ length: 18 }, (_, i) => (
+                                                    <option key={i} value={i}>{i} god</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
+                    ))}
 
-                        {/* FIX: Explicit CSS Grid to prevent layout issues */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-                            <div className="form-group">
-                                <label className="form-label">Grad *</label>
-                                <input
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="Milano"
-                                    value={dest.city}
-                                    onChange={(e) => updateDestination(index, 'city', e.target.value)}
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">Država</label>
-                                <input
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="Italija"
-                                    value={dest.country}
-                                    onChange={(e) => updateDestination(index, 'country', e.target.value)}
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">Check-in *</label>
-                                <input
-                                    type="date"
-                                    className="form-input"
-                                    value={dest.checkIn}
-                                    onChange={(e) => updateDestination(index, 'checkIn', e.target.value)}
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">Check-out *</label>
-                                <input
-                                    type="date"
-                                    className="form-input"
-                                    value={dest.checkOut}
-                                    onChange={(e) => updateDestination(index, 'checkOut', e.target.value)}
-                                />
-                            </div>
-
-                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                                <label className="form-label">Broj noći</label>
-                                <input
-                                    type="number"
-                                    className="form-input"
-                                    value={dest.nights}
-                                    readOnly
-                                    style={{ opacity: 0.7, cursor: 'not-allowed' }}
-                                />
-                            </div>
+                    {destinations.length < 3 && (
+                        <div className="flex justify-center pt-2">
+                            <button
+                                className="add-destination-btn-ss group"
+                                onClick={addDestination}
+                            >
+                                <Plus size={16} className="group-hover:rotate-90 transition-transform" />
+                                Dodaj destinaciju
+                            </button>
                         </div>
+                    )}
+                </div>
+
+                {/* FILTERS SECTION */}
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div className="form-field relative">
+                        <label className="field-label-ss"><Star size={12} /> KATEGORIJA</label>
+                        <div
+                            className="ss-input-box cursor-pointer flex items-center justify-between"
+                            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                        >
+                            <span className="text-sm font-bold">{selectedCategory}</span>
+                            <ChevronDown size={18} className={`text-indigo-400 transition-transform duration-300 ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+                        </div>
+                        {showCategoryDropdown && (
+                            <div className="dropdown-menu-ss">
+                                {CATEGORY_OPTIONS.map(opt => (
+                                    <div
+                                        key={opt}
+                                        className="dropdown-item-ss"
+                                        onClick={() => { setSelectedCategory(opt); setShowCategoryDropdown(false); }}
+                                    >
+                                        {opt}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                ))}
-            </div>
 
-            {/* Travelers */}
-            <div className="form-section">
-                <h3><Users size={20} /> Putnici</h3>
-
-                <div className="form-grid">
-                    <div className="form-group">
-                        <label className="form-label">Odrasli (18+) *</label>
-                        <input
-                            type="number"
-                            className="form-input"
-                            min="1"
-                            max="10"
-                            value={travelers.adults}
-                            onChange={(e) => updateTravelers('adults', parseInt(e.target.value))}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Deca (0-17)</label>
-                        <input
-                            type="number"
-                            className="form-input"
-                            min="0"
-                            max="10"
-                            value={travelers.children}
-                            onChange={(e) => updateTravelers('children', parseInt(e.target.value))}
-                        />
+                    <div className="form-field relative">
+                        <label className="field-label-ss"><Settings2 size={12} /> TIP USLUGE</label>
+                        <div
+                            className="ss-input-box cursor-pointer flex items-center justify-between"
+                            onClick={() => setShowServiceDropdown(!showServiceDropdown)}
+                        >
+                            <span className="text-sm font-bold">{selectedService}</span>
+                            <ChevronDown size={18} className={`text-indigo-400 transition-transform duration-300 ${showServiceDropdown ? 'rotate-180' : ''}`} />
+                        </div>
+                        {showServiceDropdown && (
+                            <div className="dropdown-menu-ss">
+                                {SERVICE_OPTIONS.map(opt => (
+                                    <div
+                                        key={opt}
+                                        className="dropdown-item-ss"
+                                        onClick={() => { setSelectedService(opt); setShowServiceDropdown(false); }}
+                                    >
+                                        {opt}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {travelers.children > 0 && (
-                    <div className="children-ages">
-                        <label className="form-label">Uzrast dece</label>
-                        <div className="ages-grid">
-                            {travelers.childrenAges?.map((age, index) => (
-                                <input
-                                    key={index}
-                                    type="number"
-                                    className="form-input"
-                                    placeholder={`Dete ${index + 1}`}
-                                    min="0"
-                                    max="17"
-                                    value={age}
-                                    onChange={(e) => {
-                                        const updated = [...(travelers.childrenAges || [])];
-                                        updated[index] = parseInt(e.target.value);
-                                        setTravelers({ ...travelers, childrenAges: updated });
-                                    }}
-                                />
-                            ))}
+                {/* SUMMARY ITINERARY */}
+                <div className="summary-card-ss mb-8">
+                    <div className="flex items-center justify-between mb-4 px-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
+                            <h3 className="text-sm font-black text-white uppercase tracking-widest">ITINERER RUTE</h3>
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-indigo-400 font-black text-lg">
+                                {destinations.reduce((sum, d) => sum + (d.nights || 0), 0)}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-bold uppercase">noći ukupno</span>
                         </div>
                     </div>
-                )}
-            </div>
 
-            {/* Budget (Optional) */}
-            <div className="form-section">
-                <h3><Euro size={20} /> Budget (Opciono)</h3>
-
-                <div className="form-group">
-                    <label className="form-label">Maksimalni budžet</label>
-                    <input
-                        type="number"
-                        className="form-input"
-                        placeholder="3000"
-                        value={budget || ''}
-                        onChange={(e) => setBudget(e.target.value ? parseFloat(e.target.value) : undefined)}
-                    />
-                    <span className="form-hint">
-                        Unesite maksimalni budžet u EUR. Ovo će pomoći AI asistentu da predloži odgovarajuće pakete.
-                    </span>
+                    <div className="space-y-2">
+                        {destinations.filter(d => d.city).map((d, idx) => (
+                            <div key={d.id} className="itinerary-item-ss animate-fade-in">
+                                <div className="itinerary-left-ss">
+                                    <div className="itinerary-node-ss">{idx + 1}</div>
+                                    <div className="itinerary-info-ss">
+                                        <h4>{d.city}</h4>
+                                        <p>
+                                            {formatDate(d.checkIn)} — {formatDate(d.checkOut)}
+                                            <span className="mx-2 text-slate-700">|</span>
+                                            {d.travelers.adults} odr, {d.travelers.children} dec
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="itinerary-right-ss">
+                                    <span className="itinerary-nights-ss">{d.nights} noći</span>
+                                </div>
+                            </div>
+                        ))}
+                        {destinations.filter(d => d.city).length === 0 && (
+                            <div className="text-center py-6 border-2 border-dashed border-white/5 rounded-2xl text-slate-600 font-bold text-xs uppercase tracking-widest">
+                                RUTA NIJE DEFINISANA
+                            </div>
+                        )}
+                    </div>
                 </div>
+
+                {/* SEARCH BUTTON */}
+                <button
+                    className="search-btn-ss-primary"
+                    onClick={onNext}
+                >
+                    <Search size={20} />
+                    POKRENI PRETRAGU PAKETA
+                </button>
             </div>
 
-            {/* Summary */}
-            <div className="step-summary">
-                <h4>Pregled:</h4>
-                <ul>
-                    <li>{destinations.length} destinacija</li>
-                    <li>{destinations.reduce((sum, d) => sum + d.nights, 0)} noći ukupno</li>
-                    <li>{travelers.adults} odraslih + {travelers.children} dece</li>
-                    {budget && <li>Budget: {budget.toFixed(2)} €</li>}
-                </ul>
-            </div>
-
+            {/* CALENDAR OVERLAY */}
+            {activeCalendar !== null && (
+                <ModernCalendar
+                    startDate={destinations[activeCalendar.index]?.checkIn || ''}
+                    endDate={destinations[activeCalendar.index]?.checkOut || ''}
+                    onChange={(start, end) => handleDateChange(activeCalendar.index, start, end)}
+                    onClose={() => setActiveCalendar(null)}
+                />
+            )}
         </div>
     );
 };

@@ -193,7 +193,7 @@ export async function makeSoapRequest<T>(
     console.log('[Solvex SOAP] Request:', soapEnvelope);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout per request
+    const timeoutId = setTimeout(() => controller.abort('Timeout'), 30000); // 30 seconds timeout per request
 
     try {
         const response = await fetch(SOLVEX_API_URL, {
@@ -231,6 +231,11 @@ export async function makeSoapRequest<T>(
         clearTimeout(timeoutId);
         console.error(`[Solvex SOAP] Error in ${method}:`, error);
         console.error('[Solvex SOAP] Failed Request Payload:', soapEnvelope);
+
+        // Specific handling for timeout/abort
+        if (error instanceof Error && (error.name === 'AbortError' || error.message.toLowerCase().includes('aborted'))) {
+            throw new Error('Solvex sistem nije odgovorio na vreme (Timeout). Molimo pokušajte ponovo ili suzite kriterijume pretrage.');
+        }
 
         // If it's already a clean error, rethrow it
         if (error instanceof Error && !error.message.includes('--- REQUEST ---')) {

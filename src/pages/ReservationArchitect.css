@@ -1944,6 +1944,7 @@
     background: #10b981;
     border-color: #10b981;
 }
+
 /* ==========================================================================
    B2B Communication Center Styles
    ========================================================================== */
@@ -1967,7 +1968,7 @@
     display: flex;
     flex-direction: column;
     gap: 24px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 .quick-subjects {
@@ -2103,12 +2104,19 @@
     font-size: 12px;
     padding: 10px;
     border-radius: 8px;
-    background: rgba(255,255,255,0.02);
+    background: rgba(255, 255, 255, 0.02);
     border-left: 3px solid var(--border);
 }
 
-.log-line.success { border-left-color: #10b981; color: #10b981; }
-.log-line.info { border-left-color: #3b82f6; color: #3b82f6; }
+.log-line.success {
+    border-left-color: #10b981;
+    color: #10b981;
+}
+
+.log-line.info {
+    border-left-color: #3b82f6;
+    color: #3b82f6;
+}
 
 .b2b-footer-notice {
     display: flex;
@@ -2121,4 +2129,110 @@
     font-size: 11px;
     font-weight: 700;
     border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+@media print {
+
+    .res-master-container,
+    .res-header-v2,
+    .res-sidebar-nav,
+    .footer-master-v4 {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+        color: black !important;
+        overflow: visible !important;
+    }
+
+    .printable-contract {
+        display: block !important;
+        padding: 40px;
+        font-family: 'Inter', sans-serif;
+        color: black;
+    }
+
+    .print-header {
+        text-align: center;
+        border-bottom: 2px solid black;
+        margin-bottom: 30px;
+        padding-bottom: 10px;
+    }
+
+    .print-header h1 {
+        margin: 0;
+        font-size: 24px;
+        text-transform: uppercase;
+    }
+
+    .print-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        margin-bottom: 30px;
+    }
+
+    .print-grid h4,
+    .print-passengers h4,
+    .print-legal-section h4 {
+        border-bottom: 1px solid #ccc;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+
+    .print-passengers table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+    }
+
+    .print-passengers th,
+    .print-passengers td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left;
+        font-size: 12px;
+    }
+
+    .print-legal-section {
+        margin-bottom: 40px;
+    }
+
+    .print-confirmation-text {
+        background: #f3f4f6;
+        border: 1px dashed black;
+        padding: 15px;
+        margin-top: 10px;
+        font-size: 13px;
+    }
+
+    .general-terms-notice {
+        font-size: 11px;
+        margin-top: 20px;
+        font-style: italic;
+    }
+
+    .print-signatures {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 60px;
+    }
+
+    .sig {
+        width: 250px;
+        text-align: center;
+    }
+
+    .sig .line {
+        border-top: 1px solid black;
+        margin-top: 40px;
+    }
+}
+
+/* Base styles for the hidden printable contract */
+.printable-contract {
+    display: none;
 }

@@ -31,7 +31,7 @@
     border: 1px solid var(--border);
     border-radius: 16px;
     width: 100%;
-    max-width: 900px;
+    max-width: 1200px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
@@ -342,5 +342,150 @@
 @media (prefers-color-scheme: dark) {
     .booking-modal {
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    }
+}
+
+/* Final Confirmation Step - Ferrari Red Style */
+.confirmation-step {
+    padding: 10px 0;
+}
+
+.ferrari-confirmation-card {
+    background: #111827;
+    border: 2px solid #ef4444;
+    /* Ferrari Red border */
+    border-radius: 20px;
+    padding: 35px;
+    position: relative;
+    box-shadow: 0 0 40px rgba(239, 68, 68, 0.2), inset 0 0 20px rgba(239, 68, 68, 0.05);
+    /* Ferrari Shadow/Glow */
+    transition: all 0.3s ease;
+}
+
+.ferrari-confirmation-card:hover {
+    box-shadow: 0 0 50px rgba(239, 68, 68, 0.3), inset 0 0 30px rgba(239, 68, 68, 0.1);
+}
+
+.cf-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    padding-bottom: 20px;
+}
+
+.cf-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #fca5a5;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.shield-icon {
+    color: #ef4444;
+    filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.6));
+}
+
+.cf-main-text {
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: #f3f4f6;
+    margin-bottom: 30px;
+}
+
+.cf-main-text strong {
+    color: #f87171;
+}
+
+/* Cancellation Policy Table */
+.cancellation-policy-box {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cancellation-policy-box h4 {
+    margin: 0 0 15px 0;
+    font-size: 0.9rem;
+    color: #ef4444;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.policy-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.policy-table th {
+    text-align: left;
+    padding: 10px;
+    color: #94a3b8;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+}
+
+.policy-table td {
+    padding: 12px 10px;
+    color: #e2e8f0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.policy-table tr:last-child td {
+    border-bottom: none;
+}
+
+.policy-note {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 15px;
+    font-style: italic;
+}
+
+.terms-link-v4 {
+    display: inline-block;
+    color: #ef4444;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.95rem;
+    padding: 10px 20px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.terms-link-v4:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: translateX(5px);
+}
+
+.btn-confirm-final {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4) !important;
+}
+
+.btn-confirm-final:hover {
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6) !important;
+}
+
+.animate-fade-in {
+    animation: fadeInStep 0.4s ease-out;
+}
+
+@keyframes fadeInStep {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

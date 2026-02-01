@@ -77,11 +77,17 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
             }
         });
 
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
         // STEP 2: Perform searches for each unique configuration
         for (const dest of params.destinations) {
             console.log(`[SmartSearchService] Querying for destination: ${dest.name}`);
 
-            const configSearchPromises = Array.from(uniqueConfigs.values()).map(async (config) => {
+            const configResults: Array<{ config: any, results: any[] }> = [];
+
+            // Execute unique configs with a small staggered delay to be polite to the API
+            const configSearchPromises = Array.from(uniqueConfigs.values()).map(async (config, cIdx) => {
+                if (cIdx > 0) await delay(200 * cIdx); // Stagger by 200ms
                 const results = await solvexAi.search({
                     destination: dest.name,
                     checkIn: new Date(params.checkIn),
@@ -96,7 +102,7 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                 return { config, results };
             });
 
-            const configResults = await Promise.all(configSearchPromises);
+            configResults.push(...(await Promise.all(configSearchPromises)));
 
             // STEP 3: Merge results - a hotel must be available for ALL unique configurations
             // We group results by hotel name (case-insensitive) for merging
@@ -141,11 +147,11 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                         }
 
                         const existing = finalResultsMap.get(hotelKey)!;
-                        config.indices.forEach(roomIdx => {
+                        config.indices.forEach((roomIdx: number) => {
                             if (!existing.allocationResults) existing.allocationResults = {};
                             existing.allocationResults[roomIdx] = h.rooms || [];
                             // Add price of the cheapest room for this allocation to the total price
-                            const minRoomPrice = Math.min(...(h.rooms?.map(r => r.price) || [h.price]));
+                            const minRoomPrice = Math.min(...(h.rooms?.map((r: any) => r.price) || [h.price]));
                             existing.price += minRoomPrice;
                         });
                     }

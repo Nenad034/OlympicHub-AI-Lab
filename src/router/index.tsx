@@ -58,6 +58,7 @@ const TCTTest = React.lazy(() => import('../pages/TCTTest'));
 const MasterSearch = React.lazy(() => import('../pages/MasterSearch'));
 const SubagentAdmin = React.lazy(() => import('../pages/SubagentAdmin'));
 const B2BSearch = React.lazy(() => import('../pages/B2BSearch'));
+const HotelView = React.lazy(() => import('../pages/HotelView'));
 
 
 // Stores
@@ -429,6 +430,10 @@ export const router = createBrowserRouter([
                         <SubagentAdmin />
                     </ProtectedRoute>
                 ),
+            },
+            {
+                path: 'hotel-view/:hotelId',
+                element: <HotelView />,
             },
             {
                 path: '*',
