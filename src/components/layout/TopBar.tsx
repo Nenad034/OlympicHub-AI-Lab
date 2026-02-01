@@ -72,24 +72,7 @@ const TopBar: React.FC = () => {
                 </div>
             )}
 
-            {/* Status Indicators - FIXED LAYOUT */}
-            <div className="top-bar-status-group">
-                <div
-                    className={`status-indicator github ${!appStatus.gitPushed ? 'error' : ''}`}
-                    title={appStatus.gitPushed ? "Git Status: Synced" : "Git Status: Unpushed Changes"}
-                >
-                    <Github size={14} />
-                    <span className="status-text">{appStatus.gitPushed ? 'Git pushed' : 'No pushed'}</span>
-                </div>
 
-                <div
-                    className={`status-indicator vercel ${!appStatus.vercelLive ? 'error' : ''}`}
-                    title={appStatus.vercelLive ? "Vercel Status: Live" : "Vercel Status: Build Failed"}
-                >
-                    <Globe size={14} />
-                    <span className="status-text">{appStatus.vercelLive ? 'Vercel Live' : 'No live'}</span>
-                </div>
-            </div>
 
             {/* Controls */}
             <div className="top-bar-controls">
