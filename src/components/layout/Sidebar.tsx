@@ -148,39 +148,31 @@ const Sidebar: React.FC = () => {
 
                 {/* B2B Partners Section - Only for Subagents */}
                 {userLevel < 6 && (
-                    <div className="nav-group" style={{
-                        background: 'rgba(255, 152, 0, 0.05)',
+                    <div className="nav-group b2b-nav-group" style={{
+                        background: 'rgba(255, 255, 255, 0.05)',
                         borderRadius: '12px',
                         padding: '12px 8px',
-                        border: '1px solid rgba(255, 152, 0, 0.2)'
+                        border: '1px solid var(--border)'
                     }}>
-                        <h3 className="nav-label" style={{ color: '#ff9800', fontWeight: 800 }}>
+                        <h3 className="nav-label">
                             {!isSidebarCollapsed && '🤝 B2B PARTNER'}
                         </h3>
                         <NavLink
                             to="/smart-search"
                             className={({ isActive }) => navItemClass(isActive)}
                             title="Smart Search (New)"
-                            style={({ isActive }) => ({
-                                borderLeft: isActive ? '4px solid #ff9800' : 'none',
-                                background: isActive ? 'rgba(255, 152, 0, 0.15)' : 'transparent'
-                            })}
                         >
-                            <Sparkles size={20} color="#ff9800" /> {!isSidebarCollapsed && (
-                                <span style={{ color: '#ff9800', fontWeight: 700 }}>Smart Search ✨</span>
+                            <Sparkles size={20} /> {!isSidebarCollapsed && (
+                                <span style={{ fontWeight: 700 }}>Smart Search ✨</span>
                             )}
                         </NavLink>
                         <NavLink
                             to="/my-reservations"
                             className={({ isActive }) => navItemClass(isActive)}
                             title="My Reservations"
-                            style={({ isActive }) => ({
-                                borderLeft: isActive ? '4px solid #ff9800' : 'none',
-                                background: isActive ? 'rgba(255, 152, 0, 0.15)' : 'transparent'
-                            })}
                         >
-                            <ClipboardList size={20} color="#ff9800" /> {!isSidebarCollapsed && (
-                                <span style={{ color: '#ff9800', fontWeight: 700 }}>Moje Rezervacije</span>
+                            <ClipboardList size={20} /> {!isSidebarCollapsed && (
+                                <span style={{ fontWeight: 700 }}>Moje Rezervacije</span>
                             )}
                         </NavLink>
                     </div>

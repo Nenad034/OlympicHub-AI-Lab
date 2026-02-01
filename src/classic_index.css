@@ -68,19 +68,35 @@
 /* Definitive Branding Overrides for Olympic B2B */
 .brand-text,
 .logo-olympic h1,
-.logo-text h1 {
+.logo-text h1,
+.logo-icon,
+.b2b-nav-group .nav-label,
+.b2b-nav-group .nav-item span,
+.b2b-nav-group .nav-item svg {
   color: #ffffff !important;
   /* White in dark mode */
+  stroke: #ffffff !important;
+  /* For lucide icons */
 }
 
 .light-theme .brand-text,
 .light-theme .logo-olympic h1,
 .light-theme .logo-text h1,
+.light-theme .logo-icon,
+.light-theme .b2b-nav-group .nav-label,
+.light-theme .b2b-nav-group .nav-item span,
+.light-theme .b2b-nav-group .nav-item svg,
 .tokyo-light-theme .brand-text,
 .tokyo-light-theme .logo-olympic h1,
-.tokyo-light-theme .logo-text h1 {
+.tokyo-light-theme .logo-text h1,
+.tokyo-light-theme .logo-icon,
+.tokyo-light-theme .b2b-nav-group .nav-label,
+.tokyo-light-theme .b2b-nav-group .nav-item span,
+.tokyo-light-theme .b2b-nav-group .nav-item svg {
   color: #800020 !important;
   /* Bordo color in light mode */
+  stroke: #800020 !important;
+  /* For lucide icons */
 }
 
 

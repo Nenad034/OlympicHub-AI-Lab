@@ -408,12 +408,6 @@ const SmartSearch: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                {isSubagent && (
-                    <div className="b2b-badge-smart">
-                        <Shield size={14} />
-                        <span>B2B PARTNER</span>
-                    </div>
-                )}
             </header>
 
             {/* TAB NAVIGATION */}
