@@ -127,11 +127,11 @@ const SmartSearch: React.FC = () => {
     const [flexibleDays, setFlexibleDays] = useState(0);
 
     // Multi-room state
-    const [rooms, setRooms] = useState(1);
+    const [activeRoomTab, setActiveRoomTab] = useState(0);
     const [roomAllocations, setRoomAllocations] = useState<RoomAllocation[]>([
         { adults: 2, children: 0, childrenAges: [] }
     ]);
-    const [showRoomPicker, setShowRoomPicker] = useState(false);
+    const [showRoomPicker, setShowRoomPicker] = useState(false); // Legacy, will remove if needed, but unused for tabs
 
     const [mealPlan, setMealPlan] = useState('');
 
@@ -562,102 +562,102 @@ const SmartSearch: React.FC = () => {
                         </div>
                     </div >
 
-                    {/* Room & Passenger Picker */}
-                    <div className="col-rooms param-item" style={{ position: 'relative' }}>
-                        <div className="field-label"><Users size={14} /> Putnici i Sobe</div>
-                        <div className="input-box" onClick={() => setShowRoomPicker(!showRoomPicker)} style={{ cursor: 'pointer' }}>
-                            <span className="room-summary-text">
-                                {roomAllocations.length} {roomAllocations.length === 1 ? 'soba' : 'sobe'}, {roomAllocations.reduce((a, b) => a + b.adults, 0)} odr.
-                            </span>
-                            <ChevronDown size={14} />
+                    {/* Room Tabs & Pax Configuration */}
+                    <div className="col-rooms-tabs param-item-wide" style={{ gridColumn: 'span 3', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '15px' }}>
+                        <div className="room-tabs-header" style={{ display: 'flex', gap: '8px', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '10px' }}>
+                            {[0, 1, 2, 3, 4].map(idx => (
+                                <button
+                                    key={idx}
+                                    className={`room-tab-btn ${activeRoomTab === idx ? 'active' : ''} ${idx >= roomAllocations.length ? 'inactive' : ''}`}
+                                    onClick={() => {
+                                        if (idx < roomAllocations.length) {
+                                            setActiveRoomTab(idx);
+                                        } else if (idx === roomAllocations.length) {
+                                            // Add new room
+                                            setRoomAllocations([...roomAllocations, { adults: 2, children: 0, childrenAges: [] }]);
+                                            setActiveRoomTab(idx);
+                                        }
+                                    }}
+                                >
+                                    Soba {idx + 1}
+                                    {idx > 0 && idx < roomAllocations.length && (
+                                        <X
+                                            size={12}
+                                            className="close-tab"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const newAlloc = roomAllocations.filter((_, i) => i !== idx);
+                                                setRoomAllocations(newAlloc);
+                                                setActiveRoomTab(Math.max(0, idx - 1));
+                                            }}
+                                        />
+                                    )}
+                                    {idx === roomAllocations.length && <Plus size={12} style={{ marginLeft: '4px' }} />}
+                                </button>
+                            ))}
                         </div>
 
-                        {showRoomPicker && (
-                            <div className="room-picker-dropdown animate-fade-in">
-                                <div className="room-picker-header">
-                                    <h4>Konfiguracija Smeštaja</h4>
-                                    <button className="close-mini" onClick={() => setShowRoomPicker(false)}><X size={14} /></button>
+                        <div className="active-room-config animate-fade-in" key={activeRoomTab} style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
+                            <div className="pax-counter-group" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <div className="field-label-mini"><Users size={14} /> Odrasli</div>
+                                <div className="counter-box mini">
+                                    <button className="btn-counter" onClick={() => {
+                                        const newAlloc = [...roomAllocations];
+                                        newAlloc[activeRoomTab].adults = Math.max(1, newAlloc[activeRoomTab].adults - 1);
+                                        setRoomAllocations(newAlloc);
+                                    }}>−</button>
+                                    <span className="counter-val">{roomAllocations[activeRoomTab].adults}</span>
+                                    <button className="btn-counter" onClick={() => {
+                                        const newAlloc = [...roomAllocations];
+                                        newAlloc[activeRoomTab].adults += 1;
+                                        setRoomAllocations(newAlloc);
+                                    }}>+</button>
                                 </div>
-                                <div className="room-list-scrollable">
-                                    {roomAllocations.map((room, idx) => (
-                                        <div key={idx} className="room-config-item">
-                                            <div className="room-label">Soba {idx + 1}</div>
-                                            <div className="room-counters">
-                                                <div className="counter-row">
-                                                    <span>Odrasli</span>
-                                                    <div className="mini-counter">
-                                                        <button onClick={() => {
-                                                            const newAlloc = [...roomAllocations];
-                                                            newAlloc[idx].adults = Math.max(1, newAlloc[idx].adults - 1);
-                                                            setRoomAllocations(newAlloc);
-                                                        }}>−</button>
-                                                        <span>{room.adults}</span>
-                                                        <button onClick={() => {
-                                                            const newAlloc = [...roomAllocations];
-                                                            newAlloc[idx].adults += 1;
-                                                            setRoomAllocations(newAlloc);
-                                                        }}>+</button>
-                                                    </div>
-                                                </div>
-                                                <div className="counter-row">
-                                                    <span>Deca</span>
-                                                    <div className="mini-counter">
-                                                        <button onClick={() => {
-                                                            const newAlloc = [...roomAllocations];
-                                                            newAlloc[idx].children = Math.max(0, newAlloc[idx].children - 1);
-                                                            newAlloc[idx].childrenAges.pop();
-                                                            setRoomAllocations(newAlloc);
-                                                        }}>−</button>
-                                                        <span>{room.children}</span>
-                                                        <button onClick={() => {
-                                                            if (room.children < 4) {
-                                                                const newAlloc = [...roomAllocations];
-                                                                newAlloc[idx].children += 1;
-                                                                newAlloc[idx].childrenAges.push(7);
-                                                                setRoomAllocations(newAlloc);
-                                                            }
-                                                        }}>+</button>
-                                                    </div>
-                                                </div>
-                                                {room.children > 0 && (
-                                                    <div className="mini-ages-grid">
-                                                        {room.childrenAges.map((age, cIdx) => (
-                                                            <div key={cIdx} className="mini-age-item">
-                                                                <small>Dete {cIdx + 1}</small>
-                                                                <input
-                                                                    type="number"
-                                                                    min="0" max="17"
-                                                                    value={age}
-                                                                    onChange={(e) => {
-                                                                        const val = parseInt(e.target.value) || 0;
-                                                                        const newAlloc = [...roomAllocations];
-                                                                        newAlloc[idx].childrenAges[cIdx] = Math.min(17, val);
-                                                                        setRoomAllocations(newAlloc);
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {roomAllocations.length > 1 && (
-                                                <button className="remove-room-link" onClick={() => setRoomAllocations(roomAllocations.filter((_, i) => i !== idx))}>Ukloni sobu</button>
-                                            )}
+                            </div>
+
+                            <div className="pax-counter-group" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <div className="field-label-mini"><Users2 size={14} /> Deca</div>
+                                <div className="counter-box mini">
+                                    <button className="btn-counter" onClick={() => {
+                                        const newAlloc = [...roomAllocations];
+                                        newAlloc[activeRoomTab].children = Math.max(0, newAlloc[activeRoomTab].children - 1);
+                                        newAlloc[activeRoomTab].childrenAges.pop();
+                                        setRoomAllocations(newAlloc);
+                                    }}>−</button>
+                                    <span className="counter-val">{roomAllocations[activeRoomTab].children}</span>
+                                    <button className="btn-counter" onClick={() => {
+                                        if (roomAllocations[activeRoomTab].children < 4) {
+                                            const newAlloc = [...roomAllocations];
+                                            newAlloc[activeRoomTab].children += 1;
+                                            newAlloc[activeRoomTab].childrenAges.push(7);
+                                            setRoomAllocations(newAlloc);
+                                        }
+                                    }}>+</button>
+                                </div>
+                            </div>
+
+                            {roomAllocations[activeRoomTab].children > 0 && (
+                                <div className="children-ages-row tabs-version">
+                                    {roomAllocations[activeRoomTab].childrenAges.map((age, idx) => (
+                                        <div key={idx} className="age-input-wrapper">
+                                            <span style={{ fontSize: '0.6rem', color: '#64748b', display: 'block', textAlign: 'center' }}>{idx + 1}. dete</span>
+                                            <input
+                                                type="number"
+                                                min="0" max="17"
+                                                value={age}
+                                                onChange={e => {
+                                                    const val = parseInt(e.target.value) || 0;
+                                                    const newAlloc = [...roomAllocations];
+                                                    newAlloc[activeRoomTab].childrenAges[idx] = Math.min(17, Math.max(0, val));
+                                                    setRoomAllocations(newAlloc);
+                                                }}
+                                                className="child-age-input mini"
+                                            />
                                         </div>
                                     ))}
                                 </div>
-                                <div className="room-picker-footer">
-                                    <button
-                                        className="btn-add-room"
-                                        disabled={roomAllocations.length >= 5}
-                                        onClick={() => setRoomAllocations([...roomAllocations, { adults: 2, children: 0, childrenAges: [] }])}
-                                    >
-                                        <Plus size={14} /> Dodaj Sobu
-                                    </button>
-                                    <button className="btn-confirm-rooms" onClick={() => setShowRoomPicker(false)}>Potvrdi</button>
-                                </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
 
 
@@ -828,51 +828,58 @@ const SmartSearch: React.FC = () => {
                                 <button className="close-modal-btn" onClick={() => setExpandedHotel(null)}><X size={20} /></button>
                             </div>
                             <div className="modal-body-v4">
-                                <div className="rooms-comparison-table">
-                                    <div className="table-header">
-                                        <div>Tip Smeštaja</div>
-                                        <div>Usluga</div>
-                                        <div>Kapacitet</div>
-                                        <div>Cena</div>
-                                        <div>Akcija</div>
-                                    </div>
-                                    {expandedHotel.rooms && expandedHotel.rooms.length > 0 ? (
-                                        expandedHotel.rooms.map((room, idx) => (
-                                            <div key={room.id || idx} className="room-row-v4">
-                                                <div className="r-name">
-                                                    <strong>{room.name || 'Standardna Soba'}</strong>
-                                                    <p>{room.description || 'Standardna Ponuda'}</p>
-                                                </div>
-                                                <div className="r-meal">
-                                                    <div className="meal-tag-mini">{getMealPlanDisplayName(expandedHotel.mealPlan)}</div>
-                                                </div>
-                                                <div className="r-cap"><Users size={14} /> {room.capacity || `${roomAllocations[0].adults}+${roomAllocations[0].children}`}</div>
-                                                <div className="r-price">{isSubagent ? getPriceWithMargin(room.price) : room.price}€</div>
-                                                <div>
-                                                    <button
-                                                        className="select-room-btn"
-                                                        onClick={() => handleReserveClick({
-                                                            name: room.name || 'Standardna Ponuda',
-                                                            price: isSubagent ? getPriceWithMargin(room.price) : room.price
-                                                        })}
-                                                    >
-                                                        Rezerviši
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="room-row-v4">
-                                            <div className="r-name"><strong>Standardna Ponuda</strong><p>{expandedHotel.name}</p></div>
-                                            <div className="r-meal">
-                                                <div className="meal-tag-mini">{getMealPlanDisplayName(expandedHotel.mealPlan)}</div>
-                                            </div>
-                                            <div className="r-cap"><Users size={14} /> {roomAllocations[0].adults}+{roomAllocations[0].children}</div>
-                                            <div className="r-price">{isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price}€</div>
-                                            <div><button className="select-room-btn" onClick={() => handleReserveClick({ name: 'Standardna Ponuda', price: isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price })}>Rezerviši</button></div>
+                                {roomAllocations.map((alloc, rIdx) => (
+                                    <div key={rIdx} className="room-allocation-section" style={{ marginTop: rIdx > 0 ? '30px' : '0' }}>
+                                        <div className="section-divider-premium">
+                                            <span>PONUDA ZA SOBU {rIdx + 1} ({alloc.adults} odr. {alloc.children > 0 ? `+ ${alloc.children} det.` : ''})</span>
                                         </div>
-                                    )}
-                                </div>
+                                        <div className="rooms-comparison-table">
+                                            <div className="table-header">
+                                                <div>Tip Smeštaja</div>
+                                                <div>Usluga</div>
+                                                <div>Kapacitet</div>
+                                                <div>Cena</div>
+                                                <div>Akcija</div>
+                                            </div>
+                                            {expandedHotel.rooms && expandedHotel.rooms.length > 0 ? (
+                                                expandedHotel.rooms.map((room, idx) => (
+                                                    <div key={room.id || idx} className="room-row-v4">
+                                                        <div className="r-name">
+                                                            <strong>{room.name || 'Standardna Soba'}</strong>
+                                                            <p>{room.description || 'Standardna Ponuda'}</p>
+                                                        </div>
+                                                        <div className="r-meal">
+                                                            <div className="meal-tag-mini">{getMealPlanDisplayName(expandedHotel.mealPlan)}</div>
+                                                        </div>
+                                                        <div className="r-cap"><Users size={14} /> {room.capacity || `${alloc.adults}+${alloc.children}`}</div>
+                                                        <div className="r-price">{isSubagent ? getPriceWithMargin(room.price) : room.price}€</div>
+                                                        <div>
+                                                            <button
+                                                                className="select-room-btn"
+                                                                onClick={() => handleReserveClick({
+                                                                    name: room.name || 'Standardna Ponuda',
+                                                                    price: isSubagent ? getPriceWithMargin(room.price) : room.price
+                                                                })}
+                                                            >
+                                                                Rezerviši
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="room-row-v4">
+                                                    <div className="r-name"><strong>Standardna Ponuda</strong><p>{expandedHotel.name}</p></div>
+                                                    <div className="r-meal">
+                                                        <div className="meal-tag-mini">{getMealPlanDisplayName(expandedHotel.mealPlan)}</div>
+                                                    </div>
+                                                    <div className="r-cap"><Users size={14} /> {alloc.adults}+{alloc.children}</div>
+                                                    <div className="r-price">{isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price}€</div>
+                                                    <div><button className="select-room-btn" onClick={() => handleReserveClick({ name: 'Standardna Ponuda', price: isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price })}>Rezerviši</button></div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
