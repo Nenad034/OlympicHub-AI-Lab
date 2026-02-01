@@ -14,7 +14,8 @@
 }
 
 .light-theme .logo-text h1 {
-    /* Adjust gradient for light mode if needed, but Gold is usually fine */
+    color: #800020 !important;
+    /* Bordo color */
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 

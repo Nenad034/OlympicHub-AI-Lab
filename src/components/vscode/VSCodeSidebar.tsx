@@ -495,7 +495,7 @@ export const VSCodeSidebar: React.FC<VSCodeSidebarProps> = ({ width }) => {
                 return (
                     <div className="sidebar-panel explorer-panel">
                         <div className="explorer-header">
-                            <span>OLYMPIC HUB</span>
+                            <span>Olympic B2B</span>
                             <div className="explorer-actions">
                                 <button title="New File"><Plus size={14} /></button>
                                 <button title="Refresh"><RefreshCw size={14} /></button>

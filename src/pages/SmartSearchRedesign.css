@@ -23,6 +23,10 @@
 }
 
 /* --- TABS NAVIGATION --- */
+.logo-text h1 {
+    color: #ffffff !important;
+}
+
 .tabs-nav-container {
     background: var(--bg-card);
     border: 1px solid var(--border-color);

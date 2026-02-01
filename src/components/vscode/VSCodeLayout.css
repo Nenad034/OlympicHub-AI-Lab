@@ -10,32 +10,32 @@ body {
     --vscode-panel-bg: var(--bg-card);
     --vscode-status-bar-bg: var(--accent);
     --vscode-title-bar-bg: var(--bg-sidebar);
-    
+
     --vscode-border: var(--border);
     --vscode-border-active: var(--accent);
-    
+
     --vscode-foreground: var(--text-primary);
     --vscode-foreground-muted: var(--text-secondary);
     --vscode-foreground-active: var(--text-primary);
-    
+
     --vscode-accent: var(--accent);
     --vscode-accent-hover: var(--accent);
-    
+
     --vscode-list-hover: var(--bg-card-hover);
     --vscode-list-active: var(--accent-glow);
     --vscode-list-selection: var(--accent-glow);
-    
+
     --vscode-tab-active-bg: var(--bg-dark);
     --vscode-tab-inactive-bg: var(--bg-card);
     --vscode-tab-border: var(--border);
-    
+
     --vscode-input-bg: var(--bg-card);
     --vscode-input-border: var(--border);
     --vscode-input-focus-border: var(--accent);
-    
+
     --vscode-button-bg: var(--accent);
     --vscode-button-hover: var(--accent);
-    
+
     --vscode-success: #4ec9b0;
     --vscode-warning: #dcdcaa;
     --vscode-error: #f14c4c;
@@ -53,14 +53,14 @@ body {
     --vscode-editor-bg: #1a1a2e;
     --vscode-panel-bg: #16213e;
     --vscode-status-bar-bg: linear-gradient(90deg, #ff006e, #8338ec, #3a86ff);
-    
+
     --vscode-border: #2d3561;
     --vscode-accent: #e94560;
     --vscode-accent-hover: #ff6b6b;
-    
+
     --vscode-foreground: #eaeaea;
     --vscode-foreground-muted: #7f8c9a;
-    
+
     /* Rainbow text colors */
     --rainbow-1: #ff6b6b;
     --rainbow-2: #feca57;
@@ -69,7 +69,7 @@ body {
     --rainbow-5: #54a0ff;
     --rainbow-6: #5f27cd;
     --rainbow-7: #00d2d3;
-    
+
     --vscode-success: #1dd1a1;
     --vscode-warning: #ffeaa7;
     --vscode-error: #ff6b6b;
@@ -115,8 +115,15 @@ body {
 }
 
 @keyframes rainbow-shift {
-    0%, 100% { filter: hue-rotate(0deg); }
-    50% { filter: hue-rotate(30deg); }
+
+    0%,
+    100% {
+        filter: hue-rotate(0deg);
+    }
+
+    50% {
+        filter: hue-rotate(30deg);
+    }
 }
 
 /* Light Rainbow Theme - Light with colorful text */
@@ -127,15 +134,15 @@ body {
     --vscode-editor-bg: #ffffff;
     --vscode-panel-bg: #f8f9fa;
     --vscode-status-bar-bg: linear-gradient(90deg, #fd79a8, #a29bfe, #74b9ff);
-    
+
     --vscode-border: #e9ecef;
     --vscode-accent: #6c5ce7;
     --vscode-accent-hover: #a29bfe;
-    
+
     --vscode-foreground: #2d3436;
     --vscode-foreground-muted: #636e72;
     --vscode-foreground-active: #000000;
-    
+
     /* Light rainbow colors */
     --rainbow-1: #e84393;
     --rainbow-2: #fd79a8;
@@ -144,7 +151,7 @@ body {
     --rainbow-5: #0984e3;
     --rainbow-6: #fdcb6e;
     --rainbow-7: #00cec9;
-    
+
     --vscode-list-hover: #f1f3f5;
     --vscode-list-active: #e9ecef;
     --vscode-tab-active-bg: #ffffff;
@@ -201,20 +208,20 @@ body {
     --vscode-editor-bg: #0a0a0f;
     --vscode-panel-bg: #12121a;
     --vscode-status-bar-bg: #ff00ff;
-    
+
     --vscode-border: #2a2a3a;
     --vscode-accent: #00ffff;
     --vscode-accent-hover: #ff00ff;
-    
+
     --vscode-foreground: #00ffff;
     --vscode-foreground-muted: #666699;
     --vscode-foreground-active: #ffffff;
-    
+
     --vscode-success: #00ff00;
     --vscode-warning: #ffff00;
     --vscode-error: #ff0055;
     --vscode-info: #00ffff;
-    
+
     --vscode-list-hover: #1a1a2a;
     --vscode-list-active: #2a2a4a;
 }
@@ -257,10 +264,23 @@ body {
 }
 
 @keyframes neon-flicker {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
-    52% { opacity: 1; }
-    54% { opacity: 0.9; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+
+    52% {
+        opacity: 1;
+    }
+
+    54% {
+        opacity: 0.9;
+    }
 }
 
 .cyberpunk-theme .vscode-status-bar {
@@ -279,20 +299,20 @@ body {
     --vscode-editor-bg: #1a2f1a;
     --vscode-panel-bg: #1f3d1f;
     --vscode-status-bar-bg: #2d6a4f;
-    
+
     --vscode-border: #3d5a3d;
     --vscode-accent: #52b788;
     --vscode-accent-hover: #74c69d;
-    
+
     --vscode-foreground: #b7e4c7;
     --vscode-foreground-muted: #74a87d;
     --vscode-foreground-active: #d8f3dc;
-    
+
     --vscode-success: #40916c;
     --vscode-warning: #d4a373;
     --vscode-error: #bc6c25;
     --vscode-info: #52b788;
-    
+
     --vscode-list-hover: #2d4a2d;
     --vscode-list-active: #2d6a4f;
 }
@@ -798,6 +818,17 @@ body {
     color: var(--vscode-foreground);
 }
 
+/* Sidebar Header Colors Fix */
+.explorer-header span {
+    color: #ffffff !important;
+}
+
+/* Light Theme Override */
+.light-theme .explorer-header span,
+.light-rainbow-theme .explorer-header span {
+    color: #800020 !important;
+}
+
 .tabs-actions {
     display: flex;
     align-items: center;
@@ -1193,8 +1224,13 @@ body {
 }
 
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .user-level-badge {
@@ -1263,8 +1299,13 @@ body {
 
 /* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .fade-in {
@@ -1286,9 +1327,10 @@ body {
         left: -48px;
         top: 0;
         bottom: 22px;
-        z-index: 2001; /* Above mobile-backdrop */
+        z-index: 2001;
+        /* Above mobile-backdrop */
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
     }
 
     .vscode-layout.mobile-menu-open .vscode-activity-bar {
@@ -1304,13 +1346,13 @@ body {
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         width: 280px !important;
         background: var(--vscode-sidebar-bg);
-        box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
     }
 
     .vscode-sidebar-wrapper.mobile-visible {
         left: 48px;
     }
-    
+
     .vscode-resize-handle {
         display: none !important;
     }
@@ -1335,6 +1377,7 @@ body {
 }
 
 @media (max-width: 768px) {
+
     .status-bar-left .status-item:not(.mobile-menu-trigger),
     .status-bar-right .status-item:not(.clickable) {
         display: none !important;

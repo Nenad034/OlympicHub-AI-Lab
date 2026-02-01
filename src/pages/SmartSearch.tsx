@@ -403,38 +403,41 @@ const SmartSearch: React.FC = () => {
                 <div className="header-brand">
                     <div className="logo-olympic">
                         <Shield size={28} className="logo-icon" />
-                        <div className="logo-text">
-                            <h1 style={{ fontSize: '1.5rem' }}>OLYMPIC HUB</h1>
-                        </div>
+                        <h1 style={{ fontSize: '1.5rem' }}>Olympic B2B</h1>
                     </div>
                 </div>
-                {isSubagent && (
-                    <div className="b2b-badge-smart">
-                        <Shield size={14} />
-                        <span>B2B PARTNER</span>
-                    </div>
-                )}
-            </header>
-
-            {/* TAB NAVIGATION */}
-            <div className="tabs-nav-container">
-                {tabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        className={`nav-tab-item ${activeTab === tab.id ? 'active' : ''}`}
-                        onClick={() => setActiveTab(tab.id)}
-                    >
-                        <tab.icon size={18} />
-                        <span>{tab.label}</span>
-                    </button>
-                ))}
+        </div>
+                {
+        isSubagent && (
+            <div className="b2b-badge-smart">
+                <Shield size={14} />
+                <span>B2B PARTNER</span>
             </div>
+        )
+    }
+            </header >
 
-            {/* MAIN SEARCH CARD */}
-            <div className="search-card-frame">
+    {/* TAB NAVIGATION */ }
+    < div className = "tabs-nav-container" >
+    {
+        tabs.map(tab => (
+            <button
+                key={tab.id}
+                className={`nav-tab-item ${activeTab === tab.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+            >
+                <tab.icon size={18} />
+                <span>{tab.label}</span>
+            </button>
+        ))
+    }
+            </div >
 
-                {/* ROW 1: DESTINATION */}
-                <div className="destination-row">
+    {/* MAIN SEARCH CARD */ }
+    < div className = "search-card-frame" >
+
+        {/* ROW 1: DESTINATION */ }
+        < div className = "destination-row" >
                     <div className="field-label"><MapPin size={14} /> Destinacija ili Smeštaj (do 3)</div>
                     <div className="destination-input-wrapper" ref={autocompleteRef}>
                         <div className="multi-destination-input premium" style={{ border: 'none', padding: 0, height: 'auto', background: 'transparent' }}>
@@ -475,28 +478,28 @@ const SmartSearch: React.FC = () => {
                             </div>
                         )}
                     </div>
-                </div>
+                </div >
 
-                {/* ROW 2: PARAMETERS GRID */}
-                <div className="params-grid">
-                    {/* Check In */}
-                    <div className="col-checkin param-item">
+    {/* ROW 2: PARAMETERS GRID */ }
+    < div className = "params-grid" >
+        {/* Check In */ }
+        < div className = "col-checkin param-item" >
                         <div className="field-label"><CalendarIcon size={14} /> Check-in</div>
                         <div className="input-box" onClick={() => setActiveCalendar('in')} style={{ cursor: 'pointer' }}>
                             {checkIn ? formatDate(checkIn) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
                         </div>
-                    </div>
+                    </div >
 
-                    {/* Check Out */}
-                    <div className="col-checkout param-item">
+    {/* Check Out */ }
+    < div className = "col-checkout param-item" >
                         <div className="field-label"><CalendarIcon size={14} /> Check-out</div>
                         <div className="input-box" onClick={() => setActiveCalendar('out')} style={{ cursor: 'pointer' }}>
                             {checkOut ? formatDate(checkOut) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
                         </div>
-                    </div>
+                    </div >
 
-                    {/* Flexibility */}
-                    <div className="col-flex param-item">
+    {/* Flexibility */ }
+    < div className = "col-flex param-item" >
                         <div className="field-label"><ArrowDownWideNarrow size={14} /> Fleksibilnost</div>
                         <div className="flex-toggle-group">
                             {[0, 1, 3, 5].map(day => (
@@ -509,20 +512,20 @@ const SmartSearch: React.FC = () => {
                                 </button>
                             ))}
                         </div>
-                    </div>
+                    </div >
 
-                    {/* Adults */}
-                    <div className="col-adults param-item">
+    {/* Adults */ }
+    < div className = "col-adults param-item" >
                         <div className="field-label"><Users size={14} /> Odrasli</div>
                         <div className="counter-box">
                             <button className="btn-counter" onClick={() => setAdults(Math.max(1, adults - 1))}>−</button>
                             <span className="counter-val">{adults}</span>
                             <button className="btn-counter" onClick={() => setAdults(adults + 1)}>+</button>
                         </div>
-                    </div>
+                    </div >
 
-                    {/* Children */}
-                    <div className="col-children param-item">
+    {/* Children */ }
+    < div className = "col-children param-item" >
                         <div className="field-label"><Users2 size={14} /> Deca</div>
                         <div className="counter-box">
                             <button className="btn-counter" onClick={() => {
@@ -537,55 +540,57 @@ const SmartSearch: React.FC = () => {
                                 setChildrenAges(prev => [...prev, 7].slice(0, newCount));
                             }}>+</button>
                         </div>
-                        {children > 0 && (
-                            <div className="children-ages-row">
-                                {childrenAges.map((age, idx) => (
-                                    <input
-                                        key={idx}
-                                        type="number"
-                                        min="0" max="17"
-                                        value={age}
-                                        onChange={e => {
-                                            const val = parseInt(e.target.value);
-                                            if (!isNaN(val)) {
-                                                const newAges = [...childrenAges];
-                                                newAges[idx] = Math.min(17, Math.max(0, val));
-                                                setChildrenAges(newAges);
-                                            }
-                                        }}
-                                        className="child-age-input"
-                                        title={`Dete ${idx + 1}`}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
+{
+    children > 0 && (
+        <div className="children-ages-row">
+            {childrenAges.map((age, idx) => (
+                <input
+                    key={idx}
+                    type="number"
+                    min="0" max="17"
+                    value={age}
+                    onChange={e => {
+                        const val = parseInt(e.target.value);
+                        if (!isNaN(val)) {
+                            const newAges = [...childrenAges];
+                            newAges[idx] = Math.min(17, Math.max(0, val));
+                            setChildrenAges(newAges);
+                        }
+                    }}
+                    className="child-age-input"
+                    title={`Dete ${idx + 1}`}
+                />
+            ))}
+        </div>
+    )
+}
+                    </div >
 
 
 
-                </div>
+                </div >
 
-                {/* SEARCH BUTTON */}
-                <div className="action-row">
-                    <button className="btn-search-main" onClick={handleSearch} disabled={isSearching}>
-                        {isSearching ? <Loader2 size={24} className="spin" /> : <Search size={24} />}
-                        <span>{isSearching ? 'Pretražujem...' : 'Pretraži Sve Dobavljače'}</span>
-                    </button>
-                </div>
-            </div>
+    {/* SEARCH BUTTON */ }
+    < div className = "action-row" >
+        <button className="btn-search-main" onClick={handleSearch} disabled={isSearching}>
+            {isSearching ? <Loader2 size={24} className="spin" /> : <Search size={24} />}
+            <span>{isSearching ? 'Pretražujem...' : 'Pretraži Sve Dobavljače'}</span>
+        </button>
+                </div >
+            </div >
 
-            {/* QUICK FILTERS */}
-            <div className="quick-filters-section">
+    {/* QUICK FILTERS */ }
+    < div className = "quick-filters-section" >
                 <div className="section-title fire"><Zap size={18} fill="currentColor" /> Brzi Filteri</div>
                 <div className="filter-chips-row">
                     <button className="quick-filter-chip" onClick={() => handleQuickFilter('last-minute')}><Clock size={16} /> Last Minute</button>
                     <button className="quick-filter-chip" onClick={() => handleQuickFilter('early-bird')}><TrendingUp size={16} /> Early Bird</button>
                     <button className="quick-filter-chip" onClick={() => handleQuickFilter('5-stars')}><Star size={16} fill="currentColor" /> 5★ Hoteli</button>
                 </div>
-            </div>
+            </div >
 
-            {/* POPULAR DESTINATIONS */}
-            <div className="popular-dests-section">
+    {/* POPULAR DESTINATIONS */ }
+    < div className = "popular-dests-section" >
                 <div className="section-title globe"><MapIcon size={18} /> Popularne Destinacije</div>
                 <div className="popular-dests-grid">
                     {[
@@ -603,153 +608,163 @@ const SmartSearch: React.FC = () => {
                         </div>
                     ))}
                 </div>
+            </div >
+
+    {/* ERROR ALERT */ }
+{
+    searchError && (
+        <div className="search-error animate-fade-in" style={{ marginTop: '2rem' }}>
+            <Info size={18} />
+            <span>{searchError}</span>
+        </div>
+    )
+}
+
+{/* RESULTS SECTION (EXISTING LOGIC) */ }
+{
+    searchPerformed && (
+        <div className="content-workflow animate-fade-in" style={{ marginTop: '3rem' }}>
+            {/* Force Single Row Toolbar */}
+            <div className="filters-toolbar-v4 premium" style={{ display: 'flex', flexWrap: 'nowrap', gap: '16px', alignItems: 'center' }}>
+                <div className="name-filter-wrapper" style={{ flex: 1, minWidth: '0' }}>
+                    <Search size={14} className="filter-icon" />
+                    <input
+                        type="text"
+                        className="smart-input premium"
+                        style={{ width: '100%', paddingLeft: '40px', height: '48px' }}
+                        placeholder="Traži po nazivu..."
+                        value={hotelNameFilter}
+                        onChange={(e) => setHotelNameFilter(e.target.value)}
+                    />
+                </div>
+                <div style={{ flex: 1, minWidth: '0' }}>
+                    <MultiSelectDropdown options={CATEGORY_OPTIONS} selected={selectedStars} onChange={setSelectedStars} placeholder="Kategorija" />
+                </div>
+                <div style={{ flex: 1, minWidth: '0' }}>
+                    <MultiSelectDropdown options={MEAL_PLAN_OPTIONS} selected={selectedMealPlans} onChange={setSelectedMealPlans} placeholder="Ishrana" />
+                </div>
+                <div className="view-mode-switcher" style={{ flexShrink: 0 }}>
+                    <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}><LayoutGrid size={18} /></button>
+                    <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}><ListIcon size={18} /></button>
+                </div>
             </div>
 
-            {/* ERROR ALERT */}
-            {searchError && (
-                <div className="search-error animate-fade-in" style={{ marginTop: '2rem' }}>
-                    <Info size={18} />
-                    <span>{searchError}</span>
+            <div className="results-summary-bar-v4 premium">
+                <div className="summary-info">
+                    <span>REZULTATA: <strong>{filteredResults.length}</strong></span>
                 </div>
-            )}
+                <div className="sort-actions">
+                    <button className={`view-btn ${sortBy === 'smart' ? 'active' : ''}`} onClick={() => setSortBy('smart')}>Smart</button>
+                    <button className={`view-btn ${sortBy === 'price_low' ? 'active' : ''}`} onClick={() => setSortBy('price_low')}>Cena ↓</button>
+                </div>
+            </div>
 
-            {/* RESULTS SECTION (EXISTING LOGIC) */}
-            {searchPerformed && (
-                <div className="content-workflow animate-fade-in" style={{ marginTop: '3rem' }}>
-                    {/* Force Single Row Toolbar */}
-                    <div className="filters-toolbar-v4 premium" style={{ display: 'flex', flexWrap: 'nowrap', gap: '16px', alignItems: 'center' }}>
-                        <div className="name-filter-wrapper" style={{ flex: 1, minWidth: '0' }}>
-                            <Search size={14} className="filter-icon" />
-                            <input
-                                type="text"
-                                className="smart-input premium"
-                                style={{ width: '100%', paddingLeft: '40px', height: '48px' }}
-                                placeholder="Traži po nazivu..."
-                                value={hotelNameFilter}
-                                onChange={(e) => setHotelNameFilter(e.target.value)}
-                            />
-                        </div>
-                        <div style={{ flex: 1, minWidth: '0' }}>
-                            <MultiSelectDropdown options={CATEGORY_OPTIONS} selected={selectedStars} onChange={setSelectedStars} placeholder="Kategorija" />
-                        </div>
-                        <div style={{ flex: 1, minWidth: '0' }}>
-                            <MultiSelectDropdown options={MEAL_PLAN_OPTIONS} selected={selectedMealPlans} onChange={setSelectedMealPlans} placeholder="Ishrana" />
-                        </div>
-                        <div className="view-mode-switcher" style={{ flexShrink: 0 }}>
-                            <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}><LayoutGrid size={18} /></button>
-                            <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}><ListIcon size={18} /></button>
-                        </div>
-                    </div>
-
-                    <div className="results-summary-bar-v4 premium">
-                        <div className="summary-info">
-                            <span>REZULTATA: <strong>{filteredResults.length}</strong></span>
-                        </div>
-                        <div className="sort-actions">
-                            <button className={`view-btn ${sortBy === 'smart' ? 'active' : ''}`} onClick={() => setSortBy('smart')}>Smart</button>
-                            <button className={`view-btn ${sortBy === 'price_low' ? 'active' : ''}`} onClick={() => setSortBy('price_low')}>Cena ↓</button>
-                        </div>
-                    </div>
-
-                    <div className={`results-container ${viewMode}-view`}>
-                        <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`}>
-                            {filteredResults.map(hotel => (
-                                <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase()} ${viewMode === 'list' ? 'horizontal' : ''}`}>
-                                    <div className="hotel-card-image">
-                                        <img src={hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
-                                        <div className="source-badge">{hotel.provider} AI</div>
-                                        <div className="hotel-stars-badge">
-                                            {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
-                                        </div>
-                                    </div>
-                                    <div className="hotel-card-content">
-                                        <div className="hotel-info-text">
-                                            <div className="hotel-title-row">
-                                                <h3>{hotel.name}</h3>
-                                                <div className="hotel-location-tag"><MapPin size={14} /> <span>{hotel.location}</span></div>
-                                                <div className="hotel-date-badge"><CalendarDays size={14} /> <span>{formatDate(checkIn)} - {formatDate(checkOut)}</span></div>
-                                            </div>
-                                        </div>
-                                        <div className="price-action-section">
-                                            <div className="lowest-price-tag">
-                                                <span className="price-val">{isSubagent ? getPriceWithMargin(hotel.price) : hotel.price}€</span>
-                                            </div>
-                                            <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji <ArrowRight size={16} /></button>
-                                        </div>
-                                    </div>
+            <div className={`results-container ${viewMode}-view`}>
+                <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`}>
+                    {filteredResults.map(hotel => (
+                        <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase()} ${viewMode === 'list' ? 'horizontal' : ''}`}>
+                            <div className="hotel-card-image">
+                                <img src={hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
+                                <div className="source-badge">{hotel.provider} AI</div>
+                                <div className="hotel-stars-badge">
+                                    {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Hotel Details Modal */}
-            {expandedHotel && (
-                <div className="modern-calendar-overlay" onClick={() => setExpandedHotel(null)}>
-                    {/* WIDE MODAL CLASS ADDED HERE */}
-                    <div className="modern-calendar-popup wide hotel-details-wide animate-fade-in" onClick={e => e.stopPropagation()}>
-                        <div className="hotel-rooms-modal-header">
-                            <div className="modal-title-zone">
-                                <h2>{expandedHotel.name}</h2>
-                                <div className="modal-meta"><MapPin size={14} /> {expandedHotel.location}</div>
                             </div>
-                            <button className="close-modal-btn" onClick={() => setExpandedHotel(null)}><X size={20} /></button>
-                        </div>
-                        <div className="modal-body-v4">
-                            <div className="rooms-comparison-table">
-                                <div className="table-header">
-                                    <div>Tip Smeštaja</div>
-                                    <div>Kapacitet</div>
-                                    <div>Cena</div>
-                                    <div>Akcija</div>
+                            <div className="hotel-card-content">
+                                <div className="hotel-info-text">
+                                    <div className="hotel-title-row">
+                                        <h3>{hotel.name}</h3>
+                                        <div className="hotel-location-tag"><MapPin size={14} /> <span>{hotel.location}</span></div>
+                                        <div className="hotel-date-badge"><CalendarDays size={14} /> <span>{formatDate(checkIn)} - {formatDate(checkOut)}</span></div>
+                                    </div>
                                 </div>
-                                <div className="room-row-v4">
-                                    <div className="r-name"><strong>Standardna Ponuda</strong><p>{getMealPlanDisplayName(expandedHotel.mealPlan)}</p></div>
-                                    <div className="r-cap"><Users size={14} /> {adults}+{children}</div>
-                                    <div className="r-price">{isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price}€</div>
-                                    <div><button className="select-room-btn" onClick={() => handleReserveClick({ name: 'Standardna Ponuda', price: isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price })}>Rezerviši</button></div>
+                                <div className="price-action-section">
+                                    <div className="lowest-price-tag">
+                                        <span className="price-val">{isSubagent ? getPriceWithMargin(hotel.price) : hotel.price}€</span>
+                                    </div>
+                                    <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji <ArrowRight size={16} /></button>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    ))}
                 </div>
-            )}
-
-            {/* Booking Modal */}
-            {isBookingModalOpen && expandedHotel && selectedRoomForBooking && (
-                <BookingModal
-                    isOpen={isBookingModalOpen}
-                    onClose={() => setIsBookingModalOpen(false)}
-                    provider={expandedHotel.provider.toLowerCase() as any}
-                    bookingData={{
-                        hotelName: expandedHotel.name, location: expandedHotel.location,
-                        checkIn, checkOut, nights, roomType: selectedRoomForBooking.name,
-                        mealPlan: getMealPlanDisplayName(expandedHotel.mealPlan),
-                        adults, children, totalPrice: selectedRoomForBooking.price,
-                        currency: 'EUR', stars: expandedHotel.stars, providerData: expandedHotel.originalData
-                    }}
-                    onSuccess={() => setIsBookingModalOpen(false)}
-                    onError={err => console.error(err)}
-                />
-            )}
-
-            {/* Calendars */}
-            {activeCalendar && (
-                <ModernCalendar
-                    startDate={checkIn} endDate={checkOut}
-                    onChange={(s, e) => {
-                        setCheckIn(s);
-                        if (e) { setCheckOut(e); syncNightsFromDates(s, e); }
-                        setActiveCalendar(null);
-                    }}
-                    onClose={() => setActiveCalendar(null)}
-                />
-            )}
-
-            {/* AI Assistant */}
-            <button className="ai-assistant-btn"><Bot size={24} /> <span>Olympic Asistent</span><Sparkles size={16} /></button>
+            </div>
         </div>
+    )
+}
+
+{/* Hotel Details Modal */ }
+{
+    expandedHotel && (
+        <div className="modern-calendar-overlay" onClick={() => setExpandedHotel(null)}>
+            {/* WIDE MODAL CLASS ADDED HERE */}
+            <div className="modern-calendar-popup wide hotel-details-wide animate-fade-in" onClick={e => e.stopPropagation()}>
+                <div className="hotel-rooms-modal-header">
+                    <div className="modal-title-zone">
+                        <h2>{expandedHotel.name}</h2>
+                        <div className="modal-meta"><MapPin size={14} /> {expandedHotel.location}</div>
+                    </div>
+                    <button className="close-modal-btn" onClick={() => setExpandedHotel(null)}><X size={20} /></button>
+                </div>
+                <div className="modal-body-v4">
+                    <div className="rooms-comparison-table">
+                        <div className="table-header">
+                            <div>Tip Smeštaja</div>
+                            <div>Kapacitet</div>
+                            <div>Cena</div>
+                            <div>Akcija</div>
+                        </div>
+                        <div className="room-row-v4">
+                            <div className="r-name"><strong>Standardna Ponuda</strong><p>{getMealPlanDisplayName(expandedHotel.mealPlan)}</p></div>
+                            <div className="r-cap"><Users size={14} /> {adults}+{children}</div>
+                            <div className="r-price">{isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price}€</div>
+                            <div><button className="select-room-btn" onClick={() => handleReserveClick({ name: 'Standardna Ponuda', price: isSubagent ? getPriceWithMargin(expandedHotel.price) : expandedHotel.price })}>Rezerviši</button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+{/* Booking Modal */ }
+{
+    isBookingModalOpen && expandedHotel && selectedRoomForBooking && (
+        <BookingModal
+            isOpen={isBookingModalOpen}
+            onClose={() => setIsBookingModalOpen(false)}
+            provider={expandedHotel.provider.toLowerCase() as any}
+            bookingData={{
+                hotelName: expandedHotel.name, location: expandedHotel.location,
+                checkIn, checkOut, nights, roomType: selectedRoomForBooking.name,
+                mealPlan: getMealPlanDisplayName(expandedHotel.mealPlan),
+                adults, children, totalPrice: selectedRoomForBooking.price,
+                currency: 'EUR', stars: expandedHotel.stars, providerData: expandedHotel.originalData
+            }}
+            onSuccess={() => setIsBookingModalOpen(false)}
+            onError={err => console.error(err)}
+        />
+    )
+}
+
+{/* Calendars */ }
+{
+    activeCalendar && (
+        <ModernCalendar
+            startDate={checkIn} endDate={checkOut}
+            onChange={(s, e) => {
+                setCheckIn(s);
+                if (e) { setCheckOut(e); syncNightsFromDates(s, e); }
+                setActiveCalendar(null);
+            }}
+            onClose={() => setActiveCalendar(null)}
+        />
+    )
+}
+
+{/* AI Assistant */ }
+<button className="ai-assistant-btn"><Bot size={24} /> <span>Olympic Asistent</span><Sparkles size={16} /></button>
+        </div >
     );
 };
 
