@@ -37,7 +37,7 @@ const Sidebar: React.FC = () => {
                         style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px' }}
                     />
                 </div>
-                {!isSidebarCollapsed && <span className="brand-text" style={{ color: 'white' }}>Olympic B2B</span>}
+                {!isSidebarCollapsed && <span className="brand-text">Olympic B2B</span>}
                 <button className="collapse-toggle" onClick={toggleSidebar}>
                     {isSidebarCollapsed ? (
                         <ChevronRight size={16} />

@@ -61,10 +61,28 @@
 }
 
 /* Colorful (Sarena) Mode - Can be applied to ANY theme */
-.prism-mode h1,
 .prism-mode .brand-text {
   color: #3b82f6 !important;
 }
+
+/* Definitive Branding Overrides for Olympic B2B */
+.brand-text,
+.logo-olympic h1,
+.logo-text h1 {
+  color: #ffffff !important;
+  /* White in dark mode */
+}
+
+.light-theme .brand-text,
+.light-theme .logo-olympic h1,
+.light-theme .logo-text h1,
+.tokyo-light-theme .brand-text,
+.tokyo-light-theme .logo-olympic h1,
+.tokyo-light-theme .logo-text h1 {
+  color: #800020 !important;
+  /* Bordo color in light mode */
+}
+
 
 .prism-mode h2 {
   color: #a855f7 !important;

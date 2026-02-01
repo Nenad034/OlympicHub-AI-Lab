@@ -309,3 +309,34 @@ h3,
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
+
+/* Definitive Branding Overrides for Olympic B2B */
+.brand-text,
+.logo-olympic h1,
+.logo-text h1 {
+  color: #ffffff !important;
+  /* White in dark mode */
+}
+
+.light-theme .brand-text,
+.light-theme .logo-olympic h1,
+.light-theme .logo-text h1,
+.tokyo-light-theme .brand-text,
+.tokyo-light-theme .logo-olympic h1,
+.tokyo-light-theme .logo-text h1 {
+  color: #800020 !important;
+  /* Bordo color in light mode */
+}
+
+/* Override Prism (Sarena) mode blue for branding if needed */
+.prism-mode .brand-text,
+.prism-mode .logo-olympic h1,
+.prism-mode .logo-text h1 {
+  color: #ffffff !important;
+}
+
+.light-theme.prism-mode .brand-text,
+.light-theme.prism-mode .logo-olympic h1,
+.light-theme.prism-mode .logo-text h1 {
+  color: #800020 !important;
+}
