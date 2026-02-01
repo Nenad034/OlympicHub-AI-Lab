@@ -30,11 +30,25 @@ const Sidebar: React.FC = () => {
     return (
         <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
             <div className="sidebar-header">
-                <div className="logo-container" style={{ background: 'transparent', boxShadow: 'none' }}>
+                <div className="logo-container" style={{
+                    background: 'transparent',
+                    boxShadow: 'none',
+                    width: isSidebarCollapsed ? '40px' : '150px',
+                    height: isSidebarCollapsed ? '40px' : '120px',
+                    margin: '0 auto',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
                     <img
                         src="/logo.jpg"
                         alt="Olympic Logo"
-                        style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px' }}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                            borderRadius: '8px'
+                        }}
                     />
                 </div>
                 {/* Removed Olympic B2B text as requested */}

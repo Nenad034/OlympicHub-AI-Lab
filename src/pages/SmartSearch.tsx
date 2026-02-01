@@ -127,6 +127,8 @@ const SmartSearch: React.FC = () => {
     const [searchResults, setSearchResults] = useState<SmartSearchResult[]>([]);
     const [searchError, setSearchError] = useState<string | null>(null);
     const [searchPerformed, setSearchPerformed] = useState(false);
+    const [selectedArrivalDate, setSelectedArrivalDate] = useState<string | null>(null);
+
 
     // Filter & UI States
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -207,6 +209,11 @@ const SmartSearch: React.FC = () => {
         setCheckOut(checkOutDate.toISOString().split('T')[0]);
         setNights(7);
 
+        // Ported from GlobalHubSearch
+        if (!selectedArrivalDate) {
+            setSelectedArrivalDate(checkInDate);
+        }
+
         // Click outside handler
         const handleClickOutside = (event: MouseEvent) => {
             if (autocompleteRef.current && !autocompleteRef.current.contains(event.target as Node)) {
@@ -284,6 +291,18 @@ const SmartSearch: React.FC = () => {
         return () => clearTimeout(timer);
     }, [destinationInput, selectedDestinations]); // recentSearches REMOVED from dependency array
 
+    const generateFlexDates = (baseDate: string, range: number) => {
+        if (!baseDate) return [];
+        const dates = [];
+        const base = new Date(baseDate);
+        for (let i = -range; i <= range; i++) {
+            const d = new Date(base);
+            d.setDate(d.getDate() + i);
+            dates.push(d.toISOString().split('T')[0]);
+        }
+        return dates;
+    };
+
     const handleAddDestination = (destination: Destination) => {
         if (selectedDestinations.length < 3) {
             setSelectedDestinations([...selectedDestinations, destination]);
@@ -314,6 +333,7 @@ const SmartSearch: React.FC = () => {
         setSearchError(null);
         setSearchResults([]);
         setSearchPerformed(false);
+        setSelectedArrivalDate(checkIn);
 
         try {
             const results = await performSmartSearch({
@@ -382,18 +402,24 @@ const SmartSearch: React.FC = () => {
             setCheckIn(today.toISOString().split('T')[0]);
             setCheckOut(nextWeek.toISOString().split('T')[0]);
             setNights(7);
-        } else if (type === '5-stars') {
-            setSelectedStars(['5']);
-            // Trigger search with 5 stars? Or just set filter.
-            // Ideally we'd set the filter state.
-        } else if (type === 'early-bird') {
-            const nextMonth = new Date();
-            nextMonth.setMonth(nextMonth.getMonth() + 3);
-            const nextWeek = new Date(nextMonth);
-            nextWeek.setDate(nextMonth.getDate() + 7);
-            setCheckIn(nextMonth.toISOString().split('T')[0]);
-            setCheckOut(nextWeek.toISOString().split('T')[0]);
         }
+    };
+
+    const renderStars = (count: number) => {
+        const goldOld = '#CFB53B'; // Old gold color
+        return (
+            <div className="star-rating-filter">
+                {[1, 2, 3, 4, 5].map(i => (
+                    <Star
+                        key={i}
+                        size={12}
+                        fill={i <= count ? goldOld : 'transparent'}
+                        color={goldOld}
+                        style={{ marginRight: '1px' }}
+                    />
+                ))}
+            </div>
+        );
     };
 
     return (
@@ -563,6 +589,17 @@ const SmartSearch: React.FC = () => {
 
                 </div >
 
+                {/* QUICK FILTERS - MOVED HERE */}
+                <div className="quick-filters-inline-v2">
+                    <button className="quick-filter-chip" onClick={() => handleQuickFilter('last-minute')}><Clock size={16} /> Last Minute</button>
+                    <button className="quick-filter-chip" onClick={() => handleQuickFilter('early-bird')}><TrendingUp size={16} /> Early Bird</button>
+                    <button className="quick-filter-chip" onClick={() => setSelectedStars(['5'])}>{renderStars(5)}</button>
+                    <button className="quick-filter-chip" onClick={() => setSelectedStars(['4'])}>{renderStars(4)}</button>
+                    <button className="quick-filter-chip" onClick={() => setSelectedStars(['3'])}>{renderStars(3)}</button>
+                    <button className="quick-filter-chip" onClick={() => setSelectedStars(['2'])}>{renderStars(2)}</button>
+                    <button className="quick-filter-chip" onClick={() => setSelectedStars(['all'])}>Sve kategorije</button>
+                </div>
+
                 {/* SEARCH BUTTON */}
                 < div className="action-row" >
                     <button className="btn-search-main" onClick={handleSearch} disabled={isSearching}>
@@ -572,36 +609,50 @@ const SmartSearch: React.FC = () => {
                 </div >
             </div >
 
-            {/* QUICK FILTERS */}
-            < div className="quick-filters-section" >
-                <div className="section-title fire"><Zap size={18} fill="currentColor" /> Brzi Filteri</div>
-                <div className="filter-chips-row">
-                    <button className="quick-filter-chip" onClick={() => handleQuickFilter('last-minute')}><Clock size={16} /> Last Minute</button>
-                    <button className="quick-filter-chip" onClick={() => handleQuickFilter('early-bird')}><TrendingUp size={16} /> Early Bird</button>
-                    <button className="quick-filter-chip" onClick={() => handleQuickFilter('5-stars')}><Star size={16} fill="currentColor" /> 5★ Hoteli</button>
-                </div>
-            </div >
-
-            {/* POPULAR DESTINATIONS */}
-            < div className="popular-dests-section" >
-                <div className="section-title globe"><MapIcon size={18} /> Popularne Destinacije</div>
-                <div className="popular-dests-grid">
-                    {[
-                        { code: 'GR', name: 'Grčka', count: 234, id: 'd4' },
-                        { code: 'EG', name: 'Egipat', count: 189, id: 'd8' },
-                        { code: 'TR', name: 'Turska', count: 156, id: 'd11' },
-                        { code: 'AE', name: 'Dubai', count: 98, id: 'd13' }
-                    ].map(dest => (
-                        <div key={dest.code} className="pop-dest-card" onClick={() => handleAddDestination(mockDestinations.find(d => d.id === dest.id) || mockDestinations[0])}>
-                            <div className="pop-bg-code">{dest.code}</div>
-                            <div className="pop-content">
-                                <span className="pop-name">{dest.name}</span>
-                                <span className="pop-count">{dest.count} ponuda</span>
+            {/* FLEXIBLE DATES RIBBON */}
+            {searchPerformed && flexibleDays > 0 && (
+                <div className="flexible-dates-ribbon-container animate-fade-in" style={{ marginBottom: '2rem' }}>
+                    <div className="ribbon-header-v4">
+                        <div className="header-left-v4">
+                            <CalendarDays size={20} className="glow-icon" />
+                            <div className="header-text-v4">
+                                <span className="title-v4">Fleksibilni datumi (±{flexibleDays} dana)</span>
+                                <span className="sub-v4">Odaberite datum za promenu pretrage</span>
                             </div>
                         </div>
-                    ))}
+                    </div>
+                    <div className="flexible-dates-strip">
+                        {generateFlexDates(selectedArrivalDate || checkIn, flexibleDays).map((dateStr) => {
+                            const dateObj = new Date(dateStr);
+                            const isActive = dateStr === checkIn;
+                            const dayName = dateObj.toLocaleDateString('sr-RS', { weekday: 'short' });
+                            const dayNum = dateObj.getDate();
+                            const monthName = dateObj.toLocaleDateString('sr-RS', { month: 'short' });
+
+                            return (
+                                <div
+                                    key={dateStr}
+                                    className={`flex-date-tile-premium ${isActive ? 'active' : ''}`}
+                                    onClick={() => {
+                                        if (!isActive) {
+                                            setCheckIn(dateStr);
+                                            // Auto-update checkout while keeping nights same
+                                            const newOut = new Date(dateStr);
+                                            newOut.setDate(newOut.getDate() + nights);
+                                            setCheckOut(newOut.toISOString().split('T')[0]);
+                                            handleSearch();
+                                        }
+                                    }}
+                                >
+                                    <span className="flex-day-name">{dayName}</span>
+                                    <span className="flex-day-num">{dayNum}</span>
+                                    <span className="flex-month">{monthName}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
-            </div >
+            )}
 
             {/* ERROR ALERT */}
             {
