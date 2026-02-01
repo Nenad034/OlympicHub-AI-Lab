@@ -1,5 +1,22 @@
 /* SMART SEARCH REDESIGN 2026 - OLYMPIC HUB */
 
+.meal-plan-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 6px 12px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 8px;
+    z-index: 10;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 /* Global Variables for the Redesign */
 :root {
     --primary-gradient: linear-gradient(90deg, #6366f1 0%, #a855f7 100%);

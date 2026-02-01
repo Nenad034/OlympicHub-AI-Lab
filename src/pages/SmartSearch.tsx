@@ -711,7 +711,7 @@ const SmartSearch: React.FC = () => {
                                     <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase()} ${viewMode === 'list' ? 'horizontal' : ''}`}>
                                         <div className="hotel-card-image">
                                             <img src={hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
-                                            <div className="source-badge">{hotel.provider} AI</div>
+                                            <div className="meal-plan-badge">{getMealPlanDisplayName(hotel.mealPlan)}</div>
                                             <div className="hotel-stars-badge">
                                                 {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
                                             </div>
