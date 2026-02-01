@@ -37,19 +37,18 @@
 }
 
 .logo-icon {
-    color: #ffd700;
-    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.4));
+    /* Color handled by index.css definitive overrides */
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1));
 }
 
 .logo-text h1 {
     font-size: 2rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
     margin: 0;
     letter-spacing: 1px;
+    -webkit-text-fill-color: initial;
+    background-clip: initial;
+    -webkit-background-clip: initial;
 }
 
 .logo-text p {
@@ -688,7 +687,9 @@
     min-width: 150px;
     border-left: 1px solid rgba(255, 255, 255, 0.1);
     padding-left: 2rem;
-}/* --- AI Assistant Floating Button --- */
+}
+
+/* --- AI Assistant Floating Button --- */
 .ai-assistant-btn {
     position: fixed;
     bottom: 2rem;
@@ -719,6 +720,7 @@
 .ai-assistant-btn svg {
     stroke-width: 2.5px;
 }
+
 /* --- MODAL WIDE OVERLAY FIX --- */
 .modern-calendar-overlay {
     position: fixed;
@@ -886,6 +888,7 @@
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
+
 /* EQUAL WIDTH FILTERS FIX */
 .filters-toolbar-v4.premium {
     display: flex;
@@ -921,6 +924,7 @@
     margin-left: 0;
     /* Remove auto margin if we want uniform spacing, or keep it to push right */
 }
+
 /* MODERN CALENDAR FIX */
 .modern-calendar-overlay {
     z-index: 9999 !important;
@@ -955,6 +959,7 @@
 .dropdown-header-label {
     display: none !important;
 }
+
 /* WIDE MODAL FIX */
 .modern-calendar-popup.wide.hotel-details-wide {
     max-width: 1200px !important;
