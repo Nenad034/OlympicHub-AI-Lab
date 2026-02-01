@@ -367,13 +367,13 @@ const SmartSearch: React.FC = () => {
             return false;
         }
 
-        if (!selectedStars.includes('all')) {
-            if (!selectedStars.includes(String(hotel.stars))) {
+        if (selectedStars.length > 0 && !selectedStars.includes('all')) {
+            if (!selectedStars.includes(String(hotel.stars || 0))) {
                 return false;
             }
         }
 
-        if (!selectedMealPlans.includes('all')) {
+        if (selectedMealPlans.length > 0 && !selectedMealPlans.includes('all')) {
             const normalized = normalizeMealPlan(hotel.mealPlan || '');
             if (!selectedMealPlans.includes(normalized)) {
                 return false;
@@ -393,6 +393,22 @@ const SmartSearch: React.FC = () => {
     };
 
     const getPriceWithMargin = (price: number) => Math.round(price * 1.15);
+
+    const toggleStarFilter = (star: string) => {
+        if (star === 'all') {
+            setSelectedStars(['all']);
+        } else {
+            setSelectedStars(prev => {
+                const withoutAll = prev.filter(s => s !== 'all');
+                if (withoutAll.includes(star)) {
+                    const next = withoutAll.filter(s => s !== star);
+                    return next.length === 0 ? ['all'] : next;
+                } else {
+                    return [...withoutAll, star];
+                }
+            });
+        }
+    };
 
     const handleQuickFilter = (type: string) => {
         if (type === 'last-minute') {
@@ -594,12 +610,12 @@ const SmartSearch: React.FC = () => {
                     <button className="quick-filter-chip" onClick={() => handleQuickFilter('last-minute')}><Clock size={16} /> Last Minute</button>
                     <button className="quick-filter-chip" onClick={() => handleQuickFilter('early-bird')}><TrendingUp size={16} /> Early Bird</button>
                     <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.1)', margin: '0 8px' }}></div>
-                    <button className={`quick-filter-chip ${selectedStars.includes('all') ? 'active' : ''}`} onClick={() => setSelectedStars(['all'])}>Sve kategorije</button>
-                    <button className={`quick-filter-chip ${selectedStars.includes('5') ? 'active' : ''}`} onClick={() => setSelectedStars(['5'])}>{renderStars(5)}</button>
-                    <button className={`quick-filter-chip ${selectedStars.includes('4') ? 'active' : ''}`} onClick={() => setSelectedStars(['4'])}>{renderStars(4)}</button>
-                    <button className={`quick-filter-chip ${selectedStars.includes('3') ? 'active' : ''}`} onClick={() => setSelectedStars(['3'])}>{renderStars(3)}</button>
-                    <button className={`quick-filter-chip ${selectedStars.includes('2') ? 'active' : ''}`} onClick={() => setSelectedStars(['2'])}>{renderStars(2)}</button>
-                    <button className={`quick-filter-chip ${selectedStars.includes('0') ? 'active' : ''}`} onClick={() => setSelectedStars(['0'])}>{renderStars(0)}</button>
+                    <button className={`quick-filter-chip ${selectedStars.includes('all') ? 'active' : ''}`} onClick={() => toggleStarFilter('all')}>Sve kategorije</button>
+                    <button className={`quick-filter-chip ${selectedStars.includes('5') ? 'active' : ''}`} onClick={() => toggleStarFilter('5')}>{renderStars(5)}</button>
+                    <button className={`quick-filter-chip ${selectedStars.includes('4') ? 'active' : ''}`} onClick={() => toggleStarFilter('4')}>{renderStars(4)}</button>
+                    <button className={`quick-filter-chip ${selectedStars.includes('3') ? 'active' : ''}`} onClick={() => toggleStarFilter('3')}>{renderStars(3)}</button>
+                    <button className={`quick-filter-chip ${selectedStars.includes('2') ? 'active' : ''}`} onClick={() => toggleStarFilter('2')}>{renderStars(2)}</button>
+                    <button className={`quick-filter-chip ${selectedStars.includes('0') ? 'active' : ''}`} onClick={() => toggleStarFilter('0')}>{renderStars(0)}</button>
                 </div>
 
                 {/* SEARCH BUTTON */}
