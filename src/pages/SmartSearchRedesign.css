@@ -205,6 +205,15 @@
     transform: translateY(-1px);
 }
 
+.quick-filter-chip.active {
+    background: rgba(207, 181, 59, 0.15);
+    /* Old gold with opacity */
+    border-color: #CFB53B;
+    /* Old gold */
+    color: white;
+    box-shadow: 0 0 10px rgba(207, 181, 59, 0.2);
+}
+
 .star-rating-filter {
     display: flex;
     align-items: center;

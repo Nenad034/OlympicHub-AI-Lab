@@ -593,11 +593,13 @@ const SmartSearch: React.FC = () => {
                 <div className="quick-filters-inline-v2">
                     <button className="quick-filter-chip" onClick={() => handleQuickFilter('last-minute')}><Clock size={16} /> Last Minute</button>
                     <button className="quick-filter-chip" onClick={() => handleQuickFilter('early-bird')}><TrendingUp size={16} /> Early Bird</button>
-                    <button className="quick-filter-chip" onClick={() => setSelectedStars(['5'])}>{renderStars(5)}</button>
-                    <button className="quick-filter-chip" onClick={() => setSelectedStars(['4'])}>{renderStars(4)}</button>
-                    <button className="quick-filter-chip" onClick={() => setSelectedStars(['3'])}>{renderStars(3)}</button>
-                    <button className="quick-filter-chip" onClick={() => setSelectedStars(['2'])}>{renderStars(2)}</button>
-                    <button className="quick-filter-chip" onClick={() => setSelectedStars(['all'])}>Sve kategorije</button>
+                    <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.1)', margin: '0 8px' }}></div>
+                    <button className={`quick-filter-chip ${selectedStars.includes('all') ? 'active' : ''}`} onClick={() => setSelectedStars(['all'])}>Sve kategorije</button>
+                    <button className={`quick-filter-chip ${selectedStars.includes('5') ? 'active' : ''}`} onClick={() => setSelectedStars(['5'])}>{renderStars(5)}</button>
+                    <button className={`quick-filter-chip ${selectedStars.includes('4') ? 'active' : ''}`} onClick={() => setSelectedStars(['4'])}>{renderStars(4)}</button>
+                    <button className={`quick-filter-chip ${selectedStars.includes('3') ? 'active' : ''}`} onClick={() => setSelectedStars(['3'])}>{renderStars(3)}</button>
+                    <button className={`quick-filter-chip ${selectedStars.includes('2') ? 'active' : ''}`} onClick={() => setSelectedStars(['2'])}>{renderStars(2)}</button>
+                    <button className={`quick-filter-chip ${selectedStars.includes('0') ? 'active' : ''}`} onClick={() => setSelectedStars(['0'])}>{renderStars(0)}</button>
                 </div>
 
                 {/* SEARCH BUTTON */}
