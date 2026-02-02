@@ -24,6 +24,8 @@ import './SmartSearchStylesFix.css';
 import './SmartSearchLightMode.css';
 import './SmartSearchRedesign.css';
 import './SmartSearchGridFix.css';
+import './ModalFixDefinitive.css';
+import './SmartSearchZoom.css';
 
 /**
  * Constants for filtering
@@ -1333,7 +1335,7 @@ const SmartSearch: React.FC = () => {
                     {/* Hotel Details Modal */}
                     {
                         expandedHotel && (
-                            <div className="modern-calendar-overlay" onClick={() => setExpandedHotel(null)}>
+                            <div className="modern-calendar-overlay hotel-modal-overlay" onClick={() => setExpandedHotel(null)}>
                                 {/* WIDE MODAL CLASS ADDED HERE */}
                                 <div className="modern-calendar-popup wide hotel-details-wide animate-fade-in" onClick={e => e.stopPropagation()}>
                                     <div className="hotel-rooms-modal-header" style={{ padding: '12px 25px', background: '#1e293b' }}>

@@ -751,7 +751,7 @@ const SubagentAdmin: React.FC = () => {
                                             <td className="amount commission">{subagent.financials.totalCommission.toLocaleString()} €</td>
                                             <td>
                                                 <div className="action-buttons">
-                                                    <button className="action-btn external" onClick={() => window.open(`/b2b-dashboard?subagentId=${subagent.id}`, '_blank')} title="Pristupi B2B strani (Impersonate)"><ExternalLink size={16} /></button>
+                                                    <button className="action-btn external" onClick={() => window.open(`/smart-search?subagentId=${subagent.id}`, '_blank')} title="Pristupi B2B strani (Impersonate)"><ExternalLink size={16} /></button>
                                                     <button className="action-btn reservations" onClick={() => handleViewReservations(subagent)} title="Rezervacije"><FileText size={16} /></button>
                                                     <button className="action-btn b2b" onClick={() => handleManageAccess(subagent)} title="B2B Pristup"><Shield size={16} /></button>
                                                     <button className="action-btn view" onClick={() => handleViewDetails(subagent)} title="Pregled"><Eye size={16} /></button>

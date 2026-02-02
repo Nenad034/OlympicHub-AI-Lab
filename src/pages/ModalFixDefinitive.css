@@ -1,0 +1,136 @@
+/* ============================================================================
+   DEFINITIVE MODAL OVERLAY FIX - ONLY FOR HOTEL DETAILS MODAL
+   Uses specific class 'hotel-modal-overlay' to avoid affecting calendar
+   ============================================================================ */
+
+/* Target ONLY hotel modal overlay - NOT calendar */
+.hotel-modal-overlay.modern-calendar-overlay {
+    /* Positioning - Cover entire viewport */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+
+    /* Z-Index - Above EVERYTHING */
+    z-index: 2147483647 !important;
+
+    /* Background - Dark blur that hides everything */
+    background: rgba(10, 12, 16, 0.95) !important;
+    backdrop-filter: blur(25px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+
+    /* Layout - Center the modal */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 40px 20px !important;
+
+    /* Scroll */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Modal Container - Only hotel details */
+.hotel-details-wide {
+    position: relative !important;
+    margin: auto !important;
+    max-width: 1400px !important;
+    width: 95% !important;
+    max-height: 90vh !important;
+
+    /* Styling */
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 50px 100px rgba(0, 0, 0, 0.9) !important;
+
+    /* Layout */
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+
+    /* Animation */
+    animation: modalPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+/* Also target the wide class when used with modern-calendar-popup in hotel modal */
+.hotel-modal-overlay .modern-calendar-popup.wide {
+    position: relative !important;
+    margin: auto !important;
+    max-width: 1400px !important;
+    width: 95% !important;
+    max-height: 90vh !important;
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 50px 100px rgba(0, 0, 0, 0.9) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    animation: modalPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+/* Modal Body Scrolling */
+.modal-body-v4 {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 2rem !important;
+}
+
+/* Buttons */
+.btn-book-v4,
+.select-room-btn {
+    background: linear-gradient(135deg, #FF4500 0%, #FF0000 100%) !important;
+    color: white !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4) !important;
+}
+
+.btn-book-v4:hover,
+.select-room-btn:hover {
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 8px 25px rgba(255, 69, 0, 0.6) !important;
+}
+
+/* Animation */
+@keyframes modalPopIn {
+    0% {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Close Button */
+.close-modal-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: none !important;
+    color: white !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+}
+
+.close-modal-btn:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: rotate(90deg) !important;
+}

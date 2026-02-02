@@ -212,6 +212,33 @@
     }
 }
 
+/* DEFINITIVE MODAL FIX - CENTERING & GLASSMORPHISM */
+.modern-calendar-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(2, 6, 23, 0.9) !important;
+    backdrop-filter: blur(12px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+    overflow-y: auto !important;
+    z-index: 9999999 !important;
+}
+
+.modern-calendar-popup.wide,
+.hotel-details-wide {
+    margin: auto !important;
+    /* Perfect Vertical & Horizontal Centering */
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 50px 100px rgba(0, 0, 0, 0.9) !important;
+    animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
 @keyframes pulse {
     0% {
         transform: scale(1);
@@ -2534,6 +2561,7 @@
 .tokyo-light-theme .insight-text p {
     color: #6d28d2;
 }
+
 /* ==========================================================================
    B2B Segment Specific Styles (Olympic Hub B2B)
    ========================================================================== */

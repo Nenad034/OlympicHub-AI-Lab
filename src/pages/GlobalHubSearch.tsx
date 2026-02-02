@@ -23,6 +23,7 @@ import { BookingSuccess } from '../components/booking/BookingSuccess';
 import '../modules/pricing/TotalTripSearch.css';
 import './GlobalHubSearch.css';
 import './B2BPriceDisplay.css';
+import './ModalFixDefinitive.css';
 import { MultiSelectDropdown } from '../components/MultiSelectDropdown';
 export interface RoomDetails {
     id: string;
@@ -1650,7 +1651,7 @@ const GlobalHubSearch: React.FC = () => {
                     </div>
                 )}
                 {expandedHotel && (
-                    <div className="modern-calendar-overlay" onClick={() => setExpandedHotel(null)}>
+                    <div className="modern-calendar-overlay hotel-modal-overlay" onClick={() => setExpandedHotel(null)}>
                         <div className="modern-calendar-popup wide animate-scale-in" onClick={e => e.stopPropagation()} style={{ maxWidth: '1000px', width: '95vw' }}>
                             <div className="hotel-rooms-modal-header">
                                 <div className="modal-title-zone">

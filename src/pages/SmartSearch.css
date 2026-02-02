@@ -12,6 +12,9 @@
     font-family: 'Inter', sans-serif;
     position: relative;
     overflow-x: hidden;
+
+    /* 20% zoom out - scale to 80% */
+    zoom: 0.8 !important;
 }
 
 /* --- Header Section --- */
@@ -1003,6 +1006,7 @@
     letter-spacing: 2px;
     text-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
 }
+
 /* ===== SMART SUGGESTIONS BOX ===== */
 .smart-suggestions-box {
     margin-top: 30px;
@@ -1032,9 +1036,17 @@
 }
 
 @keyframes pulse-glow {
-    0% { filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.4)); }
-    50% { filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.8)); }
-    100% { filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.4)); }
+    0% {
+        filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.4));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.8));
+    }
+
+    100% {
+        filter: drop-shadow(0 0 2px rgba(168, 85, 247, 0.4));
+    }
 }
 
 .ss-loading {
@@ -1100,8 +1112,17 @@
     gap: 15px;
 }
 
-.p-sm { font-size: 10px; opacity: 0.6; text-transform: uppercase; }
-.p-val { font-size: 18px; font-weight: 800; color: #fbbf24; }
+.p-sm {
+    font-size: 10px;
+    opacity: 0.6;
+    text-transform: uppercase;
+}
+
+.p-val {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fbbf24;
+}
 
 .ss-apply-btn {
     background: #a855f7;
@@ -1157,8 +1178,14 @@
 }
 
 /* Hide scrollbar but keep functionality */
-.heatmap-grid::-webkit-scrollbar { height: 4px; }
-.heatmap-grid::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 4px; }
+.heatmap-grid::-webkit-scrollbar {
+    height: 4px;
+}
+
+.heatmap-grid::-webkit-scrollbar-thumb {
+    background: rgba(168, 85, 247, 0.3);
+    border-radius: 4px;
+}
 
 .heatmap-day {
     flex: 0 0 75px;
@@ -1184,7 +1211,9 @@
     border-color: rgba(16, 185, 129, 0.2);
 }
 
-.heatmap-day.available .h-status-icon { color: #10b981; }
+.heatmap-day.available .h-status-icon {
+    color: #10b981;
+}
 
 .heatmap-day.stop-sale {
     border-color: rgba(239, 68, 68, 0.2);
@@ -1192,7 +1221,9 @@
     cursor: not-allowed;
 }
 
-.heatmap-day.stop-sale .h-status-icon { color: #ef4444; }
+.heatmap-day.stop-sale .h-status-icon {
+    color: #ef4444;
+}
 
 .heatmap-day.requested {
     border-color: #a855f7;
@@ -1200,9 +1231,25 @@
     box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
 }
 
-.h-day-name { font-size: 9px; text-transform: uppercase; font-weight: 800; opacity: 0.6; }
-.h-day-num { font-size: 16px; font-weight: 900; line-height: 1; }
-.h-price { font-size: 10px; font-weight: 800; color: #fbbf24; margin-top: 2px; }
+.h-day-name {
+    font-size: 9px;
+    text-transform: uppercase;
+    font-weight: 800;
+    opacity: 0.6;
+}
+
+.h-day-num {
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.h-price {
+    font-size: 10px;
+    font-weight: 800;
+    color: #fbbf24;
+    margin-top: 2px;
+}
 
 .h-requested-tag {
     position: absolute;
@@ -1216,7 +1263,7 @@
     border-radius: 4px;
     font-weight: 900;
     text-transform: uppercase;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 
@@ -1232,7 +1279,7 @@
     border-radius: 4px;
     font-weight: 900;
     text-transform: uppercase;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     white-space: nowrap;
 }
 
@@ -1265,3 +1312,29 @@
     background: rgba(245, 158, 11, 0.05);
 }
 
+/* DEFINITIVE MODAL FIX - CENTERING & GLASSMORPHISM */
+.modern-calendar-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(2, 6, 23, 0.9) !important;
+    backdrop-filter: blur(12px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+    overflow-y: auto !important;
+    z-index: 9999999 !important;
+}
+
+.modern-calendar-popup.wide,
+.hotel-details-wide {
+    margin: auto !important;
+    /* Perfect Vertical & Horizontal Centering */
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 50px 100px rgba(0, 0, 0, 0.9) !important;
+    animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
