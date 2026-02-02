@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { X, ShieldCheck } from 'lucide-react';
 import { GuestForm } from './GuestForm';
@@ -46,7 +47,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
     // Initialize additional guests when modal opens
     useEffect(() => {
+        console.log('[BookingModal] Effect triggered. isOpen:', isOpen, 'Data:', bookingData?.hotelName);
         if (isOpen && bookingData) {
+            console.log('[BookingModal] Initializing guests for:', bookingData.hotelName);
             const adl = parseInt(bookingData.adults.toString()) || 1;
             const chd = parseInt(bookingData.children.toString()) || 0;
             const totalGuests = adl + chd;
@@ -150,11 +153,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         }
     };
 
-    if (!isOpen) return null;
+    if (!isOpen) {
+        console.log('[BookingModal] Not rendering because isOpen is false');
+        return null;
+    }
 
-    return (
-        <div className="booking-modal-overlay" onClick={onClose}>
-            <div className="booking-modal" onClick={(e) => e.stopPropagation()}>
+    console.log('[BookingModal] RENDERING MODAL UI for:', bookingData.hotelName);
+
+    const modalContent = (
+        <div className="booking-modal-overlay" onClick={onClose} style={{ zIndex: 100000 }}>
+            <div className="booking-modal" onClick={(e) => e.stopPropagation()} style={{ zIndex: 100001 }}>
                 <div className="booking-modal-header">
                     <div>
                         <h2>Podaci za Rezervaciju</h2>
@@ -285,4 +293,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             </div>
         </div>
     );
+
+    // Render using Portal to bypass all parent z-index contexts
+    return ReactDOM.createPortal(modalContent, document.body);
 };

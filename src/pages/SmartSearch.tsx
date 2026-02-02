@@ -6,7 +6,7 @@ import {
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
     LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
     CheckCircle2, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
-    Plus
+    Plus, Globe
 } from 'lucide-react';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
 import solvexDictionaryService from '../services/solvex/solvexDictionaryService';
@@ -42,6 +42,23 @@ const MEAL_PLAN_OPTIONS = [
     { value: 'FB', label: 'Pun pansion (FB)' },
     { value: 'AI', label: 'All Inclusive (AI)' },
     { value: 'UAI', label: 'Ultra All Inclusive (UAI)' },
+];
+
+const NATIONALITY_OPTIONS = [
+    { code: 'RS', name: 'Srbija' },
+    { code: 'BA', name: 'Bosna i Hercegovina' },
+    { code: 'ME', name: 'Crna Gora' },
+    { code: 'MK', name: 'Severna Makedonija' },
+    { code: 'HR', name: 'Hrvatska' },
+    { code: 'BG', name: 'Bugarska' },
+    { code: 'RO', name: 'Rumunija' },
+    { code: 'HU', name: 'Mađarska' },
+    { code: 'GR', name: 'Grčka' },
+    { code: 'AL', name: 'Albanija' },
+    { code: 'TR', name: 'Turska' },
+    { code: 'DE', name: 'Nemačka' },
+    { code: 'AT', name: 'Austrija' },
+    { code: 'CH', name: 'Švajcarska' },
 ];
 
 /**
@@ -139,8 +156,10 @@ const SmartSearch: React.FC = () => {
     const [showRoomPicker, setShowRoomPicker] = useState(false);
     const [showStarPicker, setShowStarPicker] = useState(false);
     const [showMealPicker, setShowMealPicker] = useState(false);
+    const [showNationalityPicker, setShowNationalityPicker] = useState(false);
 
     const [mealPlan, setMealPlan] = useState('');
+    const [nationality, setNationality] = useState('RS');
 
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<SmartSearchResult[]>([]);
@@ -160,6 +179,7 @@ const SmartSearch: React.FC = () => {
     const [expandedHotel, setExpandedHotel] = useState<SmartSearchResult | null>(null);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [selectedRoomForBooking, setSelectedRoomForBooking] = useState<any>(null);
+    const tabId = useRef(Math.random().toString(36).substring(2, 11));
 
     const inputRef = useRef<HTMLInputElement>(null);
     const autocompleteRef = useRef<HTMLDivElement>(null);
@@ -233,10 +253,30 @@ const SmartSearch: React.FC = () => {
             setSelectedArrivalDate(checkInDate);
         }
 
-        // TAB COUNTER LOGIC
-        const TAB_LIMIT_KEY = 'active_search_tabs_count';
-        let currentCount = parseInt(localStorage.getItem(TAB_LIMIT_KEY) || '0');
-        localStorage.setItem(TAB_LIMIT_KEY, (currentCount + 1).toString());
+        // TAB HEARTBEAT LOGIC (Reliable cross-tab counting)
+        const HEARTBEAT_INTERVAL = 2000;
+        const TAB_PREFIX = 'search_tab_';
+
+        const updateHeartbeat = () => {
+            localStorage.setItem(`${TAB_PREFIX}${tabId.current}`, Date.now().toString());
+        };
+
+        const cleanupOldTabs = () => {
+            const now = Date.now();
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key?.startsWith(TAB_PREFIX)) {
+                    const timestamp = parseInt(localStorage.getItem(key) || '0');
+                    if (now - timestamp > 5000) {
+                        localStorage.removeItem(key);
+                    }
+                }
+            }
+        };
+
+        updateHeartbeat();
+        const heartbeatTimer = setInterval(updateHeartbeat, HEARTBEAT_INTERVAL);
+        const cleanupTimer = setInterval(cleanupOldTabs, 10000);
 
         // Click outside handler
         const handleClickOutside = (event: MouseEvent) => {
@@ -248,15 +288,28 @@ const SmartSearch: React.FC = () => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
-            // Decrement on unmount
-            let closingCount = parseInt(localStorage.getItem(TAB_LIMIT_KEY) || '1');
-            localStorage.setItem(TAB_LIMIT_KEY, Math.max(0, closingCount - 1).toString());
+            clearInterval(heartbeatTimer);
+            clearInterval(cleanupTimer);
+            localStorage.removeItem(`${TAB_PREFIX}${tabId.current}`);
         };
     }, []);
 
     const handleNewSearchTab = () => {
-        const activeTabs = parseInt(localStorage.getItem('active_search_tabs_count') || '0');
-        if (activeTabs >= 5) {
+        const TAB_PREFIX = 'search_tab_';
+        const now = Date.now();
+        let activeCount = 0;
+
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key?.startsWith(TAB_PREFIX)) {
+                const timestamp = parseInt(localStorage.getItem(key) || '0');
+                if (now - timestamp < 6000) { // Check tabs active in the last 6 seconds
+                    activeCount++;
+                }
+            }
+        }
+
+        if (activeCount >= 5) {
             alert("⚠️ LIMIT DOSTIGNUT: Imate otvorenih 5 pretraga. Molimo zatvorite neki tab pre nego što pokrenete novu pretragu radi boljih performansi.");
             return;
         }
@@ -388,7 +441,7 @@ const SmartSearch: React.FC = () => {
                 rooms: activeAllocations,
                 mealPlan,
                 currency: 'EUR',
-                nationality: 'RS',
+                nationality: nationality || 'RS',
             });
 
             setSearchResults(results);
@@ -402,6 +455,22 @@ const SmartSearch: React.FC = () => {
         } finally {
             setIsSearching(false);
         }
+    };
+
+    const getPriceWithMargin = (price: number) => Math.round(price * 1.15);
+
+    const getFinalDisplayPrice = (hotel: SmartSearchResult) => {
+        let total = 0;
+        if (hotel.allocationResults && Object.keys(hotel.allocationResults).length > 0) {
+            Object.values(hotel.allocationResults).forEach((rooms: any) => {
+                if (!rooms || rooms.length === 0) return;
+                const minPrice = Math.min(...rooms.map((r: any) => r.price));
+                total += isSubagent ? getPriceWithMargin(minPrice) : Math.round(Number(minPrice));
+            });
+        } else {
+            total = isSubagent ? getPriceWithMargin(hotel.price) : Math.round(Number(hotel.price));
+        }
+        return total;
     };
 
     const filteredResults = searchResults.filter(hotel => {
@@ -424,17 +493,28 @@ const SmartSearch: React.FC = () => {
 
         return true;
     }).sort((a, b) => {
-        if (sortBy === 'price_low') return a.price - b.price;
-        if (sortBy === 'price_high') return b.price - a.price;
+        if (sortBy === 'price_low') return getFinalDisplayPrice(a) - getFinalDisplayPrice(b);
+        if (sortBy === 'price_high') return getFinalDisplayPrice(b) - getFinalDisplayPrice(a);
+        if (sortBy === 'smart') {
+            // Smart sort: Stars descending, then price ascending
+            if ((b.stars || 0) !== (a.stars || 0)) return (b.stars || 0) - (a.stars || 0);
+            return getFinalDisplayPrice(a) - getFinalDisplayPrice(b);
+        }
         return 0;
     });
 
-    const handleReserveClick = (room: any) => {
-        setSelectedRoomForBooking(room);
+    const handleReserveClick = (room: any, rIdx: number) => {
+        console.log('[SmartSearch] handleReserveClick triggered. Room:', room.name, 'rIdx:', rIdx);
+        if (!expandedHotel) {
+            console.error('[SmartSearch] handleReserveClick: expandedHotel is missing!');
+            return;
+        }
+        console.log('[SmartSearch] Setting booking state for:', expandedHotel.name);
+        setSelectedRoomForBooking({ ...room, allocationIndex: rIdx });
         setIsBookingModalOpen(true);
     };
 
-    const getPriceWithMargin = (price: number) => Math.round(price * 1.15);
+
 
     const toggleStarFilter = (star: string) => {
         if (star === 'all') {
@@ -530,6 +610,38 @@ const SmartSearch: React.FC = () => {
 
     return (
         <div className="smart-search-container-v2">
+            {/* Booking Modal (Top Level) */}
+            {
+                isBookingModalOpen && expandedHotel && selectedRoomForBooking && (
+                    <BookingModal
+                        isOpen={isBookingModalOpen}
+                        onClose={() => setIsBookingModalOpen(false)}
+                        provider={expandedHotel.provider.toLowerCase() as any}
+                        bookingData={{
+                            hotelName: expandedHotel.name,
+                            location: expandedHotel.location,
+                            checkIn,
+                            checkOut,
+                            nights,
+                            roomType: selectedRoomForBooking.name,
+                            mealPlan: getMealPlanDisplayName(expandedHotel.mealPlan),
+                            adults: roomAllocations.reduce((sum, r) => sum + r.adults, 0),
+                            children: roomAllocations.reduce((sum, r) => sum + r.children, 0),
+                            totalPrice: isSubagent ? getPriceWithMargin(selectedRoomForBooking.price) : Math.round(Number(selectedRoomForBooking.price)),
+                            currency: 'EUR',
+                            stars: expandedHotel.stars,
+                            providerData: expandedHotel.originalData
+                        }}
+                        onSuccess={() => {
+                            setIsBookingModalOpen(false);
+                            console.log('[SmartSearch] Booking success!');
+                        }}
+                        onError={err => {
+                            console.error('[SmartSearch] Booking error:', err);
+                        }}
+                    />
+                )
+            }
             {/* Minimal Header */}
             <header className="smart-search-header">
                 <div className="ss-brand-title-box">
@@ -699,6 +811,35 @@ const SmartSearch: React.FC = () => {
                                         </div>
                                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '10px', marginTop: '10px' }}>
                                             <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setShowMealPicker(false)}>Zatvori</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Nationality Selector (Country) - BELOW MEAL SELECTOR, ALIGNED */}
+                            <div className="col-nationality param-item" style={{ position: 'relative' }}>
+                                <div className="field-label" style={{ color: '#fbbf24' }}><Globe size={14} /> Država (obavezno)</div>
+                                <div className="input-box" onClick={() => setShowNationalityPicker(!showNationalityPicker)} style={{ cursor: 'pointer', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
+                                    <span style={{ fontSize: '0.85rem' }}>
+                                        {NATIONALITY_OPTIONS.find(n => n.code === nationality)?.name || 'Odaberi državu'}
+                                    </span>
+                                    <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                                </div>
+                                {showNationalityPicker && (
+                                    <div className="vertical-filters-popover animate-fade-in-up">
+                                        <div className="vertical-filter-group" style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '10px' }}>
+                                            {NATIONALITY_OPTIONS.map(n => (
+                                                <button
+                                                    key={n.code}
+                                                    className={`v-filter-btn ${nationality === n.code ? 'active' : ''}`}
+                                                    onClick={() => {
+                                                        setNationality(n.code);
+                                                        setShowNationalityPicker(false);
+                                                    }}
+                                                >
+                                                    {n.name}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                 )}
@@ -897,6 +1038,8 @@ const SmartSearch: React.FC = () => {
                     }
 
                     {/* RESULTS SECTION (EXISTING LOGIC) */}
+
+
                     {
                         searchPerformed && (
                             <div className="content-workflow animate-fade-in" style={{ marginTop: '3rem' }}>
@@ -931,7 +1074,12 @@ const SmartSearch: React.FC = () => {
                                     </div>
                                     <div className="sort-actions">
                                         <button className={`view-btn ${sortBy === 'smart' ? 'active' : ''}`} onClick={() => setSortBy('smart')}>Smart</button>
-                                        <button className={`view-btn ${sortBy === 'price_low' ? 'active' : ''}`} onClick={() => setSortBy('price_low')}>Cena ↓</button>
+                                        <button
+                                            className={`view-btn ${sortBy.startsWith('price') ? 'active' : ''}`}
+                                            onClick={() => setSortBy(sortBy === 'price_low' ? 'price_high' : 'price_low')}
+                                        >
+                                            Cena {sortBy === 'price_low' ? '↑' : sortBy === 'price_high' ? '↓' : '↕'}
+                                        </button>
                                     </div>
                                 </div>
 
@@ -958,7 +1106,9 @@ const SmartSearch: React.FC = () => {
                                                     </div>
                                                     <div className="price-action-section">
                                                         <div className="lowest-price-tag">
-                                                            <span className="price-val">{isSubagent ? getPriceWithMargin(hotel.price) : hotel.price}€</span>
+                                                            <span className="price-val">
+                                                                {getFinalDisplayPrice(hotel)}€
+                                                            </span>
                                                             {roomAllocations.filter(r => r.adults > 0).length > 1 && (
                                                                 <span className="price-label-multi"># Za {roomAllocations.filter(r => r.adults > 0).length} sobe</span>
                                                             )}
@@ -980,12 +1130,17 @@ const SmartSearch: React.FC = () => {
                             <div className="modern-calendar-overlay" onClick={() => setExpandedHotel(null)}>
                                 {/* WIDE MODAL CLASS ADDED HERE */}
                                 <div className="modern-calendar-popup wide hotel-details-wide animate-fade-in" onClick={e => e.stopPropagation()}>
-                                    <div className="hotel-rooms-modal-header">
+                                    <div className="hotel-rooms-modal-header" style={{ padding: '12px 25px', background: '#1e293b' }}>
                                         <div className="modal-title-zone">
-                                            <h2>{expandedHotel.name}</h2>
-                                            <div className="modal-meta"><MapPin size={14} /> {expandedHotel.location}</div>
+                                            <div className="modal-meta" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                                <span style={{ color: 'white', marginRight: '15px' }}>{expandedHotel.name.toUpperCase()}</span>
+                                                <MapPin size={14} /> {expandedHotel.location}
+                                                <span style={{ marginLeft: '20px', color: '#fbbf24', fontWeight: 800 }}>
+                                                    UKUPNA CENA: {getFinalDisplayPrice(expandedHotel)} {expandedHotel.currency}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <button className="close-modal-btn" onClick={() => setExpandedHotel(null)}><X size={20} /></button>
+                                        <button className="close-modal-btn" onClick={() => setExpandedHotel(null)}><X size={18} /></button>
                                     </div>
                                     <div className="modal-body-v4">
                                         {roomAllocations.map((alloc, rIdx) => {
@@ -1017,15 +1172,12 @@ const SmartSearch: React.FC = () => {
                                                                     </div>
                                                                     <div className="r-cap"><Users size={14} /> {room.capacity || `${alloc.adults}+${alloc.children}`}</div>
                                                                     <div className="r-price">
-                                                                        <span className="p-val">{room.price} {expandedHotel.currency}</span>
+                                                                        <span className="p-val">{isSubagent ? getPriceWithMargin(room.price) : Math.round(Number(room.price))} {expandedHotel.currency}</span>
                                                                     </div>
                                                                     <div className="r-action">
                                                                         <button
                                                                             className="btn-book-v4"
-                                                                            onClick={() => {
-                                                                                setSelectedRoomForBooking({ ...room, allocationIndex: rIdx });
-                                                                                setIsBookingModalOpen(true);
-                                                                            }}
+                                                                            onClick={() => handleReserveClick(room, rIdx)}
                                                                         >
                                                                             Rezerviši
                                                                         </button>
@@ -1044,15 +1196,12 @@ const SmartSearch: React.FC = () => {
                                                                     </div>
                                                                     <div className="r-cap"><Users size={14} /> {room.capacity || `${alloc.adults}+${alloc.children}`}</div>
                                                                     <div className="r-price">
-                                                                        <span className="p-val">{room.price} {expandedHotel.currency}</span>
+                                                                        <span className="p-val">{isSubagent ? getPriceWithMargin(room.price) : Math.round(Number(room.price))} {expandedHotel.currency}</span>
                                                                     </div>
                                                                     <div className="r-action">
                                                                         <button
                                                                             className="btn-book-v4"
-                                                                            onClick={() => {
-                                                                                setSelectedRoomForBooking({ ...room, allocationIndex: rIdx });
-                                                                                setIsBookingModalOpen(true);
-                                                                            }}
+                                                                            onClick={() => handleReserveClick(room, rIdx)}
                                                                         >
                                                                             Rezerviši
                                                                         </button>
@@ -1069,20 +1218,16 @@ const SmartSearch: React.FC = () => {
                                                                 </div>
                                                                 <div className="r-cap"><Users size={14} /> {alloc.adults}+{alloc.children}</div>
                                                                 <div className="r-price">
-                                                                    <span className="p-val">{expandedHotel.price} {expandedHotel.currency}</span>
+                                                                    <span className="p-val">{isSubagent ? getPriceWithMargin(expandedHotel.price) : Math.round(Number(expandedHotel.price))} {expandedHotel.currency}</span>
                                                                 </div>
                                                                 <div className="r-action">
                                                                     <button
                                                                         className="btn-book-v4"
-                                                                        onClick={() => {
-                                                                            setSelectedRoomForBooking({
-                                                                                id: 'default',
-                                                                                name: 'Standardna Soba',
-                                                                                price: expandedHotel.price,
-                                                                                allocationIndex: rIdx
-                                                                            });
-                                                                            setIsBookingModalOpen(true);
-                                                                        }}
+                                                                        onClick={() => handleReserveClick({
+                                                                            id: 'default',
+                                                                            name: 'Standardna Soba',
+                                                                            price: expandedHotel.price
+                                                                        }, rIdx)}
                                                                     >
                                                                         Rezerviši
                                                                     </button>
@@ -1096,28 +1241,6 @@ const SmartSearch: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                        )
-                    }
-
-                    {/* Booking Modal */}
-                    {
-                        isBookingModalOpen && expandedHotel && selectedRoomForBooking && (
-                            <BookingModal
-                                isOpen={isBookingModalOpen}
-                                onClose={() => setIsBookingModalOpen(false)}
-                                provider={expandedHotel.provider.toLowerCase() as any}
-                                bookingData={{
-                                    hotelName: expandedHotel.name, location: expandedHotel.location,
-                                    checkIn, checkOut, nights, roomType: selectedRoomForBooking.name,
-                                    mealPlan: getMealPlanDisplayName(expandedHotel.mealPlan),
-                                    adults: roomAllocations.reduce((sum, r) => sum + r.adults, 0),
-                                    children: roomAllocations.reduce((sum, r) => sum + r.children, 0),
-                                    totalPrice: selectedRoomForBooking.price,
-                                    currency: 'EUR', stars: expandedHotel.stars, providerData: expandedHotel.originalData
-                                }}
-                                onSuccess={() => setIsBookingModalOpen(false)}
-                                onError={err => console.error(err)}
-                            />
                         )
                     }
 
@@ -1137,8 +1260,7 @@ const SmartSearch: React.FC = () => {
                     }
                 </>
             )}
-
-        </div >
+        </div>
     );
 };
 

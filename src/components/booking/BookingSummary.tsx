@@ -26,39 +26,45 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
 
             <div className="booking-summary-grid">
                 {/* Check-in */}
-                <div className="summary-item">
-                    <span className="summary-label">Check-in:</span>
-                    <span className="summary-value">
+                <div className="booking-summary-item">
+                    <span className="booking-summary-label">Check-in:</span>
+                    <span className="booking-summary-value">
                         {formatDateForDisplay(bookingData.checkIn)}
                     </span>
                 </div>
 
                 {/* Check-out */}
-                <div className="summary-item">
-                    <span className="summary-label">Check-out:</span>
-                    <span className="summary-value">
+                <div className="booking-summary-item">
+                    <span className="booking-summary-label">Check-out:</span>
+                    <span className="booking-summary-value">
                         {formatDateForDisplay(bookingData.checkOut)}
                     </span>
                 </div>
 
                 {/* Duration */}
-                <div className="summary-item">
-                    <span className="summary-label">Trajanje:</span>
-                    <span className="summary-value">
+                <div className="booking-summary-item">
+                    <span className="booking-summary-label">Trajanje:</span>
+                    <span className="booking-summary-value">
                         {bookingData.nights} {bookingData.nights === 1 ? 'noć' : 'noći'}
                     </span>
                 </div>
 
                 {/* Room Type */}
-                <div className="summary-item">
-                    <span className="summary-label">Tip sobe:</span>
-                    <span className="summary-value">{bookingData.roomType}</span>
+                <div className="booking-summary-item">
+                    <span className="booking-summary-label">Tip sobe:</span>
+                    <span className="booking-summary-value">{bookingData.roomType}</span>
+                </div>
+
+                {/* Meal Plan */}
+                <div className="booking-summary-item">
+                    <span className="booking-summary-label">Usluga:</span>
+                    <span className="booking-summary-value">{bookingData.mealPlan}</span>
                 </div>
 
                 {/* Guests */}
-                <div className="summary-item">
-                    <span className="summary-label">Broj gostiju:</span>
-                    <span className="summary-value">
+                <div className="booking-summary-item">
+                    <span className="booking-summary-label">Broj gostiju:</span>
+                    <span className="booking-summary-value">
                         {bookingData.adults} {bookingData.adults === 1 ? 'odrasli' : 'odraslih'}
                         {bookingData.children > 0 && (
                             <> + {bookingData.children} {bookingData.children === 1 ? 'dete' : 'dece'}</>
@@ -67,9 +73,9 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                 </div>
 
                 {/* Price */}
-                <div className="summary-item summary-price">
-                    <span className="summary-label">Ukupna cena:</span>
-                    <span className="summary-value price">
+                <div className="booking-summary-item booking-summary-price">
+                    <span className="booking-summary-label">Ukupna cena:</span>
+                    <span className="booking-summary-value price">
                         {bookingData.totalPrice.toFixed(2)} {bookingData.currency}
                     </span>
                 </div>

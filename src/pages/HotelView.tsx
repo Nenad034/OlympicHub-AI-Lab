@@ -58,8 +58,13 @@ const HotelView: React.FC = () => {
     useEffect(() => {
         // Force horizontal nav on this page
         setNavMode('horizontal');
+
+        // Add class to body to override global layout padding/background
+        document.body.classList.add('is-hotel-details-page');
+
         return () => {
             setNavMode(originalNavMode);
+            document.body.classList.remove('is-hotel-details-page');
         };
     }, []);
 

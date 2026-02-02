@@ -726,14 +726,17 @@
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(8px);
+    width: 100vw;
+    height: 100vh;
+    background: #020617;
+    /* Solid deep background to hide everything else */
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    z-index: 9999;
+    justify-content: flex-start;
+    padding: 40px 0;
+    overflow-y: auto;
+    z-index: 99999;
 }
 
 .modern-calendar-popup.wide {
@@ -744,19 +747,22 @@
     border-radius: 20px;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
     overflow: hidden;
+    margin-top: 0;
+    /* Already has padding from overlay */
+    margin-bottom: 40px;
     animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes zoomIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+.hotel-details-wide {
+    width: 94%;
+    max-width: 1300px;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+    margin-bottom: 60px;
+    display: flex;
+    flex-direction: column;
 }
 
 .hotel-rooms-modal-header {
@@ -927,9 +933,17 @@
 
 /* MODERN CALENDAR FIX */
 .modern-calendar-overlay {
-    z-index: 9999 !important;
-    /* Ensure it's above EVERYTHING */
-    background: rgba(0, 0, 0, 0.8) !important;
+    z-index: 100000 !important;
+    background: #020617 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    top: 0 !important;
+    left: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 40px 0 !important;
+    overflow-y: auto !important;
 }
 
 .modern-calendar-popup {
@@ -971,6 +985,7 @@
 .rooms-comparison-table {
     width: 100%;
 }
+
 /* --- Brand Title --- */
 .ss-brand-title-box {
     margin-bottom: 24px;

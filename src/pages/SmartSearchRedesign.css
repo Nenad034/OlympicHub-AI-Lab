@@ -162,6 +162,11 @@
     position: relative;
 }
 
+.col-nationality {
+    grid-column: 5;
+    /* Aligned below col-meals */
+}
+
 /* col-meal REMOVED */
 
 @media (max-width: 1400px) {

@@ -1,8 +1,8 @@
 /* Booking Summary Styles */
 
 .booking-summary {
-    background: linear-gradient(135deg, var(--accent-glow) 0%, var(--bg-surface) 100%);
-    border: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(15, 23, 42, 0.8) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 24px;
@@ -12,13 +12,13 @@
 .booking-summary-header {
     margin-bottom: 16px;
     padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .booking-summary-header h3 {
     font-size: 16px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #f8fafc;
     margin: 0;
     display: flex;
     align-items: center;
@@ -32,33 +32,38 @@
     margin-bottom: 16px;
 }
 
-.summary-item {
+.booking-summary-item {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(30, 30, 46, 0.4);
+    border-radius: 8px;
 }
 
-.summary-label {
-    font-size: 12px;
+.booking-summary-label {
+    font-size: 11px;
     font-weight: 500;
     color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    line-height: 1.2;
 }
 
-.summary-value {
-    font-size: 14px;
+.booking-summary-value {
+    font-size: 15px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #f8fafc;
+    line-height: 1.4;
 }
 
-.summary-item.summary-price {
+.booking-summary-item.booking-summary-price {
     grid-column: 1 / -1;
     padding-top: 12px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.summary-value.price {
+.booking-summary-value.price {
     font-size: 20px;
     color: #3b82f6;
     font-weight: 700;
@@ -68,13 +73,13 @@
 .booking-progress {
     margin-top: 16px;
     padding-top: 16px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .progress-bar {
     width: 100%;
     height: 8px;
-    background: var(--bg-input);
+    background: rgba(30, 30, 46, 0.8);
     border-radius: 4px;
     overflow: hidden;
     margin-bottom: 8px;
