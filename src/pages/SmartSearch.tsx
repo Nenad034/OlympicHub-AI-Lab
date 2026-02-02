@@ -5,10 +5,12 @@ import {
     MapPin, Calendar, CalendarDays, Users, UtensilsCrossed, Star,
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
     LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
-    CheckCircle2, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
+    CheckCircle2, CheckCircle, XCircle, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
     Plus, Globe
 } from 'lucide-react';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
+import { sentinelEvents } from '../utils/sentinelEvents';
+import { getMonthlyReservationCount } from '../services/reservationService';
 import solvexDictionaryService from '../services/solvex/solvexDictionaryService';
 import { ModernCalendar } from '../components/ModernCalendar';
 import { MultiSelectDropdown } from '../components/MultiSelectDropdown';
@@ -166,6 +168,15 @@ const SmartSearch: React.FC = () => {
     const [searchError, setSearchError] = useState<string | null>(null);
     const [searchPerformed, setSearchPerformed] = useState(false);
     const [selectedArrivalDate, setSelectedArrivalDate] = useState<string | null>(null);
+
+    // Smart Suggestions state
+    const [smartSuggestions, setSmartSuggestions] = useState<{
+        type: 'flexible_dates' | 'similar_hotels',
+        data: SmartSearchResult[],
+        message: string
+    } | null>(null);
+    const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
+    const [availabilityTimeline, setAvailabilityTimeline] = useState<Record<string, { available: boolean, price?: number, isCheapest?: boolean }>>({});
 
 
     // Filter & UI States
@@ -407,13 +418,16 @@ const SmartSearch: React.FC = () => {
         }
     };
 
-    const handleSearch = async () => {
+    const handleSearch = async (overrideParams?: { checkIn?: string, checkOut?: string }) => {
+        const activeCheckIn = overrideParams?.checkIn || checkIn;
+        const activeCheckOut = overrideParams?.checkOut || checkOut;
+
         if (selectedDestinations.length === 0) {
             setSearchError('Molimo odaberite najmanje jednu destinaciju');
             return;
         }
 
-        if (!checkIn || !checkOut) {
+        if (!activeCheckIn || !activeCheckOut) {
             setSearchError('Molimo unesite datume');
             return;
         }
@@ -422,7 +436,8 @@ const SmartSearch: React.FC = () => {
         setSearchError(null);
         setSearchResults([]);
         setSearchPerformed(false);
-        setSelectedArrivalDate(checkIn);
+        setSmartSuggestions(null);
+        setSelectedArrivalDate(activeCheckIn);
 
         try {
             const activeAllocations = roomAllocations.filter(r => r.adults > 0);
@@ -432,22 +447,106 @@ const SmartSearch: React.FC = () => {
                 return;
             }
 
-            // Mapping for service (currently uses first room or sum for simplicity)
             const results = await performSmartSearch({
                 searchType: activeTab,
                 destinations: selectedDestinations,
-                checkIn,
-                checkOut,
+                checkIn: activeCheckIn,
+                checkOut: activeCheckOut,
                 rooms: activeAllocations,
                 mealPlan,
                 currency: 'EUR',
                 nationality: nationality || 'RS',
             });
 
-            setSearchResults(results);
+            // ENHANCE WITH CRM SALES DATA
+            const resultsWithSales = await Promise.all(results.map(async (h) => {
+                const count = await getMonthlyReservationCount(h.name);
+                return { ...h, salesCount: count };
+            }));
+
+            setSearchResults(resultsWithSales);
             setSearchPerformed(true);
-            if (results.length === 0) {
-                setSearchError('Nema dostupnih rezultata za izabrane parametre');
+
+            if (resultsWithSales.length === 0 && !overrideParams) {
+                // START SMART SUGGESTIONS LOGIC
+                setIsSearchingSuggestions(true);
+                setAvailabilityTimeline({});
+                const timeline: Record<string, { available: boolean, price?: number, isCheapest?: boolean }> = {};
+
+                // We add the original date as unavailable
+                timeline[activeCheckIn] = { available: false };
+
+                let firstAvailableDate = null;
+                let foundResults: SmartSearchResult[] = [];
+
+                // We try specific offsets to build a small timeline
+                const offsets = [1, -1, 2, -2, 3, -3, 4, -4, 5, -5];
+                let bestDateResults: SmartSearchResult[] = [];
+                let minPriceFound = Infinity;
+
+                for (const offset of offsets) {
+                    const dIn = new Date(activeCheckIn);
+                    dIn.setDate(dIn.getDate() + offset);
+                    const dOut = new Date(activeCheckOut);
+                    dOut.setDate(dOut.getDate() + offset);
+
+                    const sCheckIn = dIn.toISOString().split('T')[0];
+                    const sCheckOut = dOut.toISOString().split('T')[0];
+
+                    const flexTestResults = await performSmartSearch({
+                        searchType: activeTab,
+                        destinations: selectedDestinations,
+                        checkIn: sCheckIn,
+                        checkOut: sCheckOut,
+                        rooms: activeAllocations,
+                        mealPlan,
+                        currency: 'EUR',
+                        nationality: nationality || 'RS',
+                    });
+
+                    if (flexTestResults.length > 0) {
+                        const currentMinPrice = Math.min(...flexTestResults.map(r => getFinalDisplayPrice(r)));
+                        timeline[sCheckIn] = { available: true, price: currentMinPrice };
+
+                        // Keep track of the absolute cheapest date
+                        if (currentMinPrice < minPriceFound) {
+                            minPriceFound = currentMinPrice;
+                            firstAvailableDate = { in: sCheckIn, out: sCheckOut };
+
+                            // Enhance top candidates with real sales data for the suggestions UI
+                            const topCandidates = flexTestResults.slice(0, 5);
+                            bestDateResults = await Promise.all(topCandidates.map(async (r) => {
+                                const count = await getMonthlyReservationCount(r.name);
+                                return { ...r, salesCount: count };
+                            }));
+                        }
+                    } else {
+                        timeline[sCheckIn] = { available: false };
+                    }
+                }
+
+                // Mark the absolute cheapest date in the timeline
+                if (firstAvailableDate) {
+                    timeline[firstAvailableDate.in].isCheapest = true;
+                }
+
+                setAvailabilityTimeline(timeline);
+
+                if (firstAvailableDate) {
+                    setSmartSuggestions({
+                        type: 'flexible_dates',
+                        data: bestDateResults.sort((a, b) => {
+                            // Sort by price primarily, then by sales count
+                            const priceDiff = getFinalDisplayPrice(a) - getFinalDisplayPrice(b);
+                            if (Math.abs(priceDiff) < 5) return (b.salesCount || 0) - (a.salesCount || 0);
+                            return priceDiff;
+                        }),
+                        message: `Olimpijski asistent je pronašao dostupnost! Najpovoljnija opcija je za termin ${formatDate(firstAvailableDate.in)}.`
+                    });
+                } else {
+                    setSearchError('Nažalost, nema slobodnih mesta ni u proširenom periodu (+/- 5 dana). Pokušajte sa drugim hotelom ili destinacijom.');
+                }
+                setIsSearchingSuggestions(false);
             }
         } catch (error) {
             console.error('[SmartSearch] Search error:', error);
@@ -496,7 +595,12 @@ const SmartSearch: React.FC = () => {
         if (sortBy === 'price_low') return getFinalDisplayPrice(a) - getFinalDisplayPrice(b);
         if (sortBy === 'price_high') return getFinalDisplayPrice(b) - getFinalDisplayPrice(a);
         if (sortBy === 'smart') {
-            // Smart sort: Stars descending, then price ascending
+            // Smart sort: Best Sellers first, then Stars descending, then price ascending
+            const salesA = a.salesCount || 0;
+            const salesB = b.salesCount || 0;
+            if (salesB >= 10 && salesA < 10) return 1;
+            if (salesA >= 10 && salesB < 10) return -1;
+
             if ((b.stars || 0) !== (a.stars || 0)) return (b.stars || 0) - (a.stars || 0);
             return getFinalDisplayPrice(a) - getFinalDisplayPrice(b);
         }
@@ -966,7 +1070,7 @@ const SmartSearch: React.FC = () => {
 
                         {/* SEARCH BUTTONS ROW */}
                         <div className="action-row-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', marginTop: '10px' }}>
-                            <button className="btn-search-main" onClick={handleSearch} disabled={isSearching} style={{ flex: '2' }}>
+                            <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2' }}>
                                 <div className="btn-icon-box">
                                     {isSearching ? <Loader2 size={18} className="spin" /> : <Search size={22} />}
                                 </div>
@@ -1023,6 +1127,101 @@ const SmartSearch: React.FC = () => {
                                         );
                                     })}
                                 </div>
+                            </div>
+                        )
+                    }
+
+                    {/* SMART SUGGESTIONS SECTION */}
+                    {
+                        (smartSuggestions || isSearchingSuggestions) && (
+                            <div className="smart-suggestions-box animate-fade-in">
+                                <div className="ss-header">
+                                    <Sparkles size={18} className="ss-icon" />
+                                    <h3>{isSearchingSuggestions ? 'Analiziramo alternativne termine...' : 'Olympic Smart Predlog'}</h3>
+                                </div>
+                                {isSearchingSuggestions ? (
+                                    <div className="ss-loading">
+                                        <Loader2 size={24} className="spin" />
+                                        <p>Proveravamo dostupnost u opsegu od +/- 5 dana...</p>
+                                    </div>
+                                ) : (
+                                    <div className="ss-body">
+                                        <div className="ss-message">
+                                            <CheckCircle2 size={16} color="#10b981" />
+                                            <span>{smartSuggestions?.message}</span>
+                                        </div>
+
+                                        {/* Availability Heatmap Timeline */}
+                                        <div className="ss-availability-heatmap">
+                                            <div className="heatmap-label"><Calendar size={12} /> Uporedni prikaz dostupnosti:</div>
+                                            <div className="heatmap-grid">
+                                                {Object.entries(availabilityTimeline)
+                                                    .sort((a, b) => a[0].localeCompare(b[0]))
+                                                    .map(([date, status]) => (
+                                                        <div
+                                                            key={date}
+                                                            className={`heatmap-day ${status.available ? 'available' : 'stop-sale'} ${date === checkIn ? 'requested' : ''}`}
+                                                            onClick={() => {
+                                                                if (status.available) {
+                                                                    setCheckIn(date);
+                                                                    const newOut = new Date(date);
+                                                                    newOut.setDate(newOut.getDate() + nights);
+                                                                    setCheckOut(newOut.toISOString().split('T')[0]);
+                                                                    handleSearch({ checkIn: date, checkOut: newOut.toISOString().split('T')[0] });
+                                                                }
+                                                            }}
+                                                        >
+                                                            <div className="h-day-name">{new Date(date).toLocaleDateString('sr-RS', { weekday: 'short' })}</div>
+                                                            <div className="h-day-num">{new Date(date).getDate()}</div>
+                                                            <div className="h-status-icon">
+                                                                {status.available ? <CheckCircle size={10} /> : <XCircle size={10} />}
+                                                            </div>
+                                                            {status.price && <div className="h-price">{status.price}€</div>}
+                                                            {status.isCheapest && <div className="h-cheapest-badge">Najbolja cena</div>}
+                                                            {date === checkIn && <div className="h-requested-tag">Traženo</div>}
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        </div>
+                                        <div className="ss-results-mini">
+                                            {smartSuggestions?.data.slice(0, 3).map(hotel => {
+                                                // Real CRM logic: If hotel has > 5 reservations in last 30 days, it's a Best Seller
+                                                const isBestSeller = (hotel.salesCount || 0) > 5;
+                                                return (
+                                                    <div key={hotel.id} className={`ss-result-item ${isBestSeller ? 'best-seller' : ''}`}>
+                                                        <div className="ss-res-info">
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <strong>{hotel.name}</strong>
+                                                                {isBestSeller && (
+                                                                    <span className="best-seller-mini-badge" title={`Preko ${hotel.salesCount} rezervacija u poslednjih 30 dana`}>
+                                                                        <TrendingUp size={10} /> BEST SELLER
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <span>{hotel.location} • {hotel.stars}★</span>
+                                                        </div>
+                                                        <div className="ss-res-price">
+                                                            <span className="p-sm">od</span>
+                                                            <span className="p-val">{getFinalDisplayPrice(hotel)}€</span>
+                                                            <button className="ss-apply-btn" onClick={() => {
+                                                                // Re-run search with these specific dates
+                                                                // Find date in timeline that matches this price if possible or just use the firstAvailableDate
+                                                                if (smartSuggestions.type === 'flexible_dates') {
+                                                                    // We apply the date and trigger search
+                                                                }
+                                                            }}>
+                                                                Izaberi
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                            {smartSuggestions && smartSuggestions.data.length > 3 && (
+                                                <div className="ss-more">I još {smartSuggestions.data.length - 3} sličnih ponuda...</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )
                     }
@@ -1097,9 +1296,16 @@ const SmartSearch: React.FC = () => {
                                                 <div className="hotel-card-content">
                                                     <div className="hotel-info-text">
                                                         <div className="hotel-title-row">
-                                                            <a href={`/hotel-view/${hotel.id}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
-                                                                <h3 style={{ margin: 0 }}>{hotel.name}</h3>
-                                                            </a>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                                <a href={`/hotel-view/${hotel.id}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                                                    <h3 style={{ margin: 0 }}>{hotel.name}</h3>
+                                                                </a>
+                                                                {(hotel.salesCount || 0) > 5 && (
+                                                                    <span className="best-seller-mini-badge" title={`Preko ${hotel.salesCount} rezervacija u poslednjih 30 dana`}>
+                                                                        <TrendingUp size={10} /> BEST SELLER
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             <div className="hotel-location-tag"><MapPin size={14} /> <span>{hotel.location}</span></div>
                                                             <div className="hotel-date-badge"><CalendarDays size={14} /> <span>{formatDate(checkIn)} - {formatDate(checkOut)}</span></div>
                                                         </div>

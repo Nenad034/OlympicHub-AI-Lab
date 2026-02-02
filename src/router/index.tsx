@@ -59,6 +59,7 @@ const MasterSearch = React.lazy(() => import('../pages/MasterSearch'));
 const SubagentAdmin = React.lazy(() => import('../pages/SubagentAdmin'));
 const B2BSearch = React.lazy(() => import('../pages/B2BSearch'));
 const HotelView = React.lazy(() => import('../pages/HotelView'));
+const DocumentPreviewDemo = React.lazy(() => import('../pages/DocumentPreviewDemo'));
 
 
 // Stores
@@ -434,6 +435,10 @@ export const router = createBrowserRouter([
             {
                 path: 'hotel-view/:hotelId',
                 element: <HotelView />,
+            },
+            {
+                path: 'demo/docs',
+                element: <DocumentPreviewDemo />,
             },
             {
                 path: '*',

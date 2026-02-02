@@ -5,11 +5,12 @@ import {
     Info, Users2, Moon, Zap, ShieldCheck, MoveRight, MoveLeft,
     Globe, Database, ArrowRight, Star,
     LayoutGrid, List as ListIcon, Map as MapIcon,
-    Building2, CalendarDays, X, Power, Clock,
+    Building2, CalendarDays, X, Power, Clock, TrendingUp, XCircle,
     ArrowDownWideNarrow, ArrowUpNarrowWide
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getHotelProviderManager } from '../services/providers/HotelProviderManager';
+import { getMonthlyReservationCount } from '../services/reservationService';
 // Stores
 import { useThemeStore, useAuthStore } from '../stores';
 import { useIntelligenceStore } from '../stores/intelligenceStore';
@@ -46,6 +47,7 @@ export interface CombinedResult {
     rooms: RoomDetails[];
     originalData: any;
     softZoneScore?: number;
+    salesCount?: number;
     aiScore?: number;
     otherOffers?: Array<{
         source: string;
@@ -179,6 +181,15 @@ const GlobalHubSearch: React.FC = () => {
     const [selectedDestination, setSelectedDestination] = useState<{ id: number | string, source: 'TCT' | 'Solvex' | 'OpenGreece' | 'ORS', type: 'city' | 'hotel' } | null>(null);
     const [selectedArrivalDate, setSelectedArrivalDate] = useState<string | null>(null);
     const [expandedHotel, setExpandedHotel] = useState<CombinedResult | null>(null);
+
+    // Olympic Assistant Smart Suggestions state
+    const [smartSuggestions, setSmartSuggestions] = useState<{
+        type: 'flexible_dates' | 'similar_hotels',
+        data: CombinedResult[],
+        message: string
+    } | null>(null);
+    const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
+    const [availabilityTimeline, setAvailabilityTimeline] = useState<Record<string, { available: boolean, price?: number, isCheapest?: boolean }>>({});
 
     // Advanced autocomplete state
     const [selectedIndex, setSelectedIndex] = useState(-1); // For keyboard navigation
@@ -390,9 +401,15 @@ const GlobalHubSearch: React.FC = () => {
         const providersToCall = Object.values(enabledProviders).filter(Boolean).length;
         setActiveSearches(providersToCall);
 
-        const processResults = (newResults: CombinedResult[]) => {
+        const processResults = async (newResults: CombinedResult[]) => {
+            // ENHANCE WITH CRM SALES DATA
+            const enhancedResults = await Promise.all(newResults.map(async (h) => {
+                const count = await getMonthlyReservationCount(h.name);
+                return { ...h, salesCount: count };
+            }));
+
             setResults(prev => {
-                const combined = [...prev, ...newResults];
+                const combined = [...prev, ...enhancedResults];
 
                 // Smart Merging: Group by simplified name + meal plan
                 const grouped = new Map<string, CombinedResult>();
@@ -439,7 +456,6 @@ const GlobalHubSearch: React.FC = () => {
 
                 let mergedArray = Array.from(grouped.values());
 
-                // FIX: If a specific hotel was selected from suggestions, filter out unrelated ones
                 if (selectedDestination?.type === 'hotel') {
                     const targetName = locationInput.split(',')[0].toLowerCase()
                         .split('(')[0].replace(/[0-9]\*/g, '').replace('hotel', '').trim();
@@ -471,6 +487,7 @@ const GlobalHubSearch: React.FC = () => {
                     return { ...hotel, softZoneScore: score };
                 });
             });
+
             setActiveSearches(prev => {
                 const newVal = Math.max(0, prev - 1);
                 // If all finished, stop loading
@@ -484,11 +501,9 @@ const GlobalHubSearch: React.FC = () => {
                 const response = await promise;
                 let parsed: CombinedResult[] = [];
 
-                // If response is already an array, it means it was pre-processed by the provider manager
                 if (Array.isArray(response)) {
                     parsed = response;
                 }
-                // Legacy support for direct API calls (if any remain)
                 else if (provider === 'tct' && response.success && response.data) {
                     const hotelsData = response.data.groups || response.data.hotels || [];
                     const roomsLookup = response.data.rooms || {};
@@ -524,7 +539,6 @@ const GlobalHubSearch: React.FC = () => {
                     }));
                 }
                 else if (provider === 'solvex' && response.success && response.data) {
-                    // This block is only for legacy direct calls
                     const hotelMap = new Map<string, CombinedResult>();
                     response.data.forEach((s: any) => {
                         const hId = String(s.hotel.id);
@@ -549,17 +563,13 @@ const GlobalHubSearch: React.FC = () => {
                         }
 
                         const entry = hotelMap.get(key)!;
-                        const roomTypeName = s.room?.roomType?.name || '';
-                        const roomCategoryName = s.room?.roomCategory?.name || '';
-                        const roomAccommodationName = s.room?.roomAccommodation?.name || '';
-
-                        const roomNameParts = [roomTypeName, roomCategoryName, roomAccommodationName].filter(p => p && p.trim());
+                        const roomNameParts = [s.room?.roomType?.name, s.room?.roomCategory?.name, s.room?.roomAccommodation?.name].filter(p => p && p.trim());
                         const fullRoomName = roomNameParts.length > 0 ? roomNameParts.join(' - ') : 'Standard Room';
 
                         entry.rooms.push({
                             id: s.room?.roomType?.id || `${key}-${entry.rooms.length}`,
                             name: fullRoomName,
-                            description: `${roomAccommodationName || 'Standard accommodation'}`,
+                            description: `${s.room?.roomAccommodation?.name || 'Standard accommodation'}`,
                             price: s.totalCost || 0,
                             availability: (s.quotaType === 0 || s.quotaType === 1) ? 'available' : 'on_request',
                             capacity: `${adults}+${children}`
@@ -575,7 +585,6 @@ const GlobalHubSearch: React.FC = () => {
                 processResults(parsed);
             } catch (err) {
                 console.error(`[Search] Error for ${provider}:`, err);
-                // Correctly handle loading state if error happens
                 setActiveSearches(prev => {
                     const newVal = Math.max(0, prev - 1);
                     if (newVal === 0) setIsLoading(false);
@@ -624,7 +633,7 @@ const GlobalHubSearch: React.FC = () => {
                         stars: h.stars,
                         mealPlan: h.mealPlan,
                         availability: h.availability === 'available' ? 'available' : h.availability === 'on_request' ? 'on_request' : 'stop_sale',
-                        rooms: h.rooms.map(r => ({
+                        rooms: (h.rooms || []).map(r => ({
                             id: r.id,
                             name: r.name,
                             description: r.description,
@@ -639,6 +648,72 @@ const GlobalHubSearch: React.FC = () => {
 
             handleOneSearch(providerName.toLowerCase(), searchPromise);
         });
+
+        // OLYMPIC ASSISTANT AUTO-FALLBACK
+        // Check after a timeout if results are still 0 or if all searches finish
+        setTimeout(async () => {
+            if (activeSearches === 0 && results.length === 0 && !isSearchingSuggestions) {
+                // Trigger Smart Assistant
+                setIsSearchingSuggestions(true);
+                setAvailabilityTimeline({});
+                const timeline: Record<string, any> = {};
+                timeline[checkIn] = { available: false };
+
+                let bestDateResults: CombinedResult[] = [];
+                let minPriceFound = Infinity;
+                let firstAvailableDate = null;
+
+                const offsets = [1, -1, 2, -2, 3, -3, 4, -4, 5, -5];
+                for (const offset of offsets) {
+                    const dIn = new Date(checkIn); dIn.setDate(dIn.getDate() + offset);
+                    const dOut = new Date(checkOut); dOut.setDate(dOut.getDate() + offset);
+                    const sIn = dIn.toISOString().split('T')[0];
+                    const sOut = dOut.toISOString().split('T')[0];
+
+                    const flexParams = { ...searchParams, checkIn: dIn, checkOut: dOut };
+
+                    try {
+                        // Use first available provider as sample (or manager.searchAll)
+                        const flexResults = await manager.searchByProvider(activeProviderNames[0], flexParams);
+                        if (flexResults.length > 0) {
+                            const minPrice = Math.min(...flexResults.map(r => r.price));
+                            timeline[sIn] = { available: true, price: minPrice };
+                            if (minPrice < minPriceFound) {
+                                minPriceFound = minPrice;
+                                firstAvailableDate = { in: sIn, out: sOut };
+                                // Wrap into CombinedResult
+                                bestDateResults = flexResults.slice(0, 5).map(h => ({
+                                    id: h.id, source: h.providerName as any, name: h.hotelName, location: h.location,
+                                    price: h.price, currency: h.currency, image: h.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=800", stars: h.stars, mealPlan: h.mealPlan,
+                                    availability: 'available' as const, rooms: [], originalData: h.originalData
+                                }));
+                            }
+                        } else {
+                            timeline[sIn] = { available: false };
+                        }
+                    } catch (e) { timeline[sIn] = { available: false }; }
+                }
+
+                if (firstAvailableDate) {
+                    timeline[firstAvailableDate.in].isCheapest = true;
+                    // Enhance with sales counts
+                    const enhanced = await Promise.all(bestDateResults.map(async h => {
+                        const count = await getMonthlyReservationCount(h.name);
+                        return { ...h, salesCount: count };
+                    }));
+
+                    setAvailabilityTimeline(timeline);
+                    setSmartSuggestions({
+                        type: 'flexible_dates',
+                        data: enhanced.sort((a, b) => a.price - b.price),
+                        message: `Nema rezultata za ${formatDate(checkIn)}, but Olympic Assistant found availability nearby!`
+                    });
+                } else {
+                    setError('Nažalost, nema slobodnih mesta ni +/- 5 dana.');
+                }
+                setIsSearchingSuggestions(false);
+            }
+        }, 1500);
     };
 
     const handleCheckInChange = (date: string) => {
@@ -688,8 +763,13 @@ const GlobalHubSearch: React.FC = () => {
         } else if (sortBy === 'price_high') {
             filtered.sort((a, b) => b.price - a.price);
         } else if (sortBy === 'smart') {
-            // Default Smart Ranking (Sort by score first, then price)
+            // Smart sort: Best Sellers first, then score, then price
             filtered.sort((a, b) => {
+                const salesA = a.salesCount || 0;
+                const salesB = b.salesCount || 0;
+                if (salesB >= 10 && salesA < 10) return 1;
+                if (salesA >= 10 && salesB < 10) return -1;
+
                 if ((b.softZoneScore || 0) !== (a.softZoneScore || 0)) {
                     return (b.softZoneScore || 0) - (a.softZoneScore || 0);
                 }
@@ -1312,40 +1392,91 @@ const GlobalHubSearch: React.FC = () => {
                     </div>
                 )}
 
-                {searchPerformed && results.length === 0 && !isLoading && activeSearches === 0 && (
-                    <div className="smart-fallback-zone">
-                        <div className="fallback-header">
-                            <Sparkles className="spark-icon" />
-                            <h3>Specijalno za Vas pronašli smo alternative</h3>
-                            <p>Nažalost, objekat <strong>{locationInput}</strong> trenutno nema dostupnih kapaciteta za izabrani termin, ali ovi hoteli u istoj regiji su odlično ocenjeni:</p>
+                {/* OLYMPIC ASSISTANT SMART SUGGESTIONS (UI PORTED FROM SMARTSEARCH) */}
+                {(smartSuggestions || isSearchingSuggestions) && (
+                    <div className="smart-suggestions-box animate-fade-in" style={{ marginTop: '30px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '16px', overflow: 'hidden' }}>
+                        <div className="ss-header" style={{ padding: '15px 25px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                            <Sparkles size={18} color="#3b82f6" />
+                            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>{isSearchingSuggestions ? 'Analiziramo alternativne termine...' : 'Olympic Smart Predlog'}</h3>
                         </div>
-
-                        <div className="fallback-grid">
-                            {[
-                                { name: 'Admiral, 5*', loc: 'Golden Sands', price: 420, src: 'Solvex', score: 92, img: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=600' },
-                                { name: 'Melia Grand Hermitage, 5*', loc: 'Golden Sands', price: 512, src: 'TCT', score: 96, img: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&q=80&w=600' },
-                                { name: 'Sunrise Blue Magic, 4*', loc: 'Obzor', price: 345, src: 'Solvex', score: 88, img: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&q=80&w=600' }
-                            ].map((h, i) => (
-                                <div key={i} className="fallback-mini-card" style={{ backgroundImage: `linear-gradient(to bottom, rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.95)), url(${h.img})` }}>
-                                    <div className="mini-score"><Sparkles size={10} /> Smart Choice {h.score}%</div>
-                                    <div className="mini-content">
-                                        <h4>{h.name}</h4>
-                                        <div className="mini-loc"><MapPin size={12} /> {h.loc}</div>
-                                        <div className="mini-price">Cena od <strong>{h.price} EUR</strong></div>
-                                        <button className="mini-select-btn">Pogledaj ponudu</button>
+                        {isSearchingSuggestions ? (
+                            <div className="ss-loading" style={{ padding: '40px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+                                <Loader2 size={32} className="spin" color="#3b82f6" />
+                                <p style={{ opacity: 0.8 }}>Proveravamo dostupnost u opsegu od +/- 5 dana na svim API konekcijama...</p>
+                            </div>
+                        ) : (
+                            <div className="ss-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', padding: '25px' }}>
+                                <div className="ss-left">
+                                    <div className="ss-message" style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '20px', color: '#10b981', fontWeight: 600 }}>
+                                        <CheckCircle2 size={20} />
+                                        <span>Pronađeni su slobodni termini!</span>
+                                    </div>
+                                    <div className="ss-availability-heatmap">
+                                        <div className="heatmap-header" style={{ fontSize: '0.75rem', fontWeight: 700, opacity: 0.6, letterSpacing: '1px' }}>UPRAVO PROVERENO (±5 dana):</div>
+                                        <div className="heatmap-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', marginTop: '12px' }}>
+                                            {Object.keys(availabilityTimeline).sort().map(date => {
+                                                const info = availabilityTimeline[date];
+                                                return (
+                                                    <div
+                                                        key={date}
+                                                        className={`heatmap-cell ${info.available ? 'available' : 'stop-sale'} ${info.isCheapest ? 'cheapest' : ''} ${date === checkIn ? 'original' : ''}`}
+                                                        style={{
+                                                            padding: '10px 5px',
+                                                            textAlign: 'center',
+                                                            borderRadius: '8px',
+                                                            background: info.available ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.05)',
+                                                            border: `1px solid ${info.available ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.2)'}`,
+                                                            cursor: info.available ? 'pointer' : 'default',
+                                                            position: 'relative'
+                                                        }}
+                                                        onClick={() => info.available && (setCheckIn(date), setTimeout(() => handleSearch(), 100))}
+                                                    >
+                                                        <span style={{ display: 'block', fontSize: '1rem', fontWeight: 700 }}>{date.split('-')[2]}</span>
+                                                        <span style={{ display: 'block', fontSize: '0.65rem', textTransform: 'uppercase', opacity: 0.6 }}>{new Date(date).toLocaleString('sr', { month: 'short' })}</span>
+                                                        {info.available ? (
+                                                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#10b981', marginTop: '4px' }}>{info.price}€</div>
+                                                        ) : (
+                                                            <XCircle size={14} style={{ marginTop: '4px', opacity: 0.4 }} />
+                                                        )}
+                                                        {info.isCheapest && (
+                                                            <div style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#3b82f6', color: 'white', fontSize: '8px', padding: '2px 4px', borderRadius: '4px', fontWeight: 800 }}>PET</div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-
-                        <div className="fallback-action">
-                            <p>Želite li da proširimo pretragu na susedne regije ili promenimo termine za +/- 3 dana?</p>
-                            <div className="fallback-chips">
-                                <button className="f-chip">Promeni na +/- 3 dana</button>
-                                <button className="f-chip">Susedna regija (Albena)</button>
-                                <button className="f-chip">Susedna regija (St. Constantine)</button>
+                                <div className="ss-right">
+                                    <div className="ss-results-mini" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        {smartSuggestions?.data.slice(0, 3).map(hotel => {
+                                            const isBestSeller = (hotel.salesCount || 0) > 5;
+                                            return (
+                                                <div key={hotel.id} className={`ss-result-item ${isBestSeller ? 'best-seller' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 15px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                    <div className="ss-res-info">
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <span style={{ fontWeight: 600 }}>{hotel.name}</span>
+                                                            {isBestSeller && (
+                                                                <span className="best-seller-mini-badge" title={`Preko ${hotel.salesCount} rezervacija`}>
+                                                                    <TrendingUp size={10} color="#fbbf24" />
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>{hotel.location} • {hotel.stars}★</div>
+                                                    </div>
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <div style={{ fontWeight: 700, color: '#3b82f6' }}>{hotel.price}€</div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <button className="btn-use-suggestion" onClick={() => handleSearch()} style={{ marginTop: '15px', width: '100%', padding: '12px', borderRadius: '8px', background: '#3b82f6', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+                                        Primeni najpovoljniji termin
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 )}
 
@@ -1364,7 +1495,10 @@ const GlobalHubSearch: React.FC = () => {
                                         >
                                             <img src={hotel.image} alt="" />
                                             <div className="side-info">
-                                                <h4>{hotel.name}</h4>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <h4>{hotel.name}</h4>
+                                                    {(hotel.salesCount || 0) > 5 && <span className="best-seller-badge mini"><TrendingUp size={10} /></span>}
+                                                </div>
                                                 <p>{hotel.price} {hotel.currency}</p>
                                             </div>
                                         </div>
@@ -1419,9 +1553,16 @@ const GlobalHubSearch: React.FC = () => {
                                         <div className="hotel-card-content">
                                             <div className="hotel-info-text">
                                                 <div className="hotel-title-row">
-                                                    <a href={`/hotel-view/${hotel.id}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
-                                                        <h3 style={{ margin: 0 }}>{hotel.name}</h3>
-                                                    </a>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                        <a href={`/hotel-view/${hotel.id}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                                            <h3 style={{ margin: 0 }}>{hotel.name}</h3>
+                                                        </a>
+                                                        {(hotel.salesCount || 0) > 5 && (
+                                                            <span className="best-seller-mini-badge" title={`Preko ${hotel.salesCount} rezervacija u poslednjih 30 dana`}>
+                                                                <TrendingUp size={12} color="#fbbf24" />
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div className="hotel-location-tag">
                                                         <MapPin size={14} />
                                                         <span>{hotel.location}</span>

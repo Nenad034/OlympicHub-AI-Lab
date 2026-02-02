@@ -43,6 +43,7 @@ export interface SmartSearchResult {
     rooms?: any[];
     allocationResults?: Record<number, any[]>; // Maps room index to its specific available rooms
     originalData: any;
+    salesCount?: number;
 }
 
 export const PROVIDER_MAPPING = {

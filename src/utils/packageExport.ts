@@ -7,6 +7,8 @@ import type {
     ExtraSelectionData,
     BasicInfoData
 } from '../types/packageSearch.types';
+import { getTranslation } from './translations';
+import type { Language } from './translations';
 
 export interface ExportData {
     basicInfo: BasicInfoData;
@@ -25,30 +27,31 @@ export interface ExportData {
 /**
  * Generate PDF Report
  */
-export const generatePackagePDF = (data: ExportData) => {
+export const generatePackagePDF = (data: ExportData, lang: Language = 'Srpski') => {
     const doc = new jsPDF();
+    const t = getTranslation(lang);
     const { basicInfo, flights, hotels, transfers, extras, totalPrice } = data;
 
     // Header
     doc.setFontSize(22);
     doc.setTextColor(102, 126, 234);
-    doc.text('Olympic Hub - Plan Putovanja', 14, 22);
+    doc.text(t.docTitle, 14, 22);
 
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`Datum kreiranja: ${new Date().toLocaleDateString()}`, 14, 30);
+    doc.text(`${t.createdAt}: ${new Date().toLocaleDateString()}`, 14, 30);
     doc.line(14, 35, 196, 35);
 
     // Basic Info
     doc.setFontSize(14);
     doc.setTextColor(0);
-    doc.text('Osnovne Informacije', 14, 45);
+    doc.text(t.basicInfo, 14, 45);
 
     const infoRows = [
-        ['Destinacije:', basicInfo.destinations.map(d => d.city).join(' / ')],
-        ['Putnici:', `${basicInfo.travelers.adults} Odraslih, ${basicInfo.travelers.children} Dece`],
-        ['Budžet:', `${basicInfo.budget} €`],
-        ['Ukupna Cena:', `${totalPrice.toFixed(2)} €`]
+        [`${t.destinations}:`, basicInfo.destinations.map((d: any) => d.city).join(' / ')],
+        [`${t.travelers}:`, `${basicInfo.travelers.adults} ${t.adults}, ${basicInfo.travelers.children} ${t.children}`],
+        [`${t.budget}:`, `${basicInfo.budget} €`],
+        [`${t.totalPrice}:`, `${totalPrice.toFixed(2)} €`]
     ];
 
     autoTable(doc, {
@@ -59,22 +62,22 @@ export const generatePackagePDF = (data: ExportData) => {
         columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } }
     });
 
-    let currentY = doc.lastAutoTable?.finalY ?? 65;
+    let currentY = (doc as any).lastAutoTable?.finalY ?? 65;
 
     // Flights
     if (flights) {
         doc.setFontSize(14);
-        doc.text('Letovi', 14, currentY);
+        doc.text(t.flights, 14, currentY);
 
         const flightRows: any[] = [];
         if (flights.outboundFlight) {
-            flights.outboundFlight.slices.forEach(s => {
-                flightRows.push(['Odlazak', `${s.origin.city} - ${s.origin.name} (${s.origin.iataCode})`, `${s.destination.city} - ${s.destination.name} (${s.destination.iataCode})`, new Date(s.departure).toLocaleDateString()]);
+            flights.outboundFlight.slices.forEach((s: any) => {
+                flightRows.push([t.outbound, `${s.origin.city} - ${s.origin.name} (${s.origin.iataCode})`, `${s.destination.city} - ${s.destination.name} (${s.destination.iataCode})`, new Date(s.departure).toLocaleDateString()]);
             });
         }
         if (flights.returnFlight) {
-            flights.returnFlight.slices.forEach(s => {
-                flightRows.push(['Povratak', `${s.origin.city} - ${s.origin.name} (${s.origin.iataCode})`, `${s.destination.city} - ${s.destination.name} (${s.destination.iataCode})`, new Date(s.departure).toLocaleDateString()]);
+            flights.returnFlight.slices.forEach((s: any) => {
+                flightRows.push([t.return, `${s.origin.city} - ${s.origin.name} (${s.origin.iataCode})`, `${s.destination.city} - ${s.destination.name} (${s.destination.iataCode})`, new Date(s.departure).toLocaleDateString()]);
             });
         }
         if (flights.multiCityFlights) {
@@ -86,52 +89,52 @@ export const generatePackagePDF = (data: ExportData) => {
 
         autoTable(doc, {
             startY: currentY + 5,
-            head: [['Tip', 'Od', 'Do', 'Datum']],
+            head: [[t.type, t.from, t.to, t.date]],
             body: flightRows,
             headStyles: { fillColor: [102, 126, 234] }
         });
-        currentY = doc.lastAutoTable?.finalY ?? currentY + 15;
+        currentY = (doc as any).lastAutoTable?.finalY ?? currentY + 15;
     }
 
     // Hotels
     if (hotels.length > 0) {
         doc.setFontSize(14);
-        doc.text('Smeštaj', 14, currentY);
+        doc.text(t.accommodation, 14, currentY);
 
         const hotelRows = hotels.map(h => [
             h.hotel.name,
             h.hotel.city,
             `${h.checkIn} - ${h.checkOut}`,
-            `${h.nights} noći`,
+            `${h.nights} ${t.nights}`,
             h.mealPlan.name,
             `${h.totalPrice.toFixed(2)} €`
         ]);
 
         autoTable(doc, {
             startY: currentY + 5,
-            head: [['Hotel', 'Grad', 'Period', 'Noći', 'Usluga', 'Cena']],
+            head: [[t.hotel, t.city, t.period, t.nights, t.service, t.price]],
             body: hotelRows,
             headStyles: { fillColor: [102, 126, 234] }
         });
-        currentY = doc.lastAutoTable?.finalY ?? currentY + 15;
+        currentY = (doc as any).lastAutoTable?.finalY ?? currentY + 15;
     }
 
     // Transfers & Extras
     if (transfers.length > 0 || extras.length > 0) {
         doc.setFontSize(14);
-        doc.text('Transferi i Dodatne Usluge', 14, currentY);
+        doc.text(t.transfersAndExtras, 14, currentY);
 
         const otherRows: any[] = [];
-        transfers.forEach(t => {
-            otherRows.push(['Transfer', `${t.transfer.from} -> ${t.transfer.to}`, t.date, `${t.totalPrice.toFixed(2)} €`]);
+        transfers.forEach(tobj => {
+            otherRows.push([t.transfer, `${tobj.transfer.from} -> ${tobj.transfer.to}`, tobj.date, `${tobj.totalPrice.toFixed(2)} €`]);
         });
         extras.forEach(e => {
-            otherRows.push(['Usluga', e.extra.name, e.date, `${e.totalPrice.toFixed(2)} €`]);
+            otherRows.push([t.extraService, e.extra.name, e.date, `${e.totalPrice.toFixed(2)} €`]);
         });
 
         autoTable(doc, {
             startY: currentY + 5,
-            head: [['Tip', 'Opis', 'Datum', 'Cena']],
+            head: [[t.type, t.description, t.date, t.price]],
             body: otherRows,
             headStyles: { fillColor: [102, 126, 234] }
         });
@@ -143,17 +146,18 @@ export const generatePackagePDF = (data: ExportData) => {
         doc.setPage(i);
         doc.setFontSize(8);
         doc.setTextColor(150);
-        doc.text('Olympic Hub - Agentic Trip Planner', 14, 285);
-        doc.text(`Strana ${i} od ${pageCount}`, 180, 285);
+        doc.text(t.footerTag, 14, 285);
+        doc.text(`${t.page} ${i} ${t.of} ${pageCount}`, 180, 285);
     }
 
-    doc.save(`Paket-OlympicHub-${Date.now()}.pdf`);
+    doc.save(`${t.docTitle.replace(/\s+/g, '-')}-${Date.now()}.pdf`);
 };
 
 /**
  * Generate HTML Report
  */
-export const generatePackageHTML = (data: ExportData) => {
+export const generatePackageHTML = (data: ExportData, lang: Language = 'Srpski') => {
+    const t = getTranslation(lang);
     const { basicInfo, flights, hotels, transfers, extras, totalPrice } = data;
 
     const html = `
@@ -161,7 +165,7 @@ export const generatePackageHTML = (data: ExportData) => {
         <html>
         <head>
             <meta charset="UTF-8">
-            <title>Olympic Hub - Plan Putovanja</title>
+            <title>${t.docTitle}</title>
             <style>
                 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; }
                 header { border-bottom: 2px solid #667eea; padding-bottom: 20px; margin-bottom: 30px; }
@@ -180,28 +184,28 @@ export const generatePackageHTML = (data: ExportData) => {
         <body>
             <header>
                 <h1>Olympic Hub</h1>
-                <p class="meta">Vaš personalizovani plan putovanja | Kreirano: ${new Date().toLocaleDateString()}</p>
+                <p class="meta">${t.docTitle} | ${t.createdAt}: ${new Date().toLocaleDateString()}</p>
             </header>
 
             <section>
-                <h2>Osnovne Informacije</h2>
+                <h2>${t.basicInfo}</h2>
                 <table>
-                    <tr><th>Destinacije</th><td>${basicInfo.destinations.map(d => d.city).join(' / ')}</td></tr>
-                    <tr><th>Putnici</th><td>${basicInfo.travelers.adults} Odraslih, ${basicInfo.travelers.children} Dece</td></tr>
-                    <tr><th>Očekivani Budžet</th><td>${basicInfo.budget} €</td></tr>
+                    <tr><th>${t.destinations}</th><td>${basicInfo.destinations.map((d: any) => d.city).join(' / ')}</td></tr>
+                    <tr><th>${t.travelers}</th><td>${basicInfo.travelers.adults} ${t.adults}, ${basicInfo.travelers.children} ${t.children}</td></tr>
+                    <tr><th>${t.budget}</th><td>${basicInfo.budget} €</td></tr>
                 </table>
             </section>
 
             ${flights ? `
             <section>
-                <h2>Letovi</h2>
+                <h2>${t.flights}</h2>
                 <table>
                     <thead>
-                        <tr><th>Tip</th><th>Od</th><th>Do</th><th>Datum</th></tr>
+                        <tr><th>${t.type}</th><th>${t.from}</th><th>${t.to}</th><th>${t.date}</th></tr>
                     </thead>
                     <tbody>
-                        ${flights.outboundFlight?.slices.map((s: any) => `<tr><td>Odlazak</td><td>${s.origin.city}<br/><small>${s.origin.name}</small></td><td>${s.destination.city}<br/><small>${s.destination.name}</small></td><td>${new Date(s.departure).toLocaleDateString()}</td></tr>`).join('') || ''}
-                        ${flights.returnFlight?.slices.map((s: any) => `<tr><td>Povratak</td><td>${s.origin.city}<br/><small>${s.origin.name}</small></td><td>${s.destination.city}<br/><small>${s.destination.name}</small></td><td>${new Date(s.departure).toLocaleDateString()}</td></tr>`).join('') || ''}
+                        ${flights.outboundFlight?.slices.map((s: any) => `<tr><td>${t.outbound}</td><td>${s.origin.city}<br/><small>${s.origin.name}</small></td><td>${s.destination.city}<br/><small>${s.destination.name}</small></td><td>${new Date(s.departure).toLocaleDateString()}</td></tr>`).join('') || ''}
+                        ${flights.returnFlight?.slices.map((s: any) => `<tr><td>${t.return}</td><td>${s.origin.city}<br/><small>${s.origin.name}</small></td><td>${s.destination.city}<br/><small>${s.destination.name}</small></td><td>${new Date(s.departure).toLocaleDateString()}</td></tr>`).join('') || ''}
                         ${flights.multiCityFlights?.map((offer: UnifiedFlightOffer, idx: number) => `<tr><td>Let ${idx + 1}</td><td>${offer.slices[0].origin.city}<br/><small>${offer.slices[0].origin.name}</small></td><td>${offer.slices[0].destination.city}<br/><small>${offer.slices[0].destination.name}</small></td><td>${new Date(offer.slices[0].departure).toLocaleDateString()}</td></tr>`).join('') || ''}
                     </tbody>
                 </table>
@@ -209,16 +213,16 @@ export const generatePackageHTML = (data: ExportData) => {
             ` : ''}
 
             <section>
-                <h2>Smeštaj</h2>
+                <h2>${t.accommodation}</h2>
                 <table>
                     <thead>
-                        <tr><th>Hotel</th><th>Grad</th><th>Period</th><th>Noći</th><th>Usluga</th></tr>
+                        <tr><th>${t.hotel}</th><th>${t.city}</th><th>${t.period}</th><th>${t.nights}</th><th>${t.service}</th></tr>
                     </thead>
                     <tbody>
                         ${hotels.map(h => `
                             <tr>
                                 <td><strong>${h.hotel.name}</strong></td>
-                                <td>${h.hotel.city}</td>
+                                :<td>${h.hotel.city}</td>
                                 <td>${h.checkIn} - ${h.checkOut}</td>
                                 <td>${h.nights}</td>
                                 <td>${h.mealPlan.name}</td>
@@ -230,26 +234,26 @@ export const generatePackageHTML = (data: ExportData) => {
 
             ${transfers.length > 0 || extras.length > 0 ? `
             <section>
-                <h2>Transferi i Ostalo</h2>
+                <h2>${t.transfersAndExtras}</h2>
                 <table>
                     <thead>
-                        <tr><th>Tip</th><th>Opis</th><th>Datum</th><th>Cena</th></tr>
+                        <tr><th>${t.type}</th><th>${t.description}</th><th>${t.date}</th><th>${t.price}</th></tr>
                     </thead>
                     <tbody>
-                        ${transfers.map(t => `<tr><td>Transfer</td><td>${t.transfer.from} → ${t.transfer.to}</td><td>${t.date}</td><td>${t.totalPrice.toFixed(2)} €</td></tr>`).join('')}
-                        ${extras.map(e => `<tr><td>Usluga</td><td>${e.extra.name}</td><td>${e.date}</td><td>${e.totalPrice.toFixed(2)} €</td></tr>`).join('')}
+                        ${transfers.map(tobj => `<tr><td>${t.transfer}</td><td>${tobj.transfer.from} → ${tobj.transfer.to}</td><td>${tobj.date}</td><td>${tobj.totalPrice.toFixed(2)} €</td></tr>`).join('')}
+                        ${extras.map(e => `<tr><td>${t.extraService}</td><td>${e.extra.name}</td><td>${e.date}</td><td>${e.totalPrice.toFixed(2)} €</td></tr>`).join('')}
                     </tbody>
                 </table>
             </section>
             ` : ''}
 
             <div class="total-box">
-                <p>Ukupna cena paketa</p>
+                <p>${t.totalPrice}</p>
                 <h3>${totalPrice.toFixed(2)} €</h3>
             </div>
 
             <div class="footer">
-                <p>&copy; 2026 Olympic Hub. Sva prava zadržana.</p>
+                <p>&copy; 2026 Olympic Hub. ${t.footerTag}</p>
             </div>
         </body>
         </html>
@@ -259,7 +263,7 @@ export const generatePackageHTML = (data: ExportData) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Plan-Putovanja-${Date.now()}.html`;
+    a.download = `${t.docTitle.replace(/\s+/g, '-')}-${Date.now()}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

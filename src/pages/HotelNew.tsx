@@ -35,6 +35,7 @@ interface HotelFormData {
     };
     shortDescription: string;
     longDescription: string;
+    language: 'Srpski' | 'Engleski';
 }
 
 const HotelNew: React.FC = () => {
@@ -59,6 +60,7 @@ const HotelNew: React.FC = () => {
         },
         shortDescription: '',
         longDescription: '',
+        language: 'Srpski',
     });
 
     const handleInputChange = (field: string, value: any) => {
@@ -126,7 +128,7 @@ const HotelNew: React.FC = () => {
                         coordinateSource: 'MANUAL',
                     },
                     content: [{
-                        languageCode: 'sr',
+                        languageCode: formData.language === 'Srpski' ? 'sr' : 'en',
                         officialName: formData.name,
                         displayName: formData.name,
                         shortDescription: formData.shortDescription,
@@ -332,6 +334,29 @@ const HotelNew: React.FC = () => {
                                         ))}
                                     </div>
                                 </div>
+                            </div>
+
+                            <div style={{ marginTop: '24px' }}>
+                                <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '8px' }}>
+                                    Jezik Administracije / Komunikacije
+                                </label>
+                                <select
+                                    value={formData.language}
+                                    onChange={(e) => handleInputChange('language', e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '16px 20px',
+                                        borderRadius: '16px',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        background: 'rgba(0,0,0,0.2)',
+                                        color: '#fff',
+                                        fontSize: '15px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value="Srpski">Srpski</option>
+                                    <option value="Engleski">Engleski</option>
+                                </select>
                             </div>
                         </div>
                     </div>

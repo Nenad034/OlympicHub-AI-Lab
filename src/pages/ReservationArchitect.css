@@ -2236,3 +2236,202 @@
 .printable-contract {
     display: none;
 }
+/* ===== DOCUMENTS SECTION V5 (PREMIUM) ===== */
+.doc-group-container {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+}
+
+.doc-group-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    margin: 0 0 20px 0;
+    letter-spacing: 1px;
+}
+
+.title-decorator {
+    width: 4px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 4px;
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.title-decorator.financial {
+    background: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+.docs-premium-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.doc-card-v5 {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.doc-card-v5:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+.doc-card-v5.financial:hover {
+    border-color: #10b981;
+}
+
+.doc-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.doc-icon-v5 {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--accent);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.financial .doc-icon-v5 {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.doc-title-meta h5 {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
+}
+
+.doc-title-meta span {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    display: block;
+}
+
+.doc-lang-selector {
+    display: flex;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 3px;
+    border-radius: 8px;
+    gap: 2px;
+}
+
+.doc-lang-selector button {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.doc-lang-selector button.active {
+    background: var(--accent);
+    color: white;
+}
+
+.financial .doc-lang-selector button.active {
+    background: #10b981;
+}
+
+.doc-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.doc-card-actions button {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.2s;
+    border: 1px solid transparent;
+}
+
+.doc-action.pdf {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.doc-action.pdf:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.doc-action.html {
+    background: rgba(56, 189, 248, 0.1);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.2);
+}
+
+.doc-action.html:hover {
+    background: #38bdf8;
+    color: white;
+}
+
+.doc-action.print, .doc-action.email {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border);
+    color: var(--text-secondary);
+}
+
+.doc-action.print:hover, .doc-action.email:hover {
+    background: var(--text-primary);
+    color: var(--bg-card);
+}
+
+.doc-status-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+}
+
+.doc-status-line span {
+    font-weight: 700;
+}
+

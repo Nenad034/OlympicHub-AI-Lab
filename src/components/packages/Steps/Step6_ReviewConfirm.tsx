@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     Map as MapIcon, Check, Plane, Hotel, Car, Ticket,
-    ArrowRight, Calendar, Users, Info,
-    ChevronDown, ChevronUp, FileText, Code, Mail,
-    Euro, Sparkles, MapPin, Clock, ShieldCheck,
-    Download
+    FileText, Code, Mail, Sparkles, ShieldCheck
 } from 'lucide-react';
 import { generatePackagePDF, generatePackageHTML } from '../../../utils/packageExport';
 import './SmartSearchV2.css';
@@ -15,6 +12,7 @@ import type {
     TransferSelectionData,
     ExtraSelectionData
 } from '../../../types/packageSearch.types';
+import type { Language } from '../../../utils/translations';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -57,10 +55,10 @@ const Step6_ReviewConfirm: React.FC<Step6Props> = ({
     transfers,
     extras,
     totalPrice,
-    onBack,
     onConfirm,
-    onEditStep
 }) => {
+    const [exportLang, setExportLang] = useState<Language>('Srpski');
+
     // Map setup
     const begPos: [number, number] = [44.8181, 20.3091];
     const hotelMarkers = hotels.map(h => ({
@@ -120,7 +118,7 @@ const Step6_ReviewConfirm: React.FC<Step6Props> = ({
                                 <span className="text-xl font-black text-indigo-400">{flightPrice.toFixed(2)}€</span>
                             </div>
                             <div className="space-y-4">
-                                {flights.multiCityFlights.map((f, i) => (
+                                {flights.multiCityFlights.map((f: any, i: number) => (
                                     <div key={i} className="flex items-center gap-4 text-sm font-bold text-slate-300 bg-white/5 p-3 rounded-lg">
                                         <div className="text-[10px] bg-indigo-500/20 px-2 py-0.5 rounded text-indigo-400">DEONICA {i + 1}</div>
                                         <span>{f.slices[0].origin.city} &rarr; {f.slices[0].destination.city}</span>
@@ -208,17 +206,45 @@ const Step6_ReviewConfirm: React.FC<Step6Props> = ({
                         </div>
 
                         <div className="space-y-3">
+                            {/* Language Switcher */}
+                            <div className="flex gap-2 mb-2 p-1 bg-black/20 rounded-xl border border-white/5">
+                                <button
+                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all ${exportLang === 'Srpski' ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                                    onClick={() => setExportLang('Srpski')}
+                                >
+                                    SRPSKI
+                                </button>
+                                <button
+                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all ${exportLang === 'Engleski' ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                                    onClick={() => setExportLang('Engleski')}
+                                >
+                                    ENGLISH
+                                </button>
+                            </div>
+
                             <button className="btn-search-ss !h-16 !mt-0 !text-lg" onClick={onConfirm}>
                                 <ShieldCheck size={20} /> KREIRAJ PAKET
                             </button>
                             <div className="grid grid-cols-3 gap-2">
-                                <button className="ss-input-box !h-12 !px-0 justify-center hover:bg-slate-800" onClick={() => generatePackagePDF({ basicInfo, flights, hotels, transfers, extras, totalPrice } as any)}>
+                                <button
+                                    className="ss-input-box !h-12 !px-0 justify-center hover:bg-slate-800"
+                                    onClick={() => generatePackagePDF({ basicInfo, flights, hotels, transfers, extras, totalPrice } as any, exportLang)}
+                                    title="Download PDF"
+                                >
                                     <FileText size={16} />
                                 </button>
-                                <button className="ss-input-box !h-12 !px-0 justify-center hover:bg-slate-800" onClick={() => generatePackageHTML({ basicInfo, flights, hotels, transfers, extras, totalPrice } as any)}>
+                                <button
+                                    className="ss-input-box !h-12 !px-0 justify-center hover:bg-slate-800"
+                                    onClick={() => generatePackageHTML({ basicInfo, flights, hotels, transfers, extras, totalPrice } as any, exportLang)}
+                                    title="Download HTML"
+                                >
                                     <Code size={16} />
                                 </button>
-                                <button className="ss-input-box !h-12 !px-0 justify-center hover:bg-slate-800" onClick={() => alert('Mejl poslat!')}>
+                                <button
+                                    className="ss-input-box !h-12 !px-0 justify-center hover:bg-slate-800"
+                                    onClick={() => alert(`Mejl poslat na ${exportLang === 'Srpski' ? 'srpskom' : 'engleskom'}!`)}
+                                    title="Send Email"
+                                >
                                     <Mail size={16} />
                                 </button>
                             </div>

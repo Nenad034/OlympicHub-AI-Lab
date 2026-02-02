@@ -52,6 +52,7 @@ interface Customer {
     country: string;
     identityNo?: string; // Passport/ID
     newsletter: boolean;
+    language: 'Srpski' | 'Engleski';
 }
 
 interface CustomersProps {
@@ -79,6 +80,7 @@ const Customers: React.FC<CustomersProps> = ({ onBack }) => {
         type: 'B2C',
         country: 'RS',
         newsletter: true,
+        language: 'Srpski',
         contacts: []
     });
 
@@ -145,7 +147,7 @@ const Customers: React.FC<CustomersProps> = ({ onBack }) => {
             setCustomers([...customers, newCustomer]);
         }
         setShowAddForm(false);
-        setFormData({ type: selectedTab, country: 'RS', newsletter: true, contacts: [] });
+        setFormData({ type: selectedTab, country: 'RS', newsletter: true, language: 'Srpski', contacts: [] });
         setActiveModalTab('basic');
     };
 
@@ -296,7 +298,7 @@ const Customers: React.FC<CustomersProps> = ({ onBack }) => {
                         )}
                     </div>
 
-                    <button onClick={() => { setFormData({ type: selectedTab, country: 'RS', newsletter: true, contacts: [] }); setShowAddForm(true); }} className="btn-primary">
+                    <button onClick={() => { setFormData({ type: selectedTab, country: 'RS', newsletter: true, language: 'Srpski', contacts: [] }); setShowAddForm(true); }} className="btn-primary">
                         <Plus size={18} /> Dodaj Kupca
                     </button>
                 </div>
@@ -513,6 +515,17 @@ const Customers: React.FC<CustomersProps> = ({ onBack }) => {
                                             <div className="modal-field">
                                                 <label>Telefon</label>
                                                 <input required type="text" onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="+381 6..." />
+                                            </div>
+                                            <div className="modal-field">
+                                                <label>Jezik Komunikacije</label>
+                                                <select
+                                                    value={formData.language}
+                                                    onChange={e => setFormData({ ...formData, language: e.target.value as any })}
+                                                    style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', padding: '14px', borderRadius: '12px', color: 'var(--text-primary)' }}
+                                                >
+                                                    <option value="Srpski">Srpski</option>
+                                                    <option value="Engleski">Engleski</option>
+                                                </select>
                                             </div>
 
                                             {/* Kontakt Osobe Section */}

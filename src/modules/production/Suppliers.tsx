@@ -48,6 +48,7 @@ interface Supplier {
     country: string;
     email: string;
     phone: string;
+    language: 'Srpski' | 'Engleski';
     contacts: ContactPerson[];
 }
 
@@ -79,6 +80,7 @@ const Suppliers: React.FC<SuppliersProps> = ({ onBack }) => {
         type: 'Hoteli',
         country: 'RS',
         city: 'Beograd',
+        language: 'Srpski',
         contacts: []
     });
 
@@ -146,7 +148,7 @@ const Suppliers: React.FC<SuppliersProps> = ({ onBack }) => {
         }
 
         setShowAddForm(false);
-        setFormData({ type: 'Hoteli', contacts: [] }); // Reset to default
+        setFormData({ type: 'Hoteli', language: 'Srpski', contacts: [] }); // Reset to default
     };
 
     const handleDelete = async () => {
@@ -310,7 +312,7 @@ const Suppliers: React.FC<SuppliersProps> = ({ onBack }) => {
                         )}
                     </div>
 
-                    <button onClick={() => { setFormData({ type: selectedType, contacts: [] }); setShowAddForm(true); }} className="btn-primary">
+                    <button onClick={() => { setFormData({ type: selectedType, language: 'Srpski', contacts: [] }); setShowAddForm(true); }} className="btn-primary">
                         <Plus size={18} /> {formData.id ? 'Izmeni' : 'Dodaj'}
                     </button>
                 </div>
@@ -518,6 +520,17 @@ const Suppliers: React.FC<SuppliersProps> = ({ onBack }) => {
                                             <div className="modal-field">
                                                 <label>Telefon</label>
                                                 <input type="text" value={formData.phone || ''} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="+381 6..." />
+                                            </div>
+                                            <div className="modal-field">
+                                                <label>Jezik Komunikacije</label>
+                                                <select
+                                                    value={formData.language}
+                                                    onChange={e => setFormData({ ...formData, language: e.target.value as any })}
+                                                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '14px', borderRadius: '12px', color: 'var(--text-primary)' }}
+                                                >
+                                                    <option value="Srpski">Srpski</option>
+                                                    <option value="Engleski">Engleski</option>
+                                                </select>
                                             </div>
 
                                             {/* Kontakt Osobe Section */}

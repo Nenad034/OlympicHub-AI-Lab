@@ -8,7 +8,7 @@ import {
     Package as PackageIcon, UserPlus, Fingerprint, Banknote,
     ArrowRightLeft, Briefcase, MoveRight, MoveLeft, Calendar, Mail,
     Compass, Ship, Sparkles, Search, ExternalLink, Clock, History,
-    Euro, DollarSign, CirclePercent, Copy, Share2
+    Euro, DollarSign, CirclePercent, Copy, Share2, Code
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import { ModernCalendar } from '../components/ModernCalendar';
@@ -19,6 +19,9 @@ import { saveDossierToDatabase, getNextReservationNumber, getReservationById as 
 import { useAuthStore } from '../stores';
 import '../components/GoogleAddressAutocomplete.css';
 import './ReservationArchitect.css';
+import { getTranslation } from '../utils/translations';
+import type { Language } from '../utils/translations';
+import { generateDossierPDF, generateDossierHTML } from '../utils/dossierExport';
 
 // --- Types ---
 type TripType = 'Smestaj' | 'Avio karte' | 'Dinamicki paket' | 'Putovanja' | 'Transfer';
@@ -221,12 +224,43 @@ const ReservationArchitect: React.FC = () => {
             contract: '',
             voucher: '',
             internal: ''
-        }
+        },
+        language: 'Srpski' as Language
     });
     const [isAdminMode, setIsAdminMode] = useState(false);
     const [isNotepadView, setIsNotepadView] = useState(false);
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
     const [activeCalendar, setActiveCalendar] = useState<{ id: string; type?: string } | null>(null);
+
+    // Document Settings (Per-card language control)
+    const [docSettings, setDocSettings] = useState<{ [key: string]: Language }>({
+        contract: 'Srpski',
+        voucher: 'Srpski',
+        itinerary: 'Srpski',
+        paxList: 'Srpski',
+        proforma: 'Srpski',
+        advance: 'Srpski',
+        final: 'Srpski',
+        payment: 'Srpski'
+    });
+
+    const [docGenHistory, setDocGenHistory] = useState<{ [key: string]: string }>({});
+
+    // Update docSettings when dossier language changes (sync defaults)
+    useEffect(() => {
+        if (dossier.language) {
+            setDocSettings({
+                contract: dossier.language,
+                voucher: dossier.language,
+                itinerary: dossier.language,
+                paxList: dossier.language,
+                proforma: dossier.language,
+                advance: dossier.language,
+                final: dossier.language,
+                payment: dossier.language
+            });
+        }
+    }, [dossier.language]);
 
     // --- INITIAL DATA LOAD ---
     const [isInitialized, setIsInitialized] = useState(false);
@@ -1093,6 +1127,54 @@ const ReservationArchitect: React.FC = () => {
                                                 onChange={e => setDossier({ ...dossier, booker: { ...dossier.booker, phone: e.target.value } })}
                                                 placeholder="+381..."
                                             />
+                                        </div>
+                                        <div className="input-field">
+                                            <label>Jezik Dokumentacije</label>
+                                            <div className="language-selector-pills" style={{
+                                                display: 'flex',
+                                                gap: '8px',
+                                                background: 'rgba(255,255,255,0.05)',
+                                                border: '1px solid rgba(255,255,255,0.1)',
+                                                padding: '4px',
+                                                borderRadius: '10px'
+                                            }}>
+                                                <button
+                                                    className={`lang-pill ${dossier.language === 'Srpski' ? 'active' : ''}`}
+                                                    style={{
+                                                        flex: 1,
+                                                        padding: '8px',
+                                                        borderRadius: '8px',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        fontSize: '11px',
+                                                        fontWeight: 800,
+                                                        transition: 'all 0.2s',
+                                                        background: dossier.language === 'Srpski' ? 'var(--accent)' : 'transparent',
+                                                        color: dossier.language === 'Srpski' ? 'white' : 'var(--text-secondary)'
+                                                    }}
+                                                    onClick={() => setDossier({ ...dossier, language: 'Srpski' })}
+                                                >
+                                                    SRPSKI
+                                                </button>
+                                                <button
+                                                    className={`lang-pill ${dossier.language === 'Engleski' ? 'active' : ''}`}
+                                                    style={{
+                                                        flex: 1,
+                                                        padding: '8px',
+                                                        borderRadius: '8px',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        fontSize: '11px',
+                                                        fontWeight: 800,
+                                                        transition: 'all 0.2s',
+                                                        background: dossier.language === 'Engleski' ? 'var(--accent)' : 'transparent',
+                                                        color: dossier.language === 'Engleski' ? 'white' : 'var(--text-secondary)'
+                                                    }}
+                                                    onClick={() => setDossier({ ...dossier, language: 'Engleski' })}
+                                                >
+                                                    ENGLISH
+                                                </button>
+                                            </div>
                                         </div>
                                         {dossier.customerType !== 'B2C-Individual' && (
                                             <div className="input-field">
@@ -2266,66 +2348,152 @@ const ReservationArchitect: React.FC = () => {
                         {/* SECTION: DOCUMENTS */}
                         {activeSection === 'documents' && (
                             <section className="res-section fade-in">
-                                <div className="section-title">
-                                    <h3><FileText size={20} color="var(--accent)" style={{ marginRight: '10px' }} /> Generisanje Dokumenata</h3>
-                                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Kreirajte i preuzmite svu neophodnu dokumentaciju za ovu rezervaciju</p>
+                                <div className="section-title" style={{ marginBottom: '32px' }}>
+                                    <div>
+                                        <h3 style={{ fontSize: '22px' }}><FileText size={24} color="var(--accent)" style={{ marginRight: '12px' }} /> Dokumentacija i Dokumenti</h3>
+                                        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '6px' }}>
+                                            Generišite profesionalne PDF i HTML dokumente prilagođene jeziku putnika ili ino-partnera.
+                                        </p>
+                                    </div>
+                                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px' }}>
+                                        <button className="btn-secondary" style={{ padding: '8px 20px', fontSize: '12px' }} onClick={() => addLog('Štampa', 'Pokrenuta serijska štampa svih dokumenata.', 'info')}>
+                                            <Printer size={16} /> Štampaj Paket
+                                        </button>
+                                        <button className="btn-primary" style={{ padding: '8px 20px', fontSize: '12px' }} onClick={() => setIsEmailModalOpen(true)}>
+                                            <Mail size={16} /> Email Dokumente
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div className="docs-modern-grid">
-                                    {/* Profaktura */}
-                                    <div className="doc-card-premium invoice">
-                                        <div className="doc-icon-wrapper">
-                                            <FileText size={24} />
-                                        </div>
-                                        <div className="doc-info">
-                                            <h4>Profaktura</h4>
-                                            <p>Predračun za klijenta sa instrukcijama za uplatu.</p>
-                                        </div>
-                                        <button className="doc-action-btn" onClick={() => generateDocument('Profaktura')}>
-                                            <Printer size={14} /> Generiši
-                                        </button>
-                                    </div>
+                                {/* GROUP 1: PUTNA DOKUMENTA */}
+                                <div className="doc-group-container">
+                                    <h4 className="doc-group-title">
+                                        <div className="title-decorator"></div>
+                                        Putna Dokumenta (Travel Documents)
+                                    </h4>
+                                    <div className="docs-premium-grid">
+                                        {[
+                                            { id: 'contract', title: 'Ugovor o Putovanju', icon: <ShieldCheck size={22} />, desc: 'Glavni dokument o uslovima putovanja.' },
+                                            { id: 'voucher', title: 'Smeštajni Vaučer', icon: <Building2 size={22} />, desc: 'Dokument za prijavu u hotelu.' },
+                                            { id: 'itinerary', title: 'Plan Putovanja', icon: <Compass size={22} />, desc: 'Detaljan itinerer po danima/stavkama.' },
+                                            { id: 'paxList', title: 'Putni List (Voucher)', icon: <Users size={22} />, desc: 'Spisak putnika za prevoznika/partnera.' }
+                                        ].map(doc => (
+                                            <div key={doc.id} className="doc-card-v5">
+                                                <div className="doc-card-header">
+                                                    <div className="doc-icon-v5">{doc.icon}</div>
+                                                    <div className="doc-title-meta">
+                                                        <h5>{doc.title}</h5>
+                                                        <span>{doc.desc}</span>
+                                                    </div>
+                                                </div>
 
-                                    {/* Avansni */}
-                                    <div className="doc-card-premium invoice">
-                                        <div className="doc-icon-wrapper">
-                                            <Receipt size={24} />
-                                        </div>
-                                        <div className="doc-info">
-                                            <h4>Avansni Račun</h4>
-                                            <p>Potvrda o uplati dela sredstava pre puta.</p>
-                                        </div>
-                                        <button className="doc-action-btn" onClick={() => generateDocument('Avansni Račun')}>
-                                            <Printer size={14} /> Generiši
-                                        </button>
-                                    </div>
+                                                <div className="doc-lang-selector">
+                                                    <button
+                                                        className={docSettings[doc.id] === 'Srpski' ? 'active' : ''}
+                                                        onClick={() => setDocSettings({ ...docSettings, [doc.id]: 'Srpski' })}
+                                                    >SR</button>
+                                                    <button
+                                                        className={docSettings[doc.id] === 'Engleski' ? 'active' : ''}
+                                                        onClick={() => setDocSettings({ ...docSettings, [doc.id]: 'Engleski' })}
+                                                    >EN</button>
+                                                </div>
 
-                                    {/* Konacni */}
-                                    <div className="doc-card-premium final">
-                                        <div className="doc-icon-wrapper">
-                                            <CheckCircle2 size={24} />
-                                        </div>
-                                        <div className="doc-info">
-                                            <h4>Konačni Račun</h4>
-                                            <p>Finalni fiskalni račun nakon zatvaranja rezervacije.</p>
-                                        </div>
-                                        <button className="doc-action-btn" onClick={() => generateDocument('Konačni Račun')}>
-                                            <CheckCircle2 size={14} /> Završi & Štampaj
-                                        </button>
+                                                <div className="doc-card-actions">
+                                                    <button className="doc-action pdf" onClick={() => {
+                                                        generateDossierPDF(dossier, docSettings[doc.id]);
+                                                        setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
+                                                        addLog('Generisanje PDF', `${doc.title} generisan na jeziku: ${docSettings[doc.id]}`, 'success');
+                                                    }} title="Preuzmi PDF">
+                                                        <FileText size={16} /> <span>PDF</span>
+                                                    </button>
+                                                    <button className="doc-action html" onClick={() => {
+                                                        generateDossierHTML(dossier, docSettings[doc.id]);
+                                                        setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
+                                                        addLog('Generisanje WEB', `${doc.title} generisan na jeziku: ${docSettings[doc.id]}`, 'info');
+                                                    }} title="Pregled HTML">
+                                                        <Code size={16} /> <span>WEB</span>
+                                                    </button>
+                                                    <button className="doc-action print" onClick={() => {
+                                                        window.print();
+                                                        setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
+                                                    }} title="Štampaj">
+                                                        <Printer size={16} />
+                                                    </button>
+                                                    <button className="doc-action email" onClick={() => setIsEmailModalOpen(true)} title="Pošalji na email">
+                                                        <Mail size={16} />
+                                                    </button>
+                                                </div>
+                                                <div className="doc-status-line">
+                                                    <Clock size={10} /> Poslednje generisano: <span>{docGenHistory[doc.id] || 'Nikada'}</span>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
+                                </div>
 
-                                    {/* Vaucer */}
-                                    <div className="doc-card-premium vaucer">
-                                        <div className="doc-icon-wrapper">
-                                            <Sparkles size={24} />
-                                        </div>
-                                        <div className="doc-info">
-                                            <h4>Vaučeri</h4>
-                                            <p>Putna dokumentacija za hotel i ostale usluge.</p>
-                                        </div>
-                                        <button className="doc-action-btn" onClick={() => generateDocument('Vaučer')}>
-                                            <Sparkles size={14} /> Kreiraj Vaučere
-                                        </button>
+                                {/* GROUP 2: FINANSIJSKA DOKUMENTA */}
+                                <div className="doc-group-container" style={{ marginTop: '40px' }}>
+                                    <h4 className="doc-group-title">
+                                        <div className="title-decorator financial"></div>
+                                        Finansijska Dokumenta (Financials)
+                                    </h4>
+                                    <div className="docs-premium-grid">
+                                        {[
+                                            { id: 'proforma', title: 'Profaktura (Predračun)', icon: <FileText size={22} />, desc: 'Instrukcije za uplatu preko računa.' },
+                                            { id: 'advance', title: 'Avansni Račun', icon: <Receipt size={22} />, desc: 'Potvrda o delimičnoj uplati (akontaciji).' },
+                                            { id: 'final', title: 'Konačni Račun', icon: <CheckCircle2 size={22} />, desc: 'Zatvaranje rezervacije i fiskalizacija.' },
+                                            { id: 'payment', title: 'Potvrda o Uplati ili Refund', icon: <Banknote size={22} />, desc: 'Službena potvrda primljenih sredstava.' }
+                                        ].map(doc => (
+                                            <div key={doc.id} className="doc-card-v5 financial">
+                                                <div className="doc-card-header">
+                                                    <div className="doc-icon-v5">{doc.icon}</div>
+                                                    <div className="doc-title-meta">
+                                                        <h5>{doc.title}</h5>
+                                                        <span>{doc.desc}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="doc-lang-selector">
+                                                    <button
+                                                        className={docSettings[doc.id] === 'Srpski' ? 'active' : ''}
+                                                        onClick={() => setDocSettings({ ...docSettings, [doc.id]: 'Srpski' })}
+                                                    >SR</button>
+                                                    <button
+                                                        className={docSettings[doc.id] === 'Engleski' ? 'active' : ''}
+                                                        onClick={() => setDocSettings({ ...docSettings, [doc.id]: 'Engleski' })}
+                                                    >EN</button>
+                                                </div>
+
+                                                <div className="doc-card-actions">
+                                                    <button className="doc-action pdf" onClick={() => {
+                                                        generateDossierPDF(dossier, docSettings[doc.id]);
+                                                        setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
+                                                        addLog('Generisanje PDF', `${doc.title} generisan na jeziku: ${docSettings[doc.id]}`, 'success');
+                                                    }} title="Preuzmi PDF">
+                                                        <FileText size={16} /> <span>PDF</span>
+                                                    </button>
+                                                    <button className="doc-action html" onClick={() => {
+                                                        generateDossierHTML(dossier, docSettings[doc.id]);
+                                                        setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
+                                                        addLog('Generisanje WEB', `${doc.title} generisan na jeziku: ${docSettings[doc.id]}`, 'info');
+                                                    }} title="Pregled HTML">
+                                                        <Code size={16} /> <span>WEB</span>
+                                                    </button>
+                                                    <button className="doc-action print" onClick={() => {
+                                                        window.print();
+                                                        setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
+                                                    }} title="Štampaj">
+                                                        <Printer size={16} />
+                                                    </button>
+                                                    <button className="doc-action email" onClick={() => setIsEmailModalOpen(true)} title="Pošalji na email">
+                                                        <Mail size={16} />
+                                                    </button>
+                                                </div>
+                                                <div className="doc-status-line">
+                                                    <Clock size={10} /> Poslednje generisano: <span>{docGenHistory[doc.id] || 'Nikada'}</span>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </section>
@@ -2431,7 +2599,6 @@ const ReservationArchitect: React.FC = () => {
                     </div>
 
                     <div className="footer-actions">
-                        <button className="btn-print-contract outline" onClick={handlePrint}><Printer size={16} /> Štampaj Ugovor</button>
                         {!isSubagent && <button className="btn-save-master" onClick={handleSave}><Save size={16} /> Sačuvaj Dossier</button>}
                     </div>
                 </footer>
