@@ -433,6 +433,49 @@
     background: transparent !important;
 }
 
+.room-row-v4:hover {
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+
+.r-name {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.room-type-tag {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.room-desc-mini {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.meal-tag-v4 {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 6px;
+    color: #818cf8;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.r-price .p-val {
+    color: #fbbf24;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+
 .section-divider-premium {
     position: relative;
     display: flex;

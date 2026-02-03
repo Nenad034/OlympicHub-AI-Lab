@@ -17,7 +17,8 @@ import {
     Sparkles,
     Plane,
     FileText,
-    Plug
+    Plug,
+    Search
 } from 'lucide-react';
 import { useThemeStore, useAppStore, useAuthStore } from '../stores';
 import { translations } from '../translations';
@@ -41,11 +42,9 @@ interface AppConfig {
 
 
 const apps: AppConfig[] = [
-    { id: 'master-search', name: 'Master Pretraga', desc: 'Unifikovana pretraga svih izvora - Smeštaj, Letovi, Transferi, Usluge i Putovanja.', icon: <Sparkles size={24} />, category: 'sales', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', badge: 'New', minLevel: 1, path: '/master-search' },
-    { id: 'global-hub', name: 'Globalni Hub Search', desc: 'Jedinstvena pretraga za TCT i Open Greece baze.', icon: <Sparkles size={24} />, category: 'sales', color: 'var(--gradient-blue)', badge: 'Beta', minLevel: 1, path: '/hub' },
+    { id: 'smart-search', name: 'Smart Search', desc: 'Inteligentna pretraga i preporuka smeštaja sa AI asistencijom i analizom tržišta.', icon: <Sparkles size={24} />, category: 'sales', color: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', badge: 'AI', minLevel: 1, path: '/smart-search' },
+    { id: 'global-hub', name: 'Globalni Hub Search', desc: 'Jedinstvena pretraga za TCT i Open Greece baze.', icon: <Search size={24} />, category: 'sales', color: 'var(--gradient-blue)', badge: 'Beta', minLevel: 1, path: '/hub' },
     { id: 'reservations', name: 'Rezervacije', desc: 'Centralni pregled i upravljanje svim rezervacijama.', icon: <FileText size={24} />, category: 'sales', color: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', badge: 'Novo', minLevel: 1, path: '/reservations' },
-    { id: 'package-search', name: 'Dinamik Wizard', desc: 'Interaktivni wizard za pretragu i kreiranje paketa sa AI asistentom.', icon: <Sparkles size={24} />, category: 'sales', color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', badge: 'Beta', minLevel: 1, path: '/packages/search' },
-    { id: 'flight-booking', name: 'Flights', desc: 'Pretraga i rezervacija letova sa Amadeus, Kiwi i drugim provajderima.', icon: <Plane size={24} />, category: 'sales', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', badge: 'Novo', minLevel: 1, path: '/flights' },
     { id: 'mars-analysis', name: 'Mars ERP Analitika', desc: 'Finansijska i operativna analiza procesa.', icon: <Database size={24} />, category: 'production', color: 'var(--gradient-blue)', badge: 'Live', minLevel: 1, path: '/mars-analysis' },
     { id: 'production-hub', name: 'Upravljanje Produkcijom', desc: 'Smeštaj, putovanja, transferi i paketi.', icon: <Package size={24} />, category: 'production', color: 'var(--gradient-green)', badge: 'Novo', minLevel: 1, path: '/production' },
     { id: 'suppliers', name: 'Dobavljači', desc: 'Upravljanje bazom dobavljača.', icon: <Database size={24} />, category: 'production', color: 'var(--gradient-orange)', minLevel: 1, path: '/suppliers' },
@@ -150,7 +149,7 @@ const Dashboard: React.FC = () => {
         navigate(app.path);
     };
 
-    const FEATURED_IDS = ['master-search', 'global-hub', 'reservations', 'package-search', 'flight-booking'];
+    const FEATURED_IDS = ['smart-search', 'global-hub', 'reservations'];
 
     const featuredApps = userApps.filter(app => FEATURED_IDS.includes(app.id) && userLevel >= app.minLevel);
     const otherApps = userApps.filter(app => !FEATURED_IDS.includes(app.id) && userLevel >= app.minLevel);
@@ -281,8 +280,9 @@ const Dashboard: React.FC = () => {
                     }}>
                         <div className="dashboard-grid" style={{
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(5, 1fr)',
-                            maxWidth: '1600px',
+                            gridTemplateColumns: `repeat(${featuredApps.length}, 1fr)`,
+                            maxWidth: '1200px',
+                            margin: '0 auto',
                             width: '100%',
                             gap: '20px'
                         }}>

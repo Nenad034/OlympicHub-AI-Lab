@@ -7,6 +7,7 @@ import {
 import { ModernCalendar } from '../../../components/ModernCalendar';
 import { formatDate } from '../../../utils/dateUtils';
 import '../../../pages/SmartSearchRedesign.css';
+import '../../../pages/SmartSearchFerrariFix.css';
 import type {
     BasicInfoData,
     DestinationInput

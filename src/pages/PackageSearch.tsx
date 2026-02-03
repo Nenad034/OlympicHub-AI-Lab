@@ -93,9 +93,9 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
     }, [initialDestinations, initialCheckIn, initialCheckOut]);
 
     const totalPrice = (selectedFlights?.totalPrice || 0) +
-        selectedHotels.reduce((s, h) => s + h.totalPrice, 0) +
-        selectedTransfers.reduce((s, t) => s + t.totalPrice, 0) +
-        selectedExtras.reduce((s, e) => s + e.totalPrice, 0);
+        (selectedHotels || []).filter(Boolean).reduce((s, h) => s + (h?.totalPrice || 0), 0) +
+        (selectedTransfers || []).filter(Boolean).reduce((s, t) => s + (t?.totalPrice || 0), 0) +
+        (selectedExtras || []).filter(Boolean).reduce((s, e) => s + (e?.totalPrice || 0), 0);
 
     const goNext = () => {
         if (currentStep < 6) {

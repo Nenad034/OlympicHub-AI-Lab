@@ -92,8 +92,8 @@ export class SolvexProvider implements HotelProvider {
                     // Add this room to the existing grouped hotel result
                     existing.rooms.push({
                         id: `${item.room.roomType.id}-${item.room.roomCategory.id}`,
-                        name: `${item.room.roomType.name} - ${item.room.roomCategory.name}`,
-                        description: item.room.roomAccommodation.name,
+                        name: `${item.room.roomType.name}${item.room.roomCategory.name ? ` (${item.room.roomCategory.name})` : ''} - ${item.room.roomAccommodation.name}`,
+                        description: `Dest: ${item.hotel.city.name}`,
                         price: item.totalCost,
                         availability: this.bridgeAvailability(item.quotaType),
                         capacity: item.room.roomType.places
@@ -194,12 +194,32 @@ export class SolvexProvider implements HotelProvider {
         const checkOut = params.checkOut;
         const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
 
-        // Clean the hotel name by removing redundant location info
-        // Note: SearchHotelServices already includes stars in the name (e.g. "Hotel Name 5*")
-        // so we don't need to append them again
-        let cleanName = solvexResult.hotel.name
-            .replace(/\(Golden Sands\)/gi, '') // Remove redundant town name if it's there
-            .trim();
+        const cleanText = (text: string) => {
+            return text
+                .replace(/\(Dest:.*?\)/gi, '')
+                .replace(/\(Golden Sands\)/gi, '')
+                .replace(/\(Sunny Beach\)/gi, '')
+                .replace(/\(Nessebar\)/gi, '')
+                .replace(/\(Albena\)/gi, '')
+                .replace(/\(Bansko\)/gi, '')
+                .replace(/\(Borovets\)/gi, '')
+                .replace(/\(Pamporovo\)/gi, '')
+                .replace(/\(Obzor\)/gi, '')
+                .replace(/\(St.Vlas\)/gi, '')
+                .replace(/\(Elena\)/gi, '')
+                .replace(/\(Varna\)/gi, '')
+                .replace(/\(Burgas\)/gi, '')
+                .replace(/\(Sofia\)/gi, '')
+                .replace(/\(Sozopol\)/gi, '')
+                .replace(/\(Primorsko\)/gi, '')
+                .replace(/\(Aheloy\)/gi, '')
+                .replace(/\(Golden S\)/gi, '')
+                .replace(/\(S.Beach\)/gi, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        };
+
+        const cleanName = cleanText(solvexResult.hotel.name);
 
         return {
             id: `solvex-${solvexResult.hotel.id}-${solvexResult.pansion.id}-${solvexResult.room.roomType.id}`,
@@ -217,8 +237,8 @@ export class SolvexProvider implements HotelProvider {
             nights,
             rooms: [{
                 id: `${solvexResult.room.roomType.id}`,
-                name: solvexResult.room.roomType.name,
-                description: solvexResult.room.roomCategory.name,
+                name: cleanText(`${solvexResult.room.roomType.name}${solvexResult.room.roomCategory.name ? ` (${solvexResult.room.roomCategory.name})` : ''} - ${solvexResult.room.roomAccommodation.name}`),
+                description: '',
                 price: solvexResult.totalCost,
                 availability: this.bridgeAvailability(solvexResult.quotaType),
                 capacity: solvexResult.room.roomType.places

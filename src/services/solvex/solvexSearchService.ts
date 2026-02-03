@@ -125,28 +125,28 @@ export async function searchHotels(params: Omit<SolvexHotelSearchParams, 'guid'>
                 room: {
                     roomType: {
                         id: parseInt(String(s.RtKey || '0')),
-                        name: String(s.RtCode || s.RoomTypeName || ''),
-                        nameLat: String(s.RtCode || s.RoomTypeName || ''),
+                        name: String(s.RoomTypeName || s.RtName || s.RtCode || ''),
+                        nameLat: String(s.RoomTypeName || s.RtName || s.RtCode || ''),
                         places: 0,
                         exPlaces: 0
                     },
                     roomCategory: {
                         id: parseInt(String(s.RcKey || '0')),
-                        name: String(s.RcName || s.RoomCategoryName || ''),
-                        nameLat: String(s.RcName || s.RoomCategoryName || '')
+                        name: String(s.RoomCategoryName || s.RcName || ''),
+                        nameLat: String(s.RoomCategoryName || s.RcName || '')
                     },
                     roomAccommodation: {
                         id: parseInt(String(s.AcKey || '0')),
-                        name: String(s.AcName || s.RoomAccommodationName || ''),
-                        nameLat: String(s.AcName || s.RoomAccommodationName || ''),
+                        name: String(s.RoomAccommodationName || s.AcName || ''),
+                        nameLat: String(s.RoomAccommodationName || s.AcName || ''),
                         adultMainPlaces: 0,
                         childMainPlaces: 0
                     }
                 },
                 pansion: {
                     id: parseInt(String(s.PnKey || '0')),
-                    name: String(s.PnCode || s.PansionName || ''),
-                    nameLat: String(s.PnCode || s.PansionName || ''),
+                    name: String(s.PansionName || s.PnName || s.PnCode || ''),
+                    nameLat: String(s.PansionName || s.PnName || s.PnCode || ''),
                     code: String(s.PnCode || '')
                 },
                 totalCost: parseFloat(String(s.TotalCost || s.Cost || '0')),

@@ -1,0 +1,588 @@
+/* SmartSearch Ferrari Red & Flat UI - FIX 2026 */
+
+/* --- GENERAL RESET & FLAT UI --- */
+.search-card-frame,
+.tabs-nav-container,
+.nav-tab-item,
+.nav-tab-item.active,
+.input-box,
+.destination-input-wrapper,
+.flex-toggle-group,
+.btn-new-search-tag,
+.vertical-filters-popover,
+.autocomplete-dropdown.premium,
+.flexible-dates-ribbon-container,
+.flight-results-container,
+.flexible-dates-strip,
+.flight-search-form,
+.wizard-progress.ss-glass-bar,
+.wizard-navigation.ss-floating-nav {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    background-image: none !important;
+}
+
+/* Subtle Borders Everywhere */
+.room-tab-btn,
+.room-tab-btn.active,
+.btn-search-main,
+.search-card-frame,
+.tabs-nav-container,
+.input-box,
+.destination-input-wrapper,
+.flex-toggle-group,
+.btn-new-search-tag,
+.vertical-filters-popover,
+.autocomplete-dropdown.premium,
+.flexible-dates-ribbon-container,
+.flight-search-form,
+.wizard-progress.ss-glass-bar,
+.wizard-navigation.ss-floating-nav {
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+/* --- LIGHT MODE SPECIFIC --- */
+.light-theme .smart-search-container-v2,
+.light-theme .search-card-frame,
+.light-theme .flight-search-form,
+.light-theme .package-search-page,
+.light-theme .hotel-result-card-premium {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+.light-theme .tabs-nav-container,
+.light-theme .input-box,
+.light-theme .destination-input-wrapper,
+.light-theme .flex-toggle-group,
+.light-theme .room-tab-btn,
+.light-theme .wizard-progress.ss-glass-bar,
+.light-theme .wizard-navigation.ss-floating-nav,
+.light-theme .flight-counter-controls,
+.light-theme .trip-type-selector,
+.light-theme .input-group-flight input,
+.light-theme .input-group-flight select {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+.light-theme .field-label,
+.light-theme .field-label-mini {
+    color: #475569 !important;
+}
+
+.light-theme .nav-tab-item:not(.active) {
+    color: #64748b !important;
+}
+
+.light-theme .nav-tab-item.active {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+
+.light-theme .destination-chip {
+    background: #e2e8f0 !important;
+    color: #1e293b !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+.light-theme .input-box span,
+.light-theme .smart-input-inline {
+    color: #1e293b !important;
+}
+
+
+/* --- CLICK TO GET ... (FERRARI RED BRANDING) --- */
+
+/* Header Title (Above Search Card) */
+.ss-brand-title-main {
+    display: inline-block;
+    padding: 10px 40px;
+    font-weight: 900 !important;
+    font-style: italic;
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+    position: relative;
+    z-index: 2;
+    color: white !important;
+    /* Always white on red background */
+    text-transform: uppercase;
+}
+
+.ss-brand-title-main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ff2800 !important;
+    /* Ferrari Red */
+    transform: skewX(-15deg);
+    /* Slanted sides matching italic */
+    z-index: -1;
+}
+
+/* Light Theme Button: Transparent with border for Ferrari Red text */
+.light-theme .btn-search-main {
+    background: transparent !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+.light-theme .btn-search-main span {
+    color: #ff2800 !important;
+}
+
+/* Dark Theme Button: Keep purple/blue base */
+.navy-theme .btn-search-main {
+    background: #4f46e5 !important;
+}
+
+.navy-theme .btn-search-main span {
+    color: white !important;
+}
+
+
+
+
+/* SEARCH BUTTON (CLICK TO GET) */
+.btn-search-main {
+    background: #4f46e5 !important;
+    /* Purple base as in image */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    overflow: hidden;
+    position: relative;
+    border: none !important;
+    height: 64px !important;
+    border-radius: 12px !important;
+}
+
+.btn-search-main span {
+    position: relative;
+    z-index: 2;
+    color: white !important;
+    font-weight: 900 !important;
+    font-style: italic;
+    font-size: 1.1rem;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    letter-spacing: 1px;
+}
+
+.btn-search-main span::before {
+    display: none;
+    /* Removed the background box from the button span as per new request */
+}
+
+
+.btn-icon-box {
+    display: none !important;
+    /* Remove icon box entirely */
+}
+
+
+
+/* Force Theme Backgrounds - removing black */
+.package-builder-inline,
+.flight-search-inline,
+.flight-search-page,
+.package-search-page {
+    background: transparent !important;
+}
+
+.search-card-frame,
+.flight-search-form,
+.wizard-progress.ss-glass-bar,
+.wizard-navigation.ss-floating-nav {
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* --- TABS --- */
+.nav-tab-item.active {
+    background: #4f46e5 !important;
+    /* "Tačno" field color */
+    color: white !important;
+}
+
+.nav-tab-item:not(.active) {
+    background: transparent !important;
+    color: #94a3b8 !important;
+}
+
+.tabs-nav-container {
+    background: #0f172a !important;
+    /* Theme background instead of solid black */
+}
+
+/* --- INPUTS & BACKGROUNDS --- */
+.navy-theme .search-card-frame {
+    background: #1e293b !important;
+}
+
+.navy-theme .input-box,
+.navy-theme .destination-input-wrapper,
+.navy-theme .flex-toggle-group {
+    background: #0f172a !important;
+}
+
+/* --- FLEXIBILNOST --- */
+.flex-btn.active {
+    background: #4f46e5 !important;
+}
+
+/* --- DYNAMIC WIZARD (Package Search Inline) --- */
+/* Search Button in Package Builder */
+.package-builder-step-container button[onClick*="onNext"],
+.package-builder-step-container button:contains("POKRENI PRETRAGU PAKETA") {
+    background: #4f46e5 !important;
+}
+
+/* Since the above might not work due to :contains not being standard CSS, 
+   we'll target the btn-search style often used or the inline style */
+.package-builder-step-container>button:last-child {
+    background: #4f46e5 !important;
+}
+
+/* Root variables for consistency */
+:root {
+    --ss-gradient: #4f46e5;
+    --ss-accent: #4f46e5;
+    --primary-gradient: #4f46e5;
+}
+
+/* Room tabs improvement based on image */
+.room-tab-btn.active {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+.room-tab-btn {
+    background: #0f172a !important;
+}
+
+/* --- FLIGHT SEARCH TAB --- */
+.flight-search-form {
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: none !important;
+    padding: 2.5rem !important;
+    border-radius: 20px !important;
+}
+
+.trip-type-btn.active {
+    background: #4f46e5 !important;
+    box-shadow: none !important;
+}
+
+.input-group-flight input,
+.input-group-flight select,
+.flight-counter-controls,
+.trip-type-selector {
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.search-flights-btn {
+    background: #4f46e5 !important;
+    box-shadow: none !important;
+}
+
+/* --- PACKAGE BUILDER (DYNAMIC WIZARD) --- */
+.wizard-progress.ss-glass-bar {
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: none !important;
+}
+
+.p-step-ss.active .s-num-ss {
+    background: #4f46e5 !important;
+}
+
+.wizard-navigation.ss-floating-nav {
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: none !important;
+}
+
+/* --- STEP 6 REVIEW CARDS (WIZARD) --- */
+.flight-offer-card-ss {
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 16px !important;
+    box-shadow: none !important;
+    overflow: hidden;
+}
+
+.light-theme .flight-offer-card-ss {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+.flight-main-section-ss {
+    padding: 2rem !important;
+}
+
+.flight-price-sidebar-ss {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    width: 240px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem !important;
+}
+
+.light-theme .flight-price-sidebar-ss {
+    background: #f8fafc !important;
+    border-left: 1px solid #e2e8f0 !important;
+}
+
+.price-value-ss {
+    font-size: 2.25rem !important;
+    font-weight: 900 !important;
+    letter-spacing: -1px;
+}
+
+.light-theme h4,
+.light-theme h5 {
+    color: #0f172a !important;
+}
+
+.light-theme .text-slate-300,
+.light-theme .text-slate-200 {
+    color: #1e293b !important;
+}
+
+.light-theme .text-slate-500 {
+    color: #64748b !important;
+}
+
+.light-theme .bg-white\/\[0\.02\],
+.light-theme .bg-white\/\[0\.03\] {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+
+
+/* Sidebar Summary in Step 6 */
+.search-card-frame.sticky {
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 20px !important;
+}
+
+.light-theme .search-card-frame.sticky {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Kreiraj Paket Button in Step 6 */
+.animate-pulse-slow {
+    animation: none !important;
+    /* Remove pulse for flatter look */
+}
+
+/* Export Buttons in Step 6 */
+button[onClick*="generatePackage"] {
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.light-theme button[onClick*="generatePackage"] {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Map Container in Step 6 */
+.search-card-frame.overflow-hidden {
+    border-radius: 20px !important;
+    box-shadow: none !important;
+    background: #1e293b !important;
+}
+
+/* --- STEP 6 REVIEW OVERHAUL (No Tailwind Dependencies) --- */
+.ss-review-container {
+    width: 100%;
+    margin: 0 auto;
+    color: white;
+}
+
+.ss-review-grid {
+    display: flex;
+    gap: 30px;
+    width: 100%;
+}
+
+.ss-review-main {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.ss-review-side {
+    flex: 1;
+}
+
+/* Fix for the bunched up text in summary */
+.ss-summary-card {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 30px;
+    position: sticky;
+    top: 20px;
+}
+
+.ss-price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ss-total-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px dashed rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.ss-total-label-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ss-total-amount {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+}
+
+/* Fix for the slanted buttons */
+.ss-lang-group {
+    display: flex;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 6px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+}
+
+.ss-lang-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 900;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    color: #64748b;
+    transform: none !important;
+    /* Force reset skew */
+}
+
+.ss-lang-btn.active {
+    background: #4f46e5;
+    color: white;
+}
+
+.ss-confirm-btn {
+    width: 100%;
+    height: 64px;
+    background: #4f46e5;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    transform: none !important;
+    /* Force reset skew */
+}
+
+.ss-confirm-btn:hover {
+    filter: brightness(1.1);
+}
+
+/* Export Buttons Fix */
+.ss-export-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+
+.ss-export-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px 5px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ss-export-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.ss-export-btn span {
+    font-size: 10px;
+    font-weight: 900;
+    color: #64748b;
+    margin-top: 8px;
+    text-transform: uppercase;
+}
+
+/* Light Theme Fixes */
+.light-theme .ss-summary-card {
+    background: white;
+    border-color: #cbd5e1;
+}
+
+.light-theme .ss-total-amount {
+    color: #0f172a;
+}
+
+.light-theme .ss-price-row span:first-child {
+    color: #64748b;
+}
+
+.light-theme .ss-export-btn {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.ss-review-flex {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}

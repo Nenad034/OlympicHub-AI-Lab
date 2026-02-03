@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { generatePackagePDF, generatePackageHTML } from '../../../utils/packageExport';
 import './SmartSearchV2.css';
+import '../../../pages/SmartSearchFerrariFix.css';
 import type {
     BasicInfoData,
     FlightSelectionData,
@@ -76,17 +77,14 @@ const Step6_ReviewConfirm: React.FC<Step6Props> = ({
     const extraPrice = extras.reduce((sum, e) => sum + e.totalPrice, 0);
 
     return (
-        <div className="step-content animate-fade-in" style={{ paddingBottom: '140px' }}>
-
+        <div className="ss-review-container animate-fade-in" style={{ paddingBottom: '140px' }}>
             {/* 1. INTERACTIVE MAP ITINERARY */}
-            <div className="search-card-frame !p-0 overflow-hidden mb-12" style={{ background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.08)', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
-                <div className="px-8 py-5 flex justify-between items-center" style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div className="flex items-center gap-4">
-                        <MapIcon size={20} className="text-indigo-400" />
-                        <div>
-                            <h4 className="text-white font-black text-sm uppercase tracking-widest leading-tight">Vizuelni Itinerer Putovanja</h4>
-                            <p className="text-[9px] text-slate-500 font-bold uppercase mt-1 opacity-60">Automatski generisana ruta na mapi</p>
-                        </div>
+            <div className="search-card-frame overflow-hidden mb-12">
+                <div className="px-8 py-5 ss-review-flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <MapIcon size={20} className="text-indigo-400" />
+                    <div>
+                        <h4 className="text-white font-black text-sm uppercase tracking-widest leading-tight">Vizuelni Itinerer Putovanja</h4>
+                        <p className="text-[9px] text-slate-500 font-bold uppercase mt-1 opacity-60">Automatski generisana ruta na mapi</p>
                     </div>
                 </div>
                 <div className="h-[350px] w-full relative">
@@ -103,252 +101,283 @@ const Step6_ReviewConfirm: React.FC<Step6Props> = ({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                {/* 2. PREMIUM HORIZONTAL CARDS (2/3 Width) */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="flex justify-between items-center mb-4 px-2">
-                        <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
-                            <Sparkles size={20} className="text-yellow-400" /> Rezime Vašeg Izbora
-                        </h3>
+            <div className="ss-review-grid">
+                {/* 2. MAIN CONTENT (CARDS) */}
+                <div className="ss-review-main">
+                    <div className="ss-review-flex mb-4">
+                        <Sparkles size={20} className="text-yellow-400" />
+                        <h3 className="text-xl font-black text-white uppercase tracking-tighter">Rezime Vašeg Izbora</h3>
                     </div>
 
                     {/* Flight Card */}
                     {flights && (
-                        <div className="flight-offer-card-ss !border-indigo-500/20" style={{ minHeight: 'auto', background: 'rgba(15, 23, 42, 0.6)' }}>
+                        <div className="flight-offer-card-ss">
                             <div className="card-main-layout">
-                                <div className="flight-main-section-ss" style={{ padding: '1.75rem' }}>
-                                    <div className="flex items-center gap-4 mb-6">
-                                        <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-500/20 shadow-lg shadow-indigo-500/10"><Plane size={20} /></div>
+                                <div className="flight-main-section-ss">
+                                    <div className="ss-review-flex mb-8">
+                                        <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 border border-indigo-500/20 shadow-lg">
+                                            <Plane size={24} />
+                                        </div>
                                         <div>
-                                            <h4 className="text-sm font-black text-white uppercase tracking-widest leading-none">Avio Prevoz</h4>
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Multi-city rute</span>
+                                            <h4 className="text-base font-black text-white uppercase tracking-widest leading-none mb-1">Avio Prevoz</h4>
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Multi-destination ruta</span>
                                         </div>
                                     </div>
-                                    <div className="space-y-3">
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                         {flights.multiCityFlights.map((f: any, i: number) => (
-                                            <div key={i} className="flex items-center justify-between bg-white/[0.03] px-5 py-4 rounded-xl border border-white/[0.05] hover:bg-white/[0.05] transition-colors">
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Deonica {i + 1}</span>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-sm font-black text-white uppercase">{f.slices[0].origin.city}</span>
-                                                        <span className="text-slate-600 text-xs">&rarr;</span>
-                                                        <span className="text-sm font-black text-white uppercase">{f.slices[0].destination.city}</span>
+                                            <div key={i} className="ss-price-row" style={{ background: 'rgba(255,255,255,0.02)', padding: '20px 25px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <div className="ss-review-flex" style={{ gap: '30px' }}>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black text-indigo-400 uppercase mb-2">Let {i + 1}</span>
+                                                        <div className="ss-review-flex" style={{ gap: '15px' }}>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-lg font-black text-white">{f.slices[0].origin.city}</span>
+                                                                <span className="text-[10px] font-bold text-slate-500 uppercase">{f.slices[0].origin.iataCode}</span>
+                                                            </div>
+                                                            <div className="flex flex-col items-center opacity-30">
+                                                                <span style={{ fontSize: '10px' }}>--</span>
+                                                                <Plane size={14} />
+                                                                <span style={{ fontSize: '10px' }}>--</span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-lg font-black text-white">{f.slices[0].destination.city}</span>
+                                                                <span className="text-[10px] font-bold text-slate-500 uppercase">{f.slices[0].destination.iataCode}</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <span className="text-[11px] font-black text-slate-300 uppercase block mb-1">{new Date(f.slices[0].departure).toLocaleDateString('sr-RS')}</span>
-                                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{f.slices[0].segments[0].marketing_carrier.name}</span>
+                                                <div style={{ textAlign: 'right' }}>
+                                                    <div style={{ fontSize: '14px', fontWeight: '900', color: '#cbd5e1', marginBottom: '4px' }}>{new Date(f.slices[0].departure).toLocaleDateString('sr-RS', { day: '2-digit', month: 'long' })}</div>
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{f.slices[0].segments[0].carrierName}</span>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
-                                <div className="flight-price-sidebar-ss" style={{ width: '220px', background: 'linear-gradient(to bottom, rgba(99, 102, 241, 0.05), rgba(99, 102, 241, 0.02))' }}>
-                                    <div className="price-label-ss" style={{ letterSpacing: '2px' }}>UKUPNO LETOVI</div>
-                                    <div className="price-value-ss" style={{ color: '#818cf8', fontSize: '2rem', fontWeight: 900 }}>{flightPrice.toFixed(2)}€</div>
-                                    <div className="text-[9px] font-black text-slate-600 uppercase mt-2">Sa uračunatim taksama</div>
+                                <div className="flight-price-sidebar-ss">
+                                    <div className="price-label-ss" style={{ fontSize: '10px', color: '#64748b' }}>CENA AVIOPREVOZA</div>
+                                    <div className="price-value-ss text-indigo-400">{flightPrice.toFixed(2)}€</div>
+                                    <div className="text-[10px] font-bold text-slate-600 uppercase mt-3 tracking-widest">Sve takse uključene</div>
                                 </div>
                             </div>
                         </div>
                     )}
 
                     {/* Hotel Cards */}
+                    {hotels.length > 0 && (
+                        <div className="ss-review-flex mt-12 mb-4">
+                            <Hotel size={20} className="text-emerald-400" />
+                            <h3 className="text-xl font-black text-white uppercase tracking-tighter">Smeštaj</h3>
+                        </div>
+                    )}
                     {hotels.map((h, i) => (
-                        <div key={i} className="flight-offer-card-ss !border-emerald-500/20" style={{ minHeight: 'auto', background: 'rgba(15, 23, 42, 0.6)' }}>
+                        <div key={i} className="flight-offer-card-ss">
                             <div className="card-main-layout">
-                                <div className="flight-main-section-ss" style={{ padding: '1.75rem' }}>
-                                    <div className="flex items-center gap-4 mb-6">
-                                        <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 border border-emerald-500/20 shadow-lg shadow-emerald-500/10"><Hotel size={20} /></div>
+                                <div className="flight-main-section-ss">
+                                    <div className="ss-review-flex mb-8">
+                                        <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 border border-emerald-500/20 shadow-lg">
+                                            <Hotel size={24} />
+                                        </div>
                                         <div>
-                                            <h4 className="text-sm font-black text-white uppercase tracking-widest leading-none">Smeštaj: {h.hotel.city}</h4>
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Premium odabrana soba</span>
+                                            <h4 className="text-base font-black text-white uppercase tracking-widest leading-none mb-1">Smeštaj: {h.hotel.city}</h4>
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Premium odabrana ponuda</span>
                                         </div>
                                     </div>
-                                    <div className="bg-white/[0.03] p-5 rounded-xl border border-white/[0.05]">
-                                        <div className="flex justify-between items-start mb-4">
+                                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <div className="ss-price-row" style={{ border: 'none', marginBottom: '20px' }}>
                                             <div>
-                                                <h5 className="font-black text-white uppercase text-lg leading-tight mb-2">{h.hotel.name}</h5>
-                                                <div className="flex gap-1.5">
-                                                    {[...Array(h.hotel.stars || 4)].map((_, i) => <Star key={i} size={11} className="fill-yellow-500 text-yellow-500" />)}
+                                                <h5 style={{ fontSize: '1.25rem', fontWeight: '900', color: 'white', textTransform: 'uppercase', marginBottom: '10px' }}>{h.hotel.name}</h5>
+                                                <div className="ss-review-flex" style={{ background: 'rgba(0,0,0,0.2)', padding: '6px 12px', borderRadius: '8px', width: 'fit-content' }}>
+                                                    {[...Array(h.hotel.stars || 4)].map((_, i) => (
+                                                        <Star key={i} size={12} className="fill-yellow-500 text-yellow-500" />
+                                                    ))}
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">Noćenja</span>
-                                                <div className="flex items-center gap-2 justify-end">
-                                                    <span className="text-lg font-black text-emerald-400">{h.nights || 7}</span>
-                                                    <span className="text-[10px] font-black text-slate-600 uppercase">NOĆI</span>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <span style={{ fontSize: '10px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase', display: 'block' }}>Boravak</span>
+                                                <div className="ss-review-flex" style={{ justifyContent: 'flex-end', gap: '5px' }}>
+                                                    <span style={{ fontSize: '1.5rem', fontWeight: '900', color: '#10b981' }}>{h.nights || 7}</span>
+                                                    <span style={{ fontSize: '10px', fontWeight: '900', color: '#475569' }}>NOĆI</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex gap-8 pt-4 border-t border-white/5">
-                                            <div className="flex items-center gap-2.5">
-                                                <Clock size={14} className="text-emerald-500/50" />
-                                                <span className="text-[11px] font-black text-slate-300 uppercase letter-spacing-wide">{h.checkIn} &mdash; {h.checkOut}</span>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div className="ss-review-flex">
+                                                <Clock size={16} className="text-emerald-500/50" />
+                                                <div className="flex flex-col">
+                                                    <span style={{ fontSize: '9px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase' }}>Period</span>
+                                                    <span style={{ fontSize: '12px', fontWeight: '900', color: '#e2e8f0' }}>{h.checkIn} — {h.checkOut}</span>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2.5">
-                                                <Utensils size={14} className="text-emerald-500/50" />
-                                                <span className="text-[11px] font-black text-slate-300 uppercase letter-spacing-wide">{h.mealPlan.name}</span>
+                                            <div className="ss-review-flex">
+                                                <Utensils size={16} className="text-emerald-500/50" />
+                                                <div className="flex flex-col">
+                                                    <span style={{ fontSize: '9px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase' }}>Usluga</span>
+                                                    <span style={{ fontSize: '12px', fontWeight: '900', color: '#e2e8f0' }}>{h.mealPlan.name}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flight-price-sidebar-ss" style={{ width: '220px', background: 'linear-gradient(to bottom, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.02))' }}>
-                                    <div className="price-label-ss" style={{ letterSpacing: '2px' }}>UKUPNO SMEŠTAJ</div>
-                                    <div className="price-value-ss" style={{ color: '#10b981', fontSize: '2rem', fontWeight: 900 }}>{h.totalPrice.toFixed(2)}€</div>
-                                    <div className="text-[9px] font-black text-slate-600 uppercase mt-2">Cena po sobi</div>
+                                <div className="flight-price-sidebar-ss">
+                                    <div className="price-label-ss" style={{ fontSize: '10px', color: '#64748b' }}>CENA SMEŠTAJA</div>
+                                    <div className="price-value-ss text-emerald-400">{h.totalPrice.toFixed(2)}€</div>
+                                    <div className="text-[10px] font-bold text-slate-600 uppercase mt-3 tracking-widest">PO SOBI</div>
                                 </div>
                             </div>
                         </div>
                     ))}
 
-                    {/* Transfers & Extras Combined Card */}
-                    {(transfers.length > 0 || extras.length > 0) && (
-                        <div className="flight-offer-card-ss !border-orange-500/20" style={{ minHeight: 'auto', background: 'rgba(15, 23, 42, 0.6)' }}>
+                    {/* Transfer Cards */}
+                    {transfers.length > 0 && (
+                        <div className="ss-review-flex mt-12 mb-4">
+                            <Car size={20} className="text-pink-400" />
+                            <h3 className="text-xl font-black text-white uppercase tracking-tighter">Transferi</h3>
+                        </div>
+                    )}
+                    {transfers.map((t, i) => (
+                        <div key={i} className="flight-offer-card-ss">
                             <div className="card-main-layout">
-                                <div className="flight-main-section-ss" style={{ padding: '1.75rem' }}>
-                                    <div className="grid grid-cols-2 gap-10">
-                                        <div>
-                                            <div className="flex items-center gap-4 mb-6">
-                                                <div className="w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center text-orange-400 border border-orange-500/20 shadow-lg shadow-orange-500/10"><Car size={20} /></div>
-                                                <h4 className="text-xs font-black text-white uppercase tracking-[0.2em]">Transferi</h4>
-                                            </div>
-                                            <div className="space-y-2.5">
-                                                {transfers.map((t, i) => (
-                                                    <div key={i} className="text-[11px] font-bold text-slate-300 flex items-center gap-2 bg-white/[0.03] px-4 py-3 rounded-xl border border-white/[0.05] hover:bg-white/[0.05] transition-colors">
-                                                        <span className="text-orange-500/60">•</span>
-                                                        <span className="uppercase">{t.transfer.from.split(' ')[0]}</span>
-                                                        <span className="text-slate-600">&rarr;</span>
-                                                        <span className="uppercase">{t.transfer.to.split(' ')[0]}</span>
-                                                    </div>
-                                                ))}
-                                                {transfers.length === 0 && <span className="text-[10px] text-slate-600 uppercase font-black italic ml-2">Nema odabranih transfera</span>}
-                                            </div>
+                                <div className="flight-main-section-ss">
+                                    <div className="ss-review-flex mb-8">
+                                        <div className="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-pink-400 border border-pink-500/20 shadow-lg">
+                                            <Car size={24} />
                                         </div>
                                         <div>
-                                            <div className="flex items-center gap-4 mb-6">
-                                                <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 border border-purple-500/20 shadow-lg shadow-purple-500/10"><Ticket size={20} /></div>
-                                                <h4 className="text-xs font-black text-white uppercase tracking-[0.2em]">Dodaci</h4>
+                                            <h4 className="text-base font-black text-white uppercase tracking-widest leading-none mb-1">Transfer: {t.transfer.from} &rarr; {t.transfer.to}</h4>
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.vehicle.name}</span>
+                                        </div>
+                                    </div>
+                                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <div className="ss-review-flex" style={{ justifyContent: 'space-between' }}>
+                                            <div className="flex flex-col">
+                                                <span style={{ fontSize: '9px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase' }}>Datum i Vreme</span>
+                                                <span style={{ fontSize: '12px', fontWeight: '900', color: '#e2e8f0' }}>{t.date} u {t.time}h</span>
                                             </div>
-                                            <div className="space-y-2.5">
-                                                {extras.map((e, i) => (
-                                                    <div key={i} className="text-[11px] font-bold text-slate-300 flex items-center gap-3 bg-white/[0.03] px-4 py-3 rounded-xl border border-white/[0.05] hover:bg-white/[0.05] transition-colors">
-                                                        <span className="text-purple-500/60">•</span>
-                                                        <span className="uppercase">{e.extra.name}</span>
-                                                    </div>
-                                                ))}
-                                                {extras.length === 0 && <span className="text-[10px] text-slate-600 uppercase font-black italic ml-2">Nema dodatnih usluga</span>}
+                                            <div className="flex flex-col" style={{ textAlign: 'right' }}>
+                                                <span style={{ fontSize: '9px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase' }}>Vozilo</span>
+                                                <span style={{ fontSize: '12px', fontWeight: '900', color: '#e2e8f0' }}>{t.vehicle.type.toUpperCase()}</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flight-price-sidebar-ss" style={{ width: '220px', background: 'linear-gradient(to bottom, rgba(249, 115, 22, 0.05), rgba(249, 115, 22, 0.02))' }}>
-                                    <div className="price-label-ss" style={{ letterSpacing: '2px' }}>MOBILNOST i USLUGE</div>
-                                    <div className="price-value-ss" style={{ color: '#f97316', fontSize: '2rem', fontWeight: 900 }}>{(transferPrice + extraPrice).toFixed(2)}€</div>
-                                    <div className="text-[9px] font-black text-slate-600 uppercase mt-2">UKUPNO DODATNO</div>
+                                <div className="flight-price-sidebar-ss">
+                                    <div className="price-label-ss" style={{ fontSize: '10px', color: '#64748b' }}>CENA TRANSFERA</div>
+                                    <div className="price-value-ss text-pink-400">{t.totalPrice.toFixed(2)}€</div>
                                 </div>
                             </div>
+                        </div>
+                    ))}
+
+                    {/* Extra Cards */}
+                    {extras.length > 0 && (
+                        <div className="ss-review-flex mt-12 mb-4">
+                            <Ticket size={20} className="text-orange-400" />
+                            <h3 className="text-xl font-black text-white uppercase tracking-tighter">Dodatne Aktivnosti</h3>
+                        </div>
+                    )}
+                    {extras.map((e, i) => (
+                        <div key={i} className="flight-offer-card-ss">
+                            <div className="card-main-layout">
+                                <div className="flight-main-section-ss">
+                                    <div className="ss-review-flex mb-8">
+                                        <div className="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center text-orange-400 border border-orange-500/20 shadow-lg">
+                                            <Ticket size={24} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-base font-black text-white uppercase tracking-widest leading-none mb-1">{e.extra.name}</h4>
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{e.extra.destination} • {e.quantity} putnika</span>
+                                        </div>
+                                    </div>
+                                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <p className="text-[11px] text-slate-400 leading-relaxed mb-4">{e.extra.description}</p>
+                                        <div className="ss-review-flex" style={{ gap: '20px' }}>
+                                            <div className="flex items-center gap-2">
+                                                <Clock size={12} className="text-orange-400/50" />
+                                                <span style={{ fontSize: '10px', fontWeight: '900', color: '#cbd5e1' }}>{e.extra.duration}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Clock size={12} className="text-orange-400/50" />
+                                                <span style={{ fontSize: '10px', fontWeight: '900', color: '#cbd5e1' }}>{e.date}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flight-price-sidebar-ss">
+                                    <div className="price-label-ss" style={{ fontSize: '10px', color: '#64748b' }}>CENA AKTIVNOSTI</div>
+                                    <div className="price-value-ss text-orange-400">{e.totalPrice.toFixed(2)}€</div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Placeholder if empty */}
+                    {hotels.length === 0 && !flights && transfers.length === 0 && extras.length === 0 && (
+                        <div className="search-card-frame" style={{ textAlign: 'center', padding: '60px' }}>
+                            <Sparkles size={40} className="text-slate-700 mx-auto mb-4" />
+                            <p className="text-slate-500 font-bold uppercase tracking-widest">Odaberite usluge kako biste videli rezime</p>
                         </div>
                     )}
                 </div>
 
-                {/* 3. TOTAL PANEL & ACTIONS (1/3 Width) */}
-                <div className="space-y-6">
-                    <div className="search-card-frame !p-8 sticky top-10" style={{ background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.12)', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
-                        <div className="flex items-center gap-3 mb-8 border-b border-white/5 pb-5">
-                            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-                                <ShieldCheck size={18} className="text-indigo-400" />
-                            </div>
-                            <h4 className="text-white font-black text-xs uppercase tracking-[0.25em]">Obračun Paketa</h4>
+                {/* 3. SIDE SUMMARY PANEL */}
+                <div className="ss-review-side">
+                    <div className="ss-summary-card">
+                        <div className="ss-review-flex mb-8" style={{ paddingBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                            <ShieldCheck size={20} className="text-indigo-400" />
+                            <h4 style={{ fontSize: '12px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px' }}>Obračun Paketa</h4>
                         </div>
 
-                        <div className="space-y-3 mb-10">
-                            {[
-                                { label: 'Osnovni Letovi', val: flightPrice, color: 'text-indigo-400' },
-                                { label: 'Smeštajni Kapaciteti', val: hotelPrice, color: 'text-emerald-400' },
-                                { label: 'Transferi i Dodaci', val: transferPrice + extraPrice, color: 'text-orange-400' }
-                            ].map((item, idx) => (
-                                <div key={idx} className="flex justify-between items-center group">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-400 transition-colors">{item.label}</span>
-                                    <span className={`text-xs font-black ${item.color} tabular-nums`}>{item.val.toFixed(2)}€</span>
-                                </div>
-                            ))}
-
-                            <div className="mt-8 pt-6 border-t border-white/[0.08] border-dashed">
-                                <div className="flex justify-between items-end">
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-1">UKUPNA VREDNOST</span>
-                                        <span className="text-[9px] font-bold text-slate-600 uppercase">Obračunato u EUR</span>
-                                    </div>
-                                    <div className="flex flex-col items-end">
-                                        <span className="text-[10px] font-bold text-slate-500 line-through opacity-40 mb-1">{(totalPrice * 1.1).toFixed(2)}€</span>
-                                        <span className="text-4xl font-black text-white tracking-tighter tabular-nums">{(totalPrice).toFixed(2)}€</span>
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="ss-price-row">
+                            <span style={{ fontSize: '10px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase' }}>Avio Karte</span>
+                            <span style={{ fontSize: '14px', fontWeight: '900', color: '#818cf8' }}>{flightPrice.toFixed(2)}€</span>
+                        </div>
+                        <div className="ss-price-row">
+                            <span style={{ fontSize: '10px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase' }}>Smeštaj</span>
+                            <span style={{ fontSize: '14px', fontWeight: '900', color: '#10b981' }}>{hotelPrice.toFixed(2)}€</span>
+                        </div>
+                        <div className="ss-price-row">
+                            <span style={{ fontSize: '10px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase' }}>Dodaci</span>
+                            <span style={{ fontSize: '14px', fontWeight: '900', color: '#f59e0b' }}>{(transferPrice + extraPrice).toFixed(2)}€</span>
                         </div>
 
-                        <div className="space-y-5">
-                            {/* Language Switcher */}
-                            <div className="flex gap-2 p-1.5 bg-black/30 rounded-2xl border border-white/5">
-                                <button
-                                    className={`flex-1 py-3 rounded-xl text-[10px] font-black tracking-widest transition-all duration-300 ${exportLang === 'Srpski' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
-                                    onClick={() => setExportLang('Srpski')}
-                                >
-                                    SRPSKI
-                                </button>
-                                <button
-                                    className={`flex-1 py-3 rounded-xl text-[10px] font-black tracking-widest transition-all duration-300 ${exportLang === 'Engleski' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
-                                    onClick={() => setExportLang('Engleski')}
-                                >
-                                    ENGLISH
-                                </button>
+                        <div className="ss-total-section">
+                            <div className="ss-total-label-box">
+                                <span style={{ fontSize: '10px', fontWeight: '900', color: '#818cf8', textTransform: 'uppercase', letterSpacing: '2px' }}>UKUPAN IZNOS</span>
+                                <span style={{ fontSize: '9px', fontWeight: '900', color: '#475569' }}>Obračunato u EUR</span>
+                            </div>
+                            <div className="ss-total-amount">{totalPrice.toFixed(2)}€</div>
+                        </div>
+
+                        <div style={{ marginTop: '30px' }}>
+                            <div className="ss-lang-group">
+                                <button className={`ss-lang-btn ${exportLang === 'Srpski' ? 'active' : ''}`} onClick={() => setExportLang('Srpski')}>SRPSKI</button>
+                                <button className={`ss-lang-btn ${exportLang === 'Engleski' ? 'active' : ''}`} onClick={() => setExportLang('Engleski')}>ENGLISH</button>
                             </div>
 
-                            {/* MAIN KREIRAJ PAKET BUTTON */}
-                            <button
-                                className="w-full h-16 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 text-white flex items-center justify-center gap-4 transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-500/40 active:scale-[0.98] group"
-                                onClick={onConfirm}
-                                style={{
-                                    fontSize: '15px',
-                                    fontWeight: '900',
-                                    fontStyle: 'italic',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '2px',
-                                    border: '1px solid rgba(255,255,255,0.15)'
-                                }}
-                            >
-                                <Check size={20} className="text-white group-hover:scale-125 transition-transform" /> KREIRAJ PAKET
+                            <button className="ss-confirm-btn" onClick={onConfirm}>
+                                <Check size={20} /> KREIRAJ PAKET
                             </button>
 
-                            {/* PREMIUM EXPORT ROW */}
-                            <div className="grid grid-cols-3 gap-3">
-                                {[
-                                    { icon: <FileText size={18} />, label: 'PDF', action: () => generatePackagePDF({ basicInfo, flights, hotels, transfers, extras, totalPrice } as any, exportLang) },
-                                    { icon: <Code size={18} />, label: 'HTML', action: () => generatePackageHTML({ basicInfo, flights, hotels, transfers, extras, totalPrice } as any, exportLang) },
-                                    { icon: <Mail size={18} />, label: 'EMAIL', action: () => alert(`Mejl poslat na ${exportLang === 'Srpski' ? 'srpskom' : 'engleskom'}!`) }
-                                ].map((opt, i) => (
-                                    <button
-                                        key={i}
-                                        className="flex flex-col items-center justify-center py-4 rounded-2xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.08] hover:border-white/[0.12] transition-all duration-300 group relative overflow-hidden"
-                                        onClick={opt.action}
-                                    >
-                                        <div className="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/5 transition-colors" />
-                                        <div className="text-slate-400 group-hover:text-indigo-400 group-hover:scale-110 transition-all mb-2.5 relative z-10">
-                                            {opt.icon}
-                                        </div>
-                                        <span className="text-[9px] font-black text-slate-500 group-hover:text-slate-200 uppercase tracking-widest relative z-10 transition-colors">
-                                            {opt.label}
-                                        </span>
-                                    </button>
-                                ))}
+                            <div className="ss-export-row">
+                                <button className="ss-export-btn" onClick={() => generatePackagePDF({ basicInfo, flights, hotels, transfers, extras, totalPrice } as any, exportLang)}>
+                                    <FileText size={18} className="text-slate-400" />
+                                    <span>PDF</span>
+                                </button>
+                                <button className="ss-export-btn" onClick={() => generatePackageHTML({ basicInfo, flights, hotels, transfers, extras, totalPrice } as any, exportLang)}>
+                                    <Code size={18} className="text-slate-400" />
+                                    <span>HTML</span>
+                                </button>
+                                <button className="ss-export-btn" onClick={() => alert('Mejl poslat!')}>
+                                    <Mail size={18} className="text-slate-400" />
+                                    <span>EMAIL</span>
+                                </button>
                             </div>
                         </div>
 
-                        <div className="mt-10 pt-6 border-t border-white/5">
-                            <p className="text-[9px] text-slate-600 font-bold uppercase text-center leading-relaxed opacity-60 italic tracking-wider">
-                                Ponuda je informativnog karaktera i podložna je promeni do finalne potvrde rezervacije od strane organizatora.
-                            </p>
-                        </div>
+                        <p style={{ marginTop: '20px', fontSize: '10px', color: '#475569', textAlign: 'center', fontStyle: 'italic', lineHeight: '1.5' }}>
+                            Ponuda je informativnog karaktera i podložna je promeni do finalne potvrde rezervacije.
+                        </p>
                     </div>
                 </div>
             </div>

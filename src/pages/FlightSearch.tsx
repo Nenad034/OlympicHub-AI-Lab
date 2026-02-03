@@ -17,6 +17,7 @@ import CustomDatePicker from '../components/flight/CustomDatePicker';
 import MultiCityFlightForm, { type FlightLeg } from '../components/flight/MultiCityFlightForm';
 import AirportAutocomplete from '../components/flight/AirportAutocomplete';
 import './FlightSearch.css';
+import './SmartSearchFerrariFix.css';
 
 interface FlightSearchProps {
     isInline?: boolean;
