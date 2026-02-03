@@ -17,6 +17,7 @@ import solvexDictionaryService from '../services/solvex/solvexDictionaryService'
 import { ModernCalendar } from '../components/ModernCalendar';
 import { MultiSelectDropdown } from '../components/MultiSelectDropdown';
 import { BookingModal } from '../components/booking/BookingModal';
+import { BookingSuccessModal } from '../components/booking/BookingSuccessModal';
 import { formatDate } from '../utils/dateUtils';
 import PackageSearch from './PackageSearch';
 import FlightSearch from './FlightSearch';
@@ -208,6 +209,8 @@ const SmartSearch: React.FC = () => {
     const [expandedHotel, setExpandedHotel] = useState<SmartSearchResult | null>(null);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [selectedRoomForBooking, setSelectedRoomForBooking] = useState<any>(null);
+    const [bookingSuccessData, setBookingSuccessData] = useState<{ id: string, code: string, provider: string } | null>(null);
+    const [bookingAlertError, setBookingAlertError] = useState<string | null>(null);
     const tabId = useRef(Math.random().toString(36).substring(2, 11));
 
     const inputRef = useRef<HTMLInputElement>(null);
@@ -755,16 +758,44 @@ const SmartSearch: React.FC = () => {
                             stars: expandedHotel.stars,
                             providerData: expandedHotel.originalData
                         }}
-                        onSuccess={() => {
+                        onSuccess={(code, cis, id, prov) => {
                             setIsBookingModalOpen(false);
-                            console.log('[SmartSearch] Booking success!');
+                            setBookingSuccessData({ id: id || '', code: code || '', provider: prov || '' });
                         }}
                         onError={err => {
-                            console.error('[SmartSearch] Booking error:', err);
+                            setBookingAlertError(err);
+                            // Auto-clear error after 8s
+                            setTimeout(() => setBookingAlertError(null), 8000);
                         }}
                     />
                 )
             }
+            {/* Booking Success Modal - Blocks UI via Portal */}
+            <BookingSuccessModal
+                isOpen={!!bookingSuccessData}
+                onClose={() => setBookingSuccessData(null)}
+                onOpenDossier={() => {
+                    setBookingSuccessData(null);
+                    window.open('/reservation-architect?loadFrom=pending_booking', '_blank');
+                }}
+                bookingCode={bookingSuccessData?.code || ''}
+                internalId={bookingSuccessData?.id || ''}
+                provider={bookingSuccessData?.provider || 'Solvex'}
+                hotelName={expandedHotel?.name || 'Hotel'}
+            />
+
+            {/* Booking Error Alert */}
+            {bookingAlertError && (
+                <div className="booking-status-alert error-alert">
+                    <div className="alert-icon"><XCircle size={32} /></div>
+                    <div className="alert-content">
+                        <h4>Greška pri rezervaciji</h4>
+                        <p>{bookingAlertError}</p>
+                    </div>
+                    <button className="close-alert" onClick={() => setBookingAlertError(null)}><X size={20} /></button>
+                </div>
+            )}
+
             {/* Minimal Header */}
             <header className="smart-search-header">
                 <div className="ss-brand-title-box">

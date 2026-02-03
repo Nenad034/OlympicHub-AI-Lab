@@ -153,6 +153,23 @@ export const GuestForm: React.FC<GuestFormProps> = ({
                     )}
                 </div>
 
+                {/* Gender */}
+                <div className="form-field">
+                    <label htmlFor={`guest-${guestNumber}-gender`}>
+                        Pol <span className="required">*</span>
+                    </label>
+                    <select
+                        id={`guest-${guestNumber}-gender`}
+                        value={guestData.gender || ''}
+                        onChange={(e) => handleChange('gender', e.target.value)}
+                        className={errors.gender ? 'error' : ''}
+                    >
+                        <option value="">Izaberite pol</option>
+                        <option value="M">Muški</option>
+                        <option value="F">Ženski</option>
+                    </select>
+                </div>
+
                 {/* Nationality */}
                 <div className="form-field">
                     <label htmlFor={`guest-${guestNumber}-nationality`}>

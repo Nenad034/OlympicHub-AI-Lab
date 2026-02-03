@@ -97,6 +97,11 @@ export const validateGuest = (
         errors.nationality = 'Nacionalnost je obavezna';
     }
 
+    // Gender validation
+    if (!guest.gender) {
+        errors.gender = 'Pol je obavezan';
+    }
+
     return errors;
 };
 

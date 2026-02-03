@@ -1339,3 +1339,96 @@
     box-shadow: 0 50px 100px rgba(0, 0, 0, 0.9) !important;
     animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
+
+/* Booking Status Alerts */
+.booking-status-alert {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 2147483647;
+    /* Max Z-Index */
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    max-width: 450px;
+    animation: alertSlideUp 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+    backdrop-filter: blur(12px);
+}
+
+@keyframes alertSlideUp {
+    from {
+        transform: translateY(100%) scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.success-alert {
+    background: rgba(16, 185, 129, 0.95);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.error-alert {
+    background: rgba(239, 68, 68, 0.95);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.alert-icon {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 10px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.alert-content h4 {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.alert-content p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.booking-number-badge {
+    margin-top: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    display: inline-block;
+}
+
+.booking-number-badge span {
+    color: #fcd34d;
+    margin-left: 8px;
+    letter-spacing: 1px;
+}
+
+.close-alert {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    opacity: 0.6;
+    padding: 4px;
+    transition: opacity 0.2s;
+}
+
+.close-alert:hover {
+    opacity: 1;
+}

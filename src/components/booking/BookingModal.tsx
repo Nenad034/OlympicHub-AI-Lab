@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { X, ShieldCheck } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Phone, Mail, User, ShieldCheck, CreditCard, Info, AlertTriangle, CheckCircle2, ChevronRight, BedDouble, Utensils, Plane, Users } from 'lucide-react';
+import { toIcaoLatin } from '../../utils/textUtils';
 import { GuestForm } from './GuestForm';
 import { BookingSummary } from './BookingSummary';
 import type { BookingData, GenericGuest, BookingState } from '../../types/booking.types';
 import { validateAllGuests, hasValidationErrors } from '../../utils/bookingValidation';
 import './BookingModal.css';
+import solvexBookingService from '../../services/solvex/solvexBookingService';
+import type { SolvexTourist, SolvexService } from '../../types/solvex.types';
+
 
 interface BookingModalProps {
     isOpen: boolean;
@@ -34,13 +38,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             passportNumber: '',
             nationality: '',
             email: '',
-            phone: ''
+            phone: '',
+            gender: 'M'
         },
         additionalGuests: [],
         specialRequests: '',
         termsAccepted: false,
         isSubmitting: false,
-        validationErrors: {}
+        validationErrors: {},
+        errorDetails: null
     });
 
     const [currentStep, setCurrentStep] = useState<'details' | 'confirmation'>('details');
@@ -62,7 +68,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     lastName: '',
                     dateOfBirth: '',
                     passportNumber: '',
-                    nationality: ''
+                    nationality: '',
+                    gender: 'M'
                 })
             );
 
@@ -111,6 +118,105 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         try {
             const guests = [state.mainGuest, ...state.additionalGuests];
 
+            // IF SOLVEX, handle direct booking
+            const isSolvex = provider.toLowerCase().includes('solvex');
+            console.log(`[BookingModal] Provider: ${provider}, isSolvex: ${isSolvex}`);
+
+            if (isSolvex) {
+                console.log('[BookingModal] Handling direct Solvex booking...');
+
+                const solvexResult = bookingData.providerData;
+                if (!solvexResult) throw new Error('Missing Solvex provider data');
+
+                // 1. Map guests to SolvexTourists
+                // import { toIcaoLatin } from '../../utils/textUtils'; // Removed from here
+
+                // ... inside handle submit ...
+                const solvexTourists: SolvexTourist[] = guests.map((g, i) => ({
+                    id: i + 1,
+                    firstNameLat: toIcaoLatin(g.firstName),
+                    surNameLat: toIcaoLatin(g.lastName),
+                    birthDate: `${g.dateOfBirth}T00:00:00`,
+                    sex: g.gender === 'F' ? 'Female' : 'Male', // Map M/F to Solvex sex
+                    ageType: i < bookingData.adults ? 'Adult' : 'Child',
+                    isMain: i === 0
+                }));
+
+                // 2. Map service
+                const solvexService: SolvexService = {
+                    id: 0,
+                    type: 'HotelService',
+                    externalId: 0,
+                    hotelId: solvexResult.hotel.id,
+                    nMen: bookingData.adults,
+                    startDate: `${bookingData.checkIn}T00:00:00`,
+                    duration: bookingData.nights,
+                    room: {
+                        roomTypeId: solvexResult.room.roomType.id,
+                        roomCategoryId: solvexResult.room.roomCategory.id,
+                        roomAccommodationId: solvexResult.room.roomAccommodation.id
+                    },
+                    pansionId: solvexResult.pansion.id
+                };
+
+                // 3. Perform Final Booking (CreateReservation)
+                console.log('[BookingModal] Performing CreateReservation...');
+                const saveResult = await solvexBookingService.createReservation({
+                    services: [solvexService],
+                    tourists: solvexTourists,
+                    countryId: solvexResult.hotel.country.id,
+                    cityId: solvexResult.hotel.city.id
+                });
+
+                if (saveResult.success && saveResult.data) {
+                    // Create payload for Reservation Architect (Dossier)
+                    const payload = {
+                        selectedResult: {
+                            name: bookingData.hotelName,
+                            location: bookingData.location,
+                            source: provider.toUpperCase(),
+                            price: bookingData.totalPrice,
+                            stars: bookingData.stars,
+                            mealPlan: bookingData.mealPlan || '',
+                            originalData: bookingData.providerData
+                        },
+                        selectedRoom: {
+                            name: bookingData.roomType,
+                            price: bookingData.totalPrice
+                        },
+                        searchParams: {
+                            checkIn: bookingData.checkIn,
+                            checkOut: bookingData.checkOut,
+                            nights: bookingData.nights,
+                            adults: bookingData.adults,
+                            children: bookingData.children
+                        },
+                        prefilledGuests: guests,
+                        specialRequests: state.specialRequests,
+                        confirmationText: 'Putnik je saglasan sa uslovima otkaza i promene aranžmana kao i sa Opštim Uslovima agencije.',
+                        confirmationTimestamp: new Date().toLocaleString('sr-RS'),
+                        externalBookingId: saveResult.data.externalId.toString(),
+                        externalBookingCode: saveResult.data.name
+                    };
+
+                    localStorage.setItem('pending_booking', JSON.stringify(payload));
+                    console.log('[BookingModal] Saved pending_booking for Dossier:', payload);
+
+                    await onSuccess(
+                        saveResult.data.name,
+                        '',
+                        saveResult.data.externalId.toString(),
+                        'Solvex'
+                    );
+                    // Close only after success callback runs
+                    onClose();
+                    return;
+                } else {
+                    throw new Error(saveResult.error || 'Neuspešan upis rezervacije u Solvex sistem. Proverite podatke putnika.');
+                }
+            }
+
+            // Fallback: Default flow (save to localStorage and open Architect)
             const payload = {
                 selectedResult: {
                     name: bookingData.hotelName,
@@ -138,16 +244,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 confirmationTimestamp: new Date().toLocaleString('sr-RS')
             };
 
-            // Save to localStorage for the new tab to pick up
             localStorage.setItem('pending_booking', JSON.stringify(payload));
-
-            // Open in new tab
             window.open('/reservation-architect?loadFrom=pending_booking', '_blank');
-
             onClose();
         } catch (error) {
             console.error('Booking error:', error);
-            onError(error instanceof Error ? error.message : 'Unknown error');
+            const errorMessage = error instanceof Error ? error.message : 'Nepoznata greška';
+            // Set error details for the custom error modal
+            setState(prev => ({ ...prev, errorDetails: errorMessage }));
+            onError(errorMessage);
         } finally {
             setState(prev => ({ ...prev, isSubmitting: false }));
         }
@@ -173,6 +278,96 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 </div>
 
                 <div className="booking-modal-content">
+                    {/* CUSTOM ERROR MODAL OVERLAY */}
+                    {state.errorDetails && (
+                        <div className="error-overlay" style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            background: 'rgba(0,0,0,0.85)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 20000005,
+                            backdropFilter: 'blur(5px)'
+                        }}>
+                            <div className="error-card" style={{
+                                background: '#1e1e1e',
+                                width: '90%',
+                                maxWidth: '500px',
+                                padding: '24px',
+                                borderRadius: '16px',
+                                border: '1px solid #ef4444',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '16px',
+                                boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '16px' }}>
+                                    <AlertTriangle size={32} color="#ef4444" />
+                                    <h3 style={{ margin: 0, color: '#ef4444', fontSize: '20px' }}>Greška pri rezervaciji</h3>
+                                </div>
+
+                                <p style={{ color: '#cbd5e1', fontSize: '14px', margin: 0 }}>
+                                    Dogodila se greška prilikom komunikacije sa sistemom. Molimo Vas iskopirajte detalje greške i prosledite tehničkoj podršci.
+                                </p>
+
+                                <textarea
+                                    readOnly
+                                    value={state.errorDetails || ''}
+                                    style={{
+                                        background: '#334155',
+                                        color: '#f8fafc',
+                                        border: '1px solid #475569',
+                                        borderRadius: '8px',
+                                        padding: '12px',
+                                        fontFamily: 'monospace',
+                                        fontSize: '12px',
+                                        minHeight: '150px',
+                                        resize: 'vertical',
+                                        width: '100%',
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+
+                                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(state.errorDetails || '');
+                                            alert('Greška kopirana u privremenu memoriju!');
+                                        }}
+                                        style={{
+                                            background: '#3b82f6',
+                                            color: '#fff',
+                                            border: 'none',
+                                            padding: '10px 20px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontWeight: 600
+                                        }}
+                                    >
+                                        Kopiraj grešku
+                                    </button>
+                                    <button
+                                        onClick={() => setState(prev => ({ ...prev, errorDetails: null }))}
+                                        style={{
+                                            background: 'rgba(255,255,255,0.1)',
+                                            color: '#fff',
+                                            border: '1px solid rgba(255,255,255,0.2)',
+                                            padding: '10px 20px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Zatvori
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {currentStep === 'details' ? (
                         <>
                             <BookingSummary

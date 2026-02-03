@@ -57,6 +57,7 @@ export interface GenericGuest {
     nationality: string; // ISO country code (e.g., "RS", "HR")
     email?: string; // Only for main guest
     phone?: string; // Only for main guest
+    gender?: 'M' | 'F'; // Gender for providers that require it
     address?: string; // Address of the guest
     city?: string; // City of the guest
     country?: string; // Country of the guest
@@ -123,6 +124,7 @@ export interface GuestValidationErrors {
     dateOfBirth?: string;
     passportNumber?: string;
     nationality?: string;
+    gender?: string;
 }
 
 /**
@@ -135,6 +137,7 @@ export interface BookingState {
     termsAccepted: boolean;
     isSubmitting: boolean;
     validationErrors: Record<number, GuestValidationErrors>; // Index by guest number
+    errorDetails?: string | null;
 }
 
 /**

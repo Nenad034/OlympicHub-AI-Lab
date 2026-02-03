@@ -62,6 +62,7 @@ interface Reservation {
     hotelCategory?: number; // Broj zvezdica
     leadPassenger?: string; // Nosilac putovanja (putnik)
     items?: TripItem[];
+    supplierRef?: string;
 }
 
 import { ModernCalendar } from '../components/ModernCalendar';
@@ -387,7 +388,9 @@ const ReservationsDashboard: React.FC = () => {
             proformaInvoiceSent: dbRes.proforma_invoice_sent,
             finalInvoiceCreated: dbRes.final_invoice_created,
             hotelCategory: dbRes.hotel_category,
-            leadPassenger: dbRes.lead_passenger
+            leadPassenger: dbRes.lead_passenger,
+            items: (dbRes.guests_data as any)?.tripItems || [],
+            supplierRef: dbRes.booking_id || (dbRes.guests_data as any)?.tripItems?.[0]?.supplierRef || ''
         };
     };
 
@@ -1321,6 +1324,20 @@ ${data.map(r => `  <reservation>
                                     <div className="res-identity">
                                         <div className="res-codes">
                                             <span className="ref-code" style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>{res.refCode}</span>
+                                            {res.supplierRef && (
+                                                <span className="supplier-ref" style={{
+                                                    fontSize: '11px',
+                                                    fontWeight: 800,
+                                                    color: '#fbbf24',
+                                                    background: 'rgba(251, 191, 36, 0.1)',
+                                                    padding: '2px 6px',
+                                                    borderRadius: '4px',
+                                                    marginTop: '4px',
+                                                    display: 'inline-block'
+                                                }}>
+                                                    EXT: {res.supplierRef}
+                                                </span>
+                                            )}
                                             <span className="cis-code" style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 400, marginTop: '2px' }}>{res.cisCode}</span>
                                         </div>
                                         <div className="horizontal-status-tags" style={{ marginTop: '6px' }}>
@@ -1551,6 +1568,9 @@ ${data.map(r => `  <reservation>
                                 <div className="card-header">
                                     <div className="res-codes">
                                         <span className="ref-code">{res.refCode}</span>
+                                        {res.supplierRef && <span className="supplier-ref" style={{
+                                            fontSize: '11px', fontWeight: 700, color: '#fbbf24', background: 'rgba(251, 191, 36, 0.1)', padding: '1px 5px', borderRadius: '4px'
+                                        }}>{res.supplierRef}</span>}
                                         <span className="cis-code">{res.cisCode}</span>
                                     </div>
                                     <div className="res-identity">

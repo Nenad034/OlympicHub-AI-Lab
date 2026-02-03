@@ -35,7 +35,16 @@ export const SOLVEX_SOAP_METHODS = {
     GET_CITIES: 'GetCities',
 
     /** Get list of hotels */
-    GET_HOTELS: 'GetHotels'
+    GET_HOTELS: 'GetHotels',
+
+    /** Validate reservation/quota (optional pre-check) */
+    CHECK_QUOTA: 'CheckQuota',
+
+    /** Create or update a reservation */
+    CREATE_RESERVATION: 'CreateReservation',
+
+    /** Retrieve reservation details and status */
+    GET_RESERVATION: 'GetReservation'
 } as const;
 
 /**

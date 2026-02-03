@@ -16,6 +16,8 @@ import { GoogleAddressAutocomplete } from '../components/GoogleAddressAutocomple
 import { NATIONALITIES } from '../constants/nationalities';
 import ReservationEmailModal from '../components/ReservationEmailModal';
 import { saveDossierToDatabase, getNextReservationNumber, getReservationById as apiGetReservationById } from '../services/reservationService';
+import { getReservation as getSolvexReservation } from '../services/solvex/solvexBookingService';
+import { getCachedToken } from '../services/solvex/solvexAuthService';
 import { useAuthStore } from '../stores';
 import '../components/GoogleAddressAutocomplete.css';
 import './ReservationArchitect.css';
@@ -58,6 +60,7 @@ interface TripItem {
     netPrice: number;
     bruttoPrice: number;
     passengers?: Passenger[];
+    supplierRef?: string;
 }
 
 interface CheckData {
@@ -293,15 +296,65 @@ const ReservationArchitect: React.FC = () => {
                     }
 
                     // Fallback to API call if not in local storage or ID mismatch
-                    // In a real app, you would use apiGetReservationById here
-                    /*
                     const result = await apiGetReservationById(resId);
-                    if (result && result.guests_data) {
-                        setDossier(result.guests_data);
+                    if (result.success && result.data) {
+                        const dbRes = result.data;
+                        const rawData = dbRes.guests_data as any;
+
+                        if (rawData && rawData.booker && rawData.tripItems) {
+                            // It's a full saved dossier
+                            setDossier(rawData);
+                        } else {
+                            // It's a standard reservation (e.g. from BookingModal) - Map to Dossier
+                            const guests = rawData?.guests || [];
+                            const mainGuest = guests[0] || {};
+
+                            setDossier(prev => ({
+                                ...prev,
+                                cisCode: dbRes.cis_code,
+                                resCode: dbRes.ref_code,
+                                clientReference: dbRes.booking_id || prev.clientReference,
+                                status: dbRes.status === 'confirmed' ? 'Active' : 'Request',
+                                customerType: 'B2C-Individual',
+                                booker: {
+                                    ...prev.booker,
+                                    fullName: dbRes.customer_name,
+                                    phone: dbRes.phone,
+                                    email: dbRes.email
+                                },
+                                passengers: guests.length > 0 ? guests.map((g: any, i: number) => ({
+                                    id: 'p-' + i,
+                                    firstName: g.firstName || '',
+                                    lastName: g.lastName || '',
+                                    birthDate: g.birthDate || '',
+                                    type: g.type === 'child' ? 'Child' : 'Adult',
+                                    email: g.email || '',
+                                    phone: g.phone || ''
+                                })) : [{
+                                    id: 'p-1',
+                                    firstName: mainGuest.firstName || dbRes.customer_name.split(' ')[0] || '',
+                                    lastName: mainGuest.lastName || dbRes.customer_name.split(' ').slice(1).join(' ') || '',
+                                    type: 'Adult',
+                                    email: dbRes.email,
+                                    phone: dbRes.phone
+                                } as any],
+                                tripItems: [{
+                                    id: 't-1',
+                                    type: 'Smestaj',
+                                    supplier: dbRes.supplier,
+                                    subject: dbRes.accommodation_name,
+                                    details: 'Standard Room', // Fallback
+                                    checkIn: dbRes.check_in,
+                                    checkOut: dbRes.check_out,
+                                    netPrice: dbRes.total_price * 0.9, // Estimate net
+                                    bruttoPrice: dbRes.total_price,
+                                    supplierRef: dbRes.booking_id
+                                }]
+                            }));
+                        }
                         setIsInitialized(true);
                         return;
-                    } 
-                    */
+                    }
                 } catch (e) {
                     console.error('Failed to load reservation by ID', e);
                 }
@@ -391,6 +444,7 @@ const ReservationArchitect: React.FC = () => {
                 setDossier(prev => ({
                     ...prev,
                     cisCode: 'CIS-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                    clientReference: loadData.externalBookingCode || loadData.externalBookingId || ('REF-' + Math.floor(Math.random() * 10000)),
                     resCode: null, // OBAVEZNO null za novi dosije
                     tripItems: [
                         {
@@ -415,6 +469,7 @@ const ReservationArchitect: React.FC = () => {
                             checkOut: searchParams.checkOut,
                             netPrice: Math.round((loadData.selectedRoom?.price || res.price) * 100) / 100,
                             bruttoPrice: Math.round((loadData.selectedRoom?.price || res.price) * 100) / 100,
+                            supplierRef: loadData.externalBookingCode || loadData.externalBookingId || '',
                             passengers: [...calculatedPassengers]
                         }
                     ],
@@ -1502,6 +1557,27 @@ const ReservationArchitect: React.FC = () => {
                                                                 }}
                                                             />
                                                         </div>
+                                                        <div className="supplier-inline" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                            <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-secondary)' }}>REF BROJ:</span>
+                                                            <input
+                                                                value={item.supplierRef || ''}
+                                                                placeholder="Npr. 123456"
+                                                                style={{
+                                                                    background: 'transparent',
+                                                                    border: 'none',
+                                                                    color: '#fbbf24',
+                                                                    fontWeight: 800,
+                                                                    fontSize: '12px',
+                                                                    width: '100px',
+                                                                    padding: '0'
+                                                                }}
+                                                                onChange={e => {
+                                                                    const newItems = [...dossier.tripItems];
+                                                                    newItems[idx].supplierRef = e.target.value;
+                                                                    setDossier({ ...dossier, tripItems: newItems });
+                                                                }}
+                                                            />
+                                                        </div>
                                                     </div>
                                                     <button className="del-btn-v4" onClick={() => removeTripItem(item.id)}><Trash2 size={14} /></button>
                                                 </div>
@@ -1763,6 +1839,73 @@ const ReservationArchitect: React.FC = () => {
                                                                 </div>
                                                             ))}
                                                         </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Supplier B2B Link & Verification */}
+                                                {(item.supplier.toLowerCase().includes('solvex') || item.supplier.toLowerCase().includes('b2b')) && (
+                                                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+                                                        <button
+                                                            onClick={async () => {
+                                                                const ref = item.supplierRef;
+                                                                if (!ref) {
+                                                                    alert('Nedostaje REF broj dobavljača za proveru!');
+                                                                    return;
+                                                                }
+
+                                                                // Visual feedback
+                                                                const btn = document.getElementById('solvex-btn-' + item.id);
+                                                                if (btn) btn.innerText = 'PROVERAVAM...';
+
+                                                                try {
+                                                                    const res = await getSolvexReservation(ref);
+
+                                                                    if (res.success) {
+                                                                        const token = getCachedToken();
+                                                                        // Try to construct auto-login URL if token exists, else standard URL
+                                                                        // Note: ?guid= is a common pattern for Solvex/Megatec, but not guaranteed.
+                                                                        const url = token ? `https://incomingnew.solvex.bg/Default.aspx?guid=${token}` : "https://incomingnew.solvex.bg/";
+
+                                                                        if (confirm(`✅ REZERVACIJA PRONAĐENA!\n\nStatus: ${res.data.Status || 'Potvrđeno'}\nBroj: ${res.data.Number || ref}\n\nKliknite OK da otvorite portal.`)) {
+                                                                            window.open(url, '_blank');
+                                                                        }
+                                                                    } else {
+                                                                        alert('❌ Rezervacija nije pronađena u Solvex sistemu.\nProverite REF broj ili pokušajte ručno logovanje.');
+                                                                        window.open("https://incomingnew.solvex.bg/", '_blank');
+                                                                    }
+                                                                } catch (e) {
+                                                                    console.error(e);
+                                                                    alert('Greška pri komunikaciji sa Solvex API-jem.');
+                                                                    window.open("https://incomingnew.solvex.bg/", '_blank');
+                                                                } finally {
+                                                                    if (btn) btn.innerHTML = '<div style="display:flex;flex-direction:column;align-items:flex-start"><span style="fontSize:11px;fontWeight:900;textTransform:uppercase">SOLVEX PROVERA</span><span style="fontSize:9px">KLIKNI ZA STATUS</span></div>';
+                                                                }
+                                                            }}
+                                                            id={'solvex-btn-' + item.id}
+                                                            style={{
+                                                                background: 'rgba(30, 41, 59, 0.5)',
+                                                                border: '1px solid #10b981',
+                                                                borderRadius: '8px',
+                                                                padding: '8px 20px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '12px',
+                                                                cursor: 'pointer',
+                                                                transition: 'all 0.2s',
+                                                                color: '#10b981'
+                                                            }}
+                                                            className="supplier-link-btn"
+                                                        >
+                                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                                                <span style={{ fontSize: '11px', fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                                    SOLVEX B2B
+                                                                </span>
+                                                                <span style={{ fontSize: '9px', color: '#10b981', fontWeight: 600 }}>
+                                                                    KLIKNI ZA PROVERU STATUSA
+                                                                </span>
+                                                            </div>
+                                                            <ExternalLink size={14} color="#10b981" />
+                                                        </button>
                                                     </div>
                                                 )}
                                             </div>

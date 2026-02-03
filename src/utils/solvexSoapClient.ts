@@ -59,7 +59,8 @@ const builderOptions = {
     attributeNamePrefix: '@_',
     format: true,
     indentBy: '  ',
-    suppressEmptyNode: true
+    suppressEmptyNode: true,
+    suppressBooleanAttributes: false
 };
 
 const builder = new XMLBuilder(builderOptions);
@@ -232,7 +233,10 @@ export async function makeSoapRequest<T>(
         console.error(`[Solvex SOAP] Error in ${method}:`, error);
         console.error('[Solvex SOAP] Failed Request Payload:', soapEnvelope);
 
-        // Specific handling for timeout/abort
+        // RETHROW without formatting if it already has details
+        if (error instanceof Error && error.message.includes('--- REQUEST ---')) {
+            throw error;
+        }
         if (error instanceof Error && (error.name === 'AbortError' || error.message.toLowerCase().includes('aborted'))) {
             throw new Error('Solvex sistem nije odgovorio na vreme (Timeout). Molimo pokušajte ponovo ili suzite kriterijume pretrage.');
         }
