@@ -4,26 +4,10 @@
    Based on the highly rated Global Hub Search & Smart Search UI
 */
 
-:root {
-    --bg-deep: #020617;
-    --bg-card: #0f172a;
-    --bg-input: #1e293b;
-    --border-color: rgba(255, 255, 255, 0.1);
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --accent-primary: #6366f1;
-    /* Indigo 500 */
-    --accent-primary-glow: rgba(99, 102, 241, 0.4);
-    --accent-success: #10b981;
-    --accent-warning: #fbbf24;
-    --ferrari-red: #FF2800;
-    /* Keeping as accent if needed, but primary is now Indigo per Smart Search */
-}
-
-/* === GLOBAL LAYOUT === */
 .package-search-page {
     min-height: 100vh;
-    background: var(--bg-deep);
+    background: transparent;
+    /* Use parent background */
     color: var(--text-primary);
     font-family: 'Inter', -apple-system, sans-serif;
     padding-bottom: 140px;
@@ -31,7 +15,7 @@
 
 /* === HEADER === */
 .search-header {
-    max-width: 1400px;
+    max-width: none;
     margin: 0 auto;
     padding: 2.5rem 2rem 1.5rem;
     display: flex;
@@ -52,7 +36,7 @@
 
 /* === WIZARD PROGRESS === */
 .wizard-progress {
-    max-width: 1400px;
+    max-width: none;
     margin: 0 auto 2.5rem;
     padding: 0 2rem;
 }
@@ -615,6 +599,7 @@
         padding: 1rem 2rem;
     }
 }
+
 /* === SMART SEARCH TOOLBAR === */
 .filters-toolbar-v4 {
     display: flex;
@@ -626,7 +611,7 @@
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     margin-bottom: 2rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .name-filter-wrapper {
@@ -678,7 +663,7 @@
 /* === LIVE SUMMARY STATS === */
 .package-live-summary {
     margin-top: 4rem;
-    border-top: 1px solid rgba(255,255,255,0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
     padding-top: 3rem;
 }
 
@@ -713,4 +698,260 @@
     font-size: 1.25rem;
     font-weight: 800;
     color: white;
+}
+
+/* === FLIGHT OFFER PREMIUM CARDS === */
+.flight-offer-card-ss {
+    display: flex;
+    flex-direction: column;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+}
+
+.flight-offer-card-ss .card-main-layout {
+    display: flex;
+    flex-direction: row;
+    min-height: 180px;
+}
+
+.flight-offer-card-ss:hover {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: var(--accent-primary);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.flight-offer-card-ss.selected-border {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary);
+}
+
+.flight-main-section-ss {
+    flex: 1;
+    padding: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+}
+
+.flight-price-sidebar-ss {
+    width: 280px;
+    background: rgba(2, 6, 23, 0.4);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 2rem;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.airline-info-ss {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: 80px;
+}
+
+.airline-logo-box-ss {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.airline-logo-box-ss .carrier-code {
+    font-size: 10px;
+    font-weight: 900;
+    color: #818cf8;
+    text-transform: uppercase;
+}
+
+.airline-logo-box-ss .flight-num {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+}
+
+.flight-path-ss {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.path-point-ss {
+    text-align: center;
+}
+
+.path-time-ss {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: white;
+    letter-spacing: -1px;
+    line-height: 1;
+}
+
+.path-city-ss {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 8px;
+}
+
+.path-visual-ss {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    padding-top: 10px;
+}
+
+.path-duration-ss {
+    font-size: 11px;
+    font-weight: 900;
+    color: #818cf8;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.path-line-ss {
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    position: relative;
+    border-radius: 99px;
+    margin: 8px 0;
+}
+
+.path-icon-ss {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #0f172a;
+    padding: 0 10px;
+    color: var(--accent-primary);
+}
+
+.path-stops-ss {
+    font-size: 10px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.price-label-ss {
+    font-size: 11px;
+    font-weight: 900;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+}
+
+.price-value-ss {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #4ade80;
+    letter-spacing: -2px;
+    margin-bottom: 1.5rem;
+}
+
+.details-trigger-ss {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: color 0.2s;
+}
+
+.details-trigger-ss:hover {
+    color: white;
+}
+
+.flight-expanded-details-ss {
+    padding: 2.5rem;
+    background: rgba(2, 6, 23, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.segment-row-ss {
+    display: flex;
+    gap: 2rem;
+    position: relative;
+    padding-bottom: 2rem;
+}
+
+.segment-row-ss:last-child {
+    padding-bottom: 0;
+}
+
+.segment-row-ss::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 2rem;
+    bottom: 0;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.segment-row-ss:last-child::before {
+    display: none;
+}
+
+.segment-dot-ss {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #1e293b;
+    border: 2px solid var(--accent-primary);
+    flex-shrink: 0;
+    z-index: 1;
+    box-shadow: 0 0 10px var(--accent-primary-glow);
+}
+
+.segment-content-ss {
+    flex: 1;
+}
+
+.layover-badge-ss {
+    margin: 1.5rem 0;
+    padding: 12px;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #fbbf24;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }

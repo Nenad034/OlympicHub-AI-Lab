@@ -41,16 +41,14 @@ const TopBar: React.FC = () => {
 
     const getThemeIcon = () => {
         switch (theme) {
-            case 'navy': return <Zap size={18} color="#38bdf8" />;
-            case 'light': return <Sun size={18} />;
-            case 'tokyo-light': return <Moon size={18} color="#3d59a1" />;
+            case 'navy': return <Moon size={18} color="var(--accent)" />;
+            case 'light': return <Sun size={18} color="var(--accent)" />;
             default: return <Sun size={18} />;
         }
     };
 
     const getThemeLabel = () => {
-        if (theme === 'tokyo-light') return 'Tokyo Night';
-        return theme.charAt(0).toUpperCase() + theme.slice(1);
+        return theme === 'navy' ? 'Tamna' : 'Svetla';
     };
 
     return (

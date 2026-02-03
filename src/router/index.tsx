@@ -62,6 +62,9 @@ const HotelView = React.lazy(() => import('../pages/HotelView'));
 const DocumentPreviewDemo = React.lazy(() => import('../pages/DocumentPreviewDemo'));
 
 
+const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
+
+
 // Stores
 import { useThemeStore, useAuthStore } from '../stores';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
@@ -174,6 +177,66 @@ export const router = createBrowserRouter([
                 <Login />
             </React.Suspense>
         ),
+    },
+    {
+        path: '/b2b-portal',
+        element: (
+            <AuthGuard>
+                <React.Suspense fallback={<LoadingFallback />}>
+                    <B2BPortal />
+                </React.Suspense>
+            </AuthGuard>
+        ),
+        errorElement: (
+            <div style={{
+                padding: '40px',
+                textAlign: 'center',
+                background: '#1a1a2e',
+                color: 'white',
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'sans-serif'
+            }}>
+                <h1 style={{ fontSize: '2rem', margin: '0 0 20px 0', color: '#ff6b6b' }}>Greška u B2B Portalu</h1>
+                <p style={{ fontSize: '1.2rem', opacity: 0.8, marginBottom: '30px' }}>
+                    Došlo je do neočekivane greške. Molimo osvežite stranicu ili pokušajte ponovo kasnije.
+                </p>
+                <div style={{ display: 'flex', gap: '15px' }}>
+                    <button
+                        onClick={() => window.location.reload()}
+                        style={{
+                            padding: '12px 24px',
+                            background: '#3182ce',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            fontSize: '1rem'
+                        }}
+                    >
+                        Osveži stranicu
+                    </button>
+                    <button
+                        onClick={() => window.location.href = '/subagent-admin'}
+                        style={{
+                            padding: '12px 24px',
+                            background: 'rgba(255,255,255,0.1)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            borderRadius: '8px',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontSize: '1rem'
+                        }}
+                    >
+                        Nazad na Admin
+                    </button>
+                </div>
+            </div>
+        )
     },
     {
         path: '/reservation-architect',
@@ -395,10 +458,6 @@ export const router = createBrowserRouter([
             {
                 path: 'soft-zone',
                 element: <SoftZoneDashboard />,
-            },
-            {
-                path: 'smart-search',
-                element: <SmartSearch />,
             },
             {
                 path: 'reservations',

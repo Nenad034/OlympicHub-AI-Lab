@@ -20,8 +20,7 @@
 }
 
 /* Light theme overrides */
-.light-theme,
-.tokyo-light-theme {
+.light-theme {
     --editor-bg: #ffffff;
     --editor-sidebar-bg: #f3f3f3;
     --editor-line-numbers: #237893;

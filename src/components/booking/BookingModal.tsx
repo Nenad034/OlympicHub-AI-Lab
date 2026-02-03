@@ -161,8 +161,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     console.log('[BookingModal] RENDERING MODAL UI for:', bookingData.hotelName);
 
     const modalContent = (
-        <div className="booking-modal-overlay" onClick={onClose} style={{ zIndex: 100000 }}>
-            <div className="booking-modal" onClick={(e) => e.stopPropagation()} style={{ zIndex: 100001 }}>
+        <div className="booking-modal-overlay" onClick={onClose} style={{ zIndex: 20000000 }}>
+            <div className="booking-modal" onClick={(e) => e.stopPropagation()} style={{ zIndex: 20000001 }}>
                 <div className="booking-modal-header">
                     <div>
                         <h2>Podaci za Rezervaciju</h2>

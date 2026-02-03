@@ -2,16 +2,6 @@
    SMART SEARCH V2 - PREMIUM DESIGN SYSTEM
    ========================================================================== */
 
-:root {
-    --ss-bg-card: #0f172a;
-    --ss-bg-inner: #1e293b;
-    --ss-accent: #6366f1;
-    --ss-accent-glow: rgba(99, 102, 241, 0.4);
-    --ss-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-    --ss-text-main: #f8fafc;
-    --ss-text-muted: #94a3b8;
-    --ss-border: rgba(255, 255, 255, 0.1);
-}
 
 /* --- Main Frame --- */
 .search-card-frame {
@@ -279,9 +269,9 @@
 
 /* === WIZARD PROGRESS BAR === */
 .ss-glass-bar {
-    background: rgba(15, 23, 42, 0.4);
+    background: var(--glass-bg);
     backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border);
     padding: 1.5rem 0;
     position: sticky;
     top: 0;
@@ -319,14 +309,14 @@
     width: 32px;
     height: 32px;
     border-radius: 10px;
-    background: var(--ss-bg-inner);
-    border: 1px solid var(--ss-border);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.8rem;
     font-weight: 900;
-    color: var(--ss-text-muted);
+    color: var(--text-secondary);
 }
 
 .p-step-ss.active .s-num-ss {
@@ -345,7 +335,7 @@
 .s-title-ss {
     font-size: 0.85rem;
     font-weight: 800;
-    color: white;
+    color: var(--text-primary);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -353,7 +343,7 @@
 .s-desc-ss {
     font-size: 0.65rem;
     font-weight: 700;
-    color: var(--ss-text-muted);
+    color: var(--text-secondary);
     text-transform: uppercase;
 }
 
@@ -365,15 +355,15 @@
     transform: translateX(-50%);
     width: 96%;
     max-width: 1800px;
-    background: rgba(15, 23, 42, 0.8);
+    background: var(--bg-card);
     backdrop-filter: blur(20px);
     padding: 1.25rem 2.5rem;
     border-radius: 24px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.4);
     z-index: 1000;
 }
 
@@ -408,5 +398,57 @@
 
 .animate-fade-in {
     animation: fadeIn 0.5s ease-out forwards;
-} 
- 
+}
+
+/* === HORIZONTAL OFFER CARDS (REVIEW STEP) === */
+.flight-offer-card-ss {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flight-offer-card-ss:hover {
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px);
+}
+
+.card-main-layout {
+    display: flex;
+    min-height: 200px;
+}
+
+.flight-main-section-ss {
+    flex: 1;
+    padding: 1.5rem;
+}
+
+.flight-price-sidebar-ss {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.02);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.price-label-ss {
+    font-size: 9px;
+    font-weight: 900;
+    color: var(--ss-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 0.5rem;
+}
+
+.price-value-ss {
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: white;
+    letter-spacing: -1px;
+}

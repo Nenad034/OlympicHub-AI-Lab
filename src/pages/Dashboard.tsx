@@ -12,9 +12,6 @@ import {
     Sword,
     ShieldAlert,
     Castle,
-    ShieldCheck,
-    Shield,
-    Lock,
     Cpu,
     Brain,
     Sparkles,
@@ -42,34 +39,6 @@ interface AppConfig {
     path: string;
 }
 
-// Security Feature Component
-interface SecurityFeatureProps {
-    icon: React.ReactNode;
-    bgColor: string;
-    title: string;
-    description: string;
-}
-
-const SecurityFeature: React.FC<SecurityFeatureProps> = ({ icon, bgColor, title, description }) => (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-        <div style={{
-            background: bgColor,
-            minWidth: '32px',
-            height: '32px',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: '2px'
-        }}>
-            {React.cloneElement(icon as React.ReactElement<any>, { size: 16 })}
-        </div>
-        <div>
-            <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>{title}</h4>
-            <p style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{description}</p>
-        </div>
-    </div>
-);
 
 const apps: AppConfig[] = [
     { id: 'master-search', name: 'Master Pretraga', desc: 'Unifikovana pretraga svih izvora - Smeštaj, Letovi, Transferi, Usluge i Putovanja.', icon: <Sparkles size={24} />, category: 'sales', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', badge: 'New', minLevel: 1, path: '/master-search' },
@@ -444,62 +413,7 @@ const Dashboard: React.FC = () => {
             {/* Daily Wisdom */}
             <DailyWisdom />
 
-            {/* Security Promise Section */}
-            <div style={{ marginTop: '40px' }}>
-                <div style={{
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '32px',
-                    padding: '40px',
-                    boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-                    position: 'relative',
-                    overflow: 'hidden'
-                }}>
-                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', background: 'var(--gradient-blue)' }}></div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                        <div>
-                            <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '8px' }}>Sigurnost Vaših Podataka</h2>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Vaša privatnost je naša prodajna prednost i najviši prioritet.</p>
-                        </div>
-                        <ShieldCheck size={48} color="var(--accent)" style={{ opacity: 0.2 }} />
-                    </div>
-
-                    <div className="security-promise-grid" style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(4, 1fr)',
-                        gap: '20px',
-                        marginTop: '20px',
-                        paddingTop: '20px',
-                        borderTop: '1px solid var(--border)'
-                    }}>
-                        <SecurityFeature
-                            icon={<Lock size={20} color="var(--accent)" />}
-                            bgColor="rgba(0, 92, 197, 0.1)"
-                            title="Enkripcija bankarskog nivoa"
-                            description="AES-256 šifrovanje svih osetljivih podataka."
-                        />
-                        <SecurityFeature
-                            icon={<Shield size={20} color="#22c55e" />}
-                            bgColor="rgba(34, 197, 94, 0.1)"
-                            title="Deep Vault Arhiviranje"
-                            description="Automatsko zaključavanje podataka starijih od 90 dana."
-                        />
-                        <SecurityFeature
-                            icon={<Shield size={20} color="#f59e0b" />}
-                            bgColor="rgba(245, 158, 11, 0.1)"
-                            title="Sigurna plaćanja"
-                            description="Tokenizacija transakcija preko globalnih provajdera."
-                        />
-                        <SecurityFeature
-                            icon={<Cpu size={20} color="var(--accent)" />}
-                            bgColor="rgba(0, 92, 197, 0.1)"
-                            title="Bezbedne API konekcije"
-                            description="Komunikacija kroz šifrovane kanale."
-                        />
-                    </div>
-                </div>
-            </div>
         </motion.div >
     );
 };

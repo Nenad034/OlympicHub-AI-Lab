@@ -5,9 +5,8 @@
 /* --- Main Container --- */
 .smart-search-container {
     min-height: 100vh;
-    background: #020617;
-    /* Slate 950 - Deep Premium Dark */
-    color: #f8fafc;
+    background: var(--bg-dark);
+    color: var(--text-primary);
     padding: 2rem;
     font-family: 'Inter', sans-serif;
     position: relative;
@@ -24,7 +23,7 @@
     align-items: center;
     margin-bottom: 2.5rem;
     padding-bottom: 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border);
 }
 
 .header-brand {
@@ -52,11 +51,12 @@
     -webkit-text-fill-color: initial;
     background-clip: initial;
     -webkit-background-clip: initial;
+    color: var(--ss-text-main, #f8fafc);
 }
 
 .logo-text p {
     font-size: 0.9rem;
-    color: #94a3b8;
+    color: var(--ss-text-muted, #94a3b8);
     margin: 4px 0 0 0;
     font-weight: 500;
 }
@@ -81,7 +81,7 @@
     justify-content: center;
     gap: 2rem;
     margin-bottom: 3rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--ss-border, rgba(255, 255, 255, 0.05));
     padding-bottom: 1rem;
 }
 
@@ -93,7 +93,7 @@
     background: transparent;
     border: none;
     border-radius: 12px;
-    color: #94a3b8;
+    color: var(--ss-text-muted, #94a3b8);
     font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
@@ -101,25 +101,23 @@
 }
 
 .tab-btn:hover {
-    color: white;
+    color: var(--ss-text-main, white);
     background: rgba(255, 255, 255, 0.05);
 }
 
 .tab-btn.active {
-    background: #6366f1;
-    /* Indigo 500 */
+    background: var(--accent);
     color: white;
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 20px var(--accent-glow);
 }
 
 /* --- Search Form Container --- */
 .search-form-smart {
-    background: #0f172a;
-    /* Slate 900 */
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 24px;
     padding: 2rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
     margin-bottom: 3rem;
     position: relative;
     z-index: 20;
@@ -164,7 +162,7 @@
     gap: 0.5rem;
     font-size: 0.75rem;
     font-weight: 700;
-    color: #94a3b8;
+    color: var(--ss-text-muted, #94a3b8);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -174,12 +172,10 @@
 .multi-destination-input.premium,
 .guest-selector.premium {
     height: 56px;
-    /* Uniform height for ALL inputs */
-    background: #1e293b;
-    /* Slate 800 */
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
     border-radius: 12px;
-    color: white;
+    color: var(--text-primary);
     font-size: 1rem;
     font-weight: 500;
     transition: all 0.2s;
@@ -195,8 +191,8 @@
 
 .smart-input.premium:focus,
 .smart-input.premium:active {
-    border-color: #6366f1;
-    background: #1e293b;
+    border-color: var(--ss-accent, #6366f1);
+    background: var(--ss-bg-inner, #1e293b);
 }
 
 /* --- Destination Input Specifics --- */
@@ -211,7 +207,7 @@
 .smart-input-inline {
     background: transparent;
     border: none;
-    color: white;
+    color: var(--ss-text-main, white);
     height: 100%;
     flex: 1;
     min-width: 120px;
@@ -255,12 +251,11 @@
     width: 100%;
     max-height: 350px;
     overflow-y: auto;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     z-index: 100;
-    /* High z-index to float over everything */
     padding: 0.5rem;
 }
 
@@ -528,8 +523,8 @@
 
 /* --- RESULT CARD STYLES --- */
 .hotel-result-card-premium.unified {
-    background: #1e293b;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 16px;
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -539,8 +534,8 @@
 
 .hotel-result-card-premium.unified:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-    border-color: #6366f1;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    border-color: var(--accent);
 }
 
 /* Image Section */
@@ -1070,9 +1065,9 @@
 }
 
 .ss-results-mini {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
 }
 
 .ss-result-item {
@@ -1319,13 +1314,15 @@
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    background: rgba(2, 6, 23, 0.9) !important;
-    backdrop-filter: blur(12px) !important;
+    background: rgba(2, 6, 23, 0.95) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 20px !important;
+    /* CENTERED - covers everything with blur */
+    padding: 40px 20px !important;
     overflow-y: auto !important;
     z-index: 9999999 !important;
 }
@@ -1334,6 +1331,8 @@
 .hotel-details-wide {
     margin: auto !important;
     /* Perfect Vertical & Horizontal Centering */
+    max-height: 85vh !important;
+    /* Limit height to fit on screen */
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
     box-shadow: 0 50px 100px rgba(0, 0, 0, 0.9) !important;
     animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;

@@ -203,107 +203,108 @@ const Step2_FlightSelection: React.FC<Step2Props> = ({
                         className={`tab-btn ${activeHopIndex === idx ? 'active' : ''} ${selectedOffers[idx] ? 'complete' : ''}`}
                         onClick={() => setActiveHopIndex(idx)}
                     >
-                        <Plane size={14} className={activeHopIndex === idx ? 'text-white' : 'text-indigo-400'} />
+                        <Plane size={14} style={{ color: activeHopIndex === idx ? 'white' : '#818cf8' }} />
                         <span className="font-bold">{hop.fromCity}</span>
-                        <ArrowRight size={12} className="opacity-40" />
+                        <ArrowRight size={12} style={{ opacity: 0.4 }} />
                         <span className="font-bold">{hop.toCity}</span>
-                        {selectedOffers[idx] && <Check size={14} className="ml-2 text-green-400" />}
+                        {selectedOffers[idx] && <Check size={14} style={{ marginLeft: '8px', color: '#4ade80' }} />}
                     </button>
                 ))}
             </div>
 
             {/* 2. CONTEXT BANNER */}
-            <div className="info-summary-card mb-8 flex justify-between items-center py-4 px-8">
-                <div className="flex gap-8">
-                    <div className="flex items-center gap-3">
-                        <Calendar size={18} className="text-indigo-400" />
-                        <span className="text-sm font-black text-white uppercase tracking-widest">
+            <div className="info-summary-card mb-8" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem' }}>
+                <div style={{ display: 'flex', gap: '2rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <Calendar size={18} style={{ color: '#818cf8' }} />
+                        <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '1px' }}>
                             {formatDate(currentHop?.date || '')}
                         </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <Globe size={18} className="text-indigo-400" />
-                        <span className="text-sm font-black text-white uppercase tracking-widest">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <Globe size={18} style={{ color: '#818cf8' }} />
+                        <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '1px' }}>
                             {currentHop?.fromCity} &rarr; {currentHop?.toCity}
                         </span>
                     </div>
                 </div>
-                <div className="text-xs font-black text-indigo-400 uppercase tracking-[0.2em]">
+                <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
                     Odaberi let za deonicu #{activeHopIndex + 1}
                 </div>
             </div>
 
             {/* 3. FLIGHT OFFERS */}
             {isLoading ? (
-                <div className="loading-state py-20 text-center">
-                    <Loader2 size={48} className="spin text-indigo-500 mb-6 inline-block" />
-                    <p className="text-slate-400 font-black uppercase text-sm tracking-widest">Tražimo najbolje letove...</p>
+                <div className="loading-state" style={{ padding: '4rem 0', textAlign: 'center' }}>
+                    <Loader2 size={48} className="spin" style={{ color: '#6366f1', marginBottom: '1.5rem', display: 'inline-block' }} />
+                    <p style={{ color: '#94a3b8', fontWeight: 900, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '2px' }}>Tražimo najbolje letove...</p>
                 </div>
             ) : error ? (
-                <div className="error-banner p-10 text-center bg-red-500/10 border border-red-500/20 rounded-2xl">
-                    <AlertCircle size={40} className="text-red-500 mb-4 inline-block" />
-                    <p className="text-white font-bold text-lg mb-6">{error}</p>
-                    <button onClick={() => searchForHop(activeHopIndex)} className="nav-btn primary !px-10">Pokušaj ponovo</button>
+                <div className="error-banner" style={{ padding: '2.5rem', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '20px' }}>
+                    <AlertCircle size={40} style={{ color: '#ef4444', marginBottom: '1rem', display: 'inline-block' }} />
+                    <p style={{ color: 'white', fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '1.5rem' }}>{error}</p>
+                    <button onClick={() => searchForHop(activeHopIndex)} className="nav-btn primary" style={{ padding: '0 2.5rem' }}>Pokušaj ponovo</button>
                 </div>
             ) : (
-                <div className="grid gap-6">
+                <div style={{ display: 'grid', gap: '1.5rem' }}>
                     {currentOffers.map(offer => {
                         const isSelected = selectedOffers[activeHopIndex]?.id === offer.id;
                         return (
                             <div
                                 key={offer.id}
-                                className={`hotel-result-card-premium horizontal !h-auto ${isSelected ? 'selected-border' : ''}`}
+                                className={`flight-offer-card-ss ${isSelected ? 'selected-border' : ''}`}
                                 onClick={() => handleSelectOffer(offer)}
                             >
-                                <div className="hotel-card-content !flex-row !p-0 w-full">
+                                <div className="card-main-layout">
                                     {/* Left: Flight Path */}
-                                    <div className="flex-1 p-8 border-r border-white/5">
-                                        {offer.slices.map((slice, sIdx) => (
-                                            <div key={sIdx} className="flex items-center gap-10">
-                                                <div className="w-16 h-16 bg-white/5 rounded-2xl flex flex-col items-center justify-center border border-white/10">
-                                                    <span className="text-[10px] font-black text-indigo-400 uppercase">{slice.segments[0].carrierCode}</span>
-                                                    <span className="text-xs font-bold text-white mt-1">{slice.segments[0].flightNumber}</span>
+                                    <div className="flight-main-section-ss">
+                                        <div className="airline-info-ss">
+                                            <div className="airline-logo-box-ss">
+                                                <span className="carrier-code">{offer.slices[0].segments[0].carrierCode}</span>
+                                                <span className="flight-num">{offer.slices[0].segments[0].flightNumber}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flight-path-ss">
+                                            <div className="path-point-ss">
+                                                <div className="path-time-ss">{formatTime(offer.slices[0].departure)}</div>
+                                                <div className="path-city-ss">{offer.slices[0].origin.city}</div>
+                                            </div>
+
+                                            <div className="path-visual-ss">
+                                                <div className="path-duration-ss">{formatDuration(offer.slices[0].duration)}</div>
+                                                <div className="path-line-ss">
+                                                    <div className="path-icon-ss">
+                                                        <Plane size={16} style={{ transform: 'rotate(90deg)' }} />
+                                                    </div>
                                                 </div>
-
-                                                <div className="flex-1 flex items-center justify-between gap-10">
-                                                    <div className="text-center">
-                                                        <div className="text-3xl font-black text-white">{formatTime(slice.departure)}</div>
-                                                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{slice.origin.city}</div>
-                                                    </div>
-
-                                                    <div className="flex-1 relative flex flex-col items-center">
-                                                        <div className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-3">{formatDuration(slice.duration)}</div>
-                                                        <div className="w-full h-[2px] bg-slate-700 relative">
-                                                            <Plane size={16} className="absolute left-1/2 -translate-x-1/2 top-[-7px] text-indigo-500 rotate-90" />
-                                                        </div>
-                                                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-3">
-                                                            {slice.segments.length > 1 ? `${slice.segments.length - 1} PRESEDANJE` : 'DIREKTAN LET'}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="text-center">
-                                                        <div className="text-3xl font-black text-white">{formatTime(slice.arrival)}</div>
-                                                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{slice.destination.city}</div>
-                                                    </div>
+                                                <div className="path-stops-ss">
+                                                    {offer.slices[0].segments.length > 1 ? `${offer.slices[0].segments.length - 1} PRESEDANJE` : 'DIREKTAN LET'}
                                                 </div>
                                             </div>
-                                        ))}
+
+                                            <div className="path-point-ss">
+                                                <div className="path-time-ss">{formatTime(offer.slices[0].arrival)}</div>
+                                                <div className="path-city-ss">{offer.slices[0].destination.city}</div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Right: Pricing & CTA */}
-                                    <div className="w-80 p-8 bg-black/20 flex flex-col justify-center items-center text-center">
-                                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Cena deonice</div>
-                                        <div className="text-4xl font-black text-indigo-400 mb-6">{offer.price.total.toFixed(2)}€</div>
+                                    <div className="flight-price-sidebar-ss">
+                                        <div className="price-label-ss">Cena deonice</div>
+                                        <div className="price-value-ss">{offer.price.total.toFixed(2)}€</div>
 
-                                        <div className="flex flex-col gap-3 w-full">
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
                                             <button
-                                                className={`nav-btn primary !h-14 !px-0 w-full ${isSelected ? 'bg-green-600 shadow-green-900/50 hover:bg-green-500' : ''}`}
+                                                className={`nav-btn primary ${isSelected ? 'success' : ''}`}
+                                                style={{ height: '56px', width: '100%', justifyContent: 'center' }}
                                             >
                                                 {isSelected ? <><Check size={18} /> IZABRANO</> : 'IZABERI LET'}
                                             </button>
 
                                             <button
-                                                className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors"
+                                                className="details-trigger-ss"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setExpandedOfferId(expandedOfferId === offer.id ? null : offer.id);
@@ -317,25 +318,34 @@ const Step2_FlightSelection: React.FC<Step2Props> = ({
 
                                 {/* Expanded Details */}
                                 {expandedOfferId === offer.id && (
-                                    <div className="w-full p-8 border-t border-white/5 bg-black/10 animate-slide-down" onClick={e => e.stopPropagation()}>
-                                        <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-6 border-b border-white/5 pb-4">PLAN LETA I DETALJI</h4>
-                                        <div className="grid gap-8">
+                                    <div className="flight-expanded-details-ss" onClick={e => e.stopPropagation()}>
+                                        <h4 style={{ fontSize: '0.7rem', fontWeight: 900, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '1rem' }}>
+                                            PLAN LETA I DETALJI
+                                        </h4>
+                                        <div style={{ display: 'grid', gap: '2rem' }}>
                                             {offer.slices[0].segments.map((seg, idx) => (
-                                                <div key={idx} className="flex gap-10 items-start">
-                                                    <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2 shadow-[0_0_15px_#6366f1]"></div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between mb-2">
-                                                            <div className="text-sm font-black text-white">{formatTime(seg.departure)} — {seg.origin.city} ({seg.origin.code})</div>
-                                                            <div className="text-xs font-bold text-slate-500">{seg.carrierName} {seg.flightNumber}</div>
+                                                <div key={idx} className="segment-row-ss">
+                                                    <div className="segment-dot-ss"></div>
+                                                    <div className="segment-content-ss">
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                                            <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'white' }}>
+                                                                {formatTime(seg.departure)} — {seg.origin.city} ({seg.origin.code})
+                                                            </div>
+                                                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>
+                                                                {seg.carrierName} {seg.flightNumber}
+                                                            </div>
                                                         </div>
-                                                        <p className="text-xs text-slate-400">Trajanje: {formatDuration(seg.duration)} • Avion: {seg.aircraft || 'Commercial Jet'}</p>
-                                                        <div className="text-sm font-black text-white mt-4">{formatTime(seg.arrival)} — {seg.destination.city} ({seg.destination.code})</div>
+                                                        <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                                            Trajanje: {formatDuration(seg.duration)} • Avion: {seg.aircraft || 'Commercial Jet'}
+                                                        </p>
+                                                        <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'white', marginTop: '1rem' }}>
+                                                            {formatTime(seg.arrival)} — {seg.destination.city} ({seg.destination.code})
+                                                        </div>
 
                                                         {idx < offer.slices[0].segments.length - 1 && (
-                                                            <div className="mt-6 p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl text-center">
-                                                                <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">
-                                                                    PAUZA NA AERODROMU: {formatDuration((new Date(offer.slices[0].segments[idx + 1].departure).getTime() - new Date(seg.arrival).getTime()) / 60000)}
-                                                                </span>
+                                                            <div className="layover-badge-ss">
+                                                                <Clock size={14} />
+                                                                PAUZA NA AERODROMU: {formatDuration((new Date(offer.slices[0].segments[idx + 1].departure).getTime() - new Date(seg.arrival).getTime()) / 60000)}
                                                             </div>
                                                         )}
                                                     </div>

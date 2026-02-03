@@ -18,16 +18,17 @@ export const useTheme = () => {
     useEffect(() => {
         const themeClasses: Record<Theme, string> = {
             light: 'light-theme',
-            navy: 'navy-theme',
-            'tokyo-light': 'tokyo-light-theme'
+            navy: 'navy-theme'
         };
 
-        let className = themeClasses[theme] || '';
+        const themeClass = themeClasses[theme] || 'navy-theme';
+        let fullClassName = themeClass;
+
         if (isPrism) {
-            className = `${className} prism-mode`.trim();
+            fullClassName = `${themeClass} prism-mode`.trim();
         }
 
-        document.body.className = className;
+        document.body.className = fullClassName;
     }, [theme, isPrism]);
 
     return {

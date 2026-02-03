@@ -135,15 +135,12 @@ const Login = () => {
     };
 
     // Determine theme class for the wrapper
-    const themeClass = theme === 'light' ? 'light-theme' :
-        theme === 'navy' ? 'navy-theme' :
-            theme === 'tokyo-light' ? 'tokyo-light-theme' : '';
+    const themeClass = theme === 'light' ? 'light-theme' : 'navy-theme';
 
     const getThemeIcon = () => {
         switch (theme) {
-            case 'navy': return <Zap size={16} color="#38bdf8" />;
-            case 'light': return <Sun size={16} />;
-            case 'tokyo-light': return <Moon size={16} color="#3d59a1" />;
+            case 'navy': return <Moon size={16} color="var(--accent)" />;
+            case 'light': return <Sun size={16} color="var(--accent)" />;
             default: return <Moon size={16} />;
         }
     };

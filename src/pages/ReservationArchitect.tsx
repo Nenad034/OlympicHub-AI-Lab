@@ -2374,9 +2374,9 @@ const ReservationArchitect: React.FC = () => {
                                     <div className="docs-premium-grid">
                                         {[
                                             { id: 'contract', title: 'Ugovor o Putovanju', icon: <ShieldCheck size={22} />, desc: 'Glavni dokument o uslovima putovanja.' },
-                                            { id: 'voucher', title: 'Smeštajni Vaučer', icon: <Building2 size={22} />, desc: 'Dokument za prijavu u hotelu.' },
                                             { id: 'itinerary', title: 'Plan Putovanja', icon: <Compass size={22} />, desc: 'Detaljan itinerer po danima/stavkama.' },
-                                            { id: 'paxList', title: 'Putni List (Voucher)', icon: <Users size={22} />, desc: 'Spisak putnika za prevoznika/partnera.' }
+                                            { id: 'guarantee', title: 'Garancija Putovanja', icon: <Shield size={22} />, desc: 'Polisa osiguranja od insolventnosti.' },
+                                            { id: 'voucher', title: 'Voucher', icon: <Building2 size={22} />, desc: 'Dokument za prijavu u hotelu.' }
                                         ].map(doc => (
                                             <div key={doc.id} className="doc-card-v5">
                                                 <div className="doc-card-header">

@@ -21,6 +21,9 @@ import { startNetworkMonitoring } from './utils/networkHealth';
 const App: React.FC = () => {
   const { theme, isPrism, lang } = useThemeStore();
   const { isChatOpen, setChatOpen } = useAppStore();
+  const getThemeLabel = () => {
+    return theme === 'navy' ? 'Dark' : 'Light';
+  };
   const { isLoading } = useConfig();
 
   // Apply theme and layout classes to body
@@ -33,13 +36,7 @@ const App: React.FC = () => {
     // Start Sentinel Network Monitoring
     startNetworkMonitoring();
 
-    const themeClassMap: Record<string, string> = {
-      'light': 'light-theme',
-      'navy': 'navy-theme',
-      'tokyo-light': 'tokyo-light-theme',
-    };
-
-    let themeClass = themeClassMap[theme] || '';
+    let themeClass = theme === 'light' ? 'light-theme' : 'navy-theme';
 
     if (isPrism) {
       themeClass += ' prism-mode';

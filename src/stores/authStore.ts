@@ -13,10 +13,16 @@ interface AuthState {
     userName: string;
     userEmail?: string;
     permissions: UserPermissions;
+    impersonatedSubagent?: {
+        id: string;
+        companyName: string;
+        email: string;
+    };
     login: (name: string, pass: string) => boolean;
     logout: () => void;
     setUserLevel: (level: number) => void;
     setUserName: (name: string) => void;
+    setImpersonatedSubagent: (subagent?: { id: string; companyName: string; email: string }) => void;
     getPermissions: () => UserPermissions;
 }
 
@@ -36,6 +42,7 @@ export const useAuthStore = create<AuthState>()(
             userLevel: 0,
             userName: '',
             permissions: defaultPermissions[0],
+            impersonatedSubagent: undefined,
 
             login: (name: string, pass: string) => {
                 if (name.toLowerCase() === 'nenad' && pass === 'nenad') {
@@ -65,7 +72,8 @@ export const useAuthStore = create<AuthState>()(
                     userLevel: 0,
                     userName: '',
                     userEmail: undefined,
-                    permissions: defaultPermissions[0]
+                    permissions: defaultPermissions[0],
+                    impersonatedSubagent: undefined
                 });
             },
 
@@ -78,6 +86,10 @@ export const useAuthStore = create<AuthState>()(
 
             setUserName: (name: string) => {
                 set({ userName: name });
+            },
+
+            setImpersonatedSubagent: (subagent) => {
+                set({ impersonatedSubagent: subagent });
             },
 
             getPermissions: () => {

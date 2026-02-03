@@ -18,7 +18,11 @@ import MultiCityFlightForm, { type FlightLeg } from '../components/flight/MultiC
 import AirportAutocomplete from '../components/flight/AirportAutocomplete';
 import './FlightSearch.css';
 
-const FlightSearch: React.FC = () => {
+interface FlightSearchProps {
+    isInline?: boolean;
+}
+
+const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { lang } = useThemeStore();
@@ -168,15 +172,17 @@ const FlightSearch: React.FC = () => {
     };
 
     return (
-        <div className="flight-search-page">
-            {/* Header */}
-            <div className="flight-search-header">
-                <div className="header-icon-wrapper">
-                    <Plane size={48} className="header-icon" />
+        <div className={isInline ? "flight-search-inline" : "flight-search-page"}>
+            {/* Header - Only if not inline */}
+            {!isInline && (
+                <div className="flight-search-header">
+                    <div className="header-icon-wrapper">
+                        <Plane size={48} className="header-icon" />
+                    </div>
+                    <h1>Pretraga Letova</h1>
+                    <p>Pronađite najbolje ponude za vaše putovanje širom sveta</p>
                 </div>
-                <h1>Pretraga Letova</h1>
-                <p>Pronađite najbolje ponude za vaše putovanje širom sveta</p>
-            </div>
+            )}
 
             {/* Search Form */}
             <div className="flight-search-form">
@@ -251,58 +257,94 @@ const FlightSearch: React.FC = () => {
                         </div>
 
                         <div className="form-row">
-                            {/* Adults */}
-                            <div className="input-group-flight">
-                                <label>
-                                    <Users size={14} />
-                                    Odrasli
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="9"
-                                    value={searchParams.adults}
-                                    onChange={e => setSearchParams(prev => ({ ...prev, adults: parseInt(e.target.value) || 1 }))}
-                                />
-                            </div>
+                            <div className="passenger-row-flight">
+                                {/* Adults */}
+                                <div className="flight-counter-group">
+                                    <label><Users size={16} /> ODRASLI</label>
+                                    <div className="flight-counter-controls">
+                                        <button
+                                            type="button"
+                                            className="flight-btn-counter"
+                                            onClick={() => setSearchParams(prev => ({ ...prev, adults: Math.max(1, (prev.adults || 0) - 1) }))}
+                                        >−</button>
+                                        <span className="flight-counter-val">{searchParams.adults || 0}</span>
+                                        <button
+                                            type="button"
+                                            className="flight-btn-counter"
+                                            onClick={() => setSearchParams(prev => ({ ...prev, adults: Math.min(9, (prev.adults || 0) + 1) }))}
+                                        >+</button>
+                                    </div>
+                                </div>
 
-                            {/* Children */}
-                            <div className="input-group-flight">
-                                <label>
-                                    <Users2 size={14} />
-                                    Deca
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="9"
-                                    value={searchParams.children}
-                                    onChange={e => {
-                                        const count = parseInt(e.target.value) || 0;
-                                        setSearchParams(prev => ({
-                                            ...prev,
-                                            children: count,
-                                            childrenAges: Array(count).fill(7)
-                                        }));
-                                    }}
-                                />
-                            </div>
+                                {/* Children */}
+                                <div className="flight-counter-group">
+                                    <label><Users2 size={16} /> DECA</label>
+                                    <div className="flight-counter-controls">
+                                        <button
+                                            type="button"
+                                            className="flight-btn-counter"
+                                            onClick={() => {
+                                                const newCount = Math.max(0, (searchParams.children || 0) - 1);
+                                                setSearchParams(prev => ({
+                                                    ...prev,
+                                                    children: newCount,
+                                                    childrenAges: prev.childrenAges.slice(0, newCount)
+                                                }));
+                                            }}
+                                        >−</button>
+                                        <span className="flight-counter-val">{searchParams.children || 0}</span>
+                                        <button
+                                            type="button"
+                                            className="flight-btn-counter"
+                                            onClick={() => {
+                                                const newCount = Math.min(6, (searchParams.children || 0) + 1);
+                                                setSearchParams(prev => ({
+                                                    ...prev,
+                                                    children: newCount,
+                                                    childrenAges: [...prev.childrenAges, 7].slice(0, newCount)
+                                                }));
+                                            }}
+                                        >+</button>
+                                    </div>
+                                </div>
 
-                            {/* Cabin Class */}
-                            <div className="input-group-flight">
-                                <label>
-                                    <Briefcase size={14} />
-                                    Klasa
-                                </label>
-                                <select
-                                    value={searchParams.cabinClass}
-                                    onChange={e => setSearchParams(prev => ({ ...prev, cabinClass: e.target.value as any }))}
-                                >
-                                    <option value="economy">Ekonomska</option>
-                                    <option value="premium_economy">Premium Ekonomska</option>
-                                    <option value="business">Biznis</option>
-                                    <option value="first">Prva</option>
-                                </select>
+                                {/* Children Ages In Line */}
+                                {searchParams.children > 0 && (
+                                    <div className="children-ages-inline-flight">
+                                        {searchParams.childrenAges.map((age, idx) => (
+                                            <div key={idx} className="age-input-compact-flight">
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="17"
+                                                    placeholder={`Dete ${idx + 1}`}
+                                                    value={age || ''}
+                                                    onChange={e => {
+                                                        const newAges = [...searchParams.childrenAges];
+                                                        newAges[idx] = parseInt(e.target.value) || 0;
+                                                        setSearchParams(prev => ({ ...prev, childrenAges: newAges }));
+                                                    }}
+                                                    title={`Godište deteta ${idx + 1}`}
+                                                    style={{ width: '60px', padding: '8px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Cabin Class In Line */}
+                                <div className="input-group-flight cabin-group-inline">
+                                    <select
+                                        value={searchParams.cabinClass}
+                                        onChange={e => setSearchParams(prev => ({ ...prev, cabinClass: e.target.value as any }))}
+                                        style={{ padding: '8px 12px', borderRadius: '10px' }}
+                                    >
+                                        <option value="economy">Ekonomska</option>
+                                        <option value="premium_economy">Premium</option>
+                                        <option value="business">Biznis</option>
+                                        <option value="first">Prva</option>
+                                    </select>
+                                </div>
                             </div>
 
                             {/* Search Button */}
@@ -335,58 +377,94 @@ const FlightSearch: React.FC = () => {
                         />
 
                         <div className="form-row">
-                            {/* Adults */}
-                            <div className="input-group-flight">
-                                <label>
-                                    <Users size={14} />
-                                    Odrasli
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="9"
-                                    value={searchParams.adults}
-                                    onChange={e => setSearchParams(prev => ({ ...prev, adults: parseInt(e.target.value) || 1 }))}
-                                />
-                            </div>
+                            <div className="passenger-row-flight">
+                                {/* Adults */}
+                                <div className="flight-counter-group">
+                                    <label><Users size={16} /> ODRASLI</label>
+                                    <div className="flight-counter-controls">
+                                        <button
+                                            type="button"
+                                            className="flight-btn-counter"
+                                            onClick={() => setSearchParams(prev => ({ ...prev, adults: Math.max(1, (prev.adults || 0) - 1) }))}
+                                        >−</button>
+                                        <span className="flight-counter-val">{searchParams.adults || 0}</span>
+                                        <button
+                                            type="button"
+                                            className="flight-btn-counter"
+                                            onClick={() => setSearchParams(prev => ({ ...prev, adults: Math.min(9, (prev.adults || 0) + 1) }))}
+                                        >+</button>
+                                    </div>
+                                </div>
 
-                            {/* Children */}
-                            <div className="input-group-flight">
-                                <label>
-                                    <Users2 size={14} />
-                                    Deca
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="9"
-                                    value={searchParams.children}
-                                    onChange={e => {
-                                        const count = parseInt(e.target.value) || 0;
-                                        setSearchParams(prev => ({
-                                            ...prev,
-                                            children: count,
-                                            childrenAges: Array(count).fill(7)
-                                        }));
-                                    }}
-                                />
-                            </div>
+                                {/* Children */}
+                                <div className="flight-counter-group">
+                                    <label><Users2 size={16} /> DECA</label>
+                                    <div className="flight-counter-controls">
+                                        <button
+                                            type="button"
+                                            className="flight-btn-counter"
+                                            onClick={() => {
+                                                const newCount = Math.max(0, (searchParams.children || 0) - 1);
+                                                setSearchParams(prev => ({
+                                                    ...prev,
+                                                    children: newCount,
+                                                    childrenAges: prev.childrenAges.slice(0, newCount)
+                                                }));
+                                            }}
+                                        >−</button>
+                                        <span className="flight-counter-val">{searchParams.children || 0}</span>
+                                        <button
+                                            type="button"
+                                            className="flight-btn-counter"
+                                            onClick={() => {
+                                                const newCount = Math.min(6, (searchParams.children || 0) + 1);
+                                                setSearchParams(prev => ({
+                                                    ...prev,
+                                                    children: newCount,
+                                                    childrenAges: [...prev.childrenAges, 7].slice(0, newCount)
+                                                }));
+                                            }}
+                                        >+</button>
+                                    </div>
+                                </div>
 
-                            {/* Cabin Class */}
-                            <div className="input-group-flight">
-                                <label>
-                                    <Briefcase size={14} />
-                                    Klasa
-                                </label>
-                                <select
-                                    value={searchParams.cabinClass}
-                                    onChange={e => setSearchParams(prev => ({ ...prev, cabinClass: e.target.value as any }))}
-                                >
-                                    <option value="economy">Ekonomska</option>
-                                    <option value="premium_economy">Premium Ekonomska</option>
-                                    <option value="business">Biznis</option>
-                                    <option value="first">Prva</option>
-                                </select>
+                                {/* Children Ages In Line */}
+                                {searchParams.children > 0 && (
+                                    <div className="children-ages-inline-flight">
+                                        {searchParams.childrenAges.map((age, idx) => (
+                                            <div key={idx} className="age-input-compact-flight">
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="17"
+                                                    placeholder={`Dete ${idx + 1}`}
+                                                    value={age || ''}
+                                                    onChange={e => {
+                                                        const newAges = [...searchParams.childrenAges];
+                                                        newAges[idx] = parseInt(e.target.value) || 0;
+                                                        setSearchParams(prev => ({ ...prev, childrenAges: newAges }));
+                                                    }}
+                                                    title={`Godište deteta ${idx + 1}`}
+                                                    style={{ width: '60px', padding: '8px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Cabin Class In Line */}
+                                <div className="input-group-flight cabin-group-inline">
+                                    <select
+                                        value={searchParams.cabinClass}
+                                        onChange={e => setSearchParams(prev => ({ ...prev, cabinClass: e.target.value as any }))}
+                                        style={{ padding: '8px 12px', borderRadius: '10px' }}
+                                    >
+                                        <option value="economy">Ekonomska</option>
+                                        <option value="premium_economy">Premium</option>
+                                        <option value="business">Biznis</option>
+                                        <option value="first">Prva</option>
+                                    </select>
+                                </div>
                             </div>
 
                             {/* Search Button */}

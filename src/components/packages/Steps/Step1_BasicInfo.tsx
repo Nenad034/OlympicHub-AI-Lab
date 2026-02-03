@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
     MapPin, Calendar, Users, Star,
-    Settings2, Search, Plus, X,
-    Minus, ChevronDown, Check
+    Search, Plus, X, Minus, ChevronDown, UtensilsCrossed
 } from 'lucide-react';
 import { ModernCalendar } from '../../../components/ModernCalendar';
 import { formatDate } from '../../../utils/dateUtils';
-import './SmartSearchV2.css';
-import './Step1Additions.css';
+import '../../../pages/SmartSearchRedesign.css';
 import type {
     BasicInfoData,
-    DestinationInput,
-    TravelerCount
+    DestinationInput
 } from '../../../types/packageSearch.types';
 
 interface Step1Props {
@@ -24,11 +22,12 @@ const CATEGORY_OPTIONS = ["Sve kategorije", "5 Zvezdica", "4 Zvezdice", "3 Zvezd
 const SERVICE_OPTIONS = ["Sve usluge", "Najam (RO)", "Noćenje/Doručak (BB)", "Polupansion (HB)", "Pun pansion (FB)", "All Inclusive (AI)"];
 
 const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) => {
-    // Local State
     const [destinations, setDestinations] = useState<DestinationInput[]>(
         basicInfo?.destinations.map(d => ({
             ...d,
-            travelers: d.travelers || { adults: 2, children: 0, childrenAges: [] }
+            travelers: d.travelers || { adults: 2, children: 0, childrenAges: [] },
+            category: Array.isArray(d.category) ? d.category : [CATEGORY_OPTIONS[0]],
+            service: Array.isArray(d.service) ? d.service : [SERVICE_OPTIONS[0]]
         })) || [
             {
                 id: '1',
@@ -39,22 +38,20 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
                 checkIn: '',
                 checkOut: '',
                 nights: 0,
-                travelers: { adults: 2, children: 0, childrenAges: [] }
+                travelers: { adults: 2, children: 0, childrenAges: [] },
+                category: [CATEGORY_OPTIONS[0]],
+                service: [SERVICE_OPTIONS[0]]
             }
         ]
     );
 
-    const [selectedCategory, setSelectedCategory] = useState(CATEGORY_OPTIONS[0]);
-    const [selectedService, setSelectedService] = useState(SERVICE_OPTIONS[0]);
-    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-    const [showServiceDropdown, setShowServiceDropdown] = useState(false);
+    const [activeDropdown, setActiveDropdown] = useState<{ idx: number, field: 'category' | 'service' } | null>(null);
     const [activeCalendar, setActiveCalendar] = useState<{ index: number } | null>(null);
 
-    // Sync with parent
     useEffect(() => {
         onUpdate({
             destinations,
-            travelers: destinations[0]?.travelers || { adults: 2, children: 0, childrenAges: [] }, // Use first as primary for legacy compat
+            travelers: destinations[0]?.travelers || { adults: 2, children: 0, childrenAges: [] },
             budget: basicInfo?.budget,
             currency: basicInfo?.currency || 'EUR',
             startDate: destinations[0]?.checkIn || '',
@@ -66,18 +63,16 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
     const addDestination = () => {
         if (destinations.length >= 3) return;
         const lastDest = destinations[destinations.length - 1];
-        const newDest: DestinationInput = {
+        setDestinations([...destinations, {
+            ...lastDest,
             id: String(Date.now()),
             city: '',
-            country: '',
-            countryCode: '',
-            airportCode: '',
             checkIn: lastDest?.checkOut || '',
             checkOut: '',
             nights: 0,
-            travelers: { ...lastDest.travelers } // Inherit previous destination's travelers
-        };
-        setDestinations([...destinations, newDest]);
+            category: [CATEGORY_OPTIONS[0]],
+            service: [SERVICE_OPTIONS[0]]
+        }]);
     };
 
     const removeDestination = (idx: number) => {
@@ -92,16 +87,12 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
         const newVal = Math.max(field === 'adults' ? 1 : 0, val);
 
         const newTravelers = { ...currentCount, [field]: newVal };
-
         if (field === 'children') {
             const currentAges = Array.isArray(currentCount.childrenAges) ? currentCount.childrenAges : [];
-            if (newVal > currentCount.children) {
-                newTravelers.childrenAges = [...currentAges, ...Array(newVal - currentCount.children).fill(0)];
-            } else {
-                newTravelers.childrenAges = currentAges.slice(0, newVal);
-            }
+            newTravelers.childrenAges = newVal > currentCount.children
+                ? [...currentAges, ...Array(newVal - currentCount.children).fill(7)]
+                : currentAges.slice(0, newVal);
         }
-
         updated[idx] = { ...dest, travelers: newTravelers };
         setDestinations(updated);
     };
@@ -121,266 +112,252 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
         setDestinations(updated);
     };
 
+    const toggleDestinationFilter = (idx: number, type: 'category' | 'service', value: string) => {
+        const updated = [...destinations];
+        const current = updated[idx][type] || [];
+        const defaultOption = type === 'category' ? CATEGORY_OPTIONS[0] : SERVICE_OPTIONS[0];
+
+        let newValues;
+        if (value === defaultOption) newValues = [defaultOption];
+        else {
+            const withoutDefault = current.filter(v => v !== defaultOption);
+            newValues = current.includes(value) ? withoutDefault.filter(v => v !== value) : [...withoutDefault, value];
+            if (newValues.length === 0) newValues = [defaultOption];
+        }
+
+        updated[idx] = { ...updated[idx], [type]: newValues };
+        setDestinations(updated);
+    };
+
     const handleDateChange = (idx: number, start: string, end: string) => {
         const updated = [...destinations];
         updated[idx].checkIn = start;
         updated[idx].checkOut = end;
-
         if (start && end) {
             const s = new Date(start);
             const e = new Date(end);
-            const nights = Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24));
-            updated[idx].nights = nights;
+            updated[idx].nights = Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24));
         }
-
         setDestinations(updated);
         setActiveCalendar(null);
     };
 
+    const getFilterLabel = (selected: string[] | undefined, allLabel: string) => {
+        if (!selected || selected.length === 0 || (selected.length === 1 && selected[0] === allLabel)) return allLabel;
+        if (selected.length === 1) return selected[0];
+        return `${selected.length} odabrano`;
+    };
+
     return (
-        <div className="step-content">
-            <div className="search-card-frame animate-fade-in">
+        <div className="package-builder-step-container" style={{ width: '100%', maxWidth: 'none' }}>
+            {destinations.map((dest, idx) => (
+                <div key={dest.id} className="search-card-frame" style={{
+                    marginBottom: '2rem',
+                    width: '100%',
+                    maxWidth: 'none',
+                    zIndex: activeDropdown?.idx === idx ? 100 : (destinations.length - idx),
+                    position: 'relative'
+                }}>
 
-                {/* MULTI-DESTINATION ROWS */}
-                <div className="space-y-4 mb-8">
-                    {destinations.map((dest, idx) => (
-                        <div key={dest.id} className="destination-row-ss">
-                            <div className="destination-header-ss">
-                                <div className="destination-number-badge">{idx + 1}</div>
-                                <h3 className="text-indigo-300 font-extrabold text-xs uppercase tracking-[2px]">
-                                    Destinacija {idx + 1}
-                                </h3>
-                                {destinations.length > 1 && (
-                                    <button
-                                        className="ml-auto w-8 h-8 rounded-full flex items-center justify-center bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all duration-300"
-                                        onClick={() => removeDestination(idx)}
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                )}
+                    {/* Header */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                        <h3 style={{ color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                            {idx + 1}. Destinacija
+                        </h3>
+                        {destinations.length > 1 && (
+                            <button onClick={() => removeDestination(idx)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
+                                <X size={18} />
+                            </button>
+                        )}
+                    </div>
+
+                    {/* ROW 1: DESTINATION */}
+                    <div className="destination-row">
+                        <div className="field-label"><MapPin size={14} /> Destinacija ili Smeštaj</div>
+                        <div className="destination-input-wrapper">
+                            <input
+                                type="text"
+                                placeholder="Gde putujete?"
+                                value={dest.city}
+                                onChange={(e) => updateDestination(idx, 'city', e.target.value)}
+                                style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    outline: 'none',
+                                    width: '100%',
+                                    color: 'var(--text-primary)',
+                                    fontSize: '1rem'
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* ROW 2: PARAMETERS GRID */}
+                    <div className="params-grid" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
+                        {/* Check In */}
+                        <div className="col-checkin param-item">
+                            <div className="field-label"><Calendar size={14} /> Check-in</div>
+                            <div className="input-box" onClick={() => setActiveCalendar({ index: idx })} style={{ cursor: 'pointer' }}>
+                                {dest.checkIn ? formatDate(dest.checkIn) : <span style={{ color: 'var(--text-secondary)' }}>mm/dd/yyyy</span>}
+                            </div>
+                        </div>
+
+                        {/* Check Out */}
+                        <div className="col-checkout param-item">
+                            <div className="field-label"><Calendar size={14} /> Check-out</div>
+                            <div className="input-box" onClick={() => setActiveCalendar({ index: idx })} style={{ cursor: 'pointer' }}>
+                                {dest.checkOut ? formatDate(dest.checkOut) : <span style={{ color: 'var(--text-secondary)' }}>mm/dd/yyyy</span>}
+                            </div>
+                        </div>
+
+                        {/* Nights */}
+                        <div className="param-item">
+                            <div className="field-label"><Star size={14} /> Noći</div>
+                            <div className="input-box" style={{ justifyContent: 'center', background: 'var(--ss-accent-glow)' }}>
+                                <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--ss-accent)' }}>{dest.nights || 0}</span>
+                            </div>
+                        </div>
+
+                        {/* Adults */}
+                        <div className="param-item">
+                            <div className="field-label"><Users size={14} /> Odrasli</div>
+                            <div className="input-box" style={{ display: 'flex', justifyContent: 'space-between', padding: '0 0.5rem' }}>
+                                <button onClick={() => updateTravelersPerDest(idx, 'adults', dest.travelers.adults - 1)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem' }}>−</button>
+                                <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{dest.travelers.adults}</span>
+                                <button onClick={() => updateTravelersPerDest(idx, 'adults', dest.travelers.adults + 1)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem' }}>+</button>
+                            </div>
+                        </div>
+
+                        {/* Children */}
+                        <div className="param-item" style={{ position: 'relative' }}>
+                            <div className="field-label"><Users size={14} /> Deca</div>
+                            <div className="input-box" style={{ display: 'flex', justifyContent: 'space-between', padding: '0 0.5rem' }}>
+                                <button onClick={() => updateTravelersPerDest(idx, 'children', dest.travelers.children - 1)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem' }}>−</button>
+                                <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{dest.travelers.children}</span>
+                                <button onClick={() => updateTravelersPerDest(idx, 'children', dest.travelers.children + 1)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem' }}>+</button>
                             </div>
 
-                            <div className="destination-grid-ss">
-                                {/* Destination Input */}
-                                <div className="form-field">
-                                    <label className="field-label-ss">
-                                        <MapPin size={12} /> GRAD / SMEŠTAJ
-                                    </label>
-                                    <input
-                                        type="text"
-                                        className="ss-input-box !bg-slate-900/40"
-                                        placeholder="Gde putujete?"
-                                        value={dest.city}
-                                        onChange={(e) => updateDestination(idx, 'city', e.target.value)}
-                                    />
-                                </div>
-
-                                {/* Date Range */}
-                                <div className="form-field relative">
-                                    <label className="field-label-ss">
-                                        <Calendar size={12} /> TERMIN
-                                    </label>
-                                    <div
-                                        className="ss-input-box !bg-slate-900/40 cursor-pointer hover:border-indigo-500/50 transition-colors flex items-center gap-2"
-                                        onClick={() => setActiveCalendar({ index: idx })}
-                                    >
-                                        <Calendar size={14} className="text-indigo-400" />
-                                        <span className={`text-[13px] font-bold ${dest.checkIn && dest.checkOut ? 'text-white' : 'text-slate-500'}`}>
-                                            {dest.checkIn && dest.checkOut
-                                                ? `${formatDate(dest.checkIn)} - ${formatDate(dest.checkOut)}`
-                                                : 'Odaberite datume'
-                                            }
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Nights Display */}
-                                <div className="form-field">
-                                    <label className="field-label-ss">
-                                        <Star size={12} /> NOĆI
-                                    </label>
-                                    <div className="ss-input-box !bg-indigo-500/10 !border-indigo-500/20 cursor-default flex items-center justify-center">
-                                        <span className="text-lg font-black text-indigo-400">
-                                            {dest.nights || 0}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Adults Counter */}
-                                <div className="form-field">
-                                    <label className="field-label-ss"><Users size={12} /> ODRASLI</label>
-                                    <div className="row-counter-ss">
-                                        <button className="row-counter-btn" onClick={() => updateTravelersPerDest(idx, 'adults', dest.travelers.adults - 1)}>
-                                            <Minus size={14} />
-                                        </button>
-                                        <span className="row-counter-val">{dest.travelers.adults}</span>
-                                        <button className="row-counter-btn" onClick={() => updateTravelersPerDest(idx, 'adults', dest.travelers.adults + 1)}>
-                                            <Plus size={14} />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Children Counter */}
-                                <div className="form-field relative">
-                                    <label className="field-label-ss"><Users size={12} /> DECA</label>
-                                    <div className="row-counter-ss">
-                                        <button className="row-counter-btn" onClick={() => updateTravelersPerDest(idx, 'children', dest.travelers.children - 1)}>
-                                            <Minus size={14} />
-                                        </button>
-                                        <span className="row-counter-val">{dest.travelers.children}</span>
-                                        <button className="row-counter-btn" onClick={() => updateTravelersPerDest(idx, 'children', dest.travelers.children + 1)}>
-                                            <Plus size={14} />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Child Ages row */}
+                            {/* Child Ages - directly below */}
                             {dest.travelers.children > 0 && (
-                                <div className="child-ages-row-ss animate-fade-in">
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    left: 0,
+                                    right: 0,
+                                    zIndex: 50,
+                                    background: 'var(--ss-bg-inner)',
+                                    padding: '8px',
+                                    borderRadius: '8px',
+                                    marginTop: '8px',
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    gap: '0.4rem',
+                                    border: '1px solid var(--border)',
+                                    boxShadow: '0 10px 25px rgba(0,0,0,0.4)'
+                                }}>
                                     {dest.travelers.childrenAges?.map((age, cIdx) => (
-                                        <div key={cIdx} className="child-age-item-ss">
-                                            <label className="text-[9px] font-black text-slate-500 uppercase">Dete {cIdx + 1}</label>
-                                            <select
-                                                className="age-select-ss"
+                                        <div key={cIdx} style={{ background: 'var(--bg-card)', borderRadius: '6px', padding: '4px 8px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '2px', minWidth: '60px', flex: '1' }}>
+                                            <label style={{ fontSize: '8px', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Dete {cIdx + 1}</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="17"
                                                 value={age}
-                                                onChange={(e) => updateChildAgePerDest(idx, cIdx, parseInt(e.target.value))}
-                                            >
-                                                {Array.from({ length: 18 }, (_, i) => (
-                                                    <option key={i} value={i}>{i} god</option>
-                                                ))}
-                                            </select>
+                                                onChange={(e) => updateChildAgePerDest(idx, cIdx, parseInt(e.target.value) || 0)}
+                                                style={{
+                                                    background: 'transparent',
+                                                    color: 'var(--text-primary)',
+                                                    fontSize: '11px',
+                                                    fontWeight: 'bold',
+                                                    border: 'none',
+                                                    outline: 'none',
+                                                    width: '100%',
+                                                    padding: '0'
+                                                }}
+                                            />
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
-                    ))}
 
-                    {destinations.length < 3 && (
-                        <div className="flex justify-center pt-2">
-                            <button
-                                className="add-destination-btn-ss group"
-                                onClick={addDestination}
-                            >
-                                <Plus size={16} className="group-hover:rotate-90 transition-transform" />
-                                Dodaj destinaciju
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* FILTERS SECTION */}
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                    <div className="form-field relative">
-                        <label className="field-label-ss"><Star size={12} /> KATEGORIJA</label>
-                        <div
-                            className="ss-input-box cursor-pointer flex items-center justify-between"
-                            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                        >
-                            <span className="text-sm font-bold">{selectedCategory}</span>
-                            <ChevronDown size={18} className={`text-indigo-400 transition-transform duration-300 ${showCategoryDropdown ? 'rotate-180' : ''}`} />
-                        </div>
-                        {showCategoryDropdown && (
-                            <div className="dropdown-menu-ss">
-                                {CATEGORY_OPTIONS.map(opt => (
-                                    <div
-                                        key={opt}
-                                        className="dropdown-item-ss"
-                                        onClick={() => { setSelectedCategory(opt); setShowCategoryDropdown(false); }}
-                                    >
-                                        {opt}
-                                    </div>
-                                ))}
+                        {/* Category Selector */}
+                        <div className="col-stars param-item" style={{ position: 'relative' }}>
+                            <div className="field-label"><Star size={14} /> Odaberi Kategoriju</div>
+                            <div className="input-box" onClick={() => setActiveDropdown(activeDropdown?.idx === idx && activeDropdown.field === 'category' ? null : { idx, field: 'category' })} style={{ cursor: 'pointer' }}>
+                                <span style={{ fontSize: '0.85rem' }}>
+                                    {getFilterLabel(dest.category, CATEGORY_OPTIONS[0])}
+                                </span>
+                                <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
                             </div>
-                        )}
-                    </div>
-
-                    <div className="form-field relative">
-                        <label className="field-label-ss"><Settings2 size={12} /> TIP USLUGE</label>
-                        <div
-                            className="ss-input-box cursor-pointer flex items-center justify-between"
-                            onClick={() => setShowServiceDropdown(!showServiceDropdown)}
-                        >
-                            <span className="text-sm font-bold">{selectedService}</span>
-                            <ChevronDown size={18} className={`text-indigo-400 transition-transform duration-300 ${showServiceDropdown ? 'rotate-180' : ''}`} />
-                        </div>
-                        {showServiceDropdown && (
-                            <div className="dropdown-menu-ss">
-                                {SERVICE_OPTIONS.map(opt => (
-                                    <div
-                                        key={opt}
-                                        className="dropdown-item-ss"
-                                        onClick={() => { setSelectedService(opt); setShowServiceDropdown(false); }}
-                                    >
-                                        {opt}
+                            {activeDropdown?.idx === idx && activeDropdown.field === 'category' && (
+                                <div className="vertical-filters-popover animate-fade-in-up">
+                                    <div className="vertical-filter-group">
+                                        {CATEGORY_OPTIONS.map(opt => (
+                                            <button key={opt} className={`v-filter-btn ${dest.category?.includes(opt) ? 'active' : ''}`} onClick={() => toggleDestinationFilter(idx, 'category', opt)}>
+                                                {opt}
+                                            </button>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* SUMMARY ITINERARY */}
-                <div className="summary-card-ss mb-8">
-                    <div className="flex items-center justify-between mb-4 px-2">
-                        <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
-                            <h3 className="text-sm font-black text-white uppercase tracking-widest">ITINERER RUTE</h3>
-                        </div>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-indigo-400 font-black text-lg">
-                                {destinations.reduce((sum, d) => sum + (d.nights || 0), 0)}
-                            </span>
-                            <span className="text-[10px] text-slate-500 font-bold uppercase">noći ukupno</span>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        {destinations.filter(d => d.city).map((d, idx) => (
-                            <div key={d.id} className="itinerary-item-ss animate-fade-in">
-                                <div className="itinerary-left-ss">
-                                    <div className="itinerary-node-ss">{idx + 1}</div>
-                                    <div className="itinerary-info-ss">
-                                        <h4>{d.city}</h4>
-                                        <p>
-                                            {formatDate(d.checkIn)} — {formatDate(d.checkOut)}
-                                            <span className="mx-2 text-slate-700">|</span>
-                                            {d.travelers.adults} odr, {d.travelers.children} dec
-                                        </p>
+                                    <div style={{ borderTop: '1px solid var(--border)', padding: '10px', marginTop: '10px' }}>
+                                        <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setActiveDropdown(null)}>Zatvori</button>
                                     </div>
                                 </div>
-                                <div className="itinerary-right-ss">
-                                    <span className="itinerary-nights-ss">{d.nights} noći</span>
+                            )}
+                        </div>
+
+                        {/* Meal Selector */}
+                        <div className="col-meals param-item" style={{ position: 'relative' }}>
+                            <div className="field-label"><UtensilsCrossed size={14} /> Odaberi Uslugu</div>
+                            <div className="input-box" onClick={() => setActiveDropdown(activeDropdown?.idx === idx && activeDropdown.field === 'service' ? null : { idx, field: 'service' })} style={{ cursor: 'pointer' }}>
+                                <span style={{ fontSize: '0.85rem' }}>
+                                    {getFilterLabel(dest.service, SERVICE_OPTIONS[0])}
+                                </span>
+                                <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                            </div>
+                            {activeDropdown?.idx === idx && activeDropdown.field === 'service' && (
+                                <div className="vertical-filters-popover animate-fade-in-up">
+                                    <div className="vertical-filter-group">
+                                        {SERVICE_OPTIONS.map(opt => (
+                                            <button key={opt} className={`v-filter-btn ${dest.service?.includes(opt) ? 'active' : ''}`} onClick={() => toggleDestinationFilter(idx, 'service', opt)}>
+                                                {opt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div style={{ borderTop: '1px solid var(--border)', padding: '10px', marginTop: '10px' }}>
+                                        <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setActiveDropdown(null)}>Zatvori</button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                        {destinations.filter(d => d.city).length === 0 && (
-                            <div className="text-center py-6 border-2 border-dashed border-white/5 rounded-2xl text-slate-600 font-bold text-xs uppercase tracking-widest">
-                                RUTA NIJE DEFINISANA
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
+            ))}
 
-                {/* SEARCH BUTTON */}
-                <button
-                    className="search-btn-ss-primary"
-                    onClick={onNext}
-                >
-                    <Search size={20} />
-                    POKRENI PRETRAGU PAKETA
-                </button>
-            </div>
 
-            {/* CALENDAR OVERLAY */}
-            {activeCalendar !== null && (
+            {/* Add Destination Button */}
+            {destinations.length < 3 && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
+                    <button onClick={addDestination} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', background: 'var(--ss-accent-glow)', border: '1px solid var(--ss-accent)', borderRadius: '12px', color: 'var(--ss-accent)', fontWeight: 'bold', cursor: 'pointer' }}>
+                        <Plus size={16} />
+                        Dodaj destinaciju
+                    </button>
+                </div>
+            )}
+
+            {/* Search Button */}
+            <button onClick={onNext} style={{ width: '100%', padding: '1rem', background: 'var(--ss-gradient)', border: 'none', borderRadius: '12px', color: 'white', fontSize: '1rem', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                <Search size={20} /> POKRENI PRETRAGU PAKETA
+            </button>
+
+            {activeCalendar !== null && createPortal(
                 <ModernCalendar
                     startDate={destinations[activeCalendar.index]?.checkIn || ''}
                     endDate={destinations[activeCalendar.index]?.checkOut || ''}
                     onChange={(start, end) => handleDateChange(activeCalendar.index, start, end)}
                     onClose={() => setActiveCalendar(null)}
-                />
+                />,
+                document.getElementById('portal-root') || document.body
             )}
         </div>
     );

@@ -17,24 +17,18 @@
     padding-bottom: 40px !important;
 }
 
-/* Tablet */
+/* Tablet and Desktop - Use flexible auto-fill */
 @media (min-width: 640px) {
     .results-mosaic.grid-layout {
-        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+        gap: 24px !important;
     }
 }
 
-/* Desktop */
-@media (min-width: 1024px) {
+/* Ensure cards don't get too large on ultrawide screens */
+@media (min-width: 1800px) {
     .results-mosaic.grid-layout {
-        grid-template-columns: repeat(3, 1fr) !important;
-    }
-}
-
-/* Large Desktop */
-@media (min-width: 1400px) {
-    .results-mosaic.grid-layout {
-        grid-template-columns: repeat(4, 1fr) !important;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)) !important;
     }
 }
 

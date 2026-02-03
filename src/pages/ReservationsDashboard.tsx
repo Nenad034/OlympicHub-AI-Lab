@@ -71,8 +71,8 @@ import { MultiSelectDropdown } from '../components/MultiSelectDropdown';
 
 const ReservationsDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const { userLevel } = useAuthStore();
-    const isSubagent = userLevel < 6;
+    const { userLevel, impersonatedSubagent } = useAuthStore();
+    const isSubagent = userLevel < 6 || !!impersonatedSubagent;
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [showStats, setShowStats] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -398,9 +398,10 @@ const ReservationsDashboard: React.FC = () => {
             setSyncStatus('syncing');
 
             try {
-                // If subagent, filter by their email
-                const userEmail = useAuthStore.getState().userEmail;
-                const result = await getUserReservations(isSubagent ? userEmail : undefined);
+                // If subagent or impersonated, filter by their email
+                const authState = useAuthStore.getState();
+                const userEmail = authState.impersonatedSubagent?.email || authState.userEmail;
+                const result = await getUserReservations((isSubagent || authState.impersonatedSubagent) ? userEmail : undefined);
 
                 if (result.success && result.data && result.data.length > 0) {
                     // Mapiranje database rezervacija u UI format

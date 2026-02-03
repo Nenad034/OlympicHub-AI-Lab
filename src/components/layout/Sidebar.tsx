@@ -21,7 +21,8 @@ import { translations } from '../../translations';
 const Sidebar: React.FC = () => {
     const { lang, isSidebarCollapsed, toggleSidebar } = useThemeStore();
     const { setChatOpen } = useAppStore();
-    const { userLevel } = useAuthStore();
+    const { userLevel, impersonatedSubagent, setImpersonatedSubagent } = useAuthStore();
+    const isB2BView = userLevel < 6 || !!impersonatedSubagent;
     const t = translations[lang];
 
     const navItemClass = (isActive: boolean) =>
@@ -65,7 +66,7 @@ const Sidebar: React.FC = () => {
 
             <nav className="nav-section">
                 {/* Main Section - Only for Staff */}
-                {userLevel >= 6 && (
+                {userLevel >= 6 && !impersonatedSubagent && (
                     <div className="nav-group">
                         <h3 className="nav-label">{!isSidebarCollapsed && 'Main'}</h3>
                         <NavLink
@@ -88,7 +89,7 @@ const Sidebar: React.FC = () => {
 
                 {/* AI Chat - Available for Everyone */}
                 <div className="nav-group">
-                    {userLevel >= 6 && <h3 className="nav-label">{!isSidebarCollapsed && 'AI'}</h3>}
+                    {userLevel >= 6 && !impersonatedSubagent && <h3 className="nav-label">{!isSidebarCollapsed && 'AI'}</h3>}
                     <div
                         className="nav-item"
                         title="AI Chat"
@@ -100,7 +101,7 @@ const Sidebar: React.FC = () => {
                 </div>
 
                 {/* Sectors Section - Only for Staff */}
-                {userLevel >= 6 && (
+                {userLevel >= 6 && !impersonatedSubagent && (
                     <div className="nav-group">
                         <h3 className="nav-label">{!isSidebarCollapsed && t.sectors}</h3>
                         <NavLink
@@ -160,8 +161,8 @@ const Sidebar: React.FC = () => {
                     </div>
                 )}
 
-                {/* B2B Partners Section - Only for Subagents */}
-                {userLevel < 6 && (
+                {/* B2B Partners Section - Only for Subagents or Impersonation */}
+                {isB2BView && (
                     <div className="nav-group b2b-nav-group" style={{
                         background: 'rgba(255, 255, 255, 0.05)',
                         borderRadius: '12px',
@@ -169,7 +170,7 @@ const Sidebar: React.FC = () => {
                         border: '1px solid var(--border)'
                     }}>
                         <h3 className="nav-label">
-                            {!isSidebarCollapsed && '🤝 B2B PARTNER'}
+                            {!isSidebarCollapsed && (impersonatedSubagent ? `🤝 ${impersonatedSubagent.companyName}` : '🤝 B2B PARTNER')}
                         </h3>
                         <NavLink
                             to="/smart-search"
@@ -194,7 +195,7 @@ const Sidebar: React.FC = () => {
 
 
                 {/* Intelligence Section - Only for Staff */}
-                {userLevel >= 6 && (
+                {userLevel >= 6 && !impersonatedSubagent && (
                     <div className="nav-group">
                         <h3 className="nav-label">{!isSidebarCollapsed && 'Intelligence'}</h3>
                         <NavLink
@@ -211,7 +212,7 @@ const Sidebar: React.FC = () => {
                 )}
 
                 {/* System Section - Only for Staff */}
-                {userLevel >= 6 && (
+                {userLevel >= 6 && !impersonatedSubagent && (
                     <div className="nav-group" style={{ marginTop: 'auto', paddingBottom: '10px' }}>
                         <h3 className="nav-label">{!isSidebarCollapsed && t.system}</h3>
                         <NavLink
@@ -228,6 +229,25 @@ const Sidebar: React.FC = () => {
                         >
                             <SettingsIcon size={20} /> {!isSidebarCollapsed && t.settings}
                         </NavLink>
+                    </div>
+                )}
+                {/* Exit B2B View Button for Impersonating Admins */}
+                {impersonatedSubagent && userLevel >= 6 && (
+                    <div className="nav-group" style={{ marginTop: 'auto', paddingBottom: '10px' }}>
+                        <button
+                            className="nav-item"
+                            onClick={() => setImpersonatedSubagent(undefined)}
+                            style={{
+                                color: '#f87171',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                cursor: 'pointer',
+                                width: '100%',
+                                textAlign: 'left'
+                            }}
+                        >
+                            <SettingsIcon size={20} /> {!isSidebarCollapsed && 'Zatvori B2B Prikaz'}
+                        </button>
                     </div>
                 )}
             </nav>

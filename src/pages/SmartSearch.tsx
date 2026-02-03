@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuthStore } from '../stores';
 import {
     Sparkles, Hotel, Plane, Package, Bus, Compass,
@@ -17,6 +18,7 @@ import { MultiSelectDropdown } from '../components/MultiSelectDropdown';
 import { BookingModal } from '../components/booking/BookingModal';
 import { formatDate } from '../utils/dateUtils';
 import PackageSearch from './PackageSearch';
+import FlightSearch from './FlightSearch';
 import { useConfig } from '../context/ConfigContext';
 import './SmartSearch.css';
 import './SmartSearchFix2.css';
@@ -129,8 +131,8 @@ interface RoomAllocation {
 }
 
 const SmartSearch: React.FC = () => {
-    const { userLevel } = useAuthStore();
-    const isSubagent = userLevel < 6;
+    const { userLevel, impersonatedSubagent } = useAuthStore();
+    const isSubagent = userLevel < 6 || !!impersonatedSubagent;
 
     const [activeTab, setActiveTab] = useState<'hotel' | 'flight' | 'package' | 'transfer' | 'tour'>('hotel');
     const [selectedDestinations, setSelectedDestinations] = useState<Destination[]>([]);
@@ -223,7 +225,7 @@ const SmartSearch: React.FC = () => {
     const tabs = [
         { id: 'hotel' as const, label: 'Smeštaj', icon: Hotel },
         { id: 'flight' as const, label: 'Letovi', icon: Plane },
-        { id: 'package' as const, label: 'Paketi', icon: Package },
+        { id: 'package' as const, label: 'DYNAMIC PACKAGES', icon: Package },
         { id: 'transfer' as const, label: 'Transferi', icon: Bus },
         { id: 'tour' as const, label: 'Ture', icon: Compass },
     ];
@@ -771,7 +773,7 @@ const SmartSearch: React.FC = () => {
                 }
             </div >
 
-            {/* CONDITIONAL RENDER: SMESHTAJ vs PAKETI */}
+            {/* CONDITIONAL RENDER: SMESHTAJ vs LETOVI vs PAKETI */}
             {activeTab === 'package' ? (
                 <div className="package-builder-inline animate-fade-in" style={{ marginTop: '2rem' }}>
                     <PackageSearch
@@ -780,6 +782,10 @@ const SmartSearch: React.FC = () => {
                         initialCheckOut={checkOut}
                         initialTravelers={roomAllocations}
                     />
+                </div>
+            ) : activeTab === 'flight' ? (
+                <div className="flight-search-inline animate-fade-in" style={{ marginTop: '2rem' }}>
+                    <FlightSearch isInline={true} />
                 </div>
             ) : (
                 <>
@@ -857,7 +863,7 @@ const SmartSearch: React.FC = () => {
                                             className={`flex-btn ${flexibleDays === day ? 'active' : ''}`}
                                             onClick={() => setFlexibleDays(day)}
                                         >
-                                            {day === 0 ? 'Tačno' : `+${day}`}
+                                            {day === 0 ? 'Tačno' : `±${day}`}
                                         </button>
                                     ))}
                                 </div>
@@ -977,94 +983,85 @@ const SmartSearch: React.FC = () => {
                                 </div>
 
                                 <div className="active-room-config full-width animate-fade-in" key={activeRoomTab}>
-                                    <div className="config-row-main">
-                                        <div className="pax-counter-group">
-                                            <div className="field-label-mini"><Users size={14} /> Odrasli</div>
-                                            <div className="counter-box mini">
-                                                <button className="btn-counter" onClick={() => {
-                                                    const newAlloc = [...roomAllocations];
-                                                    newAlloc[activeRoomTab].adults = Math.max(0, newAlloc[activeRoomTab].adults - 1);
-                                                    setRoomAllocations(newAlloc);
-                                                }}>−</button>
-                                                <input
-                                                    type="number"
-                                                    className="counter-val-input"
-                                                    value={roomAllocations[activeRoomTab].adults}
-                                                    onChange={e => {
-                                                        const val = parseInt(e.target.value) || 0;
+                                    <div className="passenger-row-redesign">
+                                        {/* Adults */}
+                                        <div className="flight-counter-group">
+                                            <div className="field-label-mini"><Users size={14} /> ODRASLI</div>
+                                            <div className="flight-counter-controls">
+                                                <button
+                                                    className="flight-btn-counter"
+                                                    onClick={() => {
                                                         const newAlloc = [...roomAllocations];
-                                                        newAlloc[activeRoomTab].adults = Math.max(0, Math.min(10, val));
+                                                        newAlloc[activeRoomTab].adults = Math.max(1, newAlloc[activeRoomTab].adults - 1);
                                                         setRoomAllocations(newAlloc);
                                                     }}
-                                                />
-                                                <button className="btn-counter" onClick={() => {
-                                                    const newAlloc = [...roomAllocations];
-                                                    newAlloc[activeRoomTab].adults += 1;
-                                                    setRoomAllocations(newAlloc);
-                                                }}>+</button>
+                                                >−</button>
+                                                <span className="flight-counter-val">{roomAllocations[activeRoomTab].adults}</span>
+                                                <button
+                                                    className="flight-btn-counter"
+                                                    onClick={() => {
+                                                        const newAlloc = [...roomAllocations];
+                                                        newAlloc[activeRoomTab].adults = Math.min(10, newAlloc[activeRoomTab].adults + 1);
+                                                        setRoomAllocations(newAlloc);
+                                                    }}
+                                                >+</button>
                                             </div>
                                         </div>
 
-                                        <div className="pax-counter-group">
-                                            <div className="field-label-mini"><Users2 size={14} /> Deca</div>
-                                            <div className="counter-box mini">
-                                                <button className="btn-counter" onClick={() => {
-                                                    const newAlloc = [...roomAllocations];
-                                                    if (newAlloc[activeRoomTab].children > 0) {
-                                                        newAlloc[activeRoomTab].children -= 1;
-                                                        newAlloc[activeRoomTab].childrenAges.pop();
-                                                        setRoomAllocations(newAlloc);
-                                                    }
-                                                }}>−</button>
-                                                <input
-                                                    type="number"
-                                                    className="counter-val-input"
-                                                    value={roomAllocations[activeRoomTab].children}
-                                                    onChange={e => {
-                                                        const val = parseInt(e.target.value) || 0;
+                                        {/* Children */}
+                                        <div className="flight-counter-group">
+                                            <div className="field-label-mini"><Users2 size={14} /> DECA</div>
+                                            <div className="flight-counter-controls">
+                                                <button
+                                                    className="flight-btn-counter"
+                                                    onClick={() => {
                                                         const newAlloc = [...roomAllocations];
-                                                        const count = Math.max(0, Math.min(4, val));
-                                                        newAlloc[activeRoomTab].children = count;
-                                                        // Sync ages array length
-                                                        while (newAlloc[activeRoomTab].childrenAges.length < count) {
-                                                            newAlloc[activeRoomTab].childrenAges.push(7);
-                                                        }
-                                                        while (newAlloc[activeRoomTab].childrenAges.length > count) {
+                                                        if (newAlloc[activeRoomTab].children > 0) {
+                                                            newAlloc[activeRoomTab].children -= 1;
                                                             newAlloc[activeRoomTab].childrenAges.pop();
+                                                            setRoomAllocations(newAlloc);
                                                         }
-                                                        setRoomAllocations(newAlloc);
                                                     }}
-                                                />
-                                                <button className="btn-counter" onClick={() => {
-                                                    if (roomAllocations[activeRoomTab].children < 4) {
-                                                        const newAlloc = [...roomAllocations];
-                                                        newAlloc[activeRoomTab].children += 1;
-                                                        newAlloc[activeRoomTab].childrenAges.push(7);
-                                                        setRoomAllocations(newAlloc);
-                                                    }
-                                                }}>+</button>
+                                                >−</button>
+                                                <span className="flight-counter-val">{roomAllocations[activeRoomTab].children}</span>
+                                                <button
+                                                    className="flight-btn-counter"
+                                                    onClick={() => {
+                                                        if (roomAllocations[activeRoomTab].children < 4) {
+                                                            const newAlloc = [...roomAllocations];
+                                                            newAlloc[activeRoomTab].children += 1;
+                                                            newAlloc[activeRoomTab].childrenAges.push(7);
+                                                            setRoomAllocations(newAlloc);
+                                                        }
+                                                    }}
+                                                >+</button>
                                             </div>
                                         </div>
 
-                                        <div className="children-ages-inline">
-                                            {roomAllocations[activeRoomTab].childrenAges.map((age, idx) => (
-                                                <div key={idx} className="age-input-compact">
-                                                    <input
-                                                        type="number"
-                                                        min="0" max="17"
-                                                        value={age}
-                                                        onChange={e => {
-                                                            const val = parseInt(e.target.value) || 0;
-                                                            const newAlloc = [...roomAllocations];
-                                                            newAlloc[activeRoomTab].childrenAges[idx] = Math.min(17, Math.max(0, val));
-                                                            setRoomAllocations(newAlloc);
-                                                        }}
-                                                        className="child-age-input mini"
-                                                        title={`${idx + 1}. dete`}
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
+                                        {/* Children Ages In Line */}
+                                        {roomAllocations[activeRoomTab].children > 0 && (
+                                            <div className="children-ages-inline-flight">
+                                                {roomAllocations[activeRoomTab].childrenAges.map((age, idx) => (
+                                                    <div key={idx} className="age-input-compact">
+                                                        <input
+                                                            type="number"
+                                                            min="0" max="17"
+                                                            value={age || ''}
+                                                            placeholder={`Dete ${idx + 1}`}
+                                                            onChange={e => {
+                                                                const val = parseInt(e.target.value) || 0;
+                                                                const newAlloc = [...roomAllocations];
+                                                                newAlloc[activeRoomTab].childrenAges[idx] = Math.min(17, Math.max(0, val));
+                                                                setRoomAllocations(newAlloc);
+                                                            }}
+                                                            className="child-age-input mini"
+                                                            title={`${idx + 1}. dete`}
+                                                            style={{ width: '60px', padding: '10px !important' }}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div >
@@ -1103,9 +1100,9 @@ const SmartSearch: React.FC = () => {
                                     {generateFlexDates(selectedArrivalDate || checkIn, flexibleDays).map((dateStr) => {
                                         const dateObj = new Date(dateStr);
                                         const isActive = dateStr === checkIn;
-                                        const dayName = dateObj.toLocaleDateString('sr-RS', { weekday: 'short' });
+                                        const dayName = dateObj.toLocaleDateString('sr-Latn-RS', { weekday: 'short' });
                                         const dayNum = dateObj.getDate();
-                                        const monthName = dateObj.toLocaleDateString('sr-RS', { month: 'short' });
+                                        const monthName = dateObj.toLocaleDateString('sr-Latn-RS', { month: 'short' });
 
                                         return (
                                             <div
@@ -1332,12 +1329,59 @@ const SmartSearch: React.FC = () => {
                         )
                     }
 
-                    {/* Hotel Details Modal */}
+                    {/* Calendars */}
                     {
-                        expandedHotel && (
-                            <div className="modern-calendar-overlay hotel-modal-overlay" onClick={() => setExpandedHotel(null)}>
-                                {/* WIDE MODAL CLASS ADDED HERE */}
-                                <div className="modern-calendar-popup wide hotel-details-wide animate-fade-in" onClick={e => e.stopPropagation()}>
+                        activeCalendar && (
+                            <ModernCalendar
+                                startDate={checkIn} endDate={checkOut}
+                                onChange={(s, e) => {
+                                    setCheckIn(s);
+                                    if (e) { setCheckOut(e); syncNightsFromDates(s, e); }
+                                    setActiveCalendar(null);
+                                }}
+                                onClose={() => setActiveCalendar(null)}
+                            />
+                        )
+                    }
+
+
+
+                    {/* Hotel Details Modal - RENDERED IN PORTAL */}
+                    {
+                        expandedHotel && createPortal(
+                            <div
+                                className="modern-calendar-overlay hotel-modal-overlay"
+                                onClick={() => setExpandedHotel(null)}
+                                style={{
+                                    position: 'fixed',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    width: '100vw',
+                                    height: '100vh',
+                                    background: 'rgba(2, 6, 23, 0.95)',
+                                    backdropFilter: 'blur(20px) saturate(180%)',
+                                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '40px 20px',
+                                    overflowY: 'auto',
+                                    zIndex: 9999999
+                                }}
+                            >
+                                <div
+                                    className="modern-calendar-popup wide hotel-details-wide animate-fade-in"
+                                    onClick={e => e.stopPropagation()}
+                                    style={{
+                                        margin: 'auto',
+                                        maxHeight: '85vh',
+                                        maxWidth: '1400px',
+                                        width: '95%'
+                                    }}
+                                >
                                     <div className="hotel-rooms-modal-header" style={{ padding: '12px 25px', background: '#1e293b' }}>
                                         <div className="modal-title-zone">
                                             <div className="modal-meta" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
@@ -1367,7 +1411,6 @@ const SmartSearch: React.FC = () => {
                                                             <div className="h-action">AKCIJA</div>
                                                         </div>
 
-                                                        {/* Use allocation-specific rooms if we have them from multi-room search */}
                                                         {(expandedHotel.allocationResults && expandedHotel.allocationResults[rIdx]) ? (
                                                             expandedHotel.allocationResults[rIdx].map((room: any, idx: number) => (
                                                                 <div key={room.id || idx} className="room-row-v4">
@@ -1383,12 +1426,7 @@ const SmartSearch: React.FC = () => {
                                                                         <span className="p-val">{isSubagent ? getPriceWithMargin(room.price) : Math.round(Number(room.price))} {expandedHotel.currency}</span>
                                                                     </div>
                                                                     <div className="r-action">
-                                                                        <button
-                                                                            className="btn-book-v4"
-                                                                            onClick={() => handleReserveClick(room, rIdx)}
-                                                                        >
-                                                                            Rezerviši
-                                                                        </button>
+                                                                        <button className="btn-book-v4" onClick={() => handleReserveClick(room, rIdx)}>Rezerviši</button>
                                                                     </div>
                                                                 </div>
                                                             ))
@@ -1407,38 +1445,18 @@ const SmartSearch: React.FC = () => {
                                                                         <span className="p-val">{isSubagent ? getPriceWithMargin(room.price) : Math.round(Number(room.price))} {expandedHotel.currency}</span>
                                                                     </div>
                                                                     <div className="r-action">
-                                                                        <button
-                                                                            className="btn-book-v4"
-                                                                            onClick={() => handleReserveClick(room, rIdx)}
-                                                                        >
-                                                                            Rezerviši
-                                                                        </button>
+                                                                        <button className="btn-book-v4" onClick={() => handleReserveClick(room, rIdx)}>Rezerviši</button>
                                                                     </div>
                                                                 </div>
                                                             ))
                                                         ) : (
                                                             <div className="room-row-v4">
-                                                                <div className="r-name">
-                                                                    <span className="room-type-tag">Standardna Soba</span>
-                                                                </div>
-                                                                <div className="r-servis">
-                                                                    <span className="meal-tag-v4">{expandedHotel.mealPlan || 'BB'}</span>
-                                                                </div>
+                                                                <div className="r-name"><span className="room-type-tag">Standardna Soba</span></div>
+                                                                <div className="r-servis"><span className="meal-tag-v4">{expandedHotel.mealPlan || 'BB'}</span></div>
                                                                 <div className="r-cap"><Users size={14} /> {alloc.adults}+{alloc.children}</div>
-                                                                <div className="r-price">
-                                                                    <span className="p-val">{isSubagent ? getPriceWithMargin(expandedHotel.price) : Math.round(Number(expandedHotel.price))} {expandedHotel.currency}</span>
-                                                                </div>
+                                                                <div className="r-price"><span className="p-val">{isSubagent ? getPriceWithMargin(expandedHotel.price) : Math.round(Number(expandedHotel.price))} {expandedHotel.currency}</span></div>
                                                                 <div className="r-action">
-                                                                    <button
-                                                                        className="btn-book-v4"
-                                                                        onClick={() => handleReserveClick({
-                                                                            id: 'default',
-                                                                            name: 'Standardna Soba',
-                                                                            price: expandedHotel.price
-                                                                        }, rIdx)}
-                                                                    >
-                                                                        Rezerviši
-                                                                    </button>
+                                                                    <button className="btn-book-v4" onClick={() => handleReserveClick({ id: 'default', name: 'Standardna Soba', price: expandedHotel.price }, rIdx)}>Rezerviši</button>
                                                                 </div>
                                                             </div>
                                                         )}
@@ -1448,27 +1466,13 @@ const SmartSearch: React.FC = () => {
                                         })}
                                     </div>
                                 </div>
-                            </div>
-                        )
-                    }
-
-                    {/* Calendars */}
-                    {
-                        activeCalendar && (
-                            <ModernCalendar
-                                startDate={checkIn} endDate={checkOut}
-                                onChange={(s, e) => {
-                                    setCheckIn(s);
-                                    if (e) { setCheckOut(e); syncNightsFromDates(s, e); }
-                                    setActiveCalendar(null);
-                                }}
-                                onClose={() => setActiveCalendar(null)}
-                            />
+                            </div>,
+                            document.getElementById('portal-root') || document.body
                         )
                     }
                 </>
             )}
-        </div>
+        </div >
     );
 };
 

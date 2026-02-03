@@ -3,7 +3,23 @@
 import type { UnifiedFlightOffer, FlightSearchParams } from './flight.types';
 import type { DynamicPackage, PackageDestination, PackageFlight, PackageHotel, PackageTransfer, PackageExtra } from './package.types';
 
-export type { UnifiedFlightOffer, FlightSearchParams, DynamicPackage, PackageDestination, PackageFlight, PackageHotel, PackageTransfer, PackageExtra };
+// ============================================================================
+// Basic Info (Moved up for better module resolution)
+// ============================================================================
+
+import type { BasicInfoData, TravelerCount, DestinationInput } from './step1.types';
+export * from './step1.types';
+
+export type {
+    UnifiedFlightOffer,
+    FlightSearchParams,
+    DynamicPackage,
+    PackageDestination,
+    PackageFlight,
+    PackageHotel,
+    PackageTransfer,
+    PackageExtra
+};
 
 // ============================================================================
 // Wizard State
@@ -30,43 +46,10 @@ export interface PackageSearchState {
     isDraft: boolean;
 }
 
-// ============================================================================
 // Step 1: Basic Info
 // ============================================================================
 
-export interface DestinationInput {
-    id: string;
-    city: string;
-    country: string;
-    countryCode: string;
-    airportCode: string;
-    checkIn: string;  // ISO date
-    checkOut: string; // ISO date
-    nights: number;
-    travelers: TravelerCount;
-    includedGuide?: {
-        title: string;
-        desc: string;
-        tip: string;
-        image: string;
-    };
-}
-
-export interface TravelerCount {
-    adults: number;
-    children: number;
-    childrenAges?: number[];
-}
-
-export interface BasicInfoData {
-    destinations: DestinationInput[];
-    travelers: TravelerCount;
-    budget?: number;
-    currency: string;
-    startDate: string;
-    endDate: string;
-    totalDays: number;
-}
+// Definitions moved to top for better module resolution
 
 // ============================================================================
 // Step 2: Flight Selection

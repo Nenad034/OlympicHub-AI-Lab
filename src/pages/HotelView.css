@@ -9,39 +9,27 @@
 /* --- FULL PAGE OVERRIDES WHEN ACTIVE --- */
 body.is-hotel-details-page {
     /* DEFAULT (NAVY/DARK) */
-    --hv-bg: #020617;
-    --hv-surface: #0f172a;
-    --hv-surface-alt: #111827;
-    --hv-border: rgba(255, 255, 255, 0.08);
-    --hv-text-primary: #ffffff;
-    --hv-text-secondary: #94a3b8;
-    --hv-text-muted: #64748b;
-    --hv-accent: #3b82f6;
-    --hv-card-bg: rgba(255, 255, 255, 0.03);
+    --hv-bg: var(--bg-dark);
+    --hv-surface: var(--bg-card);
+    --hv-surface-alt: var(--bg-sidebar);
+    --hv-border: var(--border);
+    --hv-text-primary: var(--text-primary);
+    --hv-text-secondary: var(--text-secondary);
+    --hv-text-muted: var(--text-secondary);
+    --hv-accent: var(--accent);
+    --hv-card-bg: var(--bg-card);
 }
 
 body.is-hotel-details-page.light-theme {
-    --hv-bg: #f8fafc;
-    --hv-surface: #ffffff;
-    --hv-surface-alt: #f1f5f9;
-    --hv-border: rgba(0, 0, 0, 0.08);
-    --hv-text-primary: #0f172a;
-    --hv-text-secondary: #475569;
-    --hv-text-muted: #64748b;
-    --hv-accent: #2563eb;
-    --hv-card-bg: #ffffff;
-}
-
-body.is-hotel-details-page.tokyo-light-theme {
-    --hv-bg: #fdf6e3;
-    --hv-surface: #fffcf0;
-    --hv-surface-alt: #eee8d5;
-    --hv-border: rgba(88, 110, 117, 0.1);
-    --hv-text-primary: #586e75;
-    --hv-text-secondary: #657b83;
-    --hv-text-muted: #93a1a1;
-    --hv-accent: #b58900;
-    --hv-card-bg: #fffcf0;
+    --hv-bg: var(--bg-dark);
+    --hv-surface: var(--bg-card);
+    --hv-surface-alt: var(--bg-sidebar);
+    --hv-border: var(--border);
+    --hv-text-primary: var(--text-primary);
+    --hv-text-secondary: var(--text-secondary);
+    --hv-text-muted: var(--text-secondary);
+    --hv-accent: var(--accent);
+    --hv-card-bg: var(--bg-card);
 }
 
 /* Apply theme background to EVERYTHING in the header */
@@ -634,8 +622,7 @@ body.is-hotel-details-page .main-content {
     color: #020617;
 }
 
-.light-theme .hv-room-book-btn-premium,
-.tokyo-light-theme .hv-room-book-btn-premium {
+.light-theme .hv-room-book-btn-premium {
     background: var(--hv-accent);
     color: #ffffff;
 }

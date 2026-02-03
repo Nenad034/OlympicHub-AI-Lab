@@ -198,8 +198,8 @@ const GlobalHubSearch: React.FC = () => {
     const [recentSearches, setRecentSearches] = useState<Array<{ id: number | string, name: string, type: 'city' | 'hotel', source: 'TCT' | 'Solvex' | 'OpenGreece' | 'ORS', stars?: number, location?: string }>>([]);
 
     // B2B Segment States
-    const { userLevel } = useAuthStore();
-    const isSubagent = userLevel < 6; // Simulation: any non-admin is treated as subagent for UI 
+    const { userLevel, impersonatedSubagent } = useAuthStore();
+    const isSubagent = userLevel < 6 || !!impersonatedSubagent;
     const [b2bMargin, setB2bMargin] = useState({ value: 10, type: 'percentage' as 'percentage' | 'fixed' });
     const [showStaffOnline, setShowStaffOnline] = useState(false);
 

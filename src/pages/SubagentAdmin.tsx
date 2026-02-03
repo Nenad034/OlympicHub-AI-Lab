@@ -42,6 +42,7 @@ import {
     CheckCircle2
 } from 'lucide-react';
 import './SubagentAdmin.css';
+import { useAuthStore } from '../stores';
 
 interface ContactPerson {
     id: string;
@@ -298,6 +299,16 @@ const SubagentAdmin: React.FC = () => {
     const handleManageAccess = (subagent: Subagent) => {
         setB2BEditAgent({ ...subagent });
         setShowB2BModal(true);
+    };
+
+    const handleImpersonate = (subagent: Subagent) => {
+        const { setImpersonatedSubagent } = useAuthStore.getState();
+        setImpersonatedSubagent({
+            id: subagent.id,
+            companyName: subagent.companyName,
+            email: subagent.email
+        });
+        navigate(`/b2b-portal?subagentId=${subagent.id}`);
     };
 
     const handleSaveAccess = () => {
@@ -751,7 +762,7 @@ const SubagentAdmin: React.FC = () => {
                                             <td className="amount commission">{subagent.financials.totalCommission.toLocaleString()} €</td>
                                             <td>
                                                 <div className="action-buttons">
-                                                    <button className="action-btn external" onClick={() => window.open(`/smart-search?subagentId=${subagent.id}`, '_blank')} title="Pristupi B2B strani (Impersonate)"><ExternalLink size={16} /></button>
+                                                    <button className="action-btn external" onClick={() => handleImpersonate(subagent)} title="Pristupi B2B strani (Impersonate)"><ExternalLink size={16} /></button>
                                                     <button className="action-btn reservations" onClick={() => handleViewReservations(subagent)} title="Rezervacije"><FileText size={16} /></button>
                                                     <button className="action-btn b2b" onClick={() => handleManageAccess(subagent)} title="B2B Pristup"><Shield size={16} /></button>
                                                     <button className="action-btn view" onClick={() => handleViewDetails(subagent)} title="Pregled"><Eye size={16} /></button>

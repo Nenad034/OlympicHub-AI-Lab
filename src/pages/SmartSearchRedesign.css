@@ -17,23 +17,12 @@
     letter-spacing: 0.5px;
 }
 
-/* Global Variables for the Redesign */
-:root {
-    --primary-gradient: linear-gradient(90deg, #6366f1 0%, #a855f7 100%);
-    --bg-dark: #020617;
-    --bg-card: #0f172a;
-    --border-color: rgba(255, 255, 255, 0.1);
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --input-bg: #1e293b;
-    --accent-glow: 0 0 20px rgba(99, 102, 241, 0.3);
-}
-
 .smart-search-container-v2 {
     min-height: 100vh;
-    background: var(--bg-dark);
+    background: transparent;
+    /* Inherit */
     font-family: 'Inter', sans-serif;
-    color: var(--text-main);
+    color: var(--text-primary);
     padding: 2rem;
     width: 96%;
     max-width: 1800px;
@@ -164,6 +153,7 @@
 
 .col-nationality {
     grid-column: 5;
+    grid-row: 2;
     /* Aligned below col-meals */
 }
 
@@ -193,7 +183,7 @@
     display: flex;
     align-items: center;
     padding: 0 1rem;
-    color: white;
+    color: var(--text-primary);
     font-size: 0.95rem;
     width: 100%;
 }
@@ -515,14 +505,14 @@
 
 .flexible-dates-strip {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     padding: 15px;
-    gap: 10px;
-    overflow-x: auto;
+    gap: 12px;
 }
 
 .flex-date-tile-premium {
-    flex: 1;
-    min-width: 80px;
+    width: 110px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -638,6 +628,8 @@
     gap: 30px;
     width: 100%;
     flex-wrap: wrap;
+    margin-top: -10px;
+    /* Further compact upwards */
 }
 
 .children-ages-inline {
@@ -1022,14 +1014,27 @@
 }
 
 .col-rooms-tabs {
-    grid-column: span 5;
-    background: rgba(255, 255, 255, 0.015);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    grid-column: 1 / span 4 !important;
+    grid-row: 2 !important;
+    background: rgba(56, 189, 248, 0.03);
+    /* Navy-tinted background */
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    /* Navy-accented border */
     border-radius: 20px;
-    padding: 24px;
+    padding: 20px 24px;
     display: flex;
     flex-direction: column;
-    margin-top: 0;
+    margin-top: 22px !important;
+    height: auto !important;
+    /* Dynamic expansion for children ages */
+    box-shadow: 0 8px 32px rgba(2, 6, 23, 0.5);
+    /* Deep Navy shadow */
+}
+
+.col-nationality {
+    grid-column: 5 !important;
+    grid-row: 2 !important;
+    margin-top: 0 !important;
 }
 
 .animate-fade-in-up {

@@ -7,6 +7,18 @@
     animation: fadeIn 0.5s ease;
 }
 
+.flight-search-inline {
+    width: 100%;
+    animation: fadeIn 0.5s ease;
+}
+
+.flight-search-inline .flight-search-form {
+    padding: 24px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
 /* Header */
 .flight-search-header {
     text-align: center;
@@ -19,10 +31,10 @@
     justify-content: center;
     width: 96px;
     height: 96px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
     border-radius: 24px;
     margin-bottom: 24px;
-    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 10px 40px rgba(56, 189, 248, 0.3);
 }
 
 .header-icon {
@@ -34,7 +46,7 @@
     font-size: 36px;
     font-weight: 700;
     margin-bottom: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -82,17 +94,17 @@
 }
 
 .trip-type-btn:hover:not(.active) {
-    background: rgba(102, 126, 234, 0.1);
-    border-color: rgba(102, 126, 234, 0.3);
-    color: #667eea;
+    background: rgba(56, 189, 248, 0.1);
+    border-color: rgba(56, 189, 248, 0.3);
+    color: var(--accent-primary);
     transform: translateY(-2px);
 }
 
 .trip-type-btn.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
     border-color: transparent;
     color: white;
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
 }
 
 .form-row {
@@ -135,8 +147,103 @@
 .input-group-flight input:focus,
 .input-group-flight select:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+}
+
+/* Custom Passenger Selectors */
+.passenger-row-flight,
+.passenger-row-redesign {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 16px 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.flight-counter-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.flight-counter-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-secondary);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.flight-counter-controls {
+    display: flex;
+    align-items: center;
+    background: rgba(10, 25, 47, 0.4);
+    border: 1px solid rgba(56, 189, 248, 0.15);
+    padding: 3px;
+    border-radius: 10px;
+    gap: 12px;
+}
+
+.flight-btn-counter {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #5D5FEF;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flight-btn-counter:hover {
+    background: #4A4CD9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(93, 95, 239, 0.3);
+}
+
+.flight-btn-counter:active {
+    transform: translateY(0);
+}
+
+.flight-counter-val {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 24px;
+    text-align: center;
+}
+
+.children-ages-inline-flight {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.age-input-compact-flight input {
+    width: 80px;
+    padding: 10px !important;
+    text-align: center;
+}
+
+.cabin-group-inline {
+    margin-left: auto;
+}
+
+.cabin-group-inline select {
+    min-width: 160px;
 }
 
 .search-flights-btn {
@@ -146,7 +253,7 @@
     justify-content: center;
     gap: 10px;
     padding: 16px 32px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
     border: none;
     border-radius: 12px;
     color: white;
@@ -154,12 +261,12 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 20px rgba(56, 189, 248, 0.3);
 }
 
 .search-flights-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 30px rgba(56, 189, 248, 0.4);
 }
 
 .search-flights-btn:disabled {
@@ -190,8 +297,8 @@
 
 .toggle-advanced-btn:hover {
     background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(102, 126, 234, 0.3);
-    color: #667eea;
+    border-color: rgba(56, 189, 248, 0.3);
+    color: var(--accent-primary);
 }
 
 .advanced-options-panel {
@@ -242,16 +349,16 @@
 }
 
 .date-flex-btn:hover {
-    background: rgba(102, 126, 234, 0.1);
-    border-color: rgba(102, 126, 234, 0.3);
-    color: #667eea;
+    background: rgba(56, 189, 248, 0.1);
+    border-color: rgba(56, 189, 248, 0.3);
+    color: var(--accent-primary);
 }
 
 .date-flex-btn.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
     border-color: transparent;
     color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
 }
 
 /* Stops Options */
@@ -279,16 +386,16 @@
 }
 
 .stops-btn:hover {
-    background: rgba(102, 126, 234, 0.1);
-    border-color: rgba(102, 126, 234, 0.3);
-    color: #667eea;
+    background: rgba(56, 189, 248, 0.1);
+    border-color: rgba(56, 189, 248, 0.3);
+    color: var(--accent-primary);
 }
 
 .stops-btn.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
     border-color: transparent;
     color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
 }
 
 .option-hint {
@@ -311,7 +418,7 @@
 }
 
 .plane-loading {
-    color: #667eea;
+    color: var(--accent-primary);
     animation: fly 2s ease-in-out infinite;
 }
 
@@ -331,12 +438,12 @@
 
 .provider-badge {
     padding: 6px 12px;
-    background: rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(102, 126, 234, 0.3);
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
     border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
-    color: #667eea;
+    color: var(--accent-primary);
     animation: pulse 2s ease-in-out infinite;
 }
 
@@ -366,7 +473,7 @@
 }
 
 .results-count svg {
-    color: #667eea;
+    color: var(--accent-primary);
 }
 
 .results-sort {
@@ -407,7 +514,7 @@
 
 .flight-offer-card:hover {
     transform: translateY(-4px);
-    border-color: rgba(102, 126, 234, 0.5);
+    border-color: rgba(56, 189, 248, 0.5);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
 }
 
@@ -416,13 +523,13 @@
     top: 16px;
     right: 16px;
     padding: 4px 12px;
-    background: rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(102, 126, 234, 0.3);
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
     border-radius: 12px;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    color: #667eea;
+    color: var(--accent-primary);
 }
 
 /* Flight Info Section */
@@ -528,13 +635,13 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #667eea;
+    background: var(--accent-primary);
 }
 
 .path-line {
     flex: 1;
     height: 2px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
     position: relative;
 }
 
@@ -542,7 +649,7 @@
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    color: #667eea;
+    color: var(--accent-primary);
     animation: planeFly 2s ease-in-out infinite;
 }
 
@@ -609,7 +716,7 @@
     align-items: center;
     gap: 8px;
     padding: 12px 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
     border: none;
     border-radius: 12px;
     color: white;
@@ -621,7 +728,7 @@
 
 .select-flight-btn:hover {
     transform: translateX(4px);
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 20px rgba(56, 189, 248, 0.4);
 }
 
 /* Expand Details */
@@ -633,10 +740,10 @@
     gap: 8px;
     margin-top: 16px;
     padding: 12px;
-    background: rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(102, 126, 234, 0.3);
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
     border-radius: 10px;
-    color: #667eea;
+    color: var(--accent-primary);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -644,8 +751,8 @@
 }
 
 .expand-details-btn:hover {
-    background: rgba(102, 126, 234, 0.2);
-    border-color: rgba(102, 126, 234, 0.5);
+    background: rgba(56, 189, 248, 0.2);
+    border-color: rgba(56, 189, 248, 0.5);
 }
 
 /* Expanded Details */
@@ -672,7 +779,7 @@
     margin-bottom: 12px;
     font-size: 14px;
     font-weight: 600;
-    color: #667eea;
+    color: var(--accent-primary);
 }
 
 /* Price Breakdown */
@@ -692,10 +799,10 @@
 }
 
 .price-row.total {
-    background: rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(102, 126, 234, 0.3);
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
     font-weight: 600;
-    color: #667eea;
+    color: var(--accent-primary);
 }
 
 /* Baggage Info */
@@ -731,7 +838,7 @@
     padding: 16px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
-    border-left: 3px solid #667eea;
+    border-left: 3px solid var(--accent-primary);
 }
 
 .segment-header {
@@ -795,7 +902,7 @@
 .segment-airport {
     font-size: 13px;
     font-weight: 600;
-    color: #667eea;
+    color: var(--accent-primary);
 }
 
 .segment-city {
@@ -853,7 +960,7 @@
     margin-bottom: 12px;
     font-size: 14px;
     font-weight: 600;
-    color: #667eea;
+    color: var(--accent-primary);
 }
 
 .segment-details {

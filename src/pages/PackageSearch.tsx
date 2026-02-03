@@ -78,7 +78,8 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
                 airportCode: '',
                 checkIn: initialCheckIn || '',
                 checkOut: initialCheckOut || '',
-                nights: 0
+                nights: 0,
+                travelers: initialTravelers ? initialTravelers[index] : { adults: 2, children: 0, childrenAges: [] }
             }));
             setBasicInfo({
                 destinations: mappedDestinations,
@@ -118,21 +119,9 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
     };
 
     return (
-        <div className="package-search-page ss-dark-theme">
-            {/* 1. PREMIUM HEADER */}
-            <div className="search-header">
-                <div className="search-header-content">
-                    <div className="header-left">
-                        <div className="bg-indigo-600/20 p-3 rounded-2xl border border-indigo-500/30">
-                            <Sparkles size={32} className="text-indigo-400" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-black text-white uppercase tracking-tight">Dynamic Package Builder</h1>
-                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Smart Search AI Experience</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div className="package-search-page">
+            {/* 1. PREMIUM HEADER REMOVED */}
+            {/* <div className="search-header"> ... </div> */}
 
             {/* 2. PROGRESS STEPS (SMART STYLE) */}
             <div className="wizard-progress ss-glass-bar">
@@ -150,27 +139,45 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
             </div>
 
             {/* 3. MAIN AREA */}
-            <div className="search-content py-12 px-8">
+            <div className="search-content py-8">
                 {renderStep()}
             </div>
 
             {/* 4. FLOATING FOOTER NAV */}
             <div className="wizard-navigation ss-floating-nav">
-                <button className="nav-btn secondary ss-glow-muted" onClick={goBack} disabled={currentStep === 1}>
-                    <ChevronLeft size={20} /> NAZAD
-                </button>
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
+                    <button className="nav-btn secondary ss-glow-muted" style={{ minWidth: '180px', height: '56px', fontSize: '12px', fontWeight: 900 }} onClick={goBack} disabled={currentStep === 1}>
+                        <ChevronLeft size={20} /> NAZAD
+                    </button>
+                </div>
 
-                <div className="flex items-center gap-10">
-                    <div className="text-right hidden md:block">
-                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Trenutni Total</div>
-                        <div className="text-2xl font-black text-indigo-400 tracking-tighter">{totalPrice.toFixed(2)}€</div>
-                    </div>
+                <div className="total-display-middle" style={{ flex: 1, textAlign: 'center' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '2px' }}>Trenutni Total</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--accent)', letterSpacing: '-2px', lineHeight: 1 }}>{totalPrice.toFixed(2)}€</div>
+                </div>
+
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
                     {currentStep < 6 ? (
-                        <button className="nav-btn primary ss-glow-indigo min-w-[200px]" onClick={goNext}>
+                        <button className="nav-btn primary ss-glow-indigo" style={{ minWidth: '240px', height: '56px', fontSize: '13px', fontWeight: 900 }} onClick={goNext}>
                             SLEDEĆI KORAK <ChevronRight size={20} />
                         </button>
                     ) : (
-                        <button className="nav-btn primary ss-glow-indigo min-w-[200px]" onClick={() => navigate('/packages/created')}>
+                        <button
+                            className="nav-btn primary animate-pulse-slow"
+                            style={{
+                                minWidth: '240px',
+                                height: '56px',
+                                fontSize: '15px',
+                                fontWeight: '900',
+                                fontStyle: 'italic',
+                                textTransform: 'uppercase',
+                                letterSpacing: '2px',
+                                background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                                boxShadow: '0 10px 30px -5px rgba(99, 102, 241, 0.5)',
+                                border: '1px solid rgba(255,255,255,0.2)'
+                            }}
+                            onClick={() => navigate('/packages/created')}
+                        >
                             <Check size={20} /> KREIRAJ PAKET
                         </button>
                     )}

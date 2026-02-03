@@ -5,7 +5,7 @@
 
 /* Target ONLY hotel modal overlay - NOT calendar */
 .hotel-modal-overlay.modern-calendar-overlay {
-    /* Positioning - Cover entire viewport */
+    /* Positioning - Cover entire viewport and LOCK IT */
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -14,22 +14,23 @@
     width: 100vw !important;
     height: 100vh !important;
 
-    /* Z-Index - Above EVERYTHING */
-    z-index: 2147483647 !important;
+    /* Z-Index - Above EVERYTHING including page content */
+    z-index: 9999999 !important;
 
-    /* Background - Dark blur that hides everything */
-    background: rgba(10, 12, 16, 0.95) !important;
-    backdrop-filter: blur(25px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+    /* Background - Premium dark blur that covers EVERYTHING */
+    background: rgba(2, 6, 23, 0.95) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
 
-    /* Layout - Center the modal */
+    /* Layout - CENTER the modal perfectly */
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
+    /* CENTERED - not flex-start! */
     padding: 40px 20px !important;
 
-    /* Scroll */
+    /* Scroll - The OVERLAY scrolls if modal is too tall */
     overflow-y: auto !important;
     overflow-x: hidden !important;
 }
@@ -38,9 +39,12 @@
 .hotel-details-wide {
     position: relative !important;
     margin: auto !important;
+    /* Auto margin works with center justify */
     max-width: 1400px !important;
     width: 95% !important;
-    max-height: 90vh !important;
+    max-height: 85vh !important;
+    /* Limit height so it fits on screen */
+    min-height: 400px !important;
 
     /* Styling */
     background: #0f172a !important;
@@ -63,7 +67,8 @@
     margin: auto !important;
     max-width: 1400px !important;
     width: 95% !important;
-    max-height: 90vh !important;
+    max-height: 85vh !important;
+    /* Match the height limit */
     background: #0f172a !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
     border-radius: 16px !important;

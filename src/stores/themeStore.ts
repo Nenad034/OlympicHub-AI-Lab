@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type Theme = 'light' | 'navy' | 'tokyo-light';
+export type Theme = 'light' | 'navy';
 export type Language = 'sr' | 'en';
 export type NavMode = 'sidebar' | 'horizontal';
 export type LayoutMode = 'classic' | 'modern';
@@ -39,10 +39,8 @@ export const useThemeStore = create<ThemeState>()(
 
             cycleTheme: () => {
                 const current = get().theme;
-                const order: Theme[] = ['light', 'navy', 'tokyo-light'];
-                const currentIndex = order.indexOf(current);
-                const nextIndex = (currentIndex + 1) % order.length;
-                set({ theme: order[nextIndex] });
+                const next = current === 'light' ? 'navy' : 'light';
+                set({ theme: next });
             },
 
             togglePrism: () => set((state) => ({ isPrism: !state.isPrism })),
