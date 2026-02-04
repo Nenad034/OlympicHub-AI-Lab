@@ -102,6 +102,13 @@ const normalizeMealPlan = (plan: string): string => {
 /**
  * Get full meal plan display name in Serbian
  */
+const formatPrice = (price: number) => {
+    return price.toLocaleString('sr-RS', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+};
+
 const getMealPlanDisplayName = (code: string | undefined): string => {
     if (!code) return 'Samo Smeštaj';
     const normalized = normalizeMealPlan(code);
@@ -214,6 +221,7 @@ const SmartSearch: React.FC = () => {
     // Booking states
     const [expandedHotel, setExpandedHotel] = useState<SmartSearchResult | null>(null);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+    const [notepadMealFilters, setNotepadMealFilters] = useState<Record<string, string>>({});
     const [selectedRoomForBooking, setSelectedRoomForBooking] = useState<any>(null);
     const [bookingSuccessData, setBookingSuccessData] = useState<{ id: string, code: string, provider: string } | null>(null);
     const [bookingAlertError, setBookingAlertError] = useState<string | null>(null);
@@ -608,10 +616,10 @@ const SmartSearch: React.FC = () => {
             Object.values(hotel.allocationResults).forEach((rooms: any) => {
                 if (!rooms || rooms.length === 0) return;
                 const minPrice = Math.min(...rooms.map((r: any) => r.price));
-                total += isSubagent ? getPriceWithMargin(minPrice) : Math.round(Number(minPrice));
+                total += isSubagent ? getPriceWithMargin(minPrice) : Number(minPrice);
             });
         } else {
-            total = isSubagent ? getPriceWithMargin(hotel.price) : Math.round(Number(hotel.price));
+            total = isSubagent ? getPriceWithMargin(hotel.price) : Number(hotel.price);
         }
         return total;
     };
@@ -776,7 +784,7 @@ const SmartSearch: React.FC = () => {
                             mealPlan: getMealPlanDisplayName(expandedHotel.mealPlan),
                             adults: roomAllocations.reduce((sum, r) => sum + r.adults, 0),
                             children: roomAllocations.reduce((sum, r) => sum + r.children, 0),
-                            totalPrice: isSubagent ? getPriceWithMargin(selectedRoomForBooking.price) : Math.round(Number(selectedRoomForBooking.price)),
+                            totalPrice: Math.round((isSubagent ? getPriceWithMargin(selectedRoomForBooking.price) : Number(selectedRoomForBooking.price)) * (viewMode === 'notepad' ? 0.8 : 1)),
                             currency: 'EUR',
                             stars: expandedHotel.stars,
                             providerData: expandedHotel.originalData
@@ -1269,7 +1277,7 @@ const SmartSearch: React.FC = () => {
                                                         </div>
                                                         <div className="ss-res-price">
                                                             <span className="p-sm">od</span>
-                                                            <span className="p-val">{getFinalDisplayPrice(hotel)}€</span>
+                                                            <span className="p-val">{formatPrice(getFinalDisplayPrice(hotel))} €</span>
                                                             <button className="ss-apply-btn" onClick={() => {
                                                                 // Re-run search with these specific dates
                                                                 // Find date in timeline that matches this price if possible or just use the firstAvailableDate
@@ -1353,21 +1361,6 @@ const SmartSearch: React.FC = () => {
                                 <div className={`results-container ${viewMode}-view`}>
                                     {viewMode === 'notepad' ? (
                                         <div className="notepad-view-v2 animate-fade-in" style={{ padding: '0', width: '100%' }}>
-                                            {/* OLD NOTEPAD VIEW PRESERVED:
-                                            <div className="notepad-view animate-fade-in" style={{
-                                                background: 'transparent',
-                                                borderRadius: '24px',
-                                                padding: '2rem 0',
-                                                fontFamily: 'monospace',
-                                                lineHeight: '1.8',
-                                                color: 'var(--text-primary)',
-                                            }}>
-                                                {filteredResults.map((hotel, hIdx) => (
-                                                    // ... old implementation
-                                                ))}
-                                            </div>
-                                            */}
-
                                             {filteredResults.map((hotel, hIdx) => (
                                                 <div key={hotel.id} className="hotel-notepad-card" style={{
                                                     background: 'var(--bg-card)',
@@ -1398,109 +1391,154 @@ const SmartSearch: React.FC = () => {
                                                                 {hotel.location}
                                                             </span>
                                                         </div>
-                                                        <div style={{ color: '#fbbf24', fontSize: '1.1rem', fontWeight: 800, whiteSpace: 'nowrap' }}>
-                                                            UKUPNA CENA: {Math.round(hotel.price)} EUR
+                                                        <div style={{ color: '#fbbf24', fontSize: '1.1rem', fontWeight: 800, whiteSpace: 'nowrap', fontStyle: 'italic' }}>
+                                                            UKUPNA CENA OD: {formatPrice(getFinalDisplayPrice(hotel))} EUR
                                                         </div>
                                                     </div>
 
                                                     {/* Body */}
                                                     <div style={{ padding: '2rem' }}>
-                                                        {/* Offer Title Pill */}
-                                                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
-                                                            <div style={{
-                                                                background: 'linear-gradient(90deg, #6366f1, #818cf8)',
-                                                                padding: '8px 24px',
-                                                                borderRadius: '20px',
-                                                                color: 'white',
-                                                                fontSize: '0.75rem',
-                                                                fontWeight: 800,
-                                                                fontStyle: 'italic',
-                                                                textTransform: 'uppercase',
-                                                                letterSpacing: '1px',
-                                                                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)'
-                                                            }}>
-                                                                PONUDA ZA SOBU 1 - {roomAllocations[0].adults} ODRASLE OSOBE {roomAllocations[0].children > 0 ? `I ${roomAllocations[0].children} DECE` : ''}
-                                                            </div>
-                                                        </div>
+                                                        {(() => {
+                                                            const allRooms = (hotel.allocationResults && hotel.allocationResults[0] ? [...hotel.allocationResults[0]].sort((a, b) => (a.price || 0) - (b.price || 0)) : (hotel.rooms || [hotel]));
+                                                            const activeMealFilter = notepadMealFilters[hotel.id] || 'all';
+                                                            const filteredRooms = allRooms.filter(r => activeMealFilter === 'all' || (r.mealPlan || hotel.mealPlan) === activeMealFilter);
+                                                            const uniqueMealPlans = Array.from(new Set(allRooms.map(r => r.mealPlan || hotel.mealPlan))).filter(Boolean);
 
-                                                        {/* Table Header */}
-                                                        <div className="room-header-v4" style={{
-                                                            display: 'grid',
-                                                            gridTemplateColumns: '2.5fr 1.2fr 1fr 1.2fr 1fr',
-                                                            padding: '15px 25px',
-                                                            background: 'rgba(255,255,255,0.04)',
-                                                            borderBottom: '1px solid rgba(255,255,255,0.1)',
-                                                            color: 'var(--text-secondary)',
-                                                            fontSize: '0.7rem',
-                                                            fontWeight: 800,
-                                                            textTransform: 'uppercase',
-                                                            letterSpacing: '1px'
-                                                        }}>
-                                                            <div>TIP SMEŠTAJA</div>
-                                                            <div>USLUGA</div>
-                                                            <div>KAPACITET</div>
-                                                            <div>CENA (UKUPNO)</div>
-                                                            <div>AKCIJA</div>
-                                                        </div>
-
-                                                        {/* Room Rows */}
-                                                        {(hotel.allocationResults && hotel.allocationResults[0] ? hotel.allocationResults[0] : (hotel.rooms || [hotel])).slice(0, 10).map((room: any, rIdx: number) => {
-                                                            const displayPrice = isSubagent ? getPriceWithMargin(room.price || hotel.price) : Math.round(Number(room.price || hotel.price));
                                                             return (
-                                                                <div key={rIdx} className="room-row-v4" style={{
-                                                                    display: 'grid',
-                                                                    gridTemplateColumns: '2.5fr 1.2fr 1fr 1.2fr 1fr',
-                                                                    padding: '4px 25px',
-                                                                    borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                                                    alignItems: 'center',
-                                                                    background: 'transparent'
-                                                                }}>
-                                                                    {/* Name */}
-                                                                    <div className="r-name" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                        <span className="room-type-tag" style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                                                                            {cleanRoomName(room.name || hotel.name || 'Standardna Soba')}
-                                                                        </span>
-                                                                        {room.description && !room.description.includes('Dest:') && (
-                                                                            <span className="room-desc-mini" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                                                                                {cleanRoomName(room.description)}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    {/* Service */}
-                                                                    <div className="r-meal">
-                                                                        <span className="meal-tag-v4" style={{
-                                                                            padding: '4px 10px',
-                                                                            background: 'rgba(99, 102, 241, 0.1)',
-                                                                            border: '1px solid rgba(99, 102, 241, 0.2)',
-                                                                            borderRadius: '6px',
-                                                                            color: '#818cf8',
-                                                                            fontSize: '0.7rem',
-                                                                            fontWeight: 800,
-                                                                            textTransform: 'uppercase'
+                                                                <>
+                                                                    <div style={{
+                                                                        display: 'grid',
+                                                                        gridTemplateColumns: '2.5fr 1.2fr 1fr 1.2fr 1fr',
+                                                                        gap: '15px',
+                                                                        alignItems: 'end',
+                                                                        marginBottom: '1.5rem',
+                                                                        padding: '0 25px'
+                                                                    }}>
+                                                                        <div style={{
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '12px',
+                                                                            fontSize: '0.85rem',
+                                                                            fontWeight: 700,
+                                                                            color: 'var(--text-secondary)',
+                                                                            background: 'rgba(255, 255, 255, 0.03)',
+                                                                            padding: '8px 16px',
+                                                                            borderRadius: '12px',
+                                                                            border: '1px solid rgba(255, 255, 255, 0.05)',
+                                                                            width: 'fit-content'
                                                                         }}>
-                                                                            {getMealPlanDisplayName(room.mealPlan || hotel.mealPlan)}
-                                                                        </span>
+                                                                            <CalendarDays size={16} className="text-indigo-400" />
+                                                                            <span>
+                                                                                {checkIn ? new Date(checkIn).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'} - {checkOut ? new Date(checkOut).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}
+                                                                            </span>
+                                                                            <span style={{ opacity: 0.5 }}>|</span>
+                                                                            <span style={{ color: 'var(--text-primary)' }}>{nights} noćenja</span>
+                                                                        </div>
+
+                                                                        {/* REDESIGNED MEAL FILTER - Now aligned with 'Usluga' column */}
+                                                                        {allRooms.length > 10 ? (
+                                                                            <div className="notepad-filter-section">
+                                                                                <div className="notepad-filter-title">
+                                                                                    <Star size={12} fill="currentColor" />
+                                                                                    ODABERI USLUGU
+                                                                                </div>
+                                                                                <div className="notepad-filter-select-container">
+                                                                                    <select
+                                                                                        className="notepad-filter-select-v2"
+                                                                                        value={activeMealFilter}
+                                                                                        onChange={(e) => setNotepadMealFilters(prev => ({ ...prev, [hotel.id]: e.target.value }))}
+                                                                                    >
+                                                                                        <option value="all">Sve usluge</option>
+                                                                                        {uniqueMealPlans.map(mp => (
+                                                                                            <option key={mp} value={mp}>{getMealPlanDisplayName(mp)}</option>
+                                                                                        ))}
+                                                                                    </select>
+                                                                                    <ChevronDown size={16} className="notepad-filter-chevron-v2" />
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : <div />}
+
+                                                                        <div style={{
+                                                                            gridColumn: '3 / span 3',
+                                                                            display: 'flex',
+                                                                            justifyContent: 'flex-end'
+                                                                        }}>
+                                                                            <div style={{
+                                                                                background: 'linear-gradient(90deg, #6366f1, #818cf8)',
+                                                                                padding: '8px 24px',
+                                                                                borderRadius: '20px',
+                                                                                color: 'white',
+                                                                                fontSize: '0.75rem',
+                                                                                fontWeight: 800,
+                                                                                fontStyle: 'italic',
+                                                                                textTransform: 'uppercase',
+                                                                                letterSpacing: '1px',
+                                                                                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)',
+                                                                                width: 'fit-content'
+                                                                            }}>
+                                                                                PONUDA ZA SOBU 1 - {roomAllocations[0].adults} ODRASLE OSOBE {roomAllocations[0].children > 0 ? `I ${roomAllocations[0].children} DECE` : ''}
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
-                                                                    {/* Capacity */}
-                                                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                        <Users size={14} />
-                                                                        {roomAllocations[0].adults}+{roomAllocations[0].children}
+
+                                                                    <div className="room-header-v4" style={{
+                                                                        display: 'grid',
+                                                                        gridTemplateColumns: '2.5fr 1.2fr 1fr 1.2fr 1fr',
+                                                                        padding: '15px 25px',
+                                                                        background: 'rgba(255,255,255,0.04)',
+                                                                        borderBottom: '1px solid rgba(255,255,255,0.1)',
+                                                                        color: 'var(--text-secondary)',
+                                                                        fontSize: '0.7rem',
+                                                                        fontWeight: 800,
+                                                                        textTransform: 'uppercase',
+                                                                        letterSpacing: '1px'
+                                                                    }}>
+                                                                        <div>TIP SMEŠTAJA</div>
+                                                                        <div>USLUGA</div>
+                                                                        <div>KAPACITET</div>
+                                                                        <div>CENA (UKUPNO)</div>
+                                                                        <div>AKCIJA</div>
                                                                     </div>
-                                                                    {/* Price */}
-                                                                    <div className="r-price">
-                                                                        <span className="notepad-price" style={{ fontSize: '1rem', fontWeight: 800, fontStyle: 'italic' }}>
-                                                                            {displayPrice} EUR
-                                                                        </span>
-                                                                    </div>
-                                                                    {/* Action */}
-                                                                    <div>
-                                                                        <button className="btn-book-v4" onClick={() => handleReserveClick(room, 0, hotel)}>
-                                                                            REZERVIŠI
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
+
+                                                                    {filteredRooms.slice(0, 50).map((room: any, rIdx: number) => {
+                                                                        const displayPrice = isSubagent ? getPriceWithMargin(room.price || hotel.price) : Number(room.price || hotel.price);
+                                                                        return (
+                                                                            <div key={rIdx} className="room-row-v4">
+                                                                                <div className="r-name">
+                                                                                    <span className="room-type-tag">
+                                                                                        {cleanRoomName(room.name || hotel.name || 'Standardna Soba')}
+                                                                                    </span>
+                                                                                    {room.description && !room.description.includes('Dest:') && (
+                                                                                        <span className="room-desc-mini">
+                                                                                            {cleanRoomName(room.description)}
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                                <div className="r-meal">
+                                                                                    <span className="meal-tag-v4">
+                                                                                        {getMealPlanDisplayName(room.mealPlan || hotel.mealPlan)}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                                    <Users size={14} />
+                                                                                    {roomAllocations[0].adults}+{roomAllocations[0].children}
+                                                                                </div>
+                                                                                <div className="r-price">
+                                                                                    <span className="p-val">
+                                                                                        {formatPrice(displayPrice)} EUR
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <button className="btn-book-v4" onClick={() => handleReserveClick(room, 0, hotel)}>
+                                                                                        REZERVIŠI
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </>
                                                             );
-                                                        })}
+                                                        })()}
                                                     </div>
                                                 </div>
                                             ))}
@@ -1508,21 +1546,19 @@ const SmartSearch: React.FC = () => {
                                     ) : (
                                         <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`}>
                                             {filteredResults.map(hotel => (
-                                                <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase()} ${viewMode === 'list' ? 'horizontal' : ''}`}>
-                                                    <a href={`/hotel-view/${hotel.id}`} target="_blank" rel="noopener noreferrer" className="hotel-card-image">
+                                                <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase().replace(/\s+/g, '')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
+                                                    <div className="hotel-card-image" onClick={() => setExpandedHotel(hotel)}>
                                                         <img src={hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
                                                         <div className="meal-plan-badge">{getMealPlanDisplayName(hotel.mealPlan)}</div>
                                                         <div className="hotel-stars-badge">
                                                             {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
                                                         </div>
-                                                    </a>
+                                                    </div>
                                                     <div className="hotel-card-content">
                                                         <div className="hotel-info-text">
                                                             <div className="hotel-title-row">
                                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                                    <a href={`/hotel-view/${hotel.id}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
-                                                                        <h3 style={{ margin: 0 }}>{hotel.name}</h3>
-                                                                    </a>
+                                                                    <h3 style={{ margin: 0 }}>{hotel.name}</h3>
                                                                     {(hotel.salesCount || 0) > 5 && (
                                                                         <span className="best-seller-mini-badge" title={`Preko ${hotel.salesCount} rezervacija u poslednjih 30 dana`}>
                                                                             <TrendingUp size={10} /> BEST SELLER
@@ -1530,14 +1566,12 @@ const SmartSearch: React.FC = () => {
                                                                     )}
                                                                 </div>
                                                                 <div className="hotel-location-tag"><MapPin size={14} /> <span>{hotel.location}</span></div>
-                                                                <div className="hotel-date-badge"><CalendarDays size={14} /> <span>{formatDate(checkIn)} - {formatDate(checkOut)}</span></div>
+                                                                <div className="hotel-date-badge"><CalendarDays size={14} /> <span>{formatDate(checkIn)} - {formatDate(checkOut)} ({nights} noćenja)</span></div>
                                                             </div>
                                                         </div>
                                                         <div className="price-action-section">
                                                             <div className="lowest-price-tag">
-                                                                <span className="price-val">
-                                                                    {getFinalDisplayPrice(hotel)}€
-                                                                </span>
+                                                                <span className="price-val">{formatPrice(getFinalDisplayPrice(hotel))} €</span>
                                                                 {roomAllocations.filter(r => r.adults > 0).length > 1 && (
                                                                     <span className="price-label-multi"># Za {roomAllocations.filter(r => r.adults > 0).length} sobe</span>
                                                                 )}
@@ -1616,7 +1650,7 @@ const SmartSearch: React.FC = () => {
                                                 </div>
                                                 <MapPin size={14} /> {expandedHotel.location}
                                                 <span style={{ marginLeft: '20px', color: '#fbbf24', fontWeight: 800 }}>
-                                                    Ukupna cena od: {getFinalDisplayPrice(expandedHotel)} {expandedHotel.currency}
+                                                    Ukupna cena od: {formatPrice(getFinalDisplayPrice(expandedHotel))} {expandedHotel.currency}
                                                 </span>
                                             </div>
                                         </div>
@@ -1711,7 +1745,8 @@ const SmartSearch: React.FC = () => {
                         )
                     }
                 </>
-            )}
+            )
+            }
         </div >
     );
 };

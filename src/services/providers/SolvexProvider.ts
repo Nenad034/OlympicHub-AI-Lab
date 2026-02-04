@@ -96,7 +96,8 @@ export class SolvexProvider implements HotelProvider {
                         description: `Dest: ${item.hotel.city.name}`,
                         price: item.totalCost,
                         availability: this.bridgeAvailability(item.quotaType),
-                        capacity: item.room.roomType.places
+                        capacity: item.room.roomType.places,
+                        mealPlan: this.bridgeMealPlan(item.pansion.name)
                     });
 
                     // Keep the lowest price as the main price for the card
@@ -241,7 +242,8 @@ export class SolvexProvider implements HotelProvider {
                 description: '',
                 price: solvexResult.totalCost,
                 availability: this.bridgeAvailability(solvexResult.quotaType),
-                capacity: solvexResult.room.roomType.places
+                capacity: solvexResult.room.roomType.places,
+                mealPlan: this.bridgeMealPlan(solvexResult.pansion.name)
             }],
             originalData: solvexResult
         };

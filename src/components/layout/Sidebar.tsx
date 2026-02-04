@@ -87,18 +87,6 @@ const Sidebar: React.FC = () => {
                     </div>
                 )}
 
-                {/* AI Chat - Available for Everyone */}
-                <div className="nav-group">
-                    {userLevel >= 6 && !impersonatedSubagent && <h3 className="nav-label">{!isSidebarCollapsed && 'AI'}</h3>}
-                    <div
-                        className="nav-item"
-                        title="AI Chat"
-                        onClick={() => setChatOpen(true)}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        <GeometricBrain size={30} color="#FFD700" /> {!isSidebarCollapsed && 'AI Chat'}
-                    </div>
-                </div>
 
                 {/* Sectors Section - Only for Staff */}
                 {userLevel >= 6 && !impersonatedSubagent && (
@@ -156,6 +144,18 @@ const Sidebar: React.FC = () => {
                         >
                             <Users size={20} color="#ff9800" /> {!isSidebarCollapsed && (
                                 <span style={{ color: '#ff9800', fontWeight: 700 }}>Subagent Admin</span>
+                            )}
+                        </NavLink>
+                        <NavLink
+                            to="/supplier-admin"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Supplier & Pricing"
+                            style={({ isActive }) => ({
+                                borderLeft: isActive ? '4px solid #10b981' : 'none',
+                            })}
+                        >
+                            <Truck size={20} color="#10b981" /> {!isSidebarCollapsed && (
+                                <span style={{ color: '#10b981', fontWeight: 700 }}>Supplier Pricing</span>
                             )}
                         </NavLink>
                     </div>

@@ -578,7 +578,7 @@ const ReservationsDashboard: React.FC = () => {
                 res.destination,
                 res.accommodationName,
                 res.checkIn,
-                `${res.totalPrice.toLocaleString()} ${res.currency}`,
+                `${formatPrice(res.totalPrice)} ${res.currency}`,
                 res.status
             ]);
 
@@ -766,6 +766,8 @@ ${data.map(r => `  <reservation>
         return true;
     });
 
+    const formatPrice = (val: number) => val.toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
     // Stats calculation based on FILTERED results
     const stats = {
         total: filteredReservations.length,
@@ -952,7 +954,7 @@ ${data.map(r => `  <reservation>
                             <div className="stat-icon revenue"><TrendingUp size={24} /></div>
                             <div className="stat-content">
                                 <span className="stat-label">Ukupan Prihod</span>
-                                <span className="stat-value">{stats.totalRevenue.toLocaleString()} €</span>
+                                <span className="stat-value">{formatPrice(stats.totalRevenue)} €</span>
                             </div>
                         </div>
 
@@ -961,7 +963,7 @@ ${data.map(r => `  <reservation>
                             <div className="stat-icon paid"><CheckCircle2 size={24} /></div>
                             <div className="stat-content">
                                 <span className="stat-label">Ukupno Naplaćeno</span>
-                                <span className="stat-value">{stats.totalPaid.toLocaleString()} €</span>
+                                <span className="stat-value">{formatPrice(stats.totalPaid)} €</span>
                             </div>
                         </div>
 
@@ -970,7 +972,7 @@ ${data.map(r => `  <reservation>
                             <div className="stat-icon outstanding"><TrendingDown size={24} /></div>
                             <div className="stat-content">
                                 <span className="stat-label">Preostalo za Naplatu</span>
-                                <span className="stat-value">{stats.outstanding.toLocaleString()} €</span>
+                                <span className="stat-value">{formatPrice(stats.outstanding)} €</span>
                             </div>
                         </div>
                     </div>
@@ -1340,8 +1342,7 @@ ${data.map(r => `  <reservation>
                                             )}
                                             <span className="cis-code" style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 400, marginTop: '2px' }}>{res.cisCode}</span>
                                         </div>
-                                        <div className="horizontal-status-tags" style={{ marginTop: '6px' }}>
-                                            <span style={{ color: 'var(--text-secondary)', fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '2px', display: 'block' }}>Status</span>
+                                        <div className="horizontal-status-tags" style={{ marginTop: '0px' }}>
                                             <div
                                                 className="status-badge"
                                                 style={{
@@ -1380,8 +1381,7 @@ ${data.map(r => `  <reservation>
 
                                     {/* Agency Column - ONLY FOR STAFF */}
                                     {!isSubagent && (
-                                        <div className="res-agency" style={{ borderLeft: '1px solid var(--border)', paddingLeft: '16px' }}>
-                                            <div className="agency-label" style={{ fontSize: '9px', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 800, letterSpacing: '0.5px' }}>Izvor Prodaje</div>
+                                        <div className="res-agency" style={{ paddingLeft: '8px', display: 'flex', alignItems: 'center' }}>
                                             <div className="agency-name" style={{
                                                 fontSize: '11px',
                                                 fontWeight: 700,
@@ -1468,12 +1468,12 @@ ${data.map(r => `  <reservation>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-end' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 600 }}>UKUPNO:</span>
-                                                <span style={{ fontSize: '15px', fontWeight: 900, color: 'var(--text-primary)' }}>{res.totalPrice.toLocaleString()} {res.currency}</span>
+                                                <span style={{ fontSize: '15px', fontWeight: 900, color: 'var(--text-primary)' }}>{formatPrice(res.totalPrice)} {res.currency}</span>
                                             </div>
 
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 600 }}>PLAĆENO:</span>
-                                                <span style={{ fontSize: '12px', fontWeight: 700, color: '#10b981' }}>{res.paid.toLocaleString()} {res.currency}</span>
+                                                <span style={{ fontSize: '12px', fontWeight: 700, color: '#10b981' }}>{formatPrice(res.paid)} {res.currency}</span>
                                             </div>
 
                                             {res.totalPrice - res.paid > 0 && (
@@ -1489,7 +1489,7 @@ ${data.map(r => `  <reservation>
                                                 }}>
                                                     <span style={{ fontSize: '9px', color: res.paid > 0 ? '#f59e0b' : '#ef4444', fontWeight: 800 }}>DUG:</span>
                                                     <span style={{ fontSize: '12px', fontWeight: 900, color: res.paid > 0 ? '#f59e0b' : '#ef4444' }}>
-                                                        {(res.totalPrice - res.paid).toLocaleString()} {res.currency}
+                                                        {formatPrice(res.totalPrice - res.paid)} {res.currency}
                                                     </span>
                                                 </div>
                                             )}
@@ -1617,17 +1617,17 @@ ${data.map(r => `  <reservation>
                                 <div className="card-footer">
                                     <div className="card-finance">
                                         <div className="finance-row total">
-                                            <span className="price">{res.totalPrice.toLocaleString()} {res.currency}</span>
+                                            <span className="price">{formatPrice(res.totalPrice)} {res.currency}</span>
                                             <span className="pax">{res.paxCount} <Users size={12} /></span>
                                         </div>
                                         <div className="finance-row detail">
                                             <span className="paid-label">Uplaćeno:</span>
-                                            <span className="paid-value">{res.paid.toLocaleString()} {res.currency}</span>
+                                            <span className="paid-value">{formatPrice(res.paid)} {res.currency}</span>
                                         </div>
                                         {res.totalPrice - res.paid > 0 && (
                                             <div className="finance-row detail remaining">
                                                 <span className="due-label">Preostalo:</span>
-                                                <span className="due-value">{(res.totalPrice - res.paid).toLocaleString()} {res.currency}</span>
+                                                <span className="due-value">{formatPrice(res.totalPrice - res.paid)} {res.currency}</span>
                                             </div>
                                         )}
                                     </div>
@@ -1817,7 +1817,7 @@ ${data.map(r => `  <reservation>
                                                                 fontSize: '12px',
                                                                 fontWeight: 900
                                                             }}>
-                                                                {totalRevenue.toLocaleString()} EUR
+                                                                {formatPrice(totalRevenue)} EUR
                                                             </div>
                                                         </div>
 

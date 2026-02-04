@@ -98,7 +98,7 @@ const App: React.FC = () => {
                 style={{
                   position: 'fixed',
                   bottom: '32px',
-                  left: '32px',
+                  right: '32px',
                   width: '64px',
                   height: '64px',
                   borderRadius: '22px',

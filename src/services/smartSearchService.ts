@@ -149,12 +149,23 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
 
                         const existing = finalResultsMap.get(hotelKey)!;
                         config.indices.forEach((roomIdx: number) => {
-                            if (!existing.allocationResults) existing.allocationResults = {};
-                            existing.allocationResults[roomIdx] = h.rooms || [];
-                            // Add price of the cheapest room for this allocation to the total price
-                            const minRoomPrice = Math.min(...(h.rooms?.map((r: any) => r.price) || [h.price]));
-                            existing.price += minRoomPrice;
+                            if (!existing.allocationResults![roomIdx]) {
+                                existing.allocationResults![roomIdx] = h.rooms || [];
+                            } else {
+                                // Append additional room/meal plan options for this room index
+                                existing.allocationResults![roomIdx].push(...(h.rooms || []));
+                            }
                         });
+
+                        // Re-calculate the total starting price for the whole hotel (sum of minimums for each room index)
+                        let minTotal = 0;
+                        Object.values(existing.allocationResults!).forEach((rooms: any) => {
+                            if (rooms && rooms.length > 0) {
+                                const minForThisRoom = Math.min(...rooms.map((r: any) => r.price));
+                                minTotal += Number(minForThisRoom);
+                            }
+                        });
+                        existing.price = minTotal;
                     }
                 });
             });

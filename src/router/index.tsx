@@ -57,6 +57,7 @@ const AmadeusTest = React.lazy(() => import('../pages/AmadeusTest'));
 const TCTTest = React.lazy(() => import('../pages/TCTTest'));
 const MasterSearch = React.lazy(() => import('../pages/MasterSearch'));
 const SubagentAdmin = React.lazy(() => import('../pages/SubagentAdmin'));
+const SupplierAdmin = React.lazy(() => import('../pages/SupplierAdmin'));
 const B2BSearch = React.lazy(() => import('../pages/B2BSearch'));
 const HotelView = React.lazy(() => import('../pages/HotelView'));
 const DocumentPreviewDemo = React.lazy(() => import('../pages/DocumentPreviewDemo'));
@@ -488,6 +489,14 @@ export const router = createBrowserRouter([
                 element: (
                     <ProtectedRoute minLevel={6}>
                         <SubagentAdmin />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: 'supplier-admin',
+                element: (
+                    <ProtectedRoute minLevel={6}>
+                        <SupplierAdmin />
                     </ProtectedRoute>
                 ),
             },

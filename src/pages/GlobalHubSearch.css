@@ -1186,9 +1186,9 @@
     padding: 12px 16px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 14px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -1200,9 +1200,19 @@
     background: rgba(255, 255, 255, 0.05);
 }
 
-.suggestion-info {
+.suggestion-icon.hotel {
+    color: #fbbf24;
+}
+
+.suggestion-icon.destination {
+    color: #3b82f6;
+}
+
+.suggestion-info,
+.suggestion-content {
     display: flex;
     flex-direction: column;
+    flex: 1;
 }
 
 .suggestion-name {
@@ -1325,16 +1335,14 @@
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05) !important;
 }
 
-.light-theme,
-.tokyo-light-theme .autocomplete-dropdown,
+.light-theme .autocomplete-dropdown,
 .tokyo-light-theme .autocomplete-dropdown {
     background: #ffffff !important;
     border-color: #e2e8f0 !important;
     box-shadow: 0 15px 45px rgba(0, 0, 0, 0.1) !important;
 }
 
-.light-theme,
-.tokyo-light-theme .suggestion-name,
+.light-theme .suggestion-name,
 .tokyo-light-theme .suggestion-name {
     color: #1e293b !important;
 }
@@ -1379,17 +1387,18 @@
     font-weight: 600;
 }
 
-.suggestion-type {
+.suggestion-type,
+.suggestion-meta {
     color: #94a3b8;
     font-size: 11px;
 }
 
-.light-theme,
+.light-theme .suggestion-name,
 .tokyo-light-theme .suggestion-name {
     color: #0f172a !important;
 }
 
-.light-theme,
+.light-theme .suggestion-type,
 .tokyo-light-theme .suggestion-type {
     color: #64748b !important;
 }
@@ -2102,48 +2111,191 @@
     border-top: 1px solid #f1f5f9 !important;
 }
 
-.light-theme,
+.light-theme .hotel-result-card-premium .hotel-title-row h3,
 .tokyo-light-theme .hotel-result-card-premium .hotel-title-row h3 {
     color: #1e293b !important;
 }
 
-.light-theme,
+/* NOTEPAD VIEW LIGHT THEME FIXES */
+.light-theme .hotel-notepad-card,
+.tokyo-light-theme .hotel-notepad-card {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+}
+
+.light-theme .hotel-notepad-card h3,
+.tokyo-light-theme .hotel-notepad-card h3 {
+    color: #0f172a !important;
+}
+
+.light-theme .hotel-notepad-card .modal-meta span,
+.tokyo-light-theme .hotel-notepad-card .modal-meta span {
+    color: #475569 !important;
+}
+
+.light-theme .room-header-v4,
+.tokyo-light-theme .room-header-v4 {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+    font-weight: 800 !important;
+}
+
+.light-theme .room-row-v4,
+.tokyo-light-theme .room-row-v4 {
+    border-bottom: 1px solid #f1f5f9 !important;
+    color: #1e293b !important;
+}
+
+.light-theme .room-row-v4:hover,
+.tokyo-light-theme .room-row-v4:hover {
+    background: #f8fafc !important;
+}
+
+.light-theme .room-type-tag,
+.tokyo-light-theme .room-type-tag {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+
+.light-theme .room-desc-mini,
+.tokyo-light-theme .room-desc-mini {
+    color: #64748b !important;
+}
+
+.light-theme .meal-tag-v4,
+.tokyo-light-theme .meal-tag-v4 {
+    background: #eff6ff !important;
+    border-color: #bfdbfe !important;
+    color: #2563eb !important;
+}
+
+.light-theme .notepad-price,
+.tokyo-light-theme .notepad-price {
+    color: #1e40af !important;
+    font-weight: 900 !important;
+    font-style: italic !important;
+}
+
+.notepad-price {
+    font-style: italic !important;
+}
+
+.light-theme .btn-book-v4,
+.tokyo-light-theme .btn-book-v4 {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important;
+}
+
+.light-theme .btn-book-v4:hover,
+.tokyo-light-theme .btn-book-v4:hover {
+    background: #1d4ed8 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3) !important;
+}
+
+.light-theme .modal-body-v4,
+.tokyo-light-theme .modal-body-v4 {
+    background: #ffffff !important;
+}
+
+/* Modal Headers in Light Theme */
+.light-theme .hotel-rooms-modal-header,
+.tokyo-light-theme .hotel-rooms-modal-header {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.light-theme .hotel-rooms-modal-header .modal-meta,
+.tokyo-light-theme .hotel-rooms-modal-header .modal-meta {
+    color: #1e293b !important;
+}
+
+.light-theme .hotel-rooms-modal-header .modal-meta span,
+.tokyo-light-theme .hotel-rooms-modal-header .modal-meta span {
+    color: #1e293b !important;
+}
+
+.light-theme .hotel-description-short,
 .tokyo-light-theme .hotel-description-short {
     color: #475569 !important;
 }
 
-.light-theme,
+/* SMART SUGGESTIONS & HEATMAP LIGHT THEME */
+.light-theme .smart-suggestions-box,
+.tokyo-light-theme .smart-suggestions-box {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+}
+
+.light-theme .heatmap-day.available,
+.tokyo-light-theme .heatmap-day.available {
+    background: #f0fdf4 !important;
+    border-color: #bbf7d0 !important;
+}
+
+.light-theme .h-price,
+.tokyo-light-theme .h-price {
+    color: #1e40af !important;
+    font-weight: 800 !important;
+}
+
+.light-theme .h-day-num,
+.tokyo-light-theme .h-day-num {
+    color: #0f172a !important;
+}
+
+.light-theme .h-day-name,
+.tokyo-light-theme .h-day-name {
+    color: #64748b !important;
+}
+
+.light-theme .ss-message span,
+.tokyo-light-theme .ss-message span {
+    color: #334155 !important;
+}
+
+.light-theme .ss-header h3,
+.tokyo-light-theme .ss-header h3 {
+    color: #0f172a !important;
+}
+
+.light-theme .price-action-section,
 .tokyo-light-theme .price-action-section {
     border-color: #f1f5f9 !important;
     background: #f8fafc !important;
 }
 
-.light-theme,
+.light-theme .price-val,
 .tokyo-light-theme .price-val {
     color: #1e293b !important;
 }
 
-.light-theme,
+.light-theme .installment-label,
 .tokyo-light-theme .installment-label {
     background: rgba(16, 185, 129, 0.1) !important;
     color: #059669 !important;
 }
 
-.light-theme,
+.light-theme .comp-chip,
 .tokyo-light-theme .comp-chip {
     background: #f1f5f9 !important;
     border-color: #e2e8f0 !important;
     color: #475569 !important;
 }
 
-.light-theme,
+.light-theme .comp-chip.active,
 .tokyo-light-theme .comp-chip.active {
     background: #eff6ff !important;
     border-color: #3b82f6 !important;
     color: #2563eb !important;
 }
 
-.light-theme,
+.light-theme .hotel-date-badge,
 .tokyo-light-theme .hotel-date-badge {
     background: #f1f5f9 !important;
     color: #64748b !important;
@@ -2250,7 +2402,7 @@
 }
 
 /* Fix for the children ages display container */
-.light-theme,
+.light-theme .children-ages-inline-v4,
 .tokyo-light-theme .children-ages-inline-v4 {
     background: #f8fafc;
     border-radius: 12px;
@@ -2268,7 +2420,7 @@
     transition: all 0.3s ease;
 }
 
-.light-theme,
+.light-theme .trip-builder-console,
 .tokyo-light-theme .trip-builder-console {
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
@@ -2299,25 +2451,25 @@
 }
 
 /* Light Theme Overrides for Name Filter */
-.light-theme,
+.light-theme .name-filter-input,
 .tokyo-light-theme .name-filter-input {
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
     color: #1e293b !important;
 }
 
-.light-theme,
+.light-theme .filter-search-icon,
 .tokyo-light-theme .filter-search-icon {
     color: #94a3b8 !important;
 }
 
-.light-theme,
+.light-theme .name-filter-input::placeholder,
 .tokyo-light-theme .name-filter-input::placeholder {
     color: #94a3b8;
 }
 
 /* Flexible Dates Ribbon - Light Theme Refinements */
-.light-theme,
+.light-theme .flexible-dates-ribbon-container,
 .tokyo-light-theme .flexible-dates-ribbon-container {
     background: #f8fafc !important;
     border: 1px solid #e2e8f0 !important;
@@ -2325,23 +2477,23 @@
     margin-top: 24px !important;
 }
 
-.light-theme,
+.light-theme .ribbon-header-v4 .title-v4,
 .tokyo-light-theme .ribbon-header-v4 .title-v4 {
     color: #1e293b !important;
 }
 
-.light-theme,
+.light-theme .ribbon-header-v4 .sub-v4,
 .tokyo-light-theme .ribbon-header-v4 .sub-v4 {
     color: #64748b !important;
 }
 
-.light-theme,
+.light-theme .ribbon-header-v4 .glow-icon,
 .tokyo-light-theme .ribbon-header-v4 .glow-icon {
     color: #3b82f6 !important;
     filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.3));
 }
 
-.light-theme,
+.light-theme .flex-date-tile-premium,
 .tokyo-light-theme .flex-date-tile-premium {
     background: #ffffff !important;
     border-color: #e2e8f0 !important;

@@ -2,12 +2,15 @@
 
 :root {
   /* Slate (Dark Theme) - Primary */
-  --bg-dark: #0F172A;
-  --bg-sidebar: #1E293B;
-  --bg-card: #1E293B;
-  --bg-panel: #1E293B;
-  --bg-surface: #334155;
-  --bg-input: #0F172A;
+  --bg-dark: #1E293B;
+  /* Slate 800 - Lighter blue instead of black */
+  --bg-sidebar: #0F172A;
+  /* Slate 900 - Darker sidebar for depth */
+  --bg-card: #334155;
+  /* Slate 700 - Lighter card to pop against bg-dark */
+  --bg-panel: #334155;
+  --bg-surface: #475569;
+  --bg-input: #1E293B;
   --accent: #60A5FA;
   --accent-glow: rgba(96, 165, 250, 0.15);
   --text-primary: #F1F5F9;
@@ -15,7 +18,7 @@
   --border: #334155;
   --glass-bg: rgba(30, 41, 59, 0.7);
   --glass-border: rgba(255, 255, 255, 0.1);
-  --bg-card-hover: #334155;
+  --bg-card-hover: #475569;
   --panel-radius: 20px;
   --gradient-blue: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   --gradient-green: linear-gradient(135deg, #10B981 0%, #059669 100%);
@@ -25,7 +28,8 @@
 
 .light-theme {
   /* Pearl (Light Theme) */
-  --bg-dark: #F1F5F9;
+  --bg-dark: #F0F9FF;
+  /* Sky 50 - Very light blue background instead of white/gray */
   --bg-sidebar: #FFFFFF;
   --bg-card: #FFFFFF;
   --bg-panel: #FFFFFF;
@@ -38,19 +42,19 @@
   --border: #E2E8F0;
   --glass-bg: rgba(255, 255, 255, 0.82);
   --glass-border: rgba(15, 23, 42, 0.1);
-  --bg-card-hover: #F1F5F9;
+  --bg-card-hover: #F8FAFC;
   --gradient-blue: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   --gradient-green: linear-gradient(135deg, #10B981 0%, #059669 100%);
 }
 
 .navy-theme {
   /* Ensure navy-theme maps to our improved Slate Dark */
-  --bg-dark: #0F172A;
-  --bg-sidebar: #1E293B;
-  --bg-card: #1E293B;
-  --bg-panel: #1E293B;
-  --bg-surface: #334155;
-  --bg-input: #0F172A;
+  --bg-dark: #1E293B;
+  --bg-sidebar: #0F172A;
+  --bg-card: #334155;
+  --bg-panel: #334155;
+  --bg-surface: #475569;
+  --bg-input: #1E293B;
   --accent: #60A5FA;
   --accent-glow: rgba(96, 165, 250, 0.15);
   --text-primary: #F1F5F9;
@@ -58,7 +62,7 @@
   --border: #334155;
   --glass-bg: rgba(30, 41, 59, 0.7);
   --glass-border: rgba(255, 255, 255, 0.1);
-  --bg-card-hover: #334155;
+  --bg-card-hover: #475569;
 }
 
 * {

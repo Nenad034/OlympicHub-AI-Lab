@@ -622,8 +622,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding-left: 24px;
-    border-left: 2px solid var(--border);
+    padding-left: 12px;
     min-width: 180px;
 }
 
@@ -1453,4 +1452,57 @@
         grid-template-columns: repeat(4, 1fr);
         /* Wrap nicely on smaller screens */
     }
+}
+
+/* LIGHT THEME OVERRIDES - FORCE COLORS */
+body.light-theme .reservations-dashboard {
+    --text-primary: #0f172a !important;
+    --text-secondary: #475569 !important;
+    --bg-card: #ffffff !important;
+    --border: #cbd5e1 !important;
+}
+
+body.light-theme .reservations-dashboard .stat-value,
+body.light-theme .reservations-dashboard .total-price,
+body.light-theme .reservations-dashboard .dashboard-header h1,
+body.light-theme .reservations-dashboard .card-customer h3,
+body.light-theme .reservations-dashboard .results-count strong {
+    color: #0f172a !important;
+    /* Slate 900 */
+    background: none !important;
+    /* Disable gradients */
+    -webkit-text-fill-color: #0f172a !important;
+    /* Override transparency */
+    background-clip: unset !important;
+    -webkit-background-clip: unset !important;
+}
+
+body.light-theme .reservations-dashboard .stat-label,
+body.light-theme .reservations-dashboard .subtitle,
+body.light-theme .reservations-dashboard .results-count,
+body.light-theme .reservations-dashboard .card-customer p {
+    color: #475569 !important;
+    /* Slate 600 */
+}
+
+body.light-theme .reservations-dashboard .stat-card,
+body.light-theme .reservations-dashboard .search-command-center,
+body.light-theme .reservations-dashboard .reservation-row,
+body.light-theme .reservations-dashboard .reservation-card {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-theme .reservations-dashboard .main-search-bar {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.light-theme .reservations-dashboard .search-input {
+    color: #0f172a !important;
+}
+
+body.light-theme .reservations-dashboard .search-input::placeholder {
+    color: #94a3b8 !important;
 }

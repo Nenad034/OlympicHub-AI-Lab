@@ -76,7 +76,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                 <div className="booking-summary-item booking-summary-price">
                     <span className="booking-summary-label">Ukupna cena:</span>
                     <span className="booking-summary-value price">
-                        {bookingData.totalPrice.toFixed(2)} {bookingData.currency}
+                        {bookingData.totalPrice.toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {bookingData.currency}
                     </span>
                 </div>
             </div>

@@ -7,14 +7,27 @@
     max-width: 100% !important;
 }
 
-/* Force Grid Layout - Default to auto-fill which is responsive by nature */
+/* Force Grid Layout - Enhanced for reliability */
 .results-mosaic.grid-layout {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)) !important;
-    gap: 24px !important;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)) !important;
+    gap: 30px !important;
     width: 100% !important;
     box-sizing: border-box !important;
     padding-bottom: 40px !important;
+}
+
+/* Force 3 columns on desktop specifically if space allows or even if it's tight */
+@media (min-width: 1200px) {
+    .results-mosaic.grid-layout {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+@media (min-width: 1600px) {
+    .results-mosaic.grid-layout {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
 }
 
 /* LIST LAYOUT - Explicit Override */

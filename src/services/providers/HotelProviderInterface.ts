@@ -142,6 +142,9 @@ export interface RoomOption {
 
     /** Maximum occupancy */
     capacity?: number;
+
+    /** Meal plan (optional, for grouped results) */
+    mealPlan?: string;
 }
 
 /**

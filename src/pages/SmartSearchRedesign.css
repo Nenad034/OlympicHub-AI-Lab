@@ -27,6 +27,8 @@
     width: 96%;
     max-width: 1800px;
     margin: 0 auto;
+    zoom: 0.8;
+    /* 20% reduction as requested */
 }
 
 /* --- TABS NAVIGATION --- */
@@ -431,6 +433,10 @@
     margin-top: 10px;
 }
 
+.room-header-v4>div:last-child {
+    text-align: center;
+}
+
 /* Main Row Style - including Modal Override */
 .modern-calendar-popup .room-row-v4,
 .notepad-view-v2 .room-row-v4,
@@ -443,6 +449,7 @@
     align-items: center !important;
     transition: all 0.2s;
     background: transparent !important;
+    font-style: italic !important;
 }
 
 .modern-calendar-popup .room-row-v4:hover,
@@ -513,7 +520,8 @@
 
 .r-price .p-val {
     color: #fbbf24;
-    font-size: 1.1rem;
+    font-size: 0.88rem !important;
+    /* Reduced by 20% from 1.1rem */
     font-weight: 800;
 }
 
@@ -1317,8 +1325,80 @@
 
 .notepad-price {
     color: #ffffff !important;
+    font-style: italic !important;
 }
 
 .light-theme .notepad-price {
     color: #2563EB !important;
+}
+
+/* NOTEPAD FILTER REDESIGN */
+.notepad-filter-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 240px;
+}
+
+.notepad-filter-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #f8fafc;
+    font-size: 0.75rem;
+    font-weight: 800;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.notepad-filter-title svg {
+    color: #fbbf24;
+}
+
+.notepad-filter-select-container {
+    position: relative;
+    width: 100%;
+}
+
+.notepad-filter-select-v2 {
+    width: 100%;
+    background: #0f172a;
+    /* Deep navy */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    appearance: none;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.notepad-filter-select-v2:hover {
+    border-color: rgba(99, 102, 241, 0.5);
+    background: #1e293b;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.notepad-filter-select-v2:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.notepad-filter-chevron-v2 {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: rgba(255, 255, 255, 0.4);
+    transition: color 0.2s;
+}
+
+.notepad-filter-select-v2:hover+.notepad-filter-chevron-v2 {
+    color: #f8fafc;
 }

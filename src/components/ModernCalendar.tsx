@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import './ModernCalendar.css';
 
@@ -105,7 +106,7 @@ export const ModernCalendar: React.FC<ModernCalendarProps> = ({ startDate, endDa
         );
     };
 
-    return (
+    return createPortal(
         <div className="modern-calendar-overlay" onClick={onClose}>
             <div className="modern-calendar-popup wide" onClick={e => e.stopPropagation()} style={{ paddingBottom: '60px', padding: '32px' }}>
                 <button
@@ -144,6 +145,7 @@ export const ModernCalendar: React.FC<ModernCalendarProps> = ({ startDate, endDa
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

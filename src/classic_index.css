@@ -1,10 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-dark: #050608;
-  --bg-sidebar: rgba(13, 17, 23, 0.9);
-  --bg-card: rgba(22, 27, 34, 0.7);
-  --bg-card-hover: rgba(30, 35, 43, 0.9);
+  --bg-dark: #1E293B;
+  /* Slate 800 - Lighter blue background */
+  --bg-sidebar: #0F172A;
+  /* Slate 900 - Darker sidebar */
+  --bg-card: #334155;
+  /* Slate 700 - Lighter card to pop */
+  --bg-card-hover: #475569;
   --accent: #3fb950;
   --accent-glow: rgba(63, 185, 80, 0.2);
   --text-primary: #ffffff;
@@ -19,7 +22,8 @@
 }
 
 .light-theme {
-  --bg-dark: #ffffff;
+  --bg-dark: #F0F9FF;
+  /* Sky 50 - Light blue for background */
   --bg-sidebar: #f6f8fa;
   --bg-card: #ffffff;
   --bg-card-hover: #f1f3f5;
@@ -47,10 +51,10 @@
 }
 
 .navy-theme {
-  --bg-dark: #020617;
-  --bg-sidebar: #0f172a;
-  --bg-card: #1e293b;
-  --bg-card-hover: #334155;
+  --bg-dark: #1E293B;
+  --bg-sidebar: #0F172A;
+  --bg-card: #334155;
+  --bg-card-hover: #475569;
   --accent: #38bdf8;
   --accent-glow: rgba(56, 189, 248, 0.2);
   --text-primary: #ffffff;
