@@ -1,38 +1,23 @@
-/* GRID LAYOUT DEFINITIVE FIX V2 */
+/* GRID LAYOUT DEFINITIVE FIX V3 */
 
 /* Force main container width */
 .results-container {
     width: 100% !important;
     box-sizing: border-box !important;
+    max-width: 100% !important;
 }
 
-/* Force Grid Layout with Explicit Media Queries for Stability */
+/* Force Grid Layout - Default to auto-fill which is responsive by nature */
 .results-mosaic.grid-layout {
     display: grid !important;
-    grid-template-columns: 1fr !important;
-    /* Mobile default */
-    gap: 20px !important;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)) !important;
+    gap: 24px !important;
     width: 100% !important;
     box-sizing: border-box !important;
     padding-bottom: 40px !important;
 }
 
-/* Tablet and Desktop - Use flexible auto-fill */
-@media (min-width: 640px) {
-    .results-mosaic.grid-layout {
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
-        gap: 24px !important;
-    }
-}
-
-/* Ensure cards don't get too large on ultrawide screens */
-@media (min-width: 1800px) {
-    .results-mosaic.grid-layout {
-        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)) !important;
-    }
-}
-
-/* LIST LAYOUT */
+/* LIST LAYOUT - Explicit Override */
 .results-mosaic.list-layout {
     display: flex !important;
     flex-direction: column !important;
@@ -44,16 +29,17 @@
 .hotel-result-card-premium.unified {
     width: 100% !important;
     max-width: none !important;
-    /* Prevent cards from being constrained */
     display: flex !important;
     flex-direction: column;
     min-width: 0 !important;
     box-sizing: border-box !important;
+    height: 100% !important;
+    /* Ensure equal height in grid */
 }
 
 /* Image Height Force */
 .hotel-card-image {
-    height: 200px !important;
+    height: 220px !important;
     width: 100% !important;
 }
 
@@ -77,4 +63,22 @@
 
 .grid-layout .hotel-card-image {
     width: 100% !important;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 480px) {
+    .results-mosaic.grid-layout {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    .list-layout .hotel-result-card-premium.unified {
+        flex-direction: column !important;
+        height: auto !important;
+    }
+
+    .list-layout .hotel-card-image {
+        width: 100% !important;
+        height: 200px !important;
+    }
 }

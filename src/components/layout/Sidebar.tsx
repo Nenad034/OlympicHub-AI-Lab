@@ -77,13 +77,13 @@ const Sidebar: React.FC = () => {
                         >
                             <LayoutDashboard size={20} /> {!isSidebarCollapsed && t.dashboard}
                         </NavLink>
-                        <NavLink
+                        {/* <NavLink
                             to="/master-search"
                             className={({ isActive }) => navItemClass(isActive)}
                             title="Master Pretraga"
                         >
                             <Search size={20} /> {!isSidebarCollapsed && 'Master Pretraga'}
-                        </NavLink>
+                        </NavLink> */}
                     </div>
                 )}
 
@@ -118,13 +118,13 @@ const Sidebar: React.FC = () => {
                         >
                             <Mail size={20} /> {!isSidebarCollapsed && 'Olympic Mail'}
                         </NavLink>
-                        <NavLink
+                        {/* <NavLink
                             to="/total-trip"
                             className={({ isActive }) => navItemClass(isActive)}
                             title="Total Trip"
                         >
                             <Compass size={20} /> {!isSidebarCollapsed && 'Total Trip'}
-                        </NavLink>
+                        </NavLink> */}
                         <NavLink
                             to="/suppliers"
                             className={({ isActive }) => navItemClass(isActive)}

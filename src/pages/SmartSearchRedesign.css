@@ -112,8 +112,8 @@
     background: var(--input-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 0.25rem 1rem;
-    min-height: 56px;
+    padding: 0.5rem 1rem;
+    min-height: 64px;
     display: flex;
     align-items: center;
     transition: all 0.2s;
@@ -124,6 +124,15 @@
 .destination-input-wrapper:focus-within {
     border-color: #818cf8;
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.destination-input-wrapper .smart-input-inline {
+    font-size: 1.15rem !important;
+}
+
+.destination-input-wrapper .destination-chip {
+    font-size: 1.05rem !important;
+    padding: 4px 10px !important;
 }
 
 /* Secondary Inputs Row */
@@ -422,19 +431,52 @@
     margin-top: 10px;
 }
 
+/* Main Row Style - including Modal Override */
+.modern-calendar-popup .room-row-v4,
+.notepad-view-v2 .room-row-v4,
 .room-row-v4 {
     display: grid !important;
     grid-template-columns: 2.5fr 1.2fr 1fr 1.2fr 1fr !important;
     gap: 15px;
-    padding: 20px 25px !important;
+    padding: 4px 25px !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
     align-items: center !important;
     transition: all 0.2s;
     background: transparent !important;
 }
 
+.modern-calendar-popup .room-row-v4:hover,
+.notepad-view-v2 .room-row-v4:hover,
 .room-row-v4:hover {
     background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* High specificity for Notepad & Modal View Button */
+.modern-calendar-popup .room-row-v4 .btn-book-v4,
+.notepad-view-v2 .room-row-v4 .btn-book-v4,
+.btn-book-v4 {
+    background: rgba(99, 102, 241, 0.1) !important;
+    color: #818cf8 !important;
+    border: 1px solid rgba(99, 102, 241, 0.2) !important;
+    padding: 6px 20px !important;
+    border-radius: 8px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    transition: all 0.2s !important;
+    background-image: none !important;
+    /* Ensure no gradient */
+}
+
+.modern-calendar-popup .room-row-v4 .btn-book-v4:hover,
+.notepad-view-v2 .room-row-v4 .btn-book-v4:hover,
+.btn-book-v4:hover {
+    background: rgba(99, 102, 241, 0.2) !important;
+    border-color: #818cf8 !important;
+    transform: translateY(-1px);
+    color: #ffffff !important;
 }
 
 
@@ -1070,14 +1112,15 @@
     margin-top: 22px !important;
     height: auto !important;
     /* Dynamic expansion for children ages */
-    box-shadow: 0 8px 32px rgba(2, 6, 23, 0.5);
-    /* Deep Navy shadow */
+    box-shadow: none !important;
 }
 
 .col-nationality {
     grid-column: 5 !important;
     grid-row: 2 !important;
     margin-top: 0 !important;
+    height: fit-content !important;
+    align-self: start !important;
 }
 
 .animate-fade-in-up {
@@ -1263,6 +1306,19 @@
     transition: transform 0.3s ease;
 }
 
+/* Centering the availability heatmap */
+.heatmap-grid {
+    justify-content: center !important;
+}
+
 .btn-new-search-tag:hover svg {
     transform: rotate(90deg) scale(1.2);
+}
+
+.notepad-price {
+    color: #ffffff !important;
+}
+
+.light-theme .notepad-price {
+    color: #2563EB !important;
 }

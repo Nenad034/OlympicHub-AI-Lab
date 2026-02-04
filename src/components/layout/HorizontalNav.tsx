@@ -55,18 +55,18 @@ const HorizontalNav: React.FC = () => {
                         <NavLink to="/" className={({ isActive }) => navItemClass(isActive)} end>
                             <LayoutDashboard size={18} /> {t.dashboard}
                         </NavLink>
-                        <NavLink to="/master-search" className={({ isActive }) => navItemClass(isActive)}>
+                        {/* <NavLink to="/master-search" className={({ isActive }) => navItemClass(isActive)}>
                             <Search size={18} /> Master Pretraga
-                        </NavLink>
+                        </NavLink> */}
                         <NavLink to="/production" className={({ isActive }) => navItemClass(isActive)}>
                             <Package size={18} /> {t.production}
                         </NavLink>
                         <NavLink to="/mail" className={({ isActive }) => navItemClass(isActive)}>
                             <Mail size={18} /> Olympic Mail
                         </NavLink>
-                        <NavLink to="/total-trip" className={({ isActive }) => navItemClass(isActive)}>
+                        {/* <NavLink to="/total-trip" className={({ isActive }) => navItemClass(isActive)}>
                             <Compass size={18} /> Total Trip
-                        </NavLink>
+                        </NavLink> */}
                         <NavLink to="/suppliers" className={({ isActive }) => navItemClass(isActive)}>
                             <Truck size={18} /> Dobavljači
                         </NavLink>

@@ -359,10 +359,10 @@ export const router = createBrowserRouter([
                 path: 'pricing-intelligence',
                 element: <PricingIntelligence />,
             },
-            {
+            /* {
                 path: 'total-trip',
                 element: <TotalTripSearch />,
-            },
+            }, */
             {
                 path: 'mail',
                 element: <OlympicMail />,
@@ -479,10 +479,10 @@ export const router = createBrowserRouter([
                 path: 'tct-test',
                 element: <TCTTest />,
             },
-            {
+            /* {
                 path: 'master-search',
                 element: <MasterSearch />,
-            },
+            }, */
             {
                 path: 'subagent-admin',
                 element: (
