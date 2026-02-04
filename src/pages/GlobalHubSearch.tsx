@@ -651,11 +651,23 @@ const GlobalHubSearch: React.FC = () => {
         return 0;
     });
 
-    const handleReserveClick = (room: any, rIdx: number, hotelOverride?: SmartSearchResult) => {
-        const hotel = hotelOverride || expandedHotel;
-        if (!hotel) return;
-        setSelectedRoomForBooking({ ...room, allocationIndex: rIdx });
-        setExpandedHotel(hotel);
+    const handleReserveClick = (serviceOrRoom: any, idx: number, sourceService?: SmartSearchResult) => {
+        const service = sourceService || expandedHotel;
+        if (!service) return;
+
+        // If it's a generic service (not hotel), use it directly
+        if (service.type !== 'hotel') {
+            setSelectedRoomForBooking({
+                id: service.id,
+                name: service.name,
+                price: service.price,
+                allocationIndex: 0
+            });
+        } else {
+            setSelectedRoomForBooking({ ...serviceOrRoom, allocationIndex: idx });
+        }
+
+        setExpandedHotel(service);
         setIsBookingModalOpen(true);
     };
 
@@ -733,17 +745,19 @@ const GlobalHubSearch: React.FC = () => {
                         }}
                         provider={expandedHotel.provider.toLowerCase() as any}
                         bookingData={{
+                            serviceName: expandedHotel.name,
+                            serviceType: expandedHotel.type || 'hotel',
                             hotelName: expandedHotel.name,
                             location: expandedHotel.location,
                             checkIn,
-                            checkOut,
-                            nights,
-                            roomType: selectedRoomForBooking.name,
-                            mealPlan: getMealPlanDisplayName(expandedHotel.mealPlan),
+                            checkOut: expandedHotel.type === 'hotel' ? checkOut : undefined,
+                            nights: expandedHotel.type === 'hotel' ? nights : 0,
+                            roomType: expandedHotel.type === 'hotel' ? selectedRoomForBooking.name : (expandedHotel.type === 'transfer' ? 'Transfer' : (expandedHotel.type === 'tour' ? 'Izlet' : 'Usluga')),
+                            mealPlan: expandedHotel.type === 'hotel' ? getMealPlanDisplayName(expandedHotel.mealPlan) : undefined,
                             adults: roomAllocations.reduce((sum, r) => sum + r.adults, 0),
                             children: roomAllocations.reduce((sum, r) => sum + r.children, 0),
-                            totalPrice: Math.round((isSubagent ? getPriceWithMargin(selectedRoomForBooking.price) : Number(selectedRoomForBooking.price)) * (viewMode === 'notepad' ? 0.8 : 1)),
-                            currency: 'EUR',
+                            totalPrice: Math.round(isSubagent ? getPriceWithMargin(selectedRoomForBooking.price || expandedHotel.price) : Number(selectedRoomForBooking.price || expandedHotel.price)),
+                            currency: expandedHotel.currency || 'EUR',
                             stars: expandedHotel.stars,
                             providerData: expandedHotel.originalData
                         }}
@@ -1348,8 +1362,8 @@ const GlobalHubSearch: React.FC = () => {
 
                                                                 {/* Table Header */}
                                                                 <div className="room-header-v4">
-                                                                    <div>TIP SMEŠTAJA</div>
-                                                                    <div>USLUGA</div>
+                                                                    <div>{hotel.type === 'hotel' ? 'TIP SMEŠTAJA' : (hotel.type === 'transfer' ? 'TIP PREVOZA' : 'NAZIV')}</div>
+                                                                    <div>{hotel.type === 'hotel' ? 'USLUGA' : 'DETALJI'}</div>
                                                                     <div>KAPACITET</div>
                                                                     <div>CENA (UKUPNO)</div>
                                                                     <div>AKCIJA</div>
@@ -1438,7 +1452,11 @@ const GlobalHubSearch: React.FC = () => {
                                                                     <span className="price-label-multi"># Za {roomAllocations.filter(r => r.adults > 0).length} sobe</span>
                                                                 )}
                                                             </div>
-                                                            <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji ponude <ArrowRight size={16} /></button>
+                                                            {hotel.type === 'hotel' ? (
+                                                                <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji ponude <ArrowRight size={16} /></button>
+                                                            ) : (
+                                                                <button className="view-more-btn" onClick={() => handleReserveClick(hotel, 0, hotel)}>Rezerviši odmah <ArrowRight size={16} /></button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>

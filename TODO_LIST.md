@@ -863,3 +863,11 @@ Booking form system je implementiran ali **Solvex booking metoda nije dokumentov
 
 **Vreme:** 3-4 sata
 **Prioritet:**  MEDIUM / HIGH
+
+
+## ðŸ´ **URGENT FIXES**
+
+### **Solvex B2B Status Check**
+- **Status:** BROKEN (2026-02-03)
+- **Issue:** API verification button in Reservation Architect fails.
+- **Next Steps:** Debug SOAP GetReservation payload. Verify if 'ID' or 'ExternalID' is correct parameter.

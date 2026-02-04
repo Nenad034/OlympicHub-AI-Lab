@@ -41,6 +41,10 @@ export class AmadeusProvider implements FlightProvider {
         }));
     }
 
+    async book(request: any): Promise<any> {
+        throw new Error('Amadeus booking not implemented yet');
+    }
+
     isConfigured(): boolean {
         return !!(import.meta.env.VITE_AMADEUS_API_KEY && import.meta.env.VITE_AMADEUS_API_SECRET);
     }

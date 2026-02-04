@@ -146,6 +146,27 @@ ${securedData}
     }
 
     /**
+     * Generates a short, catchy AI insight for a hotel
+     */
+    public async generateHotelInsight(hotel: { name: string, stars: number, price: number }, destination: string): Promise<string> {
+        if (!this.genAI || !this.checkLimits()) return "";
+
+        try {
+            this.callCount++;
+            const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const prompt = `Analiziraj hotel "${hotel.name}" (${hotel.stars}*) u mestu "${destination}" sa cenom od ${hotel.price} EUR. Napiši jednu kratku, privlačnu rečenicu na srpskom jeziku (max 15 reči) koja ističe glavnu prednost ili razlog za rezervaciju ovog hotela. Nemoj koristiti navodnike.`;
+
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text().trim().replace(/"/g, '');
+            return text;
+        } catch (error) {
+            console.error('[AiLab] Insight generation failed:', error);
+            return "";
+        }
+    }
+
+    /**
      * Emits intelligence insights
      */
     public emitInsight(message: string): void {

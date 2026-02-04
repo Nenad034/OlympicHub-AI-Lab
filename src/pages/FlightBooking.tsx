@@ -3,11 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
     ArrowLeft, User, Mail, Phone, Calendar, CreditCard,
     Building, MapPin, Check, AlertCircle, Plane, Clock,
-    Users, Briefcase, Info, Shield, Loader2
+    Users, Briefcase, Info, Shield, Loader2, Link as LinkIcon, QrCode
 } from 'lucide-react';
 import type { UnifiedFlightOffer, PassengerDetails, FlightBookingRequest } from '../types/flight.types';
 import type { FlightLeg } from '../components/flight/MultiCityFlightForm';
 import { flightMockService } from '../services/flightMockService';
+import { getFlightProviderManager } from '../services/providers/FlightProviderManager';
 import './FlightBooking.css';
 
 const FlightBooking: React.FC = () => {
@@ -34,7 +35,7 @@ const FlightBooking: React.FC = () => {
     const [passengers, setPassengers] = useState<PassengerDetails[]>([]);
 
     // Payment State
-    const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'bank_transfer'>('credit_card');
+    const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'bank_transfer' | 'agent_link' | 'ips_qr'>('credit_card');
     const [cardDetails, setCardDetails] = useState({
         cardNumber: '',
         cardHolder: '',
@@ -147,7 +148,12 @@ const FlightBooking: React.FC = () => {
                 }
             };
 
-            const result = await flightMockService.bookFlight(bookingRequest);
+            let result;
+            if (offer?.provider === 'Kyte') {
+                result = await getFlightProviderManager().bookFlight(bookingRequest);
+            } else {
+                result = await flightMockService.bookFlight(bookingRequest);
+            }
 
             if (result.success) {
                 setBookingResult(result);
@@ -456,6 +462,20 @@ const FlightBooking: React.FC = () => {
                                     <Building size={20} />
                                     <span>Bankarska Transakcija</span>
                                 </button>
+                                <button
+                                    className={`payment-method-btn ${paymentMethod === 'agent_link' ? 'active' : ''}`}
+                                    onClick={() => setPaymentMethod('agent_link')}
+                                >
+                                    <LinkIcon size={20} />
+                                    <span>Link za Plaćanje</span>
+                                </button>
+                                <button
+                                    className={`payment-method-btn ${paymentMethod === 'ips_qr' ? 'active' : ''}`}
+                                    onClick={() => setPaymentMethod('ips_qr')}
+                                >
+                                    <QrCode size={20} />
+                                    <span>IPS QR Kod (NBS)</span>
+                                </button>
                             </div>
 
                             {/* Credit Card Form */}
@@ -530,15 +550,29 @@ const FlightBooking: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Bank Transfer Info */}
-                            {paymentMethod === 'bank_transfer' && (
+                            {/* Agent Link Info */}
+                            {paymentMethod === 'agent_link' && (
                                 <div className="bank-transfer-info">
                                     <div className="info-box">
-                                        <Info size={16} />
+                                        <LinkIcon size={16} />
                                         <div>
-                                            <p><strong>Uputstvo za plaćanje:</strong></p>
-                                            <p>Nakon potvrde rezervacije, dobićete email sa detaljima za uplatu.</p>
-                                            <p>Rezervacija će biti potvrđena nakon prijema uplate.</p>
+                                            <p><strong>Link za klijenta:</strong></p>
+                                            <p>Sistem će generisati siguran link koji možete poslati klijentu.</p>
+                                            <p>Rezervacija će biti aktivna 30 minuta čekajući uplatu.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* IPS QR Info */}
+                            {paymentMethod === 'ips_qr' && (
+                                <div className="bank-transfer-info">
+                                    <div className="info-box">
+                                        <QrCode size={16} />
+                                        <div>
+                                            <p><strong>Brzo plaćanje (NBS):</strong></p>
+                                            <p>Prikazaćemo IPS QR kod koji klijent skenira aplikacijom banke.</p>
+                                            <p>Instant potvrda uplate u realnom vremenu.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -588,6 +622,36 @@ const FlightBooking: React.FC = () => {
                                     <span>Status:</span>
                                     <span className="status-confirmed">Potvrđeno</span>
                                 </div>
+
+                                {/* Payment Link Display */}
+                                {paymentMethod === 'agent_link' && (
+                                    <div className="payment-link-result" style={{ marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px dashed var(--accent)' }}>
+                                        <p style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Link za plaćanje (pošaljite klijentu):</p>
+                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                            <input
+                                                type="text"
+                                                readOnly
+                                                value={`https://pay.olympichub.com/PAY-${bookingResult.bookingReference}`}
+                                                style={{ flex: 1, background: 'var(--bg-dark)', border: '1px solid var(--border)', padding: '8px', borderRadius: '4px', color: 'var(--text-primary)' }}
+                                            />
+                                            <button
+                                                onClick={() => navigator.clipboard.writeText(`https://pay.olympichub.com/PAY-${bookingResult.bookingReference}`)}
+                                                className="copy-btn"
+                                                style={{ background: 'var(--accent)', color: 'white', border: 'none', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}
+                                            >
+                                                Kopiraj
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* IPS QR Display */}
+                                {paymentMethod === 'ips_qr' && (
+                                    <div className="ips-qr-result" style={{ marginTop: '20px', textAlign: 'center', padding: '20px', background: 'white', borderRadius: '12px', width: 'fit-content', margin: '20px auto' }}>
+                                        <QrCode size={150} color="black" />
+                                        <p style={{ color: 'black', marginTop: '10px', fontWeight: 'bold' }}>Skeniraj za plaćanje</p>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="confirmation-actions">

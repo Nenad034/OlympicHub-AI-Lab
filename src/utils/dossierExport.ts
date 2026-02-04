@@ -46,19 +46,32 @@ export const generateDossierPDF = (dossier: any, lang: Language = 'Srpski') => {
     doc.setFontSize(14);
     doc.text(t.itinerary, 14, currentY + 10);
 
-    const tripRows = tripItems.map((item: any) => [
-        item.type,
-        item.subject,
-        `${formatDate(item.checkIn)} - ${formatDate(item.checkOut)}`,
-        `${item.city}, ${item.country}`,
-        item.mealPlan || '-'
-    ]);
+    const tripRows = tripItems.map((item: any) => {
+        let desc = item.subject;
+
+        if (item.type === 'Avio karte' && item.flightLegs && item.flightLegs.length > 0) {
+            const legs = item.flightLegs.map((l: any) =>
+                `${l.airline} ${l.flightNumber} | ${l.depAirport} ${l.depTime} -> ${l.arrAirport} ${l.arrTime}`
+            ).join('\n');
+            desc = (item.subject ? item.subject + '\n' : '') + legs;
+        }
+
+        return [
+            item.type.toUpperCase(),
+            desc,
+            `${formatDate(item.checkIn)} - ${formatDate(item.checkOut)}`,
+            `${item.city || ''} ${item.country || ''}`,
+            item.mealPlan || item.details || '-'
+        ];
+    });
 
     autoTable(doc, {
         startY: currentY + 15,
         head: [[t.type, t.description, t.period, t.city, t.service]],
         body: tripRows,
-        headStyles: { fillColor: [102, 126, 234] }
+        headStyles: { fillColor: [102, 126, 234] },
+        styles: { overflow: 'linebreak', cellWidth: 'wrap' },
+        columnStyles: { 1: { cellWidth: 70 } }
     });
 
     currentY = (doc as any).lastAutoTable?.finalY ?? currentY + 40;
@@ -137,14 +150,26 @@ export const generateDossierHTML = (dossier: any, lang: Language = 'Srpski') => 
                         <tr><th>${t.type}</th><th>${t.description}</th><th>${t.period}</th><th>${t.service}</th></tr>
                     </thead>
                     <tbody>
-                        ${tripItems.map((item: any) => `
+                        ${tripItems.map((item: any) => {
+        let desc = item.subject;
+        if (item.type === 'Avio karte' && item.flightLegs && item.flightLegs.length > 0) {
+            const legs = item.flightLegs.map((l: any) =>
+                `<div><small>✈ ${l.airline} ${l.flightNumber} | ${l.depAirport} ${l.depTime} &rarr; ${l.arrAirport} ${l.arrTime}</small></div>`
+            ).join('');
+            desc = (item.subject ? `<div><strong>${item.subject}</strong></div>` : '') + legs;
+        } else {
+            desc = `<strong>${item.subject}</strong>`;
+        }
+
+        return `
                             <tr>
-                                <td>${item.type}</td>
-                                <td><strong>${item.subject}</strong></td>
+                                <td>${item.type.toUpperCase()}</td>
+                                <td>${desc}</td>
                                 <td>${formatDate(item.checkIn)} - ${formatDate(item.checkOut)}</td>
-                                <td>${item.mealPlan || '-'}</td>
+                                <td>${item.mealPlan || item.details || '-'}</td>
                             </tr>
-                        `).join('')}
+                        `;
+    }).join('')}
                     </tbody>
                 </table>
             </section>

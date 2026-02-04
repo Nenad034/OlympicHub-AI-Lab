@@ -9,7 +9,7 @@
 // CORE TYPES
 // ============================================================================
 
-export type FlightProvider = 'amadeus' | 'kiwi' | 'duffel' | 'travelFusion' | 'mock';
+export type FlightProvider = 'amadeus' | 'kiwi' | 'duffel' | 'travelFusion' | 'mock' | 'Kyte';
 export type CabinClass = 'economy' | 'premium_economy' | 'business' | 'first';
 export type PassengerType = 'adult' | 'child' | 'infant';
 export type BookingStatus = 'confirmed' | 'pending' | 'processing' | 'failed' | 'cancelled';
@@ -246,7 +246,7 @@ export interface PassportDetails {
  * Payment Details
  */
 export interface PaymentDetails {
-    method: 'credit_card' | 'debit_card' | 'bank_transfer' | 'wallet';
+    method: 'credit_card' | 'debit_card' | 'bank_transfer' | 'wallet' | 'agent_link' | 'ips_qr';
 
     // Za kartice
     cardNumber?: string;

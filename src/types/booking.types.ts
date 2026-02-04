@@ -68,11 +68,13 @@ export interface GenericGuest {
  * Booking data passed to BookingModal
  */
 export interface BookingData {
-    hotelName: string;
+    serviceName: string;
+    serviceType: 'hotel' | 'flight' | 'transfer' | 'tour' | 'package';
+    hotelName?: string;
     location: string;
     checkIn: string; // YYYY-MM-DD
-    checkOut: string; // YYYY-MM-DD
-    nights: number;
+    checkOut?: string; // YYYY-MM-DD (Optional for non-hotel services)
+    nights?: number;   // Optional for non-hotel services
     roomType: string;
     mealPlan?: string;
     adults: number;

@@ -8,7 +8,7 @@ import {
     Package as PackageIcon, UserPlus, Fingerprint, Banknote,
     ArrowRightLeft, Briefcase, MoveRight, MoveLeft, Calendar, Mail,
     Compass, Ship, Sparkles, Search, ExternalLink, Clock, History,
-    Euro, DollarSign, CirclePercent, Copy, Share2, Code
+    Euro, DollarSign, CirclePercent, Copy, Share2, Code, ChevronDown
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import { ModernCalendar } from '../components/ModernCalendar';
@@ -62,6 +62,22 @@ interface TripItem {
     bruttoPrice: number;
     passengers?: Passenger[];
     supplierRef?: string;
+    // Flight specific
+    flightLegs?: FlightLeg[];
+}
+
+interface FlightLeg {
+    id: string;
+    depAirport: string;
+    depDate: string;
+    depTime: string;
+    arrAirport: string;
+    arrDate: string;
+    arrTime: string;
+    flightNumber: string;
+    airline: string;
+    class?: string;
+    baggage?: string;
 }
 
 interface CheckData {
@@ -457,7 +473,7 @@ const ReservationArchitect: React.FC = () => {
                     tripItems: [
                         {
                             id: 't-' + Date.now(),
-                            type: 'Smestaj',
+                            type: (res.tripType === 'Avio karte' || res.type === 'flight' || loadData.type === 'flight') ? 'Avio karte' : 'Smestaj',
                             supplier: res.source,
                             country: res.location.includes('Grčka') ? 'Grčka' : (res.location.includes(',') ? res.location.split(',').pop()?.trim() : res.location),
                             city: res.location.split(',')[0].trim(),
@@ -484,7 +500,8 @@ const ReservationArchitect: React.FC = () => {
                             })(),
                             bruttoPrice: Math.round((loadData.selectedRoom?.price || res.price) * 100) / 100,
                             supplierRef: loadData.externalBookingCode || loadData.externalBookingId || '',
-                            passengers: [...calculatedPassengers]
+                            passengers: [...calculatedPassengers],
+                            flightLegs: (res.tripType === 'Avio karte' || res.type === 'flight' || loadData.type === 'flight') ? [] : undefined
                         }
                     ],
                     booker: leadPassenger ? {
@@ -662,7 +679,8 @@ const ReservationArchitect: React.FC = () => {
                 checkOut: '',
                 netPrice: 0,
                 bruttoPrice: 0,
-                passengers: [...prev.passengers]
+                passengers: [...prev.passengers],
+                flightLegs: type === 'Avio karte' ? [] : undefined
             };
             return { ...prev, tripItems: [...prev.tripItems, newItem] };
         });
@@ -677,6 +695,58 @@ const ReservationArchitect: React.FC = () => {
                     return {
                         ...item,
                         passengers: item.passengers?.filter(p => p.id !== passengerId)
+                    };
+                }
+                return item;
+            })
+        }));
+    };
+
+    const addFlightLeg = (itemId: string) => {
+        setDossier(prev => ({
+            ...prev,
+            tripItems: prev.tripItems.map(item => {
+                if (item.id === itemId) {
+                    const newLeg: FlightLeg = {
+                        id: Math.random().toString(),
+                        depAirport: '',
+                        depDate: '',
+                        depTime: '',
+                        arrAirport: '',
+                        arrDate: '',
+                        arrTime: '',
+                        flightNumber: '',
+                        airline: '',
+                        class: '',
+                        baggage: ''
+                    };
+                    return { ...item, flightLegs: [...(item.flightLegs || []), newLeg] };
+                }
+                return item;
+            })
+        }));
+    };
+
+    const removeFlightLeg = (itemId: string, legId: string) => {
+        setDossier(prev => ({
+            ...prev,
+            tripItems: prev.tripItems.map(item => {
+                if (item.id === itemId) {
+                    return { ...item, flightLegs: (item.flightLegs || []).filter(l => l.id !== legId) };
+                }
+                return item;
+            })
+        }));
+    };
+
+    const updateFlightLeg = (itemId: string, legId: string, field: keyof FlightLeg, value: string) => {
+        setDossier(prev => ({
+            ...prev,
+            tripItems: prev.tripItems.map(item => {
+                if (item.id === itemId) {
+                    return {
+                        ...item,
+                        flightLegs: (item.flightLegs || []).map(l => l.id === legId ? { ...l, [field]: value } : l)
                     };
                 }
                 return item;
@@ -1542,13 +1612,57 @@ const ReservationArchitect: React.FC = () => {
                                             <div key={item.id} className="trip-item-card">
                                                 <div className="item-header" style={{ marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '16px' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                        <div className="type-tag" style={{ background: item.type === 'Smestaj' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(56, 189, 248, 0.1)', color: item.type === 'Smestaj' ? '#10b981' : '#38bdf8' }}>
+                                                        <div className="type-tag" style={{ background: item.type === 'Smestaj' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(56, 189, 248, 0.1)', color: item.type === 'Smestaj' ? '#10b981' : '#38bdf8', padding: '0 8px', display: 'flex', alignItems: 'center' }}>
                                                             {item.type === 'Smestaj' && <Building2 size={16} />}
                                                             {item.type === 'Avio karte' && <Plane size={16} />}
                                                             {item.type === 'Transfer' && <Truck size={16} />}
                                                             {item.type === 'Putovanja' && <Globe size={16} />}
                                                             {item.type === 'Dinamicki paket' && <ArrowRightLeft size={16} />}
-                                                            <span>{item.type === 'Smestaj' ? 'SMEŠTAJ' : item.type.toUpperCase()}</span>
+
+                                                            <select
+                                                                value={item.type}
+                                                                onChange={(e) => {
+                                                                    const newType = e.target.value as TripType;
+                                                                    setDossier(prev => ({
+                                                                        ...prev,
+                                                                        tripItems: prev.tripItems.map(ti => {
+                                                                            if (ti.id === item.id) {
+                                                                                const updates: Partial<TripItem> = { type: newType };
+                                                                                // Initialize/Clear flightLegs
+                                                                                if (newType === 'Avio karte') {
+                                                                                    if (!ti.flightLegs) updates.flightLegs = [];
+                                                                                } else {
+                                                                                    updates.flightLegs = undefined; // Clean up
+                                                                                }
+                                                                                return { ...ti, ...updates };
+                                                                            }
+                                                                            return ti;
+                                                                        })
+                                                                    }));
+                                                                }}
+                                                                style={{
+                                                                    background: 'transparent',
+                                                                    border: 'none',
+                                                                    color: 'inherit',
+                                                                    fontWeight: 800,
+                                                                    fontSize: '11px',
+                                                                    textTransform: 'uppercase',
+                                                                    cursor: 'pointer',
+                                                                    marginLeft: '4px',
+                                                                    appearance: 'none',
+                                                                    WebkitAppearance: 'none',
+                                                                    outline: 'none',
+                                                                    minWidth: '80px', // Ensure clickable area
+                                                                    zIndex: 10
+                                                                }}
+                                                            >
+                                                                <option value="Smestaj" style={{ color: '#333' }}>SMEŠTAJ</option>
+                                                                <option value="Avio karte" style={{ color: '#333' }}>AVIO KARTE</option>
+                                                                <option value="Dinamicki paket" style={{ color: '#333' }}>PAKET</option>
+                                                                <option value="Putovanja" style={{ color: '#333' }}>PUTOVANJE</option>
+                                                                <option value="Transfer" style={{ color: '#333' }}>TRANSFER</option>
+                                                            </select>
+                                                            <ChevronDown size={10} style={{ marginLeft: 2, opacity: 0.7 }} />
                                                         </div>
                                                         <div className="supplier-inline" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                                             <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-secondary)' }}>DOBAVLJAČ:</span>
@@ -1596,133 +1710,277 @@ const ReservationArchitect: React.FC = () => {
                                                     <button className="del-btn-v4" onClick={() => removeTripItem(item.id)}><Trash2 size={14} /></button>
                                                 </div>
 
-                                                {/* Row 1: Dates */}
-                                                <div className="item-row-v4" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                                                    <div className="input-group-premium modern-date-wrapper" onClick={() => setActiveCalendar({ id: item.id, type: 'checkIn' })}>
-                                                        <label><MoveRight size={14} /> Datum Od</label>
-                                                        <div className="custom-date-display">
-                                                            <Calendar size={16} />
-                                                            <span>{formatDate(item.checkIn) || 'Odaberite datum'}</span>
+                                                {/* CONDITIONAL FORM RENDERING */}
+                                                {item.type === 'Avio karte' ? (
+                                                    <div className="flight-itinerary-form">
+                                                        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                            <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '13px' }}>Plan Leta (Itinerer)</h4>
+                                                            <button
+                                                                onClick={() => addFlightLeg(item.id)}
+                                                                style={{
+                                                                    background: 'rgba(56, 189, 248, 0.1)',
+                                                                    color: '#38bdf8',
+                                                                    border: '1px solid rgba(56, 189, 248, 0.2)',
+                                                                    padding: '6px 12px',
+                                                                    borderRadius: '6px',
+                                                                    cursor: 'pointer',
+                                                                    fontSize: '11px',
+                                                                    fontWeight: 700,
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '6px'
+                                                                }}
+                                                            >
+                                                                <Plus size={14} /> Dodaj Let
+                                                            </button>
                                                         </div>
-                                                    </div>
 
-                                                    <div className="input-group-premium modern-date-wrapper" onClick={() => setActiveCalendar({ id: item.id, type: 'checkOut' })}>
-                                                        <label><MoveLeft size={14} /> Datum Do</label>
-                                                        <div className="custom-date-display">
-                                                            <Calendar size={16} />
-                                                            <span>{formatDate(item.checkOut) || 'Odaberite datum'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                        {(!item.flightLegs || item.flightLegs.length === 0) && (
+                                                            <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px dashed var(--border)', color: 'var(--text-secondary)', fontSize: '12px' }}>
+                                                                Nema unetih letova. Kliknite na "Dodaj Let" da definišete itinerer.
+                                                            </div>
+                                                        )}
 
-                                                {/* Row 2: Hotel Info (Name, Stars, City, Country) in ONE ROW */}
-                                                <div className="item-row-v4" style={{
-                                                    display: 'grid',
-                                                    gridTemplateColumns: '2fr 130px 1fr 1fr',
-                                                    gap: '12px',
-                                                    marginBottom: '16px',
-                                                    alignItems: 'end'
-                                                }}>
-                                                    <div className="input-group-v4">
-                                                        <label style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                            Naziv Hotela / Objekata
-                                                            {item.stars && item.stars > 0 && (
-                                                                <span style={{ color: '#f59e0b', fontSize: '10px' }}>
-                                                                    {'⭐'.repeat(Math.round(item.stars))}
-                                                                </span>
-                                                            )}
-                                                        </label>
-                                                        <input
-                                                            value={item.subject}
-                                                            placeholder="Npr. Panorama Village Hotel"
-                                                            style={{ fontWeight: 800 }}
-                                                            onChange={e => {
-                                                                const next = [...dossier.tripItems];
-                                                                next[idx].subject = e.target.value;
-                                                                setDossier({ ...dossier, tripItems: next });
-                                                            }}
-                                                        />
-                                                    </div>
-
-                                                    <div className="input-group-v4">
-                                                        <label>Kategorija</label>
-                                                        <select
-                                                            value={item.stars || 0}
-                                                            style={{
-                                                                background: 'var(--bg-input)',
+                                                        {(item.flightLegs || []).map((leg, legIdx) => (
+                                                            <div key={leg.id} className="flight-leg-card" style={{
+                                                                background: 'rgba(255,255,255,0.03)',
                                                                 border: '1px solid var(--border)',
                                                                 borderRadius: '8px',
-                                                                padding: '10px',
-                                                                height: '42px',
-                                                                color: 'var(--text-primary)',
-                                                                fontWeight: 700,
-                                                                width: '100%'
-                                                            }}
-                                                            onChange={e => {
-                                                                const next = [...dossier.tripItems];
-                                                                next[idx].stars = parseInt(e.target.value);
-                                                                setDossier({ ...dossier, tripItems: next });
-                                                            }}
-                                                        >
-                                                            <option value="0">Bez kat.</option>
-                                                            <option value="1">1*</option>
-                                                            <option value="2">2*</option>
-                                                            <option value="3">3*</option>
-                                                            <option value="4">4*</option>
-                                                            <option value="5">5*</option>
-                                                        </select>
-                                                    </div>
+                                                                padding: '12px',
+                                                                marginBottom: '12px',
+                                                                position: 'relative'
+                                                            }}>
+                                                                <button
+                                                                    onClick={() => removeFlightLeg(item.id, leg.id)}
+                                                                    style={{
+                                                                        position: 'absolute',
+                                                                        top: '8px',
+                                                                        right: '8px',
+                                                                        background: 'transparent',
+                                                                        border: 'none',
+                                                                        color: '#ef4444',
+                                                                        cursor: 'pointer',
+                                                                        opacity: 0.7
+                                                                    }}
+                                                                >
+                                                                    <X size={14} />
+                                                                </button>
+                                                                <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                                                                    Let #{legIdx + 1}
+                                                                </div>
 
-                                                    <div className="input-group-v4">
-                                                        <label>Mesto</label>
-                                                        <input value={item.city || ''} placeholder="Npr. Tasos" onChange={e => {
-                                                            const next = [...dossier.tripItems];
-                                                            next[idx].city = e.target.value;
-                                                            setDossier({ ...dossier, tripItems: next });
-                                                        }} />
-                                                    </div>
+                                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                                                                    <div className="input-group-premium">
+                                                                        <label>Avio Kompanija</label>
+                                                                        <input
+                                                                            value={leg.airline}
+                                                                            onChange={e => updateFlightLeg(item.id, leg.id, 'airline', e.target.value)}
+                                                                            placeholder="Npr. Air Serbia"
+                                                                        />
+                                                                    </div>
+                                                                    <div className="input-group-premium">
+                                                                        <label>Broj Leta</label>
+                                                                        <input
+                                                                            value={leg.flightNumber}
+                                                                            onChange={e => updateFlightLeg(item.id, leg.id, 'flightNumber', e.target.value)}
+                                                                            placeholder="JU 100"
+                                                                        />
+                                                                    </div>
+                                                                    <div className="input-group-premium">
+                                                                        <label>Klasa / Prtljag</label>
+                                                                        <input
+                                                                            value={leg.class}
+                                                                            onChange={e => updateFlightLeg(item.id, leg.id, 'class', e.target.value)}
+                                                                            placeholder="Economy / 23kg"
+                                                                        />
+                                                                    </div>
+                                                                </div>
 
-                                                    <div className="input-group-v4">
-                                                        <label>Država</label>
-                                                        <input value={item.country || ''} placeholder="Npr. Grčka" onChange={e => {
-                                                            const next = [...dossier.tripItems];
-                                                            next[idx].country = e.target.value;
-                                                            setDossier({ ...dossier, tripItems: next });
-                                                        }} />
-                                                    </div>
-                                                </div>
+                                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: '8px', alignItems: 'center' }}>
+                                                                    {/* Departure */}
+                                                                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '6px' }}>
+                                                                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '4px' }}>POLAZAK</div>
+                                                                        <input
+                                                                            value={leg.depAirport}
+                                                                            onChange={e => updateFlightLeg(item.id, leg.id, 'depAirport', e.target.value)}
+                                                                            placeholder="Aerodrom (BEG)"
+                                                                            style={{ width: '100%', background: 'transparent', border: 'none', color: 'white', fontWeight: 700, fontSize: '12px', marginBottom: '4px' }}
+                                                                        />
+                                                                        <div style={{ display: 'flex', gap: '4px' }}>
+                                                                            <input
+                                                                                type="date"
+                                                                                value={leg.depDate}
+                                                                                onChange={e => updateFlightLeg(item.id, leg.id, 'depDate', e.target.value)}
+                                                                                style={{ flex: 2, background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', fontSize: '11px', borderRadius: '4px', padding: '2px' }}
+                                                                            />
+                                                                            <input
+                                                                                type="time"
+                                                                                value={leg.depTime}
+                                                                                onChange={e => updateFlightLeg(item.id, leg.id, 'depTime', e.target.value)}
+                                                                                style={{ flex: 1, background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', fontSize: '11px', borderRadius: '4px', padding: '2px' }}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
 
-                                                {/* Row 3: Accommodation Details */}
-                                                <div className="item-row-v4" style={{ marginBottom: '16px' }}>
-                                                    <div className="input-group-v4">
-                                                        <label>Tip Smeštaja (Tip sobe, Pogled, Sprat...)</label>
-                                                        <input
-                                                            value={item.details}
-                                                            placeholder="Npr. Standard soba, Pogled more"
-                                                            onChange={e => {
-                                                                const newItems = [...dossier.tripItems];
-                                                                newItems[idx].details = e.target.value;
-                                                                setDossier({ ...dossier, tripItems: newItems });
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
+                                                                    <div style={{ height: '80%', background: 'var(--border)' }}></div>
 
-                                                {/* Row 4: Service Type */}
-                                                <div className="item-row-v4" style={{ marginBottom: '24px' }}>
-                                                    <div className="input-group-v4">
-                                                        <label>Vrsta Usluge (Ishrana, Dodatne usluge...)</label>
-                                                        <input
-                                                            value={item.mealPlan || ''}
-                                                            placeholder="Npr. Polupansion (HB)"
-                                                            onChange={e => {
-                                                                const next = [...dossier.tripItems];
-                                                                next[idx].mealPlan = e.target.value;
-                                                                setDossier({ ...dossier, tripItems: next });
-                                                            }}
-                                                        />
+                                                                    {/* Arrival */}
+                                                                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '6px' }}>
+                                                                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '4px' }}>DOLAZAK</div>
+                                                                        <input
+                                                                            value={leg.arrAirport}
+                                                                            onChange={e => updateFlightLeg(item.id, leg.id, 'arrAirport', e.target.value)}
+                                                                            placeholder="Aerodrom (LHR)"
+                                                                            style={{ width: '100%', background: 'transparent', border: 'none', color: 'white', fontWeight: 700, fontSize: '12px', marginBottom: '4px' }}
+                                                                        />
+                                                                        <div style={{ display: 'flex', gap: '4px' }}>
+                                                                            <input
+                                                                                type="date"
+                                                                                value={leg.arrDate}
+                                                                                onChange={e => updateFlightLeg(item.id, leg.id, 'arrDate', e.target.value)}
+                                                                                style={{ flex: 2, background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', fontSize: '11px', borderRadius: '4px', padding: '2px' }}
+                                                                            />
+                                                                            <input
+                                                                                type="time"
+                                                                                value={leg.arrTime}
+                                                                                onChange={e => updateFlightLeg(item.id, leg.id, 'arrTime', e.target.value)}
+                                                                                style={{ flex: 1, background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', fontSize: '11px', borderRadius: '4px', padding: '2px' }}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="item-row-v4" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                                                            <div className="input-group-premium modern-date-wrapper" onClick={() => setActiveCalendar({ id: item.id, type: 'checkIn' })}>
+                                                                <label><MoveRight size={14} /> Datum Od</label>
+                                                                <div className="custom-date-display">
+                                                                    <Calendar size={16} />
+                                                                    <span>{formatDate(item.checkIn) || 'Odaberite datum'}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="input-group-premium modern-date-wrapper" onClick={() => setActiveCalendar({ id: item.id, type: 'checkOut' })}>
+                                                                <label><MoveLeft size={14} /> Datum Do</label>
+                                                                <div className="custom-date-display">
+                                                                    <Calendar size={16} />
+                                                                    <span>{formatDate(item.checkOut) || 'Odaberite datum'}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Row 2: Hotel Info (Name, Stars, City, Country) in ONE ROW */}
+                                                        <div className="item-row-v4" style={{
+                                                            display: 'grid',
+                                                            gridTemplateColumns: '2fr 130px 1fr 1fr',
+                                                            gap: '12px',
+                                                            marginBottom: '16px',
+                                                            alignItems: 'end'
+                                                        }}>
+                                                            <div className="input-group-v4">
+                                                                <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                                    Naziv Hotela / Objekata
+                                                                    {item.stars && item.stars > 0 && (
+                                                                        <span style={{ color: '#f59e0b', fontSize: '10px' }}>
+                                                                            {'⭐'.repeat(Math.round(item.stars))}
+                                                                        </span>
+                                                                    )}
+                                                                </label>
+                                                                <input
+                                                                    value={item.subject}
+                                                                    placeholder="Npr. Panorama Village Hotel"
+                                                                    style={{ fontWeight: 800 }}
+                                                                    onChange={e => {
+                                                                        const next = [...dossier.tripItems];
+                                                                        next[idx].subject = e.target.value;
+                                                                        setDossier({ ...dossier, tripItems: next });
+                                                                    }}
+                                                                />
+                                                            </div>
+
+                                                            <div className="input-group-v4">
+                                                                <label>Kategorija</label>
+                                                                <select
+                                                                    value={item.stars || 0}
+                                                                    style={{
+                                                                        background: 'var(--bg-input)',
+                                                                        border: '1px solid var(--border)',
+                                                                        borderRadius: '8px',
+                                                                        padding: '10px',
+                                                                        height: '42px',
+                                                                        color: 'var(--text-primary)',
+                                                                        fontWeight: 700,
+                                                                        width: '100%'
+                                                                    }}
+                                                                    onChange={e => {
+                                                                        const next = [...dossier.tripItems];
+                                                                        next[idx].stars = parseInt(e.target.value);
+                                                                        setDossier({ ...dossier, tripItems: next });
+                                                                    }}
+                                                                >
+                                                                    <option value="0">Bez kat.</option>
+                                                                    <option value="1">1*</option>
+                                                                    <option value="2">2*</option>
+                                                                    <option value="3">3*</option>
+                                                                    <option value="4">4*</option>
+                                                                    <option value="5">5*</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div className="input-group-v4">
+                                                                <label>Mesto</label>
+                                                                <input value={item.city || ''} placeholder="Npr. Tasos" onChange={e => {
+                                                                    const next = [...dossier.tripItems];
+                                                                    next[idx].city = e.target.value;
+                                                                    setDossier({ ...dossier, tripItems: next });
+                                                                }} />
+                                                            </div>
+
+                                                            <div className="input-group-v4">
+                                                                <label>Država</label>
+                                                                <input value={item.country || ''} placeholder="Npr. Grčka" onChange={e => {
+                                                                    const next = [...dossier.tripItems];
+                                                                    next[idx].country = e.target.value;
+                                                                    setDossier({ ...dossier, tripItems: next });
+                                                                }} />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Row 3: Accommodation Details */}
+                                                        <div className="item-row-v4" style={{ marginBottom: '16px' }}>
+                                                            <div className="input-group-v4">
+                                                                <label>Tip Smeštaja (Tip sobe, Pogled, Sprat...)</label>
+                                                                <input
+                                                                    value={item.details}
+                                                                    placeholder="Npr. Standard soba, Pogled more"
+                                                                    onChange={e => {
+                                                                        const newItems = [...dossier.tripItems];
+                                                                        newItems[idx].details = e.target.value;
+                                                                        setDossier({ ...dossier, tripItems: newItems });
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Row 4: Service Type */}
+                                                        <div className="item-row-v4" style={{ marginBottom: '24px' }}>
+                                                            <div className="input-group-v4">
+                                                                <label>Vrsta Usluge (Ishrana, Dodatne usluge...)</label>
+                                                                <input
+                                                                    value={item.mealPlan || ''}
+                                                                    placeholder="Npr. Polupansion (HB)"
+                                                                    onChange={e => {
+                                                                        const next = [...dossier.tripItems];
+                                                                        next[idx].mealPlan = e.target.value;
+                                                                        setDossier({ ...dossier, tripItems: next });
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </>)}
 
                                                 <div className="item-finance-v4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', alignItems: 'stretch', marginBottom: '24px', background: 'rgba(0,0,0,0.1)', padding: '16px', borderRadius: '12px' }}>
                                                     <div className="input-group-v4" style={{ filter: !canViewFinancials ? 'blur(6px)' : 'none', pointerEvents: !canViewFinancials ? 'none' : 'auto', userSelect: !canViewFinancials ? 'none' : 'auto' }}>

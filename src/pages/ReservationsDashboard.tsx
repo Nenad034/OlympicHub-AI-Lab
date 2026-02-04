@@ -89,6 +89,7 @@ const ReservationsDashboard: React.FC = () => {
         supplier: string[];
         workflow: string[];
         b2bSource: string[];
+        tripType: string[];
     }>({
         status: ['all'],
         reservationFrom: '',
@@ -98,8 +99,36 @@ const ReservationsDashboard: React.FC = () => {
         customerType: ['all'],
         supplier: ['all'],
         workflow: ['all'],
-        b2bSource: ['all']
+        b2bSource: ['all'],
+        tripType: ['all']
     });
+
+    // Trip Type Filter Handler
+    const handleTripTypeFilter = (type: string) => {
+        setActiveFilters(prev => {
+            const current = prev.tripType;
+            let newTypes: string[];
+
+            // If we are currently on 'all', then selecting a type starts a new selection list
+            if (current.includes('all')) {
+                newTypes = [type];
+            } else {
+                // Toggle logic
+                if (current.includes(type)) {
+                    newTypes = current.filter(t => t !== type);
+                } else {
+                    newTypes = [...current, type];
+                }
+            }
+
+            // If empty, revert to 'all'
+            if (newTypes.length === 0) {
+                newTypes = ['all'];
+            }
+
+            return { ...prev, tripType: newTypes };
+        });
+    };
     const toggleWorkflowFilter = (key: string, val: boolean) => {
         const filterStr = `${key}:${val}`;
         let newWorkflow = activeFilters.workflow.includes('all') ? [] : [...activeFilters.workflow];
@@ -343,6 +372,33 @@ const ReservationsDashboard: React.FC = () => {
             finalInvoiceCreated: false,
             hotelCategory: 5,
             leadPassenger: 'Milica Milić'
+        },
+        {
+            id: '7',
+            cisCode: 'CIS-G9L1K3',
+            refCode: 'REF-3051',
+            status: 'Active',
+            customerName: 'Nikola Nikolić',
+            customerType: 'B2C-Individual',
+            destination: 'Rim, Italija',
+            accommodationName: 'Air Serbia JU500 BEG-FCO',
+            checkIn: '2025-10-10',
+            checkOut: '2025-10-15',
+            nights: 5,
+            paxCount: 1,
+            totalPrice: 220,
+            paid: 220,
+            currency: 'EUR',
+            createdAt: '2025-01-08',
+            supplier: 'Kyte',
+            tripType: 'Avio karte',
+            phone: '+381 60 123 4567',
+            email: 'nikola@email.com',
+            hotelNotified: false,
+            reservationConfirmed: true,
+            proformaInvoiceSent: true,
+            finalInvoiceCreated: true,
+            leadPassenger: 'Nikola Nikolić'
         }
     ];
 
@@ -763,6 +819,13 @@ ${data.map(r => `  <reservation>
             if (!b2bMatch) return false;
         }
 
+        // Trip Type Filter
+        if (!activeFilters.tripType.includes('all')) {
+            // Check if reservation trip type matches any of the active filters
+            // We only have single select for now but logic supports array
+            if (!activeFilters.tripType.includes(res.tripType)) return false;
+        }
+
         return true;
     });
 
@@ -979,6 +1042,42 @@ ${data.map(r => `  <reservation>
 
                 </div>
             )}
+
+            {/* Trip Type Filters */}
+            <div className="trip-filters" style={{ display: 'flex', gap: '10px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
+                {[
+                    { id: 'Smeštaj', label: 'Smeštaj', icon: <Building2 size={16} /> },
+                    { id: 'Avio karte', label: 'Avio', icon: <Plane size={16} /> },
+                    { id: 'Dinamički paket', label: 'Paket', icon: <Package size={16} /> },
+                    { id: 'Putovanja', label: 'Putovanje', icon: <Globe size={16} /> },
+                    { id: 'Transfer', label: 'Transfer', icon: <Truck size={16} /> }
+                ].map(type => (
+                    <button
+                        key={type.id}
+                        onClick={() => handleTripTypeFilter(type.id)}
+                        className={`trip-filter-btn`}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 20px',
+                            background: activeFilters.tripType.includes(type.id) ? 'var(--accent)' : 'var(--bg-card)',
+                            color: activeFilters.tripType.includes(type.id) ? 'white' : 'var(--text-secondary)',
+                            border: activeFilters.tripType.includes(type.id) ? 'none' : '1px solid var(--border)',
+                            borderRadius: '10px',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            whiteSpace: 'nowrap',
+                            boxShadow: activeFilters.tripType.includes(type.id) ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none'
+                        }}
+                    >
+                        {type.icon}
+                        {type.label}
+                    </button>
+                ))}
+            </div>
 
             {/* Advanced Search Module */}
             <div className="search-command-center">
@@ -1342,7 +1441,26 @@ ${data.map(r => `  <reservation>
                                             )}
                                             <span className="cis-code" style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 400, marginTop: '2px' }}>{res.cisCode}</span>
                                         </div>
-                                        <div className="horizontal-status-tags" style={{ marginTop: '0px' }}>
+                                        <div className="horizontal-status-tags" style={{ marginTop: '0px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <div
+                                                className="status-badge"
+                                                style={{
+                                                    backgroundColor: 'var(--bg-card)',
+                                                    color: 'var(--text-secondary)',
+                                                    border: '1px solid var(--border)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    fontWeight: 700
+                                                }}
+                                            >
+                                                {res.tripType === 'Smeštaj' && <Building2 size={12} />}
+                                                {res.tripType === 'Avio karte' && <Plane size={12} />}
+                                                {res.tripType === 'Dinamički paket' && <Package size={12} />}
+                                                {res.tripType === 'Putovanja' && <Globe size={12} />}
+                                                {res.tripType === 'Transfer' && <Truck size={12} />}
+                                                {res.tripType}
+                                            </div>
                                             <div
                                                 className="status-badge"
                                                 style={{
@@ -1574,6 +1692,28 @@ ${data.map(r => `  <reservation>
                                         <span className="cis-code">{res.cisCode}</span>
                                     </div>
                                     <div className="res-identity">
+                                        <div
+                                            className="status-badge"
+                                            style={{
+                                                backgroundColor: 'var(--bg-card)',
+                                                color: 'var(--text-secondary)',
+                                                border: '1px solid var(--border)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                fontSize: '10px',
+                                                padding: '2px 6px',
+                                                marginBottom: '4px',
+                                                width: 'fit-content'
+                                            }}
+                                        >
+                                            {res.tripType === 'Smeštaj' && <Building2 size={10} />}
+                                            {res.tripType === 'Avio karte' && <Plane size={10} />}
+                                            {res.tripType === 'Dinamički paket' && <Package size={10} />}
+                                            {res.tripType === 'Putovanja' && <Globe size={10} />}
+                                            {res.tripType === 'Transfer' && <Truck size={10} />}
+                                            {res.tripType}
+                                        </div>
                                         <div className={`status-badge ${res.status.toLowerCase()}`}>
                                             {res.status}
                                         </div>
@@ -2102,7 +2242,8 @@ ${data.map(r => `  <reservation>
                                     customerType: ['all'],
                                     supplier: ['all'],
                                     workflow: ['all'],
-                                    b2bSource: ['all']
+                                    b2bSource: ['all'],
+                                    tripType: ['all']
                                 });
                             }}>
                                 Poništi Sve

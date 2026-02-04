@@ -8,8 +8,11 @@
 
 import type { FlightProvider, FlightSearchParams, FlightOffer } from './FlightProviderInterface';
 import { AmadeusProvider } from './AmadeusProvider';
+import { KyteProvider } from './KyteProvider';
 import { sentinelEvents } from '../../utils/sentinelEvents';
 import { searchHistory } from '../../utils/searchHistory';
+
+import type { FlightBookingRequest, FlightBookingResponse, FlightProvider as FlightProviderType } from '../../types/flight.types';
 
 export class FlightProviderManager {
     private providers: Map<string, FlightProvider> = new Map();
@@ -28,6 +31,18 @@ export class FlightProviderManager {
             }
         } catch (error) {
             console.error('❌ Failed to register Amadeus provider:', error);
+        }
+
+        // Register Kyte provider
+        // Register Kyte provider
+        try {
+            const kyteProvider = new KyteProvider();
+            if (kyteProvider.isConfigured()) {
+                this.registerProvider(kyteProvider);
+                console.log('✅ Kyte flight provider registered');
+            }
+        } catch (error) {
+            console.error('❌ Failed to register Kyte provider:', error);
         }
     }
 
@@ -74,6 +89,20 @@ export class FlightProviderManager {
         });
 
         return sortedResults;
+    }
+
+    async bookFlight(request: FlightBookingRequest): Promise<FlightBookingResponse> {
+        // Find provider by name (case-insensitive)
+        const providerName = request.provider;
+        const provider = Array.from(this.providers.values())
+            .find(p => p.name.toLowerCase() === providerName.toLowerCase());
+
+        if (!provider) {
+            throw new Error(`Provider '${providerName}' not found or not active.`);
+        }
+
+        await provider.authenticate();
+        return provider.book(request);
     }
 
     private async searchProvider(provider: FlightProvider, params: FlightSearchParams): Promise<FlightOffer[]> {

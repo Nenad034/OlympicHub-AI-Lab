@@ -201,7 +201,7 @@ export async function makeSoapRequest<T>(
             method: 'POST',
             headers: {
                 'Content-Type': 'text/xml; charset=utf-8',
-                'SOAPAction': method.startsWith('http') ? method : `http://www.megatec.ru/${method}`
+                'SOAPAction': `"${method.startsWith('http') ? method : `http://www.megatec.ru/${method}`}"`
             },
             body: soapEnvelope,
             signal: controller.signal

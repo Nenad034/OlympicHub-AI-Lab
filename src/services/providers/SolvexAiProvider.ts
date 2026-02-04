@@ -33,10 +33,10 @@ export class SolvexAiProvider extends SolvexProvider implements HotelProvider {
         }
 
         // Apply optimizations using the Centralized AI Service
-        return this.applyAiOptimizations(rawResults, params);
+        return await this.applyAiOptimizations(rawResults, params);
     }
 
-    private applyAiOptimizations(results: HotelSearchResult[], params: HotelSearchParams): HotelSearchResult[] {
+    private async applyAiOptimizations(results: HotelSearchResult[], params: HotelSearchParams): Promise<HotelSearchResult[]> {
         const optimized = results.map(hotel => {
             const { score } = this.aiService.calculateIntelligenceScore(
                 { hotelName: hotel.hotelName, price: hotel.price, stars: hotel.stars },
@@ -59,6 +59,27 @@ export class SolvexAiProvider extends SolvexProvider implements HotelProvider {
 
         if (optimized.length > 0) {
             this.aiService.emitInsight(`Solvex AI je pronašao ${optimized.length} ponuda optimizovanih za vašu pretragu.`);
+
+            // For a better UX, we await but with a very short timeout or just let it delay slightly.
+            // Since this is a specialized AI provider, users expect a bit of "thinking".
+
+            const top3 = optimized.slice(0, 3);
+            const others = optimized.slice(3);
+
+            try {
+                const enrichedTop3 = await Promise.all(top3.map(async (hotel) => {
+                    const insight = await this.aiService.generateHotelInsight(
+                        { name: hotel.hotelName, stars: hotel.stars, price: hotel.price },
+                        params.destination
+                    );
+                    return { ...hotel, aiInsight: insight };
+                }));
+
+                return [...enrichedTop3, ...others];
+            } catch (e) {
+                console.warn('[SolvexAi] Enrichment warning:', e);
+                return optimized;
+            }
         }
 
         return optimized;

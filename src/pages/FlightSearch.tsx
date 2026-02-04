@@ -595,6 +595,7 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
                     <p>Pretražujemo najbolje ponude...</p>
                     <div className="loading-providers">
                         <span className="provider-badge">Amadeus</span>
+                        <span className="provider-badge">Kyte</span>
                         <span className="provider-badge">Kiwi.com</span>
                         <span className="provider-badge">Duffel</span>
                     </div>

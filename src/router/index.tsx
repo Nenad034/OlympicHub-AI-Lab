@@ -61,6 +61,7 @@ const SupplierAdmin = React.lazy(() => import('../pages/SupplierAdmin'));
 const B2BSearch = React.lazy(() => import('../pages/B2BSearch'));
 const HotelView = React.lazy(() => import('../pages/HotelView'));
 const DocumentPreviewDemo = React.lazy(() => import('../pages/DocumentPreviewDemo'));
+const KyteTest = React.lazy(() => import('../pages/KyteTest'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
@@ -479,6 +480,10 @@ export const router = createBrowserRouter([
             {
                 path: 'tct-test',
                 element: <TCTTest />,
+            },
+            {
+                path: 'kyte-test',
+                element: <KyteTest />,
             },
             /* {
                 path: 'master-search',

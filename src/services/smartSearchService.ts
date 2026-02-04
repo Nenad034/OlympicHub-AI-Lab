@@ -57,6 +57,38 @@ export const PROVIDER_MAPPING = {
 export async function performSmartSearch(params: SmartSearchParams): Promise<SmartSearchResult[]> {
     console.log('[SmartSearchService] Starting multi-room search...', params);
 
+    // --- Transfer Search ---
+    if (params.searchType === 'transfer') {
+        return [
+            {
+                provider: 'Olympic',
+                type: 'transfer',
+                id: 'tr-1',
+                name: 'Privatni Transfer (Standard)',
+                location: params.destinations[0]?.name || 'Aerodrom - Hotel',
+                price: 45,
+                currency: 'EUR',
+                originalData: {}
+            }
+        ];
+    }
+
+    // --- Tour Search ---
+    if (params.searchType === 'tour') {
+        return [
+            {
+                provider: 'Olympic',
+                type: 'tour',
+                id: 'tour-1',
+                name: 'Obilazak grada sa vodičem',
+                location: params.destinations[0]?.name || 'Centar grada',
+                price: 25,
+                currency: 'EUR',
+                originalData: {}
+            }
+        ];
+    }
+
     if (params.searchType !== 'hotel') {
         return [];
     }

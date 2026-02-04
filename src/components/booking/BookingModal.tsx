@@ -53,9 +53,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
     // Initialize additional guests when modal opens
     useEffect(() => {
-        console.log('[BookingModal] Effect triggered. isOpen:', isOpen, 'Data:', bookingData?.hotelName);
+        const title = bookingData?.serviceName || bookingData?.hotelName;
+        console.log('[BookingModal] Effect triggered. isOpen:', isOpen, 'Data:', title);
         if (isOpen && bookingData) {
-            console.log('[BookingModal] Initializing guests for:', bookingData.hotelName);
+            console.log('[BookingModal] Initializing guests for:', title);
             const adl = parseInt(bookingData.adults.toString()) || 1;
             const chd = parseInt(bookingData.children.toString()) || 0;
             const totalGuests = adl + chd;
@@ -150,7 +151,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     hotelId: solvexResult.hotel.id,
                     nMen: bookingData.adults,
                     startDate: `${bookingData.checkIn}T00:00:00`,
-                    duration: bookingData.nights,
+                    duration: bookingData.nights || 0,
                     room: {
                         roomTypeId: solvexResult.room.roomType.id,
                         roomCategoryId: solvexResult.room.roomCategory.id,
@@ -169,10 +170,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 });
 
                 if (saveResult.success && saveResult.data) {
-                    // Create payload for Reservation Architect (Dossier)
                     const payload = {
                         selectedResult: {
-                            name: bookingData.hotelName,
+                            name: bookingData.serviceName || bookingData.hotelName || 'Usluga',
                             location: bookingData.location,
                             source: provider.toUpperCase(),
                             price: bookingData.totalPrice,
@@ -186,8 +186,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         },
                         searchParams: {
                             checkIn: bookingData.checkIn,
-                            checkOut: bookingData.checkOut,
-                            nights: bookingData.nights,
+                            checkOut: bookingData.checkOut || '',
+                            nights: bookingData.nights || 0,
                             adults: bookingData.adults,
                             children: bookingData.children
                         },
@@ -219,7 +219,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             // Fallback: Default flow (save to localStorage and open Architect)
             const payload = {
                 selectedResult: {
-                    name: bookingData.hotelName,
+                    name: bookingData.serviceName || bookingData.hotelName || 'Usluga',
                     location: bookingData.location,
                     source: provider.toUpperCase(),
                     price: bookingData.totalPrice,
@@ -233,8 +233,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 },
                 searchParams: {
                     checkIn: bookingData.checkIn,
-                    checkOut: bookingData.checkOut,
-                    nights: bookingData.nights,
+                    checkOut: bookingData.checkOut || '',
+                    nights: bookingData.nights || 0,
                     adults: bookingData.adults,
                     children: bookingData.children
                 },
@@ -259,11 +259,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     };
 
     if (!isOpen) {
-        console.log('[BookingModal] Not rendering because isOpen is false');
         return null;
     }
 
-    console.log('[BookingModal] RENDERING MODAL UI for:', bookingData.hotelName);
+    const displayTitle = bookingData.serviceName || bookingData.hotelName || 'Rezervacija';
+    console.log('[BookingModal] RENDERING MODAL UI for:', displayTitle);
 
     const modalContent = (
         <div className="booking-modal-overlay" onClick={onClose} style={{ zIndex: 20000000 }}>
@@ -271,7 +271,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <div className="booking-modal-header">
                     <div>
                         <h2>Podaci za Rezervaciju</h2>
-                        <p className="hotel-name">{bookingData.hotelName}</p>
+                        <p className="hotel-name">{displayTitle}</p>
                         <p className="hotel-location">{bookingData.location}</p>
                     </div>
                     <button className="close-button" onClick={onClose}><X size={24} /></button>

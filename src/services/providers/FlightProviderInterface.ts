@@ -27,10 +27,13 @@ export interface FlightOffer {
     validatingAirlineCodes: string[];
 }
 
+import type { FlightBookingRequest, FlightBookingResponse } from '../../types/flight.types';
+
 export interface FlightProvider {
     readonly name: string;
     readonly isActive: boolean;
     authenticate(): Promise<void>;
     search(params: FlightSearchParams): Promise<FlightOffer[]>;
+    book(request: FlightBookingRequest): Promise<FlightBookingResponse>;
     isConfigured(): boolean;
 }

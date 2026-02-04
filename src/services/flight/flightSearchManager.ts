@@ -105,10 +105,19 @@ class FlightSearchManager {
                 });
             });
 
-            providerStatuses.push({
-                provider: 'amadeus', // Amadeus is currently the only live provider
-                status: 'complete',
-                resultCount: providerOffers.length
+            // Aggregate counts by provider
+            const countsByProvider = providerOffers.reduce((acc, offer) => {
+                const name = offer.providerName.toLowerCase();
+                acc[name] = (acc[name] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+
+            Object.entries(countsByProvider).forEach(([name, count]) => {
+                providerStatuses.push({
+                    provider: name as any,
+                    status: 'complete',
+                    resultCount: count
+                });
             });
         }
 
