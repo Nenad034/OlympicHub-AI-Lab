@@ -24,6 +24,7 @@ import './ReservationArchitect.css';
 import { getTranslation } from '../utils/translations';
 import type { Language } from '../utils/translations';
 import { generateDossierPDF, generateDossierHTML } from '../utils/dossierExport';
+import supplierService from '../services/SupplierService';
 
 // --- Types ---
 type TripType = 'Smestaj' | 'Avio karte' | 'Dinamicki paket' | 'Putovanja' | 'Transfer';
@@ -131,7 +132,8 @@ const ReservationArchitect: React.FC = () => {
 
     // B2B Segment States
     const { userLevel } = useAuthStore();
-    const isSubagent = userLevel < 6;
+    const isSubagent = userLevel < 6; // Basic Agents/Subagents
+    const canViewFinancials = userLevel >= 7; // Managers/Admins only
     const [commsSubject, setCommsSubject] = useState('');
     const [commsMessage, setCommsMessage] = useState('');
 
@@ -230,7 +232,8 @@ const ReservationArchitect: React.FC = () => {
         },
         language: 'Srpski' as Language
     });
-    const [isAdminMode, setIsAdminMode] = useState(false);
+    const [isAdminMode, setIsAdminMode] = useState(true);
+
     const [isNotepadView, setIsNotepadView] = useState(false);
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
     const [activeCalendar, setActiveCalendar] = useState<{ id: string; type?: string } | null>(null);
@@ -270,7 +273,12 @@ const ReservationArchitect: React.FC = () => {
 
     useEffect(() => {
         async function initialize() {
+            // Chunk 1: Fetch suppliers
+            const allSuppliers = await supplierService.getAllSuppliers();
+
             const urlParams = new URLSearchParams(location.search);
+            // ...
+
             const resId = urlParams.get('id');
             const loadFrom = urlParams.get('loadFrom');
 
@@ -467,7 +475,13 @@ const ReservationArchitect: React.FC = () => {
                             mealPlan: getMealPlanDescription((res.mealPlan || loadData.selectedRoom?.mealPlan || '').replace('Standard Room', '')),
                             checkIn: searchParams.checkIn,
                             checkOut: searchParams.checkOut,
-                            netPrice: Math.round((loadData.selectedRoom?.price || res.price) * 100) / 100,
+                            netPrice: (() => {
+                                const gross = Math.round((loadData.selectedRoom?.price || res.price) * 100) / 100;
+                                const supplierName = res.source || '';
+                                const matched = allSuppliers.find(s => s.name.toLowerCase().includes(supplierName.toLowerCase()) || supplierName.toLowerCase().includes(s.name.toLowerCase()));
+                                const comm = matched?.defaultPolicy?.commission || 0;
+                                return comm > 0 ? Math.round((gross * (1 - comm / 100)) * 100) / 100 : gross;
+                            })(),
                             bruttoPrice: Math.round((loadData.selectedRoom?.price || res.price) * 100) / 100,
                             supplierRef: loadData.externalBookingCode || loadData.externalBookingId || '',
                             passengers: [...calculatedPassengers]
@@ -1710,8 +1724,8 @@ const ReservationArchitect: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                <div className="item-finance-v4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', alignItems: 'stretch', opacity: isAdminMode ? 1 : 0.8, marginBottom: '24px', background: 'rgba(0,0,0,0.1)', padding: '16px', borderRadius: '12px' }}>
-                                                    <div className="input-group-v4" style={{ filter: !isAdminMode ? 'blur(4px)' : 'none', pointerEvents: !isAdminMode ? 'none' : 'auto' }}>
+                                                <div className="item-finance-v4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', alignItems: 'stretch', marginBottom: '24px', background: 'rgba(0,0,0,0.1)', padding: '16px', borderRadius: '12px' }}>
+                                                    <div className="input-group-v4" style={{ filter: !canViewFinancials ? 'blur(6px)' : 'none', pointerEvents: !canViewFinancials ? 'none' : 'auto', userSelect: !canViewFinancials ? 'none' : 'auto' }}>
                                                         <label style={{ color: '#94a3b8' }}>Neto ({dossier.finance.currency})</label>
                                                         <input
                                                             type="number"
@@ -1737,63 +1751,49 @@ const ReservationArchitect: React.FC = () => {
                                                             }}
                                                         />
                                                     </div>
-                                                    <div className="input-group-v4" style={{ filter: !isAdminMode ? 'blur(4px)' : 'none' }}>
-                                                        <label style={{ color: '#3b82f6' }}>ZARADA</label>
-                                                        <div className="profit-box-v4" style={{
-                                                            background: 'rgba(59, 130, 246, 0.05)',
-                                                            padding: '0 14px',
-                                                            borderRadius: '10px',
-                                                            border: '1px solid rgba(59, 130, 246, 0.1)',
-                                                            height: '44px',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            fontSize: '18px',
-                                                            fontWeight: 900,
-                                                            color: '#3b82f6'
-                                                        }}>
-                                                            +{(item.bruttoPrice - item.netPrice).toFixed(2)}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="input-group-v3" style={{
-                                                        filter: !isAdminMode ? 'blur(4px)' : 'none',
-                                                        position: 'relative'
-                                                    }}>
-                                                        <label style={{ color: '#10b981', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>MARŽA</label>
-                                                        <div className="profit-box-v4" style={{
-                                                            background: 'rgba(16, 185, 129, 0.05)',
-                                                            padding: '0 14px',
-                                                            borderRadius: '10px',
-                                                            border: '1px solid rgba(16, 185, 129, 0.1)',
-                                                            height: '44px',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            fontSize: '18px',
-                                                            fontWeight: 900,
-                                                            color: '#10b981'
-                                                        }}>
-                                                            {item.netPrice > 0 ? (((item.bruttoPrice - item.netPrice) / item.netPrice) * 100).toFixed(1) : '0'}%
-                                                        </div>
-                                                        {!isAdminMode && (
-                                                            <div style={{
-                                                                position: 'absolute',
-                                                                inset: 0,
+                                                    <div className="input-group-v4" style={{ position: 'relative' }}>
+                                                        <div style={{ filter: !canViewFinancials ? 'blur(6px)' : 'none' }}>
+                                                            <label style={{ color: '#3b82f6' }}>RAZLIKA (PROFIT)</label>
+                                                            <div className="profit-box-v4" style={{
+                                                                background: 'rgba(59, 130, 246, 0.05)',
+                                                                padding: '0 14px',
+                                                                borderRadius: '10px',
+                                                                border: '1px solid rgba(59, 130, 246, 0.1)',
+                                                                height: '44px',
                                                                 display: 'flex',
                                                                 alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                color: 'var(--text-secondary)',
-                                                                fontSize: '9px',
-                                                                fontWeight: 800,
-                                                                textAlign: 'center',
-                                                                background: 'rgba(0,0,0,0.1)',
-                                                                borderRadius: '10px',
-                                                                zIndex: 2
+                                                                fontSize: '18px',
+                                                                fontWeight: 900,
+                                                                color: '#3b82f6'
                                                             }}>
-                                                                <Shield size={10} style={{ marginRight: '4px' }} /> LOKOVANO
+                                                                +{(item.bruttoPrice - item.netPrice).toFixed(2)}
                                                             </div>
-                                                        )}
+                                                        </div>
+                                                        {!canViewFinancials && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '10px', fontWeight: 700 }}><Shield size={12} style={{ marginRight: 4 }} /> RESTRICTED</div>}
+                                                    </div>
+
+                                                    <div className="input-group-v3" style={{ position: 'relative' }}>
+                                                        <div style={{ filter: !canViewFinancials ? 'blur(6px)' : 'none' }}>
+                                                            <label style={{ color: '#10b981', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>MARŽA %</label>
+                                                            <div className="profit-box-v4" style={{
+                                                                background: 'rgba(16, 185, 129, 0.05)',
+                                                                padding: '0 14px',
+                                                                borderRadius: '10px',
+                                                                border: '1px solid rgba(16, 185, 129, 0.1)',
+                                                                height: '44px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                fontSize: '18px',
+                                                                fontWeight: 900,
+                                                                color: '#10b981'
+                                                            }}>
+                                                                {item.netPrice > 0 ? (((item.bruttoPrice - item.netPrice) / item.netPrice) * 100).toFixed(1) : '0'}%
+                                                            </div>
+                                                        </div>
+                                                        {!canViewFinancials && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '10px', fontWeight: 700 }}><Shield size={12} style={{ marginRight: 4 }} /> RESTRICTED</div>}
                                                     </div>
                                                 </div>
+
 
 
 
@@ -1913,802 +1913,819 @@ const ReservationArchitect: React.FC = () => {
                                     )}
                                 </div>
                             </section>
-                        )}
+                        )
+                        }
 
                         {/* SECTION 3: FINANCE (Payments & Receipts) */}
-                        {activeSection === 'finance' && (
-                            <section className="res-section fade-in">
-                                <div className="section-title"><h3>Finansijski Dossier & Uplate</h3></div>
+                        {
+                            activeSection === 'finance' && (
+                                <section className="res-section fade-in">
+                                    <div className="section-title"><h3>Finansijski Dossier & Uplate</h3></div>
 
-                                <div className="finance-hero-v4">
-                                    <div className="hero-box">
-                                        <span>Ukupno (BRUTO)</span>
-                                        <h2>{totalBrutto.toFixed(2)} {dossier.finance.currency}</h2>
+                                    <div className="finance-hero-v4">
+                                        <div className="hero-box">
+                                            <span>Ukupno (BRUTO)</span>
+                                            <h2>{totalBrutto.toFixed(2)} {dossier.finance.currency}</h2>
+                                        </div>
+                                        <div className="hero-box success">
+                                            <span>Dosad uplaćeno</span>
+                                            <h2>{totalPaid.toFixed(2)} {dossier.finance.currency}</h2>
+                                        </div>
+                                        {isAdminMode && (
+                                            <>
+                                                <div className="hero-box net-cost" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                                                    <span>Neto Zaduženje</span>
+                                                    <h2 style={{ color: '#ef4444' }}>{totalNet.toFixed(2)} <small style={{ fontSize: '0.5em', marginLeft: '4px' }}>{dossier.finance.currency}</small></h2>
+                                                </div>
+                                                <div className="hero-box profit" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                                                    <span>Ukupna Zarada (Iznos)</span>
+                                                    <h2 style={{ color: '#10b981' }}>{totalProfit.toFixed(2)} <small style={{ fontSize: '0.5em', marginLeft: '4px' }}>{dossier.finance.currency}</small></h2>
+                                                </div>
+                                                <div className="hero-box margin" style={{ background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                                                    <span>Marža Dosijea</span>
+                                                    <h3 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#31c48d', margin: 0 }}>{profitPercent.toFixed(1)}%</h3>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
-                                    <div className="hero-box success">
-                                        <span>Dosad uplaćeno</span>
-                                        <h2>{totalPaid.toFixed(2)} {dossier.finance.currency}</h2>
-                                    </div>
-                                    {isAdminMode && (
-                                        <>
-                                            <div className="hero-box net-cost" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                                                <span>Neto Zaduženje</span>
-                                                <h2 style={{ color: '#ef4444' }}>{totalNet.toFixed(2)} <small style={{ fontSize: '0.5em', marginLeft: '4px' }}>{dossier.finance.currency}</small></h2>
-                                            </div>
-                                            <div className="hero-box profit" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                                                <span>Ukupna Zarada (Iznos)</span>
-                                                <h2 style={{ color: '#10b981' }}>{totalProfit.toFixed(2)} <small style={{ fontSize: '0.5em', marginLeft: '4px' }}>{dossier.finance.currency}</small></h2>
-                                            </div>
-                                            <div className="hero-box margin" style={{ background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-                                                <span>Marža Dosijea</span>
-                                                <h3 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#31c48d', margin: 0 }}>{profitPercent.toFixed(1)}%</h3>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
 
-                                <div className="payments-log">
-                                    <div className="log-header">
-                                        <h4>Evidencija svih uplata</h4>
-                                        <button className="add-btn green" onClick={addPayment}><Plus size={14} /> Nova Uplata</button>
-                                    </div>
-                                    <table className="payments-table">
-                                        <colgroup>
-                                            <col style={{ width: '16%' }} />
-                                            <col style={{ width: '10%' }} />
-                                            <col style={{ width: '12%' }} />
-                                            <col style={{ width: '14%' }} />
-                                            <col style={{ width: '23%' }} />
-                                            <col style={{ width: '15%' }} />
-                                            <col style={{ width: '10%' }} />
-                                        </colgroup>
-                                        <thead>
-                                            <tr>
-                                                <th>Datum/Vreme</th>
-                                                <th>Iznos</th>
-                                                <th style={{ paddingLeft: '20px' }}>Valuta</th>
-                                                <th>Način</th>
-                                                <th>Ko plaća?</th>
-                                                <th>Reg. Oznaka</th>
-                                                <th style={{ textAlign: 'right' }}>Radnje</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {dossier.finance.payments.map((p, pidx) => (
-                                                <React.Fragment key={p.id}>
-                                                    <tr className={`${!p.date ? 'unsaved-payment' : ''} ${p.status === 'deleted' ? 'deleted-payment-row' : ''}`}>
-                                                        <td>
-                                                            {p.status === 'deleted' ? (
-                                                                <span className="deleted-tag">OBRISANO</span>
-                                                            ) : p.date ? (
-                                                                <input type="datetime-local" value={p.date} onChange={e => {
-                                                                    const next = [...dossier.finance.payments];
-                                                                    next[pidx].date = e.target.value;
-                                                                    setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                }} />
-                                                            ) : (
-                                                                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>Čeka potvrdu...</span>
-                                                            )}
-                                                        </td>
-                                                        <td className={p.status === 'deleted' ? 'strikethrough' : ''}><input
-                                                            className="payment-amount-input"
-                                                            type="number"
-                                                            disabled={p.status === 'deleted'}
-                                                            value={p.amount === 0 && p.status !== 'deleted' ? '' : p.amount}
-                                                            placeholder="0"
-                                                            onChange={e => {
-                                                                const val = parseFloat(e.target.value) || 0;
-                                                                const newPayments = [...dossier.finance.payments];
-                                                                newPayments[pidx].amount = val;
-                                                                // Auto calculate RSD if dossier is in EUR/USD
-                                                                if (p.currency !== 'RSD') {
-                                                                    newPayments[pidx].amountInRsd = val * (p.exchangeRate || 1);
-                                                                } else {
-                                                                    newPayments[pidx].amountInRsd = val;
-                                                                }
-                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: newPayments } });
-                                                            }} /></td>
-                                                        <td>
-                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                <select value={p.currency} onChange={e => {
-                                                                    const curr = e.target.value as any;
-                                                                    const rate = NBS_RATES[curr as keyof typeof NBS_RATES] || 1;
+                                    <div className="payments-log">
+                                        <div className="log-header">
+                                            <h4>Evidencija svih uplata</h4>
+                                            <button className="add-btn green" onClick={addPayment}><Plus size={14} /> Nova Uplata</button>
+                                        </div>
+                                        <table className="payments-table">
+                                            <colgroup>
+                                                <col style={{ width: '16%' }} />
+                                                <col style={{ width: '10%' }} />
+                                                <col style={{ width: '12%' }} />
+                                                <col style={{ width: '14%' }} />
+                                                <col style={{ width: '23%' }} />
+                                                <col style={{ width: '15%' }} />
+                                                <col style={{ width: '10%' }} />
+                                            </colgroup>
+                                            <thead>
+                                                <tr>
+                                                    <th>Datum/Vreme</th>
+                                                    <th>Iznos</th>
+                                                    <th style={{ paddingLeft: '20px' }}>Valuta</th>
+                                                    <th>Način</th>
+                                                    <th>Ko plaća?</th>
+                                                    <th>Reg. Oznaka</th>
+                                                    <th style={{ textAlign: 'right' }}>Radnje</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {dossier.finance.payments.map((p, pidx) => (
+                                                    <React.Fragment key={p.id}>
+                                                        <tr className={`${!p.date ? 'unsaved-payment' : ''} ${p.status === 'deleted' ? 'deleted-payment-row' : ''}`}>
+                                                            <td>
+                                                                {p.status === 'deleted' ? (
+                                                                    <span className="deleted-tag">OBRISANO</span>
+                                                                ) : p.date ? (
+                                                                    <input type="datetime-local" value={p.date} onChange={e => {
+                                                                        const next = [...dossier.finance.payments];
+                                                                        next[pidx].date = e.target.value;
+                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                    }} />
+                                                                ) : (
+                                                                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>Čeka potvrdu...</span>
+                                                                )}
+                                                            </td>
+                                                            <td className={p.status === 'deleted' ? 'strikethrough' : ''}><input
+                                                                className="payment-amount-input"
+                                                                type="number"
+                                                                disabled={p.status === 'deleted'}
+                                                                value={p.amount === 0 && p.status !== 'deleted' ? '' : p.amount}
+                                                                placeholder="0"
+                                                                onChange={e => {
+                                                                    const val = parseFloat(e.target.value) || 0;
                                                                     const newPayments = [...dossier.finance.payments];
-                                                                    newPayments[pidx].currency = curr;
-                                                                    newPayments[pidx].exchangeRate = rate;
-                                                                    newPayments[pidx].amountInRsd = p.amount * rate;
+                                                                    newPayments[pidx].amount = val;
+                                                                    // Auto calculate RSD if dossier is in EUR/USD
+                                                                    if (p.currency !== 'RSD') {
+                                                                        newPayments[pidx].amountInRsd = val * (p.exchangeRate || 1);
+                                                                    } else {
+                                                                        newPayments[pidx].amountInRsd = val;
+                                                                    }
+                                                                    setDossier({ ...dossier, finance: { ...dossier.finance, payments: newPayments } });
+                                                                }} /></td>
+                                                            <td>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                    <select value={p.currency} onChange={e => {
+                                                                        const curr = e.target.value as any;
+                                                                        const rate = NBS_RATES[curr as keyof typeof NBS_RATES] || 1;
+                                                                        const newPayments = [...dossier.finance.payments];
+                                                                        newPayments[pidx].currency = curr;
+                                                                        newPayments[pidx].exchangeRate = rate;
+                                                                        newPayments[pidx].amountInRsd = p.amount * rate;
+                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: newPayments } });
+                                                                    }}>
+                                                                        <option value="RSD">RSD</option>
+                                                                        <option value="EUR">EUR</option>
+                                                                        <option value="USD">USD</option>
+                                                                    </select>
+                                                                    {p.currency !== 'RSD' && (
+                                                                        <span style={{ fontSize: '10px', color: 'var(--accent)' }}>
+                                                                            Kurs: {p.exchangeRate} | {p.amountInRsd?.toFixed(2)} RSD
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <select value={p.method} onChange={e => {
+                                                                    const newPayments = [...dossier.finance.payments];
+                                                                    newPayments[pidx].method = e.target.value as any;
                                                                     setDossier({ ...dossier, finance: { ...dossier.finance, payments: newPayments } });
                                                                 }}>
-                                                                    <option value="RSD">RSD</option>
-                                                                    <option value="EUR">EUR</option>
-                                                                    <option value="USD">USD</option>
+                                                                    <option value="Cash">Gotovina</option>
+                                                                    <option value="Card">Kartica</option>
+                                                                    <option value="Transfer">Preko računa</option>
+                                                                    <option value="Check">Čekovi</option>
                                                                 </select>
-                                                                {p.currency !== 'RSD' && (
-                                                                    <span style={{ fontSize: '10px', color: 'var(--accent)' }}>
-                                                                        Kurs: {p.exchangeRate} | {p.amountInRsd?.toFixed(2)} RSD
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <select value={p.method} onChange={e => {
-                                                                const newPayments = [...dossier.finance.payments];
-                                                                newPayments[pidx].method = e.target.value as any;
-                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: newPayments } });
-                                                            }}>
-                                                                <option value="Cash">Gotovina</option>
-                                                                <option value="Card">Kartica</option>
-                                                                <option value="Transfer">Preko računa</option>
-                                                                <option value="Check">Čekovi</option>
-                                                            </select>
-                                                        </td>
-                                                        <td>
-                                                            <div className="payer-selection" style={{ minWidth: '150px' }}>
-                                                                <select
-                                                                    value={p.isExternalPayer ? 'external' : (p.travelerPayerId || '')}
-                                                                    onChange={e => {
-                                                                        const val = e.target.value;
-                                                                        const next = [...dossier.finance.payments];
-                                                                        if (val === 'external') {
-                                                                            next[pidx].isExternalPayer = true;
-                                                                            next[pidx].travelerPayerId = undefined;
-                                                                            if (!next[pidx].payerDetails) {
-                                                                                next[pidx].payerDetails = { fullName: '', phone: '', email: '', address: '', city: '', country: '' };
+                                                            </td>
+                                                            <td>
+                                                                <div className="payer-selection" style={{ minWidth: '150px' }}>
+                                                                    <select
+                                                                        value={p.isExternalPayer ? 'external' : (p.travelerPayerId || '')}
+                                                                        onChange={e => {
+                                                                            const val = e.target.value;
+                                                                            const next = [...dossier.finance.payments];
+                                                                            if (val === 'external') {
+                                                                                next[pidx].isExternalPayer = true;
+                                                                                next[pidx].travelerPayerId = undefined;
+                                                                                if (!next[pidx].payerDetails) {
+                                                                                    next[pidx].payerDetails = { fullName: '', phone: '', email: '', address: '', city: '', country: '' };
+                                                                                }
+                                                                            } else {
+                                                                                next[pidx].isExternalPayer = false;
+                                                                                next[pidx].travelerPayerId = val;
+                                                                                const pax = dossier.passengers.find(px => px.id === val);
+                                                                                next[pidx].payerName = pax ? `${pax.firstName} ${pax.lastName}` : '';
                                                                             }
-                                                                        } else {
-                                                                            next[pidx].isExternalPayer = false;
-                                                                            next[pidx].travelerPayerId = val;
-                                                                            const pax = dossier.passengers.find(px => px.id === val);
-                                                                            next[pidx].payerName = pax ? `${pax.firstName} ${pax.lastName}` : '';
-                                                                        }
-                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                    }}
-                                                                >
-                                                                    <option value="">Ko plaća?</option>
-                                                                    {dossier.passengers.map(px => (
-                                                                        <option key={px.id} value={px.id}>{px.firstName} {px.lastName} (Putnik)</option>
-                                                                    ))}
-                                                                    <option value="external">+ Drugo lice (koje ne putuje)</option>
-                                                                </select>
-                                                            </div>
-                                                        </td>
-                                                        <td><input value={p.fiscalReceiptNo || ''} placeholder="Broj fiskalnog" onChange={e => {
-                                                            const newPayments = [...dossier.finance.payments];
-                                                            newPayments[pidx].fiscalReceiptNo = e.target.value;
-                                                            setDossier({ ...dossier, finance: { ...dossier.finance, payments: newPayments } });
-                                                        }} /></td>
-                                                        <td className="actions-cell">
-                                                            <div className="actions-wrapper">
-                                                                {!p.date ? (
-                                                                    <button
-                                                                        className="btn-save-mini"
-                                                                        title="Potvrdi i sačuvaj uplatu"
-                                                                        onClick={() => commitPayment(p.id)}
+                                                                            setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                        }}
                                                                     >
-                                                                        <Save size={14} /> Potvrdi
-                                                                    </button>
-                                                                ) : (
-                                                                    <button className="btn-receipt" title="Štampaj" onClick={() => generateDocument('Priznanica')}><Receipt size={14} /></button>
-                                                                )}
-                                                                <button className="del-btn-v4" onClick={() => removePayment(p.id)}><Trash2 size={14} /></button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-
-                                                    {/* Row for External Payer Details */}
-                                                    {p.isExternalPayer && (
-                                                        <tr className="payment-details-row">
-                                                            <td colSpan={7}>
-                                                                <div className="payment-specific-fields" style={{ borderLeft: '4px solid #f97316' }}>
-                                                                    <div style={{ gridColumn: '1/-1', fontSize: '11px', fontWeight: 800, color: '#f97316', marginBottom: '-8px' }}>
-                                                                        PODACI O PLATIOCU (Lice koje ne putuje)
-                                                                    </div>
-                                                                    <div className="extra-field-group">
-                                                                        <label>Ime i Prezime</label>
-                                                                        <input value={p.payerDetails?.fullName || ''} onChange={e => {
-                                                                            const next = [...dossier.finance.payments];
-                                                                            next[pidx].payerDetails!.fullName = e.target.value;
-                                                                            setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                        }} />
-                                                                    </div>
-                                                                    <div className="extra-field-group">
-                                                                        <label>Telefon</label>
-                                                                        <input value={p.payerDetails?.phone || ''} onChange={e => {
-                                                                            const next = [...dossier.finance.payments];
-                                                                            next[pidx].payerDetails!.phone = e.target.value;
-                                                                            setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                        }} />
-                                                                    </div>
-                                                                    <div className="extra-field-group">
-                                                                        <label>Email</label>
-                                                                        <input value={p.payerDetails?.email || ''} onChange={e => {
-                                                                            const next = [...dossier.finance.payments];
-                                                                            next[pidx].payerDetails!.email = e.target.value;
-                                                                            setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                        }} />
-                                                                    </div>
-                                                                    <div className="extra-field-group">
-                                                                        <label>Adresa</label>
-                                                                        <input value={p.payerDetails?.address || ''} onChange={e => {
-                                                                            const next = [...dossier.finance.payments];
-                                                                            next[pidx].payerDetails!.address = e.target.value;
-                                                                            setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                        }} />
-                                                                    </div>
-                                                                    <div className="extra-field-group">
-                                                                        <label>Grad / Mesto</label>
-                                                                        <input value={p.payerDetails?.city || ''} onChange={e => {
-                                                                            const next = [...dossier.finance.payments];
-                                                                            next[pidx].payerDetails!.city = e.target.value;
-                                                                            setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                        }} />
-                                                                    </div>
+                                                                        <option value="">Ko plaća?</option>
+                                                                        {dossier.passengers.map(px => (
+                                                                            <option key={px.id} value={px.id}>{px.firstName} {px.lastName} (Putnik)</option>
+                                                                        ))}
+                                                                        <option value="external">+ Drugo lice (koje ne putuje)</option>
+                                                                    </select>
+                                                                </div>
+                                                            </td>
+                                                            <td><input value={p.fiscalReceiptNo || ''} placeholder="Broj fiskalnog" onChange={e => {
+                                                                const newPayments = [...dossier.finance.payments];
+                                                                newPayments[pidx].fiscalReceiptNo = e.target.value;
+                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: newPayments } });
+                                                            }} /></td>
+                                                            <td className="actions-cell">
+                                                                <div className="actions-wrapper">
+                                                                    {!p.date ? (
+                                                                        <button
+                                                                            className="btn-save-mini"
+                                                                            title="Potvrdi i sačuvaj uplatu"
+                                                                            onClick={() => commitPayment(p.id)}
+                                                                        >
+                                                                            <Save size={14} /> Potvrdi
+                                                                        </button>
+                                                                    ) : (
+                                                                        <button className="btn-receipt" title="Štampaj" onClick={() => generateDocument('Priznanica')}><Receipt size={14} /></button>
+                                                                    )}
+                                                                    <button className="del-btn-v4" onClick={() => removePayment(p.id)}><Trash2 size={14} /></button>
                                                                 </div>
                                                             </td>
                                                         </tr>
-                                                    )}
 
-                                                    {/* Row for conditional fields */}
-                                                    {p.method !== 'Cash' && (
-                                                        <tr className="payment-details-row">
-                                                            <td colSpan={7}>
-                                                                <div className="payment-specific-fields">
-                                                                    {p.method === 'Card' && (
-                                                                        <>
-                                                                            <div className="extra-field-group">
-                                                                                <label>Vrsta kartice</label>
-                                                                                <select value={p.cardType || ''} onChange={e => {
-                                                                                    const next = [...dossier.finance.payments];
-                                                                                    next[pidx].cardType = e.target.value as any;
-                                                                                    setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                }}>
-                                                                                    <option value="">Odaberi...</option>
-                                                                                    <option value="Master">Master</option>
-                                                                                    <option value="Visa">Visa</option>
-                                                                                    <option value="Dina">Dina</option>
-                                                                                    <option value="American">American</option>
-                                                                                </select>
-                                                                            </div>
-                                                                            <div className="extra-field-group">
-                                                                                <label>Banka</label>
-                                                                                <input value={p.bankName || ''} placeholder="Naziv banke..." onChange={e => {
-                                                                                    const next = [...dossier.finance.payments];
-                                                                                    next[pidx].bankName = e.target.value;
-                                                                                    setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                }} />
-                                                                            </div>
-                                                                            <div className="extra-field-group">
-                                                                                <label>Broj rata</label>
-                                                                                <input type="number" min="1" value={p.installmentsCount || ''} placeholder="Npr. 6" onChange={e => {
-                                                                                    const next = [...dossier.finance.payments];
-                                                                                    next[pidx].installmentsCount = parseInt(e.target.value) || 0;
-                                                                                    setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                }} />
-                                                                            </div>
-                                                                        </>
-                                                                    )}
-
-
-                                                                    {p.method === 'Transfer' && (
-                                                                        <>
-                                                                            <div className="extra-field-group">
-                                                                                <label>Odabir banke</label>
-                                                                                <input value={p.bankName || ''} placeholder="Naziv banke..." onChange={e => {
-                                                                                    const next = [...dossier.finance.payments];
-                                                                                    next[pidx].bankName = e.target.value;
-                                                                                    setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                }} />
-                                                                            </div>
-                                                                            <div className="extra-field-group">
-                                                                                <label>Ime i prezime uplatioca</label>
-                                                                                <input value={p.payerName || ''} placeholder="Ko uplaćuje?" onChange={e => {
-                                                                                    const next = [...dossier.finance.payments];
-                                                                                    next[pidx].payerName = e.target.value;
-                                                                                    setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                }} />
-                                                                            </div>
-                                                                        </>
-                                                                    )}
-
-                                                                    {p.method === 'Check' && (
-                                                                        <div className="checks-container">
-                                                                            <div className="checks-header">
-                                                                                <h5><CreditCard size={14} /> Specifikacija Čekova</h5>
-                                                                                <button className="add-btn" onClick={() => addCheckToPayment(p.id)} style={{ padding: '4px 10px', fontSize: '10px' }}>
-                                                                                    <Plus size={10} /> Dodaj Ček
-                                                                                </button>
-                                                                            </div>
-                                                                            <table className="checks-sub-table">
-                                                                                <thead>
-                                                                                    <tr>
-                                                                                        <th>Broj čeka</th>
-                                                                                        <th>Banka</th>
-                                                                                        <th>Iznos</th>
-                                                                                        <th>Datum realizacije</th>
-                                                                                        <th></th>
-                                                                                    </tr>
-                                                                                </thead>
-                                                                                <tbody>
-                                                                                    {(p.checks || []).map((check, cidx) => (
-                                                                                        <tr key={check.id}>
-                                                                                            <td><input value={check.checkNumber} onChange={e => {
-                                                                                                const next = [...dossier.finance.payments];
-                                                                                                next[pidx].checks![cidx].checkNumber = e.target.value;
-                                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                            }} /></td>
-                                                                                            <td><input value={check.bank} onChange={e => {
-                                                                                                const next = [...dossier.finance.payments];
-                                                                                                next[pidx].checks![cidx].bank = e.target.value;
-                                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                            }} /></td>
-                                                                                            <td><input type="number" value={check.amount} onChange={e => {
-                                                                                                const next = [...dossier.finance.payments];
-                                                                                                next[pidx].checks![cidx].amount = parseFloat(e.target.value) || 0;
-                                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                            }} /></td>
-                                                                                            <td><input type="date" value={check.realizationDate} onChange={e => {
-                                                                                                const next = [...dossier.finance.payments];
-                                                                                                next[pidx].checks![cidx].realizationDate = e.target.value;
-                                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                            }} /></td>
-                                                                                            <td><button className="del-btn-v4" onClick={() => removeCheckFromPayment(p.id, check.id)}><X size={10} /></button></td>
-                                                                                        </tr>
-                                                                                    ))}
-                                                                                </tbody>
-                                                                            </table>
-                                                                            <div className="checks-total-bar">
-                                                                                <span>Ukupno čekovima:</span>
-                                                                                <span>{(p.checks || []).reduce((sum, c) => sum + c.amount, 0).toFixed(2)} {p.currency}</span>
-                                                                            </div>
+                                                        {/* Row for External Payer Details */}
+                                                        {p.isExternalPayer && (
+                                                            <tr className="payment-details-row">
+                                                                <td colSpan={7}>
+                                                                    <div className="payment-specific-fields" style={{ borderLeft: '4px solid #f97316' }}>
+                                                                        <div style={{ gridColumn: '1/-1', fontSize: '11px', fontWeight: 800, color: '#f97316', marginBottom: '-8px' }}>
+                                                                            PODACI O PLATIOCU (Lice koje ne putuje)
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    )}
-                                                </React.Fragment>
-                                            ))}
-                                            {dossier.finance.payments.length === 0 && (
-                                                <tr><td colSpan={7} className="empty">Nema zabeleženih uplata.</td></tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </section>
-                        )}
+                                                                        <div className="extra-field-group">
+                                                                            <label>Ime i Prezime</label>
+                                                                            <input value={p.payerDetails?.fullName || ''} onChange={e => {
+                                                                                const next = [...dossier.finance.payments];
+                                                                                next[pidx].payerDetails!.fullName = e.target.value;
+                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                            }} />
+                                                                        </div>
+                                                                        <div className="extra-field-group">
+                                                                            <label>Telefon</label>
+                                                                            <input value={p.payerDetails?.phone || ''} onChange={e => {
+                                                                                const next = [...dossier.finance.payments];
+                                                                                next[pidx].payerDetails!.phone = e.target.value;
+                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                            }} />
+                                                                        </div>
+                                                                        <div className="extra-field-group">
+                                                                            <label>Email</label>
+                                                                            <input value={p.payerDetails?.email || ''} onChange={e => {
+                                                                                const next = [...dossier.finance.payments];
+                                                                                next[pidx].payerDetails!.email = e.target.value;
+                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                            }} />
+                                                                        </div>
+                                                                        <div className="extra-field-group">
+                                                                            <label>Adresa</label>
+                                                                            <input value={p.payerDetails?.address || ''} onChange={e => {
+                                                                                const next = [...dossier.finance.payments];
+                                                                                next[pidx].payerDetails!.address = e.target.value;
+                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                            }} />
+                                                                        </div>
+                                                                        <div className="extra-field-group">
+                                                                            <label>Grad / Mesto</label>
+                                                                            <input value={p.payerDetails?.city || ''} onChange={e => {
+                                                                                const next = [...dossier.finance.payments];
+                                                                                next[pidx].payerDetails!.city = e.target.value;
+                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                            }} />
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        )}
+
+                                                        {/* Row for conditional fields */}
+                                                        {p.method !== 'Cash' && (
+                                                            <tr className="payment-details-row">
+                                                                <td colSpan={7}>
+                                                                    <div className="payment-specific-fields">
+                                                                        {p.method === 'Card' && (
+                                                                            <>
+                                                                                <div className="extra-field-group">
+                                                                                    <label>Vrsta kartice</label>
+                                                                                    <select value={p.cardType || ''} onChange={e => {
+                                                                                        const next = [...dossier.finance.payments];
+                                                                                        next[pidx].cardType = e.target.value as any;
+                                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                                    }}>
+                                                                                        <option value="">Odaberi...</option>
+                                                                                        <option value="Master">Master</option>
+                                                                                        <option value="Visa">Visa</option>
+                                                                                        <option value="Dina">Dina</option>
+                                                                                        <option value="American">American</option>
+                                                                                    </select>
+                                                                                </div>
+                                                                                <div className="extra-field-group">
+                                                                                    <label>Banka</label>
+                                                                                    <input value={p.bankName || ''} placeholder="Naziv banke..." onChange={e => {
+                                                                                        const next = [...dossier.finance.payments];
+                                                                                        next[pidx].bankName = e.target.value;
+                                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                                    }} />
+                                                                                </div>
+                                                                                <div className="extra-field-group">
+                                                                                    <label>Broj rata</label>
+                                                                                    <input type="number" min="1" value={p.installmentsCount || ''} placeholder="Npr. 6" onChange={e => {
+                                                                                        const next = [...dossier.finance.payments];
+                                                                                        next[pidx].installmentsCount = parseInt(e.target.value) || 0;
+                                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                                    }} />
+                                                                                </div>
+                                                                            </>
+                                                                        )}
+
+
+                                                                        {p.method === 'Transfer' && (
+                                                                            <>
+                                                                                <div className="extra-field-group">
+                                                                                    <label>Odabir banke</label>
+                                                                                    <input value={p.bankName || ''} placeholder="Naziv banke..." onChange={e => {
+                                                                                        const next = [...dossier.finance.payments];
+                                                                                        next[pidx].bankName = e.target.value;
+                                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                                    }} />
+                                                                                </div>
+                                                                                <div className="extra-field-group">
+                                                                                    <label>Ime i prezime uplatioca</label>
+                                                                                    <input value={p.payerName || ''} placeholder="Ko uplaćuje?" onChange={e => {
+                                                                                        const next = [...dossier.finance.payments];
+                                                                                        next[pidx].payerName = e.target.value;
+                                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                                    }} />
+                                                                                </div>
+                                                                            </>
+                                                                        )}
+
+                                                                        {p.method === 'Check' && (
+                                                                            <div className="checks-container">
+                                                                                <div className="checks-header">
+                                                                                    <h5><CreditCard size={14} /> Specifikacija Čekova</h5>
+                                                                                    <button className="add-btn" onClick={() => addCheckToPayment(p.id)} style={{ padding: '4px 10px', fontSize: '10px' }}>
+                                                                                        <Plus size={10} /> Dodaj Ček
+                                                                                    </button>
+                                                                                </div>
+                                                                                <table className="checks-sub-table">
+                                                                                    <thead>
+                                                                                        <tr>
+                                                                                            <th>Broj čeka</th>
+                                                                                            <th>Banka</th>
+                                                                                            <th>Iznos</th>
+                                                                                            <th>Datum realizacije</th>
+                                                                                            <th></th>
+                                                                                        </tr>
+                                                                                    </thead>
+                                                                                    <tbody>
+                                                                                        {(p.checks || []).map((check, cidx) => (
+                                                                                            <tr key={check.id}>
+                                                                                                <td><input value={check.checkNumber} onChange={e => {
+                                                                                                    const next = [...dossier.finance.payments];
+                                                                                                    next[pidx].checks![cidx].checkNumber = e.target.value;
+                                                                                                    setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                                                }} /></td>
+                                                                                                <td><input value={check.bank} onChange={e => {
+                                                                                                    const next = [...dossier.finance.payments];
+                                                                                                    next[pidx].checks![cidx].bank = e.target.value;
+                                                                                                    setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                                                }} /></td>
+                                                                                                <td><input type="number" value={check.amount} onChange={e => {
+                                                                                                    const next = [...dossier.finance.payments];
+                                                                                                    next[pidx].checks![cidx].amount = parseFloat(e.target.value) || 0;
+                                                                                                    setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                                                }} /></td>
+                                                                                                <td><input type="date" value={check.realizationDate} onChange={e => {
+                                                                                                    const next = [...dossier.finance.payments];
+                                                                                                    next[pidx].checks![cidx].realizationDate = e.target.value;
+                                                                                                    setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
+                                                                                                }} /></td>
+                                                                                                <td><button className="del-btn-v4" onClick={() => removeCheckFromPayment(p.id, check.id)}><X size={10} /></button></td>
+                                                                                            </tr>
+                                                                                        ))}
+                                                                                    </tbody>
+                                                                                </table>
+                                                                                <div className="checks-total-bar">
+                                                                                    <span>Ukupno čekovima:</span>
+                                                                                    <span>{(p.checks || []).reduce((sum, c) => sum + c.amount, 0).toFixed(2)} {p.currency}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </React.Fragment>
+                                                ))}
+                                                {dossier.finance.payments.length === 0 && (
+                                                    <tr><td colSpan={7} className="empty">Nema zabeleženih uplata.</td></tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </section>
+                            )
+                        }
 
                         {/* SECTION: NOTES */}
-                        {activeSection === 'notes' && (
-                            <section className="res-section fade-in">
-                                <div className="section-title">
-                                    <h3><FileText size={20} color="var(--accent)" style={{ marginRight: '10px' }} /> Napomene Rezervacije</h3>
-                                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Upravljajte napomenama za putnike, ugovore i internu evidenciju</p>
-                                </div>
-
-                                <div className="notes-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '20px' }}>
-                                    {/* General Notes */}
-                                    <div className="note-box" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, marginBottom: '12px', color: 'var(--accent)' }}>
-                                            <Sparkles size={16} /> Generalna Napomena
-                                        </label>
-                                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Napomena uvezena iz forme za pretragu/buking.</p>
-                                        <textarea
-                                            value={dossier.notes.general}
-                                            onChange={(e) => setDossier({ ...dossier, notes: { ...dossier.notes, general: e.target.value } })}
-                                            style={{ width: '100%', minHeight: '120px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', color: 'var(--text-primary)', resize: 'vertical' }}
-                                            placeholder="Napomena od putnika..."
-                                        />
+                        {
+                            activeSection === 'notes' && (
+                                <section className="res-section fade-in">
+                                    <div className="section-title">
+                                        <h3><FileText size={20} color="var(--accent)" style={{ marginRight: '10px' }} /> Napomene Rezervacije</h3>
+                                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Upravljajte napomenama za putnike, ugovore i internu evidenciju</p>
                                     </div>
 
-                                    {/* Contract Notes */}
-                                    <div className="note-box" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, marginBottom: '12px', color: '#10b981' }}>
-                                            <FileText size={16} /> Napomena za Ugovor
-                                        </label>
-                                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Ova napomena će biti štampana na Ugovoru o Putovanju.</p>
-                                        <textarea
-                                            value={dossier.notes.contract}
-                                            onChange={(e) => setDossier({ ...dossier, notes: { ...dossier.notes, contract: e.target.value } })}
-                                            style={{ width: '100%', minHeight: '120px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', color: 'var(--text-primary)', resize: 'vertical' }}
-                                            placeholder="Tekst koji ide na ugovor..."
-                                        />
-                                    </div>
+                                    <div className="notes-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '20px' }}>
+                                        {/* General Notes */}
+                                        <div className="note-box" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, marginBottom: '12px', color: 'var(--accent)' }}>
+                                                <Sparkles size={16} /> Generalna Napomena
+                                            </label>
+                                            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Napomena uvezena iz forme za pretragu/buking.</p>
+                                            <textarea
+                                                value={dossier.notes.general}
+                                                onChange={(e) => setDossier({ ...dossier, notes: { ...dossier.notes, general: e.target.value } })}
+                                                style={{ width: '100%', minHeight: '120px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', color: 'var(--text-primary)', resize: 'vertical' }}
+                                                placeholder="Napomena od putnika..."
+                                            />
+                                        </div>
 
-                                    {/* Voucher Notes */}
-                                    <div className="note-box" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, marginBottom: '12px', color: '#3b82f6' }}>
-                                            <Building2 size={16} /> Napomena za Vaučer
-                                        </label>
-                                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Napomena za hotelijera/supplier-a koja izlazi na vaučeru.</p>
-                                        <textarea
-                                            value={dossier.notes.voucher}
-                                            onChange={(e) => setDossier({ ...dossier, notes: { ...dossier.notes, voucher: e.target.value } })}
-                                            style={{ width: '100%', minHeight: '120px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', color: 'var(--text-primary)', resize: 'vertical' }}
-                                            placeholder="Napomena za hotel..."
-                                        />
-                                    </div>
+                                        {/* Contract Notes */}
+                                        <div className="note-box" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, marginBottom: '12px', color: '#10b981' }}>
+                                                <FileText size={16} /> Napomena za Ugovor
+                                            </label>
+                                            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Ova napomena će biti štampana na Ugovoru o Putovanju.</p>
+                                            <textarea
+                                                value={dossier.notes.contract}
+                                                onChange={(e) => setDossier({ ...dossier, notes: { ...dossier.notes, contract: e.target.value } })}
+                                                style={{ width: '100%', minHeight: '120px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', color: 'var(--text-primary)', resize: 'vertical' }}
+                                                placeholder="Tekst koji ide na ugovor..."
+                                            />
+                                        </div>
 
-                                    {/* Internal Notes */}
-                                    <div className="note-box" style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, marginBottom: '12px', color: '#ef4444' }}>
-                                            <Shield size={16} /> Interna Napomena (Samo Agencija)
-                                        </label>
-                                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Poverljiva napomena vidljiva isključivo agentima prodaje.</p>
-                                        <textarea
-                                            value={dossier.notes.internal}
-                                            onChange={(e) => setDossier({ ...dossier, notes: { ...dossier.notes, internal: e.target.value } })}
-                                            style={{ width: '100%', minHeight: '120px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', color: 'var(--text-primary)', resize: 'vertical' }}
-                                            placeholder="Interni dogovori, upozorenja..."
-                                        />
+                                        {/* Voucher Notes */}
+                                        <div className="note-box" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, marginBottom: '12px', color: '#3b82f6' }}>
+                                                <Building2 size={16} /> Napomena za Vaučer
+                                            </label>
+                                            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Napomena za hotelijera/supplier-a koja izlazi na vaučeru.</p>
+                                            <textarea
+                                                value={dossier.notes.voucher}
+                                                onChange={(e) => setDossier({ ...dossier, notes: { ...dossier.notes, voucher: e.target.value } })}
+                                                style={{ width: '100%', minHeight: '120px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', color: 'var(--text-primary)', resize: 'vertical' }}
+                                                placeholder="Napomena za hotel..."
+                                            />
+                                        </div>
+
+                                        {/* Internal Notes */}
+                                        <div className="note-box" style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, marginBottom: '12px', color: '#ef4444' }}>
+                                                <Shield size={16} /> Interna Napomena (Samo Agencija)
+                                            </label>
+                                            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Poverljiva napomena vidljiva isključivo agentima prodaje.</p>
+                                            <textarea
+                                                value={dossier.notes.internal}
+                                                onChange={(e) => setDossier({ ...dossier, notes: { ...dossier.notes, internal: e.target.value } })}
+                                                style={{ width: '100%', minHeight: '120px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', color: 'var(--text-primary)', resize: 'vertical' }}
+                                                placeholder="Interni dogovori, upozorenja..."
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                            </section>
-                        )}
+                                </section>
+                            )
+                        }
 
                         {/* SECTION 4: LEGAL & INSURANCE */}
-                        {activeSection === 'legal' && (
-                            <section className="res-section fade-in">
-                                <div className="section-title"><h3>Prava, Garancije i Obaveze</h3></div>
+                        {
+                            activeSection === 'legal' && (
+                                <section className="res-section fade-in">
+                                    <div className="section-title"><h3>Prava, Garancije i Obaveze</h3></div>
 
-                                {dossier.insurance.confirmationText && (
-                                    <div className="confirmation-consent-box" style={{
-                                        background: 'rgba(59, 130, 246, 0.05)',
-                                        border: '1px solid #3b82f6',
-                                        borderRadius: '12px',
-                                        padding: '20px',
-                                        marginBottom: '24px',
-                                        position: 'relative',
-                                        overflow: 'hidden'
-                                    }}>
-                                        <div style={{ position: 'absolute', top: 0, right: 0, padding: '8px 12px', background: '#3b82f6', color: 'white', fontSize: '10px', fontWeight: 800, borderBottomLeftRadius: '12px' }}>
-                                            SNIMLJENA SAGLASNOST
+                                    {dossier.insurance.confirmationText && (
+                                        <div className="confirmation-consent-box" style={{
+                                            background: 'rgba(59, 130, 246, 0.05)',
+                                            border: '1px solid #3b82f6',
+                                            borderRadius: '12px',
+                                            padding: '20px',
+                                            marginBottom: '24px',
+                                            position: 'relative',
+                                            overflow: 'hidden'
+                                        }}>
+                                            <div style={{ position: 'absolute', top: 0, right: 0, padding: '8px 12px', background: '#3b82f6', color: 'white', fontSize: '10px', fontWeight: 800, borderBottomLeftRadius: '12px' }}>
+                                                SNIMLJENA SAGLASNOST
+                                            </div>
+                                            <h4 style={{ margin: '0 0 10px 0', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <ShieldCheck size={20} /> Elektronska Potvrda Putnika
+                                            </h4>
+                                            <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.5', color: 'var(--text-primary)', fontStyle: 'italic' }}>
+                                                "{dossier.insurance.confirmationText}"
+                                            </p>
+                                            <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <Clock size={14} /> Vreme potvrde: <strong>{dossier.insurance.confirmationTimestamp}</strong>
+                                            </div>
                                         </div>
-                                        <h4 style={{ margin: '0 0 10px 0', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <ShieldCheck size={20} /> Elektronska Potvrda Putnika
-                                        </h4>
-                                        <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.5', color: 'var(--text-primary)', fontStyle: 'italic' }}>
-                                            "{dossier.insurance.confirmationText}"
-                                        </p>
-                                        <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            <Clock size={14} /> Vreme potvrde: <strong>{dossier.insurance.confirmationTimestamp}</strong>
-                                        </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                <div className="insurance-card v4">
-                                    <div className="card-top">
-                                        <ShieldCheck size={32} color="#eab308" />
-                                        <div>
-                                            <strong>Garancija Putovanja</strong>
-                                            <p>{dossier.insurance.guaranteePolicy}</p>
+                                    <div className="insurance-card v4">
+                                        <div className="card-top">
+                                            <ShieldCheck size={32} color="#eab308" />
+                                            <div>
+                                                <strong>Garancija Putovanja</strong>
+                                                <p>{dossier.insurance.guaranteePolicy}</p>
+                                            </div>
+                                        </div>
+                                        <div className="legal-toggles">
+                                            <div className="toggle-box">
+                                                <input type="checkbox" checked={dossier.insurance.cancellationOffered} />
+                                                <label>Ponudjeno osiguranje od otkaza (Travel Cancellation)</label>
+                                            </div>
+                                            <div className="toggle-box">
+                                                <input type="checkbox" checked={dossier.insurance.healthOffered} />
+                                                <label>Pružene informacije o zdravstvenom osiguranju</label>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="legal-toggles">
-                                        <div className="toggle-box">
-                                            <input type="checkbox" checked={dossier.insurance.cancellationOffered} />
-                                            <label>Ponudjeno osiguranje od otkaza (Travel Cancellation)</label>
-                                        </div>
-                                        <div className="toggle-box">
-                                            <input type="checkbox" checked={dossier.insurance.healthOffered} />
-                                            <label>Pružene informacije o zdravstvenom osiguranju</label>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                <div className="cis-sync-card">
-                                    <div className="sync-status">
-                                        <div className="pulse-indicator"></div>
-                                        <span>Sistem je spreman za sinhronizaciju sa CIS portalom eTurista.</span>
+                                    <div className="cis-sync-card">
+                                        <div className="sync-status">
+                                            <div className="pulse-indicator"></div>
+                                            <span>Sistem je spreman za sinhronizaciju sa CIS portalom eTurista.</span>
+                                        </div>
+                                        <button className="btn-sync-cis">Pošalji na CIS</button>
                                     </div>
-                                    <button className="btn-sync-cis">Pošalji na CIS</button>
-                                </div>
-                            </section>
-                        )}
+                                </section>
+                            )
+                        }
                         {/* SECTION: B2B COMMUNICATION CENTER */}
-                        {activeSection === 'communication' && isSubagent && (
-                            <section className="res-section fade-in b2b-comms-center">
-                                <div className="section-title">
-                                    <h3><Mail size={20} color="#ff9800" style={{ marginRight: '10px' }} /> B2B Centar za Komunikaciju</h3>
-                                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Direktni upiti centrali (inf@olympic.rs) vezani za ovu rezervaciju</p>
-                                </div>
-
-                                <div className="b2b-comms-grid">
-                                    <div className="comms-form-card">
-                                        <div className="quick-subjects">
-                                            <label>Brzi Predmeti:</label>
-                                            <div className="subject-chips">
-                                                {[
-                                                    `Promena imena putnika - REZ: ${dossier.resCode || dossier.clientReference}`,
-                                                    `Otkaz rezervacije - REZ: ${dossier.resCode || dossier.clientReference}`,
-                                                    `Dodatne usluge / Napomene - REZ: ${dossier.resCode || dossier.clientReference}`,
-                                                    `Pitanje oko plaćanja - REZ: ${dossier.resCode || dossier.clientReference}`,
-                                                    `Problem sa vaučerom - REZ: ${dossier.resCode || dossier.clientReference}`
-                                                ].map((subj, idx) => (
-                                                    <button
-                                                        key={idx}
-                                                        className={`subject-chip ${commsSubject === subj ? 'active' : ''}`}
-                                                        onClick={() => setCommsSubject(subj)}
-                                                    >
-                                                        {subj.split(' - ')[0]}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="input-field full-width">
-                                            <label>Predmet poruke</label>
-                                            <input
-                                                type="text"
-                                                value={commsSubject}
-                                                onChange={(e) => setCommsSubject(e.target.value)}
-                                                placeholder="Npr: Hitna promena u rezervaciji..."
-                                            />
-                                        </div>
-
-                                        <div className="input-field full-width">
-                                            <label>Vaša poruka / Upit</label>
-                                            <textarea
-                                                value={commsMessage}
-                                                onChange={(e) => setCommsMessage(e.target.value)}
-                                                placeholder="Detaljno opišite šta je potrebno..."
-                                                style={{ minHeight: '150px' }}
-                                            />
-                                        </div>
-
-                                        <button
-                                            className="send-b2b-query-btn"
-                                            onClick={() => {
-                                                addLog('B2B Upit Poslat', `Poslat upit centrali: ${commsSubject}`, 'success');
-                                                alert(`Upit uspešno poslat na inf@olympic.rs!\n\nPredmet: ${commsSubject}\n\nOdgovor možete očekivati u roku od 15 minuta u "History" sekciji ili na Vaš email.`);
-                                                setCommsMessage('');
-                                            }}
-                                            disabled={!commsSubject || !commsMessage}
-                                        >
-                                            <Mail size={18} /> Pošalji Upit Centrali
-                                        </button>
+                        {
+                            activeSection === 'communication' && isSubagent && (
+                                <section className="res-section fade-in b2b-comms-center">
+                                    <div className="section-title">
+                                        <h3><Mail size={20} color="#ff9800" style={{ marginRight: '10px' }} /> B2B Centar za Komunikaciju</h3>
+                                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Direktni upiti centrali (inf@olympic.rs) vezani za ovu rezervaciju</p>
                                     </div>
 
-                                    <div className="comms-info-card">
-                                        <div className="support-info">
-                                            <h4>Direktna Podrška</h4>
-                                            <p>Radno vreme: Pon-Pet 09-20h, Sub 09-15h</p>
-                                            <div className="support-phone">
-                                                <History size={16} /> 011/33-33-333
+                                    <div className="b2b-comms-grid">
+                                        <div className="comms-form-card">
+                                            <div className="quick-subjects">
+                                                <label>Brzi Predmeti:</label>
+                                                <div className="subject-chips">
+                                                    {[
+                                                        `Promena imena putnika - REZ: ${dossier.resCode || dossier.clientReference}`,
+                                                        `Otkaz rezervacije - REZ: ${dossier.resCode || dossier.clientReference}`,
+                                                        `Dodatne usluge / Napomene - REZ: ${dossier.resCode || dossier.clientReference}`,
+                                                        `Pitanje oko plaćanja - REZ: ${dossier.resCode || dossier.clientReference}`,
+                                                        `Problem sa vaučerom - REZ: ${dossier.resCode || dossier.clientReference}`
+                                                    ].map((subj, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            className={`subject-chip ${commsSubject === subj ? 'active' : ''}`}
+                                                            onClick={() => setCommsSubject(subj)}
+                                                        >
+                                                            {subj.split(' - ')[0]}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
+
+                                            <div className="input-field full-width">
+                                                <label>Predmet poruke</label>
+                                                <input
+                                                    type="text"
+                                                    value={commsSubject}
+                                                    onChange={(e) => setCommsSubject(e.target.value)}
+                                                    placeholder="Npr: Hitna promena u rezervaciji..."
+                                                />
+                                            </div>
+
+                                            <div className="input-field full-width">
+                                                <label>Vaša poruka / Upit</label>
+                                                <textarea
+                                                    value={commsMessage}
+                                                    onChange={(e) => setCommsMessage(e.target.value)}
+                                                    placeholder="Detaljno opišite šta je potrebno..."
+                                                    style={{ minHeight: '150px' }}
+                                                />
+                                            </div>
+
+                                            <button
+                                                className="send-b2b-query-btn"
+                                                onClick={() => {
+                                                    addLog('B2B Upit Poslat', `Poslat upit centrali: ${commsSubject}`, 'success');
+                                                    alert(`Upit uspešno poslat na inf@olympic.rs!\n\nPredmet: ${commsSubject}\n\nOdgovor možete očekivati u roku od 15 minuta u "History" sekciji ili na Vaš email.`);
+                                                    setCommsMessage('');
+                                                }}
+                                                disabled={!commsSubject || !commsMessage}
+                                            >
+                                                <Mail size={18} /> Pošalji Upit Centrali
+                                            </button>
                                         </div>
-                                        <div className="comms-history-preview">
-                                            <h5>Poslednji statusi Komunikacije</h5>
-                                            <div className="p-mini-log">
-                                                <div className="log-line success">✓ Rezervacija potvrđena od strane dobavljača (sistem)</div>
-                                                <div className="log-line info">ℹ Upit primljen i dodeljen operateru (sistem)</div>
+
+                                        <div className="comms-info-card">
+                                            <div className="support-info">
+                                                <h4>Direktna Podrška</h4>
+                                                <p>Radno vreme: Pon-Pet 09-20h, Sub 09-15h</p>
+                                                <div className="support-phone">
+                                                    <History size={16} /> 011/33-33-333
+                                                </div>
+                                            </div>
+                                            <div className="comms-history-preview">
+                                                <h5>Poslednji statusi Komunikacije</h5>
+                                                <div className="p-mini-log">
+                                                    <div className="log-line success">✓ Rezervacija potvrđena od strane dobavljača (sistem)</div>
+                                                    <div className="log-line info">ℹ Upit primljen i dodeljen operateru (sistem)</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </section>
-                        )}
+                                </section>
+                            )
+                        }
 
                         {/* SECTION: DOCUMENTS */}
-                        {activeSection === 'documents' && (
-                            <section className="res-section fade-in">
-                                <div className="section-title" style={{ marginBottom: '32px' }}>
-                                    <div>
-                                        <h3 style={{ fontSize: '22px' }}><FileText size={24} color="var(--accent)" style={{ marginRight: '12px' }} /> Dokumentacija i Dokumenti</h3>
-                                        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '6px' }}>
-                                            Generišite profesionalne PDF i HTML dokumente prilagođene jeziku putnika ili ino-partnera.
-                                        </p>
-                                    </div>
-                                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px' }}>
-                                        <button className="btn-secondary" style={{ padding: '8px 20px', fontSize: '12px' }} onClick={() => addLog('Štampa', 'Pokrenuta serijska štampa svih dokumenata.', 'info')}>
-                                            <Printer size={16} /> Štampaj Paket
-                                        </button>
-                                        <button className="btn-primary" style={{ padding: '8px 20px', fontSize: '12px' }} onClick={() => setIsEmailModalOpen(true)}>
-                                            <Mail size={16} /> Email Dokumente
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* GROUP 1: PUTNA DOKUMENTA */}
-                                <div className="doc-group-container">
-                                    <h4 className="doc-group-title">
-                                        <div className="title-decorator"></div>
-                                        Putna Dokumenta (Travel Documents)
-                                    </h4>
-                                    <div className="docs-premium-grid">
-                                        {[
-                                            { id: 'contract', title: 'Ugovor o Putovanju', icon: <ShieldCheck size={22} />, desc: 'Glavni dokument o uslovima putovanja.' },
-                                            { id: 'itinerary', title: 'Plan Putovanja', icon: <Compass size={22} />, desc: 'Detaljan itinerer po danima/stavkama.' },
-                                            { id: 'guarantee', title: 'Garancija Putovanja', icon: <Shield size={22} />, desc: 'Polisa osiguranja od insolventnosti.' },
-                                            { id: 'voucher', title: 'Voucher', icon: <Building2 size={22} />, desc: 'Dokument za prijavu u hotelu.' }
-                                        ].map(doc => (
-                                            <div key={doc.id} className="doc-card-v5">
-                                                <div className="doc-card-header">
-                                                    <div className="doc-icon-v5">{doc.icon}</div>
-                                                    <div className="doc-title-meta">
-                                                        <h5>{doc.title}</h5>
-                                                        <span>{doc.desc}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="doc-lang-selector">
-                                                    <button
-                                                        className={docSettings[doc.id] === 'Srpski' ? 'active' : ''}
-                                                        onClick={() => setDocSettings({ ...docSettings, [doc.id]: 'Srpski' })}
-                                                    >SR</button>
-                                                    <button
-                                                        className={docSettings[doc.id] === 'Engleski' ? 'active' : ''}
-                                                        onClick={() => setDocSettings({ ...docSettings, [doc.id]: 'Engleski' })}
-                                                    >EN</button>
-                                                </div>
-
-                                                <div className="doc-card-actions">
-                                                    <button className="doc-action pdf" onClick={() => {
-                                                        generateDossierPDF(dossier, docSettings[doc.id]);
-                                                        setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
-                                                        addLog('Generisanje PDF', `${doc.title} generisan na jeziku: ${docSettings[doc.id]}`, 'success');
-                                                    }} title="Preuzmi PDF">
-                                                        <FileText size={16} /> <span>PDF</span>
-                                                    </button>
-                                                    <button className="doc-action html" onClick={() => {
-                                                        generateDossierHTML(dossier, docSettings[doc.id]);
-                                                        setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
-                                                        addLog('Generisanje WEB', `${doc.title} generisan na jeziku: ${docSettings[doc.id]}`, 'info');
-                                                    }} title="Pregled HTML">
-                                                        <Code size={16} /> <span>WEB</span>
-                                                    </button>
-                                                    <button className="doc-action print" onClick={() => {
-                                                        window.print();
-                                                        setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
-                                                    }} title="Štampaj">
-                                                        <Printer size={16} />
-                                                    </button>
-                                                    <button className="doc-action email" onClick={() => setIsEmailModalOpen(true)} title="Pošalji na email">
-                                                        <Mail size={16} />
-                                                    </button>
-                                                </div>
-                                                <div className="doc-status-line">
-                                                    <Clock size={10} /> Poslednje generisano: <span>{docGenHistory[doc.id] || 'Nikada'}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* GROUP 2: FINANSIJSKA DOKUMENTA */}
-                                <div className="doc-group-container" style={{ marginTop: '40px' }}>
-                                    <h4 className="doc-group-title">
-                                        <div className="title-decorator financial"></div>
-                                        Finansijska Dokumenta (Financials)
-                                    </h4>
-                                    <div className="docs-premium-grid">
-                                        {[
-                                            { id: 'proforma', title: 'Profaktura (Predračun)', icon: <FileText size={22} />, desc: 'Instrukcije za uplatu preko računa.' },
-                                            { id: 'advance', title: 'Avansni Račun', icon: <Receipt size={22} />, desc: 'Potvrda o delimičnoj uplati (akontaciji).' },
-                                            { id: 'final', title: 'Konačni Račun', icon: <CheckCircle2 size={22} />, desc: 'Zatvaranje rezervacije i fiskalizacija.' },
-                                            { id: 'payment', title: 'Potvrda o Uplati ili Refund', icon: <Banknote size={22} />, desc: 'Službena potvrda primljenih sredstava.' }
-                                        ].map(doc => (
-                                            <div key={doc.id} className="doc-card-v5 financial">
-                                                <div className="doc-card-header">
-                                                    <div className="doc-icon-v5">{doc.icon}</div>
-                                                    <div className="doc-title-meta">
-                                                        <h5>{doc.title}</h5>
-                                                        <span>{doc.desc}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="doc-lang-selector">
-                                                    <button
-                                                        className={docSettings[doc.id] === 'Srpski' ? 'active' : ''}
-                                                        onClick={() => setDocSettings({ ...docSettings, [doc.id]: 'Srpski' })}
-                                                    >SR</button>
-                                                    <button
-                                                        className={docSettings[doc.id] === 'Engleski' ? 'active' : ''}
-                                                        onClick={() => setDocSettings({ ...docSettings, [doc.id]: 'Engleski' })}
-                                                    >EN</button>
-                                                </div>
-
-                                                <div className="doc-card-actions">
-                                                    <button className="doc-action pdf" onClick={() => {
-                                                        generateDossierPDF(dossier, docSettings[doc.id]);
-                                                        setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
-                                                        addLog('Generisanje PDF', `${doc.title} generisan na jeziku: ${docSettings[doc.id]}`, 'success');
-                                                    }} title="Preuzmi PDF">
-                                                        <FileText size={16} /> <span>PDF</span>
-                                                    </button>
-                                                    <button className="doc-action html" onClick={() => {
-                                                        generateDossierHTML(dossier, docSettings[doc.id]);
-                                                        setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
-                                                        addLog('Generisanje WEB', `${doc.title} generisan na jeziku: ${docSettings[doc.id]}`, 'info');
-                                                    }} title="Pregled HTML">
-                                                        <Code size={16} /> <span>WEB</span>
-                                                    </button>
-                                                    <button className="doc-action print" onClick={() => {
-                                                        window.print();
-                                                        setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
-                                                    }} title="Štampaj">
-                                                        <Printer size={16} />
-                                                    </button>
-                                                    <button className="doc-action email" onClick={() => setIsEmailModalOpen(true)} title="Pošalji na email">
-                                                        <Mail size={16} />
-                                                    </button>
-                                                </div>
-                                                <div className="doc-status-line">
-                                                    <Clock size={10} /> Poslednje generisano: <span>{docGenHistory[doc.id] || 'Nikada'}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </section>
-                        )}
-                        {/* SECTION 7: HISTORY (ACTIVITY LOGS) */}
-                        {activeSection === 'history' && (
-                            <section className="res-section fade-in">
-                                <div className="section-title">
-                                    <h3><History size={18} /> Istorija aktivnosti (Audit Log)</h3>
-                                </div>
-
-                                <div className="activity-timeline">
-                                    {dossier.logs.map((log) => (
-                                        <div key={log.id} className={`log-item-v4 ${log.type}`}>
-                                            <div className="log-icon-wrap">
-                                                {log.type === 'success' && <CheckCircle2 size={12} />}
-                                                {log.type === 'danger' && <X size={12} />}
-                                                {log.type === 'warning' && <AlertTriangle size={12} />}
-                                                {log.type === 'info' && <Info size={12} />}
-                                            </div>
-                                            <div className="log-content">
-                                                <div className="log-top">
-                                                    <span className="log-operator">{log.operator}</span>
-                                                    <span className="log-dot"></span>
-                                                    <span className="log-action">{log.action}</span>
-                                                    <span className="log-time">{log.timestamp}</span>
-                                                </div>
-                                                <div className="log-details">{log.details}</div>
-                                            </div>
+                        {
+                            activeSection === 'documents' && (
+                                <section className="res-section fade-in">
+                                    <div className="section-title" style={{ marginBottom: '32px' }}>
+                                        <div>
+                                            <h3 style={{ fontSize: '22px' }}><FileText size={24} color="var(--accent)" style={{ marginRight: '12px' }} /> Dokumentacija i Dokumenti</h3>
+                                            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '6px' }}>
+                                                Generišite profesionalne PDF i HTML dokumente prilagođene jeziku putnika ili ino-partnera.
+                                            </p>
                                         </div>
-                                    ))}
-                                    {dossier.logs.length === 0 && (
-                                        <div className="empty-logs">Nema zapisa u istoriji.</div>
-                                    )}
-                                </div>
-                            </section>
-                        )}
-                    </main>
-                </div>
+                                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px' }}>
+                                            <button className="btn-secondary" style={{ padding: '8px 20px', fontSize: '12px' }} onClick={() => addLog('Štampa', 'Pokrenuta serijska štampa svih dokumenata.', 'info')}>
+                                                <Printer size={16} /> Štampaj Paket
+                                            </button>
+                                            <button className="btn-primary" style={{ padding: '8px 20px', fontSize: '12px' }} onClick={() => setIsEmailModalOpen(true)}>
+                                                <Mail size={16} /> Email Dokumente
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* GROUP 1: PUTNA DOKUMENTA */}
+                                    <div className="doc-group-container">
+                                        <h4 className="doc-group-title">
+                                            <div className="title-decorator"></div>
+                                            Putna Dokumenta (Travel Documents)
+                                        </h4>
+                                        <div className="docs-premium-grid">
+                                            {[
+                                                { id: 'contract', title: 'Ugovor o Putovanju', icon: <ShieldCheck size={22} />, desc: 'Glavni dokument o uslovima putovanja.' },
+                                                { id: 'itinerary', title: 'Plan Putovanja', icon: <Compass size={22} />, desc: 'Detaljan itinerer po danima/stavkama.' },
+                                                { id: 'guarantee', title: 'Garancija Putovanja', icon: <Shield size={22} />, desc: 'Polisa osiguranja od insolventnosti.' },
+                                                { id: 'voucher', title: 'Voucher', icon: <Building2 size={22} />, desc: 'Dokument za prijavu u hotelu.' }
+                                            ].map(doc => (
+                                                <div key={doc.id} className="doc-card-v5">
+                                                    <div className="doc-card-header">
+                                                        <div className="doc-icon-v5">{doc.icon}</div>
+                                                        <div className="doc-title-meta">
+                                                            <h5>{doc.title}</h5>
+                                                            <span>{doc.desc}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="doc-lang-selector">
+                                                        <button
+                                                            className={docSettings[doc.id] === 'Srpski' ? 'active' : ''}
+                                                            onClick={() => setDocSettings({ ...docSettings, [doc.id]: 'Srpski' })}
+                                                        >SR</button>
+                                                        <button
+                                                            className={docSettings[doc.id] === 'Engleski' ? 'active' : ''}
+                                                            onClick={() => setDocSettings({ ...docSettings, [doc.id]: 'Engleski' })}
+                                                        >EN</button>
+                                                    </div>
+
+                                                    <div className="doc-card-actions">
+                                                        <button className="doc-action pdf" onClick={() => {
+                                                            generateDossierPDF(dossier, docSettings[doc.id]);
+                                                            setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
+                                                            addLog('Generisanje PDF', `${doc.title} generisan na jeziku: ${docSettings[doc.id]}`, 'success');
+                                                        }} title="Preuzmi PDF">
+                                                            <FileText size={16} /> <span>PDF</span>
+                                                        </button>
+                                                        <button className="doc-action html" onClick={() => {
+                                                            generateDossierHTML(dossier, docSettings[doc.id]);
+                                                            setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
+                                                            addLog('Generisanje WEB', `${doc.title} generisan na jeziku: ${docSettings[doc.id]}`, 'info');
+                                                        }} title="Pregled HTML">
+                                                            <Code size={16} /> <span>WEB</span>
+                                                        </button>
+                                                        <button className="doc-action print" onClick={() => {
+                                                            window.print();
+                                                            setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
+                                                        }} title="Štampaj">
+                                                            <Printer size={16} />
+                                                        </button>
+                                                        <button className="doc-action email" onClick={() => setIsEmailModalOpen(true)} title="Pošalji na email">
+                                                            <Mail size={16} />
+                                                        </button>
+                                                    </div>
+                                                    <div className="doc-status-line">
+                                                        <Clock size={10} /> Poslednje generisano: <span>{docGenHistory[doc.id] || 'Nikada'}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* GROUP 2: FINANSIJSKA DOKUMENTA */}
+                                    <div className="doc-group-container" style={{ marginTop: '40px' }}>
+                                        <h4 className="doc-group-title">
+                                            <div className="title-decorator financial"></div>
+                                            Finansijska Dokumenta (Financials)
+                                        </h4>
+                                        <div className="docs-premium-grid">
+                                            {[
+                                                { id: 'proforma', title: 'Profaktura (Predračun)', icon: <FileText size={22} />, desc: 'Instrukcije za uplatu preko računa.' },
+                                                { id: 'advance', title: 'Avansni Račun', icon: <Receipt size={22} />, desc: 'Potvrda o delimičnoj uplati (akontaciji).' },
+                                                { id: 'final', title: 'Konačni Račun', icon: <CheckCircle2 size={22} />, desc: 'Zatvaranje rezervacije i fiskalizacija.' },
+                                                { id: 'payment', title: 'Potvrda o Uplati ili Refund', icon: <Banknote size={22} />, desc: 'Službena potvrda primljenih sredstava.' }
+                                            ].map(doc => (
+                                                <div key={doc.id} className="doc-card-v5 financial">
+                                                    <div className="doc-card-header">
+                                                        <div className="doc-icon-v5">{doc.icon}</div>
+                                                        <div className="doc-title-meta">
+                                                            <h5>{doc.title}</h5>
+                                                            <span>{doc.desc}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="doc-lang-selector">
+                                                        <button
+                                                            className={docSettings[doc.id] === 'Srpski' ? 'active' : ''}
+                                                            onClick={() => setDocSettings({ ...docSettings, [doc.id]: 'Srpski' })}
+                                                        >SR</button>
+                                                        <button
+                                                            className={docSettings[doc.id] === 'Engleski' ? 'active' : ''}
+                                                            onClick={() => setDocSettings({ ...docSettings, [doc.id]: 'Engleski' })}
+                                                        >EN</button>
+                                                    </div>
+
+                                                    <div className="doc-card-actions">
+                                                        <button className="doc-action pdf" onClick={() => {
+                                                            generateDossierPDF(dossier, docSettings[doc.id]);
+                                                            setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
+                                                            addLog('Generisanje PDF', `${doc.title} generisan na jeziku: ${docSettings[doc.id]}`, 'success');
+                                                        }} title="Preuzmi PDF">
+                                                            <FileText size={16} /> <span>PDF</span>
+                                                        </button>
+                                                        <button className="doc-action html" onClick={() => {
+                                                            generateDossierHTML(dossier, docSettings[doc.id]);
+                                                            setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
+                                                            addLog('Generisanje WEB', `${doc.title} generisan na jeziku: ${docSettings[doc.id]}`, 'info');
+                                                        }} title="Pregled HTML">
+                                                            <Code size={16} /> <span>WEB</span>
+                                                        </button>
+                                                        <button className="doc-action print" onClick={() => {
+                                                            window.print();
+                                                            setDocGenHistory(prev => ({ ...prev, [doc.id]: new Date().toLocaleTimeString() }));
+                                                        }} title="Štampaj">
+                                                            <Printer size={16} />
+                                                        </button>
+                                                        <button className="doc-action email" onClick={() => setIsEmailModalOpen(true)} title="Pošalji na email">
+                                                            <Mail size={16} />
+                                                        </button>
+                                                    </div>
+                                                    <div className="doc-status-line">
+                                                        <Clock size={10} /> Poslednje generisano: <span>{docGenHistory[doc.id] || 'Nikada'}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </section>
+                            )
+                        }
+                        {/* SECTION 7: HISTORY (ACTIVITY LOGS) */}
+                        {
+                            activeSection === 'history' && (
+                                <section className="res-section fade-in">
+                                    <div className="section-title">
+                                        <h3><History size={18} /> Istorija aktivnosti (Audit Log)</h3>
+                                    </div>
+
+                                    <div className="activity-timeline">
+                                        {dossier.logs.map((log) => (
+                                            <div key={log.id} className={`log-item-v4 ${log.type}`}>
+                                                <div className="log-icon-wrap">
+                                                    {log.type === 'success' && <CheckCircle2 size={12} />}
+                                                    {log.type === 'danger' && <X size={12} />}
+                                                    {log.type === 'warning' && <AlertTriangle size={12} />}
+                                                    {log.type === 'info' && <Info size={12} />}
+                                                </div>
+                                                <div className="log-content">
+                                                    <div className="log-top">
+                                                        <span className="log-operator">{log.operator}</span>
+                                                        <span className="log-dot"></span>
+                                                        <span className="log-action">{log.action}</span>
+                                                        <span className="log-time">{log.timestamp}</span>
+                                                    </div>
+                                                    <div className="log-details">{log.details}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {dossier.logs.length === 0 && (
+                                            <div className="empty-logs">Nema zapisa u istoriji.</div>
+                                        )}
+                                    </div>
+                                </section>
+                            )
+                        }
+                    </main >
+                </div >
 
                 {/* --- MODERN CALENDAR MODAL --- */}
-                {activeCalendar && (
-                    <ModernCalendar
-                        startDate={dossier.tripItems.find(it => it.id === activeCalendar.id)?.checkIn || null}
-                        endDate={dossier.tripItems.find(it => it.id === activeCalendar.id)?.checkOut || null}
-                        onChange={(start, end) => {
-                            const newItems = dossier.tripItems.map(it =>
-                                it.id === activeCalendar.id ? { ...it, checkIn: start, checkOut: end } : it
-                            );
-                            setDossier({ ...dossier, tripItems: newItems });
-                            setActiveCalendar(null);
-                        }}
-                        onClose={() => setActiveCalendar(null)}
-                    />
-                )}
+                {
+                    activeCalendar && (
+                        <ModernCalendar
+                            startDate={dossier.tripItems.find(it => it.id === activeCalendar.id)?.checkIn || null}
+                            endDate={dossier.tripItems.find(it => it.id === activeCalendar.id)?.checkOut || null}
+                            onChange={(start, end) => {
+                                const newItems = dossier.tripItems.map(it =>
+                                    it.id === activeCalendar.id ? { ...it, checkIn: start, checkOut: end } : it
+                                );
+                                setDossier({ ...dossier, tripItems: newItems });
+                                setActiveCalendar(null);
+                            }}
+                            onClose={() => setActiveCalendar(null)}
+                        />
+                    )
+                }
 
                 {/* --- EMAIL MODAL --- */}
-                {isEmailModalOpen && (
-                    <ReservationEmailModal
-                        isOpen={isEmailModalOpen}
-                        onClose={() => setIsEmailModalOpen(false)}
-                        reservations={[
-                            {
-                                cisCode: dossier.cisCode,
-                                customerName: dossier.booker.fullName,
-                                supplier: dossier.tripItems[0]?.supplier || 'N/A',
-                                email: dossier.booker.email
-                            }
-                        ]}
-                        isBulk={false}
-                    />
-                )}
+                {
+                    isEmailModalOpen && (
+                        <ReservationEmailModal
+                            isOpen={isEmailModalOpen}
+                            onClose={() => setIsEmailModalOpen(false)}
+                            reservations={[
+                                {
+                                    cisCode: dossier.cisCode,
+                                    customerName: dossier.booker.fullName,
+                                    supplier: dossier.tripItems[0]?.supplier || 'N/A',
+                                    email: dossier.booker.email
+                                }
+                            ]}
+                            isBulk={false}
+                        />
+                    )
+                }
 
                 {/* --- FOOTER V3 --- */}
                 <footer className="res-footer-v2">
@@ -2822,8 +2839,8 @@ const ReservationArchitect: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 
