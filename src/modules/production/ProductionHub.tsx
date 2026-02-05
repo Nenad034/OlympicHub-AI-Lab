@@ -2008,6 +2008,14 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                         />
                     )}
                 </AnimatePresence>
+
+                <ImportStagingModal
+                    isOpen={isStagingOpen}
+                    onClose={() => setIsStagingOpen(false)}
+                    items={stagingItems}
+                    onConfirm={handleImportConfirm}
+                    isSyncing={isSyncing}
+                />
             </div >
         );
     }
