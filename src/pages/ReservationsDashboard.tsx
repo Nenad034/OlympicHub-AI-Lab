@@ -932,7 +932,7 @@ ${data.map(r => `  <reservation>
                 >
                     {showStats ? <ChevronUp size={20} /> : <BarChart3 size={20} />}
                 </button>
-                <button className="btn-create-new" onClick={() => navigate('/reservation-architect')}>
+                <button className="btn-create-new" onClick={() => window.open('/reservation-architect', '_blank')}>
                     <Plus size={18} />
                     Nova Rezervacija
                 </button>
@@ -1390,7 +1390,7 @@ ${data.map(r => `  <reservation>
                             <div
                                 key={res.id}
                                 className={`reservation-row ${selectedReservations.includes(res.id) ? 'selected' : ''}`}
-                                onClick={() => navigate(`/reservation-architect?id=${res.id}`)}
+                                onClick={() => window.open(`/reservation-architect?id=${res.id}`, '_blank')}
                             >
                                 {bulkEmailMode && (
                                     <div
@@ -1681,7 +1681,7 @@ ${data.map(r => `  <reservation>
                             <div
                                 key={res.id}
                                 className="reservation-card"
-                                onClick={() => navigate(`/reservation-architect?id=${res.id}`)}
+                                onClick={() => window.open(`/reservation-architect?id=${res.id}`, '_blank')}
                             >
                                 <div className="card-header">
                                     <div className="res-codes">
@@ -1786,7 +1786,7 @@ ${data.map(r => `  <reservation>
                                         </div>
 
                                         <div className="action-buttons-group">
-                                            <button className="action-btn" title="Pregled" onClick={(e) => { e.stopPropagation(); navigate(`/reservation-architect?id=${res.id}`); }}>
+                                            <button className="action-btn" title="Pregled" onClick={(e) => { e.stopPropagation(); window.open(`/reservation-architect?id=${res.id}`, '_blank'); }}>
                                                 <Eye size={14} />
                                             </button>
                                             <button className="action-btn" title="Email" onClick={(e) => { e.stopPropagation(); setSelectedReservation(res); setEmailModalOpen(true); }}>

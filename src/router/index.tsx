@@ -61,6 +61,7 @@ const SupplierAdmin = React.lazy(() => import('../pages/SupplierAdmin'));
 const B2BSearch = React.lazy(() => import('../pages/B2BSearch'));
 const HotelView = React.lazy(() => import('../pages/HotelView'));
 const DocumentPreviewDemo = React.lazy(() => import('../pages/DocumentPreviewDemo'));
+const ContactArchitect = React.lazy(() => import('../pages/ContactArchitect'));
 const KyteTest = React.lazy(() => import('../pages/KyteTest'));
 
 
@@ -460,6 +461,16 @@ export const router = createBrowserRouter([
             {
                 path: 'soft-zone',
                 element: <SoftZoneDashboard />,
+            },
+            {
+                path: 'contact-architect',
+                element: (
+                    <AuthGuard>
+                        <React.Suspense fallback={<LoadingFallback />}>
+                            <ContactArchitect />
+                        </React.Suspense>
+                    </AuthGuard>
+                ),
             },
             {
                 path: 'reservations',

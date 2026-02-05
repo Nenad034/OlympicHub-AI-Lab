@@ -171,6 +171,36 @@ export default function AIWatchdogDashboard() {
                     <button className="action-btn" onClick={refreshData}>
                         🔃 Refresh Data
                     </button>
+                    <button className="action-btn" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }} onClick={() => {
+                        // Simulate Solvex Stress (Multiple slow requests)
+                        for (let i = 0; i < 8; i++) {
+                            const id = aiMonitor.startRequest('Solvex-Live-Check');
+                            setTimeout(() => {
+                                aiMonitor.endRequest(id, true, 3500 + Math.random() * 3000);
+                            }, 100);
+                        }
+
+                        // Inject a 'degraded' status into history via public method if possible, or force via any
+                        try {
+                            (aiMonitor as any).healthHistory.push({
+                                status: 'degraded',
+                                latency: 4200,
+                                timestamp: new Date().toISOString(),
+                                details: { simulated: true, provider: 'Solvex' }
+                            });
+                        } catch (e) {
+                            console.error('Failed to inject history', e);
+                        }
+
+                        // Simulate TCT Failure
+                        aiMonitor.reportFailure('TCT-Search', 'Timeout connecting to Travel Compositor (ERR_CONNECTION_TIMED_OUT)');
+
+                        console.log('🔥 Stress simulation triggered!');
+                        refreshData();
+                        alert('Stress simulacija pokrenuta! Podaci su ubačeni u monitoring.');
+                    }}>
+                        🔥 Simuliraj Stress (Test)
+                    </button>
                 </div>
             </div>
         </div>

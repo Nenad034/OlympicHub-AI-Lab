@@ -38,12 +38,18 @@ export interface Alert {
     recommendation?: string;
 }
 
+export interface ProviderConfig {
+    latencyThreshold: number;
+    errorThreshold?: number;
+}
+
 export interface MonitorConfig {
     pulseCheckInterval: number; // ms
-    latencyThreshold: number; // ms
+    latencyThreshold: number; // default ms
     errorThreshold: number; // broj grešaka pre akcije
     maintenanceModeTimeout: number; // ms
     alertCooldown: number; // ms između alert-ova
+    providerConfigs: Record<string, ProviderConfig>;
 }
 
 // ============================================
@@ -63,10 +69,16 @@ export class AIMonitor {
     constructor(config?: Partial<MonitorConfig>) {
         this.config = {
             pulseCheckInterval: 5 * 60 * 1000, // 5 minuta
-            latencyThreshold: 2000, // 2 sekunde
+            latencyThreshold: 2000, // 2 sekunde default
             errorThreshold: 5, // 5 grešaka
             maintenanceModeTimeout: 15 * 60 * 1000, // 15 minuta
             alertCooldown: 5 * 60 * 1000, // 5 minuta
+            providerConfigs: {
+                'solvex': { latencyThreshold: 3000 }, // Specijalni prag za Solvex (3s)
+                'opengreece': { latencyThreshold: 2000 },
+                'tct': { latencyThreshold: 2500 },
+                'amadeus': { latencyThreshold: 4000 }
+            },
             ...config
         };
     }
@@ -139,8 +151,8 @@ export class AIMonitor {
                 this.errorCount.clear();
 
                 // Latency Analysis
-                if (latency > this.config.latencyThreshold) {
-                    this.handleHighLatency(latency);
+                if (latency > this.getLatencyThreshold('health-check')) {
+                    this.handleHighLatency(latency, 'health-check');
                 }
             } else {
                 result = {
@@ -182,30 +194,48 @@ export class AIMonitor {
     // ============================================
 
     /**
+     * Vraća latency threshold za specifičnog provajdera ili globalni fallback
+     */
+    private getLatencyThreshold(provider?: string): number {
+        if (provider) {
+            // Pokušaj da nađeš direktan match ili delimičan
+            const key = Object.keys(this.config.providerConfigs).find(k =>
+                provider.toLowerCase().includes(k.toLowerCase())
+            );
+            if (key) return this.config.providerConfigs[key].latencyThreshold;
+        }
+        return this.config.latencyThreshold;
+    }
+
+    /**
      * Rukuje visokim latency-em
      */
-    private handleHighLatency(latency: number) {
-        console.warn(`⚠️ High latency detected: ${latency}ms`);
+    private handleHighLatency(latency: number, provider?: string) {
+        console.warn(`⚠️ High latency detected for ${provider || 'global'}: ${latency}ms`);
+
+        const threshold = this.getLatencyThreshold(provider);
 
         // Loguj upozorenje
         tctApiLogger.logEvent({
             type: 'HIGH_LATENCY',
+            provider,
             latency,
-            threshold: this.config.latencyThreshold,
+            threshold: threshold,
             timestamp: new Date().toISOString()
         });
 
         // Poveća nivo keširanja
         this.increaseCaching();
 
-        // Pošalji alert ako je latency JAKO visok (>5s)
-        if (latency > 5000) {
+        // Pošalji alert ako je latency JAKO visok (> threshold + 3s)
+        if (latency > threshold + 3000) {
             this.sendAlert({
-                id: `latency-${Date.now()}`,
+                id: `latency-${provider || 'global'}-${Date.now()}`,
                 severity: 'warning',
                 type: 'HIGH_LATENCY',
-                message: `API response time is critically high: ${latency}ms`,
+                message: `API response time for ${provider || 'global'} is critically high: ${latency}ms (threshold: ${threshold}ms)`,
                 timestamp: new Date().toISOString(),
+                apiEndpoint: provider,
                 diagnosis: 'API server is experiencing high load or network issues',
                 recommendation: 'Consider increasing cache duration or implementing request queuing'
             });
@@ -567,9 +597,10 @@ export class AIMonitor {
         });
 
         if (success) {
-            // Proveri latenciju
-            if (latency > this.config.latencyThreshold) {
-                this.handleHighLatency(latency);
+            // Proveri latenciju koristeći specifični prag
+            const threshold = this.getLatencyThreshold(request.method);
+            if (latency > threshold) {
+                this.handleHighLatency(latency, request.method);
             }
         } else {
             // Prijavi grešku

@@ -114,18 +114,17 @@ const Sidebar: React.FC = () => {
                             <Compass size={20} /> {!isSidebarCollapsed && 'Total Trip'}
                         </NavLink> */}
                         <NavLink
-                            to="/suppliers"
+                            to="/contact-architect"
                             className={({ isActive }) => navItemClass(isActive)}
-                            title="Dobavljači"
+                            title="Master Contact Hub"
+                            style={({ isActive }) => ({
+                                borderLeft: isActive ? '4px solid var(--accent)' : 'none',
+                                background: isActive ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+                            })}
                         >
-                            <Truck size={20} /> {!isSidebarCollapsed && 'Dobavljači'}
-                        </NavLink>
-                        <NavLink
-                            to="/customers"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="Kupci"
-                        >
-                            <Users size={20} /> {!isSidebarCollapsed && 'Kupci'}
+                            <Users size={20} color="var(--accent)" /> {!isSidebarCollapsed && (
+                                <span style={{ fontWeight: 700 }}>Master Contact Hub</span>
+                            )}
                         </NavLink>
                         <NavLink
                             to="/reservations"
@@ -133,18 +132,6 @@ const Sidebar: React.FC = () => {
                             title={t.reservations}
                         >
                             <ClipboardList size={20} /> {!isSidebarCollapsed && t.reservations}
-                        </NavLink>
-                        <NavLink
-                            to="/subagent-admin"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="Subagent Admin"
-                            style={({ isActive }) => ({
-                                borderLeft: isActive ? '4px solid #ff9800' : 'none',
-                            })}
-                        >
-                            <Users size={20} color="#ff9800" /> {!isSidebarCollapsed && (
-                                <span style={{ color: '#ff9800', fontWeight: 700 }}>Subagent Admin</span>
-                            )}
                         </NavLink>
                         <NavLink
                             to="/supplier-admin"
@@ -156,6 +143,18 @@ const Sidebar: React.FC = () => {
                         >
                             <Truck size={20} color="#10b981" /> {!isSidebarCollapsed && (
                                 <span style={{ color: '#10b981', fontWeight: 700 }}>Supplier Pricing</span>
+                            )}
+                        </NavLink>
+                        <NavLink
+                            to="/subagent-admin"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Subagent Admin"
+                            style={({ isActive }) => ({
+                                borderLeft: isActive ? '4px solid #f59e0b' : 'none',
+                            })}
+                        >
+                            <Users size={20} color="#f59e0b" /> {!isSidebarCollapsed && (
+                                <span style={{ color: '#f59e0b', fontWeight: 700 }}>Subagent Admin</span>
                             )}
                         </NavLink>
                     </div>

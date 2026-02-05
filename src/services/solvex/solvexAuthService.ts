@@ -2,8 +2,20 @@
 import { makeSoapRequest } from '../../utils/solvexSoapClient';
 import type { SolvexAuthResponse, SolvexApiResponse } from '../../types/solvex.types';
 
-const SOLVEX_LOGIN = import.meta.env.VITE_SOLVEX_LOGIN;
-const SOLVEX_PASSWORD = import.meta.env.VITE_SOLVEX_PASSWORD;
+const getEnvVar = (key: string) => {
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
+        // @ts-ignore
+        return import.meta.env[key];
+    }
+    if (typeof process !== 'undefined' && process.env && process.env[key]) {
+        return process.env[key];
+    }
+    return undefined;
+};
+
+const SOLVEX_LOGIN = getEnvVar('VITE_SOLVEX_LOGIN');
+const SOLVEX_PASSWORD = getEnvVar('VITE_SOLVEX_PASSWORD');
 
 // Validate that credentials are configured
 if (!SOLVEX_LOGIN || !SOLVEX_PASSWORD) {

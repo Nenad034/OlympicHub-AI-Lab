@@ -13,6 +13,8 @@ import GeneralAIChat from './components/GeneralAIChat';
 import { GeometricBrain } from './components/icons/GeometricBrain';
 // ToastProvider removed here (provided in main.tsx)
 import SentinelPopup from './components/common/SentinelPopup';
+import { SolvexNotificationHub } from './components/SolvexNotificationHub';
+import { SolvexSyncWorker } from './components/SolvexSyncWorker';
 
 // Context
 import { useConfig } from './context/ConfigContext';
@@ -131,6 +133,10 @@ const App: React.FC = () => {
 
           {/* Real-time Sentinel Alerts */}
           <SentinelPopup />
+
+          {/* Solvex Status Sync & Notifications */}
+          <SolvexSyncWorker />
+          <SolvexNotificationHub />
         </>
       )}
     </>

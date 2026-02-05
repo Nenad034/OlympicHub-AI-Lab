@@ -11,57 +11,37 @@ import { useAuthStore } from '../stores';
 import './SubagentAdmin.css';
 import { AnimatePresence, motion } from 'framer-motion';
 
-import supplierService, { type UnifiedSupplier as Supplier } from '../services/SupplierService';
+import supplierService, { type UnifiedSupplier as Supplier, type PricingRule } from '../services/SupplierService';
 
-// Re-exporting or using the interface from service to ensure consistency
-// We alias it to 'Supplier' to minimize refactoring in this file
-// interface Supplier { ... } -> Removed in favor of service import
+// Remove Local PricingRule interface - now imported from Service
 
-interface PricingRule {
-    id: string;
-    supplierId?: string; // If specific to a supplier
-    targetType: 'Global' | 'Destination' | 'Hotel';
-    targetName: string; // e.g., 'Grčka', 'Hilton'
-    startDate?: string;
-    endDate?: string;
-    description: string;
-
-    // Incoming (Cost Reduction)
-    incomingCommission: number; // %
-    incomingExtra: number;      // Fixed Amount €
-
-    // Outgoing (Price Increase)
-    markupMargin: number;       // %
-    markupExtra: number;        // Fixed Amount €
-
-    status: 'Active' | 'Inactive';
-    priority: number; // Higher number = higher priority override
-}
-
-// Mock Data
-const MOCK_RULES: PricingRule[] = [
-    { id: 'rule-1', targetType: 'Global', targetName: 'Svi Aranžmani', description: 'Globalna politika za sve', incomingCommission: 0, incomingExtra: 0, markupMargin: 5, markupExtra: 0, status: 'Active', priority: 0 },
-    { id: 'rule-2', supplierId: 'sup-001', targetType: 'Destination', targetName: 'Grčka', description: 'Letnja sezona Grčka (Solvex)', incomingCommission: 10, incomingExtra: 0, markupMargin: 7, markupExtra: 5, status: 'Active', startDate: '2026-06-01', endDate: '2026-09-01', priority: 10 },
-    { id: 'rule-3', supplierId: 'sup-002', targetType: 'Hotel', targetName: 'Hilton Belgrade', description: 'Kao preferirani partner', incomingCommission: 15, incomingExtra: 2, markupMargin: 3, markupExtra: 0, status: 'Active', priority: 20 },
-];
 
 const SupplierAdmin: React.FC = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'suppliers' | 'matrix' | 'exceptions'>('suppliers');
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
     const [loading, setLoading] = useState(true);
-    const [rules, setRules] = useState<PricingRule[]>(MOCK_RULES);
+    const [rules, setRules] = useState<PricingRule[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Load Suppliers
+    // Load Data
     useEffect(() => {
-        const fetchSuppliers = async () => {
+        const fetchData = async () => {
             setLoading(true);
-            const data = await supplierService.getAllSuppliers();
-            setSuppliers(data);
-            setLoading(false);
+            try {
+                const [supplierData, rulesData] = await Promise.all([
+                    supplierService.getAllSuppliers(),
+                    supplierService.getPricingRules()
+                ]);
+                setSuppliers(supplierData);
+                setRules(rulesData);
+            } catch (e) {
+                console.error('Failed to load data', e);
+            } finally {
+                setLoading(false);
+            }
         };
-        fetchSuppliers();
+        fetchData();
     }, []);
 
     const handleCheckConnection = async (supplier: Supplier) => {
@@ -144,23 +124,40 @@ const SupplierAdmin: React.FC = () => {
         setShowRuleModal(true);
     };
 
-    const handleSaveRule = (e: React.FormEvent) => {
+    const handleSaveRule = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingRule) {
-            setRules(rules.map(r => r.id === editingRule.id ? { ...ruleForm, id: r.id } as PricingRule : r));
+        setLoading(true);
+
+        const ruleToSave: PricingRule = editingRule
+            ? { ...ruleForm, id: editingRule.id } as PricingRule
+            : { ...ruleForm, id: `rule-${Date.now()}` } as PricingRule;
+
+        const success = await supplierService.savePricingRule(ruleToSave);
+
+        if (success) {
+            // Update local state
+            if (editingRule) {
+                setRules(rules.map(r => r.id === editingRule.id ? ruleToSave : r));
+            } else {
+                setRules([...rules, ruleToSave]);
+            }
+            setShowRuleModal(false);
         } else {
-            const newRule = {
-                ...ruleForm,
-                id: `rule-${Date.now()}`
-            } as PricingRule;
-            setRules([...rules, newRule]);
+            alert('Greška pri čuvanju pravila.');
         }
-        setShowRuleModal(false);
+        setLoading(false);
     };
 
-    const handleDeleteRule = (id: string) => {
-        if (window.confirm('Da li ste sigurni?')) {
-            setRules(rules.filter(r => r.id !== id));
+    const handleDeleteRule = async (id: string) => {
+        if (window.confirm('Da li ste sigurni da želite da obrišete ovo pravilo?')) {
+            setLoading(true);
+            const success = await supplierService.deletePricingRule(id);
+            if (success) {
+                setRules(rules.filter(r => r.id !== id));
+            } else {
+                alert('Greška pri brisanju pravila.');
+            }
+            setLoading(false);
         }
     };
 
@@ -185,18 +182,32 @@ const SupplierAdmin: React.FC = () => {
         setShowSupplierModal(true);
     };
 
-    const handleSaveSupplier = (e: React.FormEvent) => {
+    const handleSaveSupplier = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingSupplier) {
-            setSuppliers(suppliers.map(s => s.id === editingSupplier.id ? { ...s, ...supplierForm } as Supplier : s));
-        } else {
-            const newSupplier = {
+        setLoading(true);
+
+        const supplierToSave: Supplier = editingSupplier
+            ? { ...editingSupplier, ...supplierForm } as Supplier
+            : {
                 ...supplierForm,
-                id: `sup-${Date.now()}`
+                id: `sup-${Date.now()}`,
+                apiStatus: 'Unknown',
+                financials: { totalVolume: 0, averageCommission: 0, averageMargin: 0 }
             } as Supplier;
-            setSuppliers([...suppliers, newSupplier]);
+
+        const success = await supplierService.saveSupplier(supplierToSave);
+
+        if (success) {
+            if (editingSupplier) {
+                setSuppliers(suppliers.map(s => s.id === editingSupplier.id ? supplierToSave : s));
+            } else {
+                setSuppliers([...suppliers, supplierToSave]);
+            }
+            setShowSupplierModal(false);
+        } else {
+            alert('Greška pri čuvanju dobavljača.');
         }
-        setShowSupplierModal(false);
+        setLoading(false);
     };
 
     return (

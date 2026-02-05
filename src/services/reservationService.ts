@@ -3,6 +3,8 @@
 
 import { supabase } from '../supabaseClient';
 import type { BookingRequest, BookingResponse } from '../types/booking.types';
+import { contactService } from './contactService';
+import type { Contact } from './contactService';
 
 /**
  * Database reservation type
@@ -271,10 +273,67 @@ export async function saveDossierToDatabase(dossier: any): Promise<{ success: bo
         }
 
         console.log('[Reservation Service] Dossier saved successfully:', data);
+
+        // Auto-ingest contacts to the Master Contact Hub
+        try {
+            await ingestContactsFromDossier(dossier);
+        } catch (ingestError) {
+            console.warn('[Reservation Service] Contact ingestion failed (non-critical):', ingestError);
+        }
+
         return { success: true, data };
     } catch (error) {
         console.error('[Reservation Service] Unexpected error in saveDossierToDatabase:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+}
+
+/**
+ * Automatically saves/updates contacts from a dossier to the Contact Hub
+ */
+async function ingestContactsFromDossier(dossier: any) {
+    const contactsToIngest: Partial<Contact>[] = [];
+
+    // 1. Ingest Booker
+    const bookerContact: Partial<Contact> = {
+        id: `C-BK-${dossier.booker.email.replace(/@|\./g, '-')}`,
+        type: dossier.customerType === 'B2B-Subagent' ? 'Subagent' : (dossier.customerType === 'B2C-Legal' ? 'Legal' : 'Individual'),
+        fullName: dossier.booker.fullName,
+        firmName: dossier.booker.companyName || undefined,
+        email: dossier.booker.email,
+        phone: dossier.booker.phone,
+        address: dossier.booker.address,
+        city: dossier.booker.city,
+        country: dossier.booker.country,
+        pib: dossier.booker.companyPib || undefined,
+        tags: ['Booker', dossier.customerType],
+        lastActivity: new Date().toISOString()
+    };
+    contactsToIngest.push(bookerContact);
+
+    // 2. Ingest Passengers
+    dossier.passengers.forEach((p: any) => {
+        const passengerContact: Partial<Contact> = {
+            id: `C-PX-${p.email?.replace(/@|\./g, '-') || Math.random().toString(36).substr(2, 6)}`,
+            type: 'Individual',
+            firstName: p.firstName,
+            lastName: p.lastName,
+            fullName: `${p.firstName} ${p.lastName}`,
+            email: p.email || '',
+            phone: p.phone || '',
+            birthDate: p.birthDate,
+            passportNo: p.idNumber,
+            address: p.address,
+            city: p.city,
+            tags: ['Passenger'],
+            lastActivity: new Date().toISOString()
+        };
+        contactsToIngest.push(passengerContact);
+    });
+
+    // Save all to cloud
+    for (const contact of contactsToIngest) {
+        await contactService.save(contact);
     }
 }
 

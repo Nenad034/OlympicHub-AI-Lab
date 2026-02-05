@@ -36,10 +36,39 @@
 
 import { XMLParser, XMLBuilder } from 'fast-xml-parser';
 
-const isDev = import.meta.env.MODE === 'development';
-const SOLVEX_API_URL = isDev
-    ? '/api/solvex/iservice/integrationservice.asmx'
-    : (import.meta.env.VITE_SOLVEX_API_URL || 'https://evaluation.solvex.bg/iservice/integrationservice.asmx');
+// @ts-ignore
+const isDev = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.MODE === 'development' : false;
+
+const getEnvVar = (key: string, fallback: string) => {
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
+        // @ts-ignore
+        return import.meta.env[key];
+    }
+    if (typeof process !== 'undefined' && process.env && process.env[key]) {
+        return process.env[key];
+    }
+    return fallback;
+};
+
+const SOLVEX_BASE_URL = getEnvVar('VITE_SOLVEX_API_URL', 'https://evaluation.solvex.bg/iservice/integrationservice.asmx');
+
+/**
+ * Helper to convert full URL to proxy path in the browser to bypass CORS
+ */
+function getTargetUrl(url: string): string {
+    // If we're in a browser and in development mode, use the Vite proxy
+    // @ts-ignore
+    if (typeof window !== 'undefined' && (import.meta.env?.DEV || window.location.hostname === 'localhost')) {
+        if (url.includes('evaluation.solvex.bg')) {
+            return url.replace('https://evaluation.solvex.bg', '/api/solvex');
+        }
+    }
+    return url;
+}
+
+const SOLVEX_API_URL = getTargetUrl(SOLVEX_BASE_URL);
+
 
 // XML Parser options
 const parserOptions = {
@@ -117,10 +146,13 @@ function cleanAttributes(obj: any): any {
                 continue;
             }
 
-            // Skip XML namespace and other attributes
-            if (key.startsWith('@_')) continue;
+            // Transform attribute keys (@_Key -> Key) instead of skipping them
+            const targetKey = key.startsWith('@_') ? key.substring(2) : key;
 
-            cleaned[key] = cleanAttributes(obj[key]);
+            // Skip namespace attributes and other XML junk if needed, but keep data
+            if (targetKey.includes(':') || targetKey === 'xmlns' || targetKey.startsWith('xsi:')) continue;
+
+            cleaned[targetKey] = cleanAttributes(obj[key]);
         }
 
         // If object has #text and no other meaningful children, return the text value directly

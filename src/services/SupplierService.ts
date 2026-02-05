@@ -1,6 +1,27 @@
 import { loadFromCloud, saveToCloud } from '../utils/storageUtils';
 import solvexAuthService from './solvex/solvexAuthService';
 
+export interface PricingRule {
+    id: string;
+    supplierId?: string; // If specific to a supplier
+    targetType: 'Global' | 'Destination' | 'Hotel';
+    targetName: string; // e.g., 'Grčka', 'Hilton'
+    startDate?: string;
+    endDate?: string;
+    description: string;
+
+    // Incoming (Cost Reduction)
+    incomingCommission: number; // %
+    incomingExtra: number;      // Fixed Amount €
+
+    // Outgoing (Price Increase)
+    markupMargin: number;       // %
+    markupExtra: number;        // Fixed Amount €
+
+    status: 'Active' | 'Inactive';
+    priority: number; // Higher number = higher priority override
+}
+
 // Define the shape of our unified supplier
 export interface UnifiedSupplier {
     id: string; // The internal DB ID (e.g., from Suppliers.tsx logic)
@@ -136,6 +157,75 @@ export const supplierService = {
             return res.success;
         }
         return false;
+    },
+
+    async saveSupplier(supplier: UnifiedSupplier): Promise<boolean> {
+        try {
+            const { success, data } = await loadFromCloud('suppliers');
+            let suppliers = Array.isArray(data) ? data : [];
+
+            const index = suppliers.findIndex((s: any) => s.id === supplier.id);
+            if (index !== -1) {
+                suppliers[index] = supplier;
+            } else {
+                suppliers.push(supplier);
+            }
+
+            const res = await saveToCloud('suppliers', suppliers);
+            return res.success;
+        } catch (e) {
+            console.error('Failed to save supplier', e);
+            return false;
+        }
+    },
+
+    async deleteSupplier(supplierId: string): Promise<boolean> {
+        try {
+            const { success, data } = await loadFromCloud('suppliers');
+            if (success && Array.isArray(data)) {
+                const updated = data.filter((s: any) => s.id !== supplierId);
+                const res = await saveToCloud('suppliers', updated);
+                return res.success;
+            }
+            return false;
+        } catch (e) {
+            console.error('Failed to delete supplier', e);
+            return false;
+        }
+    },
+
+    /**
+     * Pricing Rules Management
+     */
+    async getPricingRules(): Promise<PricingRule[]> {
+        const { success, data } = await loadFromCloud('supplier_pricing_rules');
+        if (success && Array.isArray(data)) {
+            return data;
+        }
+        return [];
+    },
+
+    async savePricingRule(rule: PricingRule): Promise<boolean> {
+        const rules = await this.getPricingRules();
+        const index = rules.findIndex(r => r.id === rule.id);
+
+        let updatedRules;
+        if (index !== -1) {
+            updatedRules = [...rules];
+            updatedRules[index] = rule;
+        } else {
+            updatedRules = [...rules, rule];
+        }
+
+        const { success } = await saveToCloud('supplier_pricing_rules', updatedRules);
+        return success;
+    },
+
+    async deletePricingRule(ruleId: string): Promise<boolean> {
+        const rules = await this.getPricingRules();
+        const updatedRules = rules.filter(r => r.id !== ruleId);
+        const { success } = await saveToCloud('supplier_pricing_rules', updatedRules);
+        return success;
     }
 };
 

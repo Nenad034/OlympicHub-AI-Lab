@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Plug, Database, Globe, Plane, CheckCircle, XCircle,
     AlertTriangle, Settings, Activity, ArrowRight, Shield
 } from 'lucide-react';
 import RateLimitMonitor from '../components/RateLimitMonitor';
+import AIWatchdogDashboard from '../components/watchdog/AIWatchdogDashboard';
+import GeneralAIChat from '../components/GeneralAIChat';
+import { aiMonitor } from '../services/aiMonitor';
 import './APIConnectionsHub.css';
 
 interface APIConnection {
@@ -90,7 +93,23 @@ const connections: APIConnection[] = [
 
 const APIConnectionsHub: React.FC = () => {
     const navigate = useNavigate();
-    const [selectedTab, setSelectedTab] = useState<'overview' | 'monitoring'>('overview');
+    const [selectedTab, setSelectedTab] = useState<'overview' | 'monitoring' | 'watchdog'>('overview');
+    const [isAiChatOpen, setIsAiChatOpen] = useState(false);
+    const [healthStats, setHealthStats] = useState<any>(null);
+    const [monitorStatus, setMonitorStatus] = useState<any>(null);
+
+    // Refresh function for stats
+    const refreshStats = () => {
+        setHealthStats(aiMonitor.getHealthStats());
+        setMonitorStatus(aiMonitor.getStatus());
+    };
+
+    // Auto-refresh stats every 5 seconds for the AI
+    useEffect(() => {
+        refreshStats();
+        const interval = setInterval(refreshStats, 5000);
+        return () => clearInterval(interval);
+    }, []);
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -153,10 +172,16 @@ const APIConnectionsHub: React.FC = () => {
                 >
                     <Activity size={18} /> Rate Limiting
                 </button>
+                <button
+                    className={`tab-btn ${selectedTab === 'watchdog' ? 'active' : ''}`}
+                    onClick={() => setSelectedTab('watchdog')}
+                >
+                    <Shield size={18} /> AI Watchdog
+                </button>
             </div>
 
             {/* Content */}
-            {selectedTab === 'overview' ? (
+            {selectedTab === 'overview' && (
                 <div className="connections-grid">
                     {connections.map(conn => (
                         <div key={conn.id} className="connection-card">
@@ -201,7 +226,9 @@ const APIConnectionsHub: React.FC = () => {
                         </div>
                     ))}
                 </div>
-            ) : (
+            )}
+
+            {selectedTab === 'monitoring' && (
                 <div className="monitoring-section">
                     <RateLimitMonitor />
 
@@ -220,6 +247,33 @@ const APIConnectionsHub: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {selectedTab === 'watchdog' && (
+                <div className="watchdog-tab-content">
+                    <AIWatchdogDashboard />
+                </div>
+            )}
+
+            {/* AI Assistant FAB */}
+            <button
+                className={`ai-sentinel-fab ${isAiChatOpen ? 'active' : ''}`}
+                onClick={() => setIsAiChatOpen(true)}
+                title="Open API Sentinel Assistant"
+            >
+                <div className="fab-icon">🤖</div>
+                <div className="fab-ping"></div>
+                <span className="fab-text">API Sentinel</span>
+            </button>
+
+            {/* AI Chat Modal */}
+            <GeneralAIChat
+                isOpen={isAiChatOpen}
+                onOpen={() => setIsAiChatOpen(true)}
+                onClose={() => setIsAiChatOpen(false)}
+                lang="sr"
+                context="API-Sentinel"
+                analysisData={[healthStats, monitorStatus, connections]}
+            />
         </div>
     );
 };

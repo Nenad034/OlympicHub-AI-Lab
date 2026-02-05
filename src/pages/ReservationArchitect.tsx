@@ -8,7 +8,7 @@ import {
     Package as PackageIcon, UserPlus, Fingerprint, Banknote,
     ArrowRightLeft, Briefcase, MoveRight, MoveLeft, Calendar, Mail,
     Compass, Ship, Sparkles, Search, ExternalLink, Clock, History,
-    Euro, DollarSign, CirclePercent, Copy, Share2, Code, ChevronDown
+    Euro, DollarSign, CirclePercent, Copy, Share2, Code, ChevronDown, Zap
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import { ModernCalendar } from '../components/ModernCalendar';
@@ -19,6 +19,7 @@ import { saveDossierToDatabase, getNextReservationNumber, getReservationById as 
 import { getReservation as getSolvexReservation } from '../services/solvex/solvexBookingService';
 import { getCachedToken } from '../services/solvex/solvexAuthService';
 import { useAuthStore } from '../stores';
+import { saveToCloud, loadFromCloud } from '../utils/storageUtils';
 import '../components/GoogleAddressAutocomplete.css';
 import './ReservationArchitect.css';
 import { getTranslation } from '../utils/translations';
@@ -62,6 +63,8 @@ interface TripItem {
     bruttoPrice: number;
     passengers?: Passenger[];
     supplierRef?: string;
+    solvexStatus?: string;
+    solvexKey?: string;
     // Flight specific
     flightLegs?: FlightLeg[];
 }
@@ -152,6 +155,8 @@ const ReservationArchitect: React.FC = () => {
     const canViewFinancials = userLevel >= 7; // Managers/Admins only
     const [commsSubject, setCommsSubject] = useState('');
     const [commsMessage, setCommsMessage] = useState('');
+    const [showSaveClientBtn, setShowSaveClientBtn] = useState(false);
+    const [logSearch, setLogSearch] = useState('');
 
 
     // Central State
@@ -596,7 +601,6 @@ const ReservationArchitect: React.FC = () => {
         alert(`Generisanje dokumenta: ${type}\nU realnoj aplikaciji, ovde se generiše PDF sa podacima iz dosijea:\n- Broj: ${dossier.resCode || dossier.clientReference}\n- Putnik: ${dossier.booker.fullName}\n- Iznos: ${totalBrutto} ${dossier.finance.currency}`);
     };
 
-    // --- AUTOMATION LOGIC ---
     useEffect(() => {
         // Only automate to 'Active' if payment exists and not already Canceled
         if (dossier.status !== 'Canceled' && totalPaid > 0 && dossier.status !== 'Active') {
@@ -604,6 +608,60 @@ const ReservationArchitect: React.FC = () => {
             addLog('Status Promenjen', 'Status rezervacije automatski promenjen u "Active" zbog evidentirane uplate.', 'info');
         }
     }, [totalPaid, dossier.status]);
+
+    // --- SOLVEX AUTO SYNC ---
+    useEffect(() => {
+        // Only run if initialized AND we have a Solvex item without status
+        if (!isInitialized) return;
+
+        const solvexItem = dossier.tripItems.find(i =>
+            i.supplier?.toLowerCase().includes('solvex') &&
+            i.supplierRef &&
+            (!i.solvexStatus || i.solvexStatus === 'Checking...')
+        );
+
+        if (solvexItem) {
+            const performSync = async () => {
+                console.log('[Solvex] Auto-syncing status for:', solvexItem.supplierRef);
+                try {
+                    const res = await getSolvexReservation(solvexItem.supplierRef!);
+                    if (res.success && res.data) {
+                        setDossier(prev => ({
+                            ...prev,
+                            tripItems: prev.tripItems.map(ti => ti.id === solvexItem.id ? {
+                                ...ti,
+                                solvexStatus: res.data.Status,
+                                solvexKey: res.data.ID
+                            } : ti)
+                        }));
+                        addLog('Solvex Sync', `Automatski povučen status: ${res.data.Status}`, 'success');
+                    } else {
+                        setDossier(prev => ({
+                            ...prev,
+                            tripItems: prev.tripItems.map(ti => ti.id === solvexItem.id ? {
+                                ...ti,
+                                solvexStatus: 'Nije pronađeno'
+                            } : ti)
+                        }));
+                        addLog('Solvex Sync', `Rezervacija ${solvexItem.supplierRef} nije pronađena na Solvexu.`, 'danger');
+                    }
+                } catch (err) {
+                    console.error('[Solvex Auto Sync Error]', err);
+                    setDossier(prev => ({
+                        ...prev,
+                        tripItems: prev.tripItems.map(ti => ti.id === solvexItem.id ? {
+                            ...ti,
+                            solvexStatus: 'Greška pri proveri'
+                        } : ti)
+                    }));
+                    addLog('Solvex Sync Greška', `Neuspešna komunikacija sa API: ${err instanceof Error ? err.message : 'Nepoznata greška'}`, 'danger');
+                }
+            };
+            // Delay a bit to ensure UI is ready and logs can be seen
+            const timer = setTimeout(performSync, 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [isInitialized, dossier.tripItems.length]); // Only re-run if number of items changes or on init
 
     const addPassenger = () => {
         const newPax: Passenger = {
@@ -961,11 +1019,43 @@ const ReservationArchitect: React.FC = () => {
         }
     };
 
+    const handleSaveToClients = async () => {
+        if (!dossier.booker.companyName) return;
+
+        try {
+            const newClient = {
+                id: `KUP-${new Date().getFullYear().toString().substr(-2)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+                type: dossier.customerType === 'B2B-Subagent' ? 'B2B' : 'B2C',
+                category: dossier.customerType === 'B2B-Subagent' ? 'Subagenti' : 'Pravna lica (Firme)',
+                fname: dossier.booker.fullName.split(' ')[0] || '',
+                lname: dossier.booker.fullName.split(' ').slice(1).join(' ') || '',
+                email: dossier.booker.email,
+                phone: dossier.booker.phone,
+                firmName: dossier.booker.companyName,
+                cui: dossier.booker.companyPib,
+                address: dossier.booker.address,
+                city: dossier.booker.city,
+                country: dossier.booker.country,
+                language: dossier.language || 'Srpski',
+                newsletter: true,
+                contacts: []
+            };
+
+            const { success } = await saveToCloud('customers', [newClient]);
+            if (success) {
+                alert('Klijent je uspešno sačuvan u bazi klijenata.');
+                setShowSaveClientBtn(false);
+                addLog('Klijent Sačuvan', `Kompanija ${newClient.firmName} dodata u bazu klijenta.`, 'success');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Greška prilikom čuvanja klijenta.');
+        }
+    };
+
     // Helper to get booker label based on customer type
     const getBookerLabel = () => {
-        if (dossier.customerType === 'B2B-Subagent') return 'Subagent';
-        if (dossier.customerType === 'B2C-Legal') return 'Firma';
-        return 'Ime i Prezime';
+        return 'Kontakt Osoba (Ime i Prezime)';
     };
 
     const getTripTypeIcon = (type: string) => {
@@ -996,6 +1086,55 @@ const ReservationArchitect: React.FC = () => {
                         <div className="res-badge">
                             <FileText size={14} />
                             <span>REZ: <strong>{dossier.resCode || dossier.clientReference}</strong></span>
+                            {dossier.tripItems.some(i => i.supplier?.toLowerCase().includes('solvex')) && (
+                                <div className="solvex-info-tag">
+                                    <Zap size={10} color="#fbbf24" />
+                                    <span>Solvex: <strong>{dossier.tripItems.find(i => i.supplier?.toLowerCase().includes('solvex'))?.solvexStatus || 'Checking...'}</strong></span>
+                                    {dossier.tripItems.find(i => i.supplier?.toLowerCase().includes('solvex'))?.solvexKey && (
+                                        <span className="solvex-internal-id">ID: {dossier.tripItems.find(i => i.supplier?.toLowerCase().includes('solvex'))?.solvexKey}</span>
+                                    )}
+                                    <button
+                                        className="sync-solvex-btn"
+                                        title="Sinhronizuj sa Solvexom"
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                                            const item = dossier.tripItems.find(i => i.supplier?.toLowerCase().includes('solvex'));
+                                            if (!item || !item.supplierRef) return;
+
+                                            addLog('Solvex Sync', 'Pokrenuta ručna provera statusa...', 'info');
+
+                                            try {
+                                                const res = await getSolvexReservation(item.supplierRef);
+                                                if (res.success && res.data) {
+                                                    setDossier(prev => ({
+                                                        ...prev,
+                                                        tripItems: prev.tripItems.map(ti => ti.id === item.id ? {
+                                                            ...ti,
+                                                            solvexStatus: res.data.Status,
+                                                            solvexKey: res.data.ID
+                                                        } : ti)
+                                                    }));
+                                                    addLog('Solvex Sync Uspeh', `Novi status: ${res.data.Status}`, 'success');
+                                                } else {
+                                                    addLog('Solvex Sync', res.error || 'Rezervacija nije pronađena.', 'danger');
+                                                    setDossier(prev => ({
+                                                        ...prev,
+                                                        tripItems: prev.tripItems.map(ti => ti.id === item.id ? { ...ti, solvexStatus: 'Nije pronađeno' } : ti)
+                                                    }));
+                                                }
+                                            } catch (err) {
+                                                addLog('Solvex Sync Greška', err instanceof Error ? err.message : 'Greška u komunikaciji', 'danger');
+                                                setDossier(prev => ({
+                                                    ...prev,
+                                                    tripItems: prev.tripItems.map(ti => ti.id === item.id ? { ...ti, solvexStatus: 'Greška' } : ti)
+                                                }));
+                                            }
+                                        }}
+                                    >
+                                        <RefreshCw size={10} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                         <div className="horizontal-status-tags" style={{ marginLeft: dossier.resCode ? '16px' : '0' }}>
 
@@ -1217,12 +1356,26 @@ const ReservationArchitect: React.FC = () => {
                                     </div>
 
                                     <div className="grid-v4">
+                                        {dossier.customerType !== 'B2C-Individual' && (
+                                            <div className="input-field">
+                                                <label>{dossier.customerType === 'B2B-Subagent' ? 'Naziv Subagenta' : 'Naziv Firme'}</label>
+                                                <div style={{ position: 'relative' }}>
+                                                    <input
+                                                        value={dossier.booker.companyName}
+                                                        onChange={e => setDossier({ ...dossier, booker: { ...dossier.booker, companyName: e.target.value } })}
+                                                        placeholder={dossier.customerType === 'B2B-Subagent' ? 'Pretraži bazu subagenata...' : 'Naziv kompanije...'}
+                                                        style={{ paddingRight: '40px' }}
+                                                    />
+                                                    <Search size={16} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                                                </div>
+                                            </div>
+                                        )}
                                         <div className="input-field">
                                             <label>{getBookerLabel()}</label>
                                             <input
                                                 value={dossier.booker.fullName}
                                                 onChange={e => setDossier({ ...dossier, booker: { ...dossier.booker, fullName: e.target.value } })}
-                                                placeholder={dossier.customerType === 'B2B-Subagent' ? 'Pretraži subagente...' : dossier.customerType === 'B2C-Legal' ? 'Pretraži firme...' : 'Unesite ime i prezime'}
+                                                placeholder="Unesite ime i prezime osobe"
                                             />
                                         </div>
                                         <div className="input-field">
@@ -1317,8 +1470,56 @@ const ReservationArchitect: React.FC = () => {
                                         </div>
                                         {dossier.customerType !== 'B2C-Individual' && (
                                             <div className="input-field">
-                                                <label>PIB Kompanije</label>
-                                                <input value={dossier.booker.companyPib} onChange={e => setDossier({ ...dossier, booker: { ...dossier.booker, companyPib: e.target.value } })} />
+                                                <label>PIB / MB (Srpske Kompanije)</label>
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <input
+                                                        value={dossier.booker.companyPib}
+                                                        placeholder="Unesite PIB za auto-popunjavanje..."
+                                                        onChange={e => setDossier({ ...dossier, booker: { ...dossier.booker, companyPib: e.target.value } })}
+                                                    />
+                                                    <button
+                                                        className="btn-sync-cis"
+                                                        style={{ width: 'auto', padding: '0 12px', fontSize: '11px', whiteSpace: 'nowrap' }}
+                                                        onClick={() => {
+                                                            if (!dossier.booker.companyPib) return alert('Molimo unesite PIB');
+                                                            addLog('APR Pretraga', `Pokrenuta pretraga za PIB: ${dossier.booker.companyPib}`, 'info');
+                                                            // Mocking company fetch
+                                                            setTimeout(() => {
+                                                                setDossier({
+                                                                    ...dossier,
+                                                                    booker: {
+                                                                        ...dossier.booker,
+                                                                        companyName: 'OLYMPIC DEVELOPMENT DOO',
+                                                                        address: 'Bulevar Despota Stefana 12',
+                                                                        city: 'Beograd',
+                                                                        country: 'Srbija'
+                                                                    }
+                                                                });
+                                                                setShowSaveClientBtn(true);
+                                                                addLog('APR Uspeh', 'Podaci o firmi uspešno povučeni sa APR-a.', 'success');
+                                                            }, 800);
+                                                        }}
+                                                    >
+                                                        <Zap size={14} /> APR Provera
+                                                    </button>
+                                                    {showSaveClientBtn && (
+                                                        <button
+                                                            className="btn-sync-cis"
+                                                            style={{
+                                                                width: 'auto',
+                                                                padding: '0 12px',
+                                                                fontSize: '11px',
+                                                                whiteSpace: 'nowrap',
+                                                                background: '#10b981',
+                                                                borderColor: '#059669',
+                                                                color: 'white'
+                                                            }}
+                                                            onClick={handleSaveToClients}
+                                                        >
+                                                            <Save size={14} /> Sačuvaj Klijenta
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -2914,33 +3115,77 @@ const ReservationArchitect: React.FC = () => {
                         {
                             activeSection === 'history' && (
                                 <section className="res-section fade-in">
-                                    <div className="section-title">
-                                        <h3><History size={18} /> Istorija aktivnosti (Audit Log)</h3>
+                                    <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <h3><History size={18} /> Istorija aktivnosti (Audit Log)</h3>
+                                            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Hronološki zapis svih sistemskih i korisničkih akcija</p>
+                                        </div>
+                                        <div className="log-search-wrap" style={{ position: 'relative', width: '300px' }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Pretraži logove (akcija, detalji...)"
+                                                value={logSearch}
+                                                onChange={(e) => setLogSearch(e.target.value)}
+                                                style={{
+                                                    width: '100%',
+                                                    background: 'var(--bg-card)',
+                                                    border: '1px solid var(--border)',
+                                                    borderRadius: '10px',
+                                                    padding: '10px 16px 10px 40px',
+                                                    fontSize: '13px',
+                                                    color: 'var(--text-primary)'
+                                                }}
+                                            />
+                                            <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                                            {logSearch && (
+                                                <button
+                                                    onClick={() => setLogSearch('')}
+                                                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div className="activity-timeline">
-                                        {dossier.logs.map((log) => (
-                                            <div key={log.id} className={`log-item-v4 ${log.type}`}>
-                                                <div className="log-icon-wrap">
-                                                    {log.type === 'success' && <CheckCircle2 size={12} />}
-                                                    {log.type === 'danger' && <X size={12} />}
-                                                    {log.type === 'warning' && <AlertTriangle size={12} />}
-                                                    {log.type === 'info' && <Info size={12} />}
-                                                </div>
-                                                <div className="log-content">
-                                                    <div className="log-top">
-                                                        <span className="log-operator">{log.operator}</span>
-                                                        <span className="log-dot"></span>
-                                                        <span className="log-action">{log.action}</span>
-                                                        <span className="log-time">{log.timestamp}</span>
+                                        {dossier.logs
+                                            .filter(log =>
+                                                !logSearch ||
+                                                log.action.toLowerCase().includes(logSearch.toLowerCase()) ||
+                                                log.details.toLowerCase().includes(logSearch.toLowerCase()) ||
+                                                log.operator.toLowerCase().includes(logSearch.toLowerCase())
+                                            )
+                                            .map((log) => (
+                                                <div key={log.id} className={`log-item-v4 ${log.type}`}>
+                                                    <div className="log-icon-wrap">
+                                                        {log.type === 'success' && <CheckCircle2 size={12} />}
+                                                        {log.type === 'danger' && <X size={12} />}
+                                                        {log.type === 'warning' && <AlertTriangle size={12} />}
+                                                        {log.type === 'info' && <Info size={12} />}
                                                     </div>
-                                                    <div className="log-details">{log.details}</div>
+                                                    <div className="log-content">
+                                                        <div className="log-top">
+                                                            <span className="log-operator">{log.operator}</span>
+                                                            <span className="log-dot"></span>
+                                                            <span className="log-action">{log.action}</span>
+                                                            <span className="log-time">{log.timestamp}</span>
+                                                        </div>
+                                                        <div className="log-details">{log.details}</div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))}
                                         {dossier.logs.length === 0 && (
                                             <div className="empty-logs">Nema zapisa u istoriji.</div>
                                         )}
+                                        {dossier.logs.length > 0 && dossier.logs.filter(log =>
+                                            !logSearch ||
+                                            log.action.toLowerCase().includes(logSearch.toLowerCase()) ||
+                                            log.details.toLowerCase().includes(logSearch.toLowerCase()) ||
+                                            log.operator.toLowerCase().includes(logSearch.toLowerCase())
+                                        ).length === 0 && (
+                                                <div className="empty-logs">Nema logova koji odgovaraju pretrazi.</div>
+                                            )}
                                     </div>
                                 </section>
                             )
