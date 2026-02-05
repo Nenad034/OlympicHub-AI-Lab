@@ -366,18 +366,36 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
             }
 
             if (allRemoteHotels.length === 0) {
+                // @ts-ignore
+                if (window.sentinelEvents) window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Nisu pronađeni podaci.', type: 'warning' });
                 setIsSyncing(false);
                 return;
             }
 
+            // City Id to Name Map for Fallback
+            const cityMap: Record<number, string> = {
+                33: 'Golden Sands',
+                68: 'Sunny Beach',
+                1: 'Unknown',
+                9: 'Bansko',
+                6: 'Borovets'
+            };
+
             // Prepare Staging Data
             const existingIds = new Set(hotels.map(h => h.id));
-            // const existingDataMap = new Map(hotels.map(h => [h.id, h])); // Not used
 
             const stagingCandidates: StagingItem[] = allRemoteHotels.map(h => {
                 const mappedId = `solvex_${h.id}`;
                 const name = (h.name || '').toLowerCase();
-                const city = (h.location?.city || h.address?.city || '').toLowerCase(); // assuming h.city exists from solvex response, if not check structure
+
+                // Use city from response, or fallback via ID logic if I had cityId here... 
+                // but getHotels response flattening lost cityId. 
+                // However, I added 'city' to getHotels return yesterday.
+                let city = (h.city || h.location?.city || h.address?.city || '').toLowerCase();
+
+                // Fallback: If still empty, we can't easily guess without re-fetching or passing context.
+                // But generally Solvex returns City object.
+                if (!city || city === '') city = "unknown";
 
                 // Blacklist Check
                 const isBlacklisted = name.includes('kidscamp') || name.includes('kids camp') || name.includes('kidscam') ||
@@ -389,35 +407,40 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                     id: mappedId,
                     originalId: h.id,
                     name: h.name,
-                    city: h.location?.city || h.address?.city || "Unknown",
-                    country: "Bulgaria", // Solvex is mostly BG? or logic needed
+                    city: h.city || "Unknown",
+                    country: "Bulgaria",
                     stars: h.stars || 0,
                     description: h.description,
                     imagesCount: (h.images || []).length,
                     isUpdate,
                     isBlacklisted,
-                    rawData: h // Store the full raw data for later processing
+                    rawData: h
                 };
             });
 
-            // Filter out blacklisted items if user doesn't want to see them at all?
-            // User: "The user's main objective is to permanently remove all destinations and hotels that contain 'KidsCamp'"
-            // So let's NOT show them in staging either.
+            console.log(`[Solvex Sync] Found ${stagingCandidates.length} candidates.`);
+
             const validCandidates = stagingCandidates.filter(i => !i.isBlacklisted);
+            console.log(`[Solvex Sync] Valid candidates (after blacklist): ${validCandidates.length}.`);
 
             if (validCandidates.length === 0) {
                 // @ts-ignore
-                if (window.sentinelEvents) window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Nema novih podataka za uvoz.', type: 'info' });
+                if (window.sentinelEvents) window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Nema novih podataka za uvoz (sve filtrirano).', type: 'info' });
                 setIsSyncing(false);
                 return;
             }
 
             setStagingItems(validCandidates);
+
+            // Force modal open
+            console.log(`[Solvex Sync] Opening Staging Modal with ${validCandidates.length} items`);
             setIsStagingOpen(true);
-            setIsSyncing(false); // Stop loading indicator, wait for user action
+            setIsSyncing(false);
 
         } catch (error: any) {
-            console.error('Sync failed:', error);
+            console.error('[Solvex Sync Error]:', error);
+            // @ts-ignore
+            if (window.sentinelEvents) window.sentinelEvents.emit({ title: 'Sync Error', message: error.message, type: 'error' });
             setIsSyncing(false);
         }
     };

@@ -135,12 +135,19 @@ export async function getHotels(cityId: number): Promise<SolvexApiResponse<any[]
 
         console.log(`[Solvex Dictionaries] GetHotels for city ${cityId} Raw Result:`, result);
 
-        const hotelsArr = result.Hotel || result.Hotels || Object.values(result).find(val => Array.isArray(val)) || [];
-        const hotels: any[] = Array.isArray(hotelsArr) ? hotelsArr : (hotelsArr ? [hotelsArr] : []);
+        // Better structure navigation for Solvex SOAP response
+        let hotelsData = result.Hotel || result.Hotels;
+
+        // Check inside GetHotelsResult if not found at root
+        if (!hotelsData && result.GetHotelsResult) {
+            hotelsData = result.GetHotelsResult.Hotel || result.GetHotelsResult.Hotels;
+        }
+
+        const hotelsArr = Array.isArray(hotelsData) ? hotelsData : (hotelsData ? [hotelsData] : []);
 
         return {
             success: true,
-            data: hotels.map((h: any) => {
+            data: hotelsArr.map((h: any) => {
                 const description = String(h.Description || '');
                 let images: string[] = [];
                 const additionalParams = h.AdditionalParams?.ParameterPair;
@@ -154,12 +161,18 @@ export async function getHotels(cityId: number): Promise<SolvexApiResponse<any[]
                         }
                     });
                 }
+
+                // Extract useful location info
+                const cityObj = h.City || {};
+                const cityName = String(cityObj.Name || '');
+
                 return {
                     id: parseInt(String(h.ID || h.Key || 0)),
                     name: String(h.Name || h.HotelName || ''),
                     stars: parseInt(String(h.Stars || h.StarRating || h.HotelCategory?.Name || 0)),
                     description: description,
-                    images: images
+                    images: images,
+                    city: cityName
                 };
             })
         };
