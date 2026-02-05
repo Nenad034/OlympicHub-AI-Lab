@@ -531,8 +531,6 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                     const updated = updatedHotelsToSave.find(uh => uh.id === h.id);
                     return updated || h;
                 })
-                .concat(newHotelsToSave.filter(nh => !currentHotels.some(ch => ch.id === nh.id))); // Add new hotels, avoid duplicates
-
             setHotels(updatedList);
             await syncToSupabase(updatedList); // Save all changes to Supabase
 
@@ -542,8 +540,12 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                 window.sentinelEvents.emit({ title: 'Uvoz Uspešan', message: `Uvezeno ${newHotelsToSave.length} novih i ažurirano ${updatedHotelsToSave.length} postojećih objekata.`, type: 'success' });
             }
 
-        } catch (error) {
+            // Explicit user feedback requested
+            alert(`✅ Sinhronizacija USPEŠNA!\n\n🆕 Novih hotela: ${newHotelsToSave.length}\n🔄 Ažuriranih: ${updatedHotelsToSave.length}\n\nPodaci su sačuvani u bazi.`);
+
+        } catch (error: any) {
             console.error('Import confirmation failed:', error);
+            alert(`GRESKA: ${error.message}`);
             // @ts-ignore
             if (window.sentinelEvents) {
                 // @ts-ignore

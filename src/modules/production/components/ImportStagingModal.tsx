@@ -90,29 +90,30 @@ export const ImportStagingModal: React.FC<ImportStagingModalProps> = ({
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0,0,0,0.8)',
-            backdropFilter: 'blur(8px)',
-            zIndex: 9999,
+            background: 'rgba(0,0,0,0.85)',
+            backdropFilter: 'blur(12px)',
+            zIndex: 10000,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '40px'
+            padding: '20px'
         }}>
             <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 style={{
-                    background: '#1e1e2e',
+                    background: '#13151b',
                     border: '1px solid rgba(255,255,255,0.1)',
                     borderRadius: '24px',
-                    width: '100%',
-                    maxWidth: '1000px',
-                    height: '80vh',
+                    width: '95vw',
+                    maxWidth: '1600px',
+                    height: '90vh',
                     display: 'flex',
                     flexDirection: 'column',
                     overflow: 'hidden',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                    boxShadow: '0 50px 100px -20px rgba(0, 0, 0, 0.7)',
+                    position: 'relative'
                 }}
             >
                 {/* Header */}
