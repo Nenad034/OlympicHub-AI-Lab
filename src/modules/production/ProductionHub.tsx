@@ -38,7 +38,8 @@ import {
     Image as ImageIcon,
     FileText,
     ChevronLeft,
-    Zap
+    Zap,
+    Trash2
 } from 'lucide-react';
 import { exportToJSON } from '../../utils/exportUtils';
 import PropertyWizard from '../../components/PropertyWizard';
@@ -57,7 +58,10 @@ import {
     generateIdempotencyKey,
     toUTC
 } from '../../utils/securityUtils';
+import { useAuthStore } from '../../stores/authStore';
+import { getHotels as getSolvexHotels, getCities as getSolvexCities } from '../../services/solvex/solvexDictionaryService';
 import { getProxiedImageUrl } from '../../utils/imageProxy';
+import { deleteFromCloud } from '../../utils/storageUtils';
 
 // --- TCT-IMC DATA STRUCTURES ---
 
@@ -234,6 +238,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
     const [activeModuleTab, setActiveModuleTab] = useState(initialTab);
 
     const { trackAction, isAnomalyDetected } = useSecurity();
+    const { userLevel } = useAuthStore();
 
     const [hotels, setHotels] = useState<Hotel[]>([]);
     const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
@@ -253,9 +258,99 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
     const [selectedStars, setSelectedStars] = useState<number[]>([]); // New star filter state
     const [integrityFilter, setIntegrityFilter] = useState<string[]>([]); // New integrity filter state (img, desc, amen, map)
 
+    // Move functions to component scope
+    const cleanupKidsCamp = async () => {
+        if (userLevel < 6) {
+            alert('PRISTUP ODBIJEN: Samo korisnici sa najvišim stepenom pristupa mogu vršiti masovno brisanje.');
+            return;
+        }
+        if (!window.confirm('DA LI STE SIGURNI da želite trajno obrisati SVE destinacije i hotele sa nazivom KidsCamp?')) return;
+
+        try {
+            setIsSyncing(true);
+            // @ts-ignore
+            if (window.sentinelEvents) {
+                // @ts-ignore
+                window.sentinelEvents.emit({ title: 'Čišćenje Baze', message: 'Uklanjam KidsCamp objekte...', type: 'info' });
+            }
+
+            // 1. Delete by name patterns
+            await deleteFromCloud('properties', 'name', '%KidsCamp%');
+            await deleteFromCloud('properties', 'name', '%Kids Camp%');
+            await deleteFromCloud('properties', 'name', '%KidsCam%');
+
+            // 2. Success message
+            // @ts-ignore
+            if (window.sentinelEvents) {
+                // @ts-ignore
+                window.sentinelEvents.emit({ title: 'Čišćenje Uspešno', message: 'KidsCamp objekti su trajno obrisani iz baze.', type: 'success' });
+            }
+            // Trigger local refresh
+            const { success, data } = await loadFromCloud('properties');
+            if (success && data) {
+                const mapped = data.map((h: any) => mapBackendToFrontendHotel(h)).filter(Boolean) as Hotel[];
+                setHotels(mapped);
+            }
+        } catch (error: any) {
+            console.error('Cleanup failed:', error);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const syncSolvexData = async () => {
+        try {
+            setIsSyncing(true);
+            // @ts-ignore
+            if (window.sentinelEvents) {
+                // @ts-ignore
+                window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Započinjem sinhronizaciju opisa i slika iz Solvex sistema...', type: 'info' });
+            }
+
+            const cityKeys = [33, 68, 1, 9, 6];
+            let allUpdatedHotels: any[] = [];
+
+            for (const cityId of cityKeys) {
+                const hotelsRes = await getSolvexHotels(cityId);
+                if (hotelsRes.success && hotelsRes.data) {
+                    allUpdatedHotels = [...allUpdatedHotels, ...hotelsRes.data];
+                }
+            }
+
+            if (allUpdatedHotels.length === 0) return;
+
+            const propertiesToUpdate = allUpdatedHotels.map(h => ({
+                id: `solvex_${h.id}`,
+                name: h.name,
+                starRating: h.stars,
+                images: h.images || [],
+                content: { description: h.description },
+                lastSync: new Date().toISOString()
+            }));
+
+            const { success } = await saveToCloud('properties', propertiesToUpdate);
+
+            if (success) {
+                // @ts-ignore
+                if (window.sentinelEvents) {
+                    // @ts-ignore
+                    window.sentinelEvents.emit({ title: 'Solvex Sync Uspešan', message: `Sinhronizovano ${propertiesToUpdate.length} hotela.`, type: 'success' });
+                }
+                const { data } = await loadFromCloud('properties');
+                if (data) {
+                    const mapped = data.map((h: any) => mapBackendToFrontendHotel(h)).filter(Boolean) as Hotel[];
+                    setHotels(mapped);
+                }
+            }
+        } catch (error: any) {
+            console.error('Sync failed:', error);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
     const filteredHotels = hotels.filter(h => {
-        // Global Exclusion: Remove KidsCamp objects
-        if (h.name.toLowerCase().includes('kidscamp')) return false;
+        // Global Exclusion removed - data is being cleared from DB
 
         // Status Filter
         if (statusFilter === 'active' && !h.originalPropertyData?.isActive) return false;
@@ -332,10 +427,10 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         const hasImages = (hotel.images && hotel.images.length > 0) || (data?.images && data.images.length > 0);
         if (!hasImages) missing.push({ label: 'Slike', key: 'img' });
 
-        const hasDesc = data?.content?.[0]?.longDescription || data?.longDescription || data?.description;
+        const hasDesc = data?.content?.[0]?.longDescription || data?.longDescription || data?.description || data?.content?.description;
         if (!hasDesc) missing.push({ label: 'Opis', key: 'desc' });
 
-        const hasAmenities = (hotel.amenities && hotel.amenities.length > 0) || (data?.propertyAmenities && data.propertyAmenities.length > 0);
+        const hasAmenities = (hotel.amenities && hotel.amenities.length > 0) || (data?.propertyAmenities && data.propertyAmenities.length > 0) || (data?.content?.amenities && data.content.amenities.length > 0);
         if (!hasAmenities) missing.push({ label: 'Sadržaji', key: 'amen' });
 
         const lat = hotel.location.lat || data?.geoCoordinates?.latitude;
@@ -346,89 +441,107 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         return missing;
     };
 
-    // Load hotels from Supabase on mount
-    useEffect(() => {
-        const mapBackendToFrontendHotel = (dbHotel: any): Hotel => {
-            const rawData = dbHotel.originalPropertyData || dbHotel;
-            const rawName = (rawData.name || dbHotel.name || "").toUpperCase();
+    const mapBackendToFrontendHotel = (dbHotel: any): Hotel => {
+        const rawData = dbHotel.originalPropertyData || dbHotel;
+        const rawName = (rawData.name || dbHotel.name || "").toUpperCase();
 
-            // 1. Initial extraction from DB fields
-            let fieldStars = 0;
-            const starSource = rawData.starRating ?? rawData.starrating ?? rawData.star_rating ?? rawData.stars ?? rawData.Stars ?? 0;
-            if (starSource) {
-                if (typeof starSource === 'number') fieldStars = Math.round(starSource);
+        // 1. Initial extraction from DB fields
+        let fieldStars = 0;
+        const starSource = rawData.starRating ?? rawData.starrating ?? rawData.star_rating ?? rawData.stars ?? rawData.Stars ?? 0;
+        if (starSource) {
+            if (typeof starSource === 'number') fieldStars = Math.round(starSource);
+            else {
+                const digits = String(starSource).match(/\d+/);
+                if (digits) fieldStars = parseInt(digits[0]);
+            }
+        }
+
+        // 2. Aggressive name-based extraction
+        let nameStars = 0;
+        const patterns = [
+            /([1-5])\s*\*+/,           // "5*", "4 *"
+            /([1-5])\s*STARS?/,        // "5 stars"
+            /CAT[^\d]*([1-5])/,        // "cat 5"
+            /CLASS[^\d]*([1-5])/,      // "class 5"
+            /(\*{2,5})/,               // "*****" (counts asterisks)
+            /\s(V|IV|III|II|I)\s*\*?$/ // Roman numerals at the end
+        ];
+
+        for (const p of patterns) {
+            const match = rawName.match(p);
+            if (match) {
+                if (match[1].startsWith('*')) nameStars = match[1].length;
+                else if (match[1] === 'V') nameStars = 5;
+                else if (match[1] === 'IV') nameStars = 4;
+                else if (match[1] === 'III') nameStars = 3;
+                else if (match[1] === 'II') nameStars = 2;
+                else if (match[1] === 'I') nameStars = 1;
                 else {
-                    const digits = String(starSource).match(/\d+/);
-                    if (digits) fieldStars = parseInt(digits[0]);
+                    const val = parseInt(match[1]);
+                    if (!isNaN(val)) nameStars = val;
                 }
+                if (nameStars > 0) break;
             }
+        }
 
-            // 2. Aggressive name-based extraction
-            let nameStars = 0;
-            const patterns = [
-                /([1-5])\s*\*+/,           // "5*", "4 *"
-                /([1-5])\s*STARS?/,        // "5 stars"
-                /CAT[^\d]*([1-5])/,        // "cat 5"
-                /CLASS[^\d]*([1-5])/,      // "class 5"
-                /(\*{2,5})/,               // "*****" (counts asterisks)
-                /\s(V|IV|III|II|I)\s*\*?$/ // Roman numerals at the end
-            ];
+        // 3. Logic: If name has 1-5, TRUST NAME over everything else (prevents 3* defaults)
+        // Exception: If name has NO stars but field has some, take field.
+        let finalStars = nameStars > 0 ? nameStars : fieldStars;
 
-            for (const p of patterns) {
-                const match = rawName.match(p);
-                if (match) {
-                    if (match[1].startsWith('*')) nameStars = match[1].length;
-                    else if (match[1] === 'V') nameStars = 5;
-                    else if (match[1] === 'IV') nameStars = 4;
-                    else if (match[1] === 'III') nameStars = 3;
-                    else if (match[1] === 'II') nameStars = 2;
-                    else if (match[1] === 'I') nameStars = 1;
-                    else {
-                        const val = parseInt(match[1]);
-                        if (!isNaN(val)) nameStars = val;
-                    }
-                    if (nameStars > 0) break;
-                }
-            }
+        // Cap at 5
+        if (finalStars > 5) finalStars = 5;
+        if (isNaN(finalStars)) finalStars = 0;
 
-            // 3. Logic: If name has 1-5, TRUST NAME over everything else (prevents 3* defaults)
-            // Exception: If name has NO stars but field has some, take field.
-            let finalStars = nameStars > 0 ? nameStars : fieldStars;
-
-            // Cap at 5
-            if (finalStars > 5) finalStars = 5;
-            if (isNaN(finalStars)) finalStars = 0;
-
-            return {
-                id: dbHotel.id || rawData.id,
-                name: unifyHotelName(rawData.name || dbHotel.name || ""),
-                location: {
-                    address: rawData.address?.addressLine ? (hasCyrillic(rawData.address.addressLine) ? transliterate(rawData.address.addressLine) : rawData.address.addressLine) : '',
-                    place: rawData.address?.city ? (hasCyrillic(rawData.address.city) ? transliterate(rawData.address.city) : rawData.address.city) : '',
-                    lat: rawData.geoCoordinates?.latitude || 0,
-                    lng: rawData.geoCoordinates?.longitude || 0
-                },
-                images: rawData.images || [],
-                amenities: rawData.propertyAmenities || [],
-                units: Array.isArray(rawData.units) ? rawData.units : [],
-                commonItems: rawData.commonItems || {
-                    discount: [],
-                    touristTax: [],
-                    supplement: []
-                },
-                originalPropertyData: { ...rawData, starRating: finalStars }
-            };
+        return {
+            id: dbHotel.id || rawData.id,
+            name: unifyHotelName(rawData.name || dbHotel.name || ""),
+            location: {
+                address: rawData.address?.addressLine ? (hasCyrillic(rawData.address.addressLine) ? transliterate(rawData.address.addressLine) : rawData.address.addressLine) : '',
+                place: rawData.address?.city ? (hasCyrillic(rawData.address.city) ? transliterate(rawData.address.city) : rawData.address.city) : '',
+                lat: rawData.geoCoordinates?.latitude || 0,
+                lng: rawData.geoCoordinates?.longitude || 0
+            },
+            images: rawData.images || [],
+            amenities: rawData.propertyAmenities || [],
+            units: Array.isArray(rawData.units) ? rawData.units : [],
+            commonItems: rawData.commonItems || {
+                discount: [],
+                touristTax: [],
+                supplement: []
+            },
+            originalPropertyData: { ...rawData, starRating: finalStars }
         };
+    };
 
-        const loadHotels = async () => {
-            try {
-                const { success, data } = await loadFromCloud('properties');
-                if (success && data && data.length > 0) {
-                    const mapped = data
+    const loadHotels = async () => {
+        try {
+            const { success, data } = await loadFromCloud('properties');
+            if (success && data && data.length > 0) {
+                const mapped = data
+                    .filter((h: any) => {
+                        const name = (h.name || "").toLowerCase();
+                        const hotelId = String(h.id);
+                        // Remove specific ID 2189 patterns (e.g. solvex_2189), technical names, and dummy entries
+                        const isTechnical = name.includes("pogledaj id") ||
+                            name.includes("?") ||
+                            hotelId.includes("2189") ||
+                            name.trim() === "" ||
+                            name === "null";
+                        return !isTechnical;
+                    })
+                    .map(mapBackendToFrontendHotel);
+                setHotels(mapped);
+                setDataSource('supabase');
+                console.log(`✅ Loaded ${mapped.length} hotels from Supabase`);
+            } else {
+                // Fallback to localStorage if Supabase fails or is empty
+                const saved = localStorage.getItem('olympic_hub_hotels');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    const mapped = parsed
                         .filter((h: any) => {
                             const name = (h.name || "").toLowerCase();
                             const hotelId = String(h.id);
-                            // Remove specific ID 2189 patterns (e.g. solvex_2189), technical names, and dummy entries
                             const isTechnical = name.includes("pogledaj id") ||
                                 name.includes("?") ||
                                 hotelId.includes("2189") ||
@@ -438,36 +551,20 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                         })
                         .map(mapBackendToFrontendHotel);
                     setHotels(mapped);
-                    setDataSource('supabase');
-                    console.log(`✅ Loaded ${mapped.length} hotels from Supabase`);
+                    setDataSource('local');
+                    console.log(`⚠️ Loaded ${mapped.length} hotels from LocalStorage (Fallback)`);
                 } else {
-                    // Fallback to localStorage if Supabase fails or is empty
-                    const saved = localStorage.getItem('olympic_hub_hotels');
-                    if (saved) {
-                        const parsed = JSON.parse(saved);
-                        const mapped = parsed
-                            .filter((h: any) => {
-                                const name = (h.name || "").toLowerCase();
-                                const hotelId = String(h.id);
-                                const isTechnical = name.includes("pogledaj id") ||
-                                    name.includes("?") ||
-                                    hotelId.includes("2189") ||
-                                    name.trim() === "" ||
-                                    name === "null";
-                                return !isTechnical;
-                            })
-                            .map(mapBackendToFrontendHotel);
-                        setHotels(mapped);
-                        setDataSource('local');
-                        console.log(`⚠️ Loaded ${mapped.length} hotels from LocalStorage (Fallback)`);
-                    } else {
-                        setDataSource('none');
-                    }
+                    setDataSource('none');
                 }
-            } catch (err) {
-                console.error("Failed to load hotels in ProductionHub", err);
             }
-        };
+        } catch (err) {
+            console.error("Failed to load hotels in ProductionHub", err);
+            setHotels([]);
+        }
+    };
+
+    // Load hotels from Supabase on mount
+    useEffect(() => {
         loadHotels();
 
         const loadTours = async () => {
@@ -1148,8 +1245,23 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '16px' }}>
-                            <button className="btn-secondary" style={{ height: '56px', padding: '0 32px', borderRadius: '16px', fontWeight: 800, fontSize: '16px', border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
-                                <Download size={24} style={{ marginRight: '12px' }} /> Import
+                            {userLevel >= 6 && (
+                                <button
+                                    className="btn-secondary"
+                                    onClick={cleanupKidsCamp}
+                                    style={{ height: '56px', padding: '0 24px', borderRadius: '16px', fontWeight: 800, fontSize: '13px', border: '1px solid #ef4444', color: '#ef4444', background: 'rgba(239, 68, 68, 0.05)' }}
+                                >
+                                    <Trash2 size={20} style={{ marginRight: '8px' }} /> CLEANUP KIDSCAMP
+                                </button>
+                            )}
+                            <button
+                                className="btn-secondary"
+                                onClick={syncSolvexData}
+                                disabled={isSyncing}
+                                style={{ height: '56px', padding: '0 32px', borderRadius: '16px', fontWeight: 800, fontSize: '16px', border: '1px solid var(--border)', background: 'var(--bg-card)', opacity: isSyncing ? 0.6 : 1 }}
+                            >
+                                <RefreshCw size={24} style={{ marginRight: '12px', animation: isSyncing ? 'spin 2s linear infinite' : 'none' }} />
+                                {isSyncing ? 'SINHRONIZACIJA...' : 'SYNC OD SOLVEX-A'}
                             </button>
                             <button className="btn-primary" onClick={startCreate} style={{ height: '56px', padding: '0 40px', borderRadius: '16px', fontWeight: 900, fontSize: '16px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 10px 20px rgba(37, 99, 235, 0.3)', border: 'none' }}>
                                 <Plus size={26} style={{ marginRight: '12px' }} /> KREIRAJ OBJEKAT
@@ -1582,8 +1694,22 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                         {paginatedHotels.length === 0 && (
                             <div style={{ padding: '120px 48px', textAlign: 'center' }}>
                                 <AlertCircle size={80} style={{ color: 'var(--text-secondary)', opacity: 0.1, marginBottom: '24px' }} />
-                                <h2 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '24px', fontWeight: 800 }}>Nismo pronašli nijedan objekat</h2>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '18px', marginTop: '12px', opacity: 0.6 }}>Pokušajte sa širim pojmom ili drugim filterima (npr. 'Bugarska').</p>
+                                <h2 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '24px', fontWeight: 800 }}>
+                                    {integrityFilter.length > 0 ? 'Nema objekata koji zadovoljavaju ove kriterijume integriteta' : 'Nismo pronašli nijedan objekat'}
+                                </h2>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '18px', marginTop: '12px', opacity: 0.6 }}>
+                                    {integrityFilter.length > 0
+                                        ? 'Trenutno većina objekata u bazi nema priložene slike ili opise direktno iz Solvex API-ja. Molimo resetujte filtere ili koristite ručni unos.'
+                                        : 'Pokušajte sa širim pojmom ili drugim filterima (npr. \'Bugarska\').'}
+                                </p>
+                                {integrityFilter.length > 0 && (
+                                    <button
+                                        onClick={() => setIntegrityFilter([])}
+                                        style={{ marginTop: '24px', background: 'var(--accent)', border: 'none', color: '#fff', padding: '12px 24px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}
+                                    >
+                                        PONIŠTI FILTERE INTEGRITETA
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>

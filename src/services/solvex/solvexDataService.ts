@@ -34,13 +34,33 @@ export async function getSolvexHotels(cityId?: number): Promise<SolvexHotel[]> {
 
         const hotels = Array.isArray(hotelsData) ? hotelsData : [hotelsData];
 
-        return hotels.map((h: any) => ({
-            id: parseInt(String(h.HotelKey || '0')),
-            name: String(h.HotelName || h.Name || 'Unknown Hotel'),
-            cityId: parseInt(String(h.CityKey || '0')),
-            cityName: String(h.CityName || ''),
-            starRating: 0 // GetHotels usually doesn't return stars directly, but we can store it
-        }));
+        return hotels.map((h: any) => {
+            const description = String(h.Description || '');
+
+            // Try to extract images from AdditionalParams if they exist
+            let images: string[] = [];
+            const additionalParams = h.AdditionalParams?.ParameterPair;
+            if (additionalParams) {
+                const paramsArr = Array.isArray(additionalParams) ? additionalParams : [additionalParams];
+                paramsArr.forEach((p: any) => {
+                    const key = String(p.Key || '').toLowerCase();
+                    const val = String(p.Value || '');
+                    if ((key.includes('image') || key.includes('picture') || key.includes('photo')) && val.startsWith('http')) {
+                        images.push(val);
+                    }
+                });
+            }
+
+            return {
+                id: parseInt(String(h.HotelKey || h.ID || '0')),
+                name: String(h.HotelName || h.Name || 'Unknown Hotel'),
+                cityId: parseInt(String(h.CityKey || h.CityID || '0')),
+                cityName: String(h.CityName || ''),
+                starRating: parseInt(String(h.Stars || h.StarRating || h.HotelCategory?.Name || 0)),
+                description: description,
+                images: images
+            };
+        });
     } catch (error) {
         console.error('[Solvex Data] Failed to fetch hotels:', error);
         return [];

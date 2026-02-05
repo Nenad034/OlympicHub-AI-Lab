@@ -15,6 +15,21 @@ export const saveToCloud = async (tableName: string, data: any[]) => {
     }
 };
 
+export const deleteFromCloud = async (tableName: string, column: string, pattern: string) => {
+    try {
+        const { error } = await supabase
+            .from(tableName)
+            .delete()
+            .ilike(column, pattern);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (error: any) {
+        console.error(`Error deleting from ${tableName}:`, error.message);
+        return { success: false, error: error.message };
+    }
+};
+
 export const loadFromCloud = async (tableName: string) => {
     try {
         let allData: any[] = [];

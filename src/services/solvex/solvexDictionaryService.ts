@@ -140,11 +140,28 @@ export async function getHotels(cityId: number): Promise<SolvexApiResponse<any[]
 
         return {
             success: true,
-            data: hotels.map((h: any) => ({
-                id: parseInt(String(h.ID || h.Key || 0)),
-                name: String(h.Name || h.HotelName || ''),
-                stars: parseInt(String(h.Stars || h.StarRating || 0))
-            }))
+            data: hotels.map((h: any) => {
+                const description = String(h.Description || '');
+                let images: string[] = [];
+                const additionalParams = h.AdditionalParams?.ParameterPair;
+                if (additionalParams) {
+                    const paramsArr = Array.isArray(additionalParams) ? additionalParams : [additionalParams];
+                    paramsArr.forEach((p: any) => {
+                        const key = String(p.Key || '').toLowerCase();
+                        const val = String(p.Value || '');
+                        if ((key.includes('image') || key.includes('picture') || key.includes('photo')) && val.startsWith('http')) {
+                            images.push(val);
+                        }
+                    });
+                }
+                return {
+                    id: parseInt(String(h.ID || h.Key || 0)),
+                    name: String(h.Name || h.HotelName || ''),
+                    stars: parseInt(String(h.Stars || h.StarRating || h.HotelCategory?.Name || 0)),
+                    description: description,
+                    images: images
+                };
+            })
         };
     } catch (error) {
         console.error('[Solvex Dictionaries] GetHotels failed:', error);
