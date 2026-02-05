@@ -321,6 +321,7 @@ export function buildHotelSearchParams(params: {
     children?: number;
     childrenAges?: number[];
     rooms?: number;
+    tariffs?: number[]; // Optional override, defaults to [0, 1993]
 }): Record<string, any> {
     // STRICT ORDER REQUIRED BY WSDL s:sequence for SearchHotelServiceRequest
     const request: any = {
@@ -337,12 +338,16 @@ export function buildHotelSearchParams(params: {
     }
 
     if (params.hotelId) {
-        request['HotelKeys'] = { 'int': [params.hotelId] };
+        const ids = Array.isArray(params.hotelId) ? params.hotelId : [params.hotelId];
+        request['HotelKeys'] = { 'int': ids };
     }
 
     if (params.childrenAges && params.childrenAges.length > 0) {
         request['Ages'] = { 'int': params.childrenAges };
     }
+
+    // Critical fix: Tariffs must be included to get results (0 = Default, 1993 = Standard)
+    request['Tariffs'] = { 'int': params.tariffs || [0, 1993] };
 
     request['Pax'] = params.adults + (params.children || 0);
     request['Mode'] = 0;

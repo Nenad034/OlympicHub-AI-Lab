@@ -38,7 +38,7 @@ export async function searchHotels(params: Omit<SolvexHotelSearchParams, 'guid'>
         // Using SearchHotelServices method name from constants
         const result = await makeSoapRequest<any>(SOLVEX_SOAP_METHODS.SEARCH_HOTELS, soapParams);
 
-        console.log('[Solvex Search] Raw SOAP result:', result);
+        // console.log('[Solvex Search] Raw SOAP result:', result);
 
         let items: any[] = [];
 
@@ -133,9 +133,81 @@ export async function searchHotels(params: Omit<SolvexHotelSearchParams, 'guid'>
                 }
             }
 
-            // Use Enriched description if available
-            const finalDescription = enriched?.content?.description || rawDescription;
-            const finalImages = enriched?.images || [];
+            // --- DEEP IMAGE EXTRACTION START ---
+            let extractedImages: string[] = [];
+            let extractedDescription = rawDescription;
+            const additionalParams = s.AdditionalParams?.ParameterPair;
+
+            // Recursive function to find images anywhere in the object
+            // This is a robust brute-force search because Solvex structure varies wildly
+            const findImagesRecursively = (obj: any) => {
+                if (!obj) return;
+
+                // 1. Direct string check for URLs that look like images
+                if (typeof obj === 'string' && (obj.startsWith('http') || obj.startsWith('https')) &&
+                    (obj.match(/\.(jpg|jpeg|png|gif|webp)$/i) || obj.includes('image') || obj.includes('photo'))) {
+                    extractedImages.push(obj);
+                    return;
+                }
+
+                // 2. Iterate Arrays
+                if (Array.isArray(obj)) {
+                    obj.forEach(item => findImagesRecursively(item));
+                    return;
+                }
+
+                // 3. Iterate Objects
+                if (typeof obj === 'object') {
+                    for (const key in obj) {
+                        const val = obj[key];
+
+                        // Check for Description keys while we are at it
+                        if ((key === 'Description' || key === 'HotelDescription') && typeof val === 'string' && val.length > extractedDescription.length) {
+                            extractedDescription = val;
+                        }
+
+                        // Heuristic: If key is "Image" or "Photo" and val is string, it's likely an image
+                        // Otherwise, recurse deeper
+                        const lowerKey = key.toLowerCase();
+                        if (lowerKey.includes('image') || lowerKey.includes('photo') || lowerKey.includes('picture') || lowerKey.includes('url')) {
+                            if (typeof val === 'string' && val.startsWith('http')) extractedImages.push(val);
+                            else findImagesRecursively(val);
+                        } else {
+                            findImagesRecursively(val);
+                        }
+                    }
+                }
+            };
+
+            // First pass: Try the standard AdditionalParams location
+            if (additionalParams) {
+                const paramsArr = Array.isArray(additionalParams) ? additionalParams : [additionalParams];
+                paramsArr.forEach((p: any) => {
+                    const key = String(p.Key || '').toLowerCase();
+                    const val = String(p.Value || '');
+
+                    if ((key.includes('image') || key.includes('picture') || key.includes('photo')) && val.startsWith('http')) {
+                        extractedImages.push(val);
+                    }
+                    else if (key === 'description' || key === 'hoteldescription') {
+                        if (val.length > extractedDescription.length) {
+                            extractedDescription = val;
+                        }
+                    }
+                });
+            }
+
+            // Second pass: If still no images, unleash the deep search on the whole item
+            if (extractedImages.length === 0) {
+                findImagesRecursively(s);
+                // Deduplicate
+                extractedImages = [...new Set(extractedImages)];
+            }
+            // --- DEEP IMAGE EXTRACTION END ---
+
+            // Use Enriched (Supabase) data if available, otherwise Solvex data
+            const finalDescription = enriched?.content?.description || extractedDescription;
+            const finalImages = enriched?.images || extractedImages;
 
             return {
                 hotel: {
@@ -154,7 +226,7 @@ export async function searchHotels(params: Omit<SolvexHotelSearchParams, 'guid'>
                     starRating: starRating,
                     nameLat: hotelName,
                     priceType: 0,
-                    // Attach enriched data
+                    // Attach enriched/extracted data
                     // @ts-ignore
                     description: finalDescription,
                     // @ts-ignore

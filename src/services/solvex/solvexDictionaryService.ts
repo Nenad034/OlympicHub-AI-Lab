@@ -130,18 +130,17 @@ export async function getHotels(cityId: number): Promise<SolvexApiResponse<any[]
         }
 
         const result = await makeSoapRequest<any>('GetHotels', {
+            'guid': auth.data,
             'cityKey': cityId
         });
 
         console.log(`[Solvex Dictionaries] GetHotels for city ${cityId} Raw Result:`, result);
 
-        // Better structure navigation for Solvex SOAP response
-        let hotelsData = result.Hotel || result.Hotels;
-
-        // Check inside GetHotelsResult if not found at root
-        if (!hotelsData && result.GetHotelsResult) {
-            hotelsData = result.GetHotelsResult.Hotel || result.GetHotelsResult.Hotels;
-        }
+        // Standard Solvex/MasterTour response navigation (Dataset with diffgram)
+        const hotelsData = result?.Data?.diffgram?.DocumentElement?.Hotels ||
+            result?.Hotel ||
+            result?.Hotels ||
+            result?.GetHotelsResult?.Hotel;
 
         const hotelsArr = Array.isArray(hotelsData) ? hotelsData : (hotelsData ? [hotelsData] : []);
 
@@ -162,17 +161,13 @@ export async function getHotels(cityId: number): Promise<SolvexApiResponse<any[]
                     });
                 }
 
-                // Extract useful location info
-                const cityObj = h.City || {};
-                const cityName = String(cityObj.Name || '');
-
                 return {
-                    id: parseInt(String(h.ID || h.Key || 0)),
-                    name: String(h.Name || h.HotelName || ''),
+                    id: parseInt(String(h.HotelKey || h.HotelID || h.ID || h.Key || 0)),
+                    name: String(h.HotelName || h.Name || ''),
                     stars: parseInt(String(h.Stars || h.StarRating || h.HotelCategory?.Name || 0)),
                     description: description,
                     images: images,
-                    city: cityName
+                    city: String(h.CityName || h.City?.Name || '')
                 };
             })
         };
@@ -185,9 +180,56 @@ export async function getHotels(cityId: number): Promise<SolvexApiResponse<any[]
     }
 }
 
+/**
+ * Get detailed information for multiple hotels using SearchHotelServices 
+ * (which returns AdditionalParams like images and full descriptions)
+ */
+export async function getDetailedHotels(ids: number[]): Promise<any[]> {
+    try {
+        const { searchHotels } = await import('./solvexSearchService');
+
+        // Use Peak Summer Season to ensure availability (Hotels are closed in winter!)
+        const now = new Date();
+        // If we are past August, aim for next year. Otherwise, this year.
+        const targetYear = now.getMonth() > 7 ? now.getFullYear() + 1 : now.getFullYear();
+
+        const dateFrom = `${targetYear}-07-15`;
+        const dateTo = `${targetYear}-07-22`;
+
+        console.log(`[Deep Sync] Searching for details in Peak Season: ${dateFrom} - ${dateTo}`);
+
+        const response = await searchHotels({
+            dateFrom,
+            dateTo,
+            adults: 2,
+            hotelId: ids as any // We modified client to handle number[]
+        });
+
+        if (!response.success || !response.data) return [];
+
+        return response.data.map(item => {
+            const h = item.hotel;
+            return {
+                id: h.id,
+                name: h.name,
+                stars: h.starRating,
+                city: h.city.name,
+                // FIX: Description and Images are attached to the 'hotel' object (h), not the root item
+                description: (h as any).description || "",
+                images: (h as any).images || [],
+                rawData: item
+            };
+        });
+    } catch (error) {
+        console.error('[Solvex Dictionaries] getDetailedHotels failed:', error);
+        return [];
+    }
+}
+
 export default {
     getCountries,
     getCities,
     getRegions,
-    getHotels
+    getHotels,
+    getDetailedHotels
 };

@@ -60,7 +60,7 @@ import {
 } from '../../utils/securityUtils';
 import { ImportStagingModal, type StagingItem } from './components/ImportStagingModal';
 import { useAuthStore } from '../../stores/authStore';
-import { getHotels as getSolvexHotels, getCities as getSolvexCities } from '../../services/solvex/solvexDictionaryService';
+import { getHotels as getSolvexHotels, getCities as getSolvexCities, getDetailedHotels } from '../../services/solvex/solvexDictionaryService';
 import { getProxiedImageUrl } from '../../utils/imageProxy';
 import { deleteFromCloud } from '../../utils/storageUtils';
 
@@ -248,6 +248,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
     // Staging State
     const [stagingItems, setStagingItems] = useState<StagingItem[]>([]);
     const [isStagingOpen, setIsStagingOpen] = useState(false);
+    const [syncProgress, setSyncProgress] = useState<{ current: number, total: number, status: string } | null>(null);
 
     // Tour Management State
     const [tours, setTours] = useState<Tour[]>([]);
@@ -355,7 +356,8 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                 window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Skeniram Solvex bazu...', type: 'info' });
             }
 
-            const cityKeys = [33, 68, 1, 9, 6];
+            // 33 = Golden Sands (Only sync this for now per user request) - FORCE UPDATE
+            const cityKeys = [33];
             let allRemoteHotels: any[] = [];
 
             for (const cityId of cityKeys) {
@@ -366,6 +368,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
             }
 
             if (allRemoteHotels.length === 0) {
+                alert("Solvex API nije vratio ni jedan hotel za odabrane gradove. Proverite konekciju.");
                 // @ts-ignore
                 if (window.sentinelEvents) window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Nisu pronađeni podaci.', type: 'warning' });
                 setIsSyncing(false);
@@ -424,11 +427,14 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
             console.log(`[Solvex Sync] Valid candidates (after blacklist): ${validCandidates.length}.`);
 
             if (validCandidates.length === 0) {
+                alert("Nema novih podataka za uvoz. Svi hoteli su ili već uveženi ili su na listi za blokiranje.");
                 // @ts-ignore
                 if (window.sentinelEvents) window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Nema novih podataka za uvoz (sve filtrirano).', type: 'info' });
                 setIsSyncing(false);
                 return;
             }
+
+            alert(`Pronađeno ${validCandidates.length} hotela. Otvaram prozor za pregled i odobravanje.`);
 
             setStagingItems(validCandidates);
 
@@ -439,6 +445,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
 
         } catch (error: any) {
             console.error('[Solvex Sync Error]:', error);
+            alert(`Greška prilikom skeniranja Solvex-a: ${error.message}`);
             // @ts-ignore
             if (window.sentinelEvents) window.sentinelEvents.emit({ title: 'Sync Error', message: error.message, type: 'error' });
             setIsSyncing(false);
@@ -446,114 +453,141 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
     };
 
     const handleImportConfirm = async (selectedItems: StagingItem[]) => {
-        setIsStagingOpen(false);
         setIsSyncing(true);
+        setSyncProgress({ current: 0, total: selectedItems.length, status: 'Pokretanje sinhronizacije...' });
 
         try {
-            const newHotelsToSave: Hotel[] = [];
-            const updatedHotelsToSave: Hotel[] = [];
+            const BATCH_SIZE = 50;
+            const updatedHotelsList = [...hotels];
+            let newTotal = 0;
+            let updatedTotal = 0;
 
-            for (const item of selectedItems) {
-                const rawSolvexData = item.rawData; // This is the full Solvex object we stashed
+            for (let i = 0; i < selectedItems.length; i += BATCH_SIZE) {
+                const batch = selectedItems.slice(i, i + BATCH_SIZE);
+                const batchSize = batch.length;
 
-                // Map Solvex data to our Property type
-                const propertyData: Partial<Property> = {
-                    id: item.id,
-                    name: item.name,
-                    address: {
-                        addressLine1: rawSolvexData.address?.addressLine || '',
-                        city: item.city,
-                        country: item.country,
-                        countryCode: 'BG', // Assuming Bulgaria for Solvex
-                        postalCode: rawSolvexData.address?.zipCode || ''
-                    },
-                    geoCoordinates: {
-                        latitude: rawSolvexData.location?.lat || 0,
-                        longitude: rawSolvexData.location?.lng || 0,
-                        coordinateSource: 'SOLVEX'
-                    },
-                    starRating: item.stars,
-                    images: (rawSolvexData.images || []).map((img: any) => ({
-                        url: getProxiedImageUrl(img.url), // Use image proxy
-                        altText: img.description || item.name,
-                        category: 'PROPERTY_IMAGE'
-                    })),
-                    content: [{
-                        languageCode: 'sr', // Default to Serbian
-                        officialName: item.name,
-                        displayName: item.name,
-                        shortDescription: item.description?.substring(0, 250) || '',
-                        longDescription: item.description || ''
-                    }],
-                    propertyAmenities: (rawSolvexData.amenities || []).map((amenity: any) => ({
-                        name: amenity.name,
-                        category: 'GENERAL', // Default category
-                        values: amenity.values // Keep original values
-                    })),
-                    isActive: true, // Default to active on import
-                    propertyType: 'Hotel', // Default
-                    createdAt: toUTC(new Date()),
-                    updatedAt: toUTC(new Date()),
-                    // Add other fields as necessary, potentially from rawSolvexData
-                };
+                setSyncProgress({
+                    current: i,
+                    total: selectedItems.length,
+                    status: `Učitavanje detalja za hotele ${i + 1}-${Math.min(i + BATCH_SIZE, selectedItems.length)}...`
+                });
 
-                const mappedHotel: Hotel = {
-                    id: item.id,
-                    name: unifyHotelName(item.name),
-                    location: {
-                        address: propertyData.address?.addressLine1 || '',
-                        place: propertyData.address?.city || '',
-                        lat: propertyData.geoCoordinates?.latitude || 0,
-                        lng: propertyData.geoCoordinates?.longitude || 0
-                    },
-                    images: propertyData.images || [],
-                    amenities: propertyData.propertyAmenities || [],
-                    units: [], // Solvex data might not have units in this format
-                    commonItems: { discount: [], touristTax: [], supplement: [] },
-                    originalPropertyData: propertyData
-                };
+                // Fetch deep details for the batch
+                const detailedItems = await getDetailedHotels(batch.map(item => Number(item.originalId)));
 
-                if (item.isUpdate) {
-                    // Find existing hotel and update it
-                    const existingHotelIndex = hotels.findIndex(h => h.id === item.id);
-                    if (existingHotelIndex !== -1) {
-                        const updatedHotel = { ...hotels[existingHotelIndex], ...mappedHotel };
-                        updatedHotelsToSave.push(updatedHotel);
+                // Use number keys to match usage below
+                const detailedMap = new Map(detailedItems.map(d => [d.id, d]));
+
+                const batchNewHotels: Hotel[] = [];
+                const batchUpdatedHotels: Hotel[] = [];
+
+                for (const item of batch) {
+                    const detail = detailedMap.get(Number(item.originalId)) || item;
+                    const rawSolvexData = (item as any).rawData;
+
+                    const propertyData: Partial<Property> = {
+                        id: item.id as string,
+                        address: {
+                            addressLine1: rawSolvexData?.address?.addressLine || '',
+                            city: item.city,
+                            country: item.country,
+                            countryCode: 'BG',
+                            postalCode: rawSolvexData?.address?.zipCode || ''
+                        },
+                        geoCoordinates: {
+                            latitude: rawSolvexData?.location?.lat || 0,
+                            longitude: rawSolvexData?.location?.lng || 0,
+                            coordinateSource: 'MAP_PIN'
+                        },
+                        starRating: item.stars,
+                        images: (detail.images?.length > 0 ? detail.images : (rawSolvexData?.images || [])).map((url: string, idx: number) => ({
+                            url: getProxiedImageUrl(url),
+                            altText: item.name,
+                            category: 'Exterior',
+                            sortOrder: idx
+                        })),
+                        content: [{
+                            languageCode: 'sr',
+                            officialName: item.name,
+                            displayName: item.name,
+                            shortDescription: (detail.description || item.description || '').substring(0, 250),
+                            longDescription: detail.description || item.description || ''
+                        }],
+                        // propertyAmenities: [], // REMOVED to fix DB error
+                        // Explicitly undefined to avoid sending 'amenities'
+                        // @ts-ignore
+                        amenities: undefined,
+                        isActive: true,
+                        propertyType: 'Hotel',
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    };
+
+                    const mappedHotel: Hotel = {
+                        id: item.id as string,
+                        name: unifyHotelName(item.name),
+                        location: {
+                            address: propertyData.address?.addressLine1 || '',
+                            place: propertyData.address?.city || '',
+                            lat: propertyData.geoCoordinates?.latitude || 0,
+                            lng: propertyData.geoCoordinates?.longitude || 0
+                        },
+                        images: propertyData.images?.map(img => ({ url: img.url, altText: img.altText || item.name })) || [],
+                        amenities: [],
+                        units: [],
+                        commonItems: { discount: [], touristTax: [], supplement: [] },
+                        originalPropertyData: propertyData as Property
+                    };
+
+                    if (item.isUpdate) {
+                        const idx = updatedHotelsList.findIndex(h => h.id === item.id);
+                        if (idx !== -1) {
+                            updatedHotelsList[idx] = { ...updatedHotelsList[idx], ...mappedHotel };
+                            batchUpdatedHotels.push(updatedHotelsList[idx]);
+                        }
+                        updatedTotal++;
+                    } else {
+                        updatedHotelsList.push(mappedHotel);
+                        batchNewHotels.push(mappedHotel);
+                        newTotal++;
                     }
-                } else {
-                    newHotelsToSave.push(mappedHotel);
+                }
+
+                // Batch Save to Supabase
+                await syncToSupabase(updatedHotelsList);
+                setHotels([...updatedHotelsList]);
+
+                // Pause if NOT the last batch
+                if (i + BATCH_SIZE < selectedItems.length) {
+                    const pauseTime = 60; // seconds
+                    for (let s = pauseTime; s > 0; s--) {
+                        setSyncProgress({
+                            current: i + batchSize,
+                            total: selectedItems.length,
+                            status: `Pauza zbog API limita (${s}s)...`
+                        });
+                        await new Promise(r => setTimeout(r, 1000));
+                    }
                 }
             }
 
-            const currentHotels = [...hotels];
-            const updatedList = currentHotels
-                .map(h => {
-                    const updated = updatedHotelsToSave.find(uh => uh.id === h.id);
-                    return updated || h;
-                })
-            setHotels(updatedList);
-            await syncToSupabase(updatedList); // Save all changes to Supabase
+            setSyncProgress({ current: selectedItems.length, total: selectedItems.length, status: 'Sinhronizacija završena!' });
 
             // @ts-ignore
             if (window.sentinelEvents) {
                 // @ts-ignore
-                window.sentinelEvents.emit({ title: 'Uvoz Uspešan', message: `Uvezeno ${newHotelsToSave.length} novih i ažurirano ${updatedHotelsToSave.length} postojećih objekata.`, type: 'success' });
+                window.sentinelEvents.emit({ title: 'Uvoz Uspešan', message: `Uvezeno ${newTotal} novih i ažurirano ${updatedTotal} objekata.`, type: 'success' });
             }
 
-            // Explicit user feedback requested
-            alert(`✅ Sinhronizacija USPEŠNA!\n\n🆕 Novih hotela: ${newHotelsToSave.length}\n🔄 Ažuriranih: ${updatedHotelsToSave.length}\n\nPodaci su sačuvani u bazi.`);
+            alert(`✅ Sinhronizacija USPEŠNA!\n\n🆕 Novih hotela: ${newTotal}\n🔄 Ažuriranih: ${updatedTotal}\n\nPodaci su sačuvani u bazi sa slikama i opisima.`);
 
         } catch (error: any) {
-            console.error('Import confirmation failed:', error);
-            alert(`GRESKA: ${error.message}`);
-            // @ts-ignore
-            if (window.sentinelEvents) {
-                // @ts-ignore
-                window.sentinelEvents.emit({ title: 'Greška pri uvozu', message: `Došlo je do greške prilikom uvoza: ${error.message}`, type: 'error' });
-            }
+            console.error('Import failed:', error);
+            alert(`GREŠKA: ${error.message}`);
         } finally {
             setIsSyncing(false);
-            setStagingItems([]); // Clear staging items
+            setSyncProgress(null);
+            setStagingItems([]);
         }
     };
 
@@ -1445,12 +1479,14 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                         />
                     )}
                 </AnimatePresence>
+
                 <ImportStagingModal
                     isOpen={isStagingOpen}
                     onClose={() => setIsStagingOpen(false)}
                     items={stagingItems}
                     onConfirm={handleImportConfirm}
                     isSyncing={isSyncing}
+                    syncProgress={syncProgress}
                 />
             </div>
         );
@@ -2009,8 +2045,9 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                     items={stagingItems}
                     onConfirm={handleImportConfirm}
                     isSyncing={isSyncing}
+                    syncProgress={syncProgress}
                 />
-            </div >
+            </div>
         );
     }
 

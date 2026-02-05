@@ -13,6 +13,13 @@ export interface StagingItem {
     imagesCount: number;
     isUpdate: boolean; // True if hotel already exists in DB
     isBlacklisted: boolean; // If it matches KidsCamp or similar patterns
+    rawData?: any;
+}
+
+export interface SyncProgress {
+    current: number;
+    total: number;
+    status: string;
 }
 
 interface ImportStagingModalProps {
@@ -21,6 +28,7 @@ interface ImportStagingModalProps {
     items: StagingItem[];
     onConfirm: (selectedItems: StagingItem[]) => void;
     isSyncing: boolean;
+    syncProgress?: SyncProgress | null;
 }
 
 export const ImportStagingModal: React.FC<ImportStagingModalProps> = ({
@@ -28,7 +36,8 @@ export const ImportStagingModal: React.FC<ImportStagingModalProps> = ({
     onClose,
     items,
     onConfirm,
-    isSyncing
+    isSyncing,
+    syncProgress
 }) => {
     const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
     const [filter, setFilter] = useState<'all' | 'new' | 'update'>('all');
@@ -163,6 +172,24 @@ export const ImportStagingModal: React.FC<ImportStagingModalProps> = ({
                     >
                         Novi ({items.filter(i => !i.isUpdate).length})
                     </button>
+
+                    {syncProgress && (
+                        <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', minWidth: '300px' }}>
+                            <div style={{ fontSize: '12px', color: '#10b981', fontWeight: 700, textTransform: 'uppercase' }}>
+                                {syncProgress.status}
+                            </div>
+                            <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${(syncProgress.current / syncProgress.total) * 100}%` }}
+                                    style={{ height: '100%', background: '#10b981' }}
+                                />
+                            </div>
+                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>
+                                {syncProgress.current} / {syncProgress.total} hotela obrađeno
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* List */}
