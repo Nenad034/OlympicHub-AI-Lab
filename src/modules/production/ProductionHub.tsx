@@ -1495,15 +1495,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '16px' }}>
-                            {userLevel >= 6 && (
-                                <button
-                                    className="btn-secondary"
-                                    onClick={cleanupKidsCamp}
-                                    style={{ height: '56px', padding: '0 24px', borderRadius: '16px', fontWeight: 800, fontSize: '13px', border: '1px solid #ef4444', color: '#ef4444', background: 'rgba(239, 68, 68, 0.05)' }}
-                                >
-                                    <Trash2 size={20} style={{ marginRight: '8px' }} /> CLEANUP KIDSCAMP
-                                </button>
-                            )}
+
                             <button
                                 className="btn-secondary"
                                 onClick={syncSolvexData}
