@@ -626,9 +626,27 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         setTimeout(() => setIsSyncing(false), 500);
     };
 
-    // Auto-save to localStorage as quick cache
+    // Auto-save to localStorage as quick cache - WITH NUCLEAR CLEANUP
     useEffect(() => {
-        localStorage.setItem('olympic_hub_hotels', JSON.stringify(hotels));
+        // Double check: if any KidsCamp sneaked in, remove it immediately
+        const polluted = hotels.some(h => {
+            const n = h.name.toLowerCase();
+            const c = (h.location?.place || "").toLowerCase();
+            return n.includes('kidscamp') || n.includes('kids camp') || c.includes('kidscamp');
+        });
+
+        if (polluted) {
+            console.warn("⚠️ Detected KidsCamp pollution in state! Initiating emergency cleanup...");
+            const cleanHotels = hotels.filter(h => {
+                const n = h.name.toLowerCase();
+                const c = (h.location?.place || "").toLowerCase();
+                return !n.includes('kidscamp') && !n.includes('kids camp') && !c.includes('kidscamp');
+            });
+            setHotels(cleanHotels);
+            localStorage.setItem('olympic_hub_hotels', JSON.stringify(cleanHotels));
+        } else {
+            localStorage.setItem('olympic_hub_hotels', JSON.stringify(hotels));
+        }
     }, [hotels]);
     const [showImport, setShowImport] = useState(false);
     const [importData, setImportData] = useState('');
