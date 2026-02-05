@@ -474,7 +474,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
 
                 // Fetch deep details in smaller sub-batches (5 items) to ensure data integrity
                 const allDetailedItems: any[] = [];
-                const SUB_BATCH_SIZE = 5;
+                const SUB_BATCH_SIZE = 1; // Strict serial fetching to guarantee image results
 
                 for (let j = 0; j < batch.length; j += SUB_BATCH_SIZE) {
                     const chunk = batch.slice(j, j + SUB_BATCH_SIZE);
