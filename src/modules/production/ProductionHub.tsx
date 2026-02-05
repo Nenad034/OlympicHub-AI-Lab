@@ -457,7 +457,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         setSyncProgress({ current: 0, total: selectedItems.length, status: 'Pokretanje sinhronizacije...' });
 
         try {
-            const BATCH_SIZE = 50;
+            const BATCH_SIZE = 200;
             const updatedHotelsList = [...hotels];
             let newTotal = 0;
             let updatedTotal = 0;
