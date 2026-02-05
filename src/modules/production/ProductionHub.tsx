@@ -472,9 +472,24 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                     status: `Učitavanje detalja za hotele ${i + 1}-${Math.min(i + BATCH_SIZE, selectedItems.length)}...`
                 });
 
-                // Fetch deep details for the batch
-                const detailedItems = await getDetailedHotels(batch.map(item => Number(item.originalId)));
+                // Fetch deep details in smaller sub-batches (5 items) to ensure data integrity
+                const allDetailedItems: any[] = [];
+                const SUB_BATCH_SIZE = 5;
 
+                for (let j = 0; j < batch.length; j += SUB_BATCH_SIZE) {
+                    const chunk = batch.slice(j, j + SUB_BATCH_SIZE);
+                    const chunkIds = chunk.map(item => Number(item.originalId));
+                    try {
+                        const chunkDetails = await getDetailedHotels(chunkIds);
+                        allDetailedItems.push(...chunkDetails);
+                    } catch (e) {
+                        console.error("Sub-batch failed", e);
+                    }
+                    // Tiny delay
+                    await new Promise(r => setTimeout(r, 100));
+                }
+
+                const detailedItems = allDetailedItems;
                 // Use number keys to match usage below
                 const detailedMap = new Map(detailedItems.map(d => [d.id, d]));
 
