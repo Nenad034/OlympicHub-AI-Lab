@@ -89,8 +89,7 @@ export async function searchHotels(params: Omit<SolvexHotelSearchParams, 'guid'>
             try {
                 // Dynamically import supabase client
                 // @ts-ignore
-                const { supabase } = await import('../../lib/supabaseClient');
-
+                const { supabase } = await import('../../supabaseClient');
                 if (supabase) {
                     const { data: hotelsData } = await supabase
                         .from('properties')
@@ -104,26 +103,8 @@ export async function searchHotels(params: Omit<SolvexHotelSearchParams, 'guid'>
                         });
                     }
                 }
-            } catch (err) {
-                try {
-                    // @ts-ignore
-                    const { supabase } = await import('../../lib/supabase');
-                    if (supabase) {
-                        const { data: hotelsData } = await supabase
-                            .from('properties')
-                            .select('id, images, content, propertyAmenities')
-                            .in('id', uniqueHotelIds.map(id => `solvex_${id}`));
-
-                        if (hotelsData) {
-                            hotelsData.forEach((h: any) => {
-                                const solvexId = h.id.replace('solvex_', '');
-                                enrichedMap[solvexId] = h;
-                            });
-                        }
-                    }
-                } catch (e2) {
-                    console.warn('[Solvex Search] Could not load Supabase client for enrichment', e2);
-                }
+            } catch (e2) {
+                console.warn('[Solvex Search] Could not load Supabase client for enrichment', e2);
             }
         }
 
