@@ -298,6 +298,49 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         }
     };
 
+    // Single delete function
+    const deleteHotel = async (e: React.MouseEvent, hotelId: string, hotelName: string) => {
+        e.stopPropagation();
+
+        if (userLevel < 6) {
+            alert('PRISTUP ODBIJEN: Samo korisnici sa najvišim stepenom pristupa mogu brisati hotele.');
+            return;
+        }
+
+        if (!window.confirm(`DA LI STE SIGURNI da želite trajno obrisati hotel "${hotelName}"?`)) return;
+
+        try {
+            // Optimistic update
+            setHotels(prev => prev.filter(h => h.id !== hotelId));
+
+            // Sync with backend
+            // For single delete, we can actually use the deleteFromCloud util we made earlier
+            // but that one deletes by pattern. Let's make a specific single ID deletion or just exclude from the list and save.
+            // Since we save the whole list to 'properties' table, we can just save the new list? 
+            // NO, 'properties' table is huge, we should delete the specific row.
+
+            // We need a specific delete by ID.
+            // Let's use deleteFromCloud with ID.
+            const { success } = await deleteFromCloud('properties', 'id', hotelId);
+
+            if (success) {
+                // @ts-ignore
+                if (window.sentinelEvents) {
+                    // @ts-ignore
+                    window.sentinelEvents.emit({ title: 'Hotel Obrisan', message: `Hotel "${hotelName}" je uspešno uklonjen.`, type: 'success' });
+                }
+            } else {
+                throw new Error("Backend delete failed");
+            }
+
+        } catch (error) {
+            console.error("Delete failed:", error);
+            alert("Brisanje nije uspelo. Proverite konzolu.");
+            // Revert optimistic update (reload)
+            loadHotels();
+        }
+    };
+
     const syncSolvexData = async () => {
         try {
             setIsSyncing(true);
@@ -1733,12 +1776,23 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                                         <Globe size={22} />
                                                     </button>
                                                     <button
-                                                        className="btn-icon circle"
-                                                        style={{ width: '48px', height: '48px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}
+                                                        className="btn-icon circle-btn"
+                                                        style={{ width: '40px', height: '40px', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.3)' }}
+                                                        title="Izmeni"
                                                         onClick={(e) => startEdit(e, h)}
                                                     >
-                                                        <Pencil size={22} />
+                                                        <Pencil size={18} />
                                                     </button>
+                                                    {userLevel >= 6 && (
+                                                        <button
+                                                            className="btn-icon circle-btn"
+                                                            style={{ width: '40px', height: '40px', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                                                            title="Obriši"
+                                                            onClick={(e) => deleteHotel(e, String(h.id), h.name)}
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
