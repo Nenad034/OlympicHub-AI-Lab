@@ -319,14 +319,35 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
 
             if (allUpdatedHotels.length === 0) return;
 
-            const propertiesToUpdate = allUpdatedHotels.map(h => ({
-                id: `solvex_${h.id}`,
-                name: h.name,
-                starRating: h.stars,
-                images: h.images || [],
-                content: { description: h.description },
-                lastSync: new Date().toISOString()
-            }));
+            // CRITICAL: Filter only hotels that already exist in our DB to prevent re-adding KidsCamp
+            const existingIds = new Set(hotels.map(h => h.id));
+
+            const propertiesToUpdate = allUpdatedHotels
+                .filter(h => {
+                    const mappedId = `solvex_${h.id}`;
+                    const name = (h.name || '').toLowerCase();
+                    // 1. Must already exist in our DB
+                    // 2. Must NOT contain KidsCamp
+                    return existingIds.has(mappedId) && !name.includes('kidscamp') && !name.includes('kids camp');
+                })
+                .map(h => ({
+                    id: `solvex_${h.id}`,
+                    name: h.name,
+                    starRating: h.stars,
+                    images: h.images || [],
+                    content: { description: h.description },
+                    lastSync: new Date().toISOString()
+                }));
+
+            if (propertiesToUpdate.length === 0) {
+                // @ts-ignore
+                if (window.sentinelEvents) {
+                    // @ts-ignore
+                    window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Nema novih podataka za postojeće hotele.', type: 'info' });
+                }
+                setIsSyncing(false);
+                return;
+            }
 
             const { success } = await saveToCloud('properties', propertiesToUpdate);
 
@@ -350,7 +371,11 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
     };
 
     const filteredHotels = hotels.filter(h => {
-        // Global Exclusion removed - data is being cleared from DB
+        // Global Exclusion: Permanent Hard-Block for KidsCamp
+        const name = h.name.toLowerCase();
+        const city = (h.originalPropertyData?.address?.city || h.location.place || "").toLowerCase();
+        if (name.includes('kidscamp') || name.includes('kids camp') || name.includes('kidscam')) return false;
+        if (city.includes('kidscamp') || city.includes('kids camp')) return false;
 
         // Status Filter
         if (statusFilter === 'active' && !h.originalPropertyData?.isActive) return false;
@@ -520,8 +545,14 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                 const mapped = data
                     .filter((h: any) => {
                         const name = (h.name || "").toLowerCase();
+                        const city = (h.address?.city || "").toLowerCase();
                         const hotelId = String(h.id);
-                        // Remove specific ID 2189 patterns (e.g. solvex_2189), technical names, and dummy entries
+
+                        // DEEP CLEAN: Filter out KidsCamp
+                        if (name.includes('kidscamp') || name.includes('kids camp') || name.includes('kidscam')) return false;
+                        if (city.includes('kidscamp') || city.includes('kids camp')) return false;
+
+                        // Remove specific ID 2189 patterns, technical names, and dummy entries
                         const isTechnical = name.includes("pogledaj id") ||
                             name.includes("?") ||
                             hotelId.includes("2189") ||
@@ -541,7 +572,13 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                     const mapped = parsed
                         .filter((h: any) => {
                             const name = (h.name || "").toLowerCase();
+                            const city = (h.address?.city || h.location?.city || "").toLowerCase();
                             const hotelId = String(h.id);
+
+                            // DEEP CLEAN: Filter out KidsCamp from cache
+                            if (name.includes('kidscamp') || name.includes('kids camp') || name.includes('kidscam')) return false;
+                            if (city.includes('kidscamp') || city.includes('kids camp')) return false;
+
                             const isTechnical = name.includes("pogledaj id") ||
                                 name.includes("?") ||
                                 hotelId.includes("2189") ||

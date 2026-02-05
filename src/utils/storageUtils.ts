@@ -45,7 +45,13 @@ export const loadFromCloud = async (tableName: string) => {
 
             if (error) throw error;
             if (data && data.length > 0) {
-                allData = [...allData, ...data];
+                // HARD FILTER: Remove Solvex KidsCamp spam at the source level
+                const cleanData = data.filter((item: any) => {
+                    const str = JSON.stringify(item).toLowerCase();
+                    return !str.includes('kidscamp') && !str.includes('kids camp') && !str.includes('kidscam');
+                });
+
+                allData = [...allData, ...cleanData];
                 if (data.length < batchSize) {
                     hasMore = false;
                 } else {
