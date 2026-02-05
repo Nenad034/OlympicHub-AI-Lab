@@ -58,6 +58,7 @@ import {
     generateIdempotencyKey,
     toUTC
 } from '../../utils/securityUtils';
+import { ImportStagingModal, type StagingItem } from './components/ImportStagingModal';
 import { useAuthStore } from '../../stores/authStore';
 import { getHotels as getSolvexHotels, getCities as getSolvexCities } from '../../services/solvex/solvexDictionaryService';
 import { getProxiedImageUrl } from '../../utils/imageProxy';
@@ -244,6 +245,10 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
     const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
 
+    // Staging State
+    const [stagingItems, setStagingItems] = useState<StagingItem[]>([]);
+    const [isStagingOpen, setIsStagingOpen] = useState(false);
+
     // Tour Management State
     const [tours, setTours] = useState<Tour[]>([]);
     const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
@@ -347,71 +352,186 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
             // @ts-ignore
             if (window.sentinelEvents) {
                 // @ts-ignore
-                window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Započinjem sinhronizaciju opisa i slika iz Solvex sistema...', type: 'info' });
+                window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Skeniram Solvex bazu...', type: 'info' });
             }
 
             const cityKeys = [33, 68, 1, 9, 6];
-            let allUpdatedHotels: any[] = [];
+            let allRemoteHotels: any[] = [];
 
             for (const cityId of cityKeys) {
                 const hotelsRes = await getSolvexHotels(cityId);
                 if (hotelsRes.success && hotelsRes.data) {
-                    allUpdatedHotels = [...allUpdatedHotels, ...hotelsRes.data];
+                    allRemoteHotels = [...allRemoteHotels, ...hotelsRes.data];
                 }
             }
 
-            if (allUpdatedHotels.length === 0) return;
-
-            // CRITICAL: Filter only hotels that already exist in our DB to prevent re-adding KidsCamp
-            const existingIds = new Set(hotels.map(h => h.id));
-
-            const propertiesToUpdate = allUpdatedHotels
-                .filter(h => {
-                    const mappedId = `solvex_${h.id}`;
-                    const name = (h.name || '').toLowerCase();
-                    // 1. Must already exist in our DB
-                    // 2. Must NOT contain KidsCamp
-                    return existingIds.has(mappedId) && !name.includes('kidscamp') && !name.includes('kids camp');
-                })
-                .map(h => ({
-                    id: `solvex_${h.id}`,
-                    name: h.name,
-                    starRating: h.stars,
-                    images: h.images || [],
-                    content: { description: h.description },
-                    lastSync: new Date().toISOString()
-                }));
-
-            if (propertiesToUpdate.length === 0) {
-                // @ts-ignore
-                if (window.sentinelEvents) {
-                    // @ts-ignore
-                    window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Nema novih podataka za postojeće hotele.', type: 'info' });
-                }
+            if (allRemoteHotels.length === 0) {
                 setIsSyncing(false);
                 return;
             }
 
-            const { success } = await saveToCloud('properties', propertiesToUpdate);
+            // Prepare Staging Data
+            const existingIds = new Set(hotels.map(h => h.id));
+            // const existingDataMap = new Map(hotels.map(h => [h.id, h])); // Not used
 
-            if (success) {
+            const stagingCandidates: StagingItem[] = allRemoteHotels.map(h => {
+                const mappedId = `solvex_${h.id}`;
+                const name = (h.name || '').toLowerCase();
+                const city = (h.location?.city || h.address?.city || '').toLowerCase(); // assuming h.city exists from solvex response, if not check structure
+
+                // Blacklist Check
+                const isBlacklisted = name.includes('kidscamp') || name.includes('kids camp') || name.includes('kidscam') ||
+                    city.includes('kidscamp') || city.includes('kids camp');
+
+                const isUpdate = existingIds.has(mappedId);
+
+                return {
+                    id: mappedId,
+                    originalId: h.id,
+                    name: h.name,
+                    city: h.location?.city || h.address?.city || "Unknown",
+                    country: "Bulgaria", // Solvex is mostly BG? or logic needed
+                    stars: h.stars || 0,
+                    description: h.description,
+                    imagesCount: (h.images || []).length,
+                    isUpdate,
+                    isBlacklisted,
+                    rawData: h // Store the full raw data for later processing
+                };
+            });
+
+            // Filter out blacklisted items if user doesn't want to see them at all?
+            // User: "The user's main objective is to permanently remove all destinations and hotels that contain 'KidsCamp'"
+            // So let's NOT show them in staging either.
+            const validCandidates = stagingCandidates.filter(i => !i.isBlacklisted);
+
+            if (validCandidates.length === 0) {
                 // @ts-ignore
-                if (window.sentinelEvents) {
-                    // @ts-ignore
-                    window.sentinelEvents.emit({ title: 'Solvex Sync Uspešan', message: `Sinhronizovano ${propertiesToUpdate.length} hotela.`, type: 'success' });
-                }
-                const { data } = await loadFromCloud('properties');
-                if (data) {
-                    const mapped = data.map((h: any) => mapBackendToFrontendHotel(h)).filter(Boolean) as Hotel[];
-                    setHotels(mapped);
-                }
+                if (window.sentinelEvents) window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Nema novih podataka za uvoz.', type: 'info' });
+                setIsSyncing(false);
+                return;
             }
+
+            setStagingItems(validCandidates);
+            setIsStagingOpen(true);
+            setIsSyncing(false); // Stop loading indicator, wait for user action
+
         } catch (error: any) {
             console.error('Sync failed:', error);
-        } finally {
             setIsSyncing(false);
         }
     };
+
+    const handleImportConfirm = async (selectedItems: StagingItem[]) => {
+        setIsStagingOpen(false);
+        setIsSyncing(true);
+
+        try {
+            const newHotelsToSave: Hotel[] = [];
+            const updatedHotelsToSave: Hotel[] = [];
+
+            for (const item of selectedItems) {
+                const rawSolvexData = item.rawData; // This is the full Solvex object we stashed
+
+                // Map Solvex data to our Property type
+                const propertyData: Partial<Property> = {
+                    id: item.id,
+                    name: item.name,
+                    address: {
+                        addressLine1: rawSolvexData.address?.addressLine || '',
+                        city: item.city,
+                        country: item.country,
+                        countryCode: 'BG', // Assuming Bulgaria for Solvex
+                        postalCode: rawSolvexData.address?.zipCode || ''
+                    },
+                    geoCoordinates: {
+                        latitude: rawSolvexData.location?.lat || 0,
+                        longitude: rawSolvexData.location?.lng || 0,
+                        coordinateSource: 'SOLVEX'
+                    },
+                    starRating: item.stars,
+                    images: (rawSolvexData.images || []).map((img: any) => ({
+                        url: getProxiedImageUrl(img.url), // Use image proxy
+                        altText: img.description || item.name,
+                        category: 'PROPERTY_IMAGE'
+                    })),
+                    content: [{
+                        languageCode: 'sr', // Default to Serbian
+                        officialName: item.name,
+                        displayName: item.name,
+                        shortDescription: item.description?.substring(0, 250) || '',
+                        longDescription: item.description || ''
+                    }],
+                    propertyAmenities: (rawSolvexData.amenities || []).map((amenity: any) => ({
+                        name: amenity.name,
+                        category: 'GENERAL', // Default category
+                        values: amenity.values // Keep original values
+                    })),
+                    isActive: true, // Default to active on import
+                    propertyType: 'Hotel', // Default
+                    createdAt: toUTC(new Date()),
+                    updatedAt: toUTC(new Date()),
+                    // Add other fields as necessary, potentially from rawSolvexData
+                };
+
+                const mappedHotel: Hotel = {
+                    id: item.id,
+                    name: unifyHotelName(item.name),
+                    location: {
+                        address: propertyData.address?.addressLine1 || '',
+                        place: propertyData.address?.city || '',
+                        lat: propertyData.geoCoordinates?.latitude || 0,
+                        lng: propertyData.geoCoordinates?.longitude || 0
+                    },
+                    images: propertyData.images || [],
+                    amenities: propertyData.propertyAmenities || [],
+                    units: [], // Solvex data might not have units in this format
+                    commonItems: { discount: [], touristTax: [], supplement: [] },
+                    originalPropertyData: propertyData
+                };
+
+                if (item.isUpdate) {
+                    // Find existing hotel and update it
+                    const existingHotelIndex = hotels.findIndex(h => h.id === item.id);
+                    if (existingHotelIndex !== -1) {
+                        const updatedHotel = { ...hotels[existingHotelIndex], ...mappedHotel };
+                        updatedHotelsToSave.push(updatedHotel);
+                    }
+                } else {
+                    newHotelsToSave.push(mappedHotel);
+                }
+            }
+
+            const currentHotels = [...hotels];
+            const updatedList = currentHotels
+                .map(h => {
+                    const updated = updatedHotelsToSave.find(uh => uh.id === h.id);
+                    return updated || h;
+                })
+                .concat(newHotelsToSave.filter(nh => !currentHotels.some(ch => ch.id === nh.id))); // Add new hotels, avoid duplicates
+
+            setHotels(updatedList);
+            await syncToSupabase(updatedList); // Save all changes to Supabase
+
+            // @ts-ignore
+            if (window.sentinelEvents) {
+                // @ts-ignore
+                window.sentinelEvents.emit({ title: 'Uvoz Uspešan', message: `Uvezeno ${newHotelsToSave.length} novih i ažurirano ${updatedHotelsToSave.length} postojećih objekata.`, type: 'success' });
+            }
+
+        } catch (error) {
+            console.error('Import confirmation failed:', error);
+            // @ts-ignore
+            if (window.sentinelEvents) {
+                // @ts-ignore
+                window.sentinelEvents.emit({ title: 'Greška pri uvozu', message: `Došlo je do greške prilikom uvoza: ${error.message}`, type: 'error' });
+            }
+        } finally {
+            setIsSyncing(false);
+            setStagingItems([]); // Clear staging items
+        }
+    };
+
 
     const filteredHotels = hotels.filter(h => {
         // Global Exclusion: Permanent Hard-Block for KidsCamp
@@ -438,8 +558,8 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
             // The column shows what IS MISSING.
             // If I click the "Slike" icon in filter, I probably want to see hotels that HAVE images,
             // OR I want to see hotels that ARE MISSING images?
-            // Given the column is "Integritet Podataka" and shows missing stuff, 
-            // usually filters would be "Show me those missing X". 
+            // Given the column is "Integritet Podataka" and shows missing stuff,
+            // usually filters would be "Show me those missing X".
             // But icons above usually mean "Filter by this property".
             // Let's assume the user wants to filter hotels that HAVE the selected property.
 
@@ -1300,6 +1420,13 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                         />
                     )}
                 </AnimatePresence>
+                <ImportStagingModal
+                    isOpen={isStagingOpen}
+                    onClose={() => setIsStagingOpen(false)}
+                    items={stagingItems}
+                    onConfirm={handleImportConfirm}
+                    isSyncing={isSyncing}
+                />
             </div>
         );
     }
