@@ -34,7 +34,11 @@ import {
     Ship,
     Train,
     Ticket,
-    Anchor
+    Anchor,
+    Image as ImageIcon,
+    FileText,
+    ChevronLeft,
+    Zap
 } from 'lucide-react';
 import { exportToJSON } from '../../utils/exportUtils';
 import PropertyWizard from '../../components/PropertyWizard';
@@ -53,6 +57,7 @@ import {
     generateIdempotencyKey,
     toUTC
 } from '../../utils/securityUtils';
+import { getProxiedImageUrl } from '../../utils/imageProxy';
 
 // --- TCT-IMC DATA STRUCTURES ---
 
@@ -125,9 +130,106 @@ interface ProductionHubProps {
     initialView?: 'hub' | 'list' | 'detail' | 'transport' | 'services';
 }
 
+const translateCountry = (country?: string) => {
+    if (!country) return '-';
+    const mapping: Record<string, string> = {
+        'Bulgaria': 'Bugarska',
+        'Greece': 'Grčka',
+        'Turkey': 'Turska',
+        'Montenegro': 'Crna Gora',
+        'Serbia': 'Srbija',
+        'Egypt': 'Egipat',
+        'Tunisia': 'Tunis',
+        'Italy': 'Italija',
+        'Spain': 'Španija',
+        'Croatia': 'Hrvatska',
+        'Macedonia': 'Makedonija',
+        'Albania': 'Albanija',
+        'Cyprus': 'Kipar',
+        'United Arab Emirates': 'Ujedinjeni Arapski Emirati',
+        'UAE': 'UAE'
+    };
+    return mapping[country] || country;
+};
+
+const cyrillicToLatinMap: Record<string, string> = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ж': 'zh', 'з': 'z',
+    'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p',
+    'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch',
+    'ш': 'sh', 'щ': 'sht', 'ъ': 'a', 'ь': 'y', 'ю': 'yu', 'я': 'ya',
+    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ж': 'Zh', 'З': 'Z',
+    'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N', 'О': 'O', 'П': 'P',
+    'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U', 'Ф': 'F', 'Х': 'H', 'Ц': 'Ts', 'Ч': 'Ch',
+    'Ш': 'Sh', 'Щ': 'Sht', 'Ъ': 'A', 'Ь': 'Y', 'Ю': 'Yu', 'Я': 'Ya'
+};
+
+const hasCyrillic = (text: string) => /[\u0400-\u04FF]/.test(text);
+
+const transliterate = (text: string) => {
+    return text.split('').map(char => cyrillicToLatinMap[char] || char).join('');
+};
+
+const unifyHotelName = (name: string): string => {
+    if (!name) return "";
+
+    let workingName = name.replace(/_/g, ' ').trim();
+
+    // 1. Detect and transliterate/translate Cyrillic
+    if (hasCyrillic(workingName)) {
+        workingName = transliterate(workingName);
+
+        // Basic translation for common Bulgarian/Russian hotel terms
+        const translations: Record<string, string> = {
+            'Kashta': 'House',
+            'Semeen': 'Family',
+            'Semeini': 'Family',
+            'Vila': 'Villa',
+            'Vili': 'Villas',
+            'Hotel': 'Hotel',
+            'Kashti': 'Houses',
+            'Kurort': 'Resort',
+            'Pansion': 'Guesthouse',
+            'Baza': 'Base',
+            'Otdih': 'Rest',
+            'Selo': 'Village',
+            'More': 'Sea',
+            'Planina': 'Mountain'
+        };
+
+        Object.entries(translations).forEach(([key, value]) => {
+            const regex = new RegExp(`\\b${key}\\b`, 'gi');
+            workingName = workingName.replace(regex, value);
+        });
+    }
+
+    // Match star ratings at the start like "4*", "5 *", "4*SUP", "4* SUP"
+    const starAtStartRegex = /^(\d+\*?\s*(SUP|SUPERIOR)?)\s+/i;
+    const match = workingName.match(starAtStartRegex);
+
+    let baseName = workingName;
+    let stars = "";
+
+    if (match) {
+        stars = match[1].trim();
+        baseName = workingName.substring(match[0].length).trim();
+    }
+
+    // Format to Title Case
+    const titleCased = baseName
+        .toLowerCase()
+        .split(' ')
+        .filter(w => w.length > 0)
+        .map(w => w.charAt(0).toUpperCase() + wordSlice(w))
+        .join(' ');
+
+    return stars ? `${titleCased} ${stars}` : titleCased;
+};
+
+// Helper for title case to handle Serbian characters correctly if needed
+const wordSlice = (w: string) => w.slice(1);
+
 const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all', initialView = 'hub' }) => {
     const [viewMode, setViewMode] = useState<'hub' | 'list' | 'detail' | 'transport' | 'services'>(initialView);
-    const [displayType, setDisplayType] = useState<'grid' | 'list'>('grid');
     const [searchQuery, setSearchQuery] = useState('');
     const [activeModuleTab, setActiveModuleTab] = useState(initialTab);
 
@@ -142,22 +244,179 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
     const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
     const [showTourWizard, setShowTourWizard] = useState(false);
     const [tourWizardInitialData, setTourWizardInitialData] = useState<Partial<Tour> | undefined>(undefined);
+    const [dataSource, setDataSource] = useState<'supabase' | 'local' | 'none'>('none'); // Track data source
 
-    const filteredHotels = hotels.filter(h =>
-        h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        h.location.place.toLowerCase().includes(searchQuery.toLowerCase())
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 50;
+
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all'); // Add status filter state
+    const [selectedStars, setSelectedStars] = useState<number[]>([]); // New star filter state
+    const [integrityFilter, setIntegrityFilter] = useState<string[]>([]); // New integrity filter state (img, desc, amen, map)
+
+    const filteredHotels = hotels.filter(h => {
+        // Global Exclusion: Remove KidsCamp objects
+        if (h.name.toLowerCase().includes('kidscamp')) return false;
+
+        // Status Filter
+        if (statusFilter === 'active' && !h.originalPropertyData?.isActive) return false;
+        if (statusFilter === 'inactive' && h.originalPropertyData?.isActive) return false;
+
+        // Star Rating Filter (Multi-select)
+        if (selectedStars.length > 0) {
+            const hotelStars = h.originalPropertyData?.starRating || 0;
+            if (!selectedStars.includes(hotelStars)) return false;
+        }
+
+        // Integrity Filter (Multi-select)
+        if (integrityFilter.length > 0) {
+            const missing = getMissingInfo(h).map(m => m.key);
+            // If user filters for 'img', only show hotels that HAVE images (i.e., 'img' is NOT in missing)
+            // Wait, usually filters mean "show hotels that have these features".
+            // The column shows what IS MISSING.
+            // If I click the "Slike" icon in filter, I probably want to see hotels that HAVE images,
+            // OR I want to see hotels that ARE MISSING images?
+            // Given the column is "Integritet Podataka" and shows missing stuff, 
+            // usually filters would be "Show me those missing X". 
+            // But icons above usually mean "Filter by this property".
+            // Let's assume the user wants to filter hotels that HAVE the selected property.
+
+            for (const f of integrityFilter) {
+                if (missing.includes(f)) return false;
+            }
+        }
+
+        if (!searchQuery) return true;
+        const terms = searchQuery.toLowerCase().split(' ').filter(t => t.length > 0);
+
+        const countryCode = h.originalPropertyData?.address?.countryCode || '';
+        const countryFull = translateCountry(h.originalPropertyData?.address?.country);
+        const status = h.originalPropertyData?.isActive ? 'aktivan active' : 'neaktivan inactive';
+        const cityOriginal = h.originalPropertyData?.address?.city || '';
+        const cityTranslit = hasCyrillic(cityOriginal) ? transliterate(cityOriginal) : cityOriginal;
+        const place = h.location.place || '';
+        const translitPlace = hasCyrillic(place) ? transliterate(place) : place;
+
+        // Bilingual mappings & synonyms
+        let synonyms = '';
+        const combinedLoc = (cityTranslit + ' ' + translitPlace + ' ' + place).toLowerCase();
+
+        if (combinedLoc.includes('golden sands') || combinedLoc.includes('zlatn')) synonyms += ' zlatni pjasci golden sands';
+        if (combinedLoc.includes('sunny beach') || combinedLoc.includes('sunc')) synonyms += ' suncev breg sunny beach';
+        if (combinedLoc.includes('nessebar') || combinedLoc.includes('neseb')) synonyms += ' nessebar nesebar';
+        if (combinedLoc.includes('st. vlas') || combinedLoc.includes('vlas')) synonyms += ' sveti vlas st. vlas';
+        if (combinedLoc.includes('st. constantine') || combinedLoc.includes('konstantin')) synonyms += ' sveti konstantin i elena st. constantine and helena';
+        if (combinedLoc.includes('bansko')) synonyms += ' bansko';
+        if (combinedLoc.includes('borovets') || combinedLoc.includes('borovec')) synonyms += ' borovets borovec';
+        if (combinedLoc.includes('pamporovo')) synonyms += ' pamporovo';
+        if (combinedLoc.includes('sozopol')) synonyms += ' sozopol';
+        if (combinedLoc.includes('razlog')) synonyms += ' razlog';
+
+        const searchTarget = `${h.name} ${place} ${translitPlace} ${cityTranslit} ${cityOriginal} ${h.location.address} ${h.id} ${countryCode} ${countryFull} ${status} ${synonyms}`.toLowerCase();
+
+        return terms.every(term => searchTarget.includes(term));
+    });
+
+    const paginatedHotels = filteredHotels.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
     );
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
+
+    const getMissingInfo = (hotel: Hotel) => {
+        const missing: { label: string, key: string }[] = [];
+        const data = hotel.originalPropertyData as any;
+
+        const hasImages = (hotel.images && hotel.images.length > 0) || (data?.images && data.images.length > 0);
+        if (!hasImages) missing.push({ label: 'Slike', key: 'img' });
+
+        const hasDesc = data?.content?.[0]?.longDescription || data?.longDescription || data?.description;
+        if (!hasDesc) missing.push({ label: 'Opis', key: 'desc' });
+
+        const hasAmenities = (hotel.amenities && hotel.amenities.length > 0) || (data?.propertyAmenities && data.propertyAmenities.length > 0);
+        if (!hasAmenities) missing.push({ label: 'Sadržaji', key: 'amen' });
+
+        const lat = hotel.location.lat || data?.geoCoordinates?.latitude;
+        const lng = hotel.location.lng || data?.geoCoordinates?.longitude;
+        const hasMap = lat && lng && lat !== 0 && lng !== 0;
+        if (!hasMap) missing.push({ label: 'Mapa', key: 'map' });
+
+        return missing;
+    };
 
     // Load hotels from Supabase on mount
     useEffect(() => {
+        const mapBackendToFrontendHotel = (dbHotel: any): Hotel => {
+            // Map Supabase/Solvex structure to Frontend Hotel interface
+            return {
+                id: dbHotel.id,
+                name: unifyHotelName(dbHotel.name || ""),
+                location: {
+                    address: dbHotel.address?.addressLine ? (hasCyrillic(dbHotel.address.addressLine) ? transliterate(dbHotel.address.addressLine) : dbHotel.address.addressLine) : '',
+                    place: dbHotel.address?.city ? (hasCyrillic(dbHotel.address.city) ? transliterate(dbHotel.address.city) : dbHotel.address.city) : '',
+                    lat: dbHotel.geoCoordinates?.latitude || 0,
+                    lng: dbHotel.geoCoordinates?.longitude || 0
+                },
+                images: dbHotel.images || [],
+                amenities: dbHotel.propertyAmenities || [],
+                units: [], // We don't have units in properties table
+                commonItems: {
+                    discount: [],
+                    touristTax: [],
+                    supplement: []
+                },
+                originalPropertyData: dbHotel
+            };
+        };
+
         const loadHotels = async () => {
-            const { success, data } = await loadFromCloud('properties');
-            if (success && data && data.length > 0) {
-                setHotels(data as Hotel[]);
-            } else {
-                // Fallback to localStorage if Supabase fails or is empty
-                const saved = localStorage.getItem('olympic_hub_hotels');
-                if (saved) setHotels(JSON.parse(saved));
+            try {
+                const { success, data } = await loadFromCloud('properties');
+                if (success && data && data.length > 0) {
+                    const mapped = data
+                        .filter((h: any) => {
+                            const name = (h.name || "").toLowerCase();
+                            const hotelId = String(h.id);
+                            // Remove specific ID 2189 patterns (e.g. solvex_2189), technical names, and dummy entries
+                            const isTechnical = name.includes("pogledaj id") ||
+                                name.includes("?") ||
+                                hotelId.includes("2189") ||
+                                name.trim() === "" ||
+                                name === "null";
+                            return !isTechnical;
+                        })
+                        .map(mapBackendToFrontendHotel);
+                    setHotels(mapped);
+                    setDataSource('supabase');
+                    console.log(`✅ Loaded ${mapped.length} hotels from Supabase`);
+                } else {
+                    // Fallback to localStorage if Supabase fails or is empty
+                    const saved = localStorage.getItem('olympic_hub_hotels');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        const mapped = parsed
+                            .filter((h: any) => {
+                                const name = (h.name || "").toLowerCase();
+                                const hotelId = String(h.id);
+                                const isTechnical = name.includes("pogledaj id") ||
+                                    name.includes("?") ||
+                                    hotelId.includes("2189") ||
+                                    name.trim() === "" ||
+                                    name === "null";
+                                return !isTechnical;
+                            })
+                            .map(mapBackendToFrontendHotel);
+                        setHotels(mapped);
+                        setDataSource('local');
+                        console.log(`⚠️ Loaded ${mapped.length} hotels from LocalStorage (Fallback)`);
+                    } else {
+                        setDataSource('none');
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load hotels in ProductionHub", err);
             }
         };
         loadHotels();
@@ -802,244 +1061,477 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
     }
 
     if (viewMode === 'list') {
+        const startCreate = () => {
+            setWizardInitialData(undefined);
+            setShowWizard(true);
+        };
+
+        const startEdit = (e: React.MouseEvent, hotel: Hotel) => {
+            e.stopPropagation();
+            setWizardInitialData(hotel.originalPropertyData);
+            setShowWizard(true);
+        };
+
         return (
-            <div className="module-container fade-in">
-                <div className="top-section-bar">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <button onClick={() => setViewMode('hub')} className="btn-icon circle"><ArrowLeft size={20} /></button>
-                        <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <h1 style={{ fontSize: '32px', fontWeight: '700', margin: 0 }}>Baza Smeštaja</h1>
-                                {isSyncing ? (
-                                    <div className="sync-badge syncing">
-                                        <RefreshCw size={14} className="spin" /> Syncing...
+            <div className="module-container fade-in" style={{ padding: 0, minHeight: '100vh', background: 'var(--bg-main)' }}>
+                {/* Header Area */}
+                <div style={{ padding: '32px 48px', borderBottom: '1px solid var(--border)', background: 'rgba(255, 255, 255, 0.02)', backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 100 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+                            <button onClick={() => setViewMode('hub')} className="btn-icon circle" style={{ width: '56px', height: '56px', background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                                <ArrowLeft size={28} />
+                            </button>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                    <h1 style={{ margin: 0, fontSize: '42px', fontWeight: 900, letterSpacing: '-1.5px', color: 'var(--text-main)', textTransform: 'uppercase' }}>Baza Smeštaja</h1>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', background: 'rgba(16, 185, 129, 0.15)', padding: '6px 14px', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                            <CloudCheck size={18} /> Cloud Active
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6', fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', background: 'rgba(59, 130, 246, 0.15)', padding: '6px 14px', borderRadius: '10px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                                            <Zap size={18} fill="#3b82f6" strokeWidth={0} /> {dataSource === 'supabase' ? 'SUPABASE' : 'CACHE'}
+                                        </div>
                                     </div>
-                                ) : (
-                                    <div className="sync-badge synced">
-                                        <CloudCheck size={14} /> Cloud Active
-                                    </div>
-                                )}
+                                </div>
+                                <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)', fontSize: '18px', fontWeight: 500, opacity: 0.7 }}>
+                                    Pronađeno <span style={{ color: '#fff', fontWeight: 900 }}>{filteredHotels.length}</span> objekata u realnom vremenu
+                                </p>
                             </div>
-                            <p className="subtitle">Upravljanje hotelima i smeštajnim objektima</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '16px' }}>
+                            <button className="btn-secondary" style={{ height: '56px', padding: '0 32px', borderRadius: '16px', fontWeight: 800, fontSize: '16px', border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+                                <Download size={24} style={{ marginRight: '12px' }} /> Import
+                            </button>
+                            <button className="btn-primary" onClick={startCreate} style={{ height: '56px', padding: '0 40px', borderRadius: '16px', fontWeight: 900, fontSize: '16px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 10px 20px rgba(37, 99, 235, 0.3)', border: 'none' }}>
+                                <Plus size={26} style={{ marginRight: '12px' }} /> KREIRAJ OBJEKAT
+                            </button>
                         </div>
                     </div>
-                    <style>{`
-                        .sync-badge { display: flex; alignItems: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-                        .sync-badge.syncing { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-                        .sync-badge.synced { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-                        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-                        .spin { animation: spin 2s linear infinite; }
-                    `}</style>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', background: 'var(--bg-card)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                            <button
-                                onClick={() => setDisplayType('grid')}
-                                style={{
-                                    background: displayType === 'grid' ? 'var(--accent)' : 'transparent',
-                                    color: displayType === 'grid' ? '#fff' : 'var(--text-secondary)',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    padding: '6px',
-                                    cursor: 'pointer',
-                                    display: 'flex'
-                                }}
-                            >
-                                <LayoutGrid size={18} />
-                            </button>
-                            <button
-                                onClick={() => setDisplayType('list')}
-                                style={{
-                                    background: displayType === 'list' ? 'var(--accent)' : 'transparent',
-                                    color: displayType === 'list' ? '#fff' : 'var(--text-secondary)',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    padding: '6px',
-                                    cursor: 'pointer',
-                                    display: 'flex'
-                                }}
-                            >
-                                <List size={18} />
-                            </button>
+
+                    {/* Premium Controls Row */}
+                    <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                        {/* Status Filter Group */}
+                        {/* Improved Status Filter Group */}
+                        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '18px', border: '1px solid var(--border)', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                            {[
+                                { id: 'all', icon: <List size={22} />, label: 'Svi' },
+                                { id: 'active', icon: <CheckCircle2 size={22} />, label: 'Aktivni' },
+                                { id: 'inactive', icon: <Power size={22} />, label: 'Neaktivni' }
+                            ].map(item => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setStatusFilter(item.id as any)}
+                                    className={`filter-btn-premium ${statusFilter === item.id ? 'active' : ''}`}
+                                    style={{ height: '44px', width: '56px', borderRadius: '12px' }}
+                                    title={item.label}
+                                >
+                                    {item.icon}
+                                </button>
+                            ))}
                         </div>
-                        <div className="search-bar">
-                            <Search size={18} />
-                            <input
-                                type="text"
-                                placeholder="Pretraži objekte..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(sanitizeInput(e.target.value))}
-                            />
+
+                        {/* Star Filter Group */}
+                        {/* Expanded Star Filter Group */}
+                        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '18px', border: '1px solid var(--border)' }}>
+                            {[5, 4, 3, 2, 1, 0].map(star => (
+                                <button
+                                    key={star}
+                                    onClick={() => setSelectedStars(prev => prev.includes(star) ? prev.filter(s => s !== star) : [...prev, star])}
+                                    className={`filter-btn-premium ${selectedStars.includes(star) ? 'active' : ''}`}
+                                    style={{ height: '44px', minWidth: star === 0 ? 'auto' : '60px', padding: '0 12px', borderRadius: '12px', color: selectedStars.includes(star) ? '#fbbf24' : 'var(--text-secondary)' }}
+                                >
+                                    {star === 0 ? (
+                                        <span style={{ fontSize: '10px', fontWeight: 900, whiteSpace: 'nowrap', opacity: selectedStars.includes(0) ? 1 : 0.6 }}>BEZ KAT.</span>
+                                    ) : (
+                                        <>
+                                            <span style={{ fontSize: '16px', fontWeight: 900, marginRight: '4px' }}>{star}</span>
+                                            <Star size={14} fill={selectedStars.includes(star) ? '#fbbf24' : 'none'} strokeWidth={selectedStars.includes(star) ? 0 : 2.5} />
+                                        </>
+                                    )}
+                                </button>
+                            ))}
                         </div>
-                        <button className="btn-primary-action" onClick={startCreate}>
-                            <Plus size={18} /> Kreiraj Objekat
-                        </button>
-                        <button className="btn-secondary" onClick={() => setShowImport(true)}>
-                            <Download size={18} /> Import
-                        </button>
+
+                        {/* Search Bar - Main Centerpiece */}
+                        {/* Refined Search Bar matching user screenshot */}
+                        <div style={{ flex: 1, position: 'relative' }}>
+                            <style>{`
+                                .search-bar-premium {
+                                    display: flex;
+                                    align-items: center;
+                                    background: rgba(0, 0, 0, 0.4);
+                                    border: 1px solid rgba(255, 255, 255, 0.08);
+                                    border-radius: 12px;
+                                    padding: 0 16px;
+                                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                                    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+                                }
+                                .search-bar-premium:focus-within {
+                                    border-color: rgba(59, 130, 246, 0.4);
+                                    background: rgba(0, 0, 0, 0.5);
+                                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 2px 8px rgba(0,0,0,0.5);
+                                }
+                                .search-bar-premium input {
+                                    background: transparent;
+                                    border: none;
+                                    color: #fff;
+                                    outline: none;
+                                    width: 100%;
+                                    font-size: 15px;
+                                    font-weight: 500;
+                                    padding: 0 12px;
+                                }
+                                .search-bar-premium input::placeholder {
+                                    color: rgba(255, 255, 255, 0.4);
+                                }
+                                .filter-btn-premium {
+                                    background: transparent;
+                                    border: 1px solid transparent;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    cursor: pointer;
+                                    transition: all 0.2s ease;
+                                    color: var(--text-secondary);
+                                }
+                                .filter-btn-premium:hover {
+                                    background: rgba(255, 255, 255, 0.05);
+                                    border-color: rgba(255, 255, 255, 0.1);
+                                }
+                                .filter-btn-premium.active {
+                                    background: rgba(59, 130, 246, 0.12);
+                                    border-color: rgba(59, 130, 246, 0.3);
+                                    color: #3b82f6 !important;
+                                }
+                                .suggestions-panel {
+                                    top: 55px;
+                                    left: 0;
+                                    right: 0;
+                                    background: #0f172a !important;
+                                    backdrop-filter: blur(25px);
+                                    border: 1px solid rgba(255, 255, 255, 0.1);
+                                    border-radius: 16px;
+                                    padding: 8px;
+                                    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+                                    z-index: 1000;
+                                    max-height: 420px;
+                                    overflow-y: auto;
+                                }
+                                .suggestion-item-premium {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 16px;
+                                    padding: 10px 16px;
+                                    border-radius: 10px;
+                                    cursor: pointer;
+                                    transition: all 0.2s ease;
+                                    border: 1px solid transparent;
+                                    width: 100%;
+                                    text-align: left;
+                                    background: transparent !important;
+                                    color: #fff !important;
+                                    margin-bottom: 2px;
+                                }
+                                .suggestion-item-premium:hover {
+                                    background: rgba(255, 255, 255, 0.05) !important;
+                                    border-color: rgba(255, 255, 255, 0.1);
+                                }
+                                .suggestion-icon-box {
+                                    width: 36px;
+                                    height: 36px;
+                                    background: rgba(59, 130, 246, 0.1);
+                                    border-radius: 8px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    color: #3b82f6;
+                                    flex-shrink: 0;
+                                }
+                                .suggestions-panel::-webkit-scrollbar {
+                                    width: 6px;
+                                }
+                                .suggestions-panel::-webkit-scrollbar-thumb {
+                                    background: rgba(255,255,255,0.1);
+                                    border-radius: 10px;
+                                }
+                            `}</style>
+                            <div className="search-bar-premium" style={{ height: '48px' }}>
+                                <Search size={20} color="#3b82f6" strokeWidth={3} />
+                                <input
+                                    type="text"
+                                    placeholder="Pretraži destinacije, hotele i..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                                {searchQuery && (
+                                    <button onClick={() => setSearchQuery('')} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '6px', borderRadius: '8px' }}>
+                                        <X size={16} />
+                                    </button>
+                                )}
+                            </div>
+
+                            {searchQuery.length > 1 && (
+                                <div className="suggestions-panel">
+                                    <div style={{ padding: '8px 16px 16px', fontSize: '11px', fontWeight: 900, color: 'rgba(255,255,255,0.3)', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+                                        Rezultati pretrage
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        {(() => {
+                                            const suggestions: { label: string, type: 'city' | 'hotel' | 'country', sub: string, icon: any }[] = [];
+                                            const q = searchQuery.toLowerCase();
+
+                                            // 1. Check for Countries and their cities
+                                            const uniqueCountries = new Set<string>();
+                                            hotels.forEach(h => {
+                                                const country = translateCountry(h.originalPropertyData?.address?.country);
+                                                if (country && country.toLowerCase().includes(q)) {
+                                                    uniqueCountries.add(country);
+                                                }
+                                            });
+
+                                            uniqueCountries.forEach(country => {
+                                                // Find cities in this country
+                                                const cities = new Set<string>();
+                                                hotels.forEach(h => {
+                                                    if (translateCountry(h.originalPropertyData?.address?.country) === country) {
+                                                        const city = h.location.place || (h.originalPropertyData as any)?.address?.city;
+                                                        if (city) cities.add(hasCyrillic(city) ? transliterate(city) : city);
+                                                    }
+                                                });
+                                                cities.forEach(city => {
+                                                    suggestions.push({
+                                                        label: city,
+                                                        type: 'city',
+                                                        sub: `Destinacija u državi: ${country}`,
+                                                        icon: <MapPin size={18} />
+                                                    });
+                                                });
+                                            });
+
+                                            // 2. Direct City Matches (if not already added)
+                                            hotels.forEach(h => {
+                                                const p = h.location.place;
+                                                const dataCity = (h.originalPropertyData as any)?.address?.city;
+                                                [p, dataCity].filter(Boolean).forEach(c => {
+                                                    const translit = hasCyrillic(c!) ? transliterate(c!) : c!;
+                                                    if (translit.toLowerCase().includes(q) && !suggestions.find(s => s.label === translit)) {
+                                                        suggestions.push({
+                                                            label: translit,
+                                                            type: 'city',
+                                                            sub: translateCountry(h.originalPropertyData?.address?.country),
+                                                            icon: <Navigation size={18} />
+                                                        });
+                                                    }
+                                                });
+                                            });
+
+                                            // 3. Hotel Matches
+                                            hotels.filter(h => h.name.toLowerCase().includes(q)).slice(0, 5).forEach(h => {
+                                                suggestions.push({
+                                                    label: h.name,
+                                                    type: 'hotel',
+                                                    sub: `${translateCountry(h.originalPropertyData?.address?.country)} • ${h.location.place}`,
+                                                    icon: <Building2 size={18} />
+                                                });
+                                            });
+
+                                            return suggestions.slice(0, 10);
+                                        })().map((s, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => {
+                                                    setSearchQuery(s.label);
+                                                    if (s.type === 'hotel') {
+                                                        const h = hotels.find(hotel => hotel.name === s.label);
+                                                        if (h) { setSelectedHotel(h); setViewMode('detail'); }
+                                                    }
+                                                }}
+                                                className="suggestion-item-premium"
+                                            >
+                                                <div className="suggestion-icon-box">
+                                                    {s.icon}
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>{s.label}</span>
+                                                    <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>{s.sub}</span>
+                                                </div>
+                                                <ChevronRight size={16} style={{ marginLeft: 'auto', opacity: 0.3 }} />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Integrity Quick Toggles */}
+                        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.03)', padding: '6px', borderRadius: '18px', border: '1px solid var(--border)' }}>
+                            {[
+                                { key: 'img', icon: <ImageIcon size={22} />, label: 'Slike' },
+                                { key: 'desc', icon: <FileText size={22} />, label: 'Opis' },
+                                { key: 'amen', icon: <Shield size={22} />, label: 'Sadržaji' },
+                                { key: 'map', icon: <MapPin size={22} />, label: 'Mapa' }
+                            ].map(item => (
+                                <button
+                                    key={item.key}
+                                    onClick={() => setIntegrityFilter(prev => prev.includes(item.key) ? prev.filter(k => k !== item.key) : [...prev, item.key])}
+                                    className={`filter-btn-premium ${integrityFilter.includes(item.key) ? 'active' : ''}`}
+                                    style={{ height: '48px', width: '56px', borderRadius: '12px' }}
+                                    title={`Filtriraj hotele koji imaju: ${item.label}`}
+                                >
+                                    {item.icon}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-                {/* Property Wizard */}
-                {showWizard && (
-                    <PropertyWizard
-                        onClose={() => setShowWizard(false)}
-                        onSave={handleWizardSave}
-                        initialData={wizardInitialData}
-                    />
-                )}
-
-                {displayType === 'grid' ? (
-                    <div className="dashboard-grid" style={{ marginTop: '32px' }}>
-                        {filteredHotels.map(h => {
-
-                            return (
-                                <motion.div
-                                    key={h.id}
-                                    className="module-card"
-                                    whileHover={{ y: -4, scale: 1.02 }}
-                                    onClick={() => { setSelectedHotel(h); setViewMode('detail'); }}
-                                    style={{ cursor: 'pointer', position: 'relative' }}
-                                >
-                                    <div
-                                        style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 10, cursor: 'pointer' }}
-                                        onClick={(e) => toggleStatus(e, h)}
-                                        title={h.originalPropertyData?.isActive ? 'Deaktiviraj Objekat' : 'Aktiviraj Objekat'}
-                                    >
-                                        {h.originalPropertyData?.isActive ?
-                                            <div style={{ background: '#dcfce7', padding: '6px', borderRadius: '50%', display: 'flex', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-                                                <Power size={20} color="#16a34a" />
-                                            </div>
-                                            :
-                                            <div style={{ background: '#fee2e2', padding: '6px', borderRadius: '50%', display: 'flex', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-                                                <Power size={20} color="#dc2626" />
-                                            </div>
-                                        }
-                                    </div>
-
-
-
-                                    <div className="module-icon" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-                                        <Building2 size={28} />
-                                    </div>
-
-
-
-                                    <h3 className="module-title">{h.name}</h3>
-                                    {h.originalPropertyData?.starRating ? (
-                                        <div style={{ display: 'flex', gap: '2px', marginBottom: '8px', alignItems: 'center' }}>
-                                            {[...Array(h.originalPropertyData.starRating)].map((_, i) => (
-                                                <Star key={i} size={14} fill="#fbbf24" strokeWidth={0} />
-                                            ))}
-                                        </div>
-                                    ) : null}
-                                    <p className="module-desc">
-                                        <MapPin size={14} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
-                                        {h.location.place}, {h.location.address}
-                                    </p>
-
-                                    <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                        <div className="info-badge">
-                                            <Bed size={12} />
-                                            {h.units.length} Jedinica
-                                        </div>
-                                        <div className="info-badge">
-                                            <Tag size={12} />
-                                            ID: {h.id}
-                                        </div>
-                                    </div>
-
-                                    <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
-                                        <button
-                                            className="module-action"
-                                            style={{ marginTop: 0, flex: 1 }}
-                                            onClick={(e) => { e.stopPropagation(); startEdit(h); }}
-                                        >
-                                            Otvori Modul
-                                            <ChevronRight size={16} />
-                                        </button>
-                                        <div
-                                            className="module-action"
-                                            style={{ marginTop: 0, width: '46px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                            onClick={(e) => handlePublicPreview(e, h)}
-                                            title="Prikaži Web Stranicu"
-                                        >
-                                            <Globe size={18} />
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
-
-                        <motion.div
-                            className="module-card add-new"
-                            whileHover={{ y: -4, scale: 1.02 }}
-                            onClick={startCreate}
-                            style={{ cursor: 'pointer' }}
-                        >
-                            <div className="add-icon">
-                                <Plus size={48} />
-                            </div>
-                            <span className="add-text">Dodaj Novi Objekat</span>
-                        </motion.div>
-                    </div>
-                ) : (
-                    <div style={{ marginTop: '32px', background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                <div style={{ padding: '0 48px 48px' }}>
+                    <div style={{ marginTop: '32px', background: 'rgba(255,255,255,0.01)', borderRadius: '32px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 20px 60px -10px rgba(0,0,0,0.5)' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ borderBottom: '1px solid var(--border)', background: 'rgba(0,0,0,0.2)' }}>
-                                    <th style={{ padding: '16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)' }}>Status</th>
-                                    <th style={{ padding: '16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)' }}>Naziv Objekta</th>
-                                    <th style={{ padding: '16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)' }}>Lokacija</th>
-                                    <th style={{ padding: '16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)' }}>Jedinica</th>
-                                    <th style={{ padding: '16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)' }}>ID</th>
-                                    <th style={{ padding: '16px', textAlign: 'right', fontSize: '12px', color: 'var(--text-secondary)' }}>Akcija</th>
+                                <tr style={{ borderBottom: '2px solid var(--border)', background: 'rgba(255,255,255,0.03)' }}>
+                                    <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Status</th>
+                                    <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Objekat</th>
+                                    <th style={{ padding: '24px', textAlign: 'center', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Kat.</th>
+                                    <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Lokacija</th>
+                                    <th style={{ padding: '24px', textAlign: 'center', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Kvalitet Podataka</th>
+                                    <th style={{ padding: '24px', textAlign: 'right', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Upravljanje</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {hotels.map(h => {
-                                    const isComplete = !h.originalPropertyData || validateProperty(h.originalPropertyData).length === 0;
+                                {paginatedHotels.map((h, idx) => {
+                                    const missingInfo = getMissingInfo(h);
                                     return (
                                         <tr
                                             key={h.id}
                                             onClick={() => { setSelectedHotel(h); setViewMode('detail'); }}
-                                            style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.2s' }}
-                                            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-main)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                            style={{
+                                                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'
+                                            }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.08)'; }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'; }}
                                         >
-                                            <td style={{ padding: '16px' }}>
-                                                {isComplete ?
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontSize: '13px', fontWeight: 'bold' }}>
-                                                        <CheckCircle2 size={18} /> Završeno
+                                            <td style={{ padding: '20px 24px' }} onClick={(e) => { e.stopPropagation(); toggleStatus(e, h); }}>
+                                                {h.originalPropertyData?.isActive ?
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#10b981', fontSize: '13px', fontWeight: 900, background: 'rgba(16, 185, 129, 0.15)', padding: '8px 18px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                                                        <CheckCircle2 size={18} /> LIVE
                                                     </div>
                                                     :
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontSize: '13px', fontWeight: 'bold' }}>
-                                                        <AlertCircle size={18} /> Nezavršeno
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#64748b', fontSize: '13px', fontWeight: 900, background: 'rgba(100, 116, 139, 0.15)', padding: '8px 18px', borderRadius: '12px', border: '1px solid rgba(100, 116, 139, 0.2)' }}>
+                                                        <Power size={18} /> DRAFT
                                                     </div>
                                                 }
                                             </td>
-                                            <td style={{ padding: '16px', fontWeight: '600' }}>{h.name}</td>
-                                            <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{h.location.place}, {h.location.address}</td>
-                                            <td style={{ padding: '16px' }}>{h.units.length}</td>
-                                            <td style={{ padding: '16px', fontFamily: 'monospace' }}>{h.id}</td>
-                                            <td style={{ padding: '16px', textAlign: 'right' }}>
-                                                <button className="btn-icon">
-                                                    <ChevronRight size={18} />
-                                                </button>
+                                            <td style={{ padding: '20px 24px' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                    <span style={{ fontWeight: 800, fontSize: '18px', color: 'var(--text-main)', letterSpacing: '-0.3px' }}>{h.name}</span>
+                                                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500, opacity: 0.5, fontFamily: 'monospace' }}>ID: {h.id}</span>
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '20px 24px', textAlign: 'center' }}>
+                                                {h.originalPropertyData?.starRating ? (
+                                                    <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', color: '#fbbf24' }}>
+                                                        {[...Array(h.originalPropertyData.starRating)].map((_, i) => (
+                                                            <Star key={i} size={16} fill="#fbbf24" strokeWidth={0} />
+                                                        ))}
+                                                    </div>
+                                                ) : <span style={{ opacity: 0.3 }}>-</span>}
+                                            </td>
+                                            <td style={{ padding: '20px 24px' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>
+                                                        <MapPin size={16} style={{ color: '#3b82f6' }} />
+                                                        {translateCountry(h.originalPropertyData?.address?.country)}
+                                                    </div>
+                                                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                                        {[h.location.place, h.originalPropertyData?.address?.city].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '20px 24px' }}>
+                                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                                                    {missingInfo.length === 0 ? (
+                                                        <div style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', padding: '6px 18px', borderRadius: '12px', fontSize: '11px', fontWeight: 900, border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                                            <CheckCircle2 size={14} style={{ marginRight: '8px' }} /> KOMPLETNO
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                                            {missingInfo.map(m => (
+                                                                <div key={m.key} title={`Nedostaje: ${m.label}`} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                    {m.key === 'img' && <ImageIcon size={20} />}
+                                                                    {m.key === 'desc' && <FileText size={20} />}
+                                                                    {m.key === 'amen' && <Shield size={20} />}
+                                                                    {m.key === 'map' && <MapPin size={20} />}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '20px 24px', textAlign: 'right' }}>
+                                                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                                                    <button
+                                                        className="btn-icon circle"
+                                                        style={{ color: '#3b82f6', background: 'rgba(59, 130, 246, 0.15)', width: '48px', height: '48px', border: '1px solid rgba(59, 130, 246, 0.3)' }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            window.open(`/hotel-view/${h.id}`, '_blank');
+                                                        }}
+                                                        title="Pogledaj javni prikaz"
+                                                    >
+                                                        <Globe size={22} />
+                                                    </button>
+                                                    <button
+                                                        className="btn-icon circle"
+                                                        style={{ width: '48px', height: '48px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}
+                                                        onClick={(e) => startEdit(e, h)}
+                                                    >
+                                                        <Pencil size={22} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
                                 })}
-                                {hotels.length === 0 && (
-                                    <tr>
-                                        <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                            Nema unetih objekata.
-                                        </td>
-                                    </tr>
-                                )}
                             </tbody>
                         </table>
+                        {paginatedHotels.length === 0 && (
+                            <div style={{ padding: '120px 48px', textAlign: 'center' }}>
+                                <AlertCircle size={80} style={{ color: 'var(--text-secondary)', opacity: 0.1, marginBottom: '24px' }} />
+                                <h2 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '24px', fontWeight: 800 }}>Nismo pronašli nijedan objekat</h2>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '18px', marginTop: '12px', opacity: 0.6 }}>Pokušajte sa širim pojmom ili drugim filterima (npr. 'Bugarska').</p>
+                            </div>
+                        )}
                     </div>
-                )}
+
+                    {/* PAGINATION */}
+                    {filteredHotels.length > ITEMS_PER_PAGE && (
+                        <div style={{ marginTop: '48px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '32px' }}>
+                            <button
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(c => Math.max(1, c - 1))}
+                                className="btn-secondary"
+                                style={{ height: '56px', borderRadius: '18px', padding: '0 32px', display: 'flex', alignItems: 'center', gap: '12px', opacity: currentPage === 1 ? 0.3 : 1, fontWeight: 800 }}
+                            >
+                                <ChevronLeft size={24} /> PRETHODNA
+                            </button>
+                            <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-main)', background: 'var(--bg-card)', padding: '12px 28px', borderRadius: '18px', border: '2px solid var(--border)', boxShadow: '0 10px 20px rgba(0,0,0,0.2)' }}>
+                                {currentPage} <span style={{ opacity: 0.3, fontWeight: 500, margin: '0 8px' }}>OD</span> {Math.ceil(filteredHotels.length / ITEMS_PER_PAGE)}
+                            </div>
+                            <button
+                                disabled={currentPage * ITEMS_PER_PAGE >= filteredHotels.length}
+                                onClick={() => setCurrentPage(c => c + 1)}
+                                className="btn-secondary"
+                                style={{ height: '56px', borderRadius: '18px', padding: '0 32px', display: 'flex', alignItems: 'center', gap: '12px', opacity: currentPage * ITEMS_PER_PAGE >= filteredHotels.length ? 0.3 : 1, fontWeight: 800 }}
+                            >
+                                SLEDEĆA <ChevronRight size={24} />
+                            </button>
+                        </div>
+                    )}
+                </div>
 
                 <AnimatePresence>
                     {showWizard && (
@@ -1050,7 +1542,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                         />
                     )}
                 </AnimatePresence>
-            </div>
+            </div >
         );
     }
 
@@ -1070,7 +1562,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                     <div className="profile-panel">
                         <section className="profile-hero">
                             <div className="hero-img">
-                                <img src={selectedHotel.images[0]?.url} alt={selectedHotel.name} />
+                                <img src={getProxiedImageUrl(selectedHotel.images[0]?.url)} alt={selectedHotel.name} />
                             </div>
                             <div className="hero-content" style={{ position: 'relative', zIndex: 2 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>

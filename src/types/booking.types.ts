@@ -139,6 +139,8 @@ export interface BookingState {
     termsAccepted: boolean;
     isSubmitting: boolean;
     validationErrors: Record<number, GuestValidationErrors>; // Index by guest number
+    cancellationConfirmed: boolean;
+    cancellationTimestamp: string | null;
     errorDetails?: string | null;
 }
 

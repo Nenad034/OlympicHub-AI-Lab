@@ -15,7 +15,7 @@ import ReservationEmailModal from '../components/ReservationEmailModal';
 import DateRangeInput from '../components/DateRangeInput.tsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { getUserReservations, type DatabaseReservation } from '../services/reservationService';
+import { getUserReservations, saveDossierToDatabase, type DatabaseReservation } from '../services/reservationService';
 import { useAuthStore } from '../stores';
 
 // Types
@@ -574,10 +574,105 @@ const ReservationsDashboard: React.FC = () => {
                     supabase.from('reservations').delete().eq('cis_code', testCis)
                 );
             }
-
         } catch (err) {
             console.error('❌ Neočekivana greška:', err);
             alert(`Neočekivana greška: ${err}`);
+        }
+    };
+
+    const generateTestReservation = async () => {
+        const confirmGen = window.confirm("Da li želite da generišete Test Rezervaciju sa aktivnim upozorenjima (Cancel Warning + Late Payment)?");
+        if (!confirmGen) return;
+
+        setSyncStatus('syncing');
+        try {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            const fakeDossier = {
+                cisCode: `TEST-GEN-${Date.now()}`,
+                resCode: `REF-${Math.floor(Math.random() * 10000)}/2026`,
+                status: 'Reservation',
+                clientReference: `TEST-REF-${Date.now()}`,
+                booker: {
+                    fullName: "Test Putnik (System)",
+                    email: "test.system@example.com",
+                    phone: "+38160000000",
+                    address: "Digitalna ulica 1",
+                    city: "Beograd",
+                    country: "Srbija"
+                },
+                passengers: [
+                    { firstName: "Test", lastName: "Putnik", type: "adult" }
+                ],
+                customerType: "B2C-Individual",
+                tripItems: [{
+                    id: `item-${Date.now()}`,
+                    type: "Smestaj",
+                    supplier: "Solvex",
+                    subject: "Test Hotel With Warnings", // Hotel name
+                    city: "Zlatibor",
+                    country: "Srbija",
+                    checkIn: new Date().toISOString().split('T')[0],
+                    checkOut: new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0],
+                    supplierPaymentDeadline: yesterday.toISOString().split('T')[0], // YESTERDAY -> RED WARNING
+                    bruttoPrice: 500,
+                    currency: "EUR",
+                    stars: 4
+                }],
+                finance: {
+                    currency: "EUR",
+                    totalAmount: 500,
+                    payments: []
+                },
+                cancellationConfirmed: true, // TRIGGER WARNING LOG
+                cancellationTimestamp: new Date().toISOString(),
+                hotelNotified: false,
+                proformaSent: false,
+                invoiceCreated: false,
+                // Required fields to prevent crash
+                insurance: {
+                    guaranteePolicy: 'Triglav Osiguranje br. 990000123',
+                    insurerContact: '+381 11 333 444',
+                    insurerEmail: 'pomoć@triglav.rs',
+                    cancellationOffered: true,
+                    healthOffered: true,
+                    confirmationText: '',
+                    confirmationTimestamp: ''
+                },
+                logs: [
+                    {
+                        id: 'log-init',
+                        timestamp: new Date().toISOString(),
+                        operator: 'System',
+                        action: 'Test Rezervacija',
+                        details: 'Generisano za testiranje upozorenja.',
+                        type: 'info'
+                    }
+                ],
+                notes: {
+                    general: '',
+                    contract: '',
+                    voucher: '',
+                    internal: ''
+                },
+                language: 'Srpski'
+            };
+
+            const result = await saveDossierToDatabase(fakeDossier);
+
+            if (result.success) {
+                alert("✅ Test rezervacija uspešno kreirana! \n\nProverite 'Test Hotel With Warnings' u listi.\nPayment Deadline je podešen na JUČE (treba da bude CRVENO).");
+                window.location.reload(); // Refresh to see it
+            } else {
+                alert("Greška: " + result.error);
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert("Neočekivana greška pri generisanju.");
+        } finally {
+            setSyncStatus('idle');
         }
     };
 
@@ -1355,6 +1450,16 @@ ${data.map(r => `  <reservation>
                             </div>
                         )}
                     </div>
+
+                    <button
+                        className="advanced-toggle"
+                        onClick={generateTestReservation}
+                        title="Generiši Test Rezervaciju (Cancel + Pay Warning)"
+                        style={{ marginRight: '16px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)' }}
+                    >
+                        <CloudLightning size={16} />
+                        Test (Warnings)
+                    </button>
 
                     <div className="view-switcher">
                         <button

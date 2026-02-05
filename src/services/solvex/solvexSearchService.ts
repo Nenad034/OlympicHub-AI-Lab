@@ -81,17 +81,65 @@ export async function searchHotels(params: Omit<SolvexHotelSearchParams, 'guid'>
 
         console.log(`[Solvex Search] Found ${items.length} hotel services`);
 
+        // 4a. Fetch enriched content from Supabase
+        const uniqueHotelIds = [...new Set(items.map(s => String(s.HotelKey || '0')))];
+        let enrichedMap: Record<string, any> = {};
+
+        if (uniqueHotelIds.length > 0) {
+            try {
+                // Dynamically import supabase client
+                // @ts-ignore
+                const { supabase } = await import('../../lib/supabaseClient');
+
+                if (supabase) {
+                    const { data: hotelsData } = await supabase
+                        .from('properties')
+                        .select('id, images, content, propertyAmenities')
+                        .in('id', uniqueHotelIds.map(id => `solvex_${id}`));
+
+                    if (hotelsData) {
+                        hotelsData.forEach((h: any) => {
+                            const solvexId = h.id.replace('solvex_', '');
+                            enrichedMap[solvexId] = h;
+                        });
+                    }
+                }
+            } catch (err) {
+                try {
+                    // @ts-ignore
+                    const { supabase } = await import('../../lib/supabase');
+                    if (supabase) {
+                        const { data: hotelsData } = await supabase
+                            .from('properties')
+                            .select('id, images, content, propertyAmenities')
+                            .in('id', uniqueHotelIds.map(id => `solvex_${id}`));
+
+                        if (hotelsData) {
+                            hotelsData.forEach((h: any) => {
+                                const solvexId = h.id.replace('solvex_', '');
+                                enrichedMap[solvexId] = h;
+                            });
+                        }
+                    }
+                } catch (e2) {
+                    console.warn('[Solvex Search] Could not load Supabase client for enrichment', e2);
+                }
+            }
+        }
+
         // Map SOAP results to our typed interface
         const mappedResults: SolvexHotelSearchResult[] = items.map(s => {
+            const hotelId = String(s.HotelKey || '0');
             const hotelName = String(s.HotelName || 'Unknown Hotel');
+            const enriched = enrichedMap[hotelId];
 
             // Solvex stores star rating in Description field, NOT in a separate Stars field
             // Format: "5*  (\Golden Sands)" or "4*+  (\Golden Sands)" or "Not defined  (\Golden Sands)"
             let starRating = 0;
-            const description = String(s.Description || s.HotelDescription || '');
+            const rawDescription = String(s.Description || s.HotelDescription || '');
 
             // Try to extract stars from description (e.g. "5*", "4*+", "3*")
-            const descStarMatch = description.match(/(\d)\s*\*+/);
+            const descStarMatch = rawDescription.match(/(\d)\s*\*+/);
             if (descStarMatch) {
                 starRating = parseInt(descStarMatch[1]);
             }
@@ -104,9 +152,13 @@ export async function searchHotels(params: Omit<SolvexHotelSearchParams, 'guid'>
                 }
             }
 
+            // Use Enriched description if available
+            const finalDescription = enriched?.content?.description || rawDescription;
+            const finalImages = enriched?.images || [];
+
             return {
                 hotel: {
-                    id: parseInt(String(s.HotelKey || '0')),
+                    id: parseInt(hotelId),
                     name: hotelName,
                     city: {
                         id: parseInt(String(s.CityKey || '0')),
@@ -120,7 +172,14 @@ export async function searchHotels(params: Omit<SolvexHotelSearchParams, 'guid'>
                     },
                     starRating: starRating,
                     nameLat: hotelName,
-                    priceType: 0
+                    priceType: 0,
+                    // Attach enriched data
+                    // @ts-ignore
+                    description: finalDescription,
+                    // @ts-ignore
+                    images: finalImages,
+                    // @ts-ignore
+                    amenities: enriched?.propertyAmenities || []
                 },
                 room: {
                     roomType: {

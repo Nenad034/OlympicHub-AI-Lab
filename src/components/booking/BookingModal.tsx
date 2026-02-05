@@ -46,6 +46,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         termsAccepted: false,
         isSubmitting: false,
         validationErrors: {},
+        cancellationConfirmed: false,
+        cancellationTimestamp: null as string | null,
         errorDetails: null
     });
 
@@ -111,6 +113,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             // Scroll to top of modal content
             const content = document.querySelector('.booking-modal-content');
             if (content) content.scrollTop = 0;
+            return;
+        }
+
+        if (!state.cancellationConfirmed) {
+            alert('Molimo potvrdite da ste upoznati sa otkaznim troškovima.');
             return;
         }
 
@@ -196,7 +203,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         confirmationText: 'Putnik je saglasan sa uslovima otkaza i promene aranžmana kao i sa Opštim Uslovima agencije.',
                         confirmationTimestamp: new Date().toLocaleString('sr-RS'),
                         externalBookingId: saveResult.data.externalId.toString(),
-                        externalBookingCode: saveResult.data.name
+                        externalBookingCode: saveResult.data.name,
+                        cancellationConfirmed: state.cancellationConfirmed,
+                        cancellationTimestamp: state.cancellationTimestamp,
+                        operatorName: 'System User' // Ovo treba zameniti stvarni ulogovanim korisnikom
                     };
 
                     localStorage.setItem('pending_booking', JSON.stringify(payload));
@@ -241,7 +251,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 prefilledGuests: guests,
                 specialRequests: state.specialRequests,
                 confirmationText: 'Putnik je saglasan sa uslovima otkaza i promene aranžmana kao i sa Opštim Uslovima agencije.',
-                confirmationTimestamp: new Date().toLocaleString('sr-RS')
+                confirmationTimestamp: new Date().toLocaleString('sr-RS'),
+                cancellationConfirmed: state.cancellationConfirmed,
+                cancellationTimestamp: state.cancellationTimestamp,
+                operatorName: 'System User'
             };
 
             localStorage.setItem('pending_booking', JSON.stringify(payload));
@@ -459,7 +472,37 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                                             </tr>
                                         </tbody>
                                     </table>
-                                    <p className="policy-note">* Promena datuma ili imena putnika se tretira kao otkaz rezervacije ukoliko je do polaska ostalo manje od 30 dana.</p>
+                                </div>
+
+                                <div className="cancellation-confirmation-box" style={{
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    padding: '16px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #ef4444',
+                                    marginBottom: '20px',
+                                    marginTop: '20px'
+                                }}>
+                                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                                        <AlertTriangle size={24} color="#ef4444" style={{ flexShrink: 0 }} />
+                                        <div>
+                                            <h4 style={{ color: '#ef4444', margin: '0 0 8px 0', fontSize: '15px' }}>UPOZORENJE O OTKAZNIM TROŠKOVIMA</h4>
+                                            <p style={{ color: '#fca5a5', fontSize: '13px', margin: 0 }}>
+                                                Potvrdom ove rezervacije <strong>trenutno</strong> ulazite u period otkaznih penala.
+                                                Molimo Vas imajte na umu da u slučaju otkazivanja ili nepojavljivanja, dobavljač zadržava pravo naplate prema gore navedenoj tabeli.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <label className="terms-checkbox" style={{ marginTop: '16px', borderTop: '1px solid rgba(239,68,68,0.3)', paddingTop: '16px' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={state.cancellationConfirmed}
+                                            onChange={(e) => setState({ ...state, cancellationConfirmed: e.target.checked, cancellationTimestamp: e.target.checked ? new Date().toISOString() : null })}
+                                        />
+                                        <span style={{ color: 'white', fontWeight: 600 }}>
+                                            Razumem i prihvatam rizik od otkaznih troškova.
+                                        </span>
+                                    </label>
                                 </div>
 
                                 <a href="https://www.olympictravel.rs/opsti-uslovi-putovanja" target="_blank" rel="noopener noreferrer" className="terms-link-v4">

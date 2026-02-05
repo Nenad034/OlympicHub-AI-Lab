@@ -19,6 +19,7 @@ import {
     Share2
 } from 'lucide-react';
 import { loadFromCloud } from '../utils/storageUtils';
+import { getProxiedImageUrl } from '../utils/imageProxy';
 
 
 // Types (should be shared from a types file)
@@ -57,11 +58,46 @@ const HotelDetail: React.FC = () => {
             const { success, data } = await loadFromCloud('properties');
             let hotels: Hotel[] = [];
 
+            // Helper to map DB data to Frontend structure
+            const mapBackendToFrontendHotel = (dbHotel: any): Hotel => {
+                // If it already matches the shape (legacy local data), return as is
+                if (dbHotel.location && dbHotel.location.place && dbHotel.units) {
+                    return dbHotel;
+                }
+
+                // Map Supabase/Solvex structure to Frontend Hotel interface
+                return {
+                    id: dbHotel.id,
+                    name: dbHotel.name,
+                    location: {
+                        address: dbHotel.address?.addressLine || '',
+                        place: dbHotel.address?.city || '',
+                        lat: dbHotel.geoCoordinates?.latitude || 0,
+                        lng: dbHotel.geoCoordinates?.longitude || 0
+                    },
+                    images: (dbHotel.images || []).map((img: any) => ({
+                        ...img,
+                        url: getProxiedImageUrl(img.url)
+                    })),
+                    amenities: dbHotel.propertyAmenities || [],
+                    units: [], // We don't have units in properties table
+                    commonItems: {
+                        discount: [],
+                        touristTax: [],
+                        supplement: []
+                    },
+                    originalPropertyData: dbHotel
+                };
+            };
+
             if (success && data && data.length > 0) {
-                hotels = data as Hotel[];
+                hotels = data.map(mapBackendToFrontendHotel);
             } else {
                 const saved = localStorage.getItem('olympic_hub_hotels');
-                if (saved) hotels = JSON.parse(saved);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    hotels = parsed.map(mapBackendToFrontendHotel);
+                }
             }
 
             // Find hotel by slug (converted from name)

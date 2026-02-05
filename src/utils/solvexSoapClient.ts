@@ -45,7 +45,9 @@ const getEnvVar = (key: string, fallback: string) => {
         // @ts-ignore
         return import.meta.env[key];
     }
+    // @ts-ignore
     if (typeof process !== 'undefined' && process.env && process.env[key]) {
+        // @ts-ignore
         return process.env[key];
     }
     return fallback;
@@ -60,8 +62,14 @@ function getTargetUrl(url: string): string {
     // If we're in a browser and in development mode, use the Vite proxy
     // @ts-ignore
     if (typeof window !== 'undefined' && (import.meta.env?.DEV || window.location.hostname === 'localhost')) {
-        if (url.includes('evaluation.solvex.bg')) {
-            return url.replace('https://evaluation.solvex.bg', '/api/solvex');
+        if (url.includes('evaluation.solvex.bg') || url.includes('iservice.solvex.bg')) {
+            // We want to keep the PATH of the URL but replace the domain with /api/solvex
+            // The proxy rewrite rule in vite.config.ts will stripp /api/solvex and forward the rest
+            // So if url is https://iservice.solvex.bg/IntegrationService.asmx
+            // We want /api/solvex/IntegrationService.asmx
+
+            const urlObj = new URL(url);
+            return `/api/solvex${urlObj.pathname}`;
         }
     }
     return url;
@@ -72,7 +80,7 @@ const SOLVEX_API_URL = getTargetUrl(SOLVEX_BASE_URL);
 
 // XML Parser options
 const parserOptions = {
-    ignoreAttributes: false,
+    ignoreAttributes: true, // changed from false to prevent [object Object] when attributes like msdata exist
     attributeNamePrefix: '@_',
     textNodeName: '#text',
     parseAttributeValue: true,

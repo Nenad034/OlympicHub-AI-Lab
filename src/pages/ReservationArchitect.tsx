@@ -65,6 +65,8 @@ interface TripItem {
     supplierRef?: string;
     solvexStatus?: string;
     solvexKey?: string;
+    supplierPaymentDeadline?: string; // Deadline for paying the supplier
+    cancellationPolicyConfirmed?: boolean;
     // Flight specific
     flightLegs?: FlightLeg[];
 }
@@ -331,8 +333,15 @@ const ReservationArchitect: React.FC = () => {
                         const rawData = dbRes.guests_data as any;
 
                         if (rawData && rawData.booker && rawData.tripItems) {
-                            // It's a full saved dossier
-                            setDossier(rawData);
+                            // It's a full saved dossier - safe merge
+                            setDossier(prev => ({
+                                ...prev,
+                                ...rawData,
+                                logs: rawData.logs || prev.logs || [],
+                                insurance: rawData.insurance || prev.insurance,
+                                notes: rawData.notes || prev.notes,
+                                language: rawData.language || prev.language || 'Srpski'
+                            }));
                         } else {
                             // It's a standard reservation (e.g. from BookingModal) - Map to Dossier
                             const guests = rawData?.guests || [];
@@ -505,6 +514,14 @@ const ReservationArchitect: React.FC = () => {
                             })(),
                             bruttoPrice: Math.round((loadData.selectedRoom?.price || res.price) * 100) / 100,
                             supplierRef: loadData.externalBookingCode || loadData.externalBookingId || '',
+                            supplierPaymentDeadline: (() => {
+                                // Default rule: 14 days before Check-In
+                                const checkInDate = new Date(searchParams.checkIn);
+                                checkInDate.setDate(checkInDate.getDate() - 14);
+                                // If today is already past that date, assume immediate payment (today)
+                                return checkInDate < new Date() ? new Date().toISOString().split('T')[0] : checkInDate.toISOString().split('T')[0];
+                            })(),
+                            cancellationPolicyConfirmed: loadData.cancellationConfirmed || false,
                             passengers: [...calculatedPassengers],
                             flightLegs: (res.tripType === 'Avio karte' || res.type === 'flight' || loadData.type === 'flight') ? [] : undefined
                         }
@@ -531,6 +548,14 @@ const ReservationArchitect: React.FC = () => {
                         confirmationTimestamp: loadData.confirmationTimestamp || ''
                     }
                 }));
+
+                // Log cancellation confirmation if present (just once after init)
+                if (loadData.cancellationConfirmed) {
+                    setTimeout(() => {
+                        addLog('Potvrda Otkaznih Uslova', `Putnik je prihvatio rizik od otkaznih troškova. Datum: ${loadData.cancellationTimestamp || 'N/A'}`, 'warning');
+                    }, 1000);
+                }
+
                 setIsInitialized(true);
                 // Go directly to Passengers tab
                 setActiveSection('parties');
@@ -587,7 +612,7 @@ const ReservationArchitect: React.FC = () => {
         };
         setDossier(prev => ({
             ...prev,
-            logs: [newLog, ...prev.logs]
+            logs: [newLog, ...(prev.logs || [])]
         }));
     };
 
@@ -1903,6 +1928,29 @@ const ReservationArchitect: React.FC = () => {
                                                                 onChange={e => {
                                                                     const newItems = [...dossier.tripItems];
                                                                     newItems[idx].supplierRef = e.target.value;
+                                                                    setDossier({ ...dossier, tripItems: newItems });
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div className="supplier-inline" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                            <span style={{ fontSize: '10px', fontWeight: 800, color: item.supplierPaymentDeadline && new Date(item.supplierPaymentDeadline) < new Date() ? '#ef4444' : '#fbbf24' }}>ROK PLAĆANJA:</span>
+                                                            <input
+                                                                type="date"
+                                                                value={item.supplierPaymentDeadline || ''}
+                                                                style={{
+                                                                    background: 'transparent',
+                                                                    border: 'none',
+                                                                    color: item.supplierPaymentDeadline && new Date(item.supplierPaymentDeadline) < new Date() ? '#ef4444' : '#fbbf24',
+                                                                    fontWeight: 800,
+                                                                    fontSize: '11px',
+                                                                    width: '110px',
+                                                                    padding: '0',
+                                                                    fontFamily: 'monospace',
+                                                                    colorScheme: 'dark'
+                                                                }}
+                                                                onChange={e => {
+                                                                    const newItems = [...dossier.tripItems];
+                                                                    newItems[idx].supplierPaymentDeadline = e.target.value;
                                                                     setDossier({ ...dossier, tripItems: newItems });
                                                                 }}
                                                             />

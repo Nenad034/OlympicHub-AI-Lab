@@ -18,6 +18,7 @@ export interface Address {
     city: string; // Required
     postalCode: string; // Required
     countryCode: string; // ISO 3166-1 alpha-2
+    country?: string; // Full country name
     stateProvince?: string; // ISO 3166-2
 }
 

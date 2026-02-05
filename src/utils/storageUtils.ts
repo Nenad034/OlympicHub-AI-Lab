@@ -17,12 +17,30 @@ export const saveToCloud = async (tableName: string, data: any[]) => {
 
 export const loadFromCloud = async (tableName: string) => {
     try {
-        const { data, error } = await supabase
-            .from(tableName)
-            .select('*');
+        let allData: any[] = [];
+        let from = 0;
+        const batchSize = 1000;
+        let hasMore = true;
 
-        if (error) throw error;
-        return { success: true, data };
+        while (hasMore) {
+            const { data, error } = await supabase
+                .from(tableName)
+                .select('*')
+                .range(from, from + batchSize - 1);
+
+            if (error) throw error;
+            if (data && data.length > 0) {
+                allData = [...allData, ...data];
+                if (data.length < batchSize) {
+                    hasMore = false;
+                } else {
+                    from += batchSize;
+                }
+            } else {
+                hasMore = false;
+            }
+        }
+        return { success: true, data: allData };
     } catch (error: any) {
         console.error(`Error loading from ${tableName}:`, error.message);
         return { success: false, error: error.message };

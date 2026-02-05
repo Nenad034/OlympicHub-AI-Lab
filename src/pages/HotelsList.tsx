@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { loadFromCloud, saveToCloud } from '../utils/storageUtils';
 import { sanitizeInput } from '../utils/securityUtils';
+import { getProxiedImageUrl } from '../utils/imageProxy';
 
 // Types
 interface Hotel {
@@ -58,18 +59,63 @@ const HotelsList: React.FC = () => {
     const [isSyncing, setIsSyncing] = useState(false);
     const [loading, setLoading] = useState(true);
 
+
+
+    // Helper to map DB data to Frontend structure
+    const mapBackendToFrontendHotel = (dbHotel: any): Hotel => {
+        // If it already matches the shape (legacy local data), return as is
+        if (dbHotel.location && dbHotel.location.place && dbHotel.units) {
+            return dbHotel;
+        }
+
+        // Map Supabase/Solvex structure to Frontend Hotel interface
+        return {
+            id: dbHotel.id,
+            name: dbHotel.name,
+            location: {
+                address: dbHotel.address?.addressLine || '',
+                place: dbHotel.address?.city || '',
+                lat: dbHotel.geoCoordinates?.latitude || 0,
+                lng: dbHotel.geoCoordinates?.longitude || 0
+            },
+            images: (dbHotel.images || []).map((img: any) => ({
+                ...img,
+                url: getProxiedImageUrl(img.url)
+            })),
+            amenities: dbHotel.propertyAmenities || [],
+            units: [], // We don't have units in properties table
+            commonItems: {
+                discount: [],
+                touristTax: [],
+                supplement: []
+            },
+            originalPropertyData: dbHotel
+        };
+    };
+
     // Load hotels
     useEffect(() => {
         const loadHotels = async () => {
             setLoading(true);
-            const { success, data } = await loadFromCloud('properties');
-            if (success && data && data.length > 0) {
-                setHotels(data as Hotel[]);
-            } else {
-                const saved = localStorage.getItem('olympic_hub_hotels');
-                if (saved) setHotels(JSON.parse(saved));
+            try {
+                const { success, data } = await loadFromCloud('properties');
+
+                if (success && data && data.length > 0) {
+                    const mapped = data.map(mapBackendToFrontendHotel);
+                    setHotels(mapped);
+                } else {
+                    const saved = localStorage.getItem('olympic_hub_hotels');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        const mapped = parsed.map(mapBackendToFrontendHotel);
+                        setHotels(mapped);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load hotels", err);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
         loadHotels();
     }, []);

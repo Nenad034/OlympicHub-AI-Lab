@@ -31,7 +31,7 @@ export default defineConfig({
       },
       // Proxy for Solvex API to bypass CORS
       '/api/solvex': {
-        target: 'https://evaluation.solvex.bg',
+        target: 'https://iservice.solvex.bg',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api\/solvex/, ''),

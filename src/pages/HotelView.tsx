@@ -13,6 +13,7 @@ import { useThemeStore } from '../stores';
 import type { BookingData } from '../types/booking.types';
 import './HotelView.css';
 import '../components/booking/BookingModal.css'; // Reuse some table styles
+import { loadFromCloud } from '../utils/storageUtils';
 
 interface RoomAllocation {
     adults: number;
@@ -68,9 +69,15 @@ const HotelView: React.FC = () => {
         };
     }, []);
 
+    // State for real hotel data
+    const [realHotel, setRealHotel] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // View States
     const [activeImage, setActiveImage] = useState(0);
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
+    // Search/Booking States
     const [checkIn, setCheckIn] = useState<Date>(new Date(2026, 5, 14));
     const [checkOut, setCheckOut] = useState<Date>(new Date(2026, 5, 21));
     const [roomAllocations, setRoomAllocations] = useState<RoomAllocation[]>([
@@ -86,55 +93,79 @@ const HotelView: React.FC = () => {
     const [bookingModalOpen, setBookingModalOpen] = useState(false);
     const [selectedBookingData, setSelectedBookingData] = useState<BookingData | null>(null);
 
-    // Light mode detection (can be toggled or read from store)
-    // For now we will assume it's part of the global class, but we can have local toggle
-    // const { isLightMode } = useTheme(); 
+    useEffect(() => {
+        const fetchHotel = async () => {
+            try {
+                const { data, success } = await loadFromCloud('properties');
+                if (success && data) {
+                    const found = data.find((h: any) => h.id.toString() === hotelId);
+                    if (found) {
+                        setRealHotel(found);
+                    } else {
+                        // Check localStorage
+                        const saved = localStorage.getItem('olympic_hub_hotels');
+                        if (saved) {
+                            const parsed = JSON.parse(saved);
+                            const foundLocal = parsed.find((h: any) => h.id.toString() === hotelId);
+                            if (foundLocal) setRealHotel(foundLocal);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching hotel detail", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchHotel();
+    }, [hotelId]);
 
-    // Simulated Hotel Data
-    const hotel = {
-        name: "Galeon Residence & SPA",
-        location: "Sunny Beach, Bulgaria",
-        address: "Sunny Beach South, 8240 Sunny Beach",
-        stars: 5,
+    // Simulated/Real Data mapping
+    const hotel = realHotel ? {
+        name: realHotel.name || "Galeon Residence & SPA",
+        location: `${realHotel.address?.city || ''}, ${realHotel.address?.country || 'Bugarska'}`,
+        address: realHotel.address?.addressLine1 || "Sunny Beach South, 8240 Sunny Beach",
+        stars: realHotel.starRating || 5,
         rating: 4.8,
         reviews: 1250,
-        description: "Galeon Residence & SPA nudi vrhunski doživljaj na samoj obali Crnog mora. Hotel se odlikuje modernom arhitekturom, luksuznim spa centrom i bazenima koji oduzimaju dah. Svaka soba je dizajnirana da pruži maksimalnu udobnost uz panoramski pogled na more ili prelepo uređene vrtove.",
-        images: [
+        description: realHotel.content?.[0]?.longDescription || "Galeon Residence & SPA nudi vrhunski doživljaj na samoj obali Crnog mora. Hotel se odlikuje modernom arhitekturom, luksuznim spa centrom i bazenima koji oduzimaju dah.",
+        images: realHotel.images?.length > 0 ? realHotel.images.map((img: any) => img.url) : [
             "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=1200",
             "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&q=80&w=1200",
-            "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1200",
-            "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&q=80&w=1200",
-            "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&q=80&w=1200",
-            "https://images.unsplash.com/photo-1551882547-ff43c63efece?auto=format&fit=crop&q=80&w=1200"
+            "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1200"
         ],
-        rooms: [
+        rooms: realHotel.roomTypes?.length > 0 ? realHotel.roomTypes.map((r: any, idx: number) => ({
+            id: idx,
+            name: r.nameInternal || "Standard Room",
+            meal: "BB", // Default if not found
+            capacity: `${r.osnovniKreveti}+${r.pomocniKreveti}`,
+            price: 890 + (idx * 150)
+        })) : [
             { id: 1, name: "Standard Room Park View", meal: "BB", capacity: "2+1", price: 890 },
-            { id: 2, name: "Studio Deluxe", meal: "BB", capacity: "2+2", price: 1045 },
-            { id: 3, name: "One Bedroom Apartment", meal: "BB", capacity: "2+2", price: 1260 },
-            { id: 4, name: "Two Bedroom Suite", meal: "BB", capacity: "4+2", price: 1850 },
-            { id: 5, name: "Standard Room Park View", meal: "HB", capacity: "2+1", price: 980 },
-            { id: 6, name: "Studio Deluxe", meal: "HB", capacity: "2+2", price: 1150 }
+            { id: 2, name: "Studio Deluxe", meal: "BB", capacity: "2+2", price: 1045 }
         ],
-        amenities: [
-            { icon: <Wifi size={18} />, label: "Besplatan Wi-Fi" },
-            { icon: <Coffee size={18} />, label: "Doručak uključen" },
-            { icon: <Wind size={18} />, label: "Klima uređaj" },
-            { icon: <Utensils size={18} />, label: "Restoran" },
-            { icon: <Sparkles size={18} />, label: "Spa & Wellness" },
-            { icon: <CheckCircle2 size={18} />, label: "Privatna plaža" }
-        ],
+        amenities: realHotel.propertyAmenities?.slice(0, 6).map((a: any) => ({
+            icon: <Sparkles size={18} />,
+            label: a.name
+        })) || [
+                { icon: <Wifi size={18} />, label: "Besplatan Wi-Fi" },
+                { icon: <Coffee size={18} />, label: "Doručak uključen" }
+            ],
         price: 963,
         currency: "€",
         tags: ["Premium Choice", "Best Seller", "Spa & Wellness"]
-    };
+    } : null;
+
+    if (isLoading) return <div className="hv-loading">Učitavanje podataka o hotelu...</div>;
+    if (!hotel) return <div className="hv-error">Hotel nije pronađen.</div>;
 
     // Dynamically derive available meal plans from the room list (Solvex API Logic)
-    const availableMealPlans = Array.from(new Set(hotel.rooms.map(r => r.meal)));
+    const availableMealPlans = Array.from(new Set(hotel.rooms.map((r: any) => r.meal)));
 
     const toggleMealPlan = (code: string) => {
-        setSelectedMealPlans(prev =>
+        setSelectedMealPlans((prev: string[]) =>
             prev.includes(code)
-                ? prev.filter(c => c !== code)
+                ? prev.filter((c: string) => c !== code)
                 : [...prev, code]
         );
     };
@@ -148,12 +179,12 @@ const HotelView: React.FC = () => {
         return date.toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
 
-    const nextImage = () => setActiveImage((prev) => (prev + 1) % hotel.images.length);
-    const prevImage = () => setActiveImage((prev) => (prev - 1 + hotel.images.length) % hotel.images.length);
+    const nextImage = () => setActiveImage((prev: number) => (prev + 1) % hotel.images.length);
+    const prevImage = () => setActiveImage((prev: number) => (prev - 1 + hotel.images.length) % hotel.images.length);
 
     const openBookingModal = (room: any) => {
         const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-        const totalPax = roomAllocations.reduce((acc, r) => acc + r.adults + r.children, 0);
+        const totalPax = roomAllocations.reduce((acc: number, r: RoomAllocation) => acc + r.adults + r.children, 0);
 
         const data: BookingData = {
             hotelName: hotel.name,
@@ -164,10 +195,12 @@ const HotelView: React.FC = () => {
             checkIn: formatDateStr(checkIn),
             checkOut: formatDateStr(checkOut),
             nights: nights,
-            adults: roomAllocations.reduce((acc, r) => acc + r.adults, 0),
-            children: roomAllocations.reduce((acc, r) => acc + r.children, 0),
+            adults: roomAllocations.reduce((acc: number, r: RoomAllocation) => acc + r.adults, 0),
+            children: roomAllocations.reduce((acc: number, r: RoomAllocation) => acc + r.children, 0),
             totalPrice: room.price,
             currency: hotel.currency,
+            serviceName: hotel.name,
+            serviceType: 'hotel',
             providerData: { hotelId: hotelId, roomId: room.id }
         };
 
@@ -188,7 +221,7 @@ const HotelView: React.FC = () => {
                         </div>
                     </div>
                     <div className="hv-side-grid">
-                        {hotel.images.slice(1, 5).map((img, i) => (
+                        {hotel.images.slice(1, 5).map((img: string, i: number) => (
                             <div key={i} className="hv-side-img" onClick={() => { setActiveImage(i + 1); setIsGalleryOpen(true); }}>
                                 <img src={img} alt={`${hotel.name} ${i + 2}`} />
                             </div>
@@ -251,7 +284,7 @@ const HotelView: React.FC = () => {
                             <div className="hv-field-content">
                                 <label>Sobe i Putnici</label>
                                 <span>
-                                    {roomAllocations.length} {roomAllocations.length >= 2 && roomAllocations.length <= 4 ? 'Sobe' : 'Soba'} · {roomAllocations.reduce((acc, r) => acc + r.adults + r.children, 0)} {roomAllocations.reduce((acc, r) => acc + r.adults + r.children, 0) === 1 ? 'Putnik' : 'Putnika'}
+                                    {roomAllocations.length} {roomAllocations.length >= 2 && roomAllocations.length <= 4 ? 'Sobe' : 'Soba'} · {roomAllocations.reduce((acc: number, r: RoomAllocation) => acc + r.adults + r.children, 0)} {roomAllocations.reduce((acc: number, r: RoomAllocation) => acc + r.adults + r.children, 0) === 1 ? 'Putnik' : 'Putnika'}
                                 </span>
                             </div>
                             <ChevronDown size={14} className={`hv-chevron ${showGuestSelector ? 'open' : ''}`} />
@@ -273,7 +306,7 @@ const HotelView: React.FC = () => {
                                                     onClick={() => {
                                                         if (activeRoomTab === idx && idx > 0) {
                                                             // Remove room
-                                                            const newRooms = roomAllocations.filter((_, i) => i !== idx);
+                                                            const newRooms = roomAllocations.filter((_: RoomAllocation, i: number) => i !== idx);
                                                             setRoomAllocations(newRooms);
                                                             setActiveRoomTab(0);
                                                         } else {
@@ -369,7 +402,7 @@ const HotelView: React.FC = () => {
                             <div className="hv-field-content">
                                 <label>Usluga</label>
                                 <div className="hv-meal-chips-container centered">
-                                    {availableMealPlans.map(mp => (
+                                    {availableMealPlans.map((mp: any) => (
                                         <button
                                             key={mp}
                                             className={`hv-meal-chip ${selectedMealPlans.includes(mp) ? 'active' : ''}`}
@@ -397,7 +430,7 @@ const HotelView: React.FC = () => {
                             </div>
                         ) : (
                             <div className="hv-all-results-container">
-                                {roomAllocations.map((alloc, idx) => (
+                                {roomAllocations.map((alloc: RoomAllocation, idx: number) => (
                                     <div key={idx} className="hv-room-result-group">
                                         <div className="hv-offer-banner">
                                             PONUDA ZA SOBU {idx + 1} - {getAdultsText(alloc.adults)}{getChildrenText(alloc.childrenAges)}
@@ -412,8 +445,8 @@ const HotelView: React.FC = () => {
                                                 <div className="col-action">AKCIJA</div>
                                             </div>
                                             {hotel.rooms
-                                                .filter(r => selectedMealPlans.length === 0 || selectedMealPlans.includes(r.meal))
-                                                .map(room => {
+                                                .filter((r: any) => selectedMealPlans.length === 0 || selectedMealPlans.includes(r.meal))
+                                                .map((room: any) => {
                                                     const finalPrice = Math.round(room.price * (alloc.adults + alloc.children * 0.5));
                                                     return (
                                                         <div key={room.id} className="hv-room-row-full">
@@ -460,7 +493,7 @@ const HotelView: React.FC = () => {
                             <h3>Sadržaji</h3>
                         </div>
                         <div className="hv-amenities-modern-grid">
-                            {hotel.amenities.map((a, i) => (
+                            {hotel.amenities.map((a: any, i: number) => (
                                 <div key={i} className="hv-amenity-item-premium">
                                     <span className="hv-am-label-text">{a.label}</span>
                                     <div className="hv-am-icon-below">{a.icon}</div>
