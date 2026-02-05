@@ -63,33 +63,51 @@ const HotelsList: React.FC = () => {
 
     // Helper to map DB data to Frontend structure
     const mapBackendToFrontendHotel = (dbHotel: any): Hotel => {
-        // If it already matches the shape (legacy local data), return as is
-        if (dbHotel.location && dbHotel.location.place && dbHotel.units) {
-            return dbHotel;
+        const rawData = dbHotel.originalPropertyData || dbHotel;
+
+        let cleanStars = 0;
+        const starSource = rawData.starRating || rawData.stars || rawData.Stars || 0;
+
+        if (starSource) {
+            if (typeof starSource === 'number') {
+                cleanStars = Math.round(starSource);
+            } else {
+                const digits = String(starSource).match(/\d+/);
+                if (digits) cleanStars = parseInt(digits[0]);
+            }
         }
 
-        // Map Supabase/Solvex structure to Frontend Hotel interface
+        if (cleanStars === 0 && (rawData.name || dbHotel.name)) {
+            const nameToSearch = rawData.name || dbHotel.name || "";
+            const nameMatch = nameToSearch.match(/(\d)\s*\*+/);
+            if (nameMatch) {
+                cleanStars = parseInt(nameMatch[1]);
+            }
+        }
+
+        cleanStars = isNaN(cleanStars) ? 0 : cleanStars;
+
         return {
-            id: dbHotel.id,
-            name: dbHotel.name,
+            id: dbHotel.id || rawData.id,
+            name: rawData.name || dbHotel.name, // Keep raw name for display here, or use unify if imported
             location: {
-                address: dbHotel.address?.addressLine || '',
-                place: dbHotel.address?.city || '',
-                lat: dbHotel.geoCoordinates?.latitude || 0,
-                lng: dbHotel.geoCoordinates?.longitude || 0
+                address: rawData.address?.addressLine || '',
+                place: rawData.address?.city || '',
+                lat: rawData.geoCoordinates?.latitude || 0,
+                lng: rawData.geoCoordinates?.longitude || 0
             },
-            images: (dbHotel.images || []).map((img: any) => ({
+            images: (rawData.images || []).map((img: any) => ({
                 ...img,
                 url: getProxiedImageUrl(img.url)
             })),
-            amenities: dbHotel.propertyAmenities || [],
-            units: [], // We don't have units in properties table
-            commonItems: {
+            amenities: rawData.propertyAmenities || [],
+            units: Array.isArray(rawData.units) ? rawData.units : [],
+            commonItems: rawData.commonItems || {
                 discount: [],
                 touristTax: [],
                 supplement: []
             },
-            originalPropertyData: dbHotel
+            originalPropertyData: { ...rawData, starRating: cleanStars }
         };
     };
 

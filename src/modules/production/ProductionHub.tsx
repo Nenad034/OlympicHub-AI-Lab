@@ -263,8 +263,8 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
 
         // Star Rating Filter (Multi-select)
         if (selectedStars.length > 0) {
-            const hotelStars = h.originalPropertyData?.starRating || 0;
-            if (!selectedStars.includes(hotelStars)) return false;
+            const hStars = h.originalPropertyData?.starRating !== undefined ? Number(h.originalPropertyData.starRating) : 0;
+            if (!selectedStars.includes(hStars)) return false;
         }
 
         // Integrity Filter (Multi-select)
@@ -323,7 +323,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery]);
+    }, [searchQuery, statusFilter, selectedStars, integrityFilter]);
 
     const getMissingInfo = (hotel: Hotel) => {
         const missing: { label: string, key: string }[] = [];
@@ -349,25 +349,74 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
     // Load hotels from Supabase on mount
     useEffect(() => {
         const mapBackendToFrontendHotel = (dbHotel: any): Hotel => {
-            // Map Supabase/Solvex structure to Frontend Hotel interface
+            const rawData = dbHotel.originalPropertyData || dbHotel;
+            const rawName = (rawData.name || dbHotel.name || "").toUpperCase();
+
+            // 1. Initial extraction from DB fields
+            let fieldStars = 0;
+            const starSource = rawData.starRating ?? rawData.starrating ?? rawData.star_rating ?? rawData.stars ?? rawData.Stars ?? 0;
+            if (starSource) {
+                if (typeof starSource === 'number') fieldStars = Math.round(starSource);
+                else {
+                    const digits = String(starSource).match(/\d+/);
+                    if (digits) fieldStars = parseInt(digits[0]);
+                }
+            }
+
+            // 2. Aggressive name-based extraction
+            let nameStars = 0;
+            const patterns = [
+                /([1-5])\s*\*+/,           // "5*", "4 *"
+                /([1-5])\s*STARS?/,        // "5 stars"
+                /CAT[^\d]*([1-5])/,        // "cat 5"
+                /CLASS[^\d]*([1-5])/,      // "class 5"
+                /(\*{2,5})/,               // "*****" (counts asterisks)
+                /\s(V|IV|III|II|I)\s*\*?$/ // Roman numerals at the end
+            ];
+
+            for (const p of patterns) {
+                const match = rawName.match(p);
+                if (match) {
+                    if (match[1].startsWith('*')) nameStars = match[1].length;
+                    else if (match[1] === 'V') nameStars = 5;
+                    else if (match[1] === 'IV') nameStars = 4;
+                    else if (match[1] === 'III') nameStars = 3;
+                    else if (match[1] === 'II') nameStars = 2;
+                    else if (match[1] === 'I') nameStars = 1;
+                    else {
+                        const val = parseInt(match[1]);
+                        if (!isNaN(val)) nameStars = val;
+                    }
+                    if (nameStars > 0) break;
+                }
+            }
+
+            // 3. Logic: If name has 1-5, TRUST NAME over everything else (prevents 3* defaults)
+            // Exception: If name has NO stars but field has some, take field.
+            let finalStars = nameStars > 0 ? nameStars : fieldStars;
+
+            // Cap at 5
+            if (finalStars > 5) finalStars = 5;
+            if (isNaN(finalStars)) finalStars = 0;
+
             return {
-                id: dbHotel.id,
-                name: unifyHotelName(dbHotel.name || ""),
+                id: dbHotel.id || rawData.id,
+                name: unifyHotelName(rawData.name || dbHotel.name || ""),
                 location: {
-                    address: dbHotel.address?.addressLine ? (hasCyrillic(dbHotel.address.addressLine) ? transliterate(dbHotel.address.addressLine) : dbHotel.address.addressLine) : '',
-                    place: dbHotel.address?.city ? (hasCyrillic(dbHotel.address.city) ? transliterate(dbHotel.address.city) : dbHotel.address.city) : '',
-                    lat: dbHotel.geoCoordinates?.latitude || 0,
-                    lng: dbHotel.geoCoordinates?.longitude || 0
+                    address: rawData.address?.addressLine ? (hasCyrillic(rawData.address.addressLine) ? transliterate(rawData.address.addressLine) : rawData.address.addressLine) : '',
+                    place: rawData.address?.city ? (hasCyrillic(rawData.address.city) ? transliterate(rawData.address.city) : rawData.address.city) : '',
+                    lat: rawData.geoCoordinates?.latitude || 0,
+                    lng: rawData.geoCoordinates?.longitude || 0
                 },
-                images: dbHotel.images || [],
-                amenities: dbHotel.propertyAmenities || [],
-                units: [], // We don't have units in properties table
-                commonItems: {
+                images: rawData.images || [],
+                amenities: rawData.propertyAmenities || [],
+                units: Array.isArray(rawData.units) ? rawData.units : [],
+                commonItems: rawData.commonItems || {
                     discount: [],
                     touristTax: [],
                     supplement: []
                 },
-                originalPropertyData: dbHotel
+                originalPropertyData: { ...rawData, starRating: finalStars }
             };
         };
 
@@ -1136,9 +1185,9 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                             {[5, 4, 3, 2, 1, 0].map(star => (
                                 <button
                                     key={star}
-                                    onClick={() => setSelectedStars(prev => prev.includes(star) ? prev.filter(s => s !== star) : [...prev, star])}
+                                    onClick={() => setSelectedStars(prev => prev.includes(star) && prev.length === 1 ? [] : [star])}
                                     className={`filter-btn-premium ${selectedStars.includes(star) ? 'active' : ''}`}
-                                    style={{ height: '44px', minWidth: star === 0 ? 'auto' : '60px', padding: '0 12px', borderRadius: '12px', color: selectedStars.includes(star) ? '#fbbf24' : 'var(--text-secondary)' }}
+                                    style={{ height: '44px', minWidth: star === 0 ? 'auto' : '64px', padding: '0 12px', borderRadius: '12px', color: selectedStars.includes(star) ? '#fbbf24' : 'var(--text-secondary)' }}
                                 >
                                     {star === 0 ? (
                                         <span style={{ fontSize: '10px', fontWeight: 900, whiteSpace: 'nowrap', opacity: selectedStars.includes(0) ? 1 : 0.6 }}>BEZ KAT.</span>
@@ -1151,6 +1200,30 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                 </button>
                             ))}
                         </div>
+
+                        {(selectedStars.length > 0 || statusFilter !== 'all' || integrityFilter.length > 0 || searchQuery !== '') && (
+                            <button
+                                onClick={() => {
+                                    setSelectedStars([]);
+                                    setStatusFilter('all');
+                                    setIntegrityFilter([]);
+                                    setSearchQuery('');
+                                }}
+                                style={{
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                    color: '#ef4444',
+                                    padding: '0 16px',
+                                    borderRadius: '12px',
+                                    fontSize: '12px',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    height: '44px'
+                                }}
+                            >
+                                PONIŠTI SVE
+                            </button>
+                        )}
 
                         {/* Search Bar - Main Centerpiece */}
                         {/* Refined Search Bar matching user screenshot */}
@@ -1268,6 +1341,9 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                         <X size={16} />
                                     </button>
                                 )}
+                            </div>
+                            <div style={{ position: 'absolute', right: '12px', top: '-25px', fontSize: '11px', fontWeight: 900, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '4px 10px', borderRadius: '8px' }}>
+                                {filteredHotels.length} / {hotels.length} objekata
                             </div>
 
                             {searchQuery.length > 1 && (
@@ -1432,13 +1508,18 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                                 </div>
                                             </td>
                                             <td style={{ padding: '20px 24px', textAlign: 'center' }}>
-                                                {h.originalPropertyData?.starRating ? (
-                                                    <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', color: '#fbbf24' }}>
-                                                        {[...Array(h.originalPropertyData.starRating)].map((_, i) => (
-                                                            <Star key={i} size={16} fill="#fbbf24" strokeWidth={0} />
-                                                        ))}
+                                                {Number(h.originalPropertyData?.starRating) > 0 ? (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                                        <div style={{ display: 'flex', gap: '2px', color: '#fbbf24' }}>
+                                                            {[...Array(Number(h.originalPropertyData?.starRating))].map((_, i) => (
+                                                                <Star key={i} size={14} fill="#fbbf24" strokeWidth={0} />
+                                                            ))}
+                                                        </div>
+                                                        <div style={{ fontSize: '11px', fontWeight: 900, color: '#fbbf24', background: 'rgba(251, 191, 36, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
+                                                            {h.originalPropertyData?.starRating}*
+                                                        </div>
                                                     </div>
-                                                ) : <span style={{ opacity: 0.3 }}>-</span>}
+                                                ) : <span style={{ opacity: 0.3, fontSize: '10px', fontWeight: 900, letterSpacing: '1px' }}>BEZ KAT.</span>}
                                             </td>
                                             <td style={{ padding: '20px 24px' }}>
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
