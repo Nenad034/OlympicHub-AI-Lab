@@ -787,7 +787,9 @@ const SmartSearch: React.FC = () => {
                             totalPrice: Math.round((isSubagent ? getPriceWithMargin(selectedRoomForBooking.price) : Number(selectedRoomForBooking.price)) * (viewMode === 'notepad' ? 0.8 : 1)),
                             currency: 'EUR',
                             stars: expandedHotel.stars,
-                            providerData: expandedHotel.originalData
+                            providerData: expandedHotel.originalData,
+                            serviceName: expandedHotel.name,
+                            serviceType: 'hotel'
                         }}
                         onSuccess={(code, cis, id, prov) => {
                             setIsBookingModalOpen(false);
@@ -1121,12 +1123,12 @@ const SmartSearch: React.FC = () => {
                                         {roomAllocations[activeRoomTab].children > 0 && (
                                             <div className="children-ages-inline-flight">
                                                 {roomAllocations[activeRoomTab].childrenAges.map((age, idx) => (
-                                                    <div key={idx} className="age-input-compact">
+                                                    <div key={idx} className="age-input-compact" title={`${idx + 1}. DETE`}>
                                                         <input
                                                             type="number"
                                                             min="0" max="17"
                                                             value={age || ''}
-                                                            placeholder={`Dete ${idx + 1}`}
+                                                            placeholder="Godine"
                                                             onChange={e => {
                                                                 const val = parseInt(e.target.value) || 0;
                                                                 const newAlloc = [...roomAllocations];
@@ -1134,8 +1136,6 @@ const SmartSearch: React.FC = () => {
                                                                 setRoomAllocations(newAlloc);
                                                             }}
                                                             className="child-age-input mini"
-                                                            title={`${idx + 1}. dete`}
-                                                            style={{ width: '60px', padding: '10px !important' }}
                                                         />
                                                     </div>
                                                 ))}

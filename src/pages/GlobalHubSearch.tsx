@@ -1114,12 +1114,12 @@ const GlobalHubSearch: React.FC = () => {
                                         {roomAllocations[activeRoomTab].children > 0 && (
                                             <div className="children-ages-inline-flight">
                                                 {roomAllocations[activeRoomTab].childrenAges.map((age, idx) => (
-                                                    <div key={idx} className="age-input-compact">
+                                                    <div key={idx} className="age-input-compact" title={`${idx + 1}. DETE`}>
                                                         <input
                                                             type="number"
                                                             min="0" max="17"
                                                             value={age || ''}
-                                                            placeholder={`Dete ${idx + 1}`}
+                                                            placeholder="Godine"
                                                             onChange={e => {
                                                                 const val = parseInt(e.target.value) || 0;
                                                                 const newAlloc = [...roomAllocations];
@@ -1127,7 +1127,6 @@ const GlobalHubSearch: React.FC = () => {
                                                                 setRoomAllocations(newAlloc);
                                                             }}
                                                             className="child-age-input mini"
-                                                            style={{ width: '60px' }}
                                                         />
                                                     </div>
                                                 ))}

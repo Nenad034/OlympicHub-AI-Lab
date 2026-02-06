@@ -27,8 +27,8 @@
     width: 96%;
     max-width: 1800px;
     margin: 0 auto;
-    zoom: 0.8;
-    /* 20% reduction as requested */
+    zoom: 0.92;
+    /* Increased by 15% proportionally (from 0.8 to 0.92) */
 }
 
 /* --- TABS NAVIGATION --- */
@@ -732,6 +732,8 @@
     padding-left: 20px;
     border-left: 1px solid rgba(255, 255, 255, 0.1);
     min-height: 48px;
+    flex-wrap: wrap;
+    /* Ensure they wrap if many children */
 }
 
 .age-input-compact {
@@ -744,11 +746,12 @@
 
 .age-input-compact::before {
     content: attr(title);
-    font-size: 0.6rem;
-    color: #94a3b8;
+    font-size: 0.65rem;
+    color: var(--text-secondary, #94a3b8);
     white-space: nowrap;
     text-transform: uppercase;
-    font-weight: 700;
+    font-weight: 800;
+    margin-bottom: 2px;
 }
 
 .room-inactive-hint {
@@ -901,20 +904,30 @@
 }
 
 .child-age-input {
-    width: 36px;
-    height: 32px;
+    width: 48px;
+    height: 36px;
     padding: 0;
     text-align: center;
-    font-size: 12px;
-    background: var(--input-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    color: white;
+    font-size: 14px;
+    background: var(--input-bg, rgba(255, 255, 255, 0.05));
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 8px;
+    color: var(--text-primary, white);
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.light-theme .child-age-input {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
 }
 
 .child-age-input:focus {
     border-color: #6366f1;
+    background: var(--bg-card);
     outline: none;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
 

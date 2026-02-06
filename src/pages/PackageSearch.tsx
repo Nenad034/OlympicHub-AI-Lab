@@ -144,7 +144,7 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
             </div>
 
             {/* 4. FLOATING FOOTER NAV */}
-            <div className="wizard-navigation ss-floating-nav">
+            <div id="floating-wizard-nav" className="wizard-navigation ss-floating-nav">
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
                     <button className="nav-btn secondary ss-glow-muted" style={{ minWidth: '180px', height: '56px', fontSize: '12px', fontWeight: 900 }} onClick={goBack} disabled={currentStep === 1}>
                         <ChevronLeft size={20} /> NAZAD

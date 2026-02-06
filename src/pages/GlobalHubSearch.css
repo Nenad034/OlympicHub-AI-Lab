@@ -1,5 +1,8 @@
-/* Global Hub Search Styles */
-/* Universal Height & Centering Fix */
+.global-hub-search-v2 {
+    /* Proportional 15% increase applied to match Smart Search scaling (0.8 -> 0.92) */
+    zoom: 0.92 !important;
+}
+
 .smart-query-input,
 .input-group-premium input,
 .input-group-premium select,

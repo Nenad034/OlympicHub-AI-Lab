@@ -12,8 +12,8 @@
     position: relative;
     overflow-x: hidden;
 
-    /* 20% zoom out - scale to 80% */
-    zoom: 0.8 !important;
+    /* 15% proportional increase from 0.8 -> 0.92 */
+    zoom: 0.92 !important;
 }
 
 /* --- Header Section --- */

@@ -467,8 +467,8 @@
     color: white;
 }
 
-/* === WIZARD NAVIGATION (STICKY FOOTER) === */
-.wizard-navigation {
+/* === WIZARD NAVIGATION (STICKY FOOTER) - HANDLED IN FERRARI FIX / SS-FLOATING-NAV === */
+/* .wizard-navigation {
     position: fixed;
     bottom: 0;
     left: 0;
@@ -481,7 +481,7 @@
     justify-content: space-between;
     align-items: center;
     z-index: 1000;
-}
+} */
 
 /* === MISC UTILS === */
 .info-summary-card {

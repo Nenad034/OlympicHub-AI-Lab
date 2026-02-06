@@ -348,24 +348,38 @@
 }
 
 /* === FLOATING NAVIGATION === */
-.ss-floating-nav {
-    position: fixed;
-    bottom: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 96%;
-    max-width: 1800px;
-    background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    padding: 1.25rem 2.5rem;
-    border-radius: 24px;
-    border: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.4);
-    z-index: 1000;
+/* TARGET BY ID FOR HIGHEST SPECIFICITY */
+#floating-wizard-nav.ss-floating-nav {
+    position: sticky !important;
+    bottom: 30px !important;
+
+    /* Auto width matches parent container exactly */
+    left: auto !important;
+    right: auto !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: none !important;
+
+    background: var(--bg-card) !important;
+    backdrop-filter: blur(20px) !important;
+    padding: 1.25rem 2.5rem !important;
+    border-radius: 24px !important;
+    border: 1px solid var(--border) !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.4) !important;
+    z-index: 1000 !important;
 }
+
+/* Hide the class-only version to prevent conflicts */
+.ss-floating-nav:not(#floating-wizard-nav) {
+    display: none;
+}
+
+
 
 .ss-glow-indigo {
     background: var(--ss-gradient) !important;

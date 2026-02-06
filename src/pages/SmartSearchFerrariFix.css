@@ -1,5 +1,30 @@
 /* SmartSearch Ferrari Red & Flat UI - FIX 2026 */
 
+/* Force container to allow sticky footer */
+.smart-search-container-v2 {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    /* Ensure no overflow hidden blocks sticky */
+    overflow: visible !important;
+}
+
+.package-builder-inline {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.package-search-page {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.search-content {
+    flex: 1;
+}
+
 /* --- GENERAL RESET & FLAT UI --- */
 .search-card-frame,
 .tabs-nav-container,
@@ -98,17 +123,24 @@
 /* --- CLICK TO GET ... (FERRARI RED BRANDING) --- */
 
 /* Header Title (Above Search Card) */
+/* Header Title centered */
+.ss-brand-title-box {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 3rem;
+}
+
 .ss-brand-title-main {
     display: inline-block;
-    padding: 10px 40px;
-    font-weight: 900 !important;
+    padding: 12px 60px;
+    font-weight: 950 !important;
     font-style: italic;
-    font-size: 1.8rem;
-    letter-spacing: 2px;
+    font-size: 2rem;
+    letter-spacing: 3px;
     position: relative;
     z-index: 2;
     color: white !important;
-    /* Always white on red background */
     text-transform: uppercase;
 }
 
@@ -307,10 +339,56 @@
     background: #4f46e5 !important;
 }
 
+/* Target by ID to override everything - STICKY SOLUTION 2.0 */
+#floating-wizard-nav.wizard-navigation.ss-floating-nav {
+    position: sticky !important;
+    bottom: 30px !important;
+    /* Float 30px from bottom */
+
+    /* Auto width matches parent container exactly */
+    left: auto !important;
+    right: auto !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: none !important;
+
+    /* Visuals */
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+    border-radius: 24px !important;
+    padding: 1.5rem 3rem !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-sizing: border-box !important;
+    z-index: 1000 !important;
+}
+
+
+
+/* Fallback class style (keep as backup) */
 .wizard-navigation.ss-floating-nav {
+    display: none;
+    /* Hide if ID not present to avoid duplicates */
+}
+
+/* Ensure individual steps in wizard also align */
+.wizard-progress.ss-glass-bar {
     background: #0f172a !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: none !important;
+    border-radius: 16px !important;
+    margin-bottom: 2.5rem !important;
+    padding: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.progress-steps-ss {
+    padding: 1.25rem 2rem !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
 }
 
 /* --- STEP 6 REVIEW CARDS (WIZARD) --- */

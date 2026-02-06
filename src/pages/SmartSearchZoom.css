@@ -1,9 +1,9 @@
 /* Global zoom for Smart Search page - 20% reduction */
 body:has(.smart-search-container) {
-    zoom: 0.8 !important;
+    zoom: 0.92 !important;
 }
 
 /* Alternative: if :has() not supported, apply directly */
 .smart-search-container {
-    zoom: 0.8 !important;
+    zoom: 0.92 !important;
 }

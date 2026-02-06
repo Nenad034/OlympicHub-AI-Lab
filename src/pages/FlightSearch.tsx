@@ -313,20 +313,19 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
                                 {searchParams.children > 0 && (
                                     <div className="children-ages-inline-flight">
                                         {searchParams.childrenAges.map((age, idx) => (
-                                            <div key={idx} className="age-input-compact-flight">
+                                            <div key={idx} className="age-input-compact" title={`${idx + 1}. DETE`}>
                                                 <input
                                                     type="number"
                                                     min="0"
                                                     max="17"
-                                                    placeholder={`Dete ${idx + 1}`}
+                                                    placeholder="Godine"
                                                     value={age || ''}
                                                     onChange={e => {
                                                         const newAges = [...searchParams.childrenAges];
                                                         newAges[idx] = parseInt(e.target.value) || 0;
                                                         setSearchParams(prev => ({ ...prev, childrenAges: newAges }));
                                                     }}
-                                                    title={`Godište deteta ${idx + 1}`}
-                                                    style={{ width: '60px', padding: '8px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                                                    className="child-age-input mini"
                                                 />
                                             </div>
                                         ))}
@@ -433,20 +432,19 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
                                 {searchParams.children > 0 && (
                                     <div className="children-ages-inline-flight">
                                         {searchParams.childrenAges.map((age, idx) => (
-                                            <div key={idx} className="age-input-compact-flight">
+                                            <div key={idx} className="age-input-compact" title={`${idx + 1}. DETE`}>
                                                 <input
                                                     type="number"
                                                     min="0"
                                                     max="17"
-                                                    placeholder={`Dete ${idx + 1}`}
+                                                    placeholder="Godine"
                                                     value={age || ''}
                                                     onChange={e => {
                                                         const newAges = [...searchParams.childrenAges];
                                                         newAges[idx] = parseInt(e.target.value) || 0;
                                                         setSearchParams(prev => ({ ...prev, childrenAges: newAges }));
                                                     }}
-                                                    title={`Godište deteta ${idx + 1}`}
-                                                    style={{ width: '60px', padding: '8px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                                                    className="child-age-input mini"
                                                 />
                                             </div>
                                         ))}
