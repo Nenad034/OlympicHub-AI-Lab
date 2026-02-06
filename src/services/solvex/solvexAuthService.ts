@@ -3,13 +3,15 @@ import { makeSoapRequest } from '../../utils/solvexSoapClient';
 import type { SolvexAuthResponse, SolvexApiResponse } from '../../types/solvex.types';
 
 const getEnvVar = (key: string) => {
+    // 1. Try process.env first (for scripts/Node)
+    if (typeof process !== 'undefined' && process.env && process.env[key]) {
+        return process.env[key];
+    }
+    // 2. Try Vite env (for frontend)
     // @ts-ignore
     if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
         // @ts-ignore
         return import.meta.env[key];
-    }
-    if (typeof process !== 'undefined' && process.env && process.env[key]) {
-        return process.env[key];
     }
     return undefined;
 };
@@ -48,8 +50,8 @@ export async function connect(): Promise<SolvexApiResponse<string>> {
         console.log('[Solvex Auth] Requesting new token...');
 
         const result = await makeSoapRequest<string>('Connect', {
-            'login': SOLVEX_LOGIN,
-            'password': SOLVEX_PASSWORD
+            'login': getEnvVar('VITE_SOLVEX_LOGIN') || SOLVEX_LOGIN,
+            'password': getEnvVar('VITE_SOLVEX_PASSWORD') || SOLVEX_PASSWORD
         });
 
         // Cache the token

@@ -40,15 +40,15 @@ import { XMLParser, XMLBuilder } from 'fast-xml-parser';
 const isDev = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.MODE === 'development' : false;
 
 const getEnvVar = (key: string, fallback: string) => {
+    // 1. Try process.env (Node)
+    if (typeof process !== 'undefined' && process.env && process.env[key]) {
+        return process.env[key];
+    }
+    // 2. Try Vite env (Browser)
     // @ts-ignore
     if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
         // @ts-ignore
         return import.meta.env[key];
-    }
-    // @ts-ignore
-    if (typeof process !== 'undefined' && process.env && process.env[key]) {
-        // @ts-ignore
-        return process.env[key];
     }
     return fallback;
 };
@@ -230,8 +230,12 @@ export async function makeSoapRequest<T>(
 ): Promise<T> {
     const soapEnvelope = buildSoapEnvelope(method, params);
 
-    console.log(`[Solvex SOAP] Calling method: ${method}`);
-    console.log('[Solvex SOAP] Request:', soapEnvelope);
+    const isDebug = getEnvVar('VITE_SOLVEX_DEBUG', 'false') === 'true';
+
+    if (isDebug) {
+        console.log(`[Solvex SOAP] Calling method: ${method}`);
+        console.log('[Solvex SOAP] Request:', soapEnvelope);
+    }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort('Timeout'), 30000); // 30 seconds timeout per request
@@ -265,7 +269,9 @@ export async function makeSoapRequest<T>(
             throw new Error(`Solvex API Error (${response.status}): ${response.statusText}\n\n--- REQUEST ---\n${soapEnvelope}\n\n--- RESPONSE ---\n${xmlText}`);
         }
 
-        console.log('[Solvex SOAP] Response:', xmlText);
+        if (isDebug) {
+            console.log('[Solvex SOAP] Response:', xmlText);
+        }
         const result = parseSoapResponse<T>(xmlText);
         return result;
     } catch (error) {

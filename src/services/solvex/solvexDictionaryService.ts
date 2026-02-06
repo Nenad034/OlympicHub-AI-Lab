@@ -22,9 +22,6 @@ export async function getCountries(): Promise<SolvexApiResponse<SolvexCountry[]>
             'guid': auth.data
         });
 
-        console.log('[Solvex Dictionaries] GetCountries Raw Result:', result);
-
-        // Try to find the array of items more robustly
         const countriesArr = result.Country || result.Countries || Object.values(result).find(val => Array.isArray(val)) || [];
         const countries: SolvexCountry[] = Array.isArray(countriesArr) ? countriesArr : (countriesArr ? [countriesArr] : []);
 
@@ -58,10 +55,8 @@ export async function getCities(countryId: number): Promise<SolvexApiResponse<So
 
         const result = await makeSoapRequest<any>('GetCities', {
             'countryKey': countryId,
-            'regionKey': -1 // -1 usually means "Any" in Master-Tour
+            'regionKey': -1
         });
-
-        console.log('[Solvex Dictionaries] GetCities Raw Result:', result);
 
         const citiesArr = result.City || result.Cities || Object.values(result).find(val => Array.isArray(val)) || [];
         const cities: SolvexCity[] = Array.isArray(citiesArr) ? citiesArr : (citiesArr ? [citiesArr] : []);
@@ -134,9 +129,6 @@ export async function getHotels(cityId: number): Promise<SolvexApiResponse<any[]
             'cityKey': cityId
         });
 
-        console.log(`[Solvex Dictionaries] GetHotels for city ${cityId} Raw Result:`, result);
-
-        // Standard Solvex/MasterTour response navigation (Dataset with diffgram)
         const hotelsData = result?.Data?.diffgram?.DocumentElement?.Hotels ||
             result?.Hotel ||
             result?.Hotels ||
@@ -181,28 +173,21 @@ export async function getHotels(cityId: number): Promise<SolvexApiResponse<any[]
 }
 
 /**
- * Get detailed information for multiple hotels using SearchHotelServices 
- * (which returns AdditionalParams like images and full descriptions)
+ * Get detailed information for multiple hotels
  */
 export async function getDetailedHotels(ids: number[]): Promise<any[]> {
     try {
         const { searchHotels } = await import('./solvexSearchService');
-
-        // Use Peak Summer Season to ensure availability (Hotels are closed in winter!)
         const now = new Date();
-        // If we are past August, aim for next year. Otherwise, this year.
         const targetYear = now.getMonth() > 7 ? now.getFullYear() + 1 : now.getFullYear();
-
         const dateFrom = `${targetYear}-07-15`;
         const dateTo = `${targetYear}-07-22`;
-
-        console.log(`[Deep Sync] Searching for details in Peak Season: ${dateFrom} - ${dateTo}`);
 
         const response = await searchHotels({
             dateFrom,
             dateTo,
             adults: 2,
-            hotelId: ids as any // We modified client to handle number[]
+            hotelId: ids as any
         });
 
         if (!response.success || !response.data) return [];
@@ -214,7 +199,6 @@ export async function getDetailedHotels(ids: number[]): Promise<any[]> {
                 name: h.name,
                 stars: h.starRating,
                 city: h.city.name,
-                // FIX: Description and Images are attached to the 'hotel' object (h), not the root item
                 description: (h as any).description || "",
                 images: (h as any).images || [],
                 rawData: item
@@ -226,10 +210,93 @@ export async function getDetailedHotels(ids: number[]): Promise<any[]> {
     }
 }
 
+/**
+ * Get full hotel content (images, descriptions) using GetRoomDescriptions
+ */
+export async function getHotelFullContent(hotelId: number): Promise<SolvexApiResponse<{ images: string[], description: string }>> {
+    try {
+        const auth = await connect();
+        if (!auth.success || !auth.data) {
+            return { success: false, error: auth.error };
+        }
+
+        const result = await makeSoapRequest<any>('GetRoomDescriptions', {
+            'guid': auth.data,
+            'hotelKey': hotelId
+        });
+
+        console.log(`[Solvex Content] Parsing rich content for hotel ${hotelId}...`);
+
+        let images: string[] = [];
+        let description = "";
+
+        // Brute force search in the entire result object (stringified)
+        // This is necessary because GetRoomDescriptions returns a DataSet with dynamic table names
+        const stringified = JSON.stringify(result);
+
+        // 1. Regex for Images (including .ashx dynamic paths)
+        // Matches typical image extensions and Solvex's HotelPhoto.ashx handler
+        const urlMatches = stringified.match(/https?:\/\/[^"'\s\\]+(?:\.[a-z0-9]+)?(?:\?[^"'\s\\]+)?/gi);
+        if (urlMatches) {
+            images = [...new Set(urlMatches.filter(u =>
+                (u.includes('HotelPhoto') || u.includes('image') || u.includes('photo') || /\.(jpg|jpeg|png|gif)/i.test(u)) &&
+                !u.includes('megatec.ru') &&
+                !u.includes('schemas.xmlsoap.org') &&
+                !u.includes('w3.org')
+            ))];
+        }
+
+        // 2. Extract Description from common fields
+        const findDescription = (obj: any) => {
+            if (!obj || typeof obj !== 'object') return;
+            for (const key in obj) {
+                const val = obj[key];
+                if (['Description', 'HotelDescription', 'LongDescription', 'Text'].includes(key) && typeof val === 'string' && val.length > description.length) {
+                    description = val;
+                } else if (typeof val === 'object') {
+                    findDescription(val);
+                }
+            }
+        };
+        findDescription(result);
+
+        // 3. Fallback for description from AdditionalDescription or Name if it's long enough
+        if (!description || description.length < 50) {
+            const findFallbackDesc = (obj: any) => {
+                if (!obj || typeof obj !== 'object') return;
+                for (const key in obj) {
+                    const val = obj[key];
+                    if (typeof val === 'string' && val.length > 100 && !val.startsWith('http')) {
+                        if (val.length > description.length) description = val;
+                    } else if (typeof val === 'object') {
+                        findFallbackDesc(val);
+                    }
+                }
+            };
+            findFallbackDesc(result);
+        }
+
+        return {
+            success: true,
+            data: {
+                images: images,
+                description: description
+            }
+        };
+    } catch (error) {
+        console.error(`[Solvex Content] Failed for hotel ${hotelId}:`, error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to fetch hotel content'
+        };
+    }
+}
+
 export default {
     getCountries,
     getCities,
     getRegions,
     getHotels,
-    getDetailedHotels
+    getDetailedHotels,
+    getHotelFullContent
 };
