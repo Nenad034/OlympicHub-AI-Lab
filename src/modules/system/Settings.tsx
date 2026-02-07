@@ -27,7 +27,8 @@ import {
     Menu,
     Bell,
     FileText,
-    BookOpen
+    BookOpen,
+    Brain
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConfig } from '../../context/ConfigContext';
@@ -39,6 +40,7 @@ import NotificationCenter from './NotificationCenter';
 import AIQuotaDashboard from './AIQuotaDashboard';
 import DailyActivityReport from './DailyActivityReport';
 import ModulesOverview from './ModulesOverview';
+import MasterOrchestrator from '../ai/MasterOrchestrator';
 
 // --- Types ---
 interface UserAccount {
@@ -72,7 +74,7 @@ interface Props {
     setUserLevel: (level: number) => void;
 }
 
-type TabType = 'general' | 'users' | 'permissions' | 'connections' | 'ai-quota' | 'daily-activity' | 'pulse' | 'backups' | 'archive' | 'notifications' | 'ai-training' | 'modules-overview';
+type TabType = 'general' | 'users' | 'permissions' | 'connections' | 'ai-quota' | 'daily-activity' | 'pulse' | 'backups' | 'archive' | 'notifications' | 'ai-training' | 'modules-overview' | 'orchestrator';
 
 // --- KATANA STYLED COMPONENTS (Inline Styles) ---
 const styles = {
@@ -808,6 +810,7 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                                 <div onClick={() => handleTabChange('modules-overview')} style={styles.navItem(activeTab === 'modules-overview')}><BookOpen size={18} /> Pregled Modula i Funkcija</div>
                             )}
                             <div onClick={() => handleTabChange('connections')} style={styles.navItem(activeTab === 'connections')}><Activity size={18} /> Active Connections</div>
+                            <div onClick={() => handleTabChange('orchestrator')} style={styles.navItem(activeTab === 'orchestrator')}><Brain size={18} /> Master Orchestrator AI</div>
                             <div onClick={() => handleTabChange('ai-quota')} style={styles.navItem(activeTab === 'ai-quota')}><Zap size={18} /> AI Quota Tracker</div>
                             <div onClick={() => handleTabChange('daily-activity')} style={styles.navItem(activeTab === 'daily-activity')}><FileText size={18} /> Dnevni Izveštaj</div>
                             <div onClick={() => handleTabChange('general')} style={styles.navItem(activeTab === 'general')}><LayoutDashboard size={18} /> General Settings</div>
@@ -889,6 +892,7 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                     {activeTab === 'backups' && renderBackups()}
                     {activeTab === 'archive' && <DeepArchive onBack={() => setActiveTab('general')} lang={'sr'} />}
                     {activeTab === 'modules-overview' && <ModulesOverview />}
+                    {activeTab === 'orchestrator' && <MasterOrchestrator onBack={() => setActiveTab('general')} userLevel={userLevel} />}
                 </div>
             </div>
 

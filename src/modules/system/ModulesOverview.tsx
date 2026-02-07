@@ -48,6 +48,7 @@ import {
     Network,
     Terminal
 } from 'lucide-react';
+import { useThemeStore } from '../../stores';
 
 interface ModuleFunction {
     id: string;
@@ -144,10 +145,24 @@ const MODULES_DATA: ModuleInfo[] = [
             { id: '11-1', name: 'Active Connections', description: 'Upravljanje svim API endpointima.', status: 'operativan', percentage: 100, remaining: 'Sve funkcionalnosti su aktivne.' },
             { id: '11-2', name: 'AI Quota Dashboard', description: 'Kontrola potrošnje AI resursa.', status: 'operativan', percentage: 100, remaining: 'Sve funkcionalnosti su aktivne.' }
         ]
+    },
+    {
+        id: 'intelligence-soft-zone',
+        name: 'Vajckin Meka Zona',
+        icon: Sparkles,
+        purpose: 'Napredni AI sloj za generisanje upita, analizu sentimenta i automatizaciju radnih procesa.',
+        functions: [
+            { id: 'soft-1', name: 'Prompt Engineering Lab', description: 'Testiranje i optimizacija AI instrukcija.', status: 'operativan', percentage: 100, remaining: 'Sve funkcionalnosti su aktivne.' },
+            { id: 'soft-2', name: 'Knowledge Base Integrator', description: 'Ubacivanje interne dokumentacije u AI kontekst.', status: 'u toku', percentage: 70, remaining: 'Finalizacija PDF parsera za automatsko čitanje hotelskih specifikacija.' },
+            { id: 'soft-3', name: 'Subagent AI Guard', description: 'Kontrola i monitoring AI odgovora za podagente.', status: 'ideja', percentage: 20, remaining: 'Planiranje sistema za detekciju AI halucinacija.' }
+        ]
     }
 ];
 
 const ModulesOverview: React.FC = () => {
+    const { theme } = useThemeStore();
+    const isLight = theme === 'light';
+
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [activeModules, setActiveModules] = useState<Record<string, boolean>>(() => {
@@ -155,6 +170,21 @@ const ModulesOverview: React.FC = () => {
         MODULES_DATA.forEach(m => initial[m.id] = true);
         return initial;
     });
+
+    const colors = {
+        bg: isLight ? '#f8fafc' : 'transparent',
+        cardBg: isLight ? '#ffffff' : 'rgba(30, 41, 59, 0.4)',
+        headerBg: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(30, 41, 59, 0.6)',
+        text: isLight ? '#1e293b' : '#ffffff',
+        textMuted: isLight ? '#64748b' : '#94a3b8',
+        border: isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.08)',
+        tableHeader: isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.03)',
+        inputBg: isLight ? '#ffffff' : '#020617',
+        iconBg: isLight ? '#3b82f6' : 'linear-gradient(135deg, #3b82f6, #2563eb)',
+        tableRowHover: isLight ? '#f8fafc' : 'rgba(255,255,255,0.03)',
+        mainShadow: isLight ? '0 10px 30px rgba(0,0,0,0.05)' : '0 10px 40px rgba(0,0,0,0.4)',
+        cardShadow: isLight ? '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)' : '0 20px 40px rgba(0,0,0,0.3)'
+    };
 
     const toggleModule = (id: string) => {
         setActiveModules(prev => ({
@@ -197,55 +227,80 @@ const ModulesOverview: React.FC = () => {
         if (isMock) {
             return {
                 bg: 'rgba(249, 115, 22, 0.1)',
-                color: '#fb923c',
+                color: isLight ? '#ea580c' : '#fb923c',
                 border: 'rgba(249, 115, 22, 0.2)',
                 icon: <FlaskConical size={14} />
             };
         }
         switch (status) {
             case 'operativan':
-                return { bg: 'rgba(34, 197, 94, 0.1)', color: '#4ade80', border: 'rgba(34, 197, 94, 0.2)', icon: <CheckCircle2 size={14} /> };
+                return {
+                    bg: isLight ? 'rgba(22, 163, 74, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                    color: isLight ? '#16a34a' : '#4ade80',
+                    border: isLight ? 'rgba(22, 163, 74, 0.2)' : 'rgba(34, 197, 94, 0.2)',
+                    icon: <CheckCircle2 size={14} />
+                };
             case 'nije operativan':
-                return { bg: 'rgba(239, 68, 68, 0.1)', color: '#f87171', border: 'rgba(239, 68, 68, 0.2)', icon: <AlertCircle size={14} /> };
+                return {
+                    bg: 'rgba(220, 38, 38, 0.1)',
+                    color: isLight ? '#dc2626' : '#f87171',
+                    border: 'rgba(220, 38, 38, 0.2)',
+                    icon: <AlertCircle size={14} />
+                };
             case 'mock':
-                return { bg: 'rgba(249, 115, 22, 0.1)', color: '#fb923c', border: 'rgba(249, 115, 22, 0.2)', icon: <FlaskConical size={14} /> };
+                return {
+                    bg: 'rgba(249, 115, 22, 0.1)',
+                    color: isLight ? '#ea580c' : '#fb923c',
+                    border: 'rgba(249, 115, 22, 0.2)',
+                    icon: <FlaskConical size={14} />
+                };
             case 'ideja':
-                return { bg: 'rgba(168, 85, 247, 0.1)', color: '#c084fc', border: 'rgba(168, 85, 247, 0.2)', icon: <Lightbulb size={14} /> };
+                return {
+                    bg: 'rgba(147, 51, 234, 0.1)',
+                    color: isLight ? '#9333ea' : '#c084fc',
+                    border: 'rgba(147, 51, 234, 0.2)',
+                    icon: <Lightbulb size={14} />
+                };
             default:
-                return { bg: 'rgba(234, 179, 8, 0.1)', color: '#facc15', border: 'rgba(234, 179, 8, 0.2)', icon: <Clock size={14} /> };
+                return {
+                    bg: isLight ? 'rgba(202, 138, 4, 0.1)' : 'rgba(234, 179, 8, 0.1)',
+                    color: isLight ? '#ca8a04' : '#facc15',
+                    border: isLight ? 'rgba(202, 138, 4, 0.2)' : 'rgba(234, 179, 8, 0.2)',
+                    icon: <Clock size={14} />
+                };
         }
     };
 
     const stats = [
         { label: 'SVI', value: 'all', icon: <ChevronRight size={14} /> },
-        { label: 'LIVE / OPERATIVAN', value: 'operativan', color: '#4ade80' },
-        { label: 'U TOKU', value: 'u toku', color: '#facc15' },
-        { label: 'MOCK PODACI', value: 'mock', color: '#fb923c' },
-        { label: 'IDEJA', value: 'ideja', color: '#c084fc' }
+        { label: 'LIVE / OPERATIVAN', value: 'operativan', color: isLight ? '#16a34a' : '#4ade80' },
+        { label: 'U TOKU', value: 'u toku', color: isLight ? '#ca8a04' : '#facc15' },
+        { label: 'MOCK PODACI', value: 'mock', color: isLight ? '#ea580c' : '#fb923c' },
+        { label: 'IDEJA', value: 'ideja', color: isLight ? '#9333ea' : '#c084fc' }
     ];
 
     return (
         <div style={{ maxWidth: '1400px', margin: '0 auto', animation: 'fadeIn 0.5s ease-out', paddingBottom: '100px' }}>
             {/* Header Area */}
             <div style={{
-                background: 'rgba(30, 41, 59, 0.6)',
+                background: colors.headerBg,
                 padding: '30px',
                 borderRadius: '32px',
-                border: '1px solid rgba(255,255,255,0.08)',
+                border: `1px solid ${colors.border}`,
                 backdropFilter: 'blur(30px)',
                 marginBottom: '40px',
                 position: 'sticky',
                 top: '0',
                 zIndex: 10,
-                boxShadow: '0 10px 40px rgba(0,0,0,0.4)'
+                boxShadow: colors.mainShadow
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <div>
-                        <h2 style={{ fontSize: '28px', fontWeight: 900, margin: 0, color: '#fff', letterSpacing: '-0.5px' }}>Data Source & API Audit</h2>
-                        <p style={{ color: '#94a3b8', margin: '4px 0 0', fontSize: '14px' }}>Monitoring realnih konekcija i integracija Vajckin API Agenta.</p>
+                        <h2 style={{ fontSize: '28px', fontWeight: 900, margin: 0, color: colors.text, letterSpacing: '-0.5px' }}>Data Source & API Audit</h2>
+                        <p style={{ color: colors.textMuted, margin: '4px 0 0', fontSize: '14px' }}>Monitoring realnih konekcija i integracija API GATEWAY-a.</p>
                     </div>
                     <div style={{ position: 'relative' }}>
-                        <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+                        <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: colors.textMuted }} />
                         <input
                             type="text"
                             placeholder="Traži API ili proces..."
@@ -254,10 +309,10 @@ const ModulesOverview: React.FC = () => {
                             style={{
                                 padding: '14px 16px 14px 48px',
                                 width: '400px',
-                                background: '#020617',
-                                border: '1px solid rgba(255,255,255,0.1)',
+                                background: colors.inputBg,
+                                border: `1px solid ${colors.border}`,
                                 borderRadius: '18px',
-                                color: '#fff',
+                                color: colors.text,
                                 fontSize: '14px',
                                 outline: 'none',
                                 transition: 'all 0.3s'
@@ -277,9 +332,9 @@ const ModulesOverview: React.FC = () => {
                                 gap: '8px',
                                 padding: '10px 18px',
                                 borderRadius: '14px',
-                                background: statusFilter === s.value ? (s.color ? `${s.color}22` : 'rgba(255,255,255,0.1)') : 'rgba(255,255,255,0.02)',
-                                border: `1px solid ${statusFilter === s.value ? (s.color || '#fff') : 'rgba(255,255,255,0.05)'}`,
-                                color: statusFilter === s.value ? (s.color || '#fff') : '#64748b',
+                                background: statusFilter === s.value ? (s.color ? `${s.color}22` : colors.border) : (isLight ? '#f1f5f9' : 'rgba(255,255,255,0.02)'),
+                                border: `1px solid ${statusFilter === s.value ? (s.color || colors.text) : colors.border}`,
+                                color: statusFilter === s.value ? (s.color || colors.text) : colors.textMuted,
                                 fontSize: '12px',
                                 fontWeight: 800,
                                 cursor: 'pointer',
@@ -302,12 +357,12 @@ const ModulesOverview: React.FC = () => {
 
                     return (
                         <div key={module.id} style={{
-                            background: isActive ? 'rgba(30, 41, 59, 0.4)' : 'rgba(239, 68, 68, 0.05)',
+                            background: isActive ? colors.cardBg : (isLight ? '#fee2e2' : 'rgba(239, 68, 68, 0.05)'),
                             borderRadius: '28px',
-                            border: `1px solid ${isActive ? 'rgba(255,255,255,0.08)' : 'rgba(239, 68, 68, 0.2)'}`,
+                            border: `1px solid ${isActive ? colors.border : 'rgba(239, 68, 68, 0.4)'}`,
                             padding: '32px',
                             transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                            boxShadow: isActive ? '0 20px 40px rgba(0,0,0,0.3)' : '0 10px 20px rgba(239, 68, 68, 0.1)',
+                            boxShadow: isActive ? colors.cardShadow : 'none',
                             opacity: isActive ? 1 : 0.8
                         }}>
                             <div style={{ display: 'flex', gap: '28px', marginBottom: '32px' }}>
@@ -315,7 +370,7 @@ const ModulesOverview: React.FC = () => {
                                     width: '72px',
                                     height: '72px',
                                     borderRadius: '22px',
-                                    background: isActive ? 'linear-gradient(135deg, #3b82f6, #2563eb)' : '#334155',
+                                    background: isActive ? colors.iconBg : (isLight ? '#94a3b8' : '#334155'),
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -327,7 +382,7 @@ const ModulesOverview: React.FC = () => {
                                 <div style={{ flex: 1 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                            <h3 style={{ fontSize: '24px', fontWeight: 900, margin: 0, color: isActive ? '#fff' : '#ef4444' }}>{module.name}</h3>
+                                            <h3 style={{ fontSize: '24px', fontWeight: 900, margin: 0, color: isActive ? colors.text : '#dc2626' }}>{module.name}</h3>
                                             <div style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
@@ -354,8 +409,8 @@ const ModulesOverview: React.FC = () => {
                                                 padding: '10px 20px',
                                                 borderRadius: '14px',
                                                 background: isActive ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                                                border: `1px solid ${isActive ? '#22c55e' : '#ef4444'}`,
-                                                color: isActive ? '#4ade80' : '#f87171',
+                                                border: `1px solid ${isActive ? '#16a34a' : '#ef4444'}`,
+                                                color: isActive ? (isLight ? '#16a34a' : '#4ade80') : '#dc2626',
                                                 fontSize: '13px',
                                                 fontWeight: 800,
                                                 cursor: 'pointer',
@@ -366,40 +421,40 @@ const ModulesOverview: React.FC = () => {
                                             {isActive ? 'AKTIVAN' : 'DEAKTIVIRAN'}
                                         </button>
                                     </div>
-                                    <p style={{ color: '#94a3b8', fontSize: '15px', marginTop: '10px', lineHeight: 1.6, maxWidth: '900px' }}>
+                                    <p style={{ color: colors.textMuted, fontSize: '15px', marginTop: '10px', lineHeight: 1.6, maxWidth: '900px' }}>
                                         {module.purpose}
                                     </p>
                                 </div>
                             </div>
 
                             <div style={{
-                                background: 'rgba(2, 6, 23, 0.5)',
+                                background: isLight ? '#f8fafc' : 'rgba(2, 6, 23, 0.5)',
                                 borderRadius: '20px',
                                 overflow: 'hidden',
-                                border: '1px solid rgba(255,255,255,0.07)',
+                                border: `1px solid ${colors.border}`,
                                 filter: isActive ? 'none' : 'grayscale(1) opacity(0.5)',
                                 pointerEvents: isActive ? 'auto' : 'none'
                             }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                    <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
+                                    <thead style={{ background: colors.tableHeader }}>
                                         <tr>
-                                            <th style={{ textAlign: 'left', padding: '18px 24px', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Funkcija / API</th>
-                                            <th style={{ textAlign: 'left', padding: '18px 24px', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Status</th>
-                                            <th style={{ textAlign: 'left', padding: '18px 24px', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Progres Integracije</th>
-                                            <th style={{ textAlign: 'left', padding: '18px 24px', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Preostali Rad / Napomena</th>
+                                            <th style={{ textAlign: 'left', padding: '18px 24px', color: colors.textMuted, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Funkcija / API</th>
+                                            <th style={{ textAlign: 'left', padding: '18px 24px', color: colors.textMuted, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Status</th>
+                                            <th style={{ textAlign: 'left', padding: '18px 24px', color: colors.textMuted, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Progres Integracije</th>
+                                            <th style={{ textAlign: 'left', padding: '18px 24px', color: colors.textMuted, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Preostali Rad / Napomena</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {module.functions.map((fn) => {
                                             const fnStyles = getStatusStyles(fn.status, fn.isMock);
                                             return (
-                                                <tr key={fn.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.2s' }}>
+                                                <tr key={fn.id} style={{ borderBottom: `1px solid ${colors.border}`, transition: 'background 0.2s', backgroundColor: 'transparent' }}>
                                                     <td style={{ padding: '24px' }}>
-                                                        <div style={{ fontWeight: 800, color: '#f8fafc', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                            {fn.isMock && <FlaskConical size={14} style={{ color: '#fb923c' }} />}
+                                                        <div style={{ fontWeight: 800, color: colors.text, fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            {fn.isMock && <FlaskConical size={14} style={{ color: fnStyles.color }} />}
                                                             {fn.name}
                                                         </div>
-                                                        <div style={{ fontSize: '13px', color: '#64748b', marginTop: '6px' }}>{fn.description}</div>
+                                                        <div style={{ fontSize: '13px', color: colors.textMuted, marginTop: '6px' }}>{fn.description}</div>
                                                     </td>
                                                     <td style={{ padding: '24px' }}>
                                                         <div style={{
@@ -412,14 +467,15 @@ const ModulesOverview: React.FC = () => {
                                                             color: fnStyles.color,
                                                             fontSize: '11px',
                                                             fontWeight: 800,
-                                                            textTransform: 'uppercase'
+                                                            textTransform: 'uppercase',
+                                                            border: `1px solid ${fnStyles.border}`
                                                         }}>
                                                             {fnStyles.icon} {fn.status === 'mock' ? 'MOCK PODACI' : fn.status}
                                                         </div>
                                                     </td>
                                                     <td style={{ padding: '24px' }}>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                                            <div style={{ flex: 1, minWidth: '100px', height: '8px', background: 'rgba(255,255,255,0.07)', borderRadius: '4px', overflow: 'hidden' }}>
+                                                            <div style={{ flex: 1, minWidth: '100px', height: '8px', background: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.07)', borderRadius: '4px', overflow: 'hidden' }}>
                                                                 <div style={{
                                                                     width: `${fn.percentage}%`,
                                                                     height: '100%',
@@ -427,21 +483,21 @@ const ModulesOverview: React.FC = () => {
                                                                     transition: 'width 1.2s cubic-bezier(0.165, 0.84, 0.44, 1)'
                                                                 }}></div>
                                                             </div>
-                                                            <span style={{ fontSize: '14px', fontWeight: 800, color: '#f8fafc', width: '40px' }}>{fn.percentage}%</span>
+                                                            <span style={{ fontSize: '14px', fontWeight: 800, color: colors.text, width: '40px' }}>{fn.percentage}%</span>
                                                         </div>
-                                                        {fn.isMock && <div style={{ fontSize: '10px', color: '#fb923c', marginTop: '4px', fontWeight: 600 }}>ZAHTEVA ZAMENU REALNIM API-JEM</div>}
+                                                        {fn.isMock && <div style={{ fontSize: '10px', color: isLight ? '#ea580c' : '#fb923c', marginTop: '4px', fontWeight: 600 }}>ZAHTEVA ZAMENU REALNIM API-JEM</div>}
                                                     </td>
                                                     <td style={{ padding: '24px' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', color: '#94a3b8', fontSize: '14px', lineHeight: 1.5 }}>
+                                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', color: colors.textMuted, fontSize: '14px', lineHeight: 1.5 }}>
                                                             {fn.status === 'ideja' ? (
-                                                                <Lightbulb size={16} style={{ color: '#c084fc', marginTop: '2px', flexShrink: 0 }} />
+                                                                <Lightbulb size={16} style={{ color: isLight ? '#9333ea' : '#c084fc', marginTop: '2px', flexShrink: 0 }} />
                                                             ) : (
                                                                 fn.isMock ? (
-                                                                    <AlertTriangle size={16} style={{ color: '#fb923c', marginTop: '2px', flexShrink: 0 }} />
+                                                                    <AlertTriangle size={16} style={{ color: isLight ? '#ea580c' : '#fb923c', marginTop: '2px', flexShrink: 0 }} />
                                                                 ) : (
                                                                     fn.percentage === 100 ?
-                                                                        <Target size={16} style={{ color: '#22c55e', marginTop: '2px', flexShrink: 0 }} /> :
-                                                                        <Activity size={16} style={{ color: '#3b82f6', marginTop: '2px', flexShrink: 0 }} />
+                                                                        <Target size={16} style={{ color: isLight ? '#16a34a' : '#22c55e', marginTop: '2px', flexShrink: 0 }} /> :
+                                                                        <Activity size={16} style={{ color: isLight ? '#2563eb' : '#3b82f6', marginTop: '2px', flexShrink: 0 }} />
                                                                 )
                                                             )}
                                                             {fn.remaining}
@@ -464,7 +520,7 @@ const ModulesOverview: React.FC = () => {
                     to { opacity: 1; transform: translateY(0); }
                 }
                 tr:hover {
-                    background: rgba(255,255,255,0.03) !important;
+                    background: ${colors.tableRowHover} !important;
                 }
             `}</style>
         </div>

@@ -54,21 +54,6 @@ const TopBar: React.FC = () => {
     return (
         <div className="top-bar">
             {/* Show search only in sidebar mode */}
-            {navMode === 'sidebar' && (
-                <div className="top-bar-search-wrapper">
-                    <Search
-                        size={20}
-                        className="top-bar-search-icon"
-                    />
-                    <input
-                        type="text"
-                        placeholder={t.searchPlaceholder}
-                        className="search-input"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                </div>
-            )}
 
 
 

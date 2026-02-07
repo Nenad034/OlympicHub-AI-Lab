@@ -1,297 +1,157 @@
-/* LIGHT MODE OVERRIDES FOR SMART SEARCH */
+/* THE "ZENITH MINIMALIST" UI - EXPERT PROPOSAL */
 
-/* Main Container */
-.light-theme .smart-search-container {
-    background: #f8fafc;
-    /* Slate 50 */
-    color: #0f172a;
-    /* Slate 900 */
+/* Color Palette:
+   1. Primary: #2563eb (Royal Blue) - For actions and trust
+   2. Background: #f8fafc (Ghost White) - For breathing space
+   3. Accent/Text: #1e293b (Midnight Slate) - For authority and focus
+*/
+
+/* Main Container Architecture */
+.light-theme .smart-search-container,
+.light-theme .global-hub-search-v2,
+.light-theme .smart-search-container-v2 {
+    background: #f8fafc !important;
+    /* Extremely clean, non-tiring background */
+    color: #1e293b !important;
+    padding-top: 2rem !important;
+    padding-bottom: 10rem !important;
 }
 
 /* Header */
 .light-theme .smart-search-header {
-    border-bottom-color: #e2e8f0;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    margin: -2rem -2rem 4rem -2rem !important;
 }
 
-.light-theme .logo-text h1 {
-    color: #800020 !important;
-    /* Bordo color */
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+/* Search Blocks - The "Floating Paper" Effect */
+.light-theme .search-form-smart,
+.light-theme .search-card-frame,
+.light-theme .provider-toggles-section,
+.light-theme .package-builder-inline,
+.light-theme .flight-search-form,
+.light-theme .wizard-progress.ss-glass-bar {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 24px !important;
+    box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.04) !important;
+    /* Soft premium shadow */
+    padding: 2.5rem !important;
+    margin-bottom: 30px !important;
 }
 
-.light-theme .logo-text p {
-    color: #64748b;
+/* Progress Wizard - Simplified & Clear */
+.light-theme .wizard-progress.ss-glass-bar {
+    background: #f1f5f9 !important;
+    border: none !important;
+    padding: 1.2rem !important;
 }
 
-.light-theme .b2b-badge-smart {
-    background: #fffbeb;
-    border-color: #fcd34d;
-    color: #d97706;
+.light-theme .p-step-ss .s-num-ss {
+    background: #ffffff !important;
+    color: #64748b !important;
 }
 
-/* Navigation Tabs */
-.light-theme .tab-btn {
-    color: #64748b;
+.light-theme .p-step-ss.active .s-num-ss {
+    background: #2563eb !important;
+    color: #ffffff !important;
 }
 
-.light-theme .tab-btn:hover {
-    background: #e2e8f0;
-    color: #0f172a;
+.light-theme .p-step-ss .s-text-ss span:first-child {
+    color: #1e293b !important;
+    font-weight: 800 !important;
 }
 
-.light-theme .tab-btn.active {
-    background: #4f46e5;
-    color: white;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
-}
-
-/* Search Form */
-.light-theme .search-form-smart {
-    background: #ffffff;
-    border-color: #e2e8f0;
-    box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.05);
-}
-
-.light-theme .form-field label {
-    color: #64748b;
-}
-
-/* Inputs */
+/* Input Fields - Maximum Clarity */
 .light-theme .smart-input.premium,
 .light-theme .multi-destination-input.premium,
 .light-theme .guest-selector.premium,
-.light-theme .name-filter-wrapper input {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-    color: #0f172a;
+.light-theme .input-box,
+.light-theme .destination-input-wrapper,
+.light-theme .input-group-flight input,
+.light-theme .input-group-flight select,
+.light-theme .flight-counter-controls {
+    background: #fdfdfd !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #1e293b !important;
+    border-radius: 12px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .light-theme .smart-input.premium:focus,
-.light-theme .multi-destination-input.premium:focus-within {
-    background: #ffffff;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+.light-theme .multi-destination-input.premium:focus-within,
+.light-theme .input-box:hover {
+    border-color: #2563eb !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.06) !important;
 }
 
-.light-theme .smart-input-inline {
-    color: #0f172a;
+/* Labels */
+.light-theme .form-field label,
+.light-theme .field-label,
+.light-theme .field-label-mini {
+    color: #475569 !important;
+    /* Slate 600 - Perfect for scanning */
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.5px;
 }
 
-.light-theme .smart-input-inline::placeholder {
-    color: #94a3b8;
+/* Primary Action Buttons - The Conversion Driver */
+.light-theme .btn-search-main,
+.light-theme .btn-book-v4,
+.light-theme .search-flights-btn {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2) !important;
+    border-radius: 14px !important;
 }
 
-/* Destination Chips */
-.light-theme .destination-chip {
-    background: #e0e7ff;
-    border-color: #c7d2fe;
-    color: #4338ca;
+.light-theme .btn-search-main span {
+    color: #ffffff !important;
 }
 
-.light-theme .chip-remove {
-    color: #6366f1;
+/* Floating Navigation Bar */
+.light-theme #floating-wizard-nav.wizard-navigation.ss-floating-nav {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 24px !important;
 }
 
-.light-theme .chip-remove:hover {
-    color: #312e81;
+.light-theme .ss-total-amount {
+    color: #2563eb !important;
+    font-weight: 950 !important;
 }
 
-/* Guest Selector */
-.light-theme .guest-selector.premium span {
-    color: #0f172a;
-}
-
-.light-theme .guest-selector.premium button {
-    color: #4f46e5 !important;
-}
-
-.light-theme .guest-selector.premium button:hover {
-    background: #e0e7ff !important;
-}
-
-/* Search Button */
-.light-theme .search-btn-smart.premium {
-    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.2);
-}
-
-/* Autocomplete */
-.light-theme .autocomplete-dropdown.premium {
-    background: #ffffff;
-    border-color: #e2e8f0;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-}
-
-.light-theme .suggestion-item:hover {
-    background: #f1f5f9;
-}
-
-.light-theme .suggestion-name {
-    color: #0f172a;
-}
-
-.light-theme .suggestion-meta {
-    color: #64748b;
-}
-
-/* Results Toolbar */
-.light-theme .filters-toolbar-v4.premium {
-    background: #ffffff;
-    border-color: #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-}
-
-.light-theme .name-filter-wrapper .filter-icon {
-    color: #94a3b8;
-}
-
-/* Summary Bar */
-.light-theme .results-summary-bar-v4.premium span {
-    color: #64748b;
-}
-
-.light-theme .results-summary-bar-v4.premium strong {
-    color: #0f172a;
-}
-
-/* Sort Actions */
-.light-theme .sort-actions {
-    background: #f1f5f9;
-}
-
-.light-theme .view-btn {
-    color: #64748b;
-}
-
-.light-theme .view-btn:hover {
-    color: #0f172a;
-}
-
-.light-theme .view-btn.active {
-    background: #ffffff;
-    color: #4f46e5;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-/* Result Cards */
+/* Result Cards - Soft and Inviting */
 .light-theme .hotel-result-card-premium.unified {
-    background: #ffffff;
-    border-color: #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
 }
 
 .light-theme .hotel-result-card-premium.unified:hover {
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-    border-color: #6366f1;
-}
-
-.light-theme .hotel-title-row h3 {
-    color: #0f172a;
-}
-
-.light-theme .hotel-location-tag {
-    color: #64748b;
-}
-
-.light-theme .hotel-date-badge {
-    background: #f8fafc;
-    border-color: #e2e8f0;
-    color: #475569;
-}
-
-.light-theme .price-action-section {
-    border-top-color: #f1f5f9;
-}
-
-.light-theme .hotel-result-card-premium.unified.horizontal .price-action-section {
-    border-left-color: #f1f5f9;
+    border-color: #2563eb !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08) !important;
 }
 
 .light-theme .price-val {
-    color: #0f172a;
-    /* Dark text for price in light mode, or maybe keeping gold/amber? */
-    /* Let's keep it styled but readable */
-    color: #d97706;
+    color: #1e293b !important;
+    font-weight: 900 !important;
 }
 
-.light-theme .view-more-btn {
-    background: #4f46e5;
-    color: white;
+.light-theme .nav-tab-item {
+    color: #64748b !important;
 }
 
-.light-theme .view-more-btn:hover {
-    background: #4338ca;
-}
-
-/* Modal Overrides */
-.light-theme .modern-calendar-popup.wide {
-    background: #ffffff;
-    border-color: #e2e8f0;
-}
-
-.light-theme .hotel-rooms-modal-header {
-    background: linear-gradient(to bottom, #ffffff, #f8fafc);
-    border-bottom-color: #e2e8f0;
-}
-
-.light-theme .modal-title-zone h2 {
-    color: #0f172a;
-}
-
-.light-theme .modal-meta {
-    color: #64748b;
-}
-
-.light-theme .close-modal-btn {
-    color: #64748b;
-    background: #f1f5f9;
-}
-
-.light-theme .close-modal-btn:hover {
-    background: #fee2e2;
-    color: #ef4444;
-}
-
-.light-theme .modal-body-v4 {
-    color: #0f172a;
-}
-
-.light-theme .table-header {
-    background: #f8fafc;
-    color: #64748b;
-    border-bottom-color: #e2e8f0;
-}
-
-.light-theme .room-row-v4 {
-    border-bottom-color: #e2e8f0;
-}
-
-.light-theme .room-row-v4:hover {
-    background: #f8fafc;
-}
-
-.light-theme .r-name strong {
-    color: #0f172a;
-}
-
-.light-theme .r-name p {
-    color: #64748b;
-}
-
-.light-theme .r-cap {
-    color: #64748b;
-}
-
-.light-theme .r-price {
-    color: #059669;
-    /* Green for price in light mode */
-}
-
-/* AI Assistant */
-.light-theme .ai-assistant-btn {
-    border-color: #e2e8f0;
-    color: #0f172a;
-}
-
-.light-theme .brand-text {
-    color: #800020 !important;
+.light-theme .nav-tab-item.active {
+    background: #2563eb !important;
+    color: #ffffff !important;
 }

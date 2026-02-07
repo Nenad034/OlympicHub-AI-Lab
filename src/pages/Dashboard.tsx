@@ -68,7 +68,7 @@ const apps: AppConfig[] = [
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const { lang } = useThemeStore();
-    const { searchQuery } = useAppStore();
+    const { searchQuery, setSearchQuery } = useAppStore();
     const { userLevel } = useAuthStore();
     const { activeTriggers } = useIntelligenceStore();
     const t = translations[lang];
@@ -177,17 +177,72 @@ const Dashboard: React.FC = () => {
             exit={{ opacity: 0 }}
         >
             {/* Header */}
-            <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px' }}>
-                <div>
-                    <h1 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '8px' }}>
+            <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px' }}>
+                <div style={{ flex: '1 1 auto' }}>
+                    <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '8px', background: 'linear-gradient(90deg, var(--text-primary), var(--text-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                         {t.welcomeBack}
                     </h1>
-                    <p style={{ color: 'var(--text-secondary)' }}>{t.hubDesc}</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>{t.hubDesc}</p>
+                </div>
+
+                {/* Dashboard Central Search */}
+                <div style={{ flex: '2 1 400px', maxWidth: '600px', position: 'relative' }}>
+                    <Search
+                        size={20}
+                        color="var(--accent)"
+                        style={{
+                            position: 'absolute',
+                            left: '18px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            opacity: 0.7
+                        }}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Pretraži aplikacije i module..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        style={{
+                            width: '100%',
+                            padding: '16px 24px 16px 52px',
+                            borderRadius: '16px',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--border)',
+                            color: 'var(--text-primary)',
+                            fontSize: '16px',
+                            fontWeight: '500',
+                            outline: 'none',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                            backdropFilter: 'blur(10px)'
+                        }}
+                        autoFocus
+                    />
+                    {searchQuery && (
+                        <div
+                            onClick={() => setSearchQuery('')}
+                            style={{
+                                position: 'absolute',
+                                right: '18px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                cursor: 'pointer',
+                                opacity: 0.5,
+                                fontSize: '12px',
+                                background: 'rgba(255,255,255,0.1)',
+                                padding: '4px 8px',
+                                borderRadius: '6px'
+                            }}
+                        >
+                            ESC
+                        </div>
+                    )}
                 </div>
 
                 {/* Vajckin Intelligence Status Widget */}
                 <div className="intelligence-widget-header" onClick={() => navigate('/soft-zone')} style={{
-                    background: 'var(--bg-card)',
+                    background: 'rgba(255, 255, 255, 0.03)',
                     border: '1px solid var(--border)',
                     borderRadius: '16px',
                     padding: '12px 20px',
@@ -195,8 +250,9 @@ const Dashboard: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '15px',
-                    minWidth: '300px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    minWidth: '280px',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                    backdropFilter: 'blur(10px)'
                 }}>
                     <div style={{
                         background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',

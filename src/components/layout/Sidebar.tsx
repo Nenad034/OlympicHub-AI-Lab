@@ -106,25 +106,19 @@ const Sidebar: React.FC = () => {
                         >
                             <Mail size={20} /> {!isSidebarCollapsed && 'Olympic Mail'}
                         </NavLink>
-                        {/* <NavLink
-                            to="/total-trip"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="Total Trip"
-                        >
-                            <Compass size={20} /> {!isSidebarCollapsed && 'Total Trip'}
-                        </NavLink> */}
                         <NavLink
-                            to="/contact-architect"
+                            to="/suppliers"
                             className={({ isActive }) => navItemClass(isActive)}
-                            title="Master Contact Hub"
-                            style={({ isActive }) => ({
-                                borderLeft: isActive ? '4px solid var(--accent)' : 'none',
-                                background: isActive ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
-                            })}
+                            title="Dobavljači"
                         >
-                            <Users size={20} color="var(--accent)" /> {!isSidebarCollapsed && (
-                                <span style={{ fontWeight: 700 }}>Master Contact Hub</span>
-                            )}
+                            <Truck size={20} /> {!isSidebarCollapsed && 'Dobavljači'}
+                        </NavLink>
+                        <NavLink
+                            to="/customers"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Kupci"
+                        >
+                            <Users size={20} /> {!isSidebarCollapsed && 'Kupci'}
                         </NavLink>
                         <NavLink
                             to="/reservations"
@@ -134,28 +128,11 @@ const Sidebar: React.FC = () => {
                             <ClipboardList size={20} /> {!isSidebarCollapsed && t.reservations}
                         </NavLink>
                         <NavLink
-                            to="/supplier-admin"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="Supplier & Pricing"
-                            style={({ isActive }) => ({
-                                borderLeft: isActive ? '4px solid #10b981' : 'none',
-                            })}
-                        >
-                            <Truck size={20} color="#10b981" /> {!isSidebarCollapsed && (
-                                <span style={{ color: '#10b981', fontWeight: 700 }}>Supplier Pricing</span>
-                            )}
-                        </NavLink>
-                        <NavLink
                             to="/subagent-admin"
                             className={({ isActive }) => navItemClass(isActive)}
                             title="Subagent Admin"
-                            style={({ isActive }) => ({
-                                borderLeft: isActive ? '4px solid #f59e0b' : 'none',
-                            })}
                         >
-                            <Users size={20} color="#f59e0b" /> {!isSidebarCollapsed && (
-                                <span style={{ color: '#f59e0b', fontWeight: 700 }}>Subagent Admin</span>
-                            )}
+                            <Users size={20} /> {!isSidebarCollapsed && 'Subagent Admin'}
                         </NavLink>
                     </div>
                 )}
@@ -202,34 +179,11 @@ const Sidebar: React.FC = () => {
                 )}
 
 
-                {/* Intelligence Section - Only for Staff */}
-                {userLevel >= 6 && !impersonatedSubagent && (
-                    <div className="nav-group">
-                        <h3 className="nav-label">{!isSidebarCollapsed && 'Intelligence'}</h3>
-                        <NavLink
-                            to="/soft-zone"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="Vajckin Soft Zone"
-                            style={({ isActive }) => ({
-                                borderLeft: isActive ? '4px solid #3b82f6' : 'none',
-                            })}
-                        >
-                            <Sparkles size={20} color="#3b82f6" /> {!isSidebarCollapsed && 'Meka Zona'}
-                        </NavLink>
-                    </div>
-                )}
 
                 {/* System Section - Only for Staff */}
                 {userLevel >= 6 && !impersonatedSubagent && (
                     <div className="nav-group" style={{ marginTop: 'auto', paddingBottom: '10px' }}>
                         <h3 className="nav-label">{!isSidebarCollapsed && t.system}</h3>
-                        <NavLink
-                            to="/orchestrator"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="Master Orchestrator"
-                        >
-                            <Brain size={20} /> {!isSidebarCollapsed && 'Master Orchestrator'}
-                        </NavLink>
                         <NavLink
                             to="/settings"
                             className={({ isActive }) => navItemClass(isActive)}

@@ -79,9 +79,6 @@ const HorizontalNav: React.FC = () => {
                         <NavLink to="/subagent-admin" className={({ isActive }) => navItemClass(isActive)}>
                             <Users size={18} /> Subagent Admin
                         </NavLink>
-                        <NavLink to="/orchestrator" className={({ isActive }) => navItemClass(isActive)}>
-                            <Brain size={18} /> Master Orchestrator
-                        </NavLink>
                         <NavLink to="/settings" className={({ isActive }) => navItemClass(isActive)}>
                             <SettingsIcon size={18} /> {t.settings}
                         </NavLink>
@@ -126,16 +123,6 @@ const HorizontalNav: React.FC = () => {
                     </div>
                 )}
 
-                <div className="h-nav-search-wrapper">
-                    <Search size={18} className="h-nav-search-icon" />
-                    <input
-                        type="text"
-                        placeholder={t.searchPlaceholder}
-                        className="search-input"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                </div>
             </div>
         </div>
     );
