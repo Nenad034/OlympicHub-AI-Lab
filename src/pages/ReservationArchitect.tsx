@@ -8,7 +8,7 @@ import {
     Package as PackageIcon, UserPlus, Fingerprint, Banknote,
     ArrowRightLeft, Briefcase, MoveRight, MoveLeft, Calendar, Mail,
     Compass, Ship, Sparkles, Search, ExternalLink, Clock, History,
-    Euro, DollarSign, CirclePercent, Copy, Share2, Code, ChevronDown, Zap, Phone
+    Euro, DollarSign, CirclePercent, Copy, Share2, Code, ChevronDown, Zap, Phone, Star
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import { ModernCalendar } from '../components/ModernCalendar';
@@ -144,6 +144,59 @@ interface ActivityLog {
     type: 'info' | 'warning' | 'success' | 'danger';
 }
 
+interface Dossier {
+    cisCode: string;
+    resCode: string | null;
+    status: ResStatus;
+    customerType: CustomerType;
+    clientReference: string;
+    booker: {
+        fullName: string;
+        address: string;
+        city: string;
+        country: string;
+        idNumber: string;
+        phone: string;
+        email: string;
+        companyPib: string;
+        companyName: string;
+    };
+    passengers: Passenger[];
+    tripItems: TripItem[];
+    finance: {
+        currency: string;
+        installments: Installment[];
+        payments: PaymentRecord[];
+    };
+    insurance: {
+        guaranteePolicy: string;
+        insurerContact: string;
+        insurerEmail: string;
+        cancellationOffered: boolean;
+        healthOffered: boolean;
+        confirmationText: string;
+        confirmationTimestamp: string;
+    };
+    logs: ActivityLog[];
+    notes: {
+        general: string;
+        contract: string;
+        voucher: string;
+        internal: string;
+        financial: string;
+        specialRequests: string;
+    };
+    documentTracker: {
+        [key: string]: {
+            generated: boolean;
+            sentEmail: boolean;
+            sentViber: boolean;
+            sentPrint: boolean;
+        };
+    };
+    language: Language;
+}
+
 // --- Component ---
 const ReservationArchitect: React.FC = () => {
     const navigate = useNavigate();
@@ -253,7 +306,9 @@ const ReservationArchitect: React.FC = () => {
             general: '',
             contract: '',
             voucher: '',
-            internal: ''
+            internal: '',
+            financial: '',
+            specialRequests: ''
         },
         // 8. Document Tracking
         documentTracker: {
@@ -1064,7 +1119,36 @@ const ReservationArchitect: React.FC = () => {
             text += `> Termin: ${formatDate(item.checkIn)} - ${formatDate(item.checkOut)}\n`;
             text += `> Lokacija: ${item.city}, ${item.country}\n`;
             text += `> Detalji: ${item.details} ${item.mealPlan ? `(${item.mealPlan})` : ''}\n`;
+            if (item.notes) text += `> Napomena: ${item.notes}\n`;
         });
+
+        // Add Notes Section
+        const hasNotes = dossier.notes.general || dossier.notes.internal || dossier.notes.financial || dossier.notes.specialRequests || dossier.notes.contract || dossier.notes.voucher;
+        if (hasNotes) {
+            text += `\nNAPOMENE:\n`;
+            if (dossier.notes.general) text += `- Opšte: ${dossier.notes.general}\n`;
+            if (dossier.notes.internal) text += `- Interne: ${dossier.notes.internal}\n`;
+            if (dossier.notes.financial) text += `- Finansijske: ${dossier.notes.financial}\n`;
+            if (dossier.notes.specialRequests) text += `- Specijalni zahtevi: ${dossier.notes.specialRequests}\n`;
+            if (dossier.notes.contract) text += `- Za ugovor: ${dossier.notes.contract}\n`;
+            if (dossier.notes.voucher) text += `- Za vaučer: ${dossier.notes.voucher}\n`;
+        }
+
+        // Add Generated Documents Section
+        const docs = [
+            { id: 'contract', label: 'Ugovor o Putovanju' },
+            { id: 'voucher', label: 'Vaučer / Smeštaj' },
+            { id: 'proforma', label: 'Račun / Profaktura' },
+            { id: 'itinerary', label: 'Plan Puta / Itinerer' }
+        ];
+        const generatedDocs = docs.filter(d => (dossier.documentTracker as any)?.[d.id]?.generated);
+        if (generatedDocs.length > 0) {
+            text += `\nGENERISANA DOKUMENTA:\n`;
+            generatedDocs.forEach(d => {
+                text += `- ${d.label}\n`;
+            });
+        }
+
         text += `\nUKUPNO ZA NAPLATU: ${totalBrutto.toFixed(2)} ${dossier.finance.currency}\n`;
         text += `UPLAĆENO: ${totalPaid.toFixed(2)} ${dossier.finance.currency}\n`;
         text += `SALDO (DUG): ${balance.toFixed(2)} ${dossier.finance.currency}\n`;
@@ -1595,9 +1679,45 @@ const ReservationArchitect: React.FC = () => {
                                                     &gt; Termin: {formatDate(item.checkIn)} - {formatDate(item.checkOut)}<br />
                                                     &gt; Lokacija: {item.city}, {item.country}<br />
                                                     &gt; Detalji: {item.details} {item.mealPlan ? `(${item.mealPlan})` : ''}
+                                                    {item.notes && <><br />&gt; Napomena: {item.notes}</>}
                                                 </div>
                                             ))}
                                         </div>
+
+                                        {/* Combined Notes Section for Notepad */}
+                                        {(dossier.notes.general || dossier.notes.internal || dossier.notes.financial || dossier.notes.specialRequests || dossier.notes.contract || dossier.notes.voucher) && (
+                                            <div style={{ marginBottom: '20px' }}>
+                                                <div style={{ color: '#fff', fontWeight: 'bold' }}>NAPOMENE:</div>
+                                                {dossier.notes.general && <div>- Opšte: {dossier.notes.general}</div>}
+                                                {dossier.notes.internal && <div>- Interne: {dossier.notes.internal}</div>}
+                                                {dossier.notes.financial && <div>- Finansijske: {dossier.notes.financial}</div>}
+                                                {dossier.notes.specialRequests && <div>- Specijalni zahtevi: {dossier.notes.specialRequests}</div>}
+                                                {dossier.notes.contract && <div>- Za ugovor: {dossier.notes.contract}</div>}
+                                                {dossier.notes.voucher && <div>- Za vaučer: {dossier.notes.voucher}</div>}
+                                            </div>
+                                        )}
+
+                                        {/* Generated Documents Section for Notepad */}
+                                        {(() => {
+                                            const docs = [
+                                                { id: 'contract', label: 'Ugovor o Putovanju' },
+                                                { id: 'voucher', label: 'Vaučer / Smeštaj' },
+                                                { id: 'proforma', label: 'Račun / Profaktura' },
+                                                { id: 'itinerary', label: 'Plan Puta / Itinerer' }
+                                            ];
+                                            const generatedDocs = docs.filter(d => (dossier.documentTracker as any)?.[d.id]?.generated);
+                                            if (generatedDocs.length > 0) {
+                                                return (
+                                                    <div style={{ marginBottom: '20px' }}>
+                                                        <div style={{ color: '#fff', fontWeight: 'bold' }}>GENERISANA DOKUMENTA:</div>
+                                                        {generatedDocs.map(d => (
+                                                            <div key={d.id}>- {d.label}</div>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
 
                                         <div style={{ borderTop: '1px dashed #475569', marginTop: '20px', paddingTop: '10px' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1618,298 +1738,373 @@ const ReservationArchitect: React.FC = () => {
                                     <div className="summary-html-view" style={{
                                         display: 'flex',
                                         flexDirection: 'column',
-                                        gap: '32px',
-                                        maxWidth: '1000px',
+                                        gap: '20px',
+                                        maxWidth: '1200px',
                                         margin: '0 auto',
-                                        width: '100%',
-                                        padding: '20px 0'
+                                        width: '100%'
                                     }}>
-                                        {/* 1. NOSILAC PUTOVANJA - DOCUMENT HEADER STYLE */}
+                                        {/* 1. NOSILAC PUTOVANJA - COMPACT HEADER */}
                                         <div className="summary-card" style={{
                                             background: 'var(--bg-card)',
-                                            borderRadius: '20px',
+                                            borderRadius: '16px',
                                             border: '1px solid var(--border)',
-                                            padding: '40px',
-                                            textAlign: 'center',
-                                            position: 'relative',
-                                            overflow: 'hidden'
+                                            padding: '24px 32px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '24px'
                                         }}>
-                                            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', background: 'var(--gradient-blue)' }}></div>
                                             <div style={{
-                                                width: '64px',
-                                                height: '64px',
-                                                borderRadius: '50%',
-                                                background: 'rgba(59, 130, 246, 0.1)',
+                                                width: '48px',
+                                                height: '48px',
+                                                borderRadius: '12px',
+                                                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.05))',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
                                                 color: 'var(--accent)',
-                                                margin: '0 auto 20px'
+                                                flexShrink: 0
                                             }}>
-                                                <User size={32} />
+                                                <User size={24} />
                                             </div>
-                                            <h4 style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '3px', fontWeight: 800 }}>Glavni Nosilac Putovanja / Ugovarač</h4>
-                                            <div style={{ fontSize: '32px', fontWeight: 900, color: 'var(--text-primary)', margin: '12px 0' }}>{dossier.booker.fullName}</div>
-                                            <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '32px', marginTop: '24px' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px' }}>
-                                                    <Mail size={18} color="var(--accent)" />
-                                                    <span style={{ color: 'var(--text-secondary)' }}>{dossier.booker.email}</span>
-                                                </div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px' }}>
-                                                    <Phone size={18} color="var(--accent)" />
-                                                    <span style={{ color: 'var(--text-secondary)' }}>{dossier.booker.phone}</span>
-                                                </div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px' }}>
-                                                    <MapPin size={18} color="var(--accent)" />
-                                                    <span style={{ color: 'var(--text-secondary)' }}>{dossier.booker.city}, {dossier.booker.country}</span>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 700, marginBottom: '4px' }}>Glavni Nosilac Putovanja / Ugovarač</div>
+                                                <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)', marginBottom: '8px' }}>{dossier.booker.fullName}</div>
+                                                <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                                        <Mail size={14} color="var(--accent)" />
+                                                        {dossier.booker.email}
+                                                    </div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                                        <Phone size={14} color="var(--accent)" />
+                                                        {dossier.booker.phone}
+                                                    </div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                                        <MapPin size={14} color="var(--accent)" />
+                                                        {dossier.booker.city}, {dossier.booker.country}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* 2. PLAN PUTOVANJA */}
-                                        <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '20px', border: '1px solid var(--border)', overflow: 'hidden' }}>
-                                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px 30px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <Briefcase size={22} color="var(--accent)" />
-                                                <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Specifikacija Putovanja</h4>
+                                        {/* 2. PLAN PUTOVANJA - COMPACT CARDS */}
+                                        <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <Briefcase size={18} color="var(--accent)" />
+                                                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Specifikacija Putovanja</h4>
                                             </div>
-                                            <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                                 {dossier.tripItems.map((item, idx) => (
                                                     <div key={item.id} style={{
-                                                        padding: '24px',
+                                                        padding: '16px 20px',
                                                         background: 'rgba(255,255,255,0.01)',
-                                                        borderRadius: '16px',
-                                                        border: '1px solid rgba(255,255,255,0.04)',
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        gap: '20px'
+                                                        borderRadius: '12px',
+                                                        border: '1px solid rgba(255,255,255,0.04)'
                                                     }}>
-                                                        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                                                        {/* Header Row */}
+                                                        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', marginBottom: '12px' }}>
                                                             <div style={{
-                                                                width: '56px', height: '56px', borderRadius: '14px', background: 'var(--bg-panel)',
+                                                                width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg-panel)',
                                                                 display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', flexShrink: 0
                                                             }}>
-                                                                {item.type === 'Smestaj' && <Building2 size={30} />}
-                                                                {item.type === 'Avio karte' && <Plane size={30} />}
-                                                                {item.type === 'Čarter' && <Zap size={30} />}
-                                                                {item.type === 'Bus' && <Compass size={30} />}
-                                                                {item.type === 'Krstarenje' && <Ship size={30} />}
-                                                                {item.type === 'Transfer' && <Truck size={30} />}
-                                                                {item.type === 'Putovanja' && <Globe size={30} />}
-                                                                {item.type === 'Dinamicki paket' && <PackageIcon size={30} />}
+                                                                {item.type === 'Smestaj' && <Building2 size={20} />}
+                                                                {item.type === 'Avio karte' && <Plane size={20} />}
+                                                                {item.type === 'Čarter' && <Zap size={20} />}
+                                                                {item.type === 'Bus' && <Compass size={20} />}
+                                                                {item.type === 'Krstarenje' && <Ship size={20} />}
+                                                                {item.type === 'Transfer' && <Truck size={20} />}
+                                                                {item.type === 'Putovanja' && <Globe size={20} />}
+                                                                {item.type === 'Dinamicki paket' && <PackageIcon size={20} />}
                                                             </div>
                                                             <div style={{ flex: 1 }}>
-                                                                <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '4px' }}>{item.type}</div>
-                                                                <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)' }}>{item.subject}</div>
-                                                                {item.supplier && <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>Provajder: {item.supplier}</div>}
-                                                            </div>
-                                                            <div style={{ textAlign: 'right' }}>
-                                                                <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                                                                    {formatDate(item.checkIn)} - {formatDate(item.checkOut)}
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                                                                    <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '1px' }}>{item.type}</div>
+                                                                    {item.supplier && <div style={{ fontSize: '10px', color: 'var(--text-secondary)', padding: '2px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }}>Provajder: {item.supplier}</div>}
                                                                 </div>
-                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                                                                    <MapPin size={14} /> {item.city}, {item.country}
+                                                                <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                    {item.subject}
+                                                                    {item.stars && item.stars > 0 && (
+                                                                        <div style={{ display: 'flex', gap: '1px', background: 'rgba(251, 191, 36, 0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(251, 191, 36, 0.2)' }}>
+                                                                            {[...Array(item.stars)].map((_, i) => <Star key={i} size={8} fill="#fbbf24" color="#fbbf24" />)}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                                                                    <MapPin size={12} /> {item.city}, {item.country}
                                                                 </div>
                                                             </div>
                                                         </div>
 
-                                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', padding: '16px 24px', background: 'rgba(0,0,0,0.15)', borderRadius: '12px' }}>
+                                                        {/* Details Row - 3 Columns */}
+                                                        <div style={{
+                                                            display: 'grid',
+                                                            gridTemplateColumns: 'repeat(3, 1fr)',
+                                                            gap: '12px',
+                                                            padding: '12px 16px',
+                                                            background: 'rgba(0,0,0,0.08)',
+                                                            borderRadius: '8px',
+                                                            borderTop: '1px solid rgba(255,255,255,0.05)'
+                                                        }}>
                                                             <div>
-                                                                <div style={{ color: 'var(--text-secondary)', marginBottom: '4px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>Tip Smeštaja / Opis</div>
-                                                                <div style={{ fontWeight: 700, fontSize: '14px' }}>{item.details || 'Standard Room'}</div>
+                                                                <div style={{ color: 'var(--text-secondary)', marginBottom: '2px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Tip Smeštaja / Opis</div>
+                                                                <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-primary)' }}>{item.details || 'Standard Room'}</div>
                                                             </div>
                                                             <div>
-                                                                <div style={{ color: 'var(--text-secondary)', marginBottom: '4px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>Usluga / Aranžman</div>
-                                                                <div style={{ fontWeight: 700, fontSize: '14px' }}>{item.mealPlan || 'BB - Noćenje sa doručkom'}</div>
+                                                                <div style={{ color: 'var(--text-secondary)', marginBottom: '2px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Datum Putovanja</div>
+                                                                <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-primary)' }}>{formatDate(item.checkIn)} - {formatDate(item.checkOut)}</div>
+                                                            </div>
+                                                            <div>
+                                                                <div style={{ color: 'var(--text-secondary)', marginBottom: '2px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Usluga / Aranžman</div>
+                                                                <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-primary)' }}>{item.mealPlan || 'BB - Noćenje sa doručkom'}</div>
                                                             </div>
                                                         </div>
-
-                                                        {item.notes && (
-                                                            <div style={{ padding: '12px 20px', background: 'rgba(234, 179, 8, 0.05)', borderLeft: '4px solid #eab308', borderRadius: '4px', fontSize: '13px', lineHeight: '1.6' }}>
-                                                                <div style={{ fontWeight: 800, marginBottom: '4px', color: '#eab308', fontSize: '11px', textTransform: 'uppercase' }}>Napomene za stavku:</div>
-                                                                <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{item.notes}</p>
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
 
-                                        {/* 3. PUTNICI */}
-                                        <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '20px', border: '1px solid var(--border)', overflow: 'hidden' }}>
-                                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px 30px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <Users size={22} color="var(--accent)" />
-                                                <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Učesnici Putovanja</h4>
+                                        {/* 3. PUTNICI - COMPACT GRID */}
+                                        <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <Users size={18} color="var(--accent)" />
+                                                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Učesnici Putovanja</h4>
                                             </div>
-                                            <div style={{ padding: '30px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+                                            <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
                                                 {dossier.passengers.map((p, pIdx) => (
                                                     <div key={p.id} style={{
-                                                        padding: '16px 20px',
+                                                        padding: '12px 16px',
                                                         background: 'rgba(255,255,255,0.02)',
-                                                        borderRadius: '14px',
+                                                        borderRadius: '10px',
                                                         border: '1px solid rgba(255,255,255,0.05)',
                                                         display: 'flex',
                                                         alignItems: 'center',
-                                                        gap: '16px'
+                                                        gap: '12px'
                                                     }}>
-                                                        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--bg-panel)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '16px', fontWeight: 900 }}>
+                                                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--bg-panel)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 800, flexShrink: 0 }}>
                                                             {pIdx + 1}
                                                         </div>
-                                                        <div>
-                                                            <div style={{ fontWeight: 800, fontSize: '15px', color: 'var(--text-primary)' }}>{p.firstName} {p.lastName}</div>
-                                                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>{p.type} {p.idNumber ? `| Dok: ${p.idNumber}` : ''}</div>
+                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                            <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.firstName} {p.lastName}</div>
+                                                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>{p.type} {p.idNumber ? `| Dok: ${p.idNumber}` : ''}</div>
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
 
-                                        {/* 4. DOKUMENTA I NAPOMENE (SIDE BY SIDE SYMMETRY) */}
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
-                                            {/* Document Tracking Card */}
-                                            <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '20px', border: '1px solid var(--border)', padding: '24px' }}>
-                                                <h4 style={{ margin: '0 0 20px 0', fontSize: '14px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <FileText size={16} /> Slanje Dokumenata
-                                                </h4>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        {/* 4. DOKUMENTA I NAPOMENE - TWO COLUMNS */}
+                                        <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '20px', alignItems: 'flex-start' }}>
+                                            {/* Document Tracking */}
+                                            <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <FileText size={18} color="var(--accent)" />
+                                                    <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Slanje Dokumenata</h4>
+                                                </div>
+                                                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                                     {[
                                                         { id: 'contract', label: 'Ugovor o Putovanju' },
                                                         { id: 'voucher', label: 'Vaučer / Smeštaj' },
-                                                        { id: 'proforma', label: 'Račun / Profaktura' }
-                                                    ].map(doc => (
-                                                        <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '12px' }}>
-                                                            <span style={{ fontSize: '13px', fontWeight: 700 }}>{doc.label}</span>
-                                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const current = (dossier as any).documentTracker?.[doc.id]?.sentEmail;
-                                                                        setDossier({
-                                                                            ...dossier,
-                                                                            documentTracker: {
-                                                                                ...(dossier as any).documentTracker,
-                                                                                [doc.id]: { ...(dossier as any).documentTracker?.[doc.id], sentEmail: !current }
-                                                                            }
-                                                                        } as any);
-                                                                    }}
-                                                                    style={{
-                                                                        width: '32px', height: '32px', borderRadius: '8px', border: 'none',
-                                                                        background: (dossier as any).documentTracker?.[doc.id]?.sentEmail ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
-                                                                        color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s'
-                                                                    }}
-                                                                    title="Email"
-                                                                >
-                                                                    <Mail size={14} />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const current = (dossier as any).documentTracker?.[doc.id]?.sentViber;
-                                                                        setDossier({
-                                                                            ...dossier,
-                                                                            documentTracker: {
-                                                                                ...(dossier as any).documentTracker,
-                                                                                [doc.id]: { ...(dossier as any).documentTracker?.[doc.id], sentViber: !current }
-                                                                            }
-                                                                        } as any);
-                                                                    }}
-                                                                    style={{
-                                                                        width: '32px', height: '32px', borderRadius: '8px', border: 'none',
-                                                                        background: (dossier as any).documentTracker?.[doc.id]?.sentViber ? '#22c55e' : 'rgba(255,255,255,0.05)',
-                                                                        color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s'
-                                                                    }}
-                                                                    title="Viber/WhatsApp"
-                                                                >
-                                                                    <Share2 size={14} />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const current = (dossier as any).documentTracker?.[doc.id]?.sentPrint;
-                                                                        setDossier({
-                                                                            ...dossier,
-                                                                            documentTracker: {
-                                                                                ...(dossier as any).documentTracker,
-                                                                                [doc.id]: { ...(dossier as any).documentTracker?.[doc.id], sentPrint: !current }
-                                                                            }
-                                                                        } as any);
-                                                                    }}
-                                                                    style={{
-                                                                        width: '32px', height: '32px', borderRadius: '8px', border: 'none',
-                                                                        background: (dossier as any).documentTracker?.[doc.id]?.sentPrint ? '#94a3b8' : 'rgba(255,255,255,0.05)',
-                                                                        color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s'
-                                                                    }}
-                                                                    title="Print"
-                                                                >
-                                                                    <Printer size={14} />
-                                                                </button>
+                                                        { id: 'proforma', label: 'Račun / Profaktura' },
+                                                        { id: 'itinerary', label: 'Plan Puta / Itinerer' }
+                                                    ].map(doc => {
+                                                        const isSentEmail = (dossier as any).documentTracker?.[doc.id]?.sentEmail;
+                                                        const isSentViber = (dossier as any).documentTracker?.[doc.id]?.sentViber;
+                                                        const isSentPrint = (dossier as any).documentTracker?.[doc.id]?.sentPrint;
+
+                                                        return (
+                                                            <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                                                                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>{doc.label}</span>
+                                                                <div style={{ display: 'flex', gap: '4px' }}>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setDossier(prev => ({
+                                                                                ...prev,
+                                                                                documentTracker: {
+                                                                                    ...prev.documentTracker,
+                                                                                    [doc.id]: { ...(prev.documentTracker as any)[doc.id], sentEmail: !isSentEmail }
+                                                                                }
+                                                                            } as any));
+                                                                        }}
+                                                                        style={{
+                                                                            width: '24px', height: '24px', borderRadius: '4px',
+                                                                            background: isSentEmail ? 'var(--accent)' : 'var(--bg-panel)',
+                                                                            color: isSentEmail ? 'white' : 'var(--text-secondary)',
+                                                                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s',
+                                                                            border: '1px solid var(--border)'
+                                                                        }}
+                                                                        title="Email"
+                                                                    >
+                                                                        <Mail size={10} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setDossier(prev => ({
+                                                                                ...prev,
+                                                                                documentTracker: {
+                                                                                    ...prev.documentTracker,
+                                                                                    [doc.id]: { ...(prev.documentTracker as any)[doc.id], sentViber: !isSentViber }
+                                                                                }
+                                                                            } as any));
+                                                                        }}
+                                                                        style={{
+                                                                            width: '24px', height: '24px', borderRadius: '4px',
+                                                                            background: isSentViber ? '#22c55e' : 'var(--bg-panel)',
+                                                                            color: isSentViber ? 'white' : 'var(--text-secondary)',
+                                                                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s',
+                                                                            border: '1px solid var(--border)'
+                                                                        }}
+                                                                        title="Viber/WhatsApp"
+                                                                    >
+                                                                        <Share2 size={10} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setDossier(prev => ({
+                                                                                ...prev,
+                                                                                documentTracker: {
+                                                                                    ...prev.documentTracker,
+                                                                                    [doc.id]: { ...(prev.documentTracker as any)[doc.id], sentPrint: !isSentPrint }
+                                                                                }
+                                                                            } as any));
+                                                                        }}
+                                                                        style={{
+                                                                            width: '24px', height: '24px', borderRadius: '4px',
+                                                                            background: isSentPrint ? '#94a3b8' : 'var(--bg-panel)',
+                                                                            color: isSentPrint ? 'white' : 'var(--text-secondary)',
+                                                                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s',
+                                                                            border: '1px solid var(--border)'
+                                                                        }}
+                                                                        title="Print"
+                                                                    >
+                                                                        <Printer size={10} />
+                                                                    </button>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
 
-                                            {/* Notes Card */}
-                                            <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '20px', border: '1px solid var(--border)', padding: '24px' }}>
-                                                <h4 style={{ margin: '0 0 20px 0', fontSize: '14px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <AlertTriangle size={16} /> Opšte Napomene
-                                                </h4>
-                                                <div style={{
-                                                    fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.7',
-                                                    background: 'rgba(255,255,255,0.01)', padding: '16px', borderRadius: '12px',
-                                                    border: '1px solid rgba(255,255,255,0.03)', minHeight: '120px'
-                                                }}>
-                                                    {dossier.notes.general || 'Nema dodatnih napomena za ovaj dosije.'}
+                                            {/* Unified Notes Card */}
+                                            <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <AlertTriangle size={18} color="var(--accent)" />
+                                                    <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Sve Napomene i Specijalni Zahtevi</h4>
+                                                </div>
+                                                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                                    {/* General Notes */}
+                                                    {dossier.notes.general && (
+                                                        <div style={{ padding: '12px 14px', background: 'rgba(59, 130, 246, 0.05)', borderLeft: '3px solid var(--accent)', borderRadius: '8px' }}>
+                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: 'var(--accent)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📋 Opšte Napomene</div>
+                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{dossier.notes.general}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Internal Notes */}
+                                                    {dossier.notes.internal && (
+                                                        <div style={{ padding: '12px 14px', background: 'rgba(168, 85, 247, 0.05)', borderLeft: '3px solid #a855f7', borderRadius: '8px' }}>
+                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: '#a855f7', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🔒 Interne Napomene</div>
+                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{dossier.notes.internal}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Financial Notes */}
+                                                    {dossier.notes.financial && (
+                                                        <div style={{ padding: '12px 14px', background: 'rgba(34, 197, 94, 0.05)', borderLeft: '3px solid #22c55e', borderRadius: '8px' }}>
+                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: '#22c55e', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>💰 Finansijske</div>
+                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{dossier.notes.financial}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Special Requests */}
+                                                    {dossier.notes.specialRequests && (
+                                                        <div style={{ padding: '12px 14px', background: 'rgba(234, 179, 8, 0.05)', borderLeft: '3px solid #eab308', borderRadius: '8px' }}>
+                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: '#eab308', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>⭐ Specijalni Zahtevi</div>
+                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{dossier.notes.specialRequests}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Contract Notes */}
+                                                    {dossier.notes.contract && (
+                                                        <div style={{ padding: '12px 14px', background: 'rgba(59, 130, 246, 0.05)', borderLeft: '3px solid var(--accent)', borderRadius: '8px' }}>
+                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: 'var(--accent)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📝 Napomena za Ugovor</div>
+                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{dossier.notes.contract}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Voucher Notes */}
+                                                    {dossier.notes.voucher && (
+                                                        <div style={{ padding: '12px 14px', background: 'rgba(16, 185, 129, 0.05)', borderLeft: '3px solid #10b981', borderRadius: '8px' }}>
+                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: '#10b981', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🎫 Napomena za Vaučer</div>
+                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{dossier.notes.voucher}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Trip Item Notes */}
+                                                    {dossier.tripItems.filter(item => item.notes).map((item) => (
+                                                        <div key={item.id} style={{ padding: '12px 14px', background: 'rgba(239, 68, 68, 0.05)', borderLeft: '3px solid #ef4444', borderRadius: '8px' }}>
+                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: '#ef4444', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>⚠️ {item.subject}</div>
+                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{item.notes}</p>
+                                                        </div>
+                                                    ))}
+
+                                                    {/* No Notes Message */}
+                                                    {!dossier.notes.general && !dossier.notes.internal && !dossier.notes.financial && !dossier.notes.specialRequests && !dossier.notes.contract && !dossier.notes.voucher && !dossier.tripItems.some(item => item.notes) && (
+                                                        <div style={{ padding: '10px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '12px', fontStyle: 'italic' }}>
+                                                            Nema dodatnih napomena.
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* 5. FINANSIJSKI PREGLED (BROJKE NA KRAJU) */}
+                                        {/* 5. FINANSIJSKI PREGLED - COMPACT & BALANCED */}
                                         <div className="summary-card finance-final-card" style={{
-                                            background: 'var(--accent)',
-                                            borderRadius: '24px',
-                                            padding: '40px',
-                                            color: 'white',
-                                            boxShadow: '0 20px 50px rgba(59, 130, 246, 0.4)',
+                                            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05))',
+                                            borderRadius: '16px',
+                                            padding: '24px 32px',
+                                            border: '1px solid rgba(59, 130, 246, 0.3)',
                                             display: 'flex',
                                             flexDirection: 'column',
-                                            gap: '30px'
+                                            gap: '20px'
                                         }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <div>
-                                                    <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', opacity: 0.8, marginBottom: '8px' }}>Status Rezervacije</div>
+                                                    <div style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Status Rezervacije</div>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                        <div style={{ padding: '8px 20px', background: 'rgba(255,255,255,0.2)', borderRadius: '30px', fontWeight: 900, fontSize: '18px' }}>
+                                                        <div style={{ padding: '6px 16px', background: 'var(--accent)', borderRadius: '20px', fontWeight: 800, fontSize: '14px', color: 'white' }}>
                                                             {dossier.status.toUpperCase()}
                                                         </div>
-                                                        <CheckCircle2 size={32} />
                                                     </div>
                                                 </div>
                                                 <div style={{ textAlign: 'right' }}>
-                                                    <div style={{ fontSize: '14px', opacity: 0.9, marginBottom: '4px' }}>Ukupna Vrednost Dosijea</div>
-                                                    <div style={{ fontSize: '48px', fontWeight: 900, lineHeight: 1 }}>{totalBrutto.toFixed(2)} <span style={{ fontSize: '24px' }}>{dossier.finance.currency}</span></div>
+                                                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 600 }}>Ukupna Vrednost Dosijea</div>
+                                                    <div style={{ fontSize: '32px', fontWeight: 900, lineHeight: 1, color: 'var(--text-primary)' }}>{totalBrutto.toFixed(2)} <span style={{ fontSize: '18px', fontWeight: 700 }}>{dossier.finance.currency}</span></div>
                                                 </div>
                                             </div>
 
-                                            <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
+                                            <div style={{ height: '1px', background: 'rgba(255,255,255,0.15)' }}></div>
 
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
-                                                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '24px', borderRadius: '20px' }}>
-                                                    <div style={{ fontSize: '12px', opacity: 0.8, textTransform: 'uppercase', marginBottom: '8px', fontWeight: 700 }}>Dosad uplaćeno</div>
-                                                    <div style={{ fontSize: '28px', fontWeight: 900 }}>{totalPaid.toFixed(2)} {dossier.finance.currency}</div>
-                                                    <div style={{ fontSize: '11px', marginTop: '8px', opacity: 0.7 }}>{((totalPaid / totalBrutto) * 100).toFixed(1)}% od ukupne sume</div>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px', fontWeight: 700, letterSpacing: '1px' }}>Dosad uplaćeno</div>
+                                                    <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)' }}>{totalPaid.toFixed(2)} {dossier.finance.currency}</div>
+                                                    <div style={{ fontSize: '11px', marginTop: '6px', color: 'var(--text-secondary)', fontWeight: 600 }}>{((totalPaid / totalBrutto) * 100).toFixed(1)}% od ukupne sume</div>
                                                 </div>
                                                 <div style={{
-                                                    background: balance > 0.01 ? '#991b1b' : 'rgba(16, 185, 129, 0.3)',
-                                                    padding: '24px',
-                                                    borderRadius: '20px',
-                                                    border: '1px solid rgba(255,255,255,0.2)'
+                                                    background: balance > 0.01 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                                    padding: '16px 20px',
+                                                    borderRadius: '12px',
+                                                    border: `1px solid ${balance > 0.01 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`
                                                 }}>
-                                                    <div style={{ fontSize: '12px', opacity: 0.8, textTransform: 'uppercase', marginBottom: '8px', fontWeight: 700 }}>Preostalo (SALDO)</div>
-                                                    <div style={{ fontSize: '28px', fontWeight: 900 }}>{balance.toFixed(2)} {dossier.finance.currency}</div>
-                                                    <div style={{ fontSize: '11px', marginTop: '8px', opacity: 0.7 }}>
+                                                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px', fontWeight: 700, letterSpacing: '1px' }}>Preostalo (SALDO)</div>
+                                                    <div style={{ fontSize: '20px', fontWeight: 900, color: balance > 0.01 ? '#ef4444' : '#10b981' }}>{balance.toFixed(2)} {dossier.finance.currency}</div>
+                                                    <div style={{ fontSize: '11px', marginTop: '6px', color: 'var(--text-secondary)', fontWeight: 600 }}>
                                                         {balance > 0.01 ? `${((balance / totalBrutto) * 100).toFixed(1)}% preostalo za naplatu` : 'DOSIJE JE U CELOSTI ISPLAĆEN'}
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div style={{ textAlign: 'center', fontSize: '11px', opacity: 0.6, marginTop: '10px' }}>
+                                            <div style={{ textAlign: 'center', fontSize: '10px', color: 'var(--text-secondary)', marginTop: '8px', fontStyle: 'italic' }}>
                                                 * Ovaj dokument je informativnog karaktera. Sva plaćanja se vrše u skladu sa Opštim uslovima putovanja.
                                             </div>
                                         </div>

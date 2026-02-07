@@ -189,6 +189,15 @@ const Sidebar: React.FC = () => {
                                 <span style={{ fontWeight: 700 }}>Moje Rezervacije</span>
                             )}
                         </NavLink>
+                        <NavLink
+                            to="/b2b-portal?tab=settings"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="AI Podešavanja"
+                        >
+                            <SettingsIcon size={20} /> {!isSidebarCollapsed && (
+                                <span style={{ fontWeight: 700 }}>AI Podešavanja</span>
+                            )}
+                        </NavLink>
                     </div>
                 )}
 

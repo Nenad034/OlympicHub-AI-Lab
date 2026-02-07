@@ -12,7 +12,7 @@ export interface RoomAllocation {
 }
 
 export interface SmartSearchParams {
-    searchType: 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'charter' | 'cruise' | 'event';
+    searchType: 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'charter' | 'cruise' | 'event' | 'ski';
     destinations: Array<{
         id: string;
         name: string;
@@ -30,7 +30,7 @@ export interface SmartSearchParams {
 
 export interface SmartSearchResult {
     provider: string;
-    type: 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'charter' | 'cruise' | 'event';
+    type: 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'charter' | 'cruise' | 'event' | 'ski';
     id: string;
     name: string;
     location: string;

@@ -125,7 +125,7 @@ const Login = () => {
             // Check user level for redirect
             const user = useAuthStore.getState();
             if (user.userLevel < 6) {
-                navigate('/smart-search');
+                navigate('/b2b-portal');
             } else {
                 navigate('/');
             }

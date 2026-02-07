@@ -2481,3 +2481,73 @@
 .doc-status-line span {
     font-weight: 700;
 }
+
+/* ===== SUMMARY VIEW REFINEMENTS ===== */
+.summary-card {
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.summary-card:hover {
+    border-color: rgba(96, 165, 250, 0.3) !important;
+}
+
+/* Make dividers more visible in dark mode */
+.summary-card div[style*="border-bottom"],
+.summary-card div[style*="border-top"],
+.summary-card div[style*="border: 1px solid rgba(255,255,255,0.05)"] {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Premium Header for Summary Cards */
+.summary-card h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary);
+    opacity: 0.9;
+}
+
+/* Unified Notes Section Styling */
+.unified-notes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 1200px) {
+    .unified-notes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.note-item {
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    transition: transform 0.2s ease;
+}
+
+.note-item:hover {
+    transform: translateX(4px);
+}
+
+.note-label {
+    font-weight: 700;
+    margin-bottom: 4px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.finance-final-card {
+    border: 1px solid rgba(59, 130, 246, 0.3) !important;
+    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15);
+}
+
+.finance-final-card .divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 4px 0;
+}

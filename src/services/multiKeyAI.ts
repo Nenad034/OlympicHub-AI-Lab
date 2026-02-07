@@ -9,6 +9,7 @@ import { aiCache } from './aiCache';
 import { aiUsageService } from './aiUsageService';
 import { supabase } from '../supabaseClient';
 import { ActivityLogger } from './activityLogger';
+import { useAuthStore } from '../stores/authStore';
 
 interface APIKey {
     key: string;
@@ -109,6 +110,20 @@ class MultiKeyAIService {
      */
     private getNextKey(): APIKey | null {
         const now = Date.now();
+        const authState = useAuthStore.getState();
+
+        // Check if user has their own Gemini key
+        if (authState.aiKeys?.gemini) {
+            console.log(`👤 [MULTI-KEY] Using User's Personal Gemini Key`);
+            return {
+                key: authState.aiKeys.gemini,
+                name: `Personal (${authState.userName})`,
+                priority: -1, // Highest priority
+                enabled: true,
+                failureCount: 0,
+                lastFailure: null
+            };
+        }
 
         // Reset failure counts for keys that have been in cooldown
         this.apiKeys.forEach(key => {

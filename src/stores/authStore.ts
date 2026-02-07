@@ -18,10 +18,16 @@ interface AuthState {
         companyName: string;
         email: string;
     };
+    aiKeys?: {
+        gemini?: string;
+        openai?: string;
+        claude?: string;
+    };
     login: (name: string, pass: string) => boolean;
     logout: () => void;
     setUserLevel: (level: number) => void;
     setUserName: (name: string) => void;
+    setAIKeys: (keys: AuthState['aiKeys']) => void;
     setImpersonatedSubagent: (subagent?: { id: string; companyName: string; email: string }) => void;
     getPermissions: () => UserPermissions;
 }
@@ -86,6 +92,10 @@ export const useAuthStore = create<AuthState>()(
 
             setUserName: (name: string) => {
                 set({ userName: name });
+            },
+
+            setAIKeys: (keys) => {
+                set({ aiKeys: keys });
             },
 
             setImpersonatedSubagent: (subagent) => {

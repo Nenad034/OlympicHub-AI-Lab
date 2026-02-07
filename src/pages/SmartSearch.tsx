@@ -8,7 +8,7 @@ import {
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
     LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
     CheckCircle2, CheckCircle, XCircle, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
-    Plus, Globe, AlignLeft
+    Plus, Globe, AlignLeft, Mountain
 } from 'lucide-react';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
 import { sentinelEvents } from '../utils/sentinelEvents';
@@ -162,7 +162,7 @@ const SmartSearch: React.FC = () => {
     const { userLevel, impersonatedSubagent } = useAuthStore();
     const isSubagent = userLevel < 6 || !!impersonatedSubagent;
 
-    const [activeTab, setActiveTab] = useState<'hotel' | 'flight' | 'package' | 'transfer' | 'tour'>('hotel');
+    const [activeTab, setActiveTab] = useState<'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'ski'>('hotel');
     const [selectedDestinations, setSelectedDestinations] = useState<Destination[]>([]);
     const [destinationInput, setDestinationInput] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -258,7 +258,8 @@ const SmartSearch: React.FC = () => {
         { id: 'flight' as const, label: 'Letovi', icon: Plane },
         { id: 'package' as const, label: 'DYNAMIC WIZARD', icon: Package },
         { id: 'transfer' as const, label: 'Transferi', icon: Bus },
-        { id: 'tour' as const, label: 'Ture', icon: Compass },
+        { id: 'tour' as const, label: 'Putovanja', icon: Compass },
+        { id: 'ski' as const, label: 'SKI', icon: Mountain },
     ];
 
     // Helper to sync nights when dates change
@@ -860,6 +861,14 @@ const SmartSearch: React.FC = () => {
             ) : activeTab === 'flight' ? (
                 <div className="flight-search-inline animate-fade-in" style={{ marginTop: '2rem' }}>
                     <FlightSearch isInline={true} />
+                </div>
+            ) : activeTab === 'ski' ? (
+                <div className="ski-search-wrapper animate-fade-in" style={{ marginTop: '2rem' }}>
+                    <div className="search-card-frame" style={{ textAlign: 'center', padding: '60px' }}>
+                        <Mountain size={48} color="var(--accent)" style={{ marginBottom: '20px', opacity: 0.5 }} />
+                        <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)' }}>SKI SEARCH - COMING SOON</h2>
+                        <p style={{ color: 'var(--text-secondary)', marginTop: '10px' }}>Uskoro: Najbolje ski ponude, ski pass i oprema na jednom mestu.</p>
+                    </div>
                 </div>
             ) : (
                 <>

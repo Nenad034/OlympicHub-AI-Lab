@@ -8,7 +8,7 @@ import {
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
     LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
     CheckCircle2, CheckCircle, XCircle, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
-    Plus, Globe, AlignLeft, Database, Power, Building2, Ship, Anchor, Ticket
+    Plus, Globe, AlignLeft, Database, Power, Building2, Ship, Anchor, Ticket, Mountain, Settings
 } from 'lucide-react';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
 import { sentinelEvents } from '../utils/sentinelEvents';
@@ -164,7 +164,7 @@ const GlobalHubSearch: React.FC = () => {
     const { userLevel, impersonatedSubagent } = useAuthStore();
     const isSubagent = userLevel < 6 || !!impersonatedSubagent;
 
-    const [activeTab, setActiveTab] = useState<'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'charter' | 'cruise' | 'event'>('hotel');
+    const [activeTab, setActiveTab] = useState<'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'charter' | 'cruise' | 'event' | 'ski'>('hotel');
     const [selectedDestinations, setSelectedDestinations] = useState<Destination[]>([]);
     const [destinationInput, setDestinationInput] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -274,6 +274,7 @@ const GlobalHubSearch: React.FC = () => {
         { id: 'transfer' as const, label: 'Transferi', icon: Bus },
         { id: 'event' as const, label: 'Events', icon: Ticket },
         { id: 'tour' as const, label: 'Putovanja', icon: Compass },
+        { id: 'ski' as const, label: 'SKI', icon: Mountain },
     ];
 
     // Helper to sync nights when dates change
@@ -791,7 +792,7 @@ const GlobalHubSearch: React.FC = () => {
             />
 
             {/* API Connection Section - THE KEY ADDITION FOR GLOBAL SEARCH HUB */}
-            {!isSubagent && (
+            {!isSubagent ? (
                 <div className="provider-toggles-section" style={{ margin: '0 0 20px 0', padding: '20px', background: 'var(--bg-card)', borderRadius: '24px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}>
                     <div className="provider-toggles-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                         <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-primary)', fontWeight: 800, fontSize: '1.1rem' }}>
@@ -846,6 +847,37 @@ const GlobalHubSearch: React.FC = () => {
                             );
                         })}
                     </div>
+                </div>
+            ) : (
+                <div className="subagent-ai-info" style={{ margin: '0 0 20px 0', padding: '20px', background: 'var(--bg-card)', borderRadius: '24px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow-md)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
+                            <Sparkles size={24} />
+                        </div>
+                        <div>
+                            <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', display: 'block' }}>PERSONALIZOVANI AI ASISTENT</span>
+                            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '4px 0 0' }}>Umetnite svoj API ključ za brži rad i bolju kontrolu nad AI alatima.</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => window.location.href = '/b2b-portal?tab=settings'}
+                        style={{
+                            padding: '12px 24px',
+                            borderRadius: '12px',
+                            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                            color: 'white',
+                            border: 'none',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+                        }}
+                    >
+                        <Settings size={16} /> KONFIGURIŠI AI
+                    </button>
                 </div>
             )}
 
@@ -919,6 +951,14 @@ const GlobalHubSearch: React.FC = () => {
                         onNext={() => { }}
                         onBack={() => setActiveTab('hotel')}
                     />
+                </div>
+            ) : activeTab === 'ski' ? (
+                <div className="ski-search-wrapper animate-fade-in" style={{ marginTop: '2rem' }}>
+                    <div className="search-card-frame" style={{ textAlign: 'center', padding: '60px' }}>
+                        <Mountain size={48} color="var(--accent)" style={{ marginBottom: '20px', opacity: 0.5 }} />
+                        <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)' }}>SKI SEARCH - COMING SOON</h2>
+                        <p style={{ color: 'var(--text-secondary)', marginTop: '10px' }}>Uskoro: Najbolje ski ponude, ski pass i oprema na jednom mestu.</p>
+                    </div>
                 </div>
             ) : (
                 <>

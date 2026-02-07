@@ -14,9 +14,11 @@ import {
     Sun,
     Moon,
     Compass,
-    LayoutDashboard
+    LayoutDashboard,
+    Settings
 } from 'lucide-react';
 import useTheme from '../hooks/useTheme';
+import B2BSettings from './B2BSettings';
 import './B2BPortal.css';
 
 const B2BPortal: React.FC = () => {
@@ -25,7 +27,15 @@ const B2BPortal: React.FC = () => {
     const subagentId = searchParams.get('subagentId');
     const { impersonatedSubagent, setImpersonatedSubagent } = useAuthStore();
     const { theme, cycleTheme, navMode, toggleNavMode } = useThemeStore();
-    const [activeTab, setActiveTab] = useState<'search' | 'reservations'>('search');
+    const [activeTab, setActiveTab] = useState<'search' | 'reservations' | 'settings'>((searchParams.get('tab') as any) || 'search');
+
+    // Sync tab with URL param
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab && (tab === 'search' || tab === 'reservations' || tab === 'settings')) {
+            setActiveTab(tab as any);
+        }
+    }, [searchParams]);
 
     // If no impersonation and no subagentId in URL, redirect or show error
     useEffect(() => {
@@ -83,6 +93,13 @@ const B2BPortal: React.FC = () => {
                             <FileText size={20} />
                             <span>Moje rezervacije</span>
                         </button>
+                        <button
+                            className={`b2b-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('settings')}
+                        >
+                            <Settings size={20} />
+                            <span>Podešavanja</span>
+                        </button>
                     </nav>
 
                     <div className="b2b-sidebar-footer">
@@ -119,12 +136,18 @@ const B2BPortal: React.FC = () => {
                                 >
                                     <FileText size={18} /> Rezervacije
                                 </button>
+                                <button
+                                    className={`b2b-nav-link ${activeTab === 'settings' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('settings')}
+                                >
+                                    <Settings size={18} /> Podešavanja
+                                </button>
                             </nav>
                         )}
 
                         {navMode === 'sidebar' && (
                             <div className="header-breadcrumb">
-                                {activeTab === 'search' ? 'Nova Pretraga' : 'Pregled Rezervacija'}
+                                {activeTab === 'search' ? 'Nova Pretraga' : activeTab === 'reservations' ? 'Pregled Rezervacija' : 'Podešavanja Naloga'}
                             </div>
                         )}
                     </div>
@@ -170,8 +193,10 @@ const B2BPortal: React.FC = () => {
                 <div className="b2b-page-container">
                     {activeTab === 'search' ? (
                         <SmartSearch />
-                    ) : (
+                    ) : activeTab === 'reservations' ? (
                         <ReservationsDashboard />
+                    ) : (
+                        <B2BSettings />
                     )}
                 </div>
             </main>
