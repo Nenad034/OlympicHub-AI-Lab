@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useConfig } from '../context/ConfigContext';
 import { quotaNotificationService } from '../services/quotaNotificationService';
 import { multiKeyAI } from '../services/multiKeyAI';
+import { ActivityLogger } from '../services/activityLogger';
 
 type ChatPersona = 'specialist' | 'general' | 'group';
 
@@ -251,6 +252,16 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
         if (successfulResponse) {
             setMessages(prev => [...prev, { role: 'ai', text: successfulResponse, model: usedModelName }]);
             speak(successfulResponse);
+
+            // Track AI Chat activity
+            const estimatedTokens = Math.ceil(textToSend.length / 4) + Math.ceil(successfulResponse.length / 4);
+            ActivityLogger.logAIChat(
+                'system', // TODO: Replace with actual user ID when auth is implemented
+                'User', // TODO: Replace with actual user name
+                textToSend,
+                estimatedTokens,
+                usedModelName
+            );
         } else {
             let errorMsg = lastError;
             if (lastError.includes("403") || lastError.includes("unregistered callers")) {

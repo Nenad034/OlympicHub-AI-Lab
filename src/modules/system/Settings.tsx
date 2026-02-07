@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     Users,
@@ -24,7 +25,8 @@ import {
     Zap,
     ShieldAlert,
     Menu,
-    Bell
+    Bell,
+    FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConfig } from '../../context/ConfigContext';
@@ -34,6 +36,7 @@ import SystemPulse from './SystemPulse';
 import DeepArchive from './DeepArchive';
 import NotificationCenter from './NotificationCenter';
 import AIQuotaDashboard from './AIQuotaDashboard';
+import DailyActivityReport from './DailyActivityReport';
 
 // --- Types ---
 interface UserAccount {
@@ -67,7 +70,7 @@ interface Props {
     setUserLevel: (level: number) => void;
 }
 
-type TabType = 'general' | 'users' | 'permissions' | 'connections' | 'ai-quota' | 'pulse' | 'backups' | 'archive' | 'notifications' | 'ai-training';
+type TabType = 'general' | 'users' | 'permissions' | 'connections' | 'ai-quota' | 'daily-activity' | 'pulse' | 'backups' | 'archive' | 'notifications' | 'ai-training';
 
 // --- KATANA STYLED COMPONENTS (Inline Styles) ---
 const styles = {
@@ -172,6 +175,7 @@ const styles = {
 
 export default function SettingsModule({ onBack, userLevel, setUserLevel }: Props) {
     const { config, updateConfig, createSnapshot, backups, restoreSnapshot } = useConfig();
+    const location = useLocation();
 
     // Responsive state
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -191,7 +195,12 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
         return () => window.removeEventListener('resize', handleResize);
     }, [handleResize]);
 
-    const [activeTab, setActiveTab] = useState<TabType>('connections'); // Default to connections as requested
+    // Handle URL query parameter for tab
+    const [activeTab, setActiveTab] = useState<TabType>(() => {
+        const params = new URLSearchParams(location.search);
+        const tabParam = params.get('tab') as TabType;
+        return tabParam || 'connections';
+    });
     const [searchQuery, setSearchQuery] = useState('');
     const [geminiKey, setGeminiKey] = useState(config.geminiKey);
     const [isSaving, setIsSaving] = useState(false);
@@ -795,6 +804,7 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                             <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, marginBottom: '10px', paddingLeft: '10px' }}>MAIN MENU</div>
                             <div onClick={() => handleTabChange('connections')} style={styles.navItem(activeTab === 'connections')}><Activity size={18} /> Active Connections</div>
                             <div onClick={() => handleTabChange('ai-quota')} style={styles.navItem(activeTab === 'ai-quota')}><Zap size={18} /> AI Quota Tracker</div>
+                            <div onClick={() => handleTabChange('daily-activity')} style={styles.navItem(activeTab === 'daily-activity')}><FileText size={18} /> Dnevni Izveštaj</div>
                             <div onClick={() => handleTabChange('general')} style={styles.navItem(activeTab === 'general')}><LayoutDashboard size={18} /> General Settings</div>
                             <div onClick={() => handleTabChange('users')} style={styles.navItem(activeTab === 'users')}><Users size={18} /> Users & Accounts</div>
                             <div onClick={() => handleTabChange('permissions')} style={styles.navItem(activeTab === 'permissions')}><Lock size={18} /> Access Permissions</div>
@@ -868,6 +878,7 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                     {activeTab === 'permissions' && renderPermissions()}
                     {activeTab === 'connections' && renderConnections()}
                     {activeTab === 'ai-quota' && <AIQuotaDashboard />}
+                    {activeTab === 'daily-activity' && <DailyActivityReport />}
                     {activeTab === 'notifications' && <NotificationCenter />}
                     {activeTab === 'pulse' && <SystemPulse />}
                     {activeTab === 'backups' && renderBackups()}

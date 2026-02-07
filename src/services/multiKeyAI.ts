@@ -8,6 +8,7 @@ import { aiRateLimiter } from './aiRateLimiter';
 import { aiCache } from './aiCache';
 import { aiUsageService } from './aiUsageService';
 import { supabase } from '../supabaseClient';
+import { ActivityLogger } from './activityLogger';
 
 interface APIKey {
     key: string;
@@ -185,6 +186,8 @@ class MultiKeyAIService {
             }
 
             try {
+                const startTime = Date.now(); // Track API call duration
+
                 // Use rate limiter
                 const response = await aiRateLimiter.queueRequest(async () => {
                     if (apiKey.isProxy) {
@@ -217,9 +220,19 @@ class MultiKeyAIService {
 
                 // Success! Track usage
                 const tokens = Math.ceil(prompt.length / 4) + Math.ceil(response.length / 4);
+                const endTime = Date.now();
+                const durationMs = endTime - startTime;
 
                 // Track for Gemini
                 aiUsageService.recordUsage('gemini', tokens);
+
+                // Track API call activity
+                ActivityLogger.logAPICall(
+                    'Gemini',
+                    model || 'gemini-2.0-flash',
+                    durationMs,
+                    true
+                );
 
                 // Cache the response
                 if (useCache) {
@@ -233,6 +246,15 @@ class MultiKeyAIService {
                 lastError = error;
                 console.error(`❌ [MULTI-KEY] Failed with ${apiKey.name}:`, error.message);
                 this.markKeyFailed(apiKey.name);
+
+                // Track failed API call
+                ActivityLogger.logAPICall(
+                    'Gemini',
+                    model || 'gemini-2.0-flash',
+                    0,
+                    false,
+                    error.message
+                );
 
                 // If it's a rate limit error, try next key immediately
                 if (this.isRateLimitError(error)) {

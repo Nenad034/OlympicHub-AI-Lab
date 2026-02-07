@@ -20,6 +20,13 @@ import { SolvexSyncWorker } from './components/SolvexSyncWorker';
 import { useConfig } from './context/ConfigContext';
 import { startNetworkMonitoring } from './utils/networkHealth';
 
+// Activity Tracker Test Data (Development only)
+if (import.meta.env.DEV) {
+  import('./utils/generateTestActivityData').catch(() => {
+    console.log('📝 Activity test data generator not available');
+  });
+}
+
 const App: React.FC = () => {
   const { theme, isPrism, lang } = useThemeStore();
   const { isChatOpen, setChatOpen } = useAppStore();
