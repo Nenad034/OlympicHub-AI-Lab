@@ -1,12 +1,13 @@
 /**
  * Multi-Key AI Service
- * Manages multiple Gemini API keys with automatic failover
+ * Manages multiple Gemini API keys with automatic failover and Supabase proxy fallback
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { aiRateLimiter } from './aiRateLimiter';
 import { aiCache } from './aiCache';
 import { aiUsageService } from './aiUsageService';
+import { supabase } from '../supabaseClient';
 
 interface APIKey {
     key: string;
@@ -15,6 +16,7 @@ interface APIKey {
     enabled: boolean;
     failureCount: number;
     lastFailure: number | null;
+    isProxy?: boolean;
 }
 
 interface GenerateOptions {
@@ -81,8 +83,24 @@ class MultiKeyAIService {
             });
         }
 
+        // Vercel / Supabase Fallback (Edge Function)
+        // If no keys found or explicitly requested, add Proxy as a low-priority fallback
+        const useProxy = import.meta.env.VITE_USE_EDGE_FUNCTION === 'true' || keys.length === 0 || import.meta.env.PROD;
+        if (useProxy) {
+            keys.push({
+                key: 'PROXY',
+                name: 'Supabase Proxy (Fallback)',
+                priority: 10,
+                enabled: true,
+                failureCount: 0,
+                lastFailure: null,
+                isProxy: true
+            });
+        }
+
         this.apiKeys = keys.sort((a, b) => a.priority - b.priority);
-        console.log(`🔑 [MULTI-KEY] Loaded ${this.apiKeys.length} API key(s)`);
+        console.log(`🔑 [MULTI-KEY] Loaded ${this.apiKeys.length} API key(s) (Proxy: ${useProxy})`);
+        this.apiKeys.forEach(k => console.log(`   - ${k.name}: Priority ${k.priority}${import.meta.env.DEV && !k.isProxy ? ` (${k.key.substring(0, 6)}...)` : ''}`));
     }
 
     /**
@@ -158,35 +176,49 @@ class MultiKeyAIService {
 
         // Try each available key
         let lastError: Error | null = null;
-        const maxAttempts = this.apiKeys.length;
+        const maxAttempts = Math.max(this.apiKeys.length, 1);
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
             const apiKey = this.getNextKey();
             if (!apiKey) {
-                throw new Error('No available API keys');
+                throw new Error('No available API keys or proxy');
             }
 
             try {
-                console.log(`🚀 [MULTI-KEY] Attempting with ${apiKey.name}...`);
-
                 // Use rate limiter
                 const response = await aiRateLimiter.queueRequest(async () => {
-                    const genAI = new GoogleGenerativeAI(apiKey.key);
-                    const geminiModel = genAI.getGenerativeModel({
-                        model,
-                        generationConfig: {
-                            temperature: options.temperature,
-                            maxOutputTokens: options.maxOutputTokens
-                        }
-                    });
-                    const result = await geminiModel.generateContent(prompt);
-                    return result.response.text();
+                    if (apiKey.isProxy) {
+                        console.log(`📡 [MULTI-KEY] Routing through Supabase Proxy...`);
+                        const { data, error } = await supabase.functions.invoke('gemini-proxy', {
+                            body: {
+                                prompt,
+                                model: model,
+                                temperature: options.temperature,
+                                maxTokens: options.maxOutputTokens
+                            }
+                        });
+
+                        if (error) throw new Error(`Proxy Error: ${error.message}`);
+                        if (!data?.response) throw new Error('No response from proxy');
+                        return data.response;
+                    } else {
+                        const genAI = new GoogleGenerativeAI(apiKey.key);
+                        const geminiModel = genAI.getGenerativeModel({
+                            model,
+                            generationConfig: {
+                                temperature: options.temperature,
+                                maxOutputTokens: options.maxOutputTokens
+                            }
+                        });
+                        const result = await geminiModel.generateContent(prompt);
+                        return result.response.text();
+                    }
                 });
 
                 // Success! Track usage
                 const tokens = Math.ceil(prompt.length / 4) + Math.ceil(response.length / 4);
 
-                // Track for Gemini (we can expand this if we add more providers)
+                // Track for Gemini
                 aiUsageService.recordUsage('gemini', tokens);
 
                 // Cache the response
