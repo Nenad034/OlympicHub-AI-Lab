@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { multiKeyAI } from '../multiKeyAI';
 import { sentinelEvents } from '../../utils/sentinelEvents';
 import { aiSecurity } from '../../utils/aiSecurity';
 
@@ -13,18 +13,11 @@ export interface ScoredResult {
 }
 
 export class AiIntelligenceService {
-    private genAI: GoogleGenerativeAI | null = null;
     private static instance: AiIntelligenceService;
     private callCount = 0;
     private readonly MAX_CALLS = Number((import.meta as any).env?.VITE_AI_MAX_CALLS_PER_SESSION) || 50;
 
-    private constructor() {
-        const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
-        if (apiKey) {
-            this.genAI = new GoogleGenerativeAI(apiKey);
-            console.log('✨ AI Intelligence Service initialized with API Key');
-        }
-    }
+    private constructor() { }
 
     public static getInstance(): AiIntelligenceService {
         if (!AiIntelligenceService.instance) {
@@ -96,7 +89,7 @@ export class AiIntelligenceService {
      * Safely processes content from external/untrusted sources
      */
     public async processExternalContent(rawContent: string, task: string): Promise<string> {
-        if (!this.genAI || !this.checkLimits()) return "AI is unavailable or limits reached.";
+        if (!this.checkLimits()) return "AI limit reached.";
 
         // 1. Sanitize input
         const securityCheck = aiSecurity.sanitizeUntrustedText(rawContent);
@@ -105,7 +98,7 @@ export class AiIntelligenceService {
         const securedData = aiSecurity.wrapInSafetyLayer(securityCheck.safeText);
 
         // 3. Prepare system prompt with Shield
-        const finalPrompt = `
+        const prompt = `
 ${aiSecurity.getSystemShieldPrompt()}
 
 TASK: ${task}
@@ -116,10 +109,11 @@ ${securedData}
 
         try {
             this.callCount++;
-            const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-            const result = await model.generateContent(finalPrompt);
-            const response = await result.response;
-            return response.text();
+            return await multiKeyAI.generateContent(prompt, {
+                useCache: true,
+                cacheCategory: 'analysis',
+                model: "gemini-1.5-flash"
+            });
         } catch (error) {
             console.error('[AiLab Security] External content analysis failed:', error);
             return "Bezbednosna greška pri analizi sadržaja.";
@@ -130,14 +124,12 @@ ${securedData}
      * Uses LLM to fix/enrich data when things look weird
      */
     public async smartEnrich(data: any): Promise<any> {
-        if (!this.genAI || !this.checkLimits()) return data;
+        if (!this.checkLimits()) return data;
 
         try {
             this.callCount++;
-            const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-            // Simulation of AI pattern enrichment
-            console.log(`[AiLab] LLM Call ${this.callCount}/${this.MAX_CALLS}: Enriching data...`);
+            // Simulation logic preserved or moved to multiKeyAI if needed
+            console.log(`[AiLab] LLM Call ${this.callCount}/${this.MAX_CALLS}: Enriching data via multiKeyAI...`);
             return data;
         } catch (error) {
             console.error('[AiLab] LLM Enrichment failed:', error);
@@ -149,17 +141,19 @@ ${securedData}
      * Generates a short, catchy AI insight for a hotel
      */
     public async generateHotelInsight(hotel: { name: string, stars: number, price: number }, destination: string): Promise<string> {
-        if (!this.genAI || !this.checkLimits()) return "";
+        if (!this.checkLimits()) return "";
 
         try {
             this.callCount++;
-            const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
             const prompt = `Analiziraj hotel "${hotel.name}" (${hotel.stars}*) u mestu "${destination}" sa cenom od ${hotel.price} EUR. Napiši jednu kratku, privlačnu rečenicu na srpskom jeziku (max 15 reči) koja ističe glavnu prednost ili razlog za rezervaciju ovog hotela. Nemoj koristiti navodnike.`;
 
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text().trim().replace(/"/g, '');
-            return text;
+            const response = await multiKeyAI.generateContent(prompt, {
+                useCache: true,
+                cacheCategory: 'analysis',
+                model: "gemini-1.5-flash"
+            });
+
+            return response.trim().replace(/"/g, '');
         } catch (error) {
             console.error('[AiLab] Insight generation failed:', error);
             return "";

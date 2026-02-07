@@ -6,6 +6,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { aiRateLimiter } from './aiRateLimiter';
 import { aiCache } from './aiCache';
+import { aiUsageService } from './aiUsageService';
 
 interface APIKey {
     key: string;
@@ -170,13 +171,18 @@ class MultiKeyAIService {
                     return result.response.text();
                 });
 
-                // Success! Cache the response
+                // Success! Track usage
+                const tokens = Math.ceil(prompt.length / 4) + Math.ceil(response.length / 4);
+
+                // Track for Gemini (we can expand this if we add more providers)
+                aiUsageService.recordUsage('gemini', tokens);
+
+                // Cache the response
                 if (useCache) {
-                    const tokens = Math.ceil(prompt.length / 4) + Math.ceil(response.length / 4);
                     aiCache.set(prompt, response, tokens, cacheCategory);
                 }
 
-                console.log(`✅ [MULTI-KEY] Success with ${apiKey.name}`);
+                console.log(`✅ [MULTI-KEY] Success with ${apiKey.name} (${tokens} tokens)`);
                 return response;
 
             } catch (error: any) {

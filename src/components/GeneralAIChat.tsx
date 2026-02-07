@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import { GeometricBrain } from './icons/GeometricBrain';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useConfig } from '../context/ConfigContext';
 import { quotaNotificationService } from '../services/quotaNotificationService';
 import { multiKeyAI } from '../services/multiKeyAI';
@@ -230,32 +229,10 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                 successfulResponse = response;
                 usedModelName = modelName;
 
-                // Estimate token usage (since multiKeyAI doesn't return metadata yet)
+                // local state update for UI only
                 const estimatedTokens = Math.ceil(prompt.length / 4) + Math.ceil(response.length / 4);
                 setTotalTokens(prev => prev + estimatedTokens);
-                console.log(`📊 [AI CHAT] Estimated tokens used: ${estimatedTokens}`);
-
-                // Save to localStorage for quota dashboard
-                const quotaKey = 'ai_quota_gemini';
-                const savedQuota = localStorage.getItem(quotaKey);
-                const quotaData = savedQuota ? JSON.parse(savedQuota) : {
-                    dailyUsed: 0,
-                    weeklyUsed: 0,
-                    monthlyUsed: 0,
-                    totalCalls: 0,
-                    lastReset: new Date().toISOString()
-                };
-
-                quotaData.dailyUsed += estimatedTokens;
-                quotaData.weeklyUsed += estimatedTokens;
-                quotaData.monthlyUsed += estimatedTokens;
-                quotaData.totalCalls += 1;
-                quotaData.avgPerRequest = Math.round(quotaData.dailyUsed / quotaData.totalCalls);
-
-                localStorage.setItem(quotaKey, JSON.stringify(quotaData));
-
-                // Check if alert should be sent
-                quotaNotificationService.checkAndAlert('gemini', quotaData.dailyUsed, 1000000);
+                console.log(`📊 [AI CHAT] Estimated tokens used in this call: ${estimatedTokens}`);
 
                 console.log(`✅ [AI CHAT] Success with model: ${modelName}`);
             } catch (e: any) {

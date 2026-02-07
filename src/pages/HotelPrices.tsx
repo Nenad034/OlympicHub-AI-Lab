@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { loadFromCloud, saveToCloud } from '../utils/storageUtils';
 import { useConfig } from '../context/ConfigContext';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { multiKeyAI } from '../services/multiKeyAI';
 
 // --- Types ---
 interface PriceOption {
@@ -238,27 +238,24 @@ const HotelPrices: React.FC = () => {
             return;
         }
 
-        // Standard Gemini logic
+        // Standard multiKeyAI logic
         try {
-            if (config.geminiKey) {
-                const genAI = new GoogleGenerativeAI(config.geminiKey);
-                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-                const prompt = `Ti si Price AI Assistant za Olympic Hub ERP. Upravljaš cenama za hotel ${hotel.name}. 
-                Korisnik kaže: "${chatInput}"
-                Trenutne cene: ${JSON.stringify(prices)}
-                Pravila zauzetosti: ${JSON.stringify(occupancyRules)}
-                Odgovori profesionalno na srpskom jeziku i predloži konkretne akcije ako je potrebno.`;
+            const prompt = `Ti si Price AI Assistant za Olympic Hub ERP. Upravljaš cenama za hotel ${hotel.name}. 
+            Korisnik kaže: "${chatInput}"
+            Trenutne cene: ${JSON.stringify(prices)}
+            Pravila zauzetosti: ${JSON.stringify(occupancyRules)}
+            Odgovori profesionalno na srpskom jeziku i predloži konkretne akcije ako je potrebno.`;
 
-                const result = await model.generateContent(prompt);
-                const responseText = result.response.text();
-                setChatHistory(prev => [...prev, { role: 'ai', text: responseText }]);
-            } else {
-                setTimeout(() => {
-                    setChatHistory(prev => [...prev, { role: 'ai', text: "Gemini API ključ nije podešen. Koristim simulaciju za generisanje pravila." }]);
-                }, 1000);
-            }
+            const responseText = await multiKeyAI.generateContent(prompt, {
+                useCache: true,
+                cacheCategory: 'prices',
+                model: "gemini-2.0-flash"
+            });
+
+            setChatHistory(prev => [...prev, { role: 'ai', text: responseText }]);
         } catch (e) {
-            setChatHistory(prev => [...prev, { role: 'ai', text: "Greška u AI modulu." }]);
+            console.error('AI Error:', e);
+            setChatHistory(prev => [...prev, { role: 'ai', text: "Greška u AI modulu. Proverite sistemski log." }]);
         } finally {
             setIsAILoading(false);
         }
