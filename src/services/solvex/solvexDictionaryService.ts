@@ -228,59 +228,89 @@ export async function getHotelFullContent(hotelId: number): Promise<SolvexApiRes
         console.log(`[Solvex Content] Parsing rich content for hotel ${hotelId}...`);
 
         let images: string[] = [];
-        let description = "";
+        let description = '';
 
-        // Brute force search in the entire result object (stringified)
-        // This is necessary because GetRoomDescriptions returns a DataSet with dynamic table names
-        const stringified = JSON.stringify(result);
+        // 1. Recursive search for fields in GetRoomDescriptions payload
+        const findData = (obj: any) => {
+            if (!obj || typeof obj !== 'object' || obj === null) return;
 
-        // 1. Regex for Images (including .ashx dynamic paths)
-        // Matches typical image extensions and Solvex's HotelPhoto.ashx handler
-        const urlMatches = stringified.match(/https?:\/\/[^"'\s\\]+(?:\.[a-z0-9]+)?(?:\?[^"'\s\\]+)?/gi);
-        if (urlMatches) {
-            images = [...new Set(urlMatches.filter(u =>
-                (u.includes('HotelPhoto') || u.includes('image') || u.includes('photo') || /\.(jpg|jpeg|png|gif)/i.test(u)) &&
-                !u.includes('megatec.ru') &&
-                !u.includes('schemas.xmlsoap.org') &&
-                !u.includes('w3.org')
-            ))];
-        }
+            if (Array.isArray(obj)) {
+                obj.forEach(item => findData(item));
+                return;
+            }
 
-        // 2. Extract Description from common fields
-        const findDescription = (obj: any) => {
-            if (!obj || typeof obj !== 'object') return;
             for (const key in obj) {
                 const val = obj[key];
-                if (['Description', 'HotelDescription', 'LongDescription', 'Text'].includes(key) && typeof val === 'string' && val.length > description.length) {
-                    description = val;
-                } else if (typeof val === 'object') {
-                    findDescription(val);
-                }
-            }
-        };
-        findDescription(result);
 
-        // 3. Fallback for description from AdditionalDescription or Name if it's long enough
-        if (!description || description.length < 50) {
-            const findFallbackDesc = (obj: any) => {
-                if (!obj || typeof obj !== 'object') return;
-                for (const key in obj) {
-                    const val = obj[key];
-                    if (typeof val === 'string' && val.length > 100 && !val.startsWith('http')) {
+                // Potential descriptions
+                if (['Description', 'HotelDescription', 'LongDescription', 'Text', 'Value'].includes(key) && typeof val === 'string') {
+                    if (val.length > 40 && val.includes(' ') && !val.startsWith('http')) {
                         if (val.length > description.length) description = val;
-                    } else if (typeof val === 'object') {
-                        findFallbackDesc(val);
                     }
                 }
-            };
-            findFallbackDesc(result);
+
+                // Potential images (direct fields)
+                if (['Image', 'Picture', 'Photo', 'Path', 'Url', 'HotelImage'].includes(key) && typeof val === 'string' && val.startsWith('http')) {
+                    if (!images.includes(val)) images.push(val);
+                }
+
+                if (typeof val === 'object') findData(val);
+            }
+        };
+
+        findData(result);
+
+        // 2. Fallback: Search Hotel Availability for this specific hotel to get the "HotelImage" from result table
+        if (images.length === 0) {
+            console.log(`[Solvex Content] No images in descriptions for ${hotelId}, trying Search discovery...`);
+            try {
+                const { searchHotels } = await import('./solvexSearchService');
+                // Minimum search to trigger data return
+                const dateFrom = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+                const dateTo = new Date(dateFrom.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+                const searchRes = await searchHotels({
+                    dateFrom: dateFrom.toISOString().split('T')[0],
+                    dateTo: dateTo.toISOString().split('T')[0],
+                    hotelId: hotelId,
+                    adults: 2,
+                    rooms: 1
+                });
+
+                if (searchRes.success && searchRes.data && searchRes.data.length > 0) {
+                    const firstMatch = searchRes.data[0];
+                    if (firstMatch.images && firstMatch.images.length > 0) {
+                        images = [...new Set([...images, ...firstMatch.images])];
+                    }
+                    if (!description && firstMatch.description) {
+                        description = firstMatch.description;
+                    }
+                }
+            } catch (e) {
+                console.warn(`[Solvex Content] Search discovery failed for ${hotelId}`);
+            }
+        }
+
+        // 3. Brute-force regex for anything that missed
+        const stringified = JSON.stringify(result);
+        const urlRegex = /https?:\/\/[^\s\"\'<>]+/gi;
+        const urlMatches = stringified.match(urlRegex);
+
+        if (urlMatches) {
+            urlMatches.forEach(url => {
+                const cleanUrl = url.replace(/\\"/g, '').replace(/\"/g, '').replace(/&amp;/g, '&');
+                if ((cleanUrl.match(/\.(jpg|jpeg|png|webp|gif|ashx)/i) || cleanUrl.includes('HotelPhoto')) &&
+                    !cleanUrl.includes('megatec.ru') && !cleanUrl.includes('schemas.xmlsoap.org')) {
+                    if (!images.includes(cleanUrl)) images.push(cleanUrl);
+                }
+            });
         }
 
         return {
             success: true,
             data: {
-                images: images,
-                description: description
+                images: images.filter(img => img.startsWith('http')),
+                description: description || ""
             }
         };
     } catch (error) {

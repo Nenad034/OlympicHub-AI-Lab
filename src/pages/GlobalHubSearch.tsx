@@ -8,7 +8,7 @@ import {
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
     LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
     CheckCircle2, CheckCircle, XCircle, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
-    Plus, Globe, AlignLeft, Database, Power, Building2
+    Plus, Globe, AlignLeft, Database, Power, Building2, Ship, Anchor, Ticket
 } from 'lucide-react';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
 import { sentinelEvents } from '../utils/sentinelEvents';
@@ -21,6 +21,7 @@ import { BookingSuccessModal } from '../components/booking/BookingSuccessModal';
 import { formatDate } from '../utils/dateUtils';
 import PackageSearch from './PackageSearch';
 import FlightSearch from './FlightSearch';
+import Step5_ExtrasSelection from '../components/packages/Steps/Step5_ExtrasSelection';
 import { useConfig } from '../context/ConfigContext';
 import './SmartSearch.css';
 import './SmartSearchFix2.css';
@@ -163,7 +164,7 @@ const GlobalHubSearch: React.FC = () => {
     const { userLevel, impersonatedSubagent } = useAuthStore();
     const isSubagent = userLevel < 6 || !!impersonatedSubagent;
 
-    const [activeTab, setActiveTab] = useState<'hotel' | 'flight' | 'package' | 'transfer' | 'tour'>('hotel');
+    const [activeTab, setActiveTab] = useState<'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'charter' | 'cruise' | 'event'>('hotel');
     const [selectedDestinations, setSelectedDestinations] = useState<Destination[]>([]);
     const [destinationInput, setDestinationInput] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -267,9 +268,12 @@ const GlobalHubSearch: React.FC = () => {
     const tabs = [
         { id: 'hotel' as const, label: 'Smeštaj', icon: Hotel },
         { id: 'flight' as const, label: 'Letovi', icon: Plane },
-        { id: 'package' as const, label: 'DYNAMIC WIZARD', icon: Package },
+        { id: 'package' as const, label: 'Dynamic Wizard', icon: Package },
+        { id: 'charter' as const, label: 'Čarteri', icon: Zap },
+        { id: 'cruise' as const, label: 'Krstarenja', icon: Ship },
         { id: 'transfer' as const, label: 'Transferi', icon: Bus },
-        { id: 'tour' as const, label: 'Ture', icon: Compass },
+        { id: 'event' as const, label: 'Events', icon: Ticket },
+        { id: 'tour' as const, label: 'Putovanja', icon: Compass },
     ];
 
     // Helper to sync nights when dates change
@@ -495,7 +499,7 @@ const GlobalHubSearch: React.FC = () => {
             }
 
             const results = await performSmartSearch({
-                searchType: activeTab,
+                searchType: activeTab as any,
                 destinations: selectedDestinations,
                 checkIn: activeCheckIn,
                 checkOut: activeCheckOut,
@@ -547,7 +551,7 @@ const GlobalHubSearch: React.FC = () => {
                         if (timeline[sCheckIn]?.available) continue;
 
                         const flexTestResults = await performSmartSearch({
-                            searchType: activeTab,
+                            searchType: activeTab as any,
                             destinations: selectedDestinations,
                             checkIn: sCheckIn,
                             checkOut: sCheckOut,
@@ -746,7 +750,7 @@ const GlobalHubSearch: React.FC = () => {
                         provider={expandedHotel.provider.toLowerCase() as any}
                         bookingData={{
                             serviceName: expandedHotel.name,
-                            serviceType: expandedHotel.type || 'hotel',
+                            serviceType: (expandedHotel.type as any) || 'hotel',
                             hotelName: expandedHotel.name,
                             location: expandedHotel.location,
                             checkIn,
@@ -792,7 +796,7 @@ const GlobalHubSearch: React.FC = () => {
                     <div className="provider-toggles-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                         <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-primary)', fontWeight: 800, fontSize: '1.1rem' }}>
                             <Database size={22} className="text-blue-500" />
-                            <span className="tracking-tight">UPRAVLJANJE API KONEKCIJAMA</span>
+                            <span className="tracking-tight">PARTNERI - DOBAVLJAČI</span>
                         </div>
                         <div className="master-api-toggle-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
@@ -845,14 +849,7 @@ const GlobalHubSearch: React.FC = () => {
                 </div>
             )}
 
-            {/* Minimal Header */}
-            <header className="smart-search-header">
-                <div className="ss-brand-title-box">
-                    <span className="ss-brand-title-main">
-                        {isSubagent ? 'B2B CLICK TO GET SEARCH' : 'CLICK TO GET SEARCH'}
-                    </span>
-                </div>
-            </header>
+
 
             {/* TAB NAVIGATION */}
             <div className="tabs-nav-container">
@@ -881,6 +878,47 @@ const GlobalHubSearch: React.FC = () => {
             ) : activeTab === 'flight' ? (
                 <div className="flight-search-inline animate-fade-in" style={{ marginTop: '2rem' }}>
                     <FlightSearch isInline={true} />
+                </div>
+            ) : activeTab === 'event' ? (
+                <div className="event-search-wrapper animate-fade-in" style={{ marginTop: '2rem' }}>
+                    <Step5_ExtrasSelection
+                        basicInfo={{
+                            destinations: selectedDestinations.length > 0 ? selectedDestinations.map((d, idx) => ({
+                                id: d.id,
+                                city: d.name,
+                                country: d.country || '',
+                                countryCode: '',
+                                airportCode: '',
+                                checkIn: checkIn,
+                                checkOut: checkOut,
+                                nights: nights,
+                                travelers: roomAllocations[idx] || roomAllocations[0]
+                            })) : [{
+                                id: 'placeholder',
+                                city: 'Rim',
+                                country: 'Italija',
+                                countryCode: '',
+                                airportCode: '',
+                                checkIn: checkIn,
+                                checkOut: checkOut,
+                                nights: nights,
+                                travelers: roomAllocations[0]
+                            }],
+                            travelers: {
+                                adults: roomAllocations.reduce((s, r) => s + r.adults, 0),
+                                children: roomAllocations.reduce((s, r) => s + r.children, 0),
+                                childrenAges: roomAllocations.reduce((ages, r) => [...ages, ...r.childrenAges], [] as number[])
+                            },
+                            currency: 'EUR',
+                            startDate: checkIn,
+                            endDate: checkOut,
+                            totalDays: nights
+                        }}
+                        data={[]}
+                        onUpdate={() => { }}
+                        onNext={() => { }}
+                        onBack={() => setActiveTab('hotel')}
+                    />
                 </div>
             ) : (
                 <>
@@ -1140,7 +1178,7 @@ const GlobalHubSearch: React.FC = () => {
                         {/* SEARCH BUTTONS ROW */}
                         <div className="action-row-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', marginTop: '10px' }}>
                             <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2' }}>
-                                <span>{isSearching ? 'Pretražujem...' : 'CLICK TO GET SEARCH'}</span>
+                                <span>{isSearching ? 'Pretražujem...' : <i>CLICK TO GET</i>}</span>
                             </button>
                             <button className="btn-new-search-tag" onClick={handleNewSearchTab}>
                                 <Plus size={16} />

@@ -8,7 +8,7 @@ import {
     TrendingUp, TrendingDown, Minus, ChevronDown, X as XIcon,
     FileText, CreditCard, Package, Globe, Truck, Bell, CheckCheck,
     FileCheck, Receipt, Send, Star, User, Table, FileCode, Code, RefreshCw, CloudLightning, Tag, Briefcase,
-    BarChart3, ChevronUp
+    BarChart3, ChevronUp, Zap, Compass, Ship
 } from 'lucide-react';
 import './ReservationsDashboard.css';
 import ReservationEmailModal from '../components/ReservationEmailModal';
@@ -24,7 +24,7 @@ type ViewMode = 'grid' | 'list' | 'calendar';
 
 interface TripItem {
     id: string;
-    type: 'Smestaj' | 'Avio karte' | 'Dinamicki paket' | 'Putovanja' | 'Transfer';
+    type: 'Smestaj' | 'Avio karte' | 'Dinamicki paket' | 'Putovanja' | 'Transfer' | 'Čarter' | 'Bus' | 'Krstarenje';
     supplier: string;
     subject: string;
     details: string;
@@ -1145,7 +1145,10 @@ ${data.map(r => `  <reservation>
                     { id: 'Avio karte', label: 'Avio', icon: <Plane size={16} /> },
                     { id: 'Dinamički paket', label: 'Paket', icon: <Package size={16} /> },
                     { id: 'Putovanja', label: 'Putovanje', icon: <Globe size={16} /> },
-                    { id: 'Transfer', label: 'Transfer', icon: <Truck size={16} /> }
+                    { id: 'Transfer', label: 'Transfer', icon: <Truck size={16} /> },
+                    { id: 'Čarter', label: 'Čarteri', icon: <Zap size={16} /> },
+                    { id: 'Bus', label: 'Bus Ture', icon: <Compass size={16} /> },
+                    { id: 'Krstarenje', label: 'Krstarenja', icon: <Ship size={16} /> }
                 ].map(type => (
                     <button
                         key={type.id}
@@ -1564,6 +1567,9 @@ ${data.map(r => `  <reservation>
                                                 {res.tripType === 'Dinamički paket' && <Package size={12} />}
                                                 {res.tripType === 'Putovanja' && <Globe size={12} />}
                                                 {res.tripType === 'Transfer' && <Truck size={12} />}
+                                                {res.tripType === 'Čarter' && <Zap size={12} />}
+                                                {res.tripType === 'Bus' && <Compass size={12} />}
+                                                {res.tripType === 'Krstarenje' && <Ship size={12} />}
                                                 {res.tripType}
                                             </div>
                                             <div

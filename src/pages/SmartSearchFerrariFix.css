@@ -664,3 +664,23 @@ button[onClick*="generatePackage"] {
     align-items: center;
     gap: 12px;
 }
+
+/* Symmetrical width for tabs and search form - 2026 Adjustments */
+.tabs-nav-container,
+.search-card-frame,
+.flight-search-form,
+.package-builder-inline,
+.package-search-page,
+.provider-toggles-section {
+    width: 100% !important;
+    max-width: 1650px !important;
+    /* Increased width for premium feel */
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+}
+
+/* Ensure the grid spreads nicely in the wider form */
+.params-grid {
+    grid-template-columns: repeat(5, 1fr) !important;
+}

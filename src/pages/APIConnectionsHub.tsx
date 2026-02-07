@@ -138,8 +138,8 @@ const APIConnectionsHub: React.FC = () => {
                         <Plug size={40} />
                     </div>
                     <div>
-                        <h1>API Connections Hub</h1>
-                        <p>Centralno upravljanje svim eksternim integracijama</p>
+                        <h1>PARTNERI - DOBAVLJAČI</h1>
+                        <p>Centralno upravljanje svim partnerskim konekcijama</p>
                     </div>
                 </div>
                 <div className="header-stats">

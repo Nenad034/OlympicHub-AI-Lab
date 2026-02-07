@@ -829,14 +829,7 @@ const SmartSearch: React.FC = () => {
                 </div>
             )}
 
-            {/* Minimal Header */}
-            <header className="smart-search-header">
-                <div className="ss-brand-title-box">
-                    <span className="ss-brand-title-main">
-                        {isSubagent ? 'B2B CLICK TO GET...' : 'CLICK TO GET...'}
-                    </span>
-                </div>
-            </header>
+
 
             {/* TAB NAVIGATION */}
             < div className="tabs-nav-container" >
@@ -1149,7 +1142,7 @@ const SmartSearch: React.FC = () => {
                         {/* SEARCH BUTTONS ROW */}
                         <div className="action-row-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', marginTop: '10px' }}>
                             <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2' }}>
-                                <span>{isSearching ? 'Pretražujem...' : 'CLICK TO GET...'}</span>
+                                <span>{isSearching ? 'Pretražujem...' : <i>CLICK TO GET</i>}</span>
                             </button>
 
                             <button className="btn-new-search-tag" onClick={handleNewSearchTab}>

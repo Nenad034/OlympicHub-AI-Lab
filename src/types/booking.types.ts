@@ -69,7 +69,7 @@ export interface GenericGuest {
  */
 export interface BookingData {
     serviceName: string;
-    serviceType: 'hotel' | 'flight' | 'transfer' | 'tour' | 'package';
+    serviceType: 'hotel' | 'flight' | 'transfer' | 'tour' | 'package' | 'charter' | 'bus' | 'cruise';
     hotelName?: string;
     location: string;
     checkIn: string; // YYYY-MM-DD
