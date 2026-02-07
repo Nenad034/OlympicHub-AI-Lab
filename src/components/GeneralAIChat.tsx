@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useConfig } from '../context/ConfigContext';
 import { quotaNotificationService } from '../services/quotaNotificationService';
+import { multiKeyAI } from '../services/multiKeyAI';
 
 type ChatPersona = 'specialist' | 'general' | 'group';
 
@@ -216,43 +217,45 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
             try {
                 console.log(`🤖 [AI CHAT] Trying model: ${modelName}`);
                 setApiCallCount(prev => prev + 1); // Track quota usage
-                const apiKey = config.geminiKey;
-                const genAI = new GoogleGenerativeAI(apiKey);
-                const model = genAI.getGenerativeModel({ model: modelName });
+
                 const prompt = `System Instructions: ${getSystemPrompt()}\nLanguage: ${lang}\nUser: ${textToSend}`;
-                const result = await model.generateContent(prompt);
-                successfulResponse = result.response.text();
+
+                // Use multiKeyAI service with caching and rate limiting
+                const response = await multiKeyAI.generateContent(prompt, {
+                    useCache: true,
+                    cacheCategory: 'chat',
+                    model: modelName
+                });
+
+                successfulResponse = response;
                 usedModelName = modelName;
 
-                // Track token usage
-                const usage = result.response.usageMetadata;
-                if (usage) {
-                    const tokensUsed = (usage.promptTokenCount || 0) + (usage.candidatesTokenCount || 0);
-                    setTotalTokens(prev => prev + tokensUsed);
-                    console.log(`📊 [AI CHAT] Tokens used: ${tokensUsed} (Input: ${usage.promptTokenCount}, Output: ${usage.candidatesTokenCount})`);
+                // Estimate token usage (since multiKeyAI doesn't return metadata yet)
+                const estimatedTokens = Math.ceil(prompt.length / 4) + Math.ceil(response.length / 4);
+                setTotalTokens(prev => prev + estimatedTokens);
+                console.log(`📊 [AI CHAT] Estimated tokens used: ${estimatedTokens}`);
 
-                    // Save to localStorage for quota dashboard
-                    const quotaKey = 'ai_quota_gemini';
-                    const savedQuota = localStorage.getItem(quotaKey);
-                    const quotaData = savedQuota ? JSON.parse(savedQuota) : {
-                        dailyUsed: 0,
-                        weeklyUsed: 0,
-                        monthlyUsed: 0,
-                        totalCalls: 0,
-                        lastReset: new Date().toISOString()
-                    };
+                // Save to localStorage for quota dashboard
+                const quotaKey = 'ai_quota_gemini';
+                const savedQuota = localStorage.getItem(quotaKey);
+                const quotaData = savedQuota ? JSON.parse(savedQuota) : {
+                    dailyUsed: 0,
+                    weeklyUsed: 0,
+                    monthlyUsed: 0,
+                    totalCalls: 0,
+                    lastReset: new Date().toISOString()
+                };
 
-                    quotaData.dailyUsed += tokensUsed;
-                    quotaData.weeklyUsed += tokensUsed;
-                    quotaData.monthlyUsed += tokensUsed;
-                    quotaData.totalCalls += 1;
-                    quotaData.avgPerRequest = Math.round(quotaData.dailyUsed / quotaData.totalCalls);
+                quotaData.dailyUsed += estimatedTokens;
+                quotaData.weeklyUsed += estimatedTokens;
+                quotaData.monthlyUsed += estimatedTokens;
+                quotaData.totalCalls += 1;
+                quotaData.avgPerRequest = Math.round(quotaData.dailyUsed / quotaData.totalCalls);
 
-                    localStorage.setItem(quotaKey, JSON.stringify(quotaData));
+                localStorage.setItem(quotaKey, JSON.stringify(quotaData));
 
-                    // Check if alert should be sent
-                    quotaNotificationService.checkAndAlert('gemini', quotaData.dailyUsed, 1000000);
-                }
+                // Check if alert should be sent
+                quotaNotificationService.checkAndAlert('gemini', quotaData.dailyUsed, 1000000);
 
                 console.log(`✅ [AI CHAT] Success with model: ${modelName}`);
             } catch (e: any) {

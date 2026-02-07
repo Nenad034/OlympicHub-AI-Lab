@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Activity, TrendingUp, Zap, DollarSign, AlertCircle, Download, Settings, Mail, Send } from 'lucide-react';
 import { quotaNotificationService } from '../../services/quotaNotificationService';
+import { aiRateLimiter } from '../../services/aiRateLimiter';
+import { aiCache } from '../../services/aiCache';
+import { multiKeyAI } from '../../services/multiKeyAI';
 
 interface QuotaData {
     provider: 'Google Gemini' | 'OpenAI' | 'Claude';
@@ -513,6 +516,176 @@ export default function AIQuotaDashboard() {
                         </div>
                     );
                 })}
+            </div>
+
+            {/* Advanced Statistics Panel */}
+            <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                {/* Rate Limiter Stats */}
+                <div style={{
+                    background: 'rgba(30, 41, 59, 0.5)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    borderRadius: '16px',
+                    padding: '20px'
+                }}>
+                    <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Activity size={16} color="#3b82f6" />
+                        Rate Limiter Status
+                    </h4>
+                    {(() => {
+                        const stats = aiRateLimiter.getUsageStats();
+                        return (
+                            <>
+                                <div style={{ marginBottom: '12px' }}>
+                                    <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>Requests Per Minute</div>
+                                    <div style={{ fontSize: '20px', fontWeight: 700 }}>{stats.requestsPerMinute} / 15</div>
+                                    <div style={{
+                                        height: '4px',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        borderRadius: '2px',
+                                        marginTop: '6px',
+                                        overflow: 'hidden'
+                                    }}>
+                                        <div style={{
+                                            width: `${(stats.requestsPerMinute / 15) * 100}%`,
+                                            height: '100%',
+                                            background: stats.requestsPerMinute > 12 ? '#ef4444' : '#3b82f6',
+                                            transition: 'width 0.3s ease'
+                                        }} />
+                                    </div>
+                                </div>
+                                <div style={{ marginBottom: '12px' }}>
+                                    <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>Requests Today</div>
+                                    <div style={{ fontSize: '20px', fontWeight: 700 }}>{stats.requestsToday.toLocaleString()} / 3,000</div>
+                                    <div style={{
+                                        height: '4px',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        borderRadius: '2px',
+                                        marginTop: '6px',
+                                        overflow: 'hidden'
+                                    }}>
+                                        <div style={{
+                                            width: `${stats.percentageUsed}%`,
+                                            height: '100%',
+                                            background: stats.percentageUsed > 80 ? '#ef4444' : stats.percentageUsed > 50 ? '#eab308' : '#22c55e',
+                                            transition: 'width 0.3s ease'
+                                        }} />
+                                    </div>
+                                </div>
+                                <div style={{
+                                    padding: '8px 12px',
+                                    borderRadius: '8px',
+                                    background: stats.canMakeRequest ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                    border: `1px solid ${stats.canMakeRequest ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+                                    fontSize: '11px',
+                                    color: stats.canMakeRequest ? '#22c55e' : '#ef4444',
+                                    fontWeight: 600
+                                }}>
+                                    {stats.canMakeRequest ? '✅ Ready to send requests' : '⏸️ Rate limit reached, queuing...'}
+                                </div>
+                            </>
+                        );
+                    })()}
+                </div>
+
+                {/* Cache Stats */}
+                <div style={{
+                    background: 'rgba(30, 41, 59, 0.5)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    borderRadius: '16px',
+                    padding: '20px'
+                }}>
+                    <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Zap size={16} color="#8b5cf6" />
+                        Cache Performance
+                    </h4>
+                    {(() => {
+                        const stats = aiCache.getStats();
+                        const size = aiCache.getCacheSize();
+                        return (
+                            <>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>Hit Rate</div>
+                                        <div style={{ fontSize: '20px', fontWeight: 700, color: '#8b5cf6' }}>{stats.hitRate.toFixed(1)}%</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>Tokens Saved</div>
+                                        <div style={{ fontSize: '20px', fontWeight: 700, color: '#22c55e' }}>{formatNumber(stats.tokensSaved)}</div>
+                                    </div>
+                                </div>
+                                <div style={{ marginBottom: '12px' }}>
+                                    <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>Cache Entries: {size.entries} ({size.estimatedKB} KB)</div>
+                                    <div style={{ fontSize: '10px', color: '#64748b' }}>
+                                        Hits: {stats.hits} | Misses: {stats.misses}
+                                    </div>
+                                </div>
+                                <div style={{
+                                    padding: '8px 12px',
+                                    borderRadius: '8px',
+                                    background: 'rgba(139, 92, 246, 0.1)',
+                                    border: '1px solid rgba(139, 92, 246, 0.2)',
+                                    fontSize: '11px',
+                                    color: '#8b5cf6',
+                                    fontWeight: 600
+                                }}>
+                                    💾 Saving ~{Math.round(stats.hitRate)}% API calls
+                                </div>
+                            </>
+                        );
+                    })()}
+                </div>
+
+                {/* Multi-Key Status */}
+                <div style={{
+                    background: 'rgba(30, 41, 59, 0.5)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    borderRadius: '16px',
+                    padding: '20px'
+                }}>
+                    <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Settings size={16} color="#10b981" />
+                        API Keys Status
+                    </h4>
+                    {(() => {
+                        const keys = multiKeyAI.getKeysStatus();
+                        return (
+                            <>
+                                {keys.map((key, index) => (
+                                    <div key={index} style={{
+                                        padding: '10px 12px',
+                                        borderRadius: '8px',
+                                        background: 'rgba(255,255,255,0.02)',
+                                        border: '1px solid rgba(255,255,255,0.05)',
+                                        marginBottom: '8px'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div>
+                                                <div style={{ fontSize: '12px', fontWeight: 600 }}>{key.name}</div>
+                                                <div style={{ fontSize: '10px', color: '#64748b' }}>Priority: {key.priority}</div>
+                                            </div>
+                                            <div style={{
+                                                padding: '4px 8px',
+                                                borderRadius: '6px',
+                                                fontSize: '10px',
+                                                fontWeight: 600,
+                                                background: key.enabled ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                                color: key.enabled ? '#22c55e' : '#ef4444',
+                                                border: `1px solid ${key.enabled ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+                                            }}>
+                                                {key.status}
+                                            </div>
+                                        </div>
+                                        {key.failureCount > 0 && (
+                                            <div style={{ fontSize: '10px', color: '#f87171', marginTop: '4px' }}>
+                                                ⚠️ Failures: {key.failureCount}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </>
+                        );
+                    })()}
+                </div>
             </div>
 
             {/* Info Card */}
