@@ -105,13 +105,16 @@ class MultiKeyAIService {
         const availableKeys = this.apiKeys.filter(k => k.enabled && k.failureCount < this.maxFailures);
 
         if (availableKeys.length === 0) {
-            console.error('❌ [MULTI-KEY] No available API keys!');
+            console.error('❌ [MULTI-KEY] No available API keys! Total keys in registry:', this.apiKeys.length);
+            this.apiKeys.forEach(k => console.log(`- ${k.name}: enabled=${k.enabled}, failures=${k.failureCount}`));
             return null;
         }
 
         // Round-robin through available keys
         this.currentKeyIndex = (this.currentKeyIndex + 1) % availableKeys.length;
-        return availableKeys[this.currentKeyIndex];
+        const selected = availableKeys[this.currentKeyIndex];
+        console.log(`🎯 [MULTI-KEY] Selected: ${selected.name} (Priority: ${selected.priority})`);
+        return selected;
     }
 
     /**
@@ -236,6 +239,32 @@ class MultiKeyAIService {
             failureCount: key.failureCount,
             status: key.enabled ? 'Active' : 'Disabled'
         }));
+    }
+
+    /**
+     * Update or add a custom API key at runtime (e.g. from Settings UI)
+     */
+    updateKey(key: string, name: string = 'Custom (Settings)', priority: number = 0) {
+        if (!key) return;
+
+        const existingIndex = this.apiKeys.findIndex(k => k.name === name);
+        const newKey: APIKey = {
+            key,
+            name,
+            priority,
+            enabled: true,
+            failureCount: 0,
+            lastFailure: null
+        };
+
+        if (existingIndex >= 0) {
+            this.apiKeys[existingIndex] = newKey;
+        } else {
+            this.apiKeys.push(newKey);
+            this.apiKeys.sort((a, b) => a.priority - b.priority);
+        }
+
+        console.log(`🔑 [MULTI-KEY] Key updated/added: ${name}`);
     }
 
     /**

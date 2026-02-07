@@ -133,6 +133,12 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
     }, [isOpen, lang, context, messages.length, speak, activePersona]);
 
     useEffect(() => {
+        if (config.geminiKey) {
+            multiKeyAI.updateKey(config.geminiKey, 'Primary (Settings)', 0);
+        }
+    }, [config.geminiKey]);
+
+    useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
@@ -199,12 +205,13 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
             return `Ti si ChatBot u grupnom razgovoru. Pomažeš u moderaciji i odgovaraš na pitanja tima i partnera.`;
         };
 
-        if (!config.geminiKey) {
+        const activeKeys = multiKeyAI.getKeysStatus().filter(k => k.enabled);
+        if (activeKeys.length === 0) {
             setMessages(prev => [...prev, {
                 role: 'ai',
                 text: lang === 'sr'
-                    ? "Greška: Gemini API ključ nije podešen. Molimo idite u Podešavanja (Settings) i unesite svoj API ključ da biste aktivirali AI asistenta."
-                    : "Error: Gemini API key is not configured. Please go to Settings and enter your API key to activate the AI assistant.",
+                    ? "Greška: Nijedan AI ključ nije dostupan (ni u .env ni u podešavanjima). Molimo unesite barem jedan API ključ u Podešavanjima."
+                    : "Error: No AI keys are available (neither in .env nor settings). Please enter at least one API key in Settings.",
                 isError: true
             }]);
             setIsThinking(false);
