@@ -25,6 +25,7 @@ import { GeometricBrain } from './icons/GeometricBrain';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useConfig } from '../context/ConfigContext';
+import { quotaNotificationService } from '../services/quotaNotificationService';
 
 type ChatPersona = 'specialist' | 'general' | 'group';
 
@@ -78,6 +79,8 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
     const [showUserList, setShowUserList] = useState(false);
     const [attachments, setAttachments] = useState<{ name: string; type: 'image' | 'file'; url: string } | null>(null);
+    const [apiCallCount, setApiCallCount] = useState(0);
+    const [totalTokens, setTotalTokens] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Simulated Active Users
@@ -173,7 +176,12 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
         setAttachments(null);
         setIsThinking(true);
 
-        const modelsToTry = ["gemini-2.0-flash", "gemini-flash-latest"];
+        console.log('🤖 [AI CHAT] Initiating Gemini API call at:', new Date().toISOString());
+        console.log('🤖 [AI CHAT] Persona:', activePersona, '| Context:', context);
+
+        // Primary: gemini-2.0-flash (fast, modern)
+        // Fallback: gemini-1.5-flash (stable, proven)
+        const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash"];
         let lastError = "";
         let successfulResponse = null;
         let usedModelName = "";
@@ -206,6 +214,8 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
         for (const modelName of modelsToTry) {
             if (successfulResponse) break;
             try {
+                console.log(`🤖 [AI CHAT] Trying model: ${modelName}`);
+                setApiCallCount(prev => prev + 1); // Track quota usage
                 const apiKey = config.geminiKey;
                 const genAI = new GoogleGenerativeAI(apiKey);
                 const model = genAI.getGenerativeModel({ model: modelName });
@@ -213,8 +223,41 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                 const result = await model.generateContent(prompt);
                 successfulResponse = result.response.text();
                 usedModelName = modelName;
+
+                // Track token usage
+                const usage = result.response.usageMetadata;
+                if (usage) {
+                    const tokensUsed = (usage.promptTokenCount || 0) + (usage.candidatesTokenCount || 0);
+                    setTotalTokens(prev => prev + tokensUsed);
+                    console.log(`📊 [AI CHAT] Tokens used: ${tokensUsed} (Input: ${usage.promptTokenCount}, Output: ${usage.candidatesTokenCount})`);
+
+                    // Save to localStorage for quota dashboard
+                    const quotaKey = 'ai_quota_gemini';
+                    const savedQuota = localStorage.getItem(quotaKey);
+                    const quotaData = savedQuota ? JSON.parse(savedQuota) : {
+                        dailyUsed: 0,
+                        weeklyUsed: 0,
+                        monthlyUsed: 0,
+                        totalCalls: 0,
+                        lastReset: new Date().toISOString()
+                    };
+
+                    quotaData.dailyUsed += tokensUsed;
+                    quotaData.weeklyUsed += tokensUsed;
+                    quotaData.monthlyUsed += tokensUsed;
+                    quotaData.totalCalls += 1;
+                    quotaData.avgPerRequest = Math.round(quotaData.dailyUsed / quotaData.totalCalls);
+
+                    localStorage.setItem(quotaKey, JSON.stringify(quotaData));
+
+                    // Check if alert should be sent
+                    quotaNotificationService.checkAndAlert('gemini', quotaData.dailyUsed, 1000000);
+                }
+
+                console.log(`✅ [AI CHAT] Success with model: ${modelName}`);
             } catch (e: any) {
                 lastError = e.message;
+                console.error(`❌ [AI CHAT] Failed with model ${modelName}:`, e.message);
             }
         }
 
@@ -231,6 +274,7 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
             setMessages(prev => [...prev, { role: 'ai', text: `Error: ${errorMsg}`, isError: true }]);
         }
         setIsThinking(false);
+        console.log(`📊 [AI CHAT] Session totals - API Calls: ${apiCallCount + 1} | Tokens: ${totalTokens}`);
     };
 
     const startResizing = (e: React.PointerEvent) => {
@@ -318,7 +362,9 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                                 </div>
                                 <div>
                                     <div style={{ fontWeight: 700, fontSize: '15px' }}>{getPersonaTitle()}</div>
-                                    <div style={{ fontSize: '11px', opacity: 0.8 }}>Olympic Hub Intelligence</div>
+                                    <div style={{ fontSize: '11px', opacity: 0.8, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        Olympic Hub • Calls: {apiCallCount} • Tokens: {totalTokens.toLocaleString()}
+                                    </div>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', gap: '8px' }}>

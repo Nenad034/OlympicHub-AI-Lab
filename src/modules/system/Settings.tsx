@@ -33,6 +33,7 @@ import { saveToCloud, loadFromCloud } from '../../utils/storageUtils';
 import SystemPulse from './SystemPulse';
 import DeepArchive from './DeepArchive';
 import NotificationCenter from './NotificationCenter';
+import AIQuotaDashboard from './AIQuotaDashboard';
 
 // --- Types ---
 interface UserAccount {
@@ -66,7 +67,7 @@ interface Props {
     setUserLevel: (level: number) => void;
 }
 
-type TabType = 'general' | 'users' | 'permissions' | 'connections' | 'pulse' | 'backups' | 'archive' | 'notifications' | 'ai-training';
+type TabType = 'general' | 'users' | 'permissions' | 'connections' | 'ai-quota' | 'pulse' | 'backups' | 'archive' | 'notifications' | 'ai-training';
 
 // --- KATANA STYLED COMPONENTS (Inline Styles) ---
 const styles = {
@@ -793,6 +794,7 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                         <div style={{ flex: 1, overflowY: 'auto' }}>
                             <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, marginBottom: '10px', paddingLeft: '10px' }}>MAIN MENU</div>
                             <div onClick={() => handleTabChange('connections')} style={styles.navItem(activeTab === 'connections')}><Activity size={18} /> Active Connections</div>
+                            <div onClick={() => handleTabChange('ai-quota')} style={styles.navItem(activeTab === 'ai-quota')}><Zap size={18} /> AI Quota Tracker</div>
                             <div onClick={() => handleTabChange('general')} style={styles.navItem(activeTab === 'general')}><LayoutDashboard size={18} /> General Settings</div>
                             <div onClick={() => handleTabChange('users')} style={styles.navItem(activeTab === 'users')}><Users size={18} /> Users & Accounts</div>
                             <div onClick={() => handleTabChange('permissions')} style={styles.navItem(activeTab === 'permissions')}><Lock size={18} /> Access Permissions</div>
@@ -865,6 +867,7 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                     {activeTab === 'users' && renderUsers()}
                     {activeTab === 'permissions' && renderPermissions()}
                     {activeTab === 'connections' && renderConnections()}
+                    {activeTab === 'ai-quota' && <AIQuotaDashboard />}
                     {activeTab === 'notifications' && <NotificationCenter />}
                     {activeTab === 'pulse' && <SystemPulse />}
                     {activeTab === 'backups' && renderBackups()}
