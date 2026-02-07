@@ -2853,9 +2853,21 @@ const ReservationArchitect: React.FC = () => {
                                                         </div>
 
                                                         {/* Row 3: Accommodation Details */}
-                                                        <div className="item-row-v4" style={{ marginBottom: '16px' }}>
+                                                        <div className="item-row-v4" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px', marginBottom: '16px' }}>
                                                             <div className="input-group-v4">
-                                                                <label>Tip Smeštaja (Tip sobe, Pogled, Sprat...)</label>
+                                                                <label>Tip Objekta</label>
+                                                                <input
+                                                                    value={item.accomType || ''}
+                                                                    placeholder="Npr. Hotel, Apartman..."
+                                                                    onChange={e => {
+                                                                        const next = [...dossier.tripItems];
+                                                                        next[idx].accomType = e.target.value;
+                                                                        setDossier({ ...dossier, tripItems: next });
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div className="input-group-v4">
+                                                                <label>Tip Sobe / Smeštaja (Pogled, Sprat...)</label>
                                                                 <input
                                                                     value={item.details}
                                                                     placeholder="Npr. Standard soba, Pogled more"
@@ -2868,8 +2880,8 @@ const ReservationArchitect: React.FC = () => {
                                                             </div>
                                                         </div>
 
-                                                        {/* Row 4: Service Type */}
-                                                        <div className="item-row-v4" style={{ marginBottom: '24px' }}>
+                                                        {/* Row 4: Service & Notes */}
+                                                        <div className="item-row-v4" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
                                                             <div className="input-group-v4">
                                                                 <label>Vrsta Usluge (Ishrana, Dodatne usluge...)</label>
                                                                 <input
@@ -2878,6 +2890,18 @@ const ReservationArchitect: React.FC = () => {
                                                                     onChange={e => {
                                                                         const next = [...dossier.tripItems];
                                                                         next[idx].mealPlan = e.target.value;
+                                                                        setDossier({ ...dossier, tripItems: next });
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div className="input-group-v4">
+                                                                <label>Napomene za ovu stavku</label>
+                                                                <input
+                                                                    value={item.notes || ''}
+                                                                    placeholder="Npr. Kasni check-in, pomoćni ležaj..."
+                                                                    onChange={e => {
+                                                                        const next = [...dossier.tripItems];
+                                                                        next[idx].notes = e.target.value;
                                                                         setDossier({ ...dossier, tripItems: next });
                                                                     }}
                                                                 />

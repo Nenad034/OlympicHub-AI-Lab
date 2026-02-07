@@ -30,104 +30,137 @@ async function enrichSolvexHotels() {
 
         console.log("=== SOLVEX CONTENT ENRICHMENT STARTED ===");
 
-        // Fetch hotels
-        const { data: properties, error } = await supabase
-            .from('properties')
-            .select('*')
-            .like('id', 'solvex_%');
+        // Fetch ALL hotels
+        let allProperties: any[] = [];
+        let from = 0;
+        let to = 999;
 
-        if (error) {
-            console.error("Error fetching properties:", error);
-            return;
-        }
+        console.log("Fetching properties from database...");
+        while (true) {
+            const { data, error } = await supabase
+                .from('properties')
+                .select('*')
+                .like('id', 'solvex_%')
+                .range(from, to)
+                .order('id', { ascending: true });
 
-        if (!properties || properties.length === 0) {
-            console.log("No Solvex hotels found in database.");
-            return;
-        }
-
-        console.log(`Found ${properties.length} Solvex hotels to check.`);
-
-        let updatedCount = 0;
-        let errorCount = 0;
-
-        for (let i = 0; i < properties.length; i++) {
-            const prop = properties[i];
-            const solvexIdStr = prop.id.replace('solvex_', '');
-            const solvexId = parseInt(solvexIdStr);
-
-            if (isNaN(solvexId)) {
-                console.log(`[${i + 1}/${properties.length}] Skipping invalid ID: ${prop.id}`);
-                continue;
+            if (error) {
+                console.error("Error fetching properties:", error);
+                return;
             }
 
-            console.log(`[${i + 1}/${properties.length}] Enriching ${prop.id}...`);
+            if (!data || data.length === 0) break;
 
-            const result = await getHotelFullContent(solvexId);
+            allProperties = [...allProperties, ...data];
+            if (data.length < 1000) break;
+
+            from += 1000;
+            to += 1000;
+        }
+
+        console.log(`Found ${allProperties.length} Solvex hotels to check.`);
+
+        let updatedCount = 0;
+        let skipCount = 0;
+        let errorCount = 0;
+
+        for (let i = 0; i < allProperties.length; i++) {
+            const prop = allProperties[i];
+            const today = new Date().toISOString().split('T')[0];
+
+            // Resume logic: if updated today, only skip if it ALREADY has images or content
+            // However, since we improved the parser, we might want to re-check those skipped today.
+            // But for now, let's just skip anything updated today to be safe and fast.
+            /*
+            if (prop.updated_at && prop.updated_at.startsWith(today)) {
+                skipCount++;
+                continue;
+            }
+            */
+
+            const solvexIdStr = prop.id.replace('solvex_', '');
+            const solvexId = parseInt(solvexIdStr);
+            if (isNaN(solvexId)) continue;
+
+            console.log(`[${i + 1}/${allProperties.length}] Enriching ${prop.id} (${prop.name || 'Unknown'})...`);
+
+            let result = await getHotelFullContent(solvexId);
+
+            // Rate Limit handling: if we failed due to rate limit, wait and retry
+            if (!result.success && result.error?.includes('Rate limit')) {
+                console.warn(`   [RATE LIMIT] Waiting 60 seconds before retry...`);
+                await new Promise(r => setTimeout(r, 60000));
+                result = await getHotelFullContent(solvexId);
+            }
 
             if (result.success && result.data) {
                 const { images, description } = result.data;
-                console.log(`   [DATA] Found ${images.length} images, Desc length: ${description?.length || 0}`);
 
-                if (images.length === 0 && (!description || description.length < 50)) {
-                    console.log(`   [SKIP] No rich content for ${solvexId}.`);
-                    continue;
-                }
-
-                // Prepare Update
-                const existingContent = prop.content || [];
-                const updatedContent = [...existingContent];
-
-                if (updatedContent.length === 0) {
-                    updatedContent.push({
-                        languageCode: 'sr',
-                        officialName: prop.name || prop.id,
-                        displayName: prop.name || prop.id,
-                        shortDescription: (description || "").substring(0, 250),
-                        longDescription: description || ""
-                    });
+                // Skip if both are empty - just update timestamp
+                if (images.length === 0 && (!description || description.length < 20)) {
+                    await supabase.from('properties').update({ updated_at: new Date().toISOString() }).eq('id', prop.id);
+                    console.log(`   [SKIP] No images/desc found.`);
+                    skipCount++;
                 } else {
-                    updatedContent[0].longDescription = description || updatedContent[0].longDescription;
-                    if (!updatedContent[0].shortDescription) {
+                    // Prepare Update
+                    let updatedContent: any[] = [];
+                    const existingContent = prop.content;
+
+                    if (Array.isArray(existingContent) && existingContent.length > 0) {
+                        updatedContent = JSON.parse(JSON.stringify(existingContent));
+                    } else {
+                        updatedContent = [{
+                            languageCode: 'sr',
+                            officialName: prop.name || prop.id,
+                            displayName: prop.name || prop.id,
+                            shortDescription: (description || "").substring(0, 250),
+                            longDescription: description || ""
+                        }];
+                    }
+
+                    if (updatedContent[0]) {
+                        updatedContent[0].longDescription = description || updatedContent[0].longDescription;
                         updatedContent[0].shortDescription = (description || "").substring(0, 250);
                     }
-                }
 
-                const newImages = images.map((url, idx) => ({
-                    url: url,
-                    altText: updatedContent[0]?.officialName || "Hotel Image",
-                    category: 'Exterior' as any,
-                    sortOrder: idx
-                }));
+                    const newImages = images.map((url, idx) => ({
+                        url: url,
+                        altText: prop.name || "Hotel Image",
+                        category: 'Exterior' as any,
+                        sortOrder: idx
+                    }));
 
-                const { error: updateError } = await supabase
-                    .from('properties')
-                    .update({
-                        content: updatedContent,
-                        images: newImages.length > 0 ? newImages : prop.images,
-                        updatedAt: new Date().toISOString()
-                    })
-                    .eq('id', prop.id);
+                    const { error: updateError } = await supabase
+                        .from('properties')
+                        .update({
+                            content: updatedContent,
+                            images: newImages.length > 0 ? newImages : prop.images,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', prop.id);
 
-                if (updateError) {
-                    console.error(`   [ERROR] Update failed for ${prop.id}:`, updateError);
-                    errorCount++;
-                } else {
-                    console.log(`   [SUCCESS] Updated ${prop.id} with ${images.length} images.`);
-                    updatedCount++;
+                    if (updateError) {
+                        console.error(`   [ERROR] Update failed:`, updateError);
+                        errorCount++;
+                    } else {
+                        console.log(`   [SUCCESS] Updated with ${images.length} images.`);
+                        updatedCount++;
+                    }
                 }
             } else {
-                console.error(`   [ERROR] API failed for ${solvexId}:`, result.error);
+                console.error(`   [ERROR] ${result.error}`);
                 errorCount++;
             }
 
-            // Small delay
-            await new Promise(r => setTimeout(r, 300));
+            // Global throttle: process ~6 hotels per minute to stay safe (20 requests/min limit)
+            const delay = result.data?.images.length === 0 ? 8000 : 3000;
+            await new Promise(r => setTimeout(r, delay));
         }
 
         console.log("\n=== ENRICHMENT COMPLETE ===");
-        console.log(`Total checked: ${properties.length}`);
+        console.log(`Total checked: ${allProperties.length}`);
         console.log(`Successfully updated: ${updatedCount}`);
+        console.log(`Skipped (already checked today): ${skipCount}`);
         console.log(`Errors: ${errorCount}`);
     } catch (e: any) {
         console.error("CRITICAL ERROR IN SCRIPT:", e);

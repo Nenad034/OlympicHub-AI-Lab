@@ -1,0 +1,19 @@
+﻿[dotenv@17.2.4] injecting env (17) from .env -- tip: ≡ƒôí add observability to secrets: https://dotenvx.com/ops
+[Solvex Auth] Requesting new token...
+[Solvex SOAP] Calling method: Connect
+[Solvex SOAP] Request: <?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <Connect xmlns="http://www.megatec.ru/">
+      <login>sol611s</login>
+      <password>AqC384lF</password>
+    </Connect>
+  </soap:Body>
+</soap:Envelope>
+
+[Solvex SOAP] Response: <?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><ConnectResponse xmlns="http://www.megatec.ru/"><ConnectResult>20f3af07-9366-456b-8ae1-1dde8ad1f00c</ConnectResult></ConnectResponse></soap:Body></soap:Envelope>
+[Solvex Auth] Token obtained successfully
+Sending manual SOAP request for SearchHotelServices...
+Raw Response Length: 7254
+FOUND HOTEL IMAGE TAG!
+Snippet: /><xs:element name="HotelImage" msdata:DataType="System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" type="xs:anyType" minOccurs="0" /><xs:element name="Rate" msdata:DataType="Syst
