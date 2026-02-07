@@ -69,11 +69,12 @@ export default function MarsAnalysis({ onBack, lang, userLevel, onOpenChat, onDa
     useEffect(() => {
         const loadAllFiles = async () => {
             try {
-                const { data } = await supabase
+                let query = supabase
                     .from('files')
                     .select('*')
-                    .filter('name', 'ilike', '%.xlsx')
-                    .order('created_at', { ascending: false });
+                    .filter('name', 'ilike', '%.xlsx');
+
+                const { data } = await query.order('created_at', { ascending: false });
 
                 if (data && data.length > 0) {
                     const tablesMap: any = {};

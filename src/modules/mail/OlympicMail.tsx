@@ -270,11 +270,15 @@ export const OlympicMail: React.FC = () => {
     // Load emails form Supabase on mount or account change
     const loadEmails = async () => {
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('emails')
-                .select('*')
-                .eq('account_id', selectedAccountId)
-                .order('received_at', { ascending: false });
+                .select('*');
+
+            if (selectedAccountId) {
+                query = query.eq('account_id', selectedAccountId);
+            }
+
+            const { data, error } = await query.order('received_at', { ascending: false });
 
             // If error, likely offline/demo - keep local state or don't error out
             if (error) {

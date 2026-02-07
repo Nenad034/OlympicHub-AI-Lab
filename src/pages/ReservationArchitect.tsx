@@ -600,14 +600,41 @@ const ReservationArchitect: React.FC = () => {
         }
     }, [dossier, isInitialized]);
 
-    // Helpers
-    const totalBrutto = dossier.tripItems.reduce((sum, item) => sum + (item.bruttoPrice || 0), 0);
-    const totalNet = dossier.tripItems.reduce((sum, item) => sum + (item.netPrice || 0), 0);
-    const totalProfit = totalBrutto - totalNet;
-    const profitPercent = totalNet > 0 ? (totalProfit / totalNet) * 100 : 0;
+    // --- FINANCIAL CALCULATIONS (Memoized to prevent loops) ---
+    const financialStats = React.useMemo(() => {
+        const brutto = dossier.tripItems.reduce((sum, item) => sum + (item.bruttoPrice || 0), 0);
+        const net = dossier.tripItems.reduce((sum, item) => sum + (item.netPrice || 0), 0);
+        const profit = brutto - net;
+        const profitPerc = net > 0 ? (profit / net) * 100 : 0;
+        const paid = (dossier.finance?.payments || []).reduce((sum, p) => p.status === 'deleted' ? sum : sum + (p.amount || 0), 0);
+        const bal = brutto - paid;
 
-    const totalPaid = dossier.finance.payments.reduce((sum, p) => p.status === 'deleted' ? sum : sum + (p.amount || 0), 0);
-    const balance = totalBrutto - totalPaid;
+        return {
+            totalBrutto: brutto,
+            totalNet: net,
+            totalProfit: profit,
+            profitPercent: profitPerc,
+            totalPaid: paid,
+            balance: bal
+        };
+    }, [dossier.tripItems, dossier.finance?.payments]);
+
+    const { totalBrutto, totalNet, totalProfit, profitPercent, totalPaid, balance } = financialStats;
+
+    // Fix: Ensure documentTracker exists (fallback for old data)
+    useEffect(() => {
+        if (isInitialized && !dossier.documentTracker) {
+            setDossier(prev => ({
+                ...prev,
+                documentTracker: {
+                    contract: { generated: false, sentEmail: false, sentViber: false, sentPrint: false },
+                    voucher: { generated: false, sentEmail: false, sentViber: false, sentPrint: false },
+                    itinerary: { generated: false, sentEmail: false, sentViber: false, sentPrint: false },
+                    proforma: { generated: false, sentEmail: false, sentViber: false, sentPrint: false }
+                }
+            }));
+        }
+    }, [isInitialized, dossier.documentTracker]);
 
     // --- EXCHANGE RATE SIMULATION --- (To be replaced by API)
     const NBS_RATES = {
@@ -617,11 +644,11 @@ const ReservationArchitect: React.FC = () => {
     };
 
     // --- ACTIVITY LOG HELPER ---
-    const addLog = (action: string, details: string, type: ActivityLog['type'] = 'info') => {
+    const addLog = React.useCallback((action: string, details: string, type: ActivityLog['type'] = 'info') => {
         const newLog: ActivityLog = {
             id: 'log-' + Math.random().toString(36).substr(2, 9),
             timestamp: new Date().toLocaleTimeString('sr-RS') + ' ' + new Date().toLocaleDateString('sr-RS'),
-            operator: 'Nenad', // U realnoj aplikaciji ovde ide ID ulogovanog korisnika
+            operator: 'Nenad',
             action,
             details,
             type
@@ -630,7 +657,7 @@ const ReservationArchitect: React.FC = () => {
             ...prev,
             logs: [newLog, ...(prev.logs || [])]
         }));
-    };
+    }, []);
 
     const handlePrint = () => {
         addLog('Štampa Dokumenta', 'Pokrenuta štampa Ugovora o Putovanju.', 'info');
@@ -644,11 +671,14 @@ const ReservationArchitect: React.FC = () => {
 
     useEffect(() => {
         // Only automate to 'Active' if payment exists and not already Canceled
-        if (dossier.status !== 'Canceled' && totalPaid > 0 && dossier.status !== 'Active') {
-            setDossier(prev => ({ ...prev, status: 'Active' }));
+        if (isInitialized && dossier.status !== 'Canceled' && totalPaid > 0 && dossier.status !== 'Active') {
+            setDossier(prev => {
+                if (prev.status === 'Active') return prev; // Avoid redundant update
+                return { ...prev, status: 'Active' };
+            });
             addLog('Status Promenjen', 'Status rezervacije automatski promenjen u "Active" zbog evidentirane uplate.', 'info');
         }
-    }, [totalPaid, dossier.status]);
+    }, [totalPaid, dossier.status, isInitialized, addLog]);
 
     // --- SOLVEX AUTO SYNC ---
     useEffect(() => {

@@ -128,11 +128,12 @@ export async function acknowledgeNotification(notificationId: string, operatorNa
  * Fetches unread notifications
  */
 export async function getUnreadNotifications() {
-    const { data, error } = await supabase
+    let query = supabase
         .from('solvex_notifications')
         .select('*')
-        .eq('is_read', false)
-        .order('created_at', { ascending: false });
+        .eq('is_read', false);
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     return { success: !error, data, error };
 }

@@ -167,14 +167,13 @@ export async function createPricelist(
 export async function getPricelists(status?: string): Promise<{ data: Pricelist[]; error: any }> {
     let query = supabase
         .from('pricelists')
-        .select('*')
-        .order('updated_at', { ascending: false });
+        .select('*');
 
     if (status) {
         query = query.eq('status', status);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await query.order('updated_at', { ascending: false });
     return { data: data || [], error };
 }
 

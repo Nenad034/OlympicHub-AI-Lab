@@ -146,15 +146,15 @@ export async function getUserReservations(userEmail?: string): Promise<{ success
     try {
         let query = supabase
             .from('reservations')
-            .select('*')
-            .order('created_at', { ascending: false });
+            .select('*');
 
-        // Filter by email if provided
+        // Filter by email if provided - filters MUST come before transforms like .order()
         if (userEmail) {
             query = query.eq('email', userEmail);
         }
 
-        const { data, error } = await query;
+        // Apply transforms last
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) {
             console.error('[Reservation Service] Error fetching reservations:', error);
