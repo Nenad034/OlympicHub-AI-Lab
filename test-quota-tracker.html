@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Quota Tracker - Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0f172a;
+            color: #fff;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .danger {
+            background: #ef4444;
+        }
+        .danger:hover {
+            background: #dc2626;
+        }
+        .success {
+            background: #22c55e;
+        }
+        .success:hover {
+            background: #16a34a;
+        }
+        pre {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .stat:last-child {
+            border-bottom: none;
+        }
+        .label {
+            color: #94a3b8;
+        }
+        .value {
+            font-weight: 700;
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 AI Quota Tracker - Test Tool</h1>
+    
+    <div class="card">
+        <h2>📊 Trenutno stanje u localStorage</h2>
+        <div id="currentState"></div>
+        <button onclick="refreshState()">🔄 Refresh</button>
+    </div>
+
+    <div class="card">
+        <h2>🎮 Test Actions</h2>
+        <button onclick="simulateGeminiUsage()">➕ Simulate Gemini Usage (1000 tokens)</button>
+        <button onclick="simulateOpenAIUsage()">➕ Simulate OpenAI Usage (500 tokens)</button>
+        <button onclick="simulateClaudeUsage()">➕ Simulate Claude Usage (750 tokens)</button>
+        <br><br>
+        <button class="danger" onclick="clearAllData()">🗑️ Clear All Data</button>
+        <button class="success" onclick="exportData()">💾 Export Data (JSON)</button>
+    </div>
+
+    <div class="card">
+        <h2>📝 Instructions</h2>
+        <ol>
+            <li>Kliknite na "Simulate" dugmad da dodate test podatke</li>
+            <li>Otvorite aplikaciju na <a href="http://localhost:5173" target="_blank" style="color: #3b82f6;">localhost:5173</a></li>
+            <li>Idite na <strong>Settings > AI Quota</strong> tab</li>
+            <li>Trebalo bi da vidite ažurirane brojeve</li>
+            <li>Dashboard se automatski osvežava svake 3 sekunde</li>
+        </ol>
+    </div>
+
+    <script>
+        // Simulate aiUsageService.recordUsage() functionality
+        function recordUsage(provider, tokens) {
+            const key = `ai_quota_${provider}`;
+            const saved = localStorage.getItem(key);
+            
+            let data = saved ? JSON.parse(saved) : {
+                dailyUsed: 0,
+                weeklyUsed: 0,
+                monthlyUsed: 0,
+                totalCalls: 0,
+                avgPerRequest: 0,
+                lastReset: new Date().toISOString()
+            };
+
+            // Check for daily reset
+            const lastReset = new Date(data.lastReset);
+            const now = new Date();
+            if (lastReset.toDateString() !== now.toDateString()) {
+                data.dailyUsed = 0;
+                data.lastReset = now.toISOString();
+            }
+
+            // Update stats
+            data.dailyUsed += tokens;
+            data.weeklyUsed += tokens;
+            data.monthlyUsed += tokens;
+            data.totalCalls += 1;
+            data.avgPerRequest = Math.round(data.dailyUsed / data.totalCalls);
+
+            localStorage.setItem(key, JSON.stringify(data));
+            console.log(`✅ Recorded ${tokens} tokens for ${provider}`);
+            refreshState();
+        }
+
+        function simulateGeminiUsage() {
+            recordUsage('gemini', 1000);
+        }
+
+        function simulateOpenAIUsage() {
+            recordUsage('openai', 500);
+        }
+
+        function simulateClaudeUsage() {
+            recordUsage('claude', 750);
+        }
+
+        function clearAllData() {
+            if (confirm('Da li ste sigurni da želite da obrišete sve podatke?')) {
+                localStorage.removeItem('ai_quota_gemini');
+                localStorage.removeItem('ai_quota_openai');
+                localStorage.removeItem('ai_quota_claude');
+                console.log('🗑️ All quota data cleared');
+                refreshState();
+            }
+        }
+
+        function exportData() {
+            const data = {
+                gemini: JSON.parse(localStorage.getItem('ai_quota_gemini') || 'null'),
+                openai: JSON.parse(localStorage.getItem('ai_quota_openai') || 'null'),
+                claude: JSON.parse(localStorage.getItem('ai_quota_claude') || 'null')
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ai-quota-export-${new Date().toISOString()}.json`;
+            a.click();
+            console.log('💾 Data exported');
+        }
+
+        function refreshState() {
+            const gemini = localStorage.getItem('ai_quota_gemini');
+            const openai = localStorage.getItem('ai_quota_openai');
+            const claude = localStorage.getItem('ai_quota_claude');
+
+            let html = '';
+
+            if (!gemini && !openai && !claude) {
+                html = '<p style="color: #94a3b8;">Nema podataka u localStorage. Kliknite na "Simulate" dugmad da dodate test podatke.</p>';
+            } else {
+                if (gemini) {
+                    const data = JSON.parse(gemini);
+                    html += '<h3>🤖 Google Gemini</h3>';
+                    html += '<div class="stat"><span class="label">Daily Used:</span><span class="value">' + data.dailyUsed.toLocaleString() + ' tokens</span></div>';
+                    html += '<div class="stat"><span class="label">Weekly Used:</span><span class="value">' + data.weeklyUsed.toLocaleString() + ' tokens</span></div>';
+                    html += '<div class="stat"><span class="label">Monthly Used:</span><span class="value">' + data.monthlyUsed.toLocaleString() + ' tokens</span></div>';
+                    html += '<div class="stat"><span class="label">Total Calls:</span><span class="value">' + data.totalCalls + '</span></div>';
+                    html += '<div class="stat"><span class="label">Avg per Request:</span><span class="value">' + data.avgPerRequest + ' tokens</span></div>';
+                }
+
+                if (openai) {
+                    const data = JSON.parse(openai);
+                    html += '<h3>🔮 OpenAI</h3>';
+                    html += '<div class="stat"><span class="label">Daily Used:</span><span class="value">' + data.dailyUsed.toLocaleString() + ' tokens</span></div>';
+                    html += '<div class="stat"><span class="label">Weekly Used:</span><span class="value">' + data.weeklyUsed.toLocaleString() + ' tokens</span></div>';
+                    html += '<div class="stat"><span class="label">Monthly Used:</span><span class="value">' + data.monthlyUsed.toLocaleString() + ' tokens</span></div>';
+                    html += '<div class="stat"><span class="label">Total Calls:</span><span class="value">' + data.totalCalls + '</span></div>';
+                    html += '<div class="stat"><span class="label">Avg per Request:</span><span class="value">' + data.avgPerRequest + ' tokens</span></div>';
+                }
+
+                if (claude) {
+                    const data = JSON.parse(claude);
+                    html += '<h3>🧠 Claude</h3>';
+                    html += '<div class="stat"><span class="label">Daily Used:</span><span class="value">' + data.dailyUsed.toLocaleString() + ' tokens</span></div>';
+                    html += '<div class="stat"><span class="label">Weekly Used:</span><span class="value">' + data.weeklyUsed.toLocaleString() + ' tokens</span></div>';
+                    html += '<div class="stat"><span class="label">Monthly Used:</span><span class="value">' + data.monthlyUsed.toLocaleString() + ' tokens</span></div>';
+                    html += '<div class="stat"><span class="label">Total Calls:</span><span class="value">' + data.totalCalls + '</span></div>';
+                    html += '<div class="stat"><span class="label">Avg per Request:</span><span class="value">' + data.avgPerRequest + ' tokens</span></div>';
+                }
+            }
+
+            document.getElementById('currentState').innerHTML = html;
+        }
+
+        // Initial load
+        refreshState();
+    </script>
+</body>
+</html>

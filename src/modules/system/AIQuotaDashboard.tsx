@@ -83,6 +83,11 @@ export default function AIQuotaDashboard() {
             const openaiData = localStorage.getItem('ai_quota_openai');
             const claudeData = localStorage.getItem('ai_quota_claude');
 
+            console.log('📊 [QUOTA DASHBOARD] Loading quota data from localStorage');
+            console.log('  Gemini:', geminiData ? JSON.parse(geminiData) : 'No data');
+            console.log('  OpenAI:', openaiData ? JSON.parse(openaiData) : 'No data');
+            console.log('  Claude:', claudeData ? JSON.parse(claudeData) : 'No data');
+
             setQuotaData(prev => prev.map(provider => {
                 let savedData = null;
                 if (provider.provider === 'Google Gemini' && geminiData) {
@@ -93,7 +98,22 @@ export default function AIQuotaDashboard() {
                     savedData = JSON.parse(claudeData);
                 }
 
-                return savedData ? { ...provider, ...savedData } : provider;
+                if (savedData) {
+                    // Merge saved data with provider defaults, ensuring all fields are present
+                    return {
+                        ...provider,
+                        dailyUsed: savedData.dailyUsed || 0,
+                        weeklyUsed: savedData.weeklyUsed || 0,
+                        monthlyUsed: savedData.monthlyUsed || 0,
+                        avgPerRequest: savedData.avgPerRequest || 0,
+                        lastReset: savedData.lastReset || provider.lastReset,
+                        // Keep the default dailyLimit and nextReset from provider
+                        dailyLimit: provider.dailyLimit,
+                        nextReset: provider.nextReset
+                    };
+                }
+
+                return provider;
             }));
         };
 

@@ -18,6 +18,8 @@ dist-ssr
 .env.development
 .env.production
 .env.*.local
+.env.server
+.env.server.local
 *.local
 
 # Secrets and Keys - CRITICAL: Never commit these!
@@ -95,3 +97,7 @@ backups/
 # docs/credentials.md
 .vercel
 .env*.local
+
+# Nested repositories
+OlympicHub-AI-Lab/
+
