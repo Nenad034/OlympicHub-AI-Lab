@@ -98,8 +98,8 @@ export default function AIQuotaDashboard() {
         };
 
         loadQuotaData();
-        // Refresh every 10 seconds
-        const interval = setInterval(loadQuotaData, 10000);
+        // Refresh every 3 seconds for near-real-time feedback
+        const interval = setInterval(loadQuotaData, 3000);
         return () => clearInterval(interval);
     }, []);
 

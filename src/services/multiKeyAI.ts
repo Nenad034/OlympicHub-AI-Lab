@@ -21,6 +21,8 @@ interface GenerateOptions {
     useCache?: boolean;
     cacheCategory?: 'chat' | 'analysis' | 'prices' | 'default';
     model?: string;
+    temperature?: number;
+    maxOutputTokens?: number;
 }
 
 class MultiKeyAIService {
@@ -31,6 +33,7 @@ class MultiKeyAIService {
 
     constructor() {
         this.loadAPIKeys();
+        console.log(`🔑 [MULTI-KEY] Service initialized with ${this.apiKeys.length} API keys.`);
     }
 
     /**
@@ -166,7 +169,13 @@ class MultiKeyAIService {
                 // Use rate limiter
                 const response = await aiRateLimiter.queueRequest(async () => {
                     const genAI = new GoogleGenerativeAI(apiKey.key);
-                    const geminiModel = genAI.getGenerativeModel({ model });
+                    const geminiModel = genAI.getGenerativeModel({
+                        model,
+                        generationConfig: {
+                            temperature: options.temperature,
+                            maxOutputTokens: options.maxOutputTokens
+                        }
+                    });
                     const result = await geminiModel.generateContent(prompt);
                     return result.response.text();
                 });

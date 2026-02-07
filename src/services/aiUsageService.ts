@@ -59,7 +59,11 @@ class AIUsageService {
         data.avgPerRequest = Math.round(data.dailyUsed / data.totalCalls);
 
         localStorage.setItem(key, JSON.stringify(data));
-        console.log(`📊 [USAGE] Recorded ${tokens} tokens for ${provider}. Daily: ${data.dailyUsed}`);
+        console.group(`📊 [AI USAGE] ${provider.toUpperCase()}`);
+        console.log(`Tokens: ${tokens}`);
+        console.log(`Daily Total: ${data.dailyUsed}`);
+        console.log(`Weekly Total: ${data.weeklyUsed}`);
+        console.groupEnd();
 
         // Check for alerts
         quotaNotificationService.checkAndAlert(provider, data.dailyUsed, this.limits[provider]);

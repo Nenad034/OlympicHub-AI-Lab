@@ -9,16 +9,13 @@
  * using the VITE_GEMINI_API_KEY environment variable (not recommended for production).
  */
 
-import { supabase } from '../supabaseClient';
+import { multiKeyAI } from './multiKeyAI';
 
 // Check if we're using the edge function or direct API
 const USE_EDGE_FUNCTION = import.meta.env.PROD || import.meta.env.VITE_USE_EDGE_FUNCTION === 'true';
 
-// Fallback API key for development only
-const FALLBACK_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
 interface GeminiOptions {
-    model?: 'gemini-1.5-flash' | 'gemini-1.5-pro' | 'gemini-1.0-pro';
+    model?: 'gemini-1.5-flash' | 'gemini-1.5-pro' | 'gemini-1.0-pro' | string;
     maxTokens?: number;
     temperature?: number;
     context?: string;
@@ -33,7 +30,7 @@ interface GeminiResponse {
 
 /**
  * Send a prompt to Gemini AI
- * Automatically uses Edge Function in production for security
+ * Automatically routes through multiKeyAI for tracking and failover
  */
 export async function askGemini(
     prompt: string,
@@ -46,132 +43,28 @@ export async function askGemini(
         context,
     } = options;
 
-    // Use Edge Function in production
-    if (USE_EDGE_FUNCTION) {
-        return callEdgeFunction(prompt, { model, maxTokens, temperature, context });
-    }
+    const fullPrompt = context ? `Context: ${context}\n\nUser: ${prompt}` : prompt;
 
-    // Development fallback - direct API call
-    // ⚠️ WARNING: Only use this in development!
-    if (!FALLBACK_API_KEY) {
-        return {
-            success: false,
-            response: '',
-            error: 'Gemini API key not configured. Set VITE_GEMINI_API_KEY in .env',
-        };
-    }
-
-    return callDirectAPI(prompt, { model, maxTokens, temperature, context });
-}
-
-/**
- * Call Gemini through Supabase Edge Function (SECURE)
- */
-async function callEdgeFunction(
-    prompt: string,
-    options: GeminiOptions
-): Promise<GeminiResponse> {
     try {
-        const { data, error } = await supabase.functions.invoke('gemini-proxy', {
-            body: {
-                prompt,
-                model: options.model,
-                maxTokens: options.maxTokens,
-                temperature: options.temperature,
-                context: options.context,
-            },
+        const responseText = await multiKeyAI.generateContent(fullPrompt, {
+            useCache: true,
+            cacheCategory: 'default',
+            model: model,
+            temperature: temperature,
+            maxOutputTokens: maxTokens
         });
-
-        if (error) {
-            console.error('Edge function error:', error);
-            return {
-                success: false,
-                response: '',
-                error: error.message || 'Edge function error',
-            };
-        }
-
-        return {
-            success: true,
-            response: data.response,
-            model: data.model,
-        };
-    } catch (err) {
-        console.error('Error calling edge function:', err);
-        return {
-            success: false,
-            response: '',
-            error: err instanceof Error ? err.message : 'Unknown error',
-        };
-    }
-}
-
-/**
- * Direct API call (DEVELOPMENT ONLY)
- * ⚠️ WARNING: This exposes the API key in the browser!
- */
-async function callDirectAPI(
-    prompt: string,
-    options: GeminiOptions
-): Promise<GeminiResponse> {
-    if (!FALLBACK_API_KEY) {
-        return {
-            success: false,
-            response: '',
-            error: 'API key not configured',
-        };
-    }
-
-    try {
-        const fullPrompt = options.context
-            ? `Context: ${options.context}\n\nUser: ${prompt}`
-            : prompt;
-
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:generateContent?key=${FALLBACK_API_KEY}`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: [
-                        {
-                            parts: [{ text: fullPrompt }],
-                        },
-                    ],
-                    generationConfig: {
-                        maxOutputTokens: options.maxTokens,
-                        temperature: options.temperature,
-                    },
-                }),
-            }
-        );
-
-        if (!response.ok) {
-            const errorData = await response.text();
-            console.error('Gemini API error:', errorData);
-            return {
-                success: false,
-                response: '',
-                error: `Gemini API error: ${response.status}`,
-            };
-        }
-
-        const data = await response.json();
-        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
         return {
             success: true,
             response: responseText,
-            model: options.model,
+            model: model
         };
-    } catch (err) {
-        console.error('Direct API error:', err);
+    } catch (err: any) {
+        console.error('Gemini Service Error:', err);
         return {
             success: false,
             response: '',
-            error: err instanceof Error ? err.message : 'Unknown error',
+            error: err.message || 'Gemini processing failed'
         };
     }
 }
@@ -205,82 +98,7 @@ export async function chatWithGemini(
     });
 }
 
-/**
- * Analyze an image with Gemini Vision
- * Note: Requires gemini-1.5-pro or gemini-1.5-flash model
- */
-export async function analyzeImage(
-    imageBase64: string,
-    prompt: string = 'Describe this image in detail.',
-    options: Omit<GeminiOptions, 'context'> = {}
-): Promise<GeminiResponse> {
-    // For now, this only works with direct API
-    // Edge function support for images coming soon
-    if (!FALLBACK_API_KEY) {
-        return {
-            success: false,
-            response: '',
-            error: 'Image analysis requires API key configuration',
-        };
-    }
-
-    try {
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${options.model || 'gemini-1.5-flash'}:generateContent?key=${FALLBACK_API_KEY}`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: [
-                        {
-                            parts: [
-                                { text: prompt },
-                                {
-                                    inline_data: {
-                                        mime_type: 'image/jpeg',
-                                        data: imageBase64,
-                                    },
-                                },
-                            ],
-                        },
-                    ],
-                    generationConfig: {
-                        maxOutputTokens: options.maxTokens || 2048,
-                        temperature: options.temperature || 0.7,
-                    },
-                }),
-            }
-        );
-
-        if (!response.ok) {
-            return {
-                success: false,
-                response: '',
-                error: `Vision API error: ${response.status}`,
-            };
-        }
-
-        const data = await response.json();
-        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-        return {
-            success: true,
-            response: responseText,
-            model: options.model || 'gemini-1.5-flash',
-        };
-    } catch (err) {
-        return {
-            success: false,
-            response: '',
-            error: err instanceof Error ? err.message : 'Unknown error',
-        };
-    }
-}
-
 export default {
     ask: askGemini,
     chat: chatWithGemini,
-    analyzeImage,
 };
