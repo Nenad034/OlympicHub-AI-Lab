@@ -63,6 +63,7 @@ const HotelView = React.lazy(() => import('../pages/HotelView'));
 const DocumentPreviewDemo = React.lazy(() => import('../pages/DocumentPreviewDemo'));
 const ContactArchitect = React.lazy(() => import('../pages/ContactArchitect'));
 const KyteTest = React.lazy(() => import('../pages/KyteTest'));
+const YieldDashboard = React.lazy(() => import('../modules/yield/YieldDashboard'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
@@ -361,6 +362,14 @@ export const router = createBrowserRouter([
             {
                 path: 'pricing-intelligence',
                 element: <PricingIntelligence />,
+            },
+            {
+                path: 'yield-management',
+                element: (
+                    <ProtectedRoute minLevel={3}>
+                        <YieldDashboard />
+                    </ProtectedRoute>
+                ),
             },
             /* {
                 path: 'total-trip',
