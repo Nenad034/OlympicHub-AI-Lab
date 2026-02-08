@@ -46,7 +46,8 @@ import {
     AlertTriangle,
     FlaskConical,
     Network,
-    Terminal
+    Terminal,
+    TrendingUp
 } from 'lucide-react';
 import { useThemeStore } from '../../stores';
 
@@ -155,6 +156,20 @@ const MODULES_DATA: ModuleInfo[] = [
             { id: 'soft-1', name: 'Prompt Engineering Lab', description: 'Testiranje i optimizacija AI instrukcija.', status: 'operativan', percentage: 100, remaining: 'Sve funkcionalnosti su aktivne.' },
             { id: 'soft-2', name: 'Knowledge Base Integrator', description: 'Ubacivanje interne dokumentacije u AI kontekst.', status: 'u toku', percentage: 70, remaining: 'Finalizacija PDF parsera za automatsko čitanje hotelskih specifikacija.' },
             { id: 'soft-3', name: 'Subagent AI Guard', description: 'Kontrola i monitoring AI odgovora za podagente.', status: 'ideja', percentage: 20, remaining: 'Planiranje sistema za detekciju AI halucinacija.' }
+        ]
+    },
+    {
+        id: 'yield-management',
+        name: 'Revenue Management & Yield Optimization',
+        icon: TrendingUp,
+        purpose: 'Dinamičko upravljanje cenama, praćenje konkurencije i optimizacija marži na osnovu tržišnih uslova.',
+        functions: [
+            { id: 'yield-1', name: 'Multi-Provider Price Aggregation', description: 'Agregacija cena iz svih provajdera (Solvex, TCT, OpenGreece, ORS, Mars).', status: 'operativan', percentage: 100, remaining: 'Sve funkcionalnosti su aktivne.' },
+            { id: 'yield-2', name: 'Fuzzy Hotel Matching', description: 'Deduplikacija hotela iz različitih izvora koristeći Levenshtein algoritam.', status: 'operativan', percentage: 100, remaining: 'Sve funkcionalnosti su aktivne.' },
+            { id: 'yield-3', name: 'Competitor Price Scraping', description: 'Scraping cena sa TravelLand, BigBlue i FilipTravel sajtova.', status: 'u toku', percentage: 60, remaining: 'Implementacija Playwright scraper-a sa anti-detection mehanizmima.' },
+            { id: 'yield-4', name: 'Dynamic Markup Engine', description: 'Automatska kalkulacija marže na osnovu konkurencije, sezone i tražnje.', status: 'operativan', percentage: 100, remaining: 'Sve funkcionalnosti su aktivne.' },
+            { id: 'yield-5', name: 'Markup Approval Workflow', description: 'Sistem za ručno odobravanje promena cena sa auto-approval za male promene.', status: 'operativan', percentage: 100, remaining: 'Sve funkcionalnosti su aktivne.' },
+            { id: 'yield-6', name: 'Price Intelligence Dashboard', description: 'UI za pregled predloga, istorije cena i competitor analizu.', status: 'operativan', percentage: 100, remaining: 'Sve funkcionalnosti su aktivne.' }
         ]
     }
 ];
