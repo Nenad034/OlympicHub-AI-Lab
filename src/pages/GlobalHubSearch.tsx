@@ -23,6 +23,7 @@ import PackageSearch from './PackageSearch';
 import FlightSearch from './FlightSearch';
 import Step5_ExtrasSelection from '../components/packages/Steps/Step5_ExtrasSelection';
 import { useConfig } from '../context/ConfigContext';
+import './GlobalHubSearch.css';
 import './SmartSearch.css';
 import './SmartSearchFix2.css';
 import './SmartSearchStylesFix.css';
@@ -31,7 +32,6 @@ import './SmartSearchRedesign.css';
 import './SmartSearchGridFix.css';
 import './ModalFixDefinitive.css';
 import './SmartSearchZoom.css';
-import './GlobalHubSearch.css';
 
 /**
  * Constants for filtering
@@ -1496,49 +1496,47 @@ const GlobalHubSearch: React.FC = () => {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className={`results-container ${viewMode === 'grid' ? 'grid-view' : 'list-view'}`}>
-                                        <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`}>
-                                            {filteredResults.map(hotel => (
-                                                <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase().replace(/\s+/g, '')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
-                                                    <div className="hotel-card-image" onClick={() => setExpandedHotel(hotel)}>
-                                                        <img src={hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
-                                                        <div className="meal-plan-badge">{getMealPlanDisplayName(hotel.mealPlan)}</div>
-                                                        <div className="hotel-stars-badge">
-                                                            {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
-                                                        </div>
-                                                    </div>
-                                                    <div className="hotel-card-content">
-                                                        <div className="hotel-info-text">
-                                                            <div className="hotel-title-row">
-                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                                    <h3 style={{ margin: 0 }}>{hotel.name}</h3>
-                                                                    {(hotel.salesCount || 0) > 5 && (
-                                                                        <span className="best-seller-mini-badge" title={`Preko ${hotel.salesCount} rezervacija u poslednjih 30 dana`}>
-                                                                            <TrendingUp size={10} /> BEST SELLER
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                <div className="hotel-location-tag"><MapPin size={14} /> <span>{hotel.location}</span></div>
-                                                                <div className="hotel-date-badge"><CalendarDays size={14} /> <span>{formatDate(checkIn)} - {formatDate(checkOut)} ({nights} noćenja)</span></div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="price-action-section">
-                                                            <div className="lowest-price-tag">
-                                                                <span className="price-val">{formatPrice(getFinalDisplayPrice(hotel))} €</span>
-                                                                {roomAllocations.filter(r => r.adults > 0).length > 1 && (
-                                                                    <span className="price-label-multi"># Za {roomAllocations.filter(r => r.adults > 0).length} sobe</span>
-                                                                )}
-                                                            </div>
-                                                            {hotel.type === 'hotel' ? (
-                                                                <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji ponude <ArrowRight size={16} /></button>
-                                                            ) : (
-                                                                <button className="view-more-btn" onClick={() => handleReserveClick(hotel, 0, hotel)}>Rezerviši odmah <ArrowRight size={16} /></button>
-                                                            )}
-                                                        </div>
+                                    <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`}>
+                                        {filteredResults.map(hotel => (
+                                            <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase().replace(/\s+/g, '')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
+                                                <div className="hotel-card-image" onClick={() => setExpandedHotel(hotel)}>
+                                                    <img src={hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
+                                                    <div className="meal-plan-badge">{getMealPlanDisplayName(hotel.mealPlan)}</div>
+                                                    <div className="hotel-stars-badge">
+                                                        {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
+                                                <div className="hotel-card-content">
+                                                    <div className="hotel-info-text">
+                                                        <div className="hotel-title-row">
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                                <h3 style={{ margin: 0 }}>{hotel.name}</h3>
+                                                                {(hotel.salesCount || 0) > 5 && (
+                                                                    <span className="best-seller-mini-badge" title={`Preko ${hotel.salesCount} rezervacija u poslednjih 30 dana`}>
+                                                                        <TrendingUp size={10} /> BEST SELLER
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="hotel-location-tag"><MapPin size={14} /> <span>{hotel.location}</span></div>
+                                                            <div className="hotel-date-badge"><CalendarDays size={14} /> <span>{formatDate(checkIn)} - {formatDate(checkOut)} ({nights} noćenja)</span></div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="price-action-section">
+                                                        <div className="lowest-price-tag">
+                                                            <span className="price-val">{formatPrice(getFinalDisplayPrice(hotel))} €</span>
+                                                            {roomAllocations.filter(r => r.adults > 0).length > 1 && (
+                                                                <span className="price-label-multi"># Za {roomAllocations.filter(r => r.adults > 0).length} sobe</span>
+                                                            )}
+                                                        </div>
+                                                        {hotel.type === 'hotel' ? (
+                                                            <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji ponude <ArrowRight size={16} /></button>
+                                                        ) : (
+                                                            <button className="view-more-btn" onClick={() => handleReserveClick(hotel, 0, hotel)}>Rezerviši odmah <ArrowRight size={16} /></button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                             </div>
