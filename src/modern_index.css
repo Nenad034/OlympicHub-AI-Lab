@@ -596,6 +596,22 @@ h3,
   margin-bottom: 40px;
 }
 
+.dashboard-grid.view-list {
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+.module-card.list-item {
+  min-height: auto !important;
+  padding: 12px 24px !important;
+  flex-direction: row !important;
+  align-items: center !important;
+}
+
+.module-card.list-item:hover {
+  transform: translateX(8px) !important;
+}
+
 .app-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
