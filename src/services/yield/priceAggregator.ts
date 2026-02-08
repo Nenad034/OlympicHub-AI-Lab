@@ -15,9 +15,10 @@ import type {
 } from './types';
 
 // Import existing provider services
-import { searchHotels as searchSolvex } from '../solvex/solvexHotelService';
-import { searchHotelsSync as searchTCT } from '../tctApiService';
-import { searchHotels as searchOpenGreece } from '../opengreece/opengreeceService';
+// TODO: Uncomment when actual provider integration is implemented
+// import { searchHotels as searchSolvex } from '../solvex/solvexHotelService';
+// import { searchHotelsSync as searchTCT } from '../tctApiService';
+// import { searchHotels as searchOpenGreece } from '../opengreece/opengreeceService';
 
 export class PriceAggregatorService {
     /**
