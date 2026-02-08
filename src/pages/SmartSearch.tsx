@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './SmartSearchFerrariFix.css';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores';
 import {
     Sparkles, Hotel, Plane, Package, Bus, Compass,
@@ -161,6 +162,7 @@ interface RoomAllocation {
 const SmartSearch: React.FC = () => {
     const { userLevel, impersonatedSubagent } = useAuthStore();
     const isSubagent = userLevel < 6 || !!impersonatedSubagent;
+    const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState<'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'ski'>('hotel');
     const [selectedDestinations, setSelectedDestinations] = useState<Destination[]>([]);
@@ -1549,7 +1551,7 @@ const SmartSearch: React.FC = () => {
                                         <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`}>
                                             {filteredResults.map(hotel => (
                                                 <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase().replace(/\s+/g, '')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
-                                                    <div className="hotel-card-image" onClick={() => setExpandedHotel(hotel)}>
+                                                    <div className="hotel-card-image" onClick={() => navigate('/hotel-view/' + hotel.id)}>
                                                         <img src={hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
                                                         <div className="meal-plan-badge">{getMealPlanDisplayName(hotel.mealPlan)}</div>
                                                         <div className="hotel-stars-badge">
@@ -1559,7 +1561,7 @@ const SmartSearch: React.FC = () => {
                                                     <div className="hotel-card-content">
                                                         <div className="hotel-info-text">
                                                             <div className="hotel-title-row">
-                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => navigate('/hotel-view/' + hotel.id)}>
                                                                     <h3 style={{ margin: 0 }}>{hotel.name}</h3>
                                                                     {(hotel.salesCount || 0) > 5 && (
                                                                         <span className="best-seller-mini-badge" title={`Preko ${hotel.salesCount} rezervacija u poslednjih 30 dana`}>
