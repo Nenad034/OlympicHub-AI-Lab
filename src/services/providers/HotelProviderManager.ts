@@ -42,6 +42,7 @@ import { SolvexProvider } from './SolvexProvider';
 import { SolvexAiProvider } from './SolvexAiProvider';
 import { OpenGreeceProvider } from './OpenGreeceProvider';
 import { TCTProvider } from './TCTProvider';
+import { FilosProvider } from './FilosProvider';
 import { searchHistory } from '../../utils/searchHistory';
 
 /**
@@ -113,6 +114,17 @@ export class HotelProviderManager {
             }
         } catch (error) {
             console.error('❌ Failed to register TCT provider:', error);
+        }
+
+        // Register Filos provider
+        try {
+            const filosProvider = new FilosProvider();
+            if (filosProvider.isConfigured()) {
+                this.registerProvider(filosProvider);
+                console.log('✅ Filos provider registered');
+            }
+        } catch (error) {
+            console.error('❌ Failed to register Filos provider:', error);
         }
     }
 

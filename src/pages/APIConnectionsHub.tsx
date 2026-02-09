@@ -88,6 +88,17 @@ const connections: APIConnection[] = [
         color: '#667eea',
         testPath: '/amadeus-test',
         features: ['Flight Search', 'Multi-city', 'Fare Rules', 'Ticketing']
+    },
+    {
+        id: 'filos',
+        name: 'Filos (One Tourismo)',
+        provider: 'Filos Travel / One Tourismo',
+        description: 'Greek travel market specialist - Extensive hotel inventory, transfers and activities',
+        icon: <Globe size={32} />,
+        status: 'testing',
+        color: '#0277bd',
+        testPath: '/filos-test',
+        features: ['B2B XML/JSON API', 'Greek Hotels', 'Transfers', 'Activities', 'Static Data Sync']
     }
 ];
 

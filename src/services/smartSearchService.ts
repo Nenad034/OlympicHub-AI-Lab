@@ -4,6 +4,7 @@
  */
 
 import { SolvexAiProvider } from './providers/SolvexAiProvider';
+import { FilosProvider } from './providers/FilosProvider';
 
 export interface RoomAllocation {
     adults: number;
@@ -26,6 +27,7 @@ export interface SmartSearchParams {
     mealPlan?: string;
     currency?: string;
     nationality?: string;
+    enabledProviders?: Record<string, boolean>;
 }
 
 export interface SmartSearchResult {
@@ -47,7 +49,7 @@ export interface SmartSearchResult {
 }
 
 export const PROVIDER_MAPPING = {
-    hotel: { providers: ['solvex'], primary: 'solvex' },
+    hotel: { providers: ['solvex', 'filos'], primary: 'solvex' },
     flight: { providers: [], primary: '' },
     package: { providers: [], primary: '' },
     transfer: { providers: [], primary: '' },
@@ -94,11 +96,10 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
     }
 
     const solvexAi = new SolvexAiProvider();
+    const filosProvider = new FilosProvider();
     const finalResultsMap = new Map<string, SmartSearchResult>();
 
     try {
-        await solvexAi.authenticate();
-
         // STEP 1: Identify unique room configurations to minimize API calls
         const uniqueConfigs = new Map<string, { adults: number, children: number, ages: number[], indices: number[] }>();
         params.rooms.forEach((room, idx) => {
@@ -121,21 +122,59 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
             // Execute unique configs with a small staggered delay to be polite to the API
             const configSearchPromises = Array.from(uniqueConfigs.values()).map(async (config, cIdx) => {
                 if (cIdx > 0) await delay(200 * cIdx); // Stagger by 200ms
-                const results = await solvexAi.search({
-                    destination: dest.name,
-                    checkIn: new Date(params.checkIn),
-                    checkOut: new Date(params.checkOut),
-                    adults: config.adults,
-                    children: config.children,
-                    childrenAges: config.ages,
-                    providerId: dest.id.startsWith('solvex-') ? dest.id.split('-').pop() : dest.id,
-                    providerType: dest.type === 'destination' ? 'city' : 'hotel',
-                    targetProvider: dest.id.startsWith('solvex-') || dest.provider === 'Solvex' ? 'Solvex' : undefined
-                });
+
+                const results: any[] = [];
+                const isSolvexEnabled = params.enabledProviders?.solvex || params.enabledProviders?.solvexai;
+                const isFilosEnabled = params.enabledProviders?.filos;
+
+                // SOLVEX SEARCH
+                if (isSolvexEnabled || !params.enabledProviders) {
+                    try {
+                        // Authenticate only when Solvex is enabled
+                        await solvexAi.authenticate();
+
+                        const solvexResults = await solvexAi.search({
+                            destination: dest.name,
+                            checkIn: new Date(params.checkIn),
+                            checkOut: new Date(params.checkOut),
+                            adults: config.adults,
+                            children: config.children,
+                            childrenAges: config.ages,
+                            providerId: dest.id.startsWith('solvex-') ? dest.id.split('-').pop() : dest.id,
+                            providerType: dest.type === 'destination' ? 'city' : 'hotel',
+                            targetProvider: dest.id.startsWith('solvex-') || dest.provider === 'Solvex' ? 'Solvex' : undefined
+                        });
+                        results.push(...solvexResults);
+                    } catch (e) {
+                        console.error('Solvex search failed', e);
+                    }
+                }
+
+                // FILOS SEARCH
+                if (isFilosEnabled || (!params.enabledProviders && PROVIDER_MAPPING.hotel.providers.includes('filos'))) {
+                    try {
+                        const filosResults = await filosProvider.search({
+                            destination: dest.name,
+                            checkIn: new Date(params.checkIn),
+                            checkOut: new Date(params.checkOut),
+                            adults: config.adults,
+                            children: config.children,
+                            childrenAges: config.ages,
+                            providerId: dest.id.startsWith('filos-') ? dest.id.split('-').pop() : undefined
+                        });
+                        console.log('[SmartSearchService] Filos returned:', filosResults.length, 'results');
+                        results.push(...filosResults);
+                    } catch (e) {
+                        console.error('Filos search segment failed', e);
+                    }
+                }
+
+                console.log('[SmartSearchService] Total results for this config:', results.length);
                 return { config, results };
             });
 
             configResults.push(...(await Promise.all(configSearchPromises)));
+            console.log('[SmartSearchService] Config results:', configResults.map(cr => ({ configKey: `${cr.config.adults}ad`, resultsCount: cr.results.length })));
 
             // STEP 3: Merge results - a hotel must be available for ALL unique configurations
             // We group results by hotel name (case-insensitive) for merging
@@ -156,6 +195,8 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                 }
             }
 
+            console.log('[SmartSearchService] Hotels available in ALL configs:', Array.from(hotelsInAllConfigs));
+
             // STEP 4: Build final merged results for hotels available in ALL configs
             configResults.forEach(({ config, results }) => {
                 results.forEach(h => {
@@ -163,7 +204,7 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                     if (hotelsInAllConfigs.has(hotelKey)) {
                         if (!finalResultsMap.has(hotelKey)) {
                             finalResultsMap.set(hotelKey, {
-                                provider: 'Solvex AI',
+                                provider: h.id.startsWith('filos-') ? 'Filos' : 'Solvex AI',
                                 type: 'hotel',
                                 id: h.id,
                                 name: h.hotelName,
@@ -206,7 +247,9 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
         console.error('[SmartSearchService] Search failed:', error);
     }
 
-    return Array.from(finalResultsMap.values());
+    const finalResults = Array.from(finalResultsMap.values());
+    console.log('[SmartSearchService] Returning', finalResults.length, 'final results');
+    return finalResults;
 }
 
 export function getProvidersForSearchType(searchType: string): readonly string[] {

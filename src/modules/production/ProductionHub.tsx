@@ -58,9 +58,7 @@ import {
     generateIdempotencyKey,
     toUTC
 } from '../../utils/securityUtils';
-import { ImportStagingModal, type StagingItem } from './components/ImportStagingModal';
 import { useAuthStore } from '../../stores/authStore';
-import { getHotels as getSolvexHotels, getCities as getSolvexCities, getDetailedHotels } from '../../services/solvex/solvexDictionaryService';
 import { getProxiedImageUrl } from '../../utils/imageProxy';
 import { deleteFromCloud } from '../../utils/storageUtils';
 
@@ -236,6 +234,7 @@ const wordSlice = (w: string) => w.slice(1);
 const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all', initialView = 'hub' }) => {
     const [viewMode, setViewMode] = useState<'hub' | 'list' | 'detail' | 'transport' | 'services'>(initialView);
     const [searchQuery, setSearchQuery] = useState('');
+    const [searchPills, setSearchPills] = useState<string[]>([]);
     const [activeModuleTab, setActiveModuleTab] = useState(initialTab);
 
     const { trackAction, isAnomalyDetected } = useSecurity();
@@ -244,11 +243,6 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
     const [hotels, setHotels] = useState<Hotel[]>([]);
     const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
-
-    // Staging State
-    const [stagingItems, setStagingItems] = useState<StagingItem[]>([]);
-    const [isStagingOpen, setIsStagingOpen] = useState(false);
-    const [syncProgress, setSyncProgress] = useState<{ current: number, total: number, status: string } | null>(null);
 
     // Tour Management State
     const [tours, setTours] = useState<Tour[]>([]);
@@ -347,264 +341,6 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         }
     };
 
-    const syncSolvexData = async () => {
-        try {
-            setIsSyncing(true);
-            // @ts-ignore
-            if (window.sentinelEvents) {
-                // @ts-ignore
-                window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Skeniram Solvex bazu...', type: 'info' });
-            }
-
-            // 33 = Golden Sands (Only sync this for now per user request) - FORCE UPDATE
-            const cityKeys = [33];
-            let allRemoteHotels: any[] = [];
-
-            for (const cityId of cityKeys) {
-                const hotelsRes = await getSolvexHotels(cityId);
-                if (hotelsRes.success && hotelsRes.data) {
-                    allRemoteHotels = [...allRemoteHotels, ...hotelsRes.data];
-                }
-            }
-
-            if (allRemoteHotels.length === 0) {
-                alert("Solvex API nije vratio ni jedan hotel za odabrane gradove. Proverite konekciju.");
-                // @ts-ignore
-                if (window.sentinelEvents) window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Nisu pronađeni podaci.', type: 'warning' });
-                setIsSyncing(false);
-                return;
-            }
-
-            // City Id to Name Map for Fallback
-            const cityMap: Record<number, string> = {
-                33: 'Golden Sands',
-                68: 'Sunny Beach',
-                1: 'Unknown',
-                9: 'Bansko',
-                6: 'Borovets'
-            };
-
-            // Prepare Staging Data
-            const existingIds = new Set(hotels.map(h => h.id));
-
-            const stagingCandidates: StagingItem[] = allRemoteHotels.map(h => {
-                const mappedId = `solvex_${h.id}`;
-                const name = (h.name || '').toLowerCase();
-
-                // Use city from response, or fallback via ID logic if I had cityId here... 
-                // but getHotels response flattening lost cityId. 
-                // However, I added 'city' to getHotels return yesterday.
-                let city = (h.city || h.location?.city || h.address?.city || '').toLowerCase();
-
-                // Fallback: If still empty, we can't easily guess without re-fetching or passing context.
-                // But generally Solvex returns City object.
-                if (!city || city === '') city = "unknown";
-
-                // Blacklist Check
-                const isBlacklisted = name.includes('kidscamp') || name.includes('kids camp') || name.includes('kidscam') ||
-                    city.includes('kidscamp') || city.includes('kids camp');
-
-                const isUpdate = existingIds.has(mappedId);
-
-                return {
-                    id: mappedId,
-                    originalId: h.id,
-                    name: h.name,
-                    city: h.city || "Unknown",
-                    country: "Bulgaria",
-                    stars: h.stars || 0,
-                    description: h.description,
-                    imagesCount: (h.images || []).length,
-                    isUpdate,
-                    isBlacklisted,
-                    rawData: h
-                };
-            });
-
-            console.log(`[Solvex Sync] Found ${stagingCandidates.length} candidates.`);
-
-            const validCandidates = stagingCandidates.filter(i => !i.isBlacklisted);
-            console.log(`[Solvex Sync] Valid candidates (after blacklist): ${validCandidates.length}.`);
-
-            if (validCandidates.length === 0) {
-                alert("Nema novih podataka za uvoz. Svi hoteli su ili već uveženi ili su na listi za blokiranje.");
-                // @ts-ignore
-                if (window.sentinelEvents) window.sentinelEvents.emit({ title: 'Solvex Sync', message: 'Nema novih podataka za uvoz (sve filtrirano).', type: 'info' });
-                setIsSyncing(false);
-                return;
-            }
-
-            alert(`Pronađeno ${validCandidates.length} hotela. Otvaram prozor za pregled i odobravanje.`);
-
-            setStagingItems(validCandidates);
-
-            // Force modal open
-            console.log(`[Solvex Sync] Opening Staging Modal with ${validCandidates.length} items`);
-            setIsStagingOpen(true);
-            setIsSyncing(false);
-
-        } catch (error: any) {
-            console.error('[Solvex Sync Error]:', error);
-            alert(`Greška prilikom skeniranja Solvex-a: ${error.message}`);
-            // @ts-ignore
-            if (window.sentinelEvents) window.sentinelEvents.emit({ title: 'Sync Error', message: error.message, type: 'error' });
-            setIsSyncing(false);
-        }
-    };
-
-    const handleImportConfirm = async (selectedItems: StagingItem[]) => {
-        setIsSyncing(true);
-        setSyncProgress({ current: 0, total: selectedItems.length, status: 'Pokretanje sinhronizacije...' });
-
-        try {
-            const BATCH_SIZE = 50;
-            const updatedHotelsList = [...hotels];
-            let newTotal = 0;
-            let updatedTotal = 0;
-
-            for (let i = 0; i < selectedItems.length; i += BATCH_SIZE) {
-                const batch = selectedItems.slice(i, i + BATCH_SIZE);
-                const batchSize = batch.length;
-
-                setSyncProgress({
-                    current: i,
-                    total: selectedItems.length,
-                    status: `Učitavanje detalja za hotele ${i + 1}-${Math.min(i + BATCH_SIZE, selectedItems.length)}...`
-                });
-
-                // Fetch deep details in smaller sub-batches (5 items) to ensure data integrity
-                const allDetailedItems: any[] = [];
-                const SUB_BATCH_SIZE = 1; // Strict serial fetching to guarantee image results
-
-                for (let j = 0; j < batch.length; j += SUB_BATCH_SIZE) {
-                    const chunk = batch.slice(j, j + SUB_BATCH_SIZE);
-                    const chunkIds = chunk.map(item => Number(item.originalId));
-                    try {
-                        const chunkDetails = await getDetailedHotels(chunkIds);
-                        allDetailedItems.push(...chunkDetails);
-                    } catch (e) {
-                        console.error("Sub-batch failed", e);
-                    }
-                    // Tiny delay
-                    await new Promise(r => setTimeout(r, 100));
-                }
-
-                const detailedItems = allDetailedItems;
-                // Use number keys to match usage below
-                const detailedMap = new Map(detailedItems.map(d => [d.id, d]));
-
-                const batchNewHotels: Hotel[] = [];
-                const batchUpdatedHotels: Hotel[] = [];
-
-                for (const item of batch) {
-                    const detail = detailedMap.get(Number(item.originalId)) || item;
-                    const rawSolvexData = (item as any).rawData;
-
-                    const propertyData: Partial<Property> = {
-                        id: item.id as string,
-                        address: {
-                            addressLine1: rawSolvexData?.address?.addressLine || '',
-                            city: item.city,
-                            country: item.country,
-                            countryCode: 'BG',
-                            postalCode: rawSolvexData?.address?.zipCode || ''
-                        },
-                        geoCoordinates: {
-                            latitude: rawSolvexData?.location?.lat || 0,
-                            longitude: rawSolvexData?.location?.lng || 0,
-                            coordinateSource: 'MAP_PIN'
-                        },
-                        starRating: item.stars,
-                        images: (detail.images?.length > 0 ? detail.images : (rawSolvexData?.images || [])).map((url: string, idx: number) => ({
-                            url: getProxiedImageUrl(url),
-                            altText: item.name,
-                            category: 'Exterior',
-                            sortOrder: idx
-                        })),
-                        content: [{
-                            languageCode: 'sr',
-                            officialName: item.name,
-                            displayName: item.name,
-                            shortDescription: (detail.description || item.description || '').substring(0, 250),
-                            longDescription: detail.description || item.description || ''
-                        }],
-                        // propertyAmenities: [], // REMOVED to fix DB error
-                        // Explicitly undefined to avoid sending 'amenities'
-                        // @ts-ignore
-                        amenities: undefined,
-                        isActive: true,
-                        propertyType: 'Hotel',
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    };
-
-                    const mappedHotel: Hotel = {
-                        id: item.id as string,
-                        name: unifyHotelName(item.name),
-                        location: {
-                            address: propertyData.address?.addressLine1 || '',
-                            place: propertyData.address?.city || '',
-                            lat: propertyData.geoCoordinates?.latitude || 0,
-                            lng: propertyData.geoCoordinates?.longitude || 0
-                        },
-                        images: propertyData.images?.map(img => ({ url: img.url, altText: img.altText || item.name })) || [],
-                        amenities: [],
-                        units: [],
-                        commonItems: { discount: [], touristTax: [], supplement: [] },
-                        originalPropertyData: propertyData as Property
-                    };
-
-                    if (item.isUpdate) {
-                        const idx = updatedHotelsList.findIndex(h => h.id === item.id);
-                        if (idx !== -1) {
-                            updatedHotelsList[idx] = { ...updatedHotelsList[idx], ...mappedHotel };
-                            batchUpdatedHotels.push(updatedHotelsList[idx]);
-                        }
-                        updatedTotal++;
-                    } else {
-                        updatedHotelsList.push(mappedHotel);
-                        batchNewHotels.push(mappedHotel);
-                        newTotal++;
-                    }
-                }
-
-                // Batch Save to Supabase
-                await syncToSupabase(updatedHotelsList);
-                setHotels([...updatedHotelsList]);
-
-                // Pause if NOT the last batch
-                if (i + BATCH_SIZE < selectedItems.length) {
-                    const pauseTime = 60; // seconds
-                    for (let s = pauseTime; s > 0; s--) {
-                        setSyncProgress({
-                            current: i + batchSize,
-                            total: selectedItems.length,
-                            status: `Pauza zbog API limita (${s}s)...`
-                        });
-                        await new Promise(r => setTimeout(r, 1000));
-                    }
-                }
-            }
-
-            setSyncProgress({ current: selectedItems.length, total: selectedItems.length, status: 'Sinhronizacija završena!' });
-
-            // @ts-ignore
-            if (window.sentinelEvents) {
-                // @ts-ignore
-                window.sentinelEvents.emit({ title: 'Uvoz Uspešan', message: `Uvezeno ${newTotal} novih i ažurirano ${updatedTotal} objekata.`, type: 'success' });
-            }
-
-            alert(`✅ Sinhronizacija USPEŠNA!\n\n🆕 Novih hotela: ${newTotal}\n🔄 Ažuriranih: ${updatedTotal}\n\nPodaci su sačuvani u bazi sa slikama i opisima.`);
-
-        } catch (error: any) {
-            console.error('Import failed:', error);
-            alert(`GREŠKA: ${error.message}`);
-        } finally {
-            setIsSyncing(false);
-            setSyncProgress(null);
-            setStagingItems([]);
-        }
-    };
 
 
     const filteredHotels = hotels.filter(h => {
@@ -642,8 +378,13 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
             }
         }
 
-        if (!searchQuery) return true;
-        const terms = searchQuery.toLowerCase().split(' ').filter(t => t.length > 0);
+        if (!searchQuery && searchPills.length === 0) return true;
+
+        // Split current query and combined with finalized pills
+        const terms = [
+            ...searchPills.map(p => p.toLowerCase()),
+            ...searchQuery.toLowerCase().split(' ').filter(t => t.length > 0)
+        ];
 
         const countryCode = h.originalPropertyData?.address?.countryCode || '';
         const countryFull = translateCountry(h.originalPropertyData?.address?.country);
@@ -667,6 +408,17 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         if (combinedLoc.includes('pamporovo')) synonyms += ' pamporovo';
         if (combinedLoc.includes('sozopol')) synonyms += ' sozopol';
         if (combinedLoc.includes('razlog')) synonyms += ' razlog';
+        if (combinedLoc.includes('corfu') || combinedLoc.includes('krf')) synonyms += ' corfu krf kerkyra kerkira';
+        if (combinedLoc.includes('thassos') || combinedLoc.includes('tasos')) synonyms += ' thassos thasos tasos';
+        if (combinedLoc.includes('athens') || combinedLoc.includes('atina')) synonyms += ' athens atina athina';
+        if (combinedLoc.includes('zakynthos') || combinedLoc.includes('zakinto')) synonyms += ' zakynthos zakintos zante';
+        if (combinedLoc.includes('rhodes') || combinedLoc.includes('rodos')) synonyms += ' rhodes rodos';
+        if (combinedLoc.includes('crete') || combinedLoc.includes('krit')) synonyms += ' crete krit';
+        if (combinedLoc.includes('halkidiki') || combinedLoc.includes('halkidik')) synonyms += ' halkidiki halkidik halidiki';
+        if (combinedLoc.includes('lefkada') || combinedLoc.includes('lefkad')) synonyms += ' lefkada lefkad';
+        if (combinedLoc.includes('evia') || combinedLoc.includes('evija')) synonyms += ' evia evija';
+        if (combinedLoc.includes('parga')) synonyms += ' parga';
+        if (combinedLoc.includes('sivota')) synonyms += ' sivota';
 
         const searchTarget = `${h.name} ${place} ${translitPlace} ${cityTranslit} ${cityOriginal} ${h.location.address} ${h.id} ${countryCode} ${countryFull} ${status} ${synonyms}`.toLowerCase();
 
@@ -1495,14 +1247,6 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                     )}
                 </AnimatePresence>
 
-                <ImportStagingModal
-                    isOpen={isStagingOpen}
-                    onClose={() => setIsStagingOpen(false)}
-                    items={stagingItems}
-                    onConfirm={handleImportConfirm}
-                    isSyncing={isSyncing}
-                    syncProgress={syncProgress}
-                />
             </div>
         );
     }
@@ -1547,15 +1291,6 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                         </div>
                         <div style={{ display: 'flex', gap: '16px' }}>
 
-                            <button
-                                className="btn-secondary"
-                                onClick={syncSolvexData}
-                                disabled={isSyncing}
-                                style={{ height: '56px', padding: '0 32px', borderRadius: '16px', fontWeight: 800, fontSize: '16px', border: '1px solid var(--border)', background: 'var(--bg-card)', opacity: isSyncing ? 0.6 : 1 }}
-                            >
-                                <RefreshCw size={24} style={{ marginRight: '12px', animation: isSyncing ? 'spin 2s linear infinite' : 'none' }} />
-                                {isSyncing ? 'SINHRONIZACIJA...' : 'SYNC OD SOLVEX-A'}
-                            </button>
                             <button className="btn-primary" onClick={startCreate} style={{ height: '56px', padding: '0 40px', borderRadius: '16px', fontWeight: 900, fontSize: '16px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 10px 20px rgba(37, 99, 235, 0.3)', border: 'none' }}>
                                 <Plus size={26} style={{ marginRight: '12px' }} /> KREIRAJ OBJEKAT
                             </button>
@@ -1613,6 +1348,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                     setStatusFilter('all');
                                     setIntegrityFilter([]);
                                     setSearchQuery('');
+                                    setSearchPills([]);
                                 }}
                                 style={{
                                     background: 'rgba(239, 68, 68, 0.1)',
@@ -1636,11 +1372,13 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                             <style>{`
                                 .search-bar-premium {
                                     display: flex;
+                                    flex-wrap: wrap;
+                                    gap: 8px;
                                     align-items: center;
                                     background: rgba(0, 0, 0, 0.4);
                                     border: 1px solid rgba(255, 255, 255, 0.08);
                                     border-radius: 12px;
-                                    padding: 0 16px;
+                                    padding: 8px 16px;
                                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                                     box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
                                 }
@@ -1733,16 +1471,55 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                     border-radius: 10px;
                                 }
                             `}</style>
-                            <div className="search-bar-premium" style={{ height: '48px' }}>
-                                <Search size={20} color="#3b82f6" strokeWidth={3} />
+                            <div className="search-bar-premium" style={{ minHeight: '52px' }}>
+                                <Search size={22} color="rgba(59, 130, 246, 0.6)" />
+
+                                {searchPills.map((pill, idx) => (
+                                    <div
+                                        key={idx}
+                                        style={{
+                                            background: 'rgba(59, 130, 246, 0.15)',
+                                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                                            padding: '4px 10px',
+                                            borderRadius: '8px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            color: '#fff',
+                                            fontSize: '13px',
+                                            fontWeight: 600
+                                        }}
+                                    >
+                                        {pill}
+                                        <button
+                                            onClick={() => setSearchPills(prev => prev.filter((_, i) => i !== idx))}
+                                            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', padding: 0, cursor: 'pointer', display: 'flex' }}
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+
                                 <input
                                     type="text"
-                                    placeholder="Pretraži destinacije, hotele i..."
+                                    placeholder={searchPills.length > 0 ? "" : "Pretražite po nazivu hotela, mestu ili ID-u..."}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && searchQuery.trim()) {
+                                            setSearchPills(prev => [...prev, searchQuery.trim()]);
+                                            setSearchQuery('');
+                                        } else if (e.key === 'Backspace' && !searchQuery && searchPills.length > 0) {
+                                            setSearchPills(prev => prev.slice(0, -1));
+                                        }
+                                    }}
+                                    style={{ flex: 1, minWidth: '150px' }}
                                 />
-                                {searchQuery && (
-                                    <button onClick={() => setSearchQuery('')} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '6px', borderRadius: '8px' }}>
+                                {(searchQuery || searchPills.length > 0) && (
+                                    <button
+                                        onClick={() => { setSearchQuery(''); setSearchPills([]); }}
+                                        style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', padding: '4px', cursor: 'pointer', display: 'flex', color: 'rgba(255,255,255,0.4)' }}
+                                    >
                                         <X size={16} />
                                     </button>
                                 )}
@@ -2054,14 +1831,6 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                     )}
                 </AnimatePresence>
 
-                <ImportStagingModal
-                    isOpen={isStagingOpen}
-                    onClose={() => setIsStagingOpen(false)}
-                    items={stagingItems}
-                    onConfirm={handleImportConfirm}
-                    isSyncing={isSyncing}
-                    syncProgress={syncProgress}
-                />
             </div>
         );
     }

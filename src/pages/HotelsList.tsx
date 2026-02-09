@@ -56,6 +56,7 @@ const HotelsList: React.FC = () => {
     const [hotels, setHotels] = useState<Hotel[]>([]);
     const [displayType, setDisplayType] = useState<'grid' | 'list'>('grid');
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedProvider, setSelectedProvider] = useState<string>('all');
     const [isSyncing, setIsSyncing] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -138,10 +139,18 @@ const HotelsList: React.FC = () => {
         loadHotels();
     }, []);
 
-    const filteredHotels = hotels.filter(h =>
-        h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        h.location.place.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredHotels = hotels.filter(h => {
+        const matchesQuery = h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            h.location.place.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const hotelId = String(h.id);
+        const provider = hotelId.startsWith('filos-') ? 'filos' :
+            hotelId.startsWith('solvex-') ? 'solvex' : 'internal';
+
+        const matchesProvider = selectedProvider === 'all' || provider === selectedProvider;
+
+        return matchesQuery && matchesProvider;
+    });
 
     const toggleStatus = async (e: React.MouseEvent, hotel: Hotel) => {
         e.stopPropagation();
@@ -271,6 +280,27 @@ const HotelsList: React.FC = () => {
                             onChange={(e) => setSearchQuery(sanitizeInput(e.target.value))}
                         />
                     </div>
+
+                    {/* Provider Filter */}
+                    <select
+                        style={{
+                            background: 'var(--bg-card)',
+                            color: 'var(--text-primary)',
+                            border: '1px solid var(--border)',
+                            padding: '10px 16px',
+                            borderRadius: '12px',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            outline: 'none'
+                        }}
+                        value={selectedProvider}
+                        onChange={(e) => setSelectedProvider(e.target.value)}
+                    >
+                        <option value="all">Svi Dobavljači</option>
+                        <option value="internal">Interni (Olympic)</option>
+                        <option value="solvex">Solvex</option>
+                        <option value="filos">Filos (One Tourismo)</option>
+                    </select>
 
                     <button className="btn-primary-action" onClick={() => navigate('/production/hotels/new')}>
                         <Plus size={18} /> Kreiraj Objekat

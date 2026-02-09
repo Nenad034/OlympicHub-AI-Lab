@@ -15,6 +15,7 @@ import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '..
 import { sentinelEvents } from '../utils/sentinelEvents';
 import { getMonthlyReservationCount } from '../services/reservationService';
 import solvexDictionaryService from '../services/solvex/solvexDictionaryService';
+import filosApiService from '../services/filos/api/filosApiService';
 import { ModernCalendar } from '../components/ModernCalendar';
 import { MultiSelectDropdown } from '../components/MultiSelectDropdown';
 import { BookingModal } from '../components/booking/BookingModal';
@@ -189,7 +190,8 @@ const GlobalHubSearch: React.FC = () => {
         tct: true,
         solvex: true,
         solvexai: true,
-        ors: true
+        ors: true,
+        filos: true
     });
 
     // Multi-room state
@@ -244,6 +246,10 @@ const GlobalHubSearch: React.FC = () => {
     const inputRef = useRef<HTMLInputElement>(null);
     const autocompleteRef = useRef<HTMLDivElement>(null);
 
+    // FILOS DATA CACHE
+    const filosHotelsCache = useRef<any[] | null>(null);
+    const filosDestinationsCache = useRef<any[] | null>(null);
+
     // Mock data
     const mockDestinations: Destination[] = [
         { id: 'd1', name: 'Crna Gora', type: 'destination', country: 'Montenegro' },
@@ -260,9 +266,13 @@ const GlobalHubSearch: React.FC = () => {
         { id: 'd12', name: 'Antalya', type: 'destination', country: 'Turkey' },
         { id: 'd13', name: 'Dubai', type: 'destination', country: 'UAE' },
         { id: 'd14', name: 'Bulgaria', type: 'destination', country: 'Bulgaria' },
-        { id: 'solvex-c-33', name: 'Golden Sands', type: 'destination', country: 'Bulgaria' },
-        { id: 'solvex-c-68', name: 'Sunny Beach', type: 'destination', country: 'Bulgaria' },
-        { id: 'solvex-c-9', name: 'Bansko', type: 'destination', country: 'Bulgaria' },
+        { id: 'solvex-c-33', name: 'Golden Sands', type: 'destination', country: 'Bulgaria', provider: 'Solvex' },
+        { id: 'solvex-c-68', name: 'Sunny Beach', type: 'destination', country: 'Bulgaria', provider: 'Solvex' },
+        { id: 'solvex-c-9', name: 'Bansko', type: 'destination', country: 'Bulgaria', provider: 'Solvex' },
+        { id: 'filos-reg-lindos', name: 'Lindos (Rhodes)', type: 'destination', country: 'Greece', provider: 'Filos' },
+        { id: 'filos-reg-faliraki', name: 'Faliraki (Rhodes)', type: 'destination', country: 'Greece', provider: 'Filos' },
+        { id: 'filos-reg-rhodestown', name: 'Rhodes Town', type: 'destination', country: 'Greece', provider: 'Filos' },
+        { id: 'filos-reg-ialyssos', name: 'Ialyssos (Rhodes)', type: 'destination', country: 'Greece', provider: 'Filos' },
         { id: 'h1', name: 'Hotel Splendid', type: 'hotel', country: 'Montenegro', stars: 5, provider: 'Solvex' },
         { id: 'h2', name: 'Hotel Budva Riviera', type: 'hotel', country: 'Montenegro', stars: 4, provider: 'Solvex' }
     ];
@@ -397,37 +407,99 @@ const GlobalHubSearch: React.FC = () => {
                 setShowSuggestions(true);
 
                 try {
-                    const citiesToSearch = [33, 68, 9];
                     const dynamicResults: Destination[] = [];
 
-                    for (const cityId of citiesToSearch) {
-                        const hotelsRes = await solvexDictionaryService.getHotels(cityId);
-                        if (hotelsRes.success && hotelsRes.data) {
-                            const matching = (hotelsRes.data as any[])
-                                .filter(h => h.name.toLowerCase().includes(searchTerm))
+                    // 1. SOLVEX SUGGESTIONS (if enabled)
+                    if (enabledProviders.solvex || enabledProviders.solvexai) {
+                        const citiesToSearch = [33, 68, 9];
+                        for (const cityId of citiesToSearch) {
+                            const hotelsRes = await solvexDictionaryService.getHotels(cityId);
+                            if (hotelsRes.success && hotelsRes.data) {
+                                const matching = (hotelsRes.data as any[])
+                                    .filter(h => h.name.toLowerCase().includes(searchTerm))
+                                    .map(h => ({
+                                        id: `solvex-h-${h.id}`,
+                                        name: h.name,
+                                        type: 'hotel' as const,
+                                        country: 'Bulgaria',
+                                        provider: 'Solvex',
+                                        stars: h.stars
+                                    }));
+                                dynamicResults.push(...matching);
+                            }
+                        }
+                    }
+
+                    // 2. FILOS SUGGESTIONS (if enabled)
+                    if (enabledProviders.filos) {
+                        if (!filosHotelsCache.current) {
+                            const res = await filosApiService.getHotels();
+                            if (res.success && Array.isArray(res.data)) {
+                                filosHotelsCache.current = res.data;
+                            }
+                        }
+
+                        // Handle Rhodes Hierarchy: If user types "Rodos", show sub-regions
+                        if (searchTerm.includes('rodos') || searchTerm.includes('rhodes')) {
+                            const rhodesRegions = [
+                                { name: 'Lindos (Rhodes)', id: 'filos-reg-lindos', type: 'destination', country: 'Greece', provider: 'Filos' },
+                                { name: 'Faliraki (Rhodes)', id: 'filos-reg-faliraki', type: 'destination', country: 'Greece', provider: 'Filos' },
+                                { name: 'Ialyssos (Rhodes)', id: 'filos-reg-ialyssos', type: 'destination', country: 'Greece', provider: 'Filos' },
+                                { name: 'Rhodes Town', id: 'filos-reg-rhodestown', type: 'destination', country: 'Greece', provider: 'Filos' },
+                                { name: 'Kiotari (Rhodes)', id: 'filos-reg-kiotari', type: 'destination', country: 'Greece', provider: 'Filos' },
+                                { name: 'Pefkos (Rhodes)', id: 'filos-reg-pefkos', type: 'destination', country: 'Greece', provider: 'Filos' }
+                            ];
+                            dynamicResults.push(...rhodesRegions as any);
+                        }
+
+                        if (filosHotelsCache.current) {
+                            const matchingHotels = filosHotelsCache.current
+                                .filter(h => {
+                                    const hName = (h.name || h.hotel_name || '').toLowerCase();
+                                    // Handle location as object or string
+                                    let hLoc = '';
+                                    if (h.location) {
+                                        if (typeof h.location === 'string') {
+                                            hLoc = h.location.toLowerCase();
+                                        } else if (h.location.city) {
+                                            hLoc = h.location.city.toLowerCase();
+                                        } else if (h.location.address) {
+                                            hLoc = h.location.address.toLowerCase();
+                                        }
+                                    }
+                                    return hName.includes(searchTerm) || hLoc.includes(searchTerm);
+                                })
                                 .map(h => ({
-                                    id: `solvex-h-${h.id}`,
-                                    name: h.name,
+                                    id: `filos-${h.id || h.hotel_id}`,
+                                    name: h.name || h.hotel_name,
                                     type: 'hotel' as const,
-                                    country: 'Bulgaria',
-                                    provider: 'Solvex',
-                                    stars: h.stars
+                                    country: 'Greece',
+                                    provider: 'Filos',
+                                    stars: h.rating?.value || h.stars || 4
                                 }));
-                            dynamicResults.push(...matching);
+                            dynamicResults.push(...matchingHotels as any);
                         }
                     }
 
                     if (dynamicResults.length > 0) {
                         setSuggestions(prev => {
                             const combined = [...prev, ...dynamicResults];
-                            return combined.filter((item, index, self) =>
-                                index === self.findIndex((t) => t.id === item.id)
-                            ).slice(0, 15);
+                            // Final filter of combined results to respect enabled providers
+                            return combined.filter((item, index, self) => {
+                                // Keep only if unique AND provider is enabled (or mock data with no specific provider)
+                                const isUnique = index === self.findIndex((t) => t.id === item.id);
+                                if (!isUnique) return false;
+
+                                if (item.provider === 'Solvex' && !enabledProviders.solvex && !enabledProviders.solvexai) return false;
+                                if (item.provider === 'Filos' && !enabledProviders.filos) return false;
+
+                                return true;
+                            }).slice(0, 15);
                         });
                         setShowSuggestions(true);
                     }
                 } catch (err) {
-                    console.warn('[SmartSearch] Solvex API failed:', err);
+                    console.warn('[SmartSearch] Provider suggestions failed:', err);
                 } finally {
                     setIsLoadingSuggestions(false);
                 }
@@ -510,6 +582,7 @@ const GlobalHubSearch: React.FC = () => {
                 mealPlan,
                 currency: 'EUR',
                 nationality: nationality || 'RS',
+                enabledProviders: enabledProviders
             });
 
             // ENHANCE WITH CRM SALES DATA
@@ -825,7 +898,8 @@ const GlobalHubSearch: React.FC = () => {
                             { id: 'tct', name: 'TCT', icon: Building2 },
                             { id: 'solvex', name: 'Solvex', icon: Database },
                             { id: 'solvexai', name: 'Solvex AI', icon: Sparkles },
-                            { id: 'ors', name: 'ORS', icon: Zap }
+                            { id: 'ors', name: 'ORS', icon: Zap },
+                            { id: 'filos', name: 'Filos', icon: Ship }
                         ].map((prov) => {
                             const active = (enabledProviders as any)[prov.id];
                             return (

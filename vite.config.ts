@@ -67,6 +67,29 @@ export default defineConfig(({ mode }) => {
               console.log('🇪🇺 Proxying ORS API request:', req.url);
             });
           }
+        },
+        // Proxy for Filos API (One Tourismo)
+        '/api/filos-v2': {
+          target: 'https://api-v2.onetourismo.com',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api\/filos-v2/, ''),
+          configure: (proxy) => {
+            proxy.on('proxyReq', (_proxyReq, req) => {
+              console.log('🇬🇷 Proxying Filos V2 request:', req.url);
+            });
+          }
+        },
+        '/api/filos-static': {
+          target: 'https://api-static.onetourismo.com',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api\/filos-static/, ''),
+          configure: (proxy) => {
+            proxy.on('proxyReq', (_proxyReq, req) => {
+              console.log('🇬🇷 Proxying Filos Static request:', req.url);
+            });
+          }
         }
       }
     }

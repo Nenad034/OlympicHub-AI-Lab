@@ -65,6 +65,7 @@ const ContactArchitect = React.lazy(() => import('../pages/ContactArchitect'));
 const KyteTest = React.lazy(() => import('../pages/KyteTest'));
 const YieldDashboard = React.lazy(() => import('../modules/yield/YieldDashboard'));
 const DestinationRep = React.lazy(() => import('../modules/destination/DestinationRep'));
+const FilosTest = React.lazy(() => import('../pages/FilosTest'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
@@ -509,6 +510,10 @@ export const router = createBrowserRouter([
             {
                 path: 'tct-test',
                 element: <TCTTest />,
+            },
+            {
+                path: 'filos-test',
+                element: <FilosTest />,
             },
             {
                 path: 'kyte-test',
