@@ -5,6 +5,7 @@ export { useVSCodeStore } from './vscodeStore';
 export { useMailStore } from './mailStore';
 export { useNotificationStore } from './notificationStore';
 export { useFortressStore } from './fortressStore';
+export { useDestRepStore } from './destRepStore';
 export type { Theme, Language, NavMode } from './themeStore';
 export type { Tab } from './vscodeStore';
 export type { MailAccount, Email as MailEmail } from './mailStore';

@@ -64,6 +64,7 @@ const DocumentPreviewDemo = React.lazy(() => import('../pages/DocumentPreviewDem
 const ContactArchitect = React.lazy(() => import('../pages/ContactArchitect'));
 const KyteTest = React.lazy(() => import('../pages/KyteTest'));
 const YieldDashboard = React.lazy(() => import('../modules/yield/YieldDashboard'));
+const DestinationRep = React.lazy(() => import('../modules/destination/DestinationRep'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
@@ -484,6 +485,14 @@ export const router = createBrowserRouter([
             {
                 path: 'reservations',
                 element: <ReservationsDashboard />,
+            },
+            {
+                path: 'destination-rep',
+                element: (
+                    <ProtectedRoute minLevel={4}>
+                        <DestinationRep />
+                    </ProtectedRoute>
+                ),
             },
             {
                 path: 'admin/import',

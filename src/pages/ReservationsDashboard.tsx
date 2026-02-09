@@ -3,13 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
     Search, Filter, Calendar, Users, DollarSign, Clock,
-    CheckCircle2, XCircle, AlertCircle, Eye, Edit, Trash2,
-    Download, Mail, Phone, MapPin, Building2, Plane,
-    LayoutGrid, List, CalendarDays, ArrowUpDown, Plus,
-    TrendingUp, TrendingDown, Minus, ChevronDown, X as XIcon,
-    FileText, CreditCard, Package, Globe, Truck, Bell, CheckCheck,
-    FileCheck, Receipt, Send, Star, User, Table, FileCode, Code, RefreshCw, CloudLightning, Tag, Briefcase,
-    BarChart3, ChevronUp, Zap, Compass, Ship
+    ChevronDown, ChevronUp, MoreVertical, Plus,
+    Download, LayoutGrid, List, CalendarDays,
+    Eye, Edit, Mail, Trash2, CheckCircle2, AlertCircle,
+    X as XIcon, RefreshCw, BarChart3, TrendingUp, TrendingDown,
+    MapPin, Building2, Phone, Briefcase, Tag, XCircle, Package, Globe, Truck, Plane, Zap, Compass, Ship, Star, User, ArrowUpDown, ChevronLeft, ChevronRight, CheckCheck, Receipt, CloudLightning, Bell, Send, Table, Code, FileCode, Check, Shield, MessageCircle, FileText, FileCheck, ShieldCheck
 } from 'lucide-react';
 import './ReservationsDashboard.css';
 import ReservationEmailModal from '../components/ReservationEmailModal';
@@ -64,6 +62,10 @@ interface Reservation {
     leadPassenger?: string; // Nosilac putovanja (putnik)
     items?: TripItem[];
     supplierRef?: string;
+    repChecked?: boolean;
+    repCheckedAt?: string;
+    repCheckedBy?: string;
+    repInternalNote?: string;
 }
 
 import { ModernCalendar } from '../components/ModernCalendar';
@@ -469,6 +471,10 @@ const ReservationsDashboard: React.FC = () => {
             finalInvoiceCreated: dbRes.final_invoice_created,
             hotelCategory: dbRes.hotel_category,
             leadPassenger: dbRes.lead_passenger,
+            repChecked: dbRes.rep_checked,
+            repCheckedAt: dbRes.rep_checked_at,
+            repCheckedBy: dbRes.rep_checked_by,
+            repInternalNote: dbRes.rep_internal_note,
             items: (dbRes.guests_data as any)?.tripItems || [],
             supplierRef: dbRes.booking_id || (dbRes.guests_data as any)?.tripItems?.[0]?.supplierRef || ''
         };
@@ -1144,7 +1150,7 @@ ${data.map(r => `  <reservation>
                         <div className="stat-card">
                             <div className="stat-icon paid"><CheckCircle2 size={24} /></div>
                             <div className="stat-content">
-                                <span className="stat-label">Ukupno Naplaćeno</span>
+                                <span className="stat-label">Naplaćeno</span>
                                 <span className="stat-value">{formatPrice(stats.totalPaid)} €</span>
                             </div>
                         </div>
@@ -1153,12 +1159,11 @@ ${data.map(r => `  <reservation>
                         <div className="stat-card">
                             <div className="stat-icon outstanding"><TrendingDown size={24} /></div>
                             <div className="stat-content">
-                                <span className="stat-label">Preostalo za Naplatu</span>
+                                <span className="stat-label">Preostalo</span>
                                 <span className="stat-value">{formatPrice(stats.outstanding)} €</span>
                             </div>
                         </div>
                     </div>
-
                 </div>
             )}
 

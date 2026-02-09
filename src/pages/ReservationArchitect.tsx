@@ -8,7 +8,7 @@ import {
     Package as PackageIcon, UserPlus, Fingerprint, Banknote,
     ArrowRightLeft, Briefcase, MoveRight, MoveLeft, Calendar, Mail,
     Compass, Ship, Sparkles, Search, ExternalLink, Clock, History,
-    Euro, DollarSign, CirclePercent, Copy, Share2, Code, ChevronDown, Zap, Phone, Star
+    Euro, DollarSign, CirclePercent, Copy, Share2, Code, ChevronDown, Zap, Phone, Star, MessageCircle, Send, ShieldAlert
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import { ModernCalendar } from '../components/ModernCalendar';
@@ -18,7 +18,7 @@ import ReservationEmailModal from '../components/ReservationEmailModal';
 import { saveDossierToDatabase, getNextReservationNumber, getReservationById as apiGetReservationById } from '../services/reservationService';
 import { getReservation as getSolvexReservation } from '../services/solvex/solvexBookingService';
 import { getCachedToken } from '../services/solvex/solvexAuthService';
-import { useAuthStore } from '../stores';
+import { useAuthStore, useDestRepStore } from '../stores';
 import { saveToCloud, loadFromCloud } from '../utils/storageUtils';
 import '../components/GoogleAddressAutocomplete.css';
 import './ReservationArchitect.css';
@@ -186,6 +186,10 @@ interface Dossier {
         financial: string;
         specialRequests: string;
     };
+    repChecked?: boolean;
+    repCheckedAt?: string;
+    repCheckedBy?: string;
+    repInternalNote?: string;
     documentTracker: {
         [key: string]: {
             generated: boolean;
@@ -310,6 +314,10 @@ const ReservationArchitect: React.FC = () => {
             financial: '',
             specialRequests: ''
         },
+        repChecked: false,
+        repCheckedAt: '',
+        repCheckedBy: '',
+        repInternalNote: '',
         // 8. Document Tracking
         documentTracker: {
             contract: { generated: false, sentEmail: false, sentViber: false, sentPrint: false },
@@ -421,7 +429,11 @@ const ReservationArchitect: React.FC = () => {
                             setDossier(prev => ({
                                 ...prev,
                                 cisCode: dbRes.cis_code,
-                                resCode: dbRes.ref_code,
+                                resCode: dbRes.ref_code || null,
+                                repChecked: dbRes.rep_checked || false,
+                                repCheckedAt: dbRes.rep_checked_at || '',
+                                repCheckedBy: dbRes.rep_checked_by || '',
+                                repInternalNote: dbRes.rep_internal_note || '',
                                 clientReference: dbRes.booking_id || prev.clientReference,
                                 status: dbRes.status === 'confirmed' ? 'Active' : 'Request',
                                 customerType: 'B2C-Individual',
@@ -1522,6 +1534,9 @@ const ReservationArchitect: React.FC = () => {
                                 <Mail size={18} /> B2B Komunikacija
                             </button>
                         )}
+                        <button className={activeSection === 'rep' ? 'active' : ''} onClick={() => setActiveSection('rep')}>
+                            <Shield size={18} /> Dest. Predstavnik
+                        </button>
                         <button className={activeSection === 'notes' ? 'active' : ''} onClick={() => setActiveSection('notes')}>
                             <FileText size={18} /> Napomene
                         </button>
@@ -4431,6 +4446,165 @@ const ReservationArchitect: React.FC = () => {
                                             )}
                                         </div>
                                     )}
+                                </section>
+                            )
+                        }
+                        {/* SECTION: DESTINATION REPRESENTATIVE */}
+                        {
+                            activeSection === 'rep' && (
+                                <section className="res-section fade-in">
+                                    <div className="section-title">
+                                        <h3><Shield size={20} color="#10b981" style={{ marginRight: '10px' }} /> Komunikacija sa Predstavnikom na Destinaciji</h3>
+                                    </div>
+
+                                    <div className="rep-chat-container" style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: '1fr 340px',
+                                        gap: '20px',
+                                        marginTop: '20px'
+                                    }}>
+                                        <div className="rep-chat-box" style={{
+                                            background: 'var(--bg-card)',
+                                            borderRadius: '16px',
+                                            border: '1px solid var(--border)',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            height: '600px',
+                                            overflow: 'hidden'
+                                        }}>
+                                            <div className="chat-messages" style={{
+                                                flex: 1,
+                                                padding: '20px',
+                                                overflowY: 'auto',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '12px',
+                                                background: 'rgba(0,0,0,0.2)'
+                                            }}>
+                                                {useDestRepStore.getState().getDossierMessages(dossier.resCode || dossier.clientReference).length === 0 ? (
+                                                    <div style={{ textAlign: 'center', marginTop: '100px', color: 'var(--text-secondary)' }}>
+                                                        <MessageCircle size={48} style={{ opacity: 0.2, marginBottom: '16px' }} />
+                                                        <p>Nema poruka za ovaj dosije.</p>
+                                                    </div>
+                                                ) : (
+                                                    useDestRepStore.getState().getDossierMessages(dossier.resCode || dossier.clientReference).map((msg: any) => (
+                                                        <div key={msg.id} className={`chat-message ${msg.role}`} style={{
+                                                            maxWidth: '80%',
+                                                            padding: '12px 16px',
+                                                            borderRadius: '16px',
+                                                            alignSelf: msg.role === 'agent' ? 'flex-end' : 'flex-start',
+                                                            background: msg.role === 'agent' ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
+                                                            color: msg.role === 'agent' ? 'white' : 'var(--text-primary)',
+                                                            border: msg.role === 'rep' ? '1px solid var(--border)' : 'none'
+                                                        }}>
+                                                            <div style={{ fontSize: '11px', opacity: 0.7, marginBottom: '4px', fontWeight: 700 }}>
+                                                                {msg.sender} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </div>
+                                                            <div style={{ fontSize: '14px', lineHeight: '1.5' }}>{msg.text}</div>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                            <div className="chat-input-area" style={{ padding: '20px', background: 'var(--bg-sidebar)', borderTop: '1px solid var(--border)', display: 'flex', gap: '12px' }}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Unesite poruku za predstavnika..."
+                                                    style={{
+                                                        flex: 1,
+                                                        background: 'var(--bg-card)',
+                                                        border: '1px solid var(--border)',
+                                                        borderRadius: '10px',
+                                                        padding: '10px 16px',
+                                                        color: 'var(--text-primary)'
+                                                    }}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            const val = e.currentTarget.value;
+                                                            if (!val.trim()) return;
+                                                            useDestRepStore.getState().addMessage({
+                                                                dossierId: dossier.resCode || dossier.clientReference || undefined,
+                                                                sender: 'Agent Nenad',
+                                                                senderEmail: 'nenad@olympic.rs',
+                                                                text: val,
+                                                                role: 'agent'
+                                                            });
+                                                            e.currentTarget.value = '';
+                                                        }
+                                                    }}
+                                                />
+                                                <button className="btn-primary" style={{ padding: '0 20px', borderRadius: '10px' }}>
+                                                    <Send size={18} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="rep-status-aside" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                            <div className="status-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                                <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', marginBottom: '12px', textTransform: 'uppercase' }}>Status Provere</div>
+                                                {dossier.repChecked ? (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                                                        <div style={{
+                                                            width: '40px',
+                                                            height: '40px',
+                                                            borderRadius: '10px',
+                                                            background: 'rgba(16, 185, 129, 0.1)',
+                                                            color: '#10b981',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}>
+                                                            <Shield size={24} />
+                                                        </div>
+                                                        <div>
+                                                            <div style={{ fontWeight: 800, color: '#10b981' }}>Provereno (Checked)</div>
+                                                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                                                                {dossier.repCheckedBy} @ {dossier.repCheckedAt ? new Date(dossier.repCheckedAt).toLocaleString() : '---'}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', opacity: 0.5 }}>
+                                                        <div style={{
+                                                            width: '40px',
+                                                            height: '40px',
+                                                            borderRadius: '10px',
+                                                            background: 'rgba(239, 68, 68, 0.1)',
+                                                            color: '#ef4444',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}>
+                                                            <ShieldAlert size={24} />
+                                                        </div>
+                                                        <div>
+                                                            <div style={{ fontWeight: 800, color: '#ef4444' }}>Nije Provereno</div>
+                                                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Čeka se na proveru predstavnika</div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {dossier.repInternalNote && (
+                                                    <div style={{ fontSize: '12px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                                        <strong>Interna Napomena Predstavnika:</strong><br />
+                                                        {dossier.repInternalNote}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="status-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                                <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', marginBottom: '12px', textTransform: 'uppercase' }}>Dodeljeni Predstavnici</div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--accent)', color: 'white', display: 'flex', alignItems: 'center', justifyItems: 'center', fontWeight: 700, fontSize: '12px', justifyContent: 'center' }}>MP</div>
+                                                        <div>
+                                                            <div style={{ fontSize: '13px', fontWeight: 700 }}>Miloš Predstavnik</div>
+                                                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Regija: Hurgada</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </section>
                             )
                         }

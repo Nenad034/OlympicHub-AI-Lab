@@ -36,8 +36,8 @@ const defaultPermissions: Record<number, UserPermissions> = {
     0: { canImport: false, canExport: false }, // Guest / Logged out
     1: { canImport: false, canExport: false },
     2: { canImport: false, canExport: true },
-    3: { canImport: true, canExport: true },
-    4: { canImport: true, canExport: true },
+    3: { canImport: true, canExport: true }, // Subagent
+    4: { canImport: false, canExport: true, allowedModules: ['destination_rep'] }, // Destination Rep
     5: { canImport: true, canExport: true },
     6: { canImport: true, canExport: true }, // Master Admin
 };
@@ -67,6 +67,16 @@ export const useAuthStore = create<AuthState>()(
                         userName: 'Test Subagent',
                         userEmail: 'subagent@partner.com',
                         permissions: defaultPermissions[3]
+                    });
+                    return true;
+                }
+                // Test Representative Account
+                if (name.toLowerCase() === 'rep' && pass === 'test') {
+                    set({
+                        userLevel: 4,
+                        userName: 'Miloš Predstavnik',
+                        userEmail: 'milos.rep@olympic.rs',
+                        permissions: defaultPermissions[4]
                     });
                     return true;
                 }

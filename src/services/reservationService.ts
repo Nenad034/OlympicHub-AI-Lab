@@ -39,6 +39,38 @@ export interface DatabaseReservation {
     booking_id?: string; // Provider booking ID (e.g., Solvex booking ID)
     provider: 'solvex' | 'tct' | 'opengreece';
     guests_data?: Record<string, unknown>; // JSON field for all guest information
+    // Destination Representative fields
+    rep_checked?: boolean;
+    rep_checked_at?: string;
+    rep_checked_by?: string;
+    rep_internal_note?: string;
+}
+
+/**
+ * Update a reservation in the database
+ */
+export async function updateReservation(
+    id: string,
+    updates: Partial<DatabaseReservation>
+): Promise<{ success: boolean; error?: string; data?: DatabaseReservation }> {
+    try {
+        const { data, error } = await supabase
+            .from('reservations')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[Reservation Service] Error updating reservation:', error);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true, data: data };
+    } catch (error) {
+        console.error('[Reservation Service] Unexpected error updating reservation:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
 }
 
 /**
@@ -257,7 +289,11 @@ export async function saveDossierToDatabase(dossier: any): Promise<{ success: bo
             hotel_category: firstItem?.stars || 0,
             lead_passenger: dossier.passengers[0] ? `${dossier.passengers[0].firstName} ${dossier.passengers[0].lastName}` : dossier.booker.fullName,
             provider: firstItem?.supplier?.toLowerCase().includes('solvex') ? 'solvex' : (firstItem?.supplier?.toLowerCase().includes('tct') ? 'tct' : 'opengreece'),
-            guests_data: dossier // Store entire dossier object for full restoration later
+            guests_data: dossier, // Store entire dossier object for full restoration later
+            rep_checked: dossier.repChecked,
+            rep_checked_at: dossier.repCheckedAt,
+            rep_checked_by: dossier.repCheckedBy,
+            rep_internal_note: dossier.repInternalNote
         };
 
         // Use upsert based on cis_code
