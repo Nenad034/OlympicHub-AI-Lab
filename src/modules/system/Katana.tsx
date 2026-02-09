@@ -13,30 +13,20 @@ import {
     Tag,
     LogOut,
     CheckCircle,
-    X
+    X,
+    Bell
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GeometricBrain } from '../../components/icons/GeometricBrain';
-import { saveToCloud, loadFromCloud } from '../../utils/storageUtils';
-
-interface KatanaTask {
-    id: string;
-    text: string;
-    completed: boolean;
-    important: boolean;
-    category: 'daily' | 'planned' | 'general';
-    createdAt: string;
-    note?: string;
-    tags?: string[];
-    attachments?: string[];
-}
+import type { KatanaTask } from '../../stores/katanaStore';
+import { useKatanaStore } from '../../stores/katanaStore';
 
 interface Props {
     onBack: () => void;
 }
 
 export default function Katana({ onBack }: Props) {
-    const [tasks, setTasks] = useState<KatanaTask[]>([]);
+    const { tasks, loadTasks, addTask, updateTask, deleteTask, toggleTask } = useKatanaStore();
     const [input, setInput] = useState('');
     const [aiInput, setAiInput] = useState('');
     const [activeCategory, setActiveCategory] = useState<'daily' | 'planned' | 'general' | 'all'>('all');
@@ -46,62 +36,31 @@ export default function Katana({ onBack }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const loadTasks = async () => {
-            const { success, data } = await loadFromCloud('katana_tasks');
-            if (success && data && data.length > 0) {
-                setTasks(data as KatanaTask[]);
-            } else {
-                const saved = localStorage.getItem('katana_tasks');
-                if (saved) setTasks(JSON.parse(saved));
-                else {
-                    setTasks([
-                        { id: '1', text: 'Analizirati MARS prodaju za Q4', completed: false, important: true, category: 'daily', createdAt: new Date().toISOString() },
-                        { id: '2', text: 'Ažurirati cenovnike za letnju sezonu', completed: false, important: false, category: 'planned', createdAt: new Date().toISOString() }
-                    ]);
-                }
-            }
-        };
         loadTasks();
     }, []);
 
-    useEffect(() => {
-        localStorage.setItem('katana_tasks', JSON.stringify(tasks));
-        if (tasks.length > 0) {
-            saveToCloud('katana_tasks', tasks);
-        }
-    }, [tasks]);
-
-    const addTask = (text: string, important = false, category: 'daily' | 'planned' | 'general' = 'general') => {
+    const handleAddTask = (text: string, important = false, category: 'daily' | 'planned' | 'general' = 'general') => {
         if (!text.trim()) return;
-        const newTask: KatanaTask = {
-            id: Date.now().toString(),
-            text,
-            completed: false,
-            important,
-            category,
-            createdAt: new Date().toISOString()
-        };
-        setTasks([newTask, ...tasks]);
+        addTask(text, important, category);
         setInput('');
-    };
-
-    const toggleTask = (id: string) => {
-        setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
     };
 
     const toggleImportant = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        setTasks(tasks.map(t => t.id === id ? { ...t, important: !t.important } : t));
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+            updateTask(id, { important: !task.important });
+        }
     };
 
-    const deleteTask = (id: string, e?: React.MouseEvent) => {
+    const handleDeleteTask = (id: string, e?: React.MouseEvent) => {
         e?.stopPropagation();
-        setTasks(tasks.filter(t => t.id !== id));
+        deleteTask(id);
         if (selectedTask?.id === id) setSelectedTask(null);
     };
 
     const updateTaskDetail = (id: string, field: keyof KatanaTask, value: any) => {
-        setTasks(prev => prev.map(t => t.id === id ? { ...t, [field]: value } : t));
+        updateTask(id, { [field]: value });
         if (selectedTask?.id === id) {
             setSelectedTask(prev => prev ? { ...prev, [field]: value } : null);
         }
@@ -127,7 +86,7 @@ export default function Katana({ onBack }: Props) {
             if (text.toLowerCase().includes('danas')) category = 'daily';
             if (text.toLowerCase().includes('planir')) category = 'planned';
 
-            addTask(text.replace(/hitno|danas|planirano/gi, '').trim(), important, category);
+            handleAddTask(text.replace(/hitno|danas|planirano/gi, '').trim(), important, category);
             setAiInput('');
             setIsAiThinking(false);
         }, 1200);
@@ -256,7 +215,7 @@ export default function Katana({ onBack }: Props) {
                                         placeholder="Dodaj novi zadatak..."
                                         value={input}
                                         onChange={e => setInput(e.target.value)}
-                                        onKeyDown={e => e.key === 'Enter' && addTask(input)}
+                                        onKeyDown={e => e.key === 'Enter' && handleAddTask(input)}
                                         style={{ flex: 1, background: 'transparent', border: 'none', fontSize: '16px', color: 'var(--text-primary)', outline: 'none' }}
                                     />
                                     <div style={{ display: 'flex', gap: '10px' }}>
@@ -304,6 +263,16 @@ export default function Katana({ onBack }: Props) {
                                                         <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', textTransform: 'capitalize' }}>
                                                             <Tag size={10} /> {task.category}
                                                         </span>
+                                                        {task.text.startsWith('OBAVEZA:') && (
+                                                            <span style={{ fontSize: '10px', color: '#FFD700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                <Sword size={10} /> Iz Mejl Modula
+                                                            </span>
+                                                        )}
+                                                        {task.note?.includes('PODSETNIK:') && (
+                                                            <span style={{ fontSize: '10px', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                <Bell size={10} /> Podsetnik
+                                                            </span>
+                                                        )}
                                                         {task.tags && task.tags.length > 0 && (
                                                             <div style={{ display: 'flex', gap: '4px' }}>
                                                                 {task.tags.map(t => (
@@ -452,7 +421,7 @@ export default function Katana({ onBack }: Props) {
                                 </div>
                                 <div style={{ padding: '20px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)' }}>
                                     <span>Created: {new Date(selectedTask.createdAt).toLocaleDateString()}</span>
-                                    <button onClick={() => deleteTask(selectedTask.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                                    <button onClick={() => handleDeleteTask(selectedTask.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
                                 </div>
                             </motion.div>
                         )}

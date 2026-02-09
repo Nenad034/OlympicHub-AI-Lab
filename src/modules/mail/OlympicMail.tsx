@@ -32,9 +32,11 @@ import {
     Loader2,
     Sparkles,
     Wand2,
-    Languages
+    Languages,
+    Sword
 } from 'lucide-react';
 import { useMailStore, useAuthStore } from '../../stores';
+import { useKatanaStore } from '../../stores/katanaStore';
 import { sendEmail as sendEmailViaSmtp, fetchEmails as fetchEmailsViaImap } from '../../services/emailService';
 import { generateOfferFromEmail, translateWithTone } from '../../services/aiOfferService';
 import { supabase } from '../../supabaseClient';
@@ -61,6 +63,8 @@ export const OlympicMail: React.FC = () => {
         addAccount,
         receiveEmail
     } = useMailStore();
+
+    const { addTask: addKatanaTask } = useKatanaStore();
 
     const { userLevel } = useAuthStore();
 
@@ -514,6 +518,27 @@ export const OlympicMail: React.FC = () => {
         }
     };
 
+    const handleSendToKatana = async (email: any) => {
+        try {
+            const reminderDate = new Date();
+            reminderDate.setHours(reminderDate.getHours() + 24);
+            const reminderStr = reminderDate.toLocaleString('sr-RS');
+
+            const note = `Email od: ${email.sender} (${email.senderEmail})\nSubject: ${email.subject}\n\n${email.body}\n\n--- PODSETNIK: ${reminderStr} ---`;
+
+            await addKatanaTask(
+                `OBAVEZA: ${email.subject}`,
+                false,
+                'planned',
+                note
+            );
+            notify('mail', 'success', 'Poslato u Katanu', 'Zadatak je uspešno kreiran u Katana modulu sa podsetnikom.');
+        } catch (error) {
+            console.error('Error sending to Katana:', error);
+            alert('❌ Greška prilikom slanja u Katanu.');
+        }
+    };
+
     return (
         <div
             ref={containerRef}
@@ -776,6 +801,29 @@ export const OlympicMail: React.FC = () => {
                                                 >
                                                     {isLoadingAIOffer ? <Loader2 size={18} className="spin" /> : <Sparkles size={18} />}
                                                     <span>Kreiraj ponudu</span>
+                                                </button>
+
+                                                <div className="v-divider"></div>
+
+                                                <button
+                                                    className="katana-send-btn"
+                                                    title="Pošalji u Katanu"
+                                                    onClick={() => handleSendToKatana(selectedEmail)}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                        background: 'rgba(255, 215, 0, 0.1)',
+                                                        border: '1px solid rgba(255, 215, 0, 0.3)',
+                                                        padding: '6px 12px',
+                                                        borderRadius: '8px',
+                                                        color: '#FFD700',
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    <Sword size={18} />
+                                                    <span style={{ fontSize: '11px', fontWeight: 800 }}>U KATANU</span>
                                                 </button>
 
                                                 <div className="v-divider"></div>
