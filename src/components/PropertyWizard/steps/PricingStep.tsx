@@ -8,11 +8,14 @@ import type {
     RoomTypePricing,
     PricingRule,
     ImportPreview,
-    AIAssistantMessage
+    AIAssistantMessage,
+    PricingMatrix,
+    MatrixCell
 } from '../../../types/pricing.types';
 import { generatePricingRules, calculateFinalPrice } from '../../../utils/pricingRulesGenerator';
 import { parsePriceListFile, detectFileType, validateImportPreview } from '../../../utils/priceListParsers';
 import PriceCards from '../components/PriceCards';
+import { Settings, Layers, Grid3X3, Link as LinkIcon, Info } from 'lucide-react';
 
 interface PricingStepProps {
     property: Property;
@@ -27,7 +30,7 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
     const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
     const [aiMessages, setAiMessages] = useState<AIAssistantMessage[]>([]);
     const [aiPrompt, setAiPrompt] = useState('');
-    const [activeTab, setActiveTab] = useState<'basic' | 'rooms' | 'details'>('basic');
+    const [activeTab, setActiveTab] = useState<'basic' | 'matrix' | 'rooms' | 'details'>('basic');
 
     // Initialize price list with default categories
     useEffect(() => {
@@ -36,7 +39,6 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                 { code: 'ADL', label: 'Odrasli', ageFrom: 18, ageTo: 99 },
                 { code: 'CHD1', label: 'Deca 2-7', ageFrom: 2, ageTo: 7 },
                 { code: 'CHD2', label: 'Deca 7-12', ageFrom: 7, ageTo: 12 },
-                { code: 'CHD3', label: 'Deca 12-18', ageFrom: 12, ageTo: 18 },
                 { code: 'INF', label: 'Beba 0-2', ageFrom: 0, ageTo: 2 }
             ];
 
@@ -50,6 +52,45 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                 currency: 'EUR',
                 personCategories: defaultCategories,
                 roomTypePricing: [],
+                pricingMatrices: [
+                    {
+                        id: 'm1',
+                        name: 'Standardna Pravila',
+                        targetRoomTypeIds: property.roomTypes?.map(r => r.roomTypeId || '') || [],
+                        grid: {
+                            'BASIC_1': {
+                                'ADL': { type: 'percent', value: 100 },
+                                'CHD1': { type: 'percent', value: 100 },
+                                'CHD2': { type: 'percent', value: 100 },
+                                'INF': { type: 'fixed', value: 15 }
+                            },
+                            'BASIC_2': {
+                                'ADL': { type: 'percent', value: 100 },
+                                'CHD1': { type: 'percent', value: 100 },
+                                'CHD2': { type: 'percent', value: 100 },
+                                'INF': { type: 'free', value: 0 }
+                            },
+                            'EXTRA_1': {
+                                'ADL': { type: 'percent', value: 80 },
+                                'CHD1': { type: 'percent', value: 50 },
+                                'CHD2': { type: 'percent', value: 70 },
+                                'INF': { type: 'free', value: 0 }
+                            },
+                            'EXTRA_2': {
+                                'ADL': { type: 'percent', value: 80 },
+                                'CHD1': { type: 'free', value: 0 },
+                                'CHD2': { type: 'fixed', value: 15 },
+                                'INF': { type: 'free', value: 0 }
+                            },
+                            'SHARING': {
+                                'ADL': { type: 'hidden', value: 0 },
+                                'CHD1': { type: 'fixed', value: 15 },
+                                'CHD2': { type: 'fixed', value: 20 },
+                                'INF': { type: 'free', value: 0 }
+                            }
+                        }
+                    }
+                ],
                 priceIncludes: [],
                 priceExcludes: [],
                 notes: [],
@@ -224,6 +265,23 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                     Osnovni Podaci
                 </button>
                 <button
+                    onClick={() => setActiveTab('matrix')}
+                    style={{
+                        padding: '12px 24px',
+                        background: activeTab === 'matrix' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                        border: 'none',
+                        borderBottom: activeTab === 'matrix' ? '2px solid #3b82f6' : '2px solid transparent',
+                        color: activeTab === 'matrix' ? '#3b82f6' : 'rgba(255,255,255,0.6)',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    <Grid3X3 size={16} style={{ marginRight: '8px', display: 'inline' }} />
+                    Matrica Cena (Globalna)
+                </button>
+                <button
                     onClick={() => setActiveTab('rooms')}
                     style={{
                         padding: '12px 24px',
@@ -237,6 +295,7 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                         transition: 'all 0.2s'
                     }}
                 >
+                    <Layers size={16} style={{ marginRight: '8px', display: 'inline' }} />
                     Tipovi Soba
                 </button>
                 <button
@@ -253,9 +312,174 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                         transition: 'all 0.2s'
                     }}
                 >
-                    Detalji
+                    <FileText size={16} style={{ marginRight: '8px', display: 'inline' }} />
+                    Dodatni Detalji
                 </button>
             </div>
+
+            {/* Matrix Builder Tab */}
+            {activeTab === 'matrix' && (
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="glass-card"
+                    style={{ padding: '32px' }}
+                >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
+                        <div>
+                            <h3 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '8px', color: '#fff' }}>Globalna Matrica Pravila</h3>
+                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px' }}>
+                                Definišite popuste i doplata jednom, pa ih primenite na sve sobe. Brzo, precizno i bez greške.
+                            </p>
+                        </div>
+                        <div style={{ padding: '12px 20px', background: 'rgba(59,130,246,0.1)', borderRadius: '14px', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <Settings size={20} color="#3b82f6" />
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#3b82f6' }}>AUTOPILOT MODE</span>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '32px' }}>
+                        {/* Matrix Table */}
+                        <div>
+                            <div className="matrix-table-container" style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '8px' }}>
+                                    <thead>
+                                        <tr>
+                                            <th style={{ padding: '12px', textAlign: 'left', fontSize: '12px', opacity: 0.4 }}>POZICIJA LEŽAJA</th>
+                                            {priceList.personCategories.map(cat => (
+                                                <th key={cat.code} style={{ padding: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 800, color: '#3b82f6' }}>
+                                                    {cat.label}
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {[
+                                            { key: 'BASIC_1', label: '1. Osnovni' },
+                                            { key: 'BASIC_2', label: '2. Osnovni' },
+                                            { key: 'EXTRA_1', label: '1. Pomoćni' },
+                                            { key: 'EXTRA_2', label: '2. Pomoćni' },
+                                            { key: 'SHARING', label: 'Dete deli ležaj' }
+                                        ].map(row => (
+                                            <tr key={row.key}>
+                                                <td style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', fontWeight: 700, fontSize: '13px' }}>
+                                                    {row.label}
+                                                </td>
+                                                {priceList.personCategories.map(cat => {
+                                                    const matrix = priceList.pricingMatrices?.[0];
+                                                    const cell = matrix?.grid[row.key]?.[cat.code] || { type: 'percent', value: 0 };
+
+                                                    return (
+                                                        <td key={cat.code} style={{ padding: '4px' }}>
+                                                            <div style={{
+                                                                background: cell.type === 'hidden' ? 'transparent' : 'rgba(255,255,255,0.05)',
+                                                                borderRadius: '12px',
+                                                                padding: '12px',
+                                                                border: '1px solid rgba(255,255,255,0.1)',
+                                                                display: 'flex',
+                                                                flexDirection: 'column',
+                                                                gap: '8px',
+                                                                opacity: cell.type === 'hidden' ? 0.2 : 1
+                                                            }}>
+                                                                <select
+                                                                    value={cell.type}
+                                                                    onChange={(e) => {
+                                                                        const newMatrices = [...(priceList.pricingMatrices || [])];
+                                                                        if (!newMatrices[0].grid[row.key]) newMatrices[0].grid[row.key] = {};
+                                                                        newMatrices[0].grid[row.key][cat.code] = { ...cell, type: e.target.value as any };
+                                                                        setPriceList({ ...priceList, pricingMatrices: newMatrices });
+                                                                    }}
+                                                                    style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', outline: 'none' }}
+                                                                >
+                                                                    <option value="percent">% Procenat</option>
+                                                                    <option value="fixed">€ Fiksno</option>
+                                                                    <option value="free">Gratis</option>
+                                                                    <option value="hidden">Nije dozv.</option>
+                                                                </select>
+
+                                                                {(cell.type === 'percent' || cell.type === 'fixed') && (
+                                                                    <input
+                                                                        type="number"
+                                                                        value={cell.value}
+                                                                        onChange={(e) => {
+                                                                            const newMatrices = [...(priceList.pricingMatrices || [])];
+                                                                            if (!newMatrices[0].grid[row.key]) newMatrices[0].grid[row.key] = {};
+                                                                            if (!newMatrices[0].grid[row.key][cat.code]) {
+                                                                                newMatrices[0].grid[row.key][cat.code] = { ...cell };
+                                                                            }
+                                                                            newMatrices[0].grid[row.key][cat.code].value = parseFloat(e.target.value) || 0;
+                                                                            setPriceList({ ...priceList, pricingMatrices: newMatrices });
+                                                                        }}
+                                                                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '6px', color: '#fff', fontSize: '14px', width: '100%', textAlign: 'center', outline: 'none' }}
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Room Apply Selector */}
+                        <div className="glass-card" style={{ padding: '24px', background: 'rgba(59,130,246,0.03)', border: '1px solid rgba(59,130,246,0.1)' }}>
+                            <h4 style={{ fontSize: '16px', fontWeight: 800, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <LinkIcon size={18} color="#3b82f6" /> Poveži sa sobama
+                            </h4>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                {property.roomTypes?.map(room => {
+                                    const isLinked = priceList.pricingMatrices?.[0].targetRoomTypeIds.includes(room.roomTypeId || '');
+                                    return (
+                                        <div
+                                            key={room.roomTypeId}
+                                            onClick={() => {
+                                                const newMatrices = [...(priceList.pricingMatrices || [])];
+                                                const ids = new Date().getTime(); // Dummy update
+                                                const currentIds = newMatrices[0].targetRoomTypeIds;
+                                                if (currentIds.includes(room.roomTypeId!)) {
+                                                    newMatrices[0].targetRoomTypeIds = currentIds.filter(id => id !== room.roomTypeId);
+                                                } else {
+                                                    newMatrices[0].targetRoomTypeIds = [...currentIds, room.roomTypeId!];
+                                                }
+                                                setPriceList({ ...priceList, pricingMatrices: newMatrices });
+                                            }}
+                                            style={{
+                                                padding: '12px 16px',
+                                                borderRadius: '12px',
+                                                background: isLinked ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.03)',
+                                                border: `1px solid ${isLinked ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.05)'}`,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '12px',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            <div style={{ width: '20px', height: '20px', borderRadius: '6px', border: '2px solid #3b82f6', background: isLinked ? '#3b82f6' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                {isLinked && <Check size={14} color="#fff" />}
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontSize: '13px', fontWeight: 700 }}>{room.nameInternal}</div>
+                                                <div style={{ fontSize: '11px', opacity: 0.5 }}>{room.category}</div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div style={{ marginTop: '32px', padding: '16px', background: 'rgba(255,221,0,0.05)', borderRadius: '12px', border: '1px dashed rgba(255,221,0,0.2)', display: 'flex', gap: '12px' }}>
+                                <Info size={20} color="#ffdd00" style={{ flexShrink: 0 }} />
+                                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.5 }}>
+                                    Promene u matrici će <strong>odmah</strong> biti primenjene na sve označene tipove soba. Ne morate ulaziti u svaku sobu posebno.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
 
             {/* Tab Content */}
             <AnimatePresence mode="wait">

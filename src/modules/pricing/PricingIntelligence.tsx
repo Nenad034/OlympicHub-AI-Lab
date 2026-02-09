@@ -95,7 +95,41 @@ const PricingIntelligence: React.FC = () => {
     const [isDarkMode, setIsDarkMode] = useState(false);
 
     // Global Pricelist Items state
-    const [addedItems, setAddedItems] = useState<any[]>([]);
+    const [addedItems, setAddedItems] = useState<any[]>([
+        {
+            id: 'MOCK-001',
+            roomType: 'Double Room Standard (2+1)',
+            dateFrom: '2026-06-01',
+            dateTo: '2026-06-30',
+            netPrice: 68.00,
+            brutoPrice: 85.00,
+            occupancy: { adults: 2, children: 1 },
+            status: 'active',
+            pricelistTitle: 'Leto 2026 - Grčka'
+        },
+        {
+            id: 'MOCK-002',
+            roomType: 'Family Apartment (2+2)',
+            dateFrom: '2026-07-01',
+            dateTo: '2026-07-31',
+            netPrice: 116.00,
+            brutoPrice: 145.00,
+            occupancy: { adults: 2, children: 2 },
+            status: 'active',
+            pricelistTitle: 'Sezona 2026 - Bugarska'
+        },
+        {
+            id: 'MOCK-003',
+            roomType: 'Junior Suite (2+0)',
+            dateFrom: '2026-08-01',
+            dateTo: '2026-08-31',
+            netPrice: 88.00,
+            brutoPrice: 110.00,
+            occupancy: { adults: 2, children: 0 },
+            status: 'warning',
+            pricelistTitle: 'Premium Ponuda - Turska'
+        }
+    ]);
     const [isLoadingData, setIsLoadingData] = useState(false);
 
     // Product Configuration State

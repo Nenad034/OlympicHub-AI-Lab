@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
     MapPin, Calendar, Users, Star,
-    Search, Plus, X, Minus, ChevronDown, UtensilsCrossed, Users2, ArrowDownWideNarrow
+    Search, Plus, X, Minus, ChevronDown, UtensilsCrossed, Users2, ArrowDownWideNarrow,
+    Globe, DollarSign
 } from 'lucide-react';
 import { ModernCalendar } from '../../../components/ModernCalendar';
 import { formatDate } from '../../../utils/dateUtils';
@@ -21,6 +22,29 @@ interface Step1Props {
 
 const CATEGORY_OPTIONS = ["Sve kategorije", "5 Zvezdica", "4 Zvezdice", "3 Zvezdice"];
 const SERVICE_OPTIONS = ["Sve usluge", "Najam (RO)", "Noćenje/Doručak (BB)", "Polupansion (HB)", "Pun pansion (FB)", "All Inclusive (AI)"];
+
+const NATIONALITY_OPTIONS = [
+    { code: 'RS', name: 'Srbija' },
+    { code: 'BA', name: 'Bosna i Hercegovina' },
+    { code: 'ME', name: 'Crna Gora' },
+    { code: 'MK', name: 'Severna Makedonija' },
+    { code: 'HR', name: 'Hrvatska' },
+    { code: 'BG', name: 'Bugarska' },
+    { code: 'RO', name: 'Rumunija' },
+    { code: 'HU', name: 'Mađarska' },
+    { code: 'GR', name: 'Grčka' },
+    { code: 'AL', name: 'Albanija' },
+    { code: 'TR', name: 'Turska' },
+    { code: 'DE', name: 'Nemačka' },
+    { code: 'AT', name: 'Austrija' },
+    { code: 'CH', name: 'Švajcarska' },
+    { code: 'RU', name: 'Rusija' },
+    { code: 'US', name: 'SAD' },
+    { code: 'GB', name: 'Velika Britanija' },
+    { code: 'IT', name: 'Italija' },
+    { code: 'FR', name: 'Francuska' },
+    { code: 'ES', name: 'Španija' },
+];
 
 interface RoomAllocation {
     adults: number;
@@ -80,6 +104,11 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
         ]
     );
 
+    const [budgetFrom, setBudgetFrom] = useState(basicInfo?.budgetFrom?.toString() || '');
+    const [budgetTo, setBudgetTo] = useState(basicInfo?.budgetTo?.toString() || '');
+    const [nationality, setNationality] = useState(basicInfo?.nationality || 'RS');
+    const [showNationalityPicker, setShowNationalityPicker] = useState<number | null>(null);
+
     const [activeDropdown, setActiveDropdown] = useState<{ idx: number, field: 'category' | 'service' } | null>(null);
     const [activeCalendar, setActiveCalendar] = useState<{ index: number } | null>(null);
 
@@ -92,13 +121,16 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
         onUpdate({
             destinations: destinations.map(d => ({ ...d, travelers: primaryRoom })),
             travelers: primaryRoom,
-            budget: basicInfo?.budget,
+            budget: budgetTo ? Number(budgetTo) : basicInfo?.budget,
+            budgetFrom: budgetFrom ? Number(budgetFrom) : undefined,
+            budgetTo: budgetTo ? Number(budgetTo) : undefined,
+            nationality: nationality,
             currency: basicInfo?.currency || 'EUR',
             startDate: destinations[0]?.checkIn || '',
             endDate: destinations[destinations.length - 1]?.checkOut || '',
             totalDays: destinations.reduce((sum, d) => sum + (d.nights || 0), 0)
         });
-    }, [destinations, roomAllocations]);
+    }, [destinations, roomAllocations, budgetFrom, budgetTo, nationality]);
 
     const addDestination = () => {
         if (destinations.length >= 3) return;
@@ -444,6 +476,72 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
                                     </div>
                                 </div>
                             )}
+
+                            {/* Nationality & Budget Group - POSITIONED BELOW MEAL SELECTOR */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+                                {/* Nationality Selector */}
+                                <div style={{ position: 'relative', width: '100%' }}>
+                                    <div className="field-label" style={{ marginBottom: '8px' }}><Globe size={14} /> NACIONALNOST</div>
+                                    <div className="input-box" onClick={() => setShowNationalityPicker(showNationalityPicker === idx ? null : idx)} style={{ cursor: 'pointer' }}>
+                                        <span style={{ fontSize: '0.85rem' }}>
+                                            {NATIONALITY_OPTIONS.find(n => n.code === nationality)?.name || 'Odaberi državu'}
+                                        </span>
+                                        <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                                    </div>
+                                    {showNationalityPicker === idx && (
+                                        <div className="vertical-filters-popover animate-fade-in-up" style={{ top: '100%', left: 0, minWidth: '220px' }}>
+                                            <div className="vertical-filter-group" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                                                {NATIONALITY_OPTIONS.map(n => (
+                                                    <button key={n.code} className={`v-filter-btn ${nationality === n.code ? 'active' : ''}`} onClick={() => { setNationality(n.code); setShowNationalityPicker(null); }}>
+                                                        {n.name}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Budget Filter */}
+                                <div style={{ width: '100%' }}>
+                                    <div className="field-label" style={{ marginBottom: '8px' }}><DollarSign size={14} /> BUDŽET</div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <input
+                                            type="number"
+                                            placeholder="Od"
+                                            value={budgetFrom}
+                                            onChange={(e) => setBudgetFrom(e.target.value)}
+                                            style={{
+                                                flex: 1,
+                                                background: 'rgba(255,255,255,0.05)',
+                                                border: '1px solid rgba(255,255,255,0.1)',
+                                                borderRadius: '12px',
+                                                padding: '12px',
+                                                color: '#fff',
+                                                fontSize: '0.85rem',
+                                                outline: 'none',
+                                                width: '100%'
+                                            }}
+                                        />
+                                        <input
+                                            type="number"
+                                            placeholder="Do"
+                                            value={budgetTo}
+                                            onChange={(e) => setBudgetTo(e.target.value)}
+                                            style={{
+                                                flex: 1,
+                                                background: 'rgba(255,255,255,0.05)',
+                                                border: '1px solid rgba(255,255,255,0.1)',
+                                                borderRadius: '12px',
+                                                padding: '12px',
+                                                color: '#fff',
+                                                fontSize: '0.85rem',
+                                                outline: 'none',
+                                                width: '100%'
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

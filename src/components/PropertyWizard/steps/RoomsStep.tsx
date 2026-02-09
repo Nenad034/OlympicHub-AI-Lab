@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Bed, Trash2, Grid, List, X, Save, Copy } from 'lucide-react';
+import { Plus, Bed, Trash2, Grid, List, X, Save, Copy, Maximize, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { StepProps } from '../types';
 import type { RoomType, BeddingConfiguration } from '../../../types/property.types';
@@ -422,8 +422,30 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
                             <div style={{ flex: 1 }}>
                                 <h4 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', margin: 0 }}>{room.nameInternal || 'Soba bez naziva'}</h4>
                                 <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '4px' }}>#{room.code} • {room.category}</div>
+
+                                {/* Bed, Size & View Badge Grid */}
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 800, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '4px 10px', borderRadius: '8px' }}>
+                                        <Bed size={12} /> {room.osnovniKreveti || 0} OSN.
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 800, color: '#a78bfa', background: 'rgba(167, 139, 250, 0.1)', padding: '4px 10px', borderRadius: '8px' }}>
+                                        <Plus size={12} /> {room.pomocniKreveti || 0} POM.
+                                    </div>
+
+                                    {room.sizeSqm && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 800, color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '4px 10px', borderRadius: '8px' }}>
+                                            <Maximize size={12} /> {room.sizeSqm} m²
+                                        </div>
+                                    )}
+
+                                    {room.viewType && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 800, color: '#fbbf24', background: 'rgba(251, 191, 36, 0.1)', padding: '4px 10px', borderRadius: '8px' }}>
+                                            <Eye size={12} /> {room.viewType === 'SeaView' ? 'Pogled na More' : room.viewType === 'GardenView' ? 'Bašta' : room.viewType}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <div style={{ display: 'flex', gap: '8px', marginTop: viewMode === 'grid' ? '20px' : 0, alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '8px', marginTop: viewMode === 'grid' ? '12px' : 0, alignItems: 'center' }}>
                                 <motion.button
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}

@@ -9,7 +9,7 @@ import {
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
     LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
     CheckCircle2, CheckCircle, XCircle, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
-    Plus, Globe, AlignLeft, Database, Power, Building2, Ship, Anchor, Ticket, Mountain, Settings
+    Plus, Globe, AlignLeft, Database, Power, Building2, Ship, Anchor, Ticket, Mountain, Settings, DollarSign
 } from 'lucide-react';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
 import { sentinelEvents } from '../utils/sentinelEvents';
@@ -233,6 +233,8 @@ const GlobalHubSearch: React.FC = () => {
     const [hotelNameFilter, setHotelNameFilter] = useState('');
     const [selectedStars, setSelectedStars] = useState<string[]>(['all']);
     const [selectedMealPlans, setSelectedMealPlans] = useState<string[]>(['all']);
+    const [budgetFrom, setBudgetFrom] = useState<string>('');
+    const [budgetTo, setBudgetTo] = useState<string>('');
 
     // Booking states
     const [expandedHotel, setExpandedHotel] = useState<SmartSearchResult | null>(null);
@@ -721,6 +723,11 @@ const GlobalHubSearch: React.FC = () => {
             const normalized = normalizeMealPlan(hotel.mealPlan || '');
             if (!selectedMealPlans.includes(normalized)) return false;
         }
+
+        const price = getFinalDisplayPrice(hotel);
+        if (budgetFrom && price < Number(budgetFrom)) return false;
+        if (budgetTo && price > Number(budgetTo)) return false;
+
         return true;
     }).sort((a, b) => {
         if (sortBy === 'price_low') return getFinalDisplayPrice(a) - getFinalDisplayPrice(b);
@@ -1175,33 +1182,78 @@ const GlobalHubSearch: React.FC = () => {
                                 )}
                             </div>
 
-                            {/* Nationality Selector */}
-                            <div className="col-nationality param-item" style={{ position: 'relative' }}>
-                                <div className="field-label"><Globe size={14} /> NACIONALNOST</div>
-                                <div className="input-box" onClick={() => setShowNationalityPicker(!showNationalityPicker)} style={{ cursor: 'pointer' }}>
-                                    <span style={{ fontSize: '0.85rem' }}>
-                                        {NATIONALITY_OPTIONS.find(n => n.code === nationality)?.name || 'Odaberi državu'}
-                                    </span>
-                                    <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-                                </div>
-                                {showNationalityPicker && (
-                                    <div className="vertical-filters-popover animate-fade-in-up">
-                                        <div className="vertical-filter-group" style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '10px' }}>
-                                            {NATIONALITY_OPTIONS.map(n => (
-                                                <button
-                                                    key={n.code}
-                                                    className={`v-filter-btn ${nationality === n.code ? 'active' : ''}`}
-                                                    onClick={() => {
-                                                        setNationality(n.code);
-                                                        setShowNationalityPicker(false);
-                                                    }}
-                                                >
-                                                    {n.name}
-                                                </button>
-                                            ))}
-                                        </div>
+                            <div className="col-nationality" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                {/* Nationality Selector */}
+                                <div className="param-item" style={{ position: 'relative' }}>
+                                    <div className="field-label"><Globe size={14} /> NACIONALNOST</div>
+                                    <div className="input-box" onClick={() => setShowNationalityPicker(!showNationalityPicker)} style={{ cursor: 'pointer' }}>
+                                        <span style={{ fontSize: '0.85rem' }}>
+                                            {NATIONALITY_OPTIONS.find(n => n.code === nationality)?.name || 'Odaberi državu'}
+                                        </span>
+                                        <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
                                     </div>
-                                )}
+                                    {showNationalityPicker && (
+                                        <div className="vertical-filters-popover animate-fade-in-up">
+                                            <div className="vertical-filter-group" style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '10px' }}>
+                                                {NATIONALITY_OPTIONS.map(n => (
+                                                    <button
+                                                        key={n.code}
+                                                        className={`v-filter-btn ${nationality === n.code ? 'active' : ''}`}
+                                                        onClick={() => {
+                                                            setNationality(n.code);
+                                                            setShowNationalityPicker(false);
+                                                        }}
+                                                    >
+                                                        {n.name}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Budget Filter */}
+                                <div className="param-item">
+                                    <div className="field-label"><DollarSign size={14} /> BUDŽET</div>
+                                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                                        <input
+                                            type="number"
+                                            placeholder="Od"
+                                            value={budgetFrom}
+                                            onChange={(e) => setBudgetFrom(e.target.value)}
+                                            className="budget-input"
+                                            style={{
+                                                flex: 1,
+                                                background: 'rgba(255,255,255,0.05)',
+                                                border: '1px solid rgba(255,255,255,0.1)',
+                                                borderRadius: '12px',
+                                                padding: '12px',
+                                                color: '#fff',
+                                                fontSize: '0.85rem',
+                                                outline: 'none',
+                                                width: '100%'
+                                            }}
+                                        />
+                                        <input
+                                            type="number"
+                                            placeholder="Do"
+                                            value={budgetTo}
+                                            onChange={(e) => setBudgetTo(e.target.value)}
+                                            className="budget-input"
+                                            style={{
+                                                flex: 1,
+                                                background: 'rgba(255,255,255,0.05)',
+                                                border: '1px solid rgba(255,255,255,0.1)',
+                                                borderRadius: '12px',
+                                                padding: '12px',
+                                                color: '#fff',
+                                                fontSize: '0.85rem',
+                                                outline: 'none',
+                                                width: '100%'
+                                            }}
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Room Configuration */}

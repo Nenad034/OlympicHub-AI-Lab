@@ -29,6 +29,9 @@ export interface BasicInfoData {
     destinations: DestinationInput[];
     travelers: TravelerCount;
     budget?: number;
+    budgetFrom?: number;
+    budgetTo?: number;
+    nationality?: string;
     currency: string;
     startDate: string;
     endDate: string;

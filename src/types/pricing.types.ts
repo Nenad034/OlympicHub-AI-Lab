@@ -96,9 +96,28 @@ export interface PriceList {
     // Import metadata
     importSource?: ImportSource;
 
+    // Matrix-based pricing (Global rules)
+    pricingMatrices?: PricingMatrix[];
+
     // Timestamps
     createdAt?: Date;
     updatedAt?: Date;
+}
+
+export interface MatrixCell {
+    type: 'percent' | 'fixed' | 'free' | 'hidden';
+    value: number;
+}
+
+export interface PricingMatrix {
+    id: string;
+    name: string;
+    targetRoomTypeIds: string[];
+    grid: {
+        [bedKey: string]: {
+            [categoryCode: string]: MatrixCell;
+        }
+    }
 }
 
 export interface PriceCard {
