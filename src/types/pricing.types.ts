@@ -109,15 +109,22 @@ export interface MatrixCell {
     value: number;
 }
 
-export interface PricingMatrix {
+export interface PricingMatrixContext {
     id: string;
-    name: string;
-    targetRoomTypeIds: string[];
+    baseAdults: number;
+    label: string;
     grid: {
         [bedKey: string]: {
             [categoryCode: string]: MatrixCell;
         }
     }
+}
+
+export interface PricingMatrix {
+    id: string;
+    name: string;
+    targetRoomTypeIds: string[];
+    contexts: PricingMatrixContext[];
 }
 
 export interface PriceCard {
