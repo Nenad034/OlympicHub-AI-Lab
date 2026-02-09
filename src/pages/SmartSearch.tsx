@@ -628,8 +628,11 @@ const SmartSearch: React.FC = () => {
     };
 
     const filteredResults = searchResults.filter(hotel => {
-        if (hotelNameFilter && !hotel.name.toLowerCase().includes(hotelNameFilter.toLowerCase())) {
-            return false;
+        if (hotelNameFilter) {
+            const searchTerm = hotelNameFilter.toLowerCase();
+            const matchesName = hotel.name.toLowerCase().includes(searchTerm);
+            const matchesLocation = hotel.location && hotel.location.toLowerCase().includes(searchTerm);
+            if (!matchesName && !matchesLocation) return false;
         }
 
         if (selectedStars.length > 0 && !selectedStars.includes('all')) {

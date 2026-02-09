@@ -131,7 +131,7 @@ export interface HotelRoom {
 
 export interface MealPlan {
     id: string;
-    code: 'RO' | 'BB' | 'HB' | 'FB' | 'AI';
+    code: 'RO' | 'BB' | 'HB' | 'FB' | 'AI' | 'UAI';
     name: string;
     description: string;
     price: number;

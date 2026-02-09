@@ -168,6 +168,9 @@ const Step3_HotelSelection: React.FC<Step3Props> = ({
     const [selectedHotels, setSelectedHotels] = useState<HotelSelectionData[]>(data || []);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [sortBy, setSortBy] = useState<'smart' | 'price'>('smart');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedStars, setSelectedStars] = useState('Kategorija');
+    const [selectedMeal, setSelectedMeal] = useState('Usluga');
 
     const currentDest = basicInfo?.destinations[activeDestIndex];
 
@@ -231,6 +234,26 @@ const Step3_HotelSelection: React.FC<Step3Props> = ({
             setIsLoading(false);
         }
     };
+
+    const filteredResults = results.filter(hotel => {
+        if (searchTerm) {
+            const s = searchTerm.toLowerCase();
+            const matchesName = hotel.name.toLowerCase().includes(s);
+            const matchesLoc = hotel.location && hotel.location.toLowerCase().includes(s);
+            if (!matchesName && !matchesLoc) return false;
+        }
+        if (selectedStars !== 'Kategorija') {
+            const starNum = parseInt(selectedStars[0]);
+            if (hotel.stars !== starNum) return false;
+        }
+        if (selectedMeal !== 'Usluga') {
+            if (hotel.mealPlanCode !== selectedMeal) return false;
+        }
+        return true;
+    }).sort((a, b) => {
+        if (sortBy === 'price') return a.price - b.price;
+        return 0; // Smart sort placeholder
+    });
 
     const handleSelectHotel = (hotelResult: InternalHotelResult) => {
         if (!currentDest) return;
@@ -322,19 +345,32 @@ const Step3_HotelSelection: React.FC<Step3Props> = ({
             }}>
                 <div style={{ position: 'relative', flex: 1.5 }}>
                     <Search size={18} style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
-                    <input type="text" placeholder="Traži po nazivu..."
-                        style={{ width: '100%', height: '52px', background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '0 1.25rem 0 3.5rem', color: 'white', fontSize: '0.9rem' }} />
+                    <input
+                        type="text"
+                        placeholder="Traži po nazivu..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ width: '100%', height: '52px', background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '0 1.25rem 0 3.5rem', color: 'white', fontSize: '0.9rem' }}
+                    />
                 </div>
 
                 <div style={{ flex: 1, position: 'relative' }}>
-                    <select style={{ width: '100%', height: '52px', background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '0 1.25rem', color: '#94a3b8', appearance: 'none', fontSize: '0.9rem' }}>
+                    <select
+                        value={selectedStars}
+                        onChange={(e) => setSelectedStars(e.target.value)}
+                        style={{ width: '100%', height: '52px', background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '0 1.25rem', color: '#94a3b8', appearance: 'none', fontSize: '0.9rem' }}
+                    >
                         {CATEGORY_OPTIONS.map(opt => <option key={opt}>{opt}</option>)}
                     </select>
                     <ChevronDown size={14} style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
                 </div>
 
                 <div style={{ flex: 1, position: 'relative' }}>
-                    <select style={{ width: '100%', height: '52px', background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '0 1.25rem', color: '#94a3b8', appearance: 'none', fontSize: '0.9rem' }}>
+                    <select
+                        value={selectedMeal}
+                        onChange={(e) => setSelectedMeal(e.target.value)}
+                        style={{ width: '100%', height: '52px', background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '0 1.25rem', color: '#94a3b8', appearance: 'none', fontSize: '0.9rem' }}
+                    >
                         {SERVICE_OPTIONS.map(opt => <option key={opt}>{opt}</option>)}
                     </select>
                     <ChevronDown size={14} style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
@@ -348,7 +384,7 @@ const Step3_HotelSelection: React.FC<Step3Props> = ({
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', padding: '0 0.5rem' }}>
                 <div style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    REZULTATA: <span style={{ color: 'white' }}>{results.length}</span>
+                    REZULTATA: <span style={{ color: 'white' }}>{filteredResults.length}</span>
                 </div>
                 <div style={{ display: 'flex', background: 'rgba(15, 23, 42, 0.4)', padding: '4px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
                     <button onClick={() => setSortBy('smart')} style={{ padding: '0 1.5rem', height: '36px', borderRadius: '8px', background: sortBy === 'smart' ? '#6366f1' : 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>Smart</button>
@@ -363,7 +399,7 @@ const Step3_HotelSelection: React.FC<Step3Props> = ({
                 </div>
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
-                    {results.map(hotel => {
+                    {filteredResults.map(hotel => {
                         const isSelected = selectedHotels[activeDestIndex]?.hotel.id === hotel.id;
                         return (
                             <div key={hotel.id} className={`hotel-result-card-premium ${isSelected ? 'selected-border' : ''}`}

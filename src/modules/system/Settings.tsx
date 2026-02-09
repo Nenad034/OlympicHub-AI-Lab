@@ -28,7 +28,11 @@ import {
     Bell,
     FileText,
     BookOpen,
-    Brain
+    Brain,
+    LayoutGrid,
+    List,
+    ChevronRight,
+    Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConfig } from '../../context/ConfigContext';
@@ -74,41 +78,59 @@ interface Props {
     setUserLevel: (level: number) => void;
 }
 
-type TabType = 'general' | 'users' | 'permissions' | 'connections' | 'ai-quota' | 'daily-activity' | 'pulse' | 'backups' | 'archive' | 'notifications' | 'ai-training' | 'modules-overview' | 'orchestrator';
+type TabType = 'overview' | 'general' | 'users' | 'permissions' | 'connections' | 'ai-quota' | 'daily-activity' | 'pulse' | 'backups' | 'archive' | 'notifications' | 'ai-training' | 'modules-overview' | 'orchestrator';
+
+interface SettingsModuleConfig {
+    id: TabType;
+    name: string;
+    desc: string;
+    icon: React.ReactNode;
+    color: string;
+    minLevel: number;
+    category: 'system' | 'security' | 'ai' | 'activity';
+}
+
+const SETTING_MODULES: SettingsModuleConfig[] = [
+    { id: 'modules-overview', name: 'Pregled Modula', desc: 'Audit i monitoring svih API konekcija i sistemskih funkcija.', icon: <BookOpen size={24} />, color: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', minLevel: 6, category: 'system' },
+    { id: 'connections', name: 'Aktivne Konekcije', desc: 'Upravljanje eksternim API servisima i integracijama.', icon: <Activity size={24} />, color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', minLevel: 1, category: 'system' },
+    { id: 'orchestrator', name: 'AI Orchestrator', desc: 'Centralno upravljanje AI agentima i modelima.', icon: <Brain size={24} />, color: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', minLevel: 6, category: 'ai' },
+    { id: 'ai-quota', name: 'AI Quota Tracker', desc: 'Praćenje i kontrola potrošnje AI resursa po modulima.', icon: <Zap size={24} />, color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', minLevel: 3, category: 'ai' },
+    { id: 'daily-activity', name: 'Dnevni Izveštaj', desc: 'Kompletna analiza aktivnosti i statusa rezervacija.', icon: <FileText size={24} />, color: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', minLevel: 3, category: 'activity' },
+    { id: 'general', name: 'General Settings', desc: 'Osnovna podešavanja sistema i AI konfiguracija.', icon: <LayoutDashboard size={24} />, color: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', minLevel: 1, category: 'system' },
+    { id: 'users', name: 'Korisnički Nalozi', desc: 'Upravljanje operaterima, nivoima pristupa i profilima.', icon: <Users size={24} />, color: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', minLevel: 1, category: 'security' },
+    { id: 'permissions', name: 'Access Permissions', desc: 'Matrica prava pristupa i specifična ovlašćenja.', icon: <Lock size={24} />, color: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', minLevel: 6, category: 'security' },
+    { id: 'notifications', name: 'Notifikacije', desc: 'Podešavanja sistemskih obaveštenja i upozorenja.', icon: <Bell size={24} />, color: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', minLevel: 1, category: 'system' },
+    { id: 'backups', name: 'System Snapshots', desc: 'Upravljanje rezervnim kopijama i istorijom sistema.', icon: <RotateCcw size={24} />, color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', minLevel: 6, category: 'security' },
+    { id: 'pulse', name: 'System Pulse', desc: 'Monitoring performansi i zdravlja hardvera u realnom vremenu.', icon: <Activity size={24} />, color: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)', minLevel: 1, category: 'activity' },
+    { id: 'archive', name: 'Deep Archive', desc: 'Registar svih obrisanih i istorijskih podataka.', icon: <ShieldAlert size={24} />, color: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)', minLevel: 6, category: 'security' },
+];
 
 // --- KATANA STYLED COMPONENTS (Inline Styles) ---
 const styles = {
     layout: {
         display: 'flex',
+        flexDirection: 'column' as const,
         height: '100vh',
-        background: '#0f172a', // Slate 900
-        color: '#e2e8f0',
+        background: 'var(--bg-dark)',
+        color: 'var(--text-primary)',
         fontFamily: "'Inter', sans-serif",
         overflow: 'hidden'
-    },
-    sidebar: {
-        width: '260px',
-        background: '#020617', // Slate 950
-        borderRight: '1px solid rgba(255,255,255,0.05)',
-        display: 'flex',
-        flexDirection: 'column' as const,
-        padding: '20px'
     },
     main: {
         flex: 1,
         display: 'flex',
         flexDirection: 'column' as const,
         overflow: 'hidden',
-        background: '#0f172a'
+        background: 'transparent'
     },
     header: {
         height: '70px',
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        borderBottom: '1px solid var(--border)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 30px',
-        background: 'rgba(15, 23, 42, 0.8)',
+        background: 'var(--glass-bg)',
         backdropFilter: 'blur(10px)'
     },
     contentArea: {
@@ -135,8 +157,8 @@ const styles = {
         boxShadow: active ? '0 4px 12px rgba(37, 99, 235, 0.3)' : 'none'
     }),
     card: {
-        background: 'rgba(30, 41, 59, 0.5)', // Slate 800 with opacity
-        border: '1px solid rgba(255,255,255,0.05)',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
         borderRadius: '16px',
         padding: '24px',
         marginBottom: '20px'
@@ -145,9 +167,9 @@ const styles = {
         width: '100%',
         padding: '12px 16px',
         borderRadius: '10px',
-        background: 'rgba(15, 23, 42, 0.6)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        color: '#fff',
+        background: 'var(--bg-input)',
+        border: '1px solid var(--border)',
+        color: 'var(--text-primary)',
         outline: 'none',
         fontSize: '13px'
     },
@@ -184,14 +206,12 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
     // Responsive state
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
-    const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
 
     // Window resize handler
     const handleResize = useCallback(() => {
         const width = window.innerWidth;
         setIsMobile(width < 768);
         setIsTablet(width >= 768 && width < 1024);
-        setSidebarOpen(width >= 768);
     }, []);
 
     useEffect(() => {
@@ -203,8 +223,17 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
     const [activeTab, setActiveTab] = useState<TabType>(() => {
         const params = new URLSearchParams(location.search);
         const tabParam = params.get('tab') as TabType;
-        return tabParam || 'connections';
+        return tabParam || 'overview';
     });
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+        const saved = localStorage.getItem('settings-view-mode');
+        return (saved as 'grid' | 'list') || 'grid';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('settings-view-mode', viewMode);
+    }, [viewMode]);
+
     const [searchQuery, setSearchQuery] = useState('');
     const [geminiKey, setGeminiKey] = useState(config.geminiKey);
     const [isSaving, setIsSaving] = useState(false);
@@ -223,10 +252,9 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
     const [showIntegrationForm, setShowIntegrationForm] = useState(false);
     const [integrationFormData, setIntegrationFormData] = useState<Partial<Integration>>({ name: '', endpoint: '', key: '' });
 
-    // Handle tab change and close sidebar on mobile
+    // Handle tab change
     const handleTabChange = (tab: TabType) => {
         setActiveTab(tab);
-        if (isMobile) setSidebarOpen(false);
     };
 
     // Default Integrations (System)
@@ -430,14 +458,14 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
 
             <div style={styles.card}>
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '15px' }}>
-                    <Cpu color="#3b82f6" />
+                    <Cpu color="var(--accent)" />
                     <div>
                         <h4 style={{ margin: 0, fontSize: '16px' }}>AI Configuration (Gemini)</h4>
-                        <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#94a3b8' }}>Ključ za pristup Google AI Modelima</p>
+                        <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>Ključ za pristup Google AI Modelima</p>
                     </div>
                 </div>
                 <input type="password" value={geminiKey} onChange={e => setGeminiKey(e.target.value)} style={styles.input} />
-                <button onClick={handleSave} style={{ ...styles.button, background: '#3b82f6', color: '#fff', marginTop: '15px' }}>
+                <button onClick={handleSave} style={{ ...styles.button, background: 'var(--accent)', color: '#fff', marginTop: '15px' }}>
                     {isSaving ? 'Saving...' : 'Save Configuration'}
                 </button>
             </div>
@@ -447,12 +475,12 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                     <Zap color="#eab308" />
                     <div>
                         <h4 style={{ margin: 0, fontSize: '16px' }}>Simulacija Nivoa</h4>
-                        <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#94a3b8' }}>Privremeno preuzimanje privilegija drugog nivoa</p>
+                        <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>Privremeno preuzimanje privilegija drugog nivoa</p>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                     {[1, 2, 3, 4, 5, 6].map(lvl => (
-                        <button key={lvl} onClick={() => setUserLevel(lvl)} style={{ ...styles.button, background: userLevel >= lvl ? (lvl === 6 ? '#7c3aed' : '#334155') : 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}>
+                        <button key={lvl} onClick={() => setUserLevel(lvl)} style={{ ...styles.button, background: userLevel >= lvl ? (lvl === 6 ? 'var(--gradient-purple)' : 'var(--bg-surface)') : 'transparent', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>
                             {lvl === 6 ? 'MASTER' : `LVL ${lvl}`}
                         </button>
                     ))}
@@ -467,8 +495,8 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>Korisnički Nalozi</h3>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    {isMaster && <button onClick={() => setShowArchive(!showArchive)} style={{ ...styles.button, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>Archive ({archivedUsers.length})</button>}
-                    <button onClick={() => setShowUserForm(!showUserForm)} style={{ ...styles.button, background: '#3b82f6', color: '#fff' }}><UserPlus size={16} /> New User</button>
+                    {isMaster && <button onClick={() => setShowArchive(!showArchive)} style={{ ...styles.button, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>Archive ({archivedUsers.length})</button>}
+                    <button onClick={() => setShowUserForm(!showUserForm)} style={{ ...styles.button, background: 'var(--accent)', color: '#fff' }}><UserPlus size={16} /> New User</button>
                 </div>
             </div>
 
@@ -517,17 +545,17 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                     <div
                         key={u.id}
                         onClick={() => { setNewUser(u); setShowUserForm(true); }}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'background 0.2s' }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--bg-input)', borderRadius: '12px', border: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.2s' }}
                     >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{u.firstName[0]}</div>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{u.firstName[0]}</div>
                             <div>
                                 <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     {u.firstName} {u.lastName}
                                     {u.level === 6 && <img src="/logo.jpg" alt="Master" title="Master Account" style={{ width: '20px', height: '20px', borderRadius: '4px', objectFit: 'cover' }} />}
-                                    <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: 'auto' }}>LVL {u.level}</span>
+                                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginLeft: 'auto' }}>LVL {u.level}</span>
                                 </div>
-                                <div style={{ fontSize: '12px', color: '#64748b' }}>{u.email}</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{u.email}</div>
                             </div>
                         </div>
                         <button onClick={() => handleDeleteUser(u.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
@@ -570,8 +598,8 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                                     <td key={l} style={{ textAlign: 'center', padding: '10px', borderRadius: l === 6 ? '0 8px 8px 0' : 0 }}>
                                         <button onClick={() => toggleModuleAccess(l, mod.id)}
                                             style={{
-                                                width: '20px', height: '20px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer',
-                                                background: accessRules[l]?.includes(mod.id) ? '#3b82f6' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center'
+                                                width: '20px', height: '20px', borderRadius: '4px', border: '1px solid var(--border)', cursor: 'pointer',
+                                                background: accessRules[l]?.includes(mod.id) ? 'var(--accent)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center'
                                             }}>
                                             {accessRules[l]?.includes(mod.id) && <Check size={12} color="#fff" />}
                                         </button>
@@ -658,25 +686,25 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                                 <div key={k}>{k}: <span style={{ color: '#fff' }}>{v}</span></div>
                             ))}
                         </div>
-                        <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', marginTop: '15px', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ height: '4px', background: 'var(--border)', marginTop: '15px', borderRadius: '2px', overflow: 'hidden' }}>
                             <div style={{ width: integration.status === 'active' ? '100%' : '30%', background: integration.color, height: '100%' }}></div>
                         </div>
                     </div>
                 ))}
 
                 {/* Add New Connection Placeholder */}
-                <div onClick={() => { setIntegrationFormData({ name: '', endpoint: '', key: '' }); setShowIntegrationForm(true); }} style={{ ...styles.card, border: '1px dashed rgba(255,255,255,0.1)', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', minHeight: '160px' }}>
-                    <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '50%', marginBottom: '10px' }}>
-                        <Plus color="#94a3b8" />
+                <div onClick={() => { setIntegrationFormData({ name: '', endpoint: '', key: '' }); setShowIntegrationForm(true); }} style={{ ...styles.card, border: '1px dashed var(--border)', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', minHeight: '160px' }}>
+                    <div style={{ padding: '12px', background: 'var(--glass-bg)', borderRadius: '50%', marginBottom: '10px' }}>
+                        <Plus color="var(--text-secondary)" />
                     </div>
-                    <span style={{ fontSize: '13px', color: '#64748b' }}>Add New Integration</span>
+                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Add New Integration</span>
                 </div>
             </div>
 
             <AnimatePresence>
                 {showIntegrationForm && (
                     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(5px)', background: 'rgba(0,0,0,0.5)' }}>
-                        <div style={{ ...styles.card, width: '400px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <div style={{ ...styles.card, width: '400px', background: 'var(--bg-sidebar)', border: '1px solid var(--border)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
                                 <h3 style={{ margin: 0 }}>{integrationFormData.name ? 'Edit Integration' : 'New Integration'}</h3>
                                 <button onClick={() => setShowIntegrationForm(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={18} /></button>
@@ -738,128 +766,161 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
         </div>
     );
 
-    return (
-        <div style={{ ...styles.layout, flexDirection: isMobile ? 'column' : 'row' }}>
-            {/* MOBILE HEADER with Menu Toggle */}
-            {isMobile && (
+    // 6. Overview (Sub-Dashboard)
+    const renderOverview = () => {
+        const filteredModules = SETTING_MODULES.filter(m =>
+            (m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                m.desc.toLowerCase().includes(searchQuery.toLowerCase())) &&
+            userLevel >= m.minLevel
+        );
+
+        return (
+            <div className="fade-in">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                    <div>
+                        <h3 style={{ fontSize: '24px', fontWeight: 800, margin: 0 }}>System Control Center</h3>
+                        <p style={{ color: '#94a3b8', margin: '4px 0 0', fontSize: '14px' }}>Upravljanje parametrima, bezbednošću i resursima sistema.</p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <button onClick={() => setViewMode('grid')} style={{ padding: '8px', borderRadius: '8px', border: 'none', background: viewMode === 'grid' ? 'rgba(59, 130, 246, 0.1)' : 'transparent', color: viewMode === 'grid' ? '#3b82f6' : '#94a3b8', cursor: 'pointer' }}>
+                            <LayoutGrid size={18} />
+                        </button>
+                        <button onClick={() => setViewMode('list')} style={{ padding: '8px', borderRadius: '8px', border: 'none', background: viewMode === 'list' ? 'rgba(59, 130, 246, 0.1)' : 'transparent', color: viewMode === 'list' ? '#3b82f6' : '#94a3b8', cursor: 'pointer' }}>
+                            <List size={18} />
+                        </button>
+                    </div>
+                </div>
+
                 <div style={{
-                    height: '60px',
-                    background: '#020617',
-                    borderBottom: '1px solid rgba(255,255,255,0.05)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0 20px',
-                    flexShrink: 0
+                    display: 'grid',
+                    gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(320px, 1fr))' : '1fr',
+                    gap: '20px'
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <button
-                            onClick={() => setSidebarOpen(!sidebarOpen)}
+                    {filteredModules.map((mod, idx) => (
+                        <motion.div
+                            key={mod.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.05 }}
+                            onClick={() => setActiveTab(mod.id)}
                             style={{
-                                background: 'rgba(255,255,255,0.05)',
-                                border: 'none',
-                                borderRadius: '10px',
-                                width: '40px',
-                                height: '40px',
+                                ...styles.card,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                flexDirection: viewMode === 'list' ? 'row' : 'column',
+                                alignItems: viewMode === 'list' ? 'center' : 'flex-start',
+                                gap: '20px',
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                border: '1px solid var(--border)',
+                                background: 'var(--glass-bg)',
+                                backdropFilter: 'blur(10px)'
+                            }}
+                            whileHover={{ y: -5, background: 'var(--bg-card-hover)', borderColor: 'var(--accent)' }}
+                        >
+                            <div style={{
+                                width: '56px',
+                                height: '56px',
+                                borderRadius: '16px',
+                                background: mod.color,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                cursor: 'pointer',
-                                color: '#94a3b8'
-                            }}
-                        >
-                            <Menu size={20} />
-                        </button>
-                        <h2 style={{ fontSize: '16px', fontWeight: 800, margin: 0, background: 'linear-gradient(90deg, #3b82f6, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>SYSTEM CORE</h2>
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#64748b' }}>
-                        {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-                    </div>
-                </div>
-            )}
-
-            {/* LEFT SIDEBAR - Responsive */}
-            <AnimatePresence>
-                {sidebarOpen && (
-                    <motion.div
-                        initial={isMobile ? { x: -280 } : false}
-                        animate={{ x: 0 }}
-                        exit={isMobile ? { x: -280 } : undefined}
-                        transition={{ type: 'tween', duration: 0.2 }}
-                        style={{
-                            ...styles.sidebar,
-                            width: isTablet ? '220px' : '260px',
-                            position: isMobile ? 'fixed' : 'relative',
-                            top: isMobile ? '60px' : 0,
-                            left: 0,
-                            bottom: 0,
-                            zIndex: isMobile ? 100 : 1,
-                            height: isMobile ? 'calc(100vh - 60px)' : '100vh'
-                        }}
-                    >
-                        {!isMobile && (
-                            <div style={{ marginBottom: '40px', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                <h2 style={{ fontSize: isTablet ? '16px' : '18px', fontWeight: 800, margin: 0, background: 'linear-gradient(90deg, #3b82f6, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>SYSTEM CORE</h2>
-                                <p style={{ fontSize: '11px', color: '#64748b', margin: '4px 0 0' }}>Admin Panel v2.0</p>
+                                color: '#fff',
+                                boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
+                                flexShrink: 0
+                            }}>
+                                {mod.icon}
                             </div>
-                        )}
 
-                        <div style={{ flex: 1, overflowY: 'auto' }}>
-                            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, marginBottom: '10px', paddingLeft: '10px' }}>MAIN MENU</div>
-                            {userLevel >= 6 && (
-                                <div onClick={() => handleTabChange('modules-overview')} style={styles.navItem(activeTab === 'modules-overview')}><BookOpen size={18} /> Pregled Modula i Funkcija</div>
-                            )}
-                            <div onClick={() => handleTabChange('connections')} style={styles.navItem(activeTab === 'connections')}><Activity size={18} /> Active Connections</div>
-                            <div onClick={() => handleTabChange('orchestrator')} style={styles.navItem(activeTab === 'orchestrator')}><Brain size={18} /> Master Orchestrator AI</div>
-                            <div onClick={() => handleTabChange('ai-quota')} style={styles.navItem(activeTab === 'ai-quota')}><Zap size={18} /> AI Quota Tracker</div>
-                            <div onClick={() => handleTabChange('daily-activity')} style={styles.navItem(activeTab === 'daily-activity')}><FileText size={18} /> Dnevni Izveštaj</div>
-                            <div onClick={() => handleTabChange('general')} style={styles.navItem(activeTab === 'general')}><LayoutDashboard size={18} /> General Settings</div>
-                            <div onClick={() => handleTabChange('users')} style={styles.navItem(activeTab === 'users')}><Users size={18} /> Users & Accounts</div>
-                            <div onClick={() => handleTabChange('permissions')} style={styles.navItem(activeTab === 'permissions')}><Lock size={18} /> Access Permissions</div>
-                            <div onClick={() => handleTabChange('notifications')} style={styles.navItem(activeTab === 'notifications')}><Bell size={18} /> Notifications</div>
-                            <div onClick={() => handleTabChange('backups')} style={styles.navItem(activeTab === 'backups')}><RotateCcw size={18} /> System Snapshots</div>
-                            <div onClick={() => handleTabChange('pulse')} style={styles.navItem(activeTab === 'pulse')}><Activity size={18} /> System Pulse</div>
-                            {userLevel >= 6 && (
-                                <div onClick={() => handleTabChange('archive')} style={{ ...styles.navItem(activeTab === 'archive'), borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '10px', paddingTop: '10px' }}>
-                                    <ShieldAlert size={18} /> Deep Archive
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>{mod.name}</h4>
+                                    {mod.minLevel >= 6 && <span style={{ fontSize: '10px', background: 'rgba(124, 58, 237, 0.2)', color: '#a78bfa', padding: '2px 8px', borderRadius: '100px', fontWeight: 800 }}>MASTER</span>}
                                 </div>
-                            )}
-                        </div>
+                                <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#94a3b8', lineHeight: 1.5 }}>{mod.desc}</p>
+                            </div>
 
-                        <div style={{ marginTop: 'auto' }}>
-                            <button onClick={onBack} style={{ ...styles.button, width: '100%', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', color: '#94a3b8' }}>
-                                <ArrowLeft size={16} /> Exit to Menu
-                            </button>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                            {viewMode === 'list' && <ChevronRight size={20} style={{ opacity: 0.3 }} />}
 
-            {/* Mobile Overlay */}
-            {isMobile && sidebarOpen && (
-                <div
-                    onClick={() => setSidebarOpen(false)}
-                    style={{
-                        position: 'fixed',
-                        top: '60px',
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.5)',
-                        zIndex: 99
-                    }}
-                />
-            )}
+                            {/* Decorative Background Glow */}
+                            <div style={{
+                                position: 'absolute',
+                                top: '-20%',
+                                right: '-10%',
+                                width: '120px',
+                                height: '120px',
+                                background: mod.color,
+                                filter: 'blur(60px)',
+                                opacity: 0.05,
+                                pointerEvents: 'none'
+                            }} />
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
 
+    return (
+        <div style={styles.layout}>
             {/* MAIN CONTENT */}
             <div style={{ ...styles.main, flex: 1 }}>
-                {/* HEADER - Hide breadcrumb on mobile */}
+                {/* HEADER */}
                 <div style={{ ...styles.header, padding: isMobile ? '0 15px' : isTablet ? '0 20px' : '0 30px', height: isMobile ? '60px' : '70px' }}>
-                    {!isMobile && (
-                        <div style={{ fontSize: '14px', color: '#64748b' }}>
-                            Settings / <span style={{ color: '#fff', fontWeight: 600 }}>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</span>
-                        </div>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <button
+                            onClick={onBack}
+                            style={{
+                                background: 'rgba(255,255,255,0.05)',
+                                border: '1px solid rgba(255,255,255,0.05)',
+                                borderRadius: '10px',
+                                padding: '8px 14px',
+                                color: '#94a3b8',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontSize: '13px',
+                                transition: 'all 0.2s',
+                                fontWeight: 600
+                            } as any}
+                        >
+                            <ArrowLeft size={16} /> Izlaz
+                        </button>
+                        {!isMobile && (
+                            <>
+                                {activeTab !== 'overview' && (
+                                    <button
+                                        onClick={() => setActiveTab('overview')}
+                                        style={{
+                                            background: 'rgba(255,255,255,0.05)',
+                                            border: '1px solid rgba(255,255,255,0.05)',
+                                            borderRadius: '10px',
+                                            padding: '8px 14px',
+                                            color: '#94a3b8',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            fontSize: '13px',
+                                            transition: 'all 0.2s',
+                                            fontWeight: 600
+                                        } as any}
+                                    >
+                                        <LayoutDashboard size={14} /> Dashboard
+                                    </button>
+                                )}
+                                <div style={{ fontSize: '14px', color: '#64748b' }}>
+                                    System / <span style={{ color: '#fff', fontWeight: 600 }}>
+                                        {SETTING_MODULES.find(m => m.id === activeTab)?.name || activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                                    </span>
+                                </div>
+                            </>
+                        )}
+                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '15px', marginLeft: isMobile ? 'auto' : 0, width: isMobile ? '100%' : 'auto' }}>
                         <div style={{ position: 'relative', flex: isMobile ? 1 : 'none' }}>
                             <Search size={16} color="#64748b" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -881,6 +942,7 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
 
                 {/* CONTENT AREA */}
                 <div style={{ ...styles.contentArea, padding: isMobile ? '15px' : isTablet ? '20px' : '30px' }}>
+                    {activeTab === 'overview' && renderOverview()}
                     {activeTab === 'general' && renderGeneral()}
                     {activeTab === 'users' && renderUsers()}
                     {activeTab === 'permissions' && renderPermissions()}
@@ -890,17 +952,17 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                     {activeTab === 'notifications' && <NotificationCenter />}
                     {activeTab === 'pulse' && <SystemPulse />}
                     {activeTab === 'backups' && renderBackups()}
-                    {activeTab === 'archive' && <DeepArchive onBack={() => setActiveTab('general')} lang={'sr'} />}
+                    {activeTab === 'archive' && <DeepArchive onBack={() => setActiveTab('overview')} lang={'sr'} />}
                     {activeTab === 'modules-overview' && <ModulesOverview />}
-                    {activeTab === 'orchestrator' && <MasterOrchestrator onBack={() => setActiveTab('general')} userLevel={userLevel} />}
+                    {activeTab === 'orchestrator' && <MasterOrchestrator onBack={() => setActiveTab('overview')} userLevel={userLevel} />}
                 </div>
             </div>
 
             {/* Confirmation Modal */}
             <AnimatePresence>
                 {pendingAction && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} style={{ ...styles.card, width: '400px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 110 }}>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} style={{ ...styles.card, width: '400px', background: 'var(--bg-sidebar)', border: '1px solid var(--border)' }}>
                             <h3 style={{ marginTop: 0 }}>Confirm Action</h3>
                             <p style={{ color: '#94a3b8' }}>This action is irreversible. Required authentication level: MASTER.</p>
                             <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
@@ -911,6 +973,6 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                     </div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 }

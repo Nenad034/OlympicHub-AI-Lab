@@ -153,7 +153,7 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
 
                 <div className="total-display-middle" style={{ flex: 1, textAlign: 'center' }}>
                     <div style={{ fontSize: '10px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '2px' }}>Trenutni Total</div>
-                    <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--accent)', letterSpacing: '-2px', lineHeight: 1 }}>{totalPrice.toFixed(2)}€</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--accent)', letterSpacing: '-2px', lineHeight: 1, fontStyle: 'italic' }}>{totalPrice.toFixed(2)}€</div>
                 </div>
 
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>

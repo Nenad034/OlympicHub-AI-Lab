@@ -16,6 +16,7 @@ export interface DestinationInput {
     travelers: TravelerCount;
     category?: string[]; // e.g. ["5 Zvezdica", "4 Zvezdice"]
     service?: string[];  // e.g. ["All Inclusive"]
+    flexibleDays?: number;
     includedGuide?: {
         title: string;
         desc: string;

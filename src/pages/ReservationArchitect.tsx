@@ -1116,10 +1116,10 @@ const ReservationArchitect: React.FC = () => {
     };
 
     const getSummaryNotepadText = () => {
-        let text = `--- REZERVACIJA / DOSSIER ${dossier.cisCode} ---\n`;
-        text += `STATUS: ${dossier.status.toUpperCase()}\n`;
-        text += `REF: ${dossier.clientReference}\n`;
-        if (dossier.resCode) text += `REZ: ${dossier.resCode}\n`;
+        let text = `Rezervacija broj : ${dossier.resCode || '---'}\n`;
+        text += `Status: ${dossier.status}\n`;
+        text += `Ref broj dobavljača: ${dossier.clientReference}\n`;
+        text += `Cis oznaka: ${dossier.cisCode}\n`;
         text += `\nUGOVARAČ:\n${dossier.booker.fullName}\n${dossier.booker.email} | ${dossier.booker.phone}\n${dossier.booker.address}, ${dossier.booker.city}\n`;
         text += `\nPUTNICI (${dossier.passengers.length}):\n`;
         dossier.passengers.forEach((p, i) => {
@@ -1666,10 +1666,10 @@ const ReservationArchitect: React.FC = () => {
                                             </button>
                                         </div>
                                         <div style={{ borderBottom: '1px dashed #475569', marginBottom: '20px', paddingBottom: '10px' }}>
-                                            <h4 style={{ margin: 0, color: 'var(--accent)' }}>--- REZERVACIJA / DOSSIER {dossier.cisCode} ---</h4>
-                                            <div>STATUS: {dossier.status.toUpperCase()}</div>
-                                            <div>REF: {dossier.clientReference}</div>
-                                            {dossier.resCode && <div>REZ: {dossier.resCode}</div>}
+                                            <div style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Rezervacija broj : {dossier.resCode || '---'}</div>
+                                            <div>Status: {dossier.status}</div>
+                                            <div>Ref broj dobavljača: {dossier.clientReference}</div>
+                                            <div>Cis oznaka: {dossier.cisCode}</div>
                                         </div>
 
                                         <div style={{ marginBottom: '20px' }}>
@@ -1758,6 +1758,68 @@ const ReservationArchitect: React.FC = () => {
                                         margin: '0 auto',
                                         width: '100%'
                                     }}>
+                                        {/* OSNOVNI KODOVI REZERVACIJE */}
+                                        <div className="info-group codes-management-card" style={{
+                                            padding: '24px',
+                                            background: 'rgba(59, 130, 246, 0.03)',
+                                            borderRadius: '16px',
+                                            border: '1.5px dashed var(--border)',
+                                            display: 'grid',
+                                            gridTemplateColumns: '1fr 1fr 1fr',
+                                            gap: '24px'
+                                        }}>
+                                            <div className="input-field">
+                                                <label style={{ color: 'var(--accent)', fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Sistemski Broj Rezervacije (REZ)</label>
+                                                <input
+                                                    value={dossier.resCode || ''}
+                                                    placeholder="npr. 0000001/2026"
+                                                    onChange={e => setDossier({ ...dossier, resCode: e.target.value })}
+                                                    style={{
+                                                        background: 'var(--bg-card)',
+                                                        border: '1.5px solid var(--accent)',
+                                                        borderRadius: '10px',
+                                                        height: '42px',
+                                                        padding: '0 16px',
+                                                        fontSize: '15px',
+                                                        fontWeight: 700,
+                                                        width: '100%'
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="input-field">
+                                                <label style={{ fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Klijentska Referenca (REF)</label>
+                                                <input
+                                                    value={dossier.clientReference}
+                                                    onChange={e => setDossier({ ...dossier, clientReference: e.target.value })}
+                                                    style={{
+                                                        background: 'var(--bg-card)',
+                                                        borderRadius: '10px',
+                                                        height: '42px',
+                                                        padding: '0 16px',
+                                                        fontSize: '14px',
+                                                        width: '100%'
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="input-field">
+                                                <label style={{ fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Interni CIS Kod</label>
+                                                <input
+                                                    value={dossier.cisCode}
+                                                    readOnly
+                                                    style={{
+                                                        background: 'transparent',
+                                                        border: '1px solid var(--border)',
+                                                        borderRadius: '10px',
+                                                        height: '42px',
+                                                        padding: '0 16px',
+                                                        fontSize: '14px',
+                                                        color: 'var(--text-secondary)',
+                                                        cursor: 'not-allowed',
+                                                        width: '100%'
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
                                         {/* 1. NOSILAC PUTOVANJA - COMPACT HEADER */}
                                         <div className="summary-card" style={{
                                             background: 'var(--bg-card)',
@@ -2219,66 +2281,6 @@ const ReservationArchitect: React.FC = () => {
                                     </div>
                                 ) : (
                                     <>
-                                        {/* OSNOVNI KODOVI REZERVACIJE */}
-                                        <div className="info-group codes-management-card" style={{
-                                            marginBottom: '30px',
-                                            padding: '24px',
-                                            background: 'rgba(59, 130, 246, 0.03)',
-                                            borderRadius: '16px',
-                                            border: '1.5px dashed var(--border)',
-                                            display: 'grid',
-                                            gridTemplateColumns: '1fr 1fr 1fr',
-                                            gap: '24px'
-                                        }}>
-                                            <div className="input-field">
-                                                <label style={{ color: 'var(--accent)', fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Sistemski Broj Rezervacije (REZ)</label>
-                                                <input
-                                                    value={dossier.resCode || ''}
-                                                    placeholder="npr. 0000001/2026"
-                                                    onChange={e => setDossier({ ...dossier, resCode: e.target.value })}
-                                                    style={{
-                                                        background: 'var(--bg-card)',
-                                                        border: '1.5px solid var(--accent)',
-                                                        borderRadius: '10px',
-                                                        height: '42px',
-                                                        padding: '0 16px',
-                                                        fontSize: '15px',
-                                                        fontWeight: 700
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className="input-field">
-                                                <label style={{ fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Klijentska Referenca (REF)</label>
-                                                <input
-                                                    value={dossier.clientReference}
-                                                    onChange={e => setDossier({ ...dossier, clientReference: e.target.value })}
-                                                    style={{
-                                                        background: 'var(--bg-card)',
-                                                        borderRadius: '10px',
-                                                        height: '42px',
-                                                        padding: '0 16px',
-                                                        fontSize: '14px'
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className="input-field">
-                                                <label style={{ fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Interni CIS Kod</label>
-                                                <input
-                                                    value={dossier.cisCode}
-                                                    readOnly
-                                                    style={{
-                                                        background: 'transparent',
-                                                        border: '1px solid var(--border)',
-                                                        borderRadius: '10px',
-                                                        height: '42px',
-                                                        padding: '0 16px',
-                                                        fontSize: '14px',
-                                                        color: 'var(--text-secondary)',
-                                                        cursor: 'not-allowed'
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
 
                                         <div className="info-group main-booker-card">
                                             <div className="booker-header-row">
@@ -4761,7 +4763,7 @@ const ReservationArchitect: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

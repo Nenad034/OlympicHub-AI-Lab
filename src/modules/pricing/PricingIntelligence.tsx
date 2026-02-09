@@ -20,12 +20,14 @@ import {
     Loader2,
     CheckCircle2,
     Play,
-    Code
+    Code,
+    Edit3
 } from 'lucide-react';
 import './PricingModule.styles.css';
 import { PricingCodeView } from './PricingCodeView';
 import { HOTEL_SERVICES } from '../../data/services/hotelServices';
 import { ROOM_PREFIXES, ROOM_VIEWS, ROOM_TYPES } from '../../data/rooms/roomTypes';
+import { mapSolvexToInternal, MOCK_SOLVEX_DATA } from './solvexImporter';
 import {
     createPricelist,
     getPricelists,
@@ -34,16 +36,69 @@ import {
     type PricePeriod,
     type PriceRule
 } from './pricelistService';
+import ManualPricelistCreator from './ManualPricelistCreator';
+import PricelistItemsList from './PricelistItemsList';
+
+const styles = {
+    button: {
+        padding: '10px 20px',
+        borderRadius: '10px',
+        border: 'none',
+        cursor: 'pointer',
+        fontSize: '13px',
+        fontWeight: 600,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        transition: 'all 0.2s',
+        fontFamily: "'Inter', sans-serif"
+    },
+    input: {
+        width: '100%',
+        padding: '12px 16px',
+        borderRadius: '10px',
+        background: 'var(--bg-input)',
+        border: '1.5px solid var(--border)',
+        color: 'var(--text-primary)',
+        outline: 'none',
+        fontSize: '14px',
+        fontFamily: "'Inter', sans-serif",
+        boxSizing: 'border-box' as const
+    },
+    select: {
+        width: '100%',
+        padding: '12px 16px',
+        borderRadius: '10px',
+        background: 'var(--bg-input)',
+        border: '1.5px solid var(--border)',
+        color: 'var(--text-primary)',
+        outline: 'none',
+        fontSize: '14px',
+        fontFamily: "'Inter', sans-serif",
+        cursor: 'pointer',
+        appearance: 'none' as const,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 12px center',
+        backgroundSize: '16px',
+        backgroundColor: 'var(--bg-input)'
+    }
+};
 
 const PricingIntelligence: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'setup' | 'grid' | 'rules' | 'mapping'>('setup');
+    const [viewMode, setViewMode] = useState<'code' | 'standard'>('standard');
+    const [activeTab, setActiveTab] = useState<'manual' | 'product' | 'periods' | 'rules' | 'ai'>('manual');
     const [messages, setMessages] = useState([
         { role: 'ai', content: 'Detektovao sam tvoj JSON format! Vidim da imaš "API unit showcase". Da li želiš da mapiramo ove jedinice u tvoju bazu smeštaja?' }
     ]);
     const [input, setInput] = useState('');
     const [isDarkMode, setIsDarkMode] = useState(false);
 
-    // Product Configuration State (Hoisted for persistence)
+    // Global Pricelist Items state
+    const [addedItems, setAddedItems] = useState<any[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(false);
+
+    // Product Configuration State
     const [productState, setProductState] = useState({
         service: '',
         prefix: '',
@@ -52,8 +107,8 @@ const PricingIntelligence: React.FC = () => {
         name: ''
     });
 
-    // Price Periods State (Base Rates)
-    const [pricePeriods, setPricePeriods] = useState([
+    // Price Periods State
+    const [pricePeriods, setPricePeriods] = useState<any[]>([
         {
             id: '1',
             dateFrom: '2026-04-01',
@@ -63,69 +118,39 @@ const PricingIntelligence: React.FC = () => {
             provisionPercent: 21.00,
             releaseDays: 0,
             minStay: 3,
-            maxStay: null as number | null,
+            maxStay: null,
             minAdults: 2,
             maxAdults: 3,
             minChildren: 0,
             maxChildren: 2,
             arrivalDays: [1, 2, 3, 4, 5, 6, 7]
-        },
-        {
-            id: '2',
-            dateFrom: '2026-06-20',
-            dateTo: '2026-06-30',
-            basis: 'PER_ROOM_DAY',
-            netPrice: 120.00,
-            provisionPercent: 15.00,
-            releaseDays: 7,
-            minStay: 5,
-            maxStay: null as number | null,
-            minAdults: 2,
-            maxAdults: 2,
-            minChildren: 0,
-            maxChildren: 1,
-            arrivalDays: [5, 6] // Samo petak i subota
         }
     ]);
 
     // Supplements/Discounts State
-    const [supplements, setSupplements] = useState([
+    const [supplements, setSupplements] = useState<any[]>([
         {
             id: '1',
-            type: 'SUPPLEMENT',
+            rule_type: 'SUPPLEMENT',
             title: 'Supplement for person on basic bed',
             netPrice: 12.50,
             provisionPercent: 20,
-            childAgeFrom: null as number | null,
-            childAgeTo: null as number | null,
             minAdults: 2,
             minChildren: 2
-        },
-        {
-            id: '2',
-            type: 'DISCOUNT',
-            title: 'Early Booking -10%',
-            percentValue: 10,
-            daysBeforeArrival: 30,
-            childAgeFrom: null as number | null,
-            childAgeTo: null as number | null,
-            minAdults: null as number | null,
-            minChildren: null as number | null
         }
     ]);
 
-    // Pricelist Management State
     const [pricelistId, setPricelistId] = useState<string | null>(null);
     const [pricelistTitle, setPricelistTitle] = useState('Novi Cenovnik');
     const [savedPricelists, setSavedPricelists] = useState<Pricelist[]>([]);
     const [isSaving, setIsSaving] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
     const [showLoadModal, setShowLoadModal] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
 
-    // Load saved pricelists on mount
+    // Load saved pricelists and existing items
     useEffect(() => {
         loadSavedPricelists();
+        fetchPricelistItems();
     }, []);
 
     const loadSavedPricelists = async () => {
@@ -135,17 +160,50 @@ const PricingIntelligence: React.FC = () => {
         }
     };
 
-    // Save current pricelist to Supabase
+    const fetchPricelistItems = async () => {
+        setIsLoadingData(true);
+        try {
+            const { pricingService } = await import('../../services/pricing/pricingService');
+            const data = await pricingService.getPricelists();
+
+            const mappedItems: any[] = [];
+            data.forEach((pl: any) => {
+                pl.price_periods?.forEach((pp: any) => {
+                    mappedItems.push({
+                        id: pp.id,
+                        pricelist_id: pl.id,
+                        roomType: pp.room_type_name,
+                        dateFrom: pp.date_from,
+                        dateTo: pp.date_to,
+                        netPrice: pp.net_price,
+                        brutoPrice: pp.gross_price,
+                        occupancy: { adults: 2, children: 1 },
+                        status: pl.status,
+                        pricelistTitle: pl.title
+                    });
+                });
+            });
+            setAddedItems(mappedItems);
+        } catch (error) {
+            console.error('Failed to fetch items:', error);
+        } finally {
+            setIsLoadingData(false);
+        }
+    };
+
+    const handleAddNewItem = (item: any) => {
+        setAddedItems(prev => [item, ...prev]);
+    };
+
     const handleSavePricelist = async (activate: boolean = false) => {
         if (validationIssues.length > 0 && activate) {
-            alert('Ispravite greÅ¡ke pre aktiviranja cenovnika.');
+            alert('Ispravite greške pre aktiviranja cenovnika.');
             return;
         }
 
         setIsSaving(true);
         setSaveSuccess(false);
 
-        // Transform local state to API format
         const pricelistData: Pricelist = {
             title: pricelistTitle,
             product: productState,
@@ -155,7 +213,7 @@ const PricingIntelligence: React.FC = () => {
         const periodsData: PricePeriod[] = pricePeriods.map(p => ({
             date_from: p.dateFrom,
             date_to: p.dateTo,
-            basis: p.basis as 'PER_PERSON_DAY' | 'PER_ROOM_DAY' | 'PER_UNIT_STAY',
+            basis: p.basis,
             net_price: p.netPrice,
             provision_percent: p.provisionPercent,
             min_stay: p.minStay,
@@ -169,7 +227,7 @@ const PricingIntelligence: React.FC = () => {
         }));
 
         const rulesData: PriceRule[] = supplements.map((s: any) => ({
-            rule_type: s.type as 'SUPPLEMENT' | 'DISCOUNT',
+            rule_type: s.rule_type,
             title: s.title,
             net_price: s.netPrice,
             provision_percent: s.provisionPercent,
@@ -184,123 +242,59 @@ const PricingIntelligence: React.FC = () => {
         const { data, error } = await createPricelist(pricelistData, periodsData, rulesData);
 
         setIsSaving(false);
-
         if (error) {
-            console.error('Error saving pricelist:', error);
-            alert('GreÅ¡ka pri Äuvanju: ' + (error.message || 'Nepoznata greÅ¡ka'));
+            console.error('Error saving:', error);
+            alert('Greška pri čuvanju');
         } else if (data) {
             setPricelistId(data.id || null);
             setSaveSuccess(true);
-            loadSavedPricelists(); // Refresh list
-
-            // Auto-hide success indicator
+            loadSavedPricelists();
+            fetchPricelistItems();
             setTimeout(() => setSaveSuccess(false), 3000);
-
-            if (activate) {
-                setMessages(prev => [...prev, {
-                    role: 'ai',
-                    content: `âœ… Cenovnik "${pricelistTitle}" je aktiviran i saÄuvan u bazi!`
-                }]);
-            }
         }
     };
 
-    // Load a pricelist from Supabase
     const handleLoadPricelist = async (id: string) => {
-        setIsLoading(true);
+        setIsLoadingData(true);
         setShowLoadModal(false);
-
         const { pricelist, periods, rules, error } = await getPricelistWithDetails(id);
-
-        if (error || !pricelist) {
-            alert('GreÅ¡ka pri uÄitavanju cenovnika.');
-            setIsLoading(false);
-            return;
+        if (!error && pricelist) {
+            setPricelistId(pricelist.id || null);
+            setPricelistTitle(pricelist.title);
+            setProductState(pricelist.product || { service: '', prefix: '', type: '', view: '', name: '' });
+            setPricePeriods(periods.map(p => ({
+                id: p.id,
+                dateFrom: p.date_from,
+                dateTo: p.date_to,
+                basis: p.basis,
+                netPrice: p.net_price,
+                provisionPercent: p.provision_percent,
+                releaseDays: p.release_days,
+                minStay: p.min_stay,
+                maxStay: p.max_stay,
+                minAdults: p.min_adults,
+                maxAdults: p.max_adults,
+                minChildren: p.min_children,
+                maxChildren: p.max_children,
+                arrivalDays: p.arrival_days
+            })));
+            setSupplements(rules.map(r => ({ ...r, netPrice: r.net_price, percentValue: r.percent_value })));
         }
-
-        // Update state with loaded data
-        setPricelistId(pricelist.id || null);
-        setPricelistTitle(pricelist.title);
-        setProductState(pricelist.product || { service: '', prefix: '', type: '', view: '', name: '' });
-
-        // Transform periods
-        setPricePeriods(periods.map((p, idx) => ({
-            id: p.id || String(idx + 1),
-            dateFrom: p.date_from,
-            dateTo: p.date_to,
-            basis: p.basis,
-            netPrice: p.net_price,
-            provisionPercent: p.provision_percent,
-            releaseDays: p.release_days,
-            minStay: p.min_stay,
-            maxStay: p.max_stay ?? null,
-            minAdults: p.min_adults,
-            maxAdults: p.max_adults,
-            minChildren: p.min_children,
-            maxChildren: p.max_children,
-            arrivalDays: p.arrival_days
-        })));
-
-        // Transform rules
-        setSupplements(rules.map((r, idx) => ({
-            id: r.id || String(idx + 1),
-            type: r.rule_type,
-            title: r.title,
-            netPrice: r.net_price || 0,
-            provisionPercent: r.provision_percent || 20,
-            percentValue: r.percent_value || 0,
-            daysBeforeArrival: r.days_before_arrival || 0,
-            childAgeFrom: r.child_age_from ?? null,
-            childAgeTo: r.child_age_to ?? null,
-            minAdults: r.min_adults ?? null,
-            minChildren: r.min_children ?? null
-        })) as any);
-
-        setIsLoading(false);
-        setActiveTab('setup');
-
-        setMessages(prev => [...prev, {
-            role: 'ai',
-            content: `ðŸ“‚ UÄitan cenovnik: "${pricelist.title}"`
-        }]);
+        setIsLoadingData(false);
     };
 
-    // Export Configuration to JSON
     const exportToJSON = () => {
-        const config = {
-            pricelist: {
-                id: pricelistId || 'draft',
-                title: pricelistTitle,
-                product: productState,
-                baseRates: pricePeriods.map(p => ({
-                    ...p,
-                    grossPrice: (p.netPrice * (1 + p.provisionPercent / 100)).toFixed(2)
-                })),
-                supplements: supplements
-            },
-            exportedAt: new Date().toISOString(),
-            format: 'MARS_COMPATIBLE'
-        };
-
+        const config = { pricelist: { title: pricelistTitle, product: productState, periods: pricePeriods, rules: supplements } };
         const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `pricelist_${productState.name || 'export'}_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
+        const a = document.createElement('a'); a.href = url; a.download = `pricelist.json`; a.click(); URL.revokeObjectURL(url);
     };
 
-    // Validation Check
     const getValidationStatus = () => {
         const issues: string[] = [];
         if (!productState.type) issues.push('Nije izabran tip sobe');
         if (!productState.service) issues.push('Nije izabrana usluga');
-        if (pricePeriods.length === 0) issues.push('Nema definisanih cenovnih perioda');
-        pricePeriods.forEach((p, i) => {
-            if (!p.dateFrom || !p.dateTo) issues.push(`Period ${i + 1}: Nedostaju datumi`);
-            if (p.netPrice <= 0) issues.push(`Period ${i + 1}: Neto cena mora biti > 0`);
-        });
+        if (pricePeriods.length === 0) issues.push('Nema perioda');
         return issues;
     };
 
@@ -312,103 +306,154 @@ const PricingIntelligence: React.FC = () => {
         setInput('');
     };
 
-    return (
-        <div className={`pricing-module ${isDarkMode ? 'navy-theme' : ''}`}>
-            {/* VS Code Editor Style - Full Screen Code View */}
-            <PricingCodeView
-                pricelistTitle={pricelistTitle}
-                pricelistId={pricelistId}
-                productState={productState as any}
-                pricePeriods={pricePeriods as any}
-                supplements={supplements as any}
-                validationIssues={validationIssues}
-                saveSuccess={saveSuccess}
-                isSaving={isSaving}
-                isDarkMode={isDarkMode}
-                onTitleChange={setPricelistTitle}
-                onDarkModeToggle={() => setIsDarkMode(!isDarkMode)}
-                onLoadPricelist={() => setShowLoadModal(true)}
-                onExportJSON={exportToJSON}
-                onSaveDraft={() => handleSavePricelist(false)}
-                onActivate={() => handleSavePricelist(true)}
-                onProductChange={setProductState as any}
-                onPeriodsChange={setPricePeriods as any}
-                onSupplementsChange={setSupplements as any}
-            />
+    const handleImportSolvex = () => {
+        const data = mapSolvexToInternal(MOCK_SOLVEX_DATA);
+        if (data) {
+            setProductState(data.productState as any);
+            setPricePeriods(data.periods);
+            setSupplements(data.rules);
+            setActiveTab('periods');
+        }
+    };
 
-            {/* Load Modal */}
-            {showLoadModal && (
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    background: 'rgba(0,0,0,0.7)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }} onClick={() => setShowLoadModal(false)}>
-                    <div
-                        style={{
-                            background: 'var(--editor-bg)',
-                            borderRadius: '8px',
-                            padding: '24px',
-                            width: '600px',
-                            maxHeight: '70vh',
-                            overflow: 'auto',
-                            border: '1px solid var(--editor-border)'
-                        }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--editor-text)' }}>
-                            <FolderOpen size={20} /> Učitaj Cenovnik
-                        </h3>
+    const handleMarsExport = () => {
+        const marsData = { header: { hotelCode: 'BP_2930' }, rows: pricePeriods.map(p => ({ S_DATE_FROM: p.dateFrom, N_NETO: p.netPrice })) };
+        setMessages(prev => [...prev, { role: 'ai', content: `MARS Export: ${JSON.stringify(marsData, null, 2)}` }]);
+    };
 
-                        {savedPricelists.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '32px', color: 'var(--editor-comment)' }}>
-                                Nema sačuvanih cenovnika.
-                            </div>
-                        ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                {savedPricelists.map(pl => (
-                                    <div
-                                        key={pl.id}
-                                        onClick={() => handleLoadPricelist(pl.id!)}
-                                        style={{
-                                            padding: '16px',
-                                            background: 'var(--editor-line-hover)',
-                                            borderRadius: '6px',
-                                            cursor: 'pointer',
-                                            border: '1px solid var(--pricing-border)',
-                                            transition: 'all 0.2s'
-                                        }}
-                                        onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--pricing-accent)')}
-                                        onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--pricing-border)')}
-                                    >
-                                        <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{pl.title}</div>
-                                        <div style={{ fontSize: '12px', color: 'var(--pricing-text-dim)', display: 'flex', gap: '12px' }}>
-                                            <span>ðŸ“¦ {pl.product?.name || 'Bez proizvoda'}</span>
-                                            <span style={{
-                                                padding: '2px 8px',
-                                                borderRadius: '4px',
-                                                background: pl.status === 'active' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                                                color: pl.status === 'active' ? '#10b981' : '#f59e0b'
-                                            }}>
-                                                {pl.status === 'active' ? 'Aktivan' : 'Nacrt'}
-                                            </span>
-                                            <span>ðŸ“… {pl.updated_at ? new Date(pl.updated_at).toLocaleDateString('sr-RS') : '-'}</span>
-                                        </div>
+    const renderStandardUI = () => {
+        return (
+            <div style={{
+                padding: activeTab === 'manual' ? '24px 0' : '24px',
+                background: 'var(--bg-dark)',
+                minHeight: '100vh',
+                maxHeight: '100vh',
+                color: 'var(--text-primary)',
+                display: 'flex',
+                flexDirection: 'column',
+                overflowY: 'auto',
+                boxSizing: 'border-box',
+                width: '100%'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                    <div>
+                        <h2 style={{ fontSize: '28px', fontWeight: 800, margin: 0, background: 'var(--gradient-blue)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                            Pricing Intelligence
+                        </h2>
+                        <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0', fontSize: '14px' }}>Generator i menadžer cenovnika sa AI podrškom.</p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <div style={{ display: 'flex', background: 'var(--bg-card)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                            <button onClick={() => setViewMode('standard')} style={{ ...styles.button, background: viewMode === 'standard' ? 'var(--accent)' : 'transparent', color: viewMode === 'standard' ? '#fff' : 'var(--text-secondary)' }}>
+                                <TableIcon size={16} /> UI Mode
+                            </button>
+                            <button onClick={() => setViewMode('code')} style={{ ...styles.button, background: viewMode === 'code' ? 'var(--accent)' : 'transparent', color: viewMode === 'code' ? '#fff' : 'var(--text-secondary)' }}>
+                                <Code size={16} /> Dev Mode
+                            </button>
+                        </div>
+                        <button onClick={() => handleSavePricelist(true)} style={{ ...styles.button, background: 'var(--gradient-green)', color: '#fff', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)' }}>
+                            <Play size={18} /> Aktiviraj Cenovnik
+                        </button>
+                    </div>
+                </div>
+
+                <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', gap: '30px', marginBottom: '30px', borderBottom: '1px solid var(--border)' }}>
+                        {['manual', 'product', 'periods', 'rules', 'ai'].map((tab) => (
+                            <button key={tab} onClick={() => setActiveTab(tab as any)} style={{ padding: '12px 24px', border: 'none', background: 'transparent', color: activeTab === tab ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '15px', fontWeight: 700, cursor: 'pointer', borderBottom: activeTab === tab ? '3px solid var(--accent)' : '3px solid transparent', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                {tab === 'manual' && '✏️ Ručno Kreiranje'}
+                                {tab === 'product' && '📦 Konfiguracija'}
+                                {tab === 'periods' && '📅 Periodi'}
+                                {tab === 'rules' && '⚡ Pravila'}
+                                {tab === 'ai' && '🤖 AI'}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="fade-in" style={{ width: '100%', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                        {activeTab === 'product' && (
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
+                                <div style={{ background: 'var(--bg-card)', padding: '30px', borderRadius: '20px', border: '1px solid var(--border)' }}>
+                                    <h3 style={{ marginTop: 0, marginBottom: '24px', fontSize: '18px' }}>Osnovne Postavke</h3>
+                                    <div style={{ display: 'grid', gap: '20px' }}>
+                                        <input value={pricelistTitle} onChange={e => setPricelistTitle(e.target.value)} style={styles.input} placeholder="Naziv cenovnika" />
+                                        <select value={productState.type} onChange={e => setProductState({ ...productState, type: e.target.value })} style={styles.select}>
+                                            <option value="" style={{ background: 'var(--bg-input)' }}>Izaberite tip sobe...</option>
+                                            {ROOM_TYPES.map(r => <option key={r.id} value={r.id} style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>{r.name}</option>)}
+                                        </select>
                                     </div>
-                                ))}
+                                </div>
                             </div>
                         )}
+                        {activeTab === 'manual' && <ManualPricelistCreator onAddItem={handleAddNewItem} addedItems={addedItems} />}
+                        {activeTab === 'periods' && (
+                            <div style={{ background: 'var(--bg-card)', borderRadius: '20px', border: '1px solid var(--border)', overflow: 'hidden', padding: '24px' }}>
+                                <h3>Cenovni Periodi</h3>
+                                {/* Simple table placeholder for brevitiy, full logic is in state */}
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <thead><tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border)' }}><th>OD</th><th>DO</th><th>NETO</th></tr></thead>
+                                    <tbody>{pricePeriods.map(p => <tr key={p.id}><td>{p.dateFrom}</td><td>{p.dateTo}</td><td>{p.netPrice} EUR</td></tr>)}</tbody>
+                                </table>
+                            </div>
+                        )}
+                        {activeTab === 'ai' && (
+                            <div style={{ background: 'var(--bg-card)', borderRadius: '20px', border: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '300px 1fr', minHeight: '500px' }}>
+                                <div style={{ padding: '24px', borderRight: '1px solid var(--border)' }}>
+                                    <button onClick={handleImportSolvex} style={{ ...styles.button, width: '100%', background: 'var(--accent)', color: '#fff', marginBottom: '12px' }}>Import Solvex</button>
+                                    <button onClick={handleMarsExport} style={{ ...styles.button, width: '100%', background: '#10b981', color: '#fff' }}>Export MARS</button>
+                                </div>
+                                <div style={{ padding: '24px' }}>
+                                    <div style={{ height: '300px', overflowY: 'auto', marginBottom: '20px' }}>{messages.map((m, i) => <div key={i} style={{ marginBottom: '12px', padding: '12px', borderRadius: '12px', background: m.role === 'ai' ? 'var(--bg-input)' : 'var(--accent)', color: m.role === 'ai' ? 'inherit' : '#fff' }}>{m.content}</div>)}</div>
+                                    <div style={{ display: 'flex', gap: '12px' }}><input value={input} onChange={e => setInput(e.target.value)} style={styles.input} /><button onClick={handleSendMessage} style={styles.button}><Send size={18} /></button></div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
-                        <button
-                            className="btn-secondary"
-                            style={{ marginTop: '16px', width: '100%' }}
-                            onClick={() => setShowLoadModal(false)}
-                        >
-                            Zatvori
-                        </button>
+                    <div style={{ marginTop: '40px', paddingBottom: '100px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                            <div style={{ width: '4px', height: '24px', background: 'var(--accent)', borderRadius: '2px' }} />
+                            <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800 }}>Pregled Svih Stavki</h3>
+                        </div>
+                        <PricelistItemsList items={addedItems} isLoading={isLoadingData} />
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className={`pricing-module ${isDarkMode ? 'navy-theme' : ''}`} style={{ background: 'var(--bg-dark)' }}>
+            {viewMode === 'code' ? (
+                <PricingCodeView
+                    pricelistTitle={pricelistTitle}
+                    pricelistId={pricelistId}
+                    productState={productState as any}
+                    pricePeriods={pricePeriods as any}
+                    supplements={supplements as any}
+                    validationIssues={validationIssues}
+                    saveSuccess={saveSuccess}
+                    isSaving={isSaving}
+                    isDarkMode={isDarkMode}
+                    onTitleChange={setPricelistTitle}
+                    onDarkModeToggle={() => setIsDarkMode(!isDarkMode)}
+                    onLoadPricelist={() => setShowLoadModal(true)}
+                    onExportJSON={exportToJSON}
+                    onSaveDraft={() => handleSavePricelist(false)}
+                    onActivate={() => handleSavePricelist(true)}
+                    onProductChange={setProductState as any}
+                    onPeriodsChange={setPricePeriods as any}
+                    onSupplementsChange={setSupplements as any}
+                />
+            ) : renderStandardUI()}
+
+            {showLoadModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div style={{ background: 'var(--bg-card)', padding: '30px', borderRadius: '20px', width: '500px' }}>
+                        <h3>Učitaj Cenovnik</h3>
+                        {savedPricelists.map(pl => <div key={pl.id} onClick={() => handleLoadPricelist(pl.id!)} style={{ padding: '12px', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', marginBottom: '8px' }}>{pl.title}</div>)}
+                        <button onClick={() => setShowLoadModal(false)} style={{ ...styles.button, width: '100%', marginTop: '20px' }}>Zatvori</button>
                     </div>
                 </div>
             )}
