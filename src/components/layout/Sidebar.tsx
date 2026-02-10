@@ -11,7 +11,8 @@ import {
     Brain,
     Sparkles,
     ClipboardList,
-    Search
+    Search,
+    DollarSign
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { GeometricBrain } from '../icons/GeometricBrain';
@@ -133,6 +134,13 @@ const Sidebar: React.FC = () => {
                             title="Subagent Admin"
                         >
                             <Users size={20} /> {!isSidebarCollapsed && 'Subagent Admin'}
+                        </NavLink>
+                        <NavLink
+                            to="/price-list-architect"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Pricing Architect"
+                        >
+                            <DollarSign size={20} /> {!isSidebarCollapsed && 'Pricing Architect'}
                         </NavLink>
                     </div>
                 )}

@@ -32,6 +32,7 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
             bathroomCount: 1,
             bathroomType: 'Private',
             beddingConfigurations: [],
+            bedSetupVariants: [{ id: Math.random().toString(36).substr(2, 5), basic: 2, extra: 0 }],
             amenities: [],
             images: [],
             allowedOccupancyVariants: []
@@ -85,151 +86,125 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
     };
 
     const renderOccupancyTable = (room: RoomType, roomIndex: number) => {
-        const osnovni = room.osnovniKreveti || 0;
-        const pomocni = room.pomocniKreveti || 0;
-        const totalBeds = osnovni + pomocni;
-        if (totalBeds === 0) {
+        if (!room.bedSetupVariants || room.bedSetupVariants.length === 0) {
             return (
                 <div style={{ padding: '40px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
                     <Bed size={32} style={{ opacity: 0.2, marginBottom: '12px' }} />
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Definišite broj osnovnih i pomoćnih ležajeva iznad <br /> kako biste videli tabelu zauzetosti.</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Definišite barem jednu varijantu kreveta iznad <br /> kako biste videli tabelu zauzetosti.</p>
                 </div>
             );
         }
 
         return (
-            <div className="glass-card" style={{ padding: '0', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                            <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>ACTIVE</th>
-                            <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Max osoba</th>
-                            <th style={{ padding: '16px 12px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                <div style={{ display: 'flex', gap: '20px' }}>
-                                    {Array.from({ length: osnovni }).map((_, i) => <span key={`h-o-${i}`} style={{ color: '#3b82f6', fontSize: '14px', fontWeight: 800 }}>Osnovni</span>)}
-                                    {Array.from({ length: pomocni }).map((_, i) => <span key={`h-p-${i}`} style={{ color: '#a78bfa', fontSize: '14px', fontWeight: 800 }}>Pomoćni</span>)}
+            <div style={{ display: 'grid', gap: '24px' }}>
+                {room.bedSetupVariants.map((setup) => {
+                    const basic = setup.basic || 0;
+                    const extra = setup.extra || 0;
+                    const total = basic + extra;
+
+                    // Generate variants for THIS specific setup (e.g., 2+1 -> 1ADL+2CHD, 2ADL+1CHD, 3ADL+0CHD)
+                    const variantsForThisSetup: { vKey: string, adults: number, children: number, total: number }[] = [];
+                    for (let a = 1; a <= total; a++) {
+                        const c = total - a;
+                        variantsForThisSetup.push({
+                            vKey: `${setup.id}_${a}ADL_${c}CHD`,
+                            adults: a,
+                            children: c,
+                            total: total
+                        });
+                    }
+
+                    return (
+                        <div key={setup.id} className="glass-card" style={{ padding: '0', overflow: 'hidden', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
+                            <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '12px 24px', borderBottom: '1px solid rgba(139, 92, 246, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ background: 'var(--accent)', color: '#fff', padding: '4px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 900 }}>
+                                    {setup.basic} OSNOVNA + {setup.extra} POMOĆNA
                                 </div>
-                            </th>
-                            <th style={{ padding: '16px 24px', textAlign: 'center', fontSize: '14px', fontWeight: 800, color: '#ef4444', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Dete Deli Ležaj</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {Array.from({ length: totalBeds || 1 }).map((_, variantIdx) => {
-                            // For N beds, generate N variants with different ADL/CHD combinations
-                            // All variants have the same total occupancy (totalBeds)
-                            const adults = variantIdx + 1; // 1 to totalBeds adults
-                            const children = totalBeds - adults; // Remaining are children
-
-                            // Build bed assignment array
-                            const bedAssignment = [];
-                            let adultsPlaced = 0;
-                            let childrenPlaced = 0;
-
-                            // First fill basic beds
-                            for (let i = 0; i < osnovni; i++) {
-                                if (adultsPlaced < adults) {
-                                    bedAssignment.push({ type: 'osnovni', occupant: 'ADL' });
-                                    adultsPlaced++;
-                                } else if (childrenPlaced < children) {
-                                    bedAssignment.push({ type: 'osnovni', occupant: 'CHD' });
-                                    childrenPlaced++;
-                                } else {
-                                    bedAssignment.push({ type: 'osnovni', occupant: 'EMPTY' }); // Should not happen if logic is correct
-                                }
-                            }
-
-                            // Then fill extra beds
-                            for (let i = 0; i < pomocni; i++) {
-                                if (adultsPlaced < adults) {
-                                    bedAssignment.push({ type: 'pomocni', occupant: 'ADL' });
-                                    adultsPlaced++;
-                                } else if (childrenPlaced < children) {
-                                    bedAssignment.push({ type: 'pomocni', occupant: 'CHD' });
-                                    childrenPlaced++;
-                                } else {
-                                    bedAssignment.push({ type: 'pomocni', occupant: 'EMPTY' }); // Should not happen if logic is correct
-                                }
-                            }
-
-                            const vKey = `${adults}ADL_${children}CHD`;
-                            const isActive = room.allowedOccupancyVariants?.includes(vKey);
-                            const childSharing = room.childSharingVariants?.includes(vKey);
-                            const displayTotal = childSharing ? totalBeds + 1 : totalBeds;
-
-                            return (
-                                <tr key={vKey} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', background: isActive ? 'rgba(59, 130, 246, 0.02)' : 'transparent' }}>
-                                    <td style={{ padding: '12px 24px', textAlign: 'left' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={isActive}
-                                            onChange={(e) => {
-                                                const variants = room.allowedOccupancyVariants || [];
-                                                const newVariants = e.target.checked ? [...variants, vKey] : variants.filter((v: string) => v !== vKey);
-                                                updateRoom(roomIndex, { allowedOccupancyVariants: newVariants });
-                                            }}
-                                        />
-                                    </td>
-                                    <td style={{ padding: '12px 12px', textAlign: 'center' }}>
-                                        <span style={{ fontSize: '16px', fontWeight: 800, color: '#fff' }}>{displayTotal}</span>
-                                    </td>
-                                    <td style={{ padding: '12px 12px' }}>
-                                        <div style={{ display: 'flex', gap: '20px' }}>
-                                            {bedAssignment.map((bed, idx) => (
-                                                <div key={idx} style={{
-                                                    padding: '6px 12px',
-                                                    borderRadius: '6px',
-                                                    fontSize: '12px',
-                                                    fontWeight: 800,
-                                                    background: bed.occupant === 'ADL' ? 'rgba(59, 130, 246, 0.15)' : (bed.occupant === 'CHD' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)'),
-                                                    color: bed.occupant === 'ADL' ? '#3b82f6' : (bed.occupant === 'CHD' ? '#10b981' : 'rgba(255,255,255,0.2)'),
-                                                    border: `1px solid ${bed.occupant === 'ADL' ? 'rgba(59, 130, 246, 0.3)' : (bed.occupant === 'CHD' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255,255,255,0.1)')}`,
-                                                    minWidth: '50px',
-                                                    textAlign: 'center'
-                                                }}>
-                                                    {bed.occupant === 'EMPTY' ? '-' : bed.occupant}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </td>
-                                    <td style={{ padding: '12px 24px', textAlign: 'center' }}>
-                                        <div
-                                            style={{
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                                alignItems: 'center'
-                                            }}
-                                            onClick={() => {
-                                                const sharing = room.childSharingVariants || [];
-                                                const newSharing = sharing.includes(vKey)
-                                                    ? sharing.filter((v: string) => v !== vKey)
-                                                    : [...sharing, vKey];
-                                                updateRoom(roomIndex, { childSharingVariants: newSharing });
-                                            }}
-                                        >
-                                            <div style={{
-                                                width: '24px',
-                                                height: '24px',
-                                                borderRadius: '6px',
-                                                border: '2px solid rgba(255,255,255,0.1)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                transition: 'all 0.2s',
-                                                background: childSharing ? 'rgba(236, 72, 153, 0.15)' : 'transparent',
-                                                borderColor: childSharing ? '#ec4899' : 'rgba(255,255,255,0.1)'
-                                            }}>
-                                                {childSharing && (
-                                                    <span style={{ color: '#ec4899', fontSize: '16px', fontWeight: 900 }}>✓</span>
-                                                )}
+                            </div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ background: 'rgba(255,255,255,0.01)' }}>
+                                        <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', width: '80px' }}>STATUS</th>
+                                        <th style={{ padding: '12px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', width: '80px' }}>TOTAL</th>
+                                        <th style={{ padding: '12px 12px', textAlign: 'left' }}>
+                                            <div style={{ display: 'flex', gap: '12px' }}>
+                                                {Array.from({ length: basic }).map((_, i) => <span key={`h-b-${i}`} style={{ color: '#3b82f6', fontSize: '11px', fontWeight: 800 }}>OSN</span>)}
+                                                {Array.from({ length: extra }).map((_, i) => <span key={`h-e-${i}`} style={{ color: '#a78bfa', fontSize: '11px', fontWeight: 800 }}>POM</span>)}
                                             </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                                        </th>
+                                        <th style={{ padding: '12px 24px', textAlign: 'center', fontSize: '11px', fontWeight: 800, color: '#ef4444', width: '120px' }}>DETE DELI</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {variantsForThisSetup.map((v) => {
+                                        const isActive = room.allowedOccupancyVariants?.includes(v.vKey);
+                                        const isSharing = room.childSharingVariants?.includes(v.vKey);
+
+                                        const bedPlan = [];
+                                        let adlLeft = v.adults;
+                                        let chdLeft = v.children;
+
+                                        for (let i = 0; i < basic; i++) {
+                                            if (adlLeft > 0) { adlLeft--; bedPlan.push('ADL'); }
+                                            else if (chdLeft > 0) { chdLeft--; bedPlan.push('CHD'); }
+                                            else bedPlan.push('-');
+                                        }
+                                        for (let i = 0; i < extra; i++) {
+                                            if (adlLeft > 0) { adlLeft--; bedPlan.push('ADL'); }
+                                            else if (chdLeft > 0) { chdLeft--; bedPlan.push('CHD'); }
+                                            else bedPlan.push('-');
+                                        }
+
+                                        return (
+                                            <tr key={v.vKey} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', background: isActive ? 'rgba(59, 130, 246, 0.03)' : 'transparent' }}>
+                                                <td style={{ padding: '10px 24px' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isActive}
+                                                        onChange={e => {
+                                                            const variants = room.allowedOccupancyVariants || [];
+                                                            const updated = e.target.checked ? [...variants, v.vKey] : variants.filter(x => x !== v.vKey);
+                                                            updateRoom(roomIndex, { allowedOccupancyVariants: updated });
+                                                        }}
+                                                    />
+                                                </td>
+                                                <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 900, color: '#fff' }}>
+                                                    {isSharing ? v.total + 1 : v.total}
+                                                </td>
+                                                <td style={{ padding: '10px 12px' }}>
+                                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                                        {bedPlan.map((occupant, idx) => (
+                                                            <div key={idx} style={{
+                                                                minWidth: '36px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                fontSize: '10px', fontWeight: 900, borderRadius: '4px',
+                                                                background: occupant === 'ADL' ? 'rgba(59, 130, 246, 0.2)' : (occupant === 'CHD' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.05)'),
+                                                                color: occupant === 'ADL' ? '#3b82f6' : (occupant === 'CHD' ? '#10b981' : 'rgba(255,255,255,0.2)'),
+                                                                border: `1px solid ${occupant === 'ADL' ? 'rgba(59, 130, 246, 0.3)' : (occupant === 'CHD' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255,255,255,0.1)')}`
+                                                            }}>
+                                                                {occupant}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                                <td style={{ padding: '10px 24px', textAlign: 'center' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSharing}
+                                                        onChange={e => {
+                                                            const variants = room.childSharingVariants || [];
+                                                            const updated = e.target.checked ? [...variants, v.vKey] : variants.filter(x => x !== v.vKey);
+                                                            updateRoom(roomIndex, { childSharingVariants: updated });
+                                                        }}
+                                                    />
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    );
+                })}
             </div>
         );
     };
@@ -292,14 +267,65 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
                                                 </select>
                                             </div>
                                         </div>
-                                        <div className="form-grid" style={{ marginBottom: '16px' }}>
-                                            <div className="form-group">
-                                                <label className="form-label">Osnovni Kreveti</label>
-                                                <input type="number" className="glass-input" value={room.osnovniKreveti ?? ''} onChange={(e) => updateRoom(editingRoom, { osnovniKreveti: e.target.value === '' ? undefined : parseInt(e.target.value, 10) || 0 })} />
+                                        <div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                                <h4 className="form-section-title" style={{ margin: 0 }}>Struktura Kreveta (Varijante)</h4>
+                                                <button
+                                                    className="btn-primary"
+                                                    style={{ padding: '6px 12px', fontSize: '11px', borderRadius: '8px' }}
+                                                    onClick={() => {
+                                                        const variants = room.bedSetupVariants || [];
+                                                        updateRoom(editingRoom, {
+                                                            bedSetupVariants: [...variants, { id: Math.random().toString(36).substr(2, 5), basic: 2, extra: 0 }]
+                                                        });
+                                                    }}
+                                                >
+                                                    <Plus size={14} style={{ marginRight: '4px' }} /> DODAJ NOVI RED
+                                                </button>
                                             </div>
-                                            <div className="form-group">
-                                                <label className="form-label">Pomoćni Kreveti</label>
-                                                <input type="number" className="glass-input" value={room.pomocniKreveti ?? ''} onChange={(e) => updateRoom(editingRoom, { pomocniKreveti: e.target.value === '' ? undefined : parseInt(e.target.value, 10) || 0 })} />
+
+                                            <div style={{ display: 'grid', gap: '12px', marginBottom: '24px' }}>
+                                                {(room.bedSetupVariants || []).map((setup, idx) => (
+                                                    <div key={setup.id} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                        <div style={{ flex: 1 }}>
+                                                            <label style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 800, marginBottom: '4px', display: 'block' }}>OSNOVNI</label>
+                                                            <input
+                                                                type="number"
+                                                                className="glass-input"
+                                                                style={{ padding: '8px' }}
+                                                                value={setup.basic}
+                                                                onChange={e => {
+                                                                    const newVariants = [...(room.bedSetupVariants || [])];
+                                                                    newVariants[idx] = { ...newVariants[idx], basic: parseInt(e.target.value) || 0 };
+                                                                    updateRoom(editingRoom, { bedSetupVariants: newVariants, osnovniKreveti: Math.max(...newVariants.map(v => v.basic)) });
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div style={{ flex: 1 }}>
+                                                            <label style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 800, marginBottom: '4px', display: 'block' }}>POMOĆNI</label>
+                                                            <input
+                                                                type="number"
+                                                                className="glass-input"
+                                                                style={{ padding: '8px' }}
+                                                                value={setup.extra}
+                                                                onChange={e => {
+                                                                    const newVariants = [...(room.bedSetupVariants || [])];
+                                                                    newVariants[idx] = { ...newVariants[idx], extra: parseInt(e.target.value) || 0 };
+                                                                    updateRoom(editingRoom, { bedSetupVariants: newVariants, pomocniKreveti: Math.max(...newVariants.map(v => v.extra)) });
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            onClick={() => {
+                                                                const newVariants = room.bedSetupVariants.filter((_, i) => i !== idx);
+                                                                updateRoom(editingRoom, { bedSetupVariants: newVariants });
+                                                            }}
+                                                            style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', height: '36px', width: '36px', borderRadius: '8px', cursor: 'pointer' }}
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     </div>

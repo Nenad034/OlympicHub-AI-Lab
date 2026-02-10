@@ -11,7 +11,8 @@ import {
     Brain,
     ClipboardList,
     Sparkles,
-    X
+    X,
+    DollarSign
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useThemeStore, useAppStore, useAuthStore } from '../../stores';
@@ -78,6 +79,9 @@ const HorizontalNav: React.FC = () => {
                         </NavLink>
                         <NavLink to="/subagent-admin" className={({ isActive }) => navItemClass(isActive)}>
                             <Users size={18} /> Subagent Admin
+                        </NavLink>
+                        <NavLink to="/price-list-architect" className={({ isActive }) => navItemClass(isActive)}>
+                            <DollarSign size={18} /> Pricing Architect
                         </NavLink>
                         <NavLink to="/settings" className={({ isActive }) => navItemClass(isActive)}>
                             <SettingsIcon size={18} /> {t.settings}

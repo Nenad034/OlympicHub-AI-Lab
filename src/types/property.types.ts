@@ -84,8 +84,13 @@ export interface RoomType {
     maxChildren: number;
     maxOccupancy: number;
     minOccupancy: number;
-    osnovniKreveti: number; // Basic beds
-    pomocniKreveti: number; // Extra beds
+    osnovniKreveti: number; // Default/Primary count
+    pomocniKreveti: number; // Default/Primary count
+    bedSetupVariants: {
+        id: string;
+        basic: number;
+        extra: number;
+    }[];
     allowChildSharingBed: boolean; // Dete deli krevet
     allowAdultsOnExtraBeds: boolean; // Odrasli na pomoćnom ležaju
     allowInfantSharingBed: boolean; // Beba deli krevet

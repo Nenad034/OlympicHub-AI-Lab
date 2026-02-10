@@ -182,6 +182,13 @@ class MultiKeyAIService {
             model = 'gemini-1.5-flash'
         } = options;
 
+        // --- DEVELOPMENT BYPASS ---
+        if (import.meta.env.VITE_AI_DEV_MODE === 'true') {
+            const mockResponse = "[AI Simulation] Ova ponuda je visoko ocenjena zbog odlične lokacije i pristupačne cene.";
+            console.log(`⚡ [MULTI-KEY] DEV MODE: Bypassing real AI call. Returning mock.`);
+            return mockResponse;
+        }
+
         // Check cache first
         if (useCache) {
             const cached = aiCache.get(prompt, cacheCategory);

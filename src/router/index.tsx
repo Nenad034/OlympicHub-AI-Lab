@@ -66,6 +66,7 @@ const KyteTest = React.lazy(() => import('../pages/KyteTest'));
 const YieldDashboard = React.lazy(() => import('../modules/yield/YieldDashboard'));
 const DestinationRep = React.lazy(() => import('../modules/destination/DestinationRep'));
 const FilosTest = React.lazy(() => import('../pages/FilosTest'));
+const PriceListArchitect = React.lazy(() => import('../pages/PriceListArchitect'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
@@ -269,6 +270,10 @@ export const router = createBrowserRouter([
             </AuthGuard>
         ),
         children: [
+            {
+                path: 'price-list-architect',
+                element: <PriceListArchitect />,
+            },
             // Dashboard
             {
                 index: true,
