@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, User, Cpu, Code, Zap, Shield, Moon, Sun, Coffee, Sparkles } from 'lucide-react';
+import { ClickToTravelLogo } from '../components/icons/ClickToTravelLogo';
 import { useAuthStore, useThemeStore } from '../stores';
 
 const CircuitBackground = ({ theme }: { theme: 'circuit' | 'code' | 'minimal' }) => {
@@ -178,17 +179,7 @@ const Login = () => {
             >
                 <div className="login-header">
                     <div className="logo-box">
-                        <img
-                            src="/logo.jpg"
-                            alt="Olympic Eagle Logo"
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'contain',
-                                borderRadius: '12px',
-                                filter: isPrism ? 'drop-shadow(0 0 8px var(--accent))' : 'none'
-                            }}
-                        />
+                        <ClickToTravelLogo height={72} showText={true} />
                     </div>
                     <h2 className="brand-title">OlympicHub <span>034</span></h2>
                     <p className="subtitle">Advanced Management System</p>

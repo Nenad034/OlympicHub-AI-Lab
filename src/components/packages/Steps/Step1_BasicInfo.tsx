@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ClickToTravelLogo } from '../../icons/ClickToTravelLogo';
 import { createPortal } from 'react-dom';
 import {
     MapPin, Calendar, Users, Star,
@@ -556,7 +557,7 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
 
             {/* Search Button */}
             <button onClick={onNext} style={{ width: '100%', padding: '1.25rem', background: 'var(--ss-gradient)', border: 'none', borderRadius: '12px', color: 'white', fontSize: '1.2rem', fontWeight: 'bold', fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                CLICK TO GET ...
+                <ClickToTravelLogo height={36} showText={true} />
             </button>
 
             {activeCalendar !== null && createPortal(

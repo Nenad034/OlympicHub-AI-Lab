@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ClickToTravelLogo } from '../components/icons/ClickToTravelLogo';
 import {
     Search, Hotel, MapPin, Calendar, Users, Sparkles,
     Loader2, CheckCircle2, MoveRight, MoveLeft, Moon,
@@ -331,8 +332,7 @@ const OpenGreeceSearch: React.FC = () => {
                             onClick={handleSearch}
                             disabled={isSearching || !selectedHotel}
                         >
-                            {isSearching ? <Loader2 className="spin" /> : <Search size={22} />}
-                            <span>Proveri dostupnost</span>
+                            {isSearching ? <Loader2 className="spin" /> : <ClickToTravelLogo height={32} />}
                         </button>
                     </div>
                 </div>

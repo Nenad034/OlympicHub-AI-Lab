@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { GeometricBrain } from '../icons/GeometricBrain';
+import { ClickToTravelLogo } from '../icons/ClickToTravelLogo';
 import { useThemeStore, useAppStore, useAuthStore } from '../../stores';
 import { translations } from '../../translations';
 
@@ -32,28 +33,13 @@ const Sidebar: React.FC = () => {
 
     return (
         <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
-            <div className="sidebar-header">
-                <div className="logo-container" style={{
-                    background: 'transparent',
-                    boxShadow: 'none',
-                    width: isSidebarCollapsed ? '40px' : '150px',
-                    height: isSidebarCollapsed ? '40px' : '120px',
-                    margin: '0 auto',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}>
-                    <img
-                        src="/logo.jpg"
-                        alt="Olympic Logo"
-                        style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'contain',
-                            borderRadius: '8px'
-                        }}
-                    />
+            <div className="sidebar-header" style={{ position: 'relative', overflow: 'visible', zIndex: 100 }}>
+                {/* Logo wrapper fully decoupled from sidebar width constraints */}
+                <div style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', width: 'max-content' }}>
+                    <ClickToTravelLogo height={48} showText={true} />
                 </div>
+                {/* Spacer to push toggle button to the right if using flex */}
+                <div style={{ flex: 1 }}></div>
                 {/* Removed Olympic B2B text as requested */}
                 <button className="collapse-toggle" onClick={toggleSidebar}>
                     {isSidebarCollapsed ? (

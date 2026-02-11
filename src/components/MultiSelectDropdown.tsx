@@ -110,7 +110,7 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ option
                     borderRadius: '12px',
                     boxShadow: '0 15px 40px rgba(0,0,0,0.5)',
                     zIndex: 200,
-                    maxHeight: '350px',
+                    maxHeight: '500px',
                     display: 'flex',
                     flexDirection: 'column',
                     overflow: 'hidden'

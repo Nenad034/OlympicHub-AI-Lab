@@ -99,8 +99,17 @@ const ShiftsGeneratorPage: React.FC = () => {
             if (propertiesRes.success && propertiesRes.data) {
                 setHotels(propertiesRes.data);
                 propertiesRes.data.forEach((h: any) => {
-                    const city = h.originalPropertyData?.address?.city || h.location?.place || '';
-                    if (city) uniqueDestsMap.set(city.toLowerCase(), city);
+                    // Check multiple possible paths for city name based on current DB structure
+                    const city = h.location?.place ||
+                        h.originalPropertyData?.address?.city ||
+                        h.originalPropertyData?.location?.place ||
+                        h.address?.city ||
+                        '';
+
+                    if (city) {
+                        const trimmedCity = city.trim();
+                        if (trimmedCity) uniqueDestsMap.set(trimmedCity.toLowerCase(), trimmedCity);
+                    }
                 });
             }
 

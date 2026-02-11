@@ -1,14 +1,21 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../stores';
-import { Cpu, Zap, Shield, Key, CheckCircle2, AlertTriangle, Save, Sparkles, Search, Building2, Calendar } from 'lucide-react';
+import {
+    Cpu, Zap, Shield, CheckCircle2, AlertTriangle, Save,
+    Sparkles, Search, Building2, Calendar, Database,
+    RefreshCw, Loader2
+} from 'lucide-react';
+import { syncSolvexMedia } from '../services/solvex/solvexMediaService';
 
 const B2BSettings: React.FC = () => {
     const { aiKeys, setAIKeys } = useAuthStore();
-    const [activeView, setActiveView] = useState<'keys' | 'docs'>('keys');
+    const [activeView, setActiveView] = useState<'keys' | 'docs' | 'providers'>('keys');
     const [activeDocSection, setActiveDocSection] = useState<'search' | 'inventory' | 'ai' | 'booking'>('search');
     const [keys, setKeys] = useState(aiKeys || { gemini: '', openai: '', claude: '' });
     const [isSaving, setIsSaving] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
     const handleSave = () => {
         setIsSaving(true);
@@ -19,6 +26,24 @@ const B2BSettings: React.FC = () => {
             setSaveStatus('success');
             setTimeout(() => setSaveStatus('idle'), 3000);
         }, 800);
+    };
+
+    const handleSyncSolvex = async () => {
+        setIsSyncing(true);
+        setSyncStatus('idle');
+        try {
+            const result = await syncSolvexMedia();
+            if (result.success) {
+                setSyncStatus('success');
+            } else {
+                setSyncStatus('error');
+            }
+        } catch (error) {
+            setSyncStatus('error');
+        } finally {
+            setIsSyncing(false);
+            setTimeout(() => setSyncStatus('idle'), 5000);
+        }
     };
 
     const renderApiDocs = () => {
@@ -135,7 +160,7 @@ const B2BSettings: React.FC = () => {
             }
         };
 
-        const current = docContent[activeDocSection];
+        const current = (docContent as any)[activeDocSection];
 
         return (
             <div className="api-gateway-docs" style={{
@@ -151,11 +176,9 @@ const B2BSettings: React.FC = () => {
                 border: '1px solid rgba(255,255,255,0.1)',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
             }}>
-                {/* Glow Effects */}
                 <div style={{ position: 'absolute', top: '-100px', left: '-100px', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
                 <div style={{ position: 'absolute', bottom: '-100px', right: '-100px', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-                {/* Docs Sidebar */}
                 <div className="docs-nav" style={{
                     width: '240px',
                     background: 'rgba(255, 255, 255, 0.03)',
@@ -209,7 +232,6 @@ const B2BSettings: React.FC = () => {
                     ))}
                 </div>
 
-                {/* Docs Content */}
                 <div className="docs-main" style={{ flex: 1, zIndex: 2, display: 'flex', flexDirection: 'column' }}>
                     <div style={{ marginBottom: '40px' }}>
                         <h1 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '-0.02em', margin: 0, lineHeight: 1 }}>
@@ -253,7 +275,7 @@ const B2BSettings: React.FC = () => {
                             color: '#e2e8f0',
                             border: '1px solid rgba(255,255,255,0.03)'
                         }}>
-                            {current.code.split('\n').map((line, i) => {
+                            {current.code.split('\n').map((line: string, i: number) => {
                                 const highlightedLine = line
                                     .replace(/"([^"]+)":/g, '<span style="color: #f472b6">"$1"</span>:')
                                     .replace(/: "(.*)"/g, ': <span style="color: #34d399">"$1"</span>')
@@ -264,9 +286,6 @@ const B2BSettings: React.FC = () => {
                                 );
                             })}
                         </pre>
-
-                        {/* Top internal glow */}
-                        <div style={{ position: 'absolute', top: '0', left: '10%', right: '10%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)' }} />
                     </div>
                 </div>
             </div>
@@ -279,30 +298,34 @@ const B2BSettings: React.FC = () => {
                 <button
                     onClick={() => setActiveView('keys')}
                     style={{
-                        padding: '10px 24px',
-                        borderRadius: '12px',
-                        border: 'none',
+                        padding: '10px 24px', borderRadius: '12px', border: 'none',
                         background: activeView === 'keys' ? 'var(--card-bg)' : 'transparent',
                         color: activeView === 'keys' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
+                        fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
                         boxShadow: activeView === 'keys' ? 'var(--shadow-md)' : 'none'
                     }}
                 >
                     Nalog i Ključevi
                 </button>
                 <button
+                    onClick={() => setActiveView('providers')}
+                    style={{
+                        padding: '10px 24px', borderRadius: '12px', border: 'none',
+                        background: activeView === 'providers' ? 'var(--card-bg)' : 'transparent',
+                        color: activeView === 'providers' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                        boxShadow: activeView === 'providers' ? 'var(--shadow-md)' : 'none'
+                    }}
+                >
+                    Konekcije (Provajderi)
+                </button>
+                <button
                     onClick={() => setActiveView('docs')}
                     style={{
-                        padding: '10px 24px',
-                        borderRadius: '12px',
-                        border: 'none',
+                        padding: '10px 24px', borderRadius: '12px', border: 'none',
                         background: activeView === 'docs' ? 'var(--card-bg)' : 'transparent',
                         color: activeView === 'docs' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
+                        fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
                         boxShadow: activeView === 'docs' ? 'var(--shadow-md)' : 'none'
                     }}
                 >
@@ -349,13 +372,9 @@ const B2BSettings: React.FC = () => {
                                         value={keys.gemini}
                                         onChange={(e) => setKeys({ ...keys, gemini: e.target.value })}
                                         style={{
-                                            width: '100%',
-                                            padding: '14px 16px 14px 48px',
-                                            borderRadius: '14px',
-                                            background: 'rgba(0,0,0,0.2)',
-                                            border: '1px solid var(--border-color)',
-                                            color: 'inherit',
-                                            fontSize: '14px'
+                                            width: '100%', padding: '14px 16px 14px 48px', borderRadius: '14px',
+                                            background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)',
+                                            color: 'inherit', fontSize: '14px'
                                         }}
                                     />
                                 </div>
@@ -375,13 +394,9 @@ const B2BSettings: React.FC = () => {
                                         value={keys.openai}
                                         onChange={(e) => setKeys({ ...keys, openai: e.target.value })}
                                         style={{
-                                            width: '100%',
-                                            padding: '14px 16px 14px 48px',
-                                            borderRadius: '14px',
-                                            background: 'rgba(0,0,0,0.2)',
-                                            border: '1px solid var(--border-color)',
-                                            color: 'inherit',
-                                            fontSize: '14px'
+                                            width: '100%', padding: '14px 16px 14px 48px', borderRadius: '14px',
+                                            background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)',
+                                            color: 'inherit', fontSize: '14px'
                                         }}
                                     />
                                 </div>
@@ -401,13 +416,9 @@ const B2BSettings: React.FC = () => {
                                         value={keys.claude}
                                         onChange={(e) => setKeys({ ...keys, claude: e.target.value })}
                                         style={{
-                                            width: '100%',
-                                            padding: '14px 16px 14px 48px',
-                                            borderRadius: '14px',
-                                            background: 'rgba(0,0,0,0.2)',
-                                            border: '1px solid var(--border-color)',
-                                            color: 'inherit',
-                                            fontSize: '14px'
+                                            width: '100%', padding: '14px 16px 14px 48px', borderRadius: '14px',
+                                            background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)',
+                                            color: 'inherit', fontSize: '14px'
                                         }}
                                     />
                                 </div>
@@ -424,26 +435,17 @@ const B2BSettings: React.FC = () => {
                         <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '20px' }}>
                             {saveStatus === 'success' && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#22c55e', fontSize: '14px', fontWeight: 600 }}>
-                                    <CheckCircle2 size={18} />
-                                    Promene su sačuvane!
+                                    <CheckCircle2 size={18} /> Promene su sačuvane!
                                 </div>
                             )}
                             <button
                                 onClick={handleSave}
                                 disabled={isSaving}
                                 style={{
-                                    padding: '14px 30px',
-                                    borderRadius: '14px',
+                                    padding: '14px 30px', borderRadius: '14px',
                                     background: isSaving ? '#64748b' : 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)',
-                                    color: '#fff',
-                                    border: 'none',
-                                    fontWeight: 700,
-                                    fontSize: '15px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '10px',
-                                    transition: 'all 0.2s',
+                                    color: '#fff', border: 'none', fontWeight: 700, fontSize: '15px', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: '10px', transition: 'all 0.2s',
                                     boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
                                 }}
                             >
@@ -452,10 +454,70 @@ const B2BSettings: React.FC = () => {
                         </div>
                     </div>
                 </>
+            ) : activeView === 'providers' ? (
+                <div className="providers-settings">
+                    <div className="settings-header" style={{ marginBottom: '30px' }}>
+                        <h1 style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '10px' }}>
+                            Upravljanje Konekcijama
+                        </h1>
+                        <p style={{ color: 'var(--text-secondary)' }}>
+                            Konfiguracija eksternih provajdera i sinhronizacija statičkih podataka (hoteli, slike, opisi).
+                        </p>
+                    </div>
+
+                    <div className="provider-card" style={{ background: 'var(--card-bg)', borderRadius: '24px', padding: '30px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-md)', marginBottom: '20px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div style={{ display: 'flex', gap: '20px' }}>
+                                <div style={{ width: '60px', height: '60px', borderRadius: '16px', background: '#f59e0b', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Database size={32} />
+                                </div>
+                                <div>
+                                    <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>SOLVEX (Bugarska)</h2>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '4px' }}>SOAP v4 + JSON Media API</p>
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                        <span style={{ fontSize: '11px', background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>SOAP AKTIVAN</span>
+                                        <span style={{ fontSize: '11px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>MEDIA READY</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleSyncSolvex}
+                                disabled={isSyncing}
+                                style={{
+                                    padding: '12px 20px', borderRadius: '12px',
+                                    background: isSyncing ? '#64748b' : 'var(--accent)',
+                                    color: 'white', border: 'none', fontWeight: 700,
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s'
+                                }}
+                            >
+                                {isSyncing ? <Loader2 size={18} className="spin" /> : <RefreshCw size={18} />}
+                                {isSyncing ? 'Sinhronizacija...' : 'Sinhronizuj Slike i Opise'}
+                            </button>
+                        </div>
+
+                        <div style={{ marginTop: '25px', padding: '16px', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '14px', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', color: '#3b82f6', marginBottom: '8px' }}>
+                                <Zap size={16} /> <span style={{ fontWeight: 700, fontSize: '13px' }}>TEHNIČKA NAPOMENA</span>
+                            </div>
+                            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                                Solvex SOAP API ne isporučuje slike u pretrazi. Ova opcija povlači podatke sa novog JSON Media API-ja i kešira ih u lokalnu bazu kako bi pretraga bila brza i vizuelno bogata.
+                            </p>
+                            {syncStatus === 'success' && (
+                                <div style={{ marginTop: '12px', color: '#22c55e', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <CheckCircle2 size={16} /> Sinhronizacija uspešno završena!
+                                </div>
+                            )}
+                            {syncStatus === 'error' && (
+                                <div style={{ marginTop: '12px', color: '#ef4444', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <AlertTriangle size={16} /> Greška prilikom sinhronizacije.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             ) : renderApiDocs()}
         </div>
     );
 };
-
 
 export default B2BSettings;

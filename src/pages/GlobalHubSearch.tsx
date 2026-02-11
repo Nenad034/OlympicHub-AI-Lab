@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ClickToTravelLogo } from '../components/icons/ClickToTravelLogo';
 import './SmartSearchFerrariFix.css';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -1345,7 +1346,11 @@ const GlobalHubSearch: React.FC = () => {
                         {/* SEARCH BUTTONS ROW */}
                         <div className="action-row-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', marginTop: '10px' }}>
                             <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2' }}>
-                                <span>{isSearching ? 'Pretražujem...' : <i>CLICK TO GET</i>}</span>
+                                <span>{isSearching ? 'Pretražujem...' : (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '160px' }}>
+                                        <ClickToTravelLogo height={36} showText={true} />
+                                    </div>
+                                )}</span>
                             </button>
                             <button className="btn-new-search-tag" onClick={handleNewSearchTab}>
                                 <Plus size={16} />

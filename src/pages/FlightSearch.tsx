@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ClickToTravelLogo } from '../components/icons/ClickToTravelLogo';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Search, Plane, Calendar, Users, MapPin, ArrowRight,
@@ -359,10 +360,7 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
                                         Pretražujem...
                                     </>
                                 ) : (
-                                    <>
-                                        <Search size={20} />
-                                        Pretraži Letove
-                                    </>
+                                    <ClickToTravelLogo height={32} />
                                 )}
                             </button>
                         </div>
@@ -478,10 +476,7 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
                                         Pretražujem...
                                     </>
                                 ) : (
-                                    <>
-                                        <Search size={20} />
-                                        Pretraži Letove
-                                    </>
+                                    <ClickToTravelLogo height={32} />
                                 )}
                             </button>
                         </div>

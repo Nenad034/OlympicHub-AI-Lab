@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ClickToTravelLogo } from '../../components/icons/ClickToTravelLogo';
 import {
     Search, Plane, Home, MapPin, Calendar, Users, Sparkles,
     Bus, Compass, Ticket, Loader2, CheckCircle2, Hotel,
@@ -318,8 +319,7 @@ const TotalTripSearch: React.FC = () => {
                         )}
 
                         <button className="search-launch-btn-v4" onClick={handleSearch} disabled={isLoading}>
-                            {isLoading ? <Loader2 className="spin" /> : <Search size={22} />}
-                            <span>{t.searchOffers}</span>
+                            {isLoading ? <Loader2 className="spin" /> : <ClickToTravelLogo height={32} />}
                         </button>
                     </div>
                 </div>

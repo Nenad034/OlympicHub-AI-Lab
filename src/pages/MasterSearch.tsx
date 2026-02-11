@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ClickToTravelLogo } from '../components/icons/ClickToTravelLogo';
 import { useNavigate } from 'react-router-dom';
 import {
     Hotel,
@@ -167,7 +168,7 @@ const MasterSearch: React.FC = () => {
                                     </div>
 
                                     <button className="search-action-btn-prm" onClick={() => setShowSupplierSelector(true)}>
-                                        <Search size={18} /> Pretraži Smeštaj
+                                        <ClickToTravelLogo height={28} />
                                     </button>
                                 </div>
                             </div>

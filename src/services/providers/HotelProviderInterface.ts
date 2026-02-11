@@ -102,6 +102,12 @@ export interface HotelSearchResult {
     /** Main hotel image URL (optional) */
     image?: string;
 
+    /** List of hotel image URLs (optional) */
+    images?: string[];
+
+    /** Detailed hotel description (optional) */
+    description?: string;
+
     /** Availability status */
     availability: 'available' | 'on_request' | 'unavailable';
 

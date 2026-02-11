@@ -45,6 +45,7 @@ import AIQuotaDashboard from './AIQuotaDashboard';
 import DailyActivityReport from './DailyActivityReport';
 import ModulesOverview from './ModulesOverview';
 import MasterOrchestrator from '../ai/MasterOrchestrator';
+import { ClickToTravelLogo } from '../../components/icons/ClickToTravelLogo';
 
 // --- Types ---
 interface UserAccount {
@@ -553,7 +554,7 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                             <div>
                                 <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     {u.firstName} {u.lastName}
-                                    {u.level === 6 && <img src="/logo.jpg" alt="Master" title="Master Account" style={{ width: '20px', height: '20px', borderRadius: '4px', objectFit: 'cover' }} />}
+                                    {u.level === 6 && <ClickToTravelLogo height={20} showText={false} />}
                                     <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginLeft: 'auto' }}>LVL {u.level}</span>
                                 </div>
                                 <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{u.email}</div>

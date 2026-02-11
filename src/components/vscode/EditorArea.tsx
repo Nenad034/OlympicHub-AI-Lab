@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, SplitSquareHorizontal, MoreHorizontal } from 'lucide-react';
+import { ClickToTravelLogo } from '../icons/ClickToTravelLogo';
 import { useVSCodeStore, type Tab } from '../../stores/vscodeStore';
 import { Outlet, useNavigate } from 'react-router-dom';
 
@@ -19,7 +20,7 @@ export const EditorArea: React.FC = () => {
         e.stopPropagation();
         const closedTabIndex = tabs.findIndex(t => t.id === tabId);
         closeTab(tabId);
-        
+
         // If we closed the active tab, navigate to the next available tab
         if (activeTabId === tabId) {
             const remainingTabs = tabs.filter(t => t.id !== tabId);
@@ -40,17 +41,10 @@ export const EditorArea: React.FC = () => {
             <div className="vscode-editor-area">
                 <div className="editor-welcome">
                     <div className="welcome-content">
-                        <img 
-                            src="/logo.jpg" 
-                            alt="Olympic Hub" 
-                            className="welcome-logo"
-                            onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                            }}
-                        />
+                        <ClickToTravelLogo height={96} className="welcome-logo" showText={true} />
                         <h1>Olympic Hub</h1>
                         <p className="welcome-subtitle">Enterprise Resource Planning za turizam</p>
-                        
+
                         <div className="welcome-actions">
                             <div className="welcome-section">
                                 <h3>Start</h3>
