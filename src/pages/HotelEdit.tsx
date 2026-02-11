@@ -15,7 +15,7 @@ import {
     Globe,
     AlertCircle
 } from 'lucide-react';
-import { loadFromCloud, saveToCloud } from '../utils/storageUtils';
+import { loadFromCloud, saveToCloud, updateLocalHotelCache } from '../utils/storageUtils';
 import { useToast } from '../components/ui/Toast';
 
 // Hotel type
@@ -202,7 +202,7 @@ const HotelEdit: React.FC = () => {
 
             // Save to cloud
             await saveToCloud('properties', updatedList);
-            localStorage.setItem('olympic_hub_hotels', JSON.stringify(updatedList));
+            updateLocalHotelCache(updatedList);
 
             success('Hotel sačuvan!', 'Promene su uspešno sačuvane.');
 

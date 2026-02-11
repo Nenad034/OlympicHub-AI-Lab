@@ -33,6 +33,17 @@ window.addEventListener('unhandledrejection', function (event) {
   `;
 });
 
+// Emergency cleanup for QuotaExceededError
+try {
+  const hotelCache = localStorage.getItem('olympic_hub_hotels');
+  if (hotelCache && hotelCache.length > 1000000) { // > 1MB
+    console.warn("🛡️ Emergency cleanup: Local hotel cache too large, clearing...");
+    localStorage.removeItem('olympic_hub_hotels');
+  }
+} catch (e) {
+  console.error("Cleanup error:", e);
+}
+
 console.log("🚀 Booting Olympic Hub...");
 
 try {

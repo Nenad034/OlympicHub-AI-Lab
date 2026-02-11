@@ -136,3 +136,48 @@ export const restoreItem = async (item: any) => {
 
     return { success: true };
 };
+
+/**
+ * Safely sets an item in localStorage, handling QuotaExceededError.
+ */
+export const safeLocalStorageSetItem = (key: string, value: any) => {
+    try {
+        const serialized = JSON.stringify(value);
+        localStorage.setItem(key, serialized);
+    } catch (e) {
+        if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+            console.warn(`LocalStorage Quota Exceeded for key '${key}'. Clearing cache and retrying with minimal data or skipping.`);
+            try {
+                // Nuclear option: Clear specific large keys to make space
+                if (key !== 'olympic_hub_hotels') {
+                    localStorage.removeItem('olympic_hub_hotels'); // Prioritize current save
+                    localStorage.setItem(key, JSON.stringify(value));
+                } else {
+                    // For hotels, we can't do much if it's too big, just skip
+                    console.error("Cannot save hotels to localStorage: Payload too large.");
+                }
+            } catch (retryErr) {
+                console.error("Failed to recover from Storage Quota error:", retryErr);
+            }
+        } else {
+            console.error("LocalStorage Error:", e);
+        }
+    }
+};
+
+/**
+ * intelligently updates the local hotel cache.
+ * If the dataset is too large, it truncates it to the top 200 items to prevent crashes.
+ */
+export const updateLocalHotelCache = (hotels: any[]) => {
+    try {
+        if (hotels.length > 500) {
+            console.info(`Dataset size (${hotels.length}) exceeds safety limit. Caching top 200 hotels only.`);
+            safeLocalStorageSetItem('olympic_hub_hotels', hotels.slice(0, 200));
+        } else {
+            safeLocalStorageSetItem('olympic_hub_hotels', hotels);
+        }
+    } catch (e) {
+        console.warn("Failed to update local hotel cache:", e);
+    }
+};

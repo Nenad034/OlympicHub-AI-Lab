@@ -9,8 +9,8 @@ export const getProxiedImageUrl = (url: string | undefined | null): string => {
 
     // Check if it's a Solvex URL
     if (url.toLowerCase().includes('solvex')) {
-        // Rewrite rule in vercel.json / vite.config.ts:
-        // /api/solvex/(.*) -> https://evaluation.solvex.bg/$1
+        const isB2B = url.toLowerCase().includes('b2b.solvex.bg');
+        const proxyPrefix = isB2B ? '/api/solvex-b2b' : '/api/solvex';
 
         // 1. Remove the protocol and domain to get the path
         let path = url.replace(/^https?:\/\/[^/]+/, '');
@@ -19,7 +19,7 @@ export const getProxiedImageUrl = (url: string | undefined | null): string => {
         if (!path.startsWith('/')) path = '/' + path;
 
         // 3. Return the local proxy URL
-        return `/api/solvex${path}`;
+        return `${proxyPrefix}${path}`;
     }
 
     return url;

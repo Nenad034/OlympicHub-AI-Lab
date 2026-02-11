@@ -14,6 +14,7 @@ import type { BookingData } from '../types/booking.types';
 import './HotelView.css';
 import '../components/booking/BookingModal.css'; // Reuse some table styles
 import { loadFromCloud } from '../utils/storageUtils';
+import { getProxiedImageUrl } from '../utils/imageProxy';
 
 interface RoomAllocation {
     adults: number;
@@ -129,7 +130,10 @@ const HotelView: React.FC = () => {
         rating: 4.8,
         reviews: 1250,
         description: realHotel.content?.[0]?.longDescription || "Galeon Residence & SPA nudi vrhunski doživljaj na samoj obali Crnog mora. Hotel se odlikuje modernom arhitekturom, luksuznim spa centrom i bazenima koji oduzimaju dah.",
-        images: realHotel.images?.length > 0 ? realHotel.images.map((img: any) => img.url) : [
+        images: realHotel.images?.length > 0 ? realHotel.images.map((img: any) => {
+            const url = typeof img === 'string' ? img : (img?.url || '');
+            return getProxiedImageUrl(url);
+        }) : [
             "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=1200",
             "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&q=80&w=1200",
             "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1200"
@@ -250,7 +254,7 @@ const HotelView: React.FC = () => {
                         <h1>{hotel.name}</h1>
 
                         <div className="hv-stars-under">
-                            {[...Array(hotel.stars)].map((_, i) => <Star key={i} size={20} fill="#FFD700" color="#FFD700" />)}
+                            {[...Array(Math.floor(Number(hotel.stars || 0)))].map((_, i) => <Star key={i} size={20} fill="#FFD700" color="#FFD700" />)}
                         </div>
 
                         <div className="hv-rating-reviews-row">

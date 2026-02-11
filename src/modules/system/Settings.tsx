@@ -46,6 +46,8 @@ import DailyActivityReport from './DailyActivityReport';
 import ModulesOverview from './ModulesOverview';
 import MasterOrchestrator from '../ai/MasterOrchestrator';
 import { ClickToTravelLogo } from '../../components/icons/ClickToTravelLogo';
+import { syncSolvexMedia } from '../../services/solvex/solvexMediaService';
+import { Loader2, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 // --- Types ---
 interface UserAccount {
@@ -239,6 +241,8 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
     const [searchQuery, setSearchQuery] = useState('');
     const [geminiKey, setGeminiKey] = useState(config.geminiKey);
     const [isSaving, setIsSaving] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
     // Data States
     const [users, setUsers] = useState<UserAccount[]>([]);
@@ -371,6 +375,24 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
         setIsSaving(true);
         await updateConfig({ geminiKey });
         setTimeout(() => setIsSaving(false), 800);
+    };
+
+    const handleSyncSolvex = async () => {
+        setIsSyncing(true);
+        setSyncStatus('idle');
+        try {
+            const result = await syncSolvexMedia();
+            if (result.success) {
+                setSyncStatus('success');
+            } else {
+                setSyncStatus('error');
+            }
+        } catch (error) {
+            setSyncStatus('error');
+        } finally {
+            setIsSyncing(false);
+            setTimeout(() => setSyncStatus('idle'), 5000);
+        }
     };
 
     const handleCreateSnapshot = async () => createSnapshot(`${new Date().toLocaleString('sr-RS')}`);
@@ -662,7 +684,58 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                {/* SOLVEX SYNC CARD (Specialized) */}
+                <div style={{ ...styles.card, border: '1px solid rgba(245, 158, 11, 0.3)', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(0,0,0,0) 100%)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <div style={{ padding: '10px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '10px', color: '#f59e0b' }}>
+                                <Database size={20} />
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: 700 }}>SOLVEX (Bugarska)</div>
+                                <div style={{ fontSize: '11px', color: '#64748b' }}>SOAP v4 + JSON Media API</div>
+                            </div>
+                        </div>
+                        <div style={styles.statusBadge('active')}>
+                            AKTIVAN
+                        </div>
+                    </div>
+
+                    <p style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '15px', lineHeight: 1.4 }}>
+                        Sinhronizacija galerija i detaljnih opisa hotela sa eksternog JSON portala.
+                    </p>
+
+                    <button
+                        onClick={handleSyncSolvex}
+                        disabled={isSyncing}
+                        style={{
+                            width: '100%',
+                            padding: '10px',
+                            borderRadius: '10px',
+                            background: isSyncing ? 'rgba(255,255,255,0.05)' : '#f59e0b',
+                            color: '#fff',
+                            border: 'none',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            fontSize: '13px'
+                        }}
+                    >
+                        {isSyncing ? <Loader2 size={16} className="spin" /> : <RefreshCw size={16} />}
+                        {isSyncing ? 'Sinhronizacija...' : 'Sinhronizuj Media Podatke'}
+                    </button>
+
+                    {syncStatus === 'success' && (
+                        <div style={{ marginTop: '10px', color: '#22c55e', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <CheckCircle2 size={14} /> Uspešno ažurirano!
+                        </div>
+                    )}
+                </div>
+
                 {integrations.map(integration => (
                     <div
                         key={integration.id}

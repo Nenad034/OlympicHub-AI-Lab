@@ -38,16 +38,11 @@ import { rateLimiter } from '../utils/rateLimiter';
 
 // Helper to convert endpoint to proxy URL in development
 function getProxyUrl(endpoint: string): string {
-    // In development, use Vite proxy to bypass CORS
-    if (import.meta.env.DEV) {
-        // Convert full URL to proxy path
-        if (endpoint.includes('nsCallWebServices')) {
-            return '/api/opengreece/nsCallWebServices/handlerequest.aspx';
-        } else if (endpoint.includes('nsCallWebService_Push')) {
-            return '/api/opengreece/nsCallWebService_Push/handlerequest.aspx';
-        }
+    // In the browser, always use our internal proxy to avoid CORS
+    if (typeof window !== 'undefined') {
+        const urlObj = new URL(endpoint);
+        return `/api/opengreece${urlObj.pathname}${urlObj.search}`;
     }
-    // In production, use direct URL
     return endpoint;
 }
 

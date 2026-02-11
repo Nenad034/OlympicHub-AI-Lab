@@ -26,6 +26,7 @@ import {
     Pencil,
     Star,
     Globe,
+    Info,
     Power,
     CloudCheck,
     RefreshCw,
@@ -50,7 +51,8 @@ import { type Property, validateProperty } from '../../types/property.types';
 import { type Tour } from '../../types/tour.types';
 import {
     saveToCloud,
-    loadFromCloud
+    loadFromCloud,
+    updateLocalHotelCache
 } from '../../utils/storageUtils';
 import { useSecurity } from '../../hooks/useSecurity';
 import {
@@ -124,6 +126,7 @@ interface Hotel {
         touristTax: PriceRule[];
         supplement: PriceRule[];
     };
+    description?: string;
     originalPropertyData?: Partial<Property>;
 }
 
@@ -441,7 +444,8 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         const hasImages = (hotel.images && hotel.images.length > 0) || (data?.images && data.images.length > 0);
         if (!hasImages) missing.push({ label: 'Slike', key: 'img' });
 
-        const hasDesc = data?.content?.[0]?.longDescription || data?.longDescription || data?.description || data?.content?.description;
+        const content = data?.content;
+        const hasDesc = (Array.isArray(content) ? content[0]?.longDescription : content?.description) || data?.longDescription || data?.description;
         if (!hasDesc) missing.push({ label: 'Opis', key: 'desc' });
 
         const hasAmenities = (hotel.amenities && hotel.amenities.length > 0) || (data?.propertyAmenities && data.propertyAmenities.length > 0) || (data?.content?.amenities && data.content.amenities.length > 0);
@@ -456,12 +460,24 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
     };
 
     const mapBackendToFrontendHotel = (dbHotel: any): Hotel => {
-        const rawData = dbHotel.originalPropertyData || dbHotel;
+        if (!dbHotel) return {
+            id: 'unknown',
+            name: 'Unknown Hotel',
+            location: { address: '', lat: 0, lng: 0, place: '' },
+            images: [],
+            amenities: [],
+            units: [],
+            commonItems: { discount: [], touristTax: [], supplement: [] }
+        };
+
+        const rawData = dbHotel.originalPropertyData || dbHotel || {};
         const rawName = (rawData.name || dbHotel.name || "").toUpperCase();
 
         // 1. Initial extraction from DB fields
         let fieldStars = 0;
+        // Safely extract star rating from any possible field name
         const starSource = rawData.starRating ?? rawData.starrating ?? rawData.star_rating ?? rawData.stars ?? rawData.Stars ?? 0;
+
         if (starSource) {
             if (typeof starSource === 'number') fieldStars = Math.round(starSource);
             else {
@@ -499,30 +515,34 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         }
 
         // 3. Logic: If name has 1-5, TRUST NAME over everything else (prevents 3* defaults)
-        // Exception: If name has NO stars but field has some, take field.
         let finalStars = nameStars > 0 ? nameStars : fieldStars;
 
-        // Cap at 5
-        if (finalStars > 5) finalStars = 5;
-        if (isNaN(finalStars)) finalStars = 0;
+        // Cap at 5 and ensure it's a valid number between 0 and 5
+        finalStars = Math.max(0, Math.min(5, Math.floor(finalStars || 0)));
 
         return {
-            id: dbHotel.id || rawData.id,
-            name: unifyHotelName(rawData.name || dbHotel.name || ""),
+            id: dbHotel.id || rawData.id || `temp-${Math.random().toString(36).substr(2, 9)}`,
+            name: unifyHotelName(rawData.name || dbHotel.name || "Neviđeni objekat"),
             location: {
                 address: rawData.address?.addressLine ? (hasCyrillic(rawData.address.addressLine) ? transliterate(rawData.address.addressLine) : rawData.address.addressLine) : '',
-                place: rawData.address?.city ? (hasCyrillic(rawData.address.city) ? transliterate(rawData.address.city) : rawData.address.city) : '',
-                lat: rawData.geoCoordinates?.latitude || 0,
-                lng: rawData.geoCoordinates?.longitude || 0
+                place: rawData.address?.city ? (hasCyrillic(rawData.address.city) ? transliterate(rawData.address.city) : rawData.address.city) : (rawData.location?.place || ''),
+                lat: Number(rawData.geoCoordinates?.latitude) || 0,
+                lng: Number(rawData.geoCoordinates?.longitude) || 0
             },
-            images: rawData.images || [],
-            amenities: rawData.propertyAmenities || [],
+            images: Array.isArray(rawData.images) ? rawData.images : [],
+            amenities: Array.isArray(rawData.propertyAmenities) ? rawData.propertyAmenities : [],
             units: Array.isArray(rawData.units) ? rawData.units : [],
             commonItems: rawData.commonItems || {
                 discount: [],
                 touristTax: [],
                 supplement: []
             },
+            description: (Array.isArray(rawData.content) ? rawData.content[0]?.longDescription : rawData.content?.description) ||
+                rawData.longDescription ||
+                rawData.description ||
+                rawData.il_description ||
+                rawData.short_description ||
+                "",
             originalPropertyData: { ...rawData, starRating: finalStars }
         };
     };
@@ -533,8 +553,9 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
             if (success && data && data.length > 0) {
                 const mapped = data
                     .filter((h: any) => {
+                        if (!h) return false;
                         const name = (h.name || "").toLowerCase();
-                        const city = (h.address?.city || "").toLowerCase();
+                        const city = (h.address?.city || h.location?.city || h.location?.place || "").toLowerCase();
                         const hotelId = String(h.id);
 
                         // DEEP CLEAN: Filter out KidsCamp
@@ -560,8 +581,9 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                     const parsed = JSON.parse(saved);
                     const mapped = parsed
                         .filter((h: any) => {
+                            if (!h) return false;
                             const name = (h.name || "").toLowerCase();
-                            const city = (h.address?.city || h.location?.city || "").toLowerCase();
+                            const city = (h.address?.city || h.location?.city || h.location?.place || "").toLowerCase();
                             const hotelId = String(h.id);
 
                             // DEEP CLEAN: Filter out KidsCamp from cache
@@ -610,31 +632,33 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         setIsSyncing(true);
         const { success } = await saveToCloud('properties', updatedHotels);
         if (success) {
-            localStorage.setItem('olympic_hub_hotels', JSON.stringify(updatedHotels));
+            updateLocalHotelCache(updatedHotels);
         }
         setTimeout(() => setIsSyncing(false), 500);
     };
 
-    // Auto-save to localStorage as quick cache - WITH NUCLEAR CLEANUP
+    // Auto-save to localStorage as quick cache - WITH NUCLEAR CLEANUP & SAFETY
     useEffect(() => {
         // Double check: if any KidsCamp sneaked in, remove it immediately
         const polluted = hotels.some(h => {
-            const n = h.name.toLowerCase();
+            if (!h) return false;
+            const n = (h.name || "").toLowerCase();
             const c = (h.location?.place || "").toLowerCase();
-            return n.includes('kidscamp') || n.includes('kids camp') || c.includes('kidscamp');
+            return n.includes('kidscamp') || n.includes('kids camp') || n.includes('kidscam') || c.includes('kidscamp');
         });
 
         if (polluted) {
             console.warn("⚠️ Detected KidsCamp pollution in state! Initiating emergency cleanup...");
             const cleanHotels = hotels.filter(h => {
-                const n = h.name.toLowerCase();
+                if (!h) return false;
+                const n = (h.name || "").toLowerCase();
                 const c = (h.location?.place || "").toLowerCase();
-                return !n.includes('kidscamp') && !n.includes('kids camp') && !c.includes('kidscamp');
+                return !n.includes('kidscamp') && !n.includes('kids camp') && !n.includes('kidscam') && !c.includes('kidscamp');
             });
             setHotels(cleanHotels);
-            localStorage.setItem('olympic_hub_hotels', JSON.stringify(cleanHotels));
-        } else {
-            localStorage.setItem('olympic_hub_hotels', JSON.stringify(hotels));
+            updateLocalHotelCache(cleanHotels);
+        } else if (hotels.length > 0) {
+            updateLocalHotelCache(hotels);
         }
     }, [hotels]);
     const [showImport, setShowImport] = useState(false);
@@ -708,10 +732,10 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
 
     const handlePublicPreview = (e: React.MouseEvent, hotel: Hotel) => {
         e.stopPropagation();
-        const content = hotel.originalPropertyData?.content?.[0];
-        const description = content?.longDescription || '<p>Nema opisa.</p>';
+        const content = (hotel.originalPropertyData as any)?.content;
+        const description = (Array.isArray(content) ? content[0]?.longDescription : content?.description) || '<p>Nema opisa.</p>';
         const title = hotel.name;
-        const mainImage = hotel.images?.[0]?.url || 'https://placehold.co/1200x800?text=Hotel+Image';
+        const mainImage = (hotel.images?.[0] as any)?.url || (typeof hotel.images?.[0] === 'string' ? hotel.images[0] : 'https://placehold.co/1200x800?text=Hotel+Image');
         const stars = hotel.originalPropertyData?.starRating || 0;
         const starStr = '★'.repeat(stars);
 
@@ -809,10 +833,10 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                     </div>
 
                     <div class="gallery">
-                        <img src="${mainImage}" class="gallery-main" alt="Main View" />
-                        <div class="gallery-side">
-                            <img src="${hotel.images?.[1]?.url || 'https://placehold.co/800x600/eee/999?text=Enterijer+Sobe'}" class="gallery-img" />
-                            <img src="${hotel.images?.[2]?.url || 'https://placehold.co/800x600/eee/999?text=Restoran'}" class="gallery-img" />
+                        <img src="${mainImage}" className="gallery-main" alt="Main View" />
+                        <div className="gallery-side">
+                            <img src="${typeof hotel.images?.[1] === 'string' ? hotel.images[1] : hotel.images?.[1]?.url || 'https://placehold.co/800x600/eee/999?text=Enterijer+Sobe'}" className="gallery-img" />
+                            <img src="${typeof hotel.images?.[2] === 'string' ? hotel.images[2] : hotel.images?.[2]?.url || 'https://placehold.co/800x600/eee/999?text=Restoran'}" className="gallery-img" />
                         </div>
                     </div>
 
@@ -1690,10 +1714,10 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                                 </div>
                                             </td>
                                             <td style={{ padding: '20px 24px', textAlign: 'center' }}>
-                                                {Number(h.originalPropertyData?.starRating) > 0 ? (
+                                                {Math.floor(Number(h.originalPropertyData?.starRating || 0)) > 0 ? (
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                                                         <div style={{ display: 'flex', gap: '2px', color: '#fbbf24' }}>
-                                                            {[...Array(Number(h.originalPropertyData?.starRating))].map((_, i) => (
+                                                            {[...Array(Math.floor(Number(h.originalPropertyData?.starRating || 0)))].map((_, i) => (
                                                                 <Star key={i} size={14} fill="#fbbf24" strokeWidth={0} />
                                                             ))}
                                                         </div>
@@ -1851,7 +1875,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                     <div className="profile-panel">
                         <section className="profile-hero">
                             <div className="hero-img">
-                                <img src={getProxiedImageUrl(selectedHotel.images[0]?.url)} alt={selectedHotel.name} />
+                                <img src={getProxiedImageUrl(typeof selectedHotel.images?.[0] === 'string' ? selectedHotel.images[0] : (selectedHotel.images?.[0] as any)?.url)} alt={selectedHotel.name} />
                             </div>
                             <div className="hero-content" style={{ position: 'relative', zIndex: 2 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
@@ -1861,7 +1885,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                             {selectedHotel.name}
                                             {selectedHotel.originalPropertyData?.starRating && (
                                                 <div style={{ display: 'flex', gap: '2px', fontSize: '16px', color: '#fbbf24' }}>
-                                                    {[...Array(selectedHotel.originalPropertyData.starRating)].map((_, i) => (
+                                                    {[...Array(selectedHotel.originalPropertyData?.starRating || 0)].map((_, i) => (
                                                         <Star key={i} size={20} fill="#fbbf24" strokeWidth={0} />
                                                     ))}
                                                 </div>
@@ -1915,50 +1939,79 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                 marginHeight={0}
                                 marginWidth={0}
                                 title="Hotel Location"
-                                src={`https://maps.google.com/maps?q=${selectedHotel.location.lat},${selectedHotel.location.lng}&z=15&output=embed`}
-                                style={{ filter: 'grayscale(0.2) contrast(1.1)' }
-                                }
-                            ></iframe >
-                        </section >
+                                src={`https://maps.google.com/maps?q=${selectedHotel.location?.lat},${selectedHotel.location?.lng}&z=15&output=embed`}
+                                style={{ filter: 'grayscale(0.2) contrast(1.1)' }}
+                            ></iframe>
+                        </section>
+                    </div> {/* Closes profile-panel */}
 
-                        <section className="amenities-section">
-                            <h2 className="section-title"><Shield size={18} /> Sadržaji Objekta</h2>
-                            <div className="amenity-groups">
-                                <div className="amenity-group">
-                                    <h4><Maximize size={16} /> Karakteristike</h4>
-                                    <ul>
-                                        <li>Broj soba: {getAmenityValue('numberOfRooms')}</li>
-                                        <li>Spratnost: {getAmenityValue('numberOfFloors')}</li>
-                                        <li>Internet: {getAmenityValue('internetAccess')}</li>
-                                        <li>Klimatizovano: {getAmenityValue('airConditioning')}</li>
-                                    </ul>
-                                </div>
-                                <div className="amenity-group">
-                                    <h4><MapPin size={16} /> Udaljenosti</h4>
-                                    <div className="distance-grid">
-                                        <div className="dist-item"><span>Centar</span><strong>{getDistance('Center')}</strong></div>
-                                        <div className="dist-item"><span>Plaža</span><strong>{getDistance('Beach')}</strong></div>
-                                        <div className="dist-item"><span>Prodavnica</span><strong>{getDistance('Shop')}</strong></div>
-                                        <div className="dist-item"><span>Restoran</span><strong>{getDistance('Restaurant')}</strong></div>
-                                    </div>
-                                </div>
-                                <div className="amenity-group">
-                                    <h4><Utensils size={16} /> Ishrana i Bar</h4>
-                                    <p>{getAmenityValue('fb')}</p>
+                    <section className="description-section" style={{ marginTop: '20px', padding: '30px', background: 'var(--bg-card)', borderRadius: '24px', border: '1px solid var(--border)' }}>
+                        <h2 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '20px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Info size={20} style={{ color: '#3b82f6' }} /> O Objektu
+                        </h2>
+                        <div
+                            style={{ color: 'var(--text-secondary)', lineHeight: '1.8', fontSize: '15px' }}
+                            dangerouslySetInnerHTML={{
+                                __html: (() => {
+                                    const data = selectedHotel?.originalPropertyData as any;
+                                    const content = data?.content;
+
+                                    // 1. Check content object
+                                    if (content) {
+                                        if (typeof content === 'string') return content;
+                                        if (content.description) return content.description;
+                                        if (Array.isArray(content) && content[0]?.longDescription) return content[0].longDescription;
+                                        if (content.longDescription) return content.longDescription;
+                                    }
+
+                                    // 2. Check root levels
+                                    return data?.longDescription ||
+                                        data?.description ||
+                                        data?.il_description ||
+                                        data?.short_description ||
+                                        selectedHotel?.description ||
+                                        'Nema dostupnog opisa za ovaj objekat.';
+                                })()
+                            }}
+                        />
+                    </section>
+
+                    <section className="amenities-section">
+                        <h2 className="section-title"><Shield size={18} /> Sadržaji Objekta</h2>
+                        <div className="amenity-groups">
+                            <div className="amenity-group">
+                                <h4><Maximize size={16} /> Karakteristike</h4>
+                                <ul>
+                                    <li>Broj soba: {getAmenityValue('numberOfRooms')}</li>
+                                    <li>Spratnost: {getAmenityValue('numberOfFloors')}</li>
+                                    <li>Internet: {getAmenityValue('internetAccess')}</li>
+                                    <li>Klimatizovano: {getAmenityValue('airConditioning')}</li>
+                                </ul>
+                            </div>
+                            <div className="amenity-group">
+                                <h4><MapPin size={16} /> Udaljenosti</h4>
+                                <div className="distance-grid">
+                                    <div className="dist-item"><span>Centar</span><strong>{getDistance('Center')}</strong></div>
+                                    <div className="dist-item"><span>Plaža</span><strong>{getDistance('Beach')}</strong></div>
+                                    <div className="dist-item"><span>Prodavnica</span><strong>{getDistance('Shop')}</strong></div>
+                                    <div className="dist-item"><span>Restoran</span><strong>{getDistance('Restaurant')}</strong></div>
                                 </div>
                             </div>
-                        </section>
-                    </div >
-
+                            <div className="amenity-group">
+                                <h4><Utensils size={16} /> Ishrana i Bar</h4>
+                                <p>{getAmenityValue('fb')}</p>
+                            </div>
+                        </div>
+                    </section>
                     {/* Right Panel: Units & Pricing */}
-                    < div className="logic-panel" >
+                    <div className="logic-panel">
                         <section className="units-section">
                             <div className="section-header">
                                 <h2><Bed size={20} /> Smeštajne Jedinice</h2>
-                                <span className="unit-count">{selectedHotel.units.length} Jedinica</span>
+                                <span className="unit-count">{selectedHotel?.units?.length || 0} Jedinica</span>
                             </div>
 
-                            {selectedHotel.units.map(unit => (
+                            {selectedHotel?.units?.map(unit => (
                                 <div key={unit.id} className="unit-card-erp">
                                     <div className="unit-header">
                                         <h3>{unit.name} <span>(ID: {unit.id})</span></h3>
@@ -1985,7 +2038,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {unit.pricelist.baseRate.map((rate, i) => (
+                                                {unit.pricelist?.baseRate?.map((rate: any, i: number) => (
                                                     <tr key={i}>
                                                         <td>{rate.dateFrom} - {rate.dateTo}</td>
                                                         <td className="price-td">{rate.price} {rate.currency}</td>
@@ -1999,10 +2052,10 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
 
                                     <div className="supplements-row">
                                         <div className="supp-item">
-                                            <Tag size={12} /> <strong>Popust:</strong> {unit.pricelist.discount[0]?.title} ({unit.pricelist.discount[0]?.percent}%)
+                                            <Tag size={12} /> <strong>Popust:</strong> {unit.pricelist?.discount?.[0]?.title} ({unit.pricelist?.discount?.[0]?.percent}%)
                                         </div>
                                         <div className="supp-item">
-                                            <Waves size={12} /> <strong>Taksa:</strong> {unit.pricelist.touristTax[0]?.title} ({unit.pricelist.touristTax[0]?.price} {unit.pricelist.touristTax[0]?.currency})
+                                            <Waves size={12} /> <strong>Taksa:</strong> {unit.pricelist?.touristTax?.[0]?.title} ({unit.pricelist?.touristTax?.[0]?.price} {unit.pricelist?.touristTax?.[0]?.currency})
                                         </div>
                                     </div>
                                 </div>
@@ -2012,13 +2065,13 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                         <section className="common-rules-section">
                             <h2><CheckCircle2 size={18} /> Zajednička pravila i doplate</h2>
                             <div className="common-items-cards">
-                                {selectedHotel.commonItems.supplement.map((s, i) => (
+                                {selectedHotel?.commonItems?.supplement?.map((s: any, i: number) => (
                                     <div key={i} className="common-rule-card">
                                         <div className="rule-title">{s.title}</div>
                                         <div className="rule-price">{s.price} {s.currency} <span>({s.paymentType})</span></div>
                                     </div>
                                 ))}
-                                {selectedHotel.commonItems.discount.map((d, i) => (
+                                {selectedHotel?.commonItems?.discount?.map((d: any, i: number) => (
                                     <div key={i} className="common-rule-card discount">
                                         <div className="rule-title">{d.title}</div>
                                         <div className="rule-price">{d.percent}% popusta</div>
@@ -2026,8 +2079,8 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                 ))}
                             </div>
                         </section>
-                    </div >
-                </div >
+                    </div>
+                </div>
 
                 <AnimatePresence>
                     {showWizard && (

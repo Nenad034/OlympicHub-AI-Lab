@@ -24,6 +24,7 @@ import { formatDate } from '../utils/dateUtils';
 import PackageSearch from './PackageSearch';
 import FlightSearch from './FlightSearch';
 import { useConfig } from '../context/ConfigContext';
+import { getProxiedImageUrl } from '../utils/imageProxy';
 import './SmartSearch.css';
 import './SmartSearchFix2.css';
 import './SmartSearchStylesFix.css';
@@ -1605,10 +1606,10 @@ const SmartSearch: React.FC = () => {
                                             {filteredResults.map(hotel => (
                                                 <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase().replace(/\s+/g, '')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
                                                     <div className="hotel-card-image" onClick={() => navigate('/hotel-view/' + hotel.id)}>
-                                                        <img src={hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
+                                                        <img src={getProxiedImageUrl(hotel.images?.[0]) || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
                                                         <div className="meal-plan-badge">{getMealPlanDisplayName(hotel.mealPlan)}</div>
                                                         <div className="hotel-stars-badge">
-                                                            {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
+                                                            {Array(Math.floor(Number(hotel.stars || 0))).fill(0).map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
                                                         </div>
                                                     </div>
                                                     <div className="hotel-card-content">

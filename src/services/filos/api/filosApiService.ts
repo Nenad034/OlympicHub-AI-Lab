@@ -10,9 +10,8 @@ const FILOS_STATIC_ORIGIN = 'https://api-static.onetourismo.com';
  * Helper to convert full URL to proxy path in the browser to bypass CORS
  */
 function getTargetUrl(origin: string, type: 'v2' | 'static'): string {
-    // If we're in a browser and in development mode, use the Vite proxy
-    // @ts-ignore
-    if (typeof window !== 'undefined' && (import.meta.env?.DEV || window.location.hostname === 'localhost')) {
+    // In the browser, always use our internal proxy to avoid CORS
+    if (typeof window !== 'undefined') {
         return `/api/filos-${type}`;
     }
     return origin;

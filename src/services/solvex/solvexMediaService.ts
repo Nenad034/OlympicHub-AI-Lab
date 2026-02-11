@@ -5,6 +5,7 @@ export interface SolvexApiHotel {
     il_id: string;
     il_hotelname: string;
     description: string;
+    il_description?: string;
     image?: {
         url: string;
     };
@@ -15,6 +16,9 @@ export interface SolvexApiHotel {
         title: string;
         descripion: string;
     }>;
+    name?: string;
+    city?: { id: string; name: string };
+    country?: { id: string; name: string };
 }
 
 /**
@@ -33,8 +37,14 @@ export async function syncSolvexMedia() {
             throw new Error(`Failed to fetch Solvex API: ${response.statusText}`);
         }
 
-        const hotels: SolvexApiHotel[] = await response.json();
+        const rawResult = await response.json();
+        const hotels: SolvexApiHotel[] = Array.isArray(rawResult) ? rawResult : (rawResult.data || rawResult.hotels || []);
+
         console.log(`[Solvex Media Sync] Received ${hotels.length} hotels from API.`);
+
+        if (hotels.length === 0) {
+            console.warn('[Solvex Media Sync] No hotels found in API response. Check API structure:', Object.keys(rawResult));
+        }
 
         let processedCount = 0;
         let errorCount = 0;
@@ -51,7 +61,7 @@ export async function syncSolvexMedia() {
                 // Extract images
                 const images: string[] = [];
                 if (hotel.image?.url) images.push(hotel.image.url);
-                if (hotel.images) {
+                if (hotel.images && Array.isArray(hotel.images)) {
                     hotel.images.forEach(img => {
                         if (img.url && !images.includes(img.url)) {
                             images.push(img.url);
@@ -59,24 +69,35 @@ export async function syncSolvexMedia() {
                     });
                 }
 
-                // Process notes into amenities or additional content
-                const amenities = hotel.notes?.filter(n =>
+                // Process notes into amenities
+                const amenities = Array.isArray(hotel.notes) ? hotel.notes.filter(n =>
                     n.title.toLowerCase().includes('facilities') ||
                     n.title.toLowerCase().includes('sport') ||
                     n.title.toLowerCase().includes('children')
-                ).map(n => n.descripion) || [];
+                ).map(n => n.descripion) : [];
+
+                // Extract Star Rating from il_description (e.g. "4* (\\Golden Sands)")
+                let stars = 0;
+                const starMatch = hotel.il_description?.match(/(\d)\*/);
+                if (starMatch) stars = parseInt(starMatch[1]);
 
                 return {
                     id: `solvex_${solvexKey}`,
-                    provider: 'solvex',
-                    name: hotel.il_hotelname || '',
+                    name: hotel.il_hotelname || hotel.name || '',
+                    starRating: stars,
                     images: images,
                     content: {
                         description: hotel.description,
                         notes: hotel.notes
                     },
                     propertyAmenities: amenities,
-                    last_sync: new Date().toISOString()
+                    address: {
+                        city: hotel.city?.name || '',
+                        country: hotel.country?.name || 'Bulgaria',
+                        addressLine: hotel.description?.substring(0, 100).replace(/<[^>]*>/g, '').trim() || ''
+                    },
+                    isActive: true,
+                    updated_at: new Date().toISOString()
                 };
             });
 

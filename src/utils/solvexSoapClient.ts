@@ -59,17 +59,11 @@ const SOLVEX_BASE_URL = getEnvVar('VITE_SOLVEX_API_URL', 'https://evaluation.sol
  * Helper to convert full URL to proxy path in the browser to bypass CORS
  */
 function getTargetUrl(url: string): string {
-    // If we're in a browser and in development mode, use the Vite proxy
-    // @ts-ignore
-    if (typeof window !== 'undefined' && (import.meta.env?.DEV || window.location.hostname === 'localhost')) {
+    // In the browser, always use our internal proxy to avoid CORS
+    if (typeof window !== 'undefined') {
         if (url.includes('evaluation.solvex.bg') || url.includes('iservice.solvex.bg')) {
-            // We want to keep the PATH of the URL but replace the domain with /api/solvex
-            // The proxy rewrite rule in vite.config.ts will stripp /api/solvex and forward the rest
-            // So if url is https://iservice.solvex.bg/IntegrationService.asmx
-            // We want /api/solvex/IntegrationService.asmx
-
             const urlObj = new URL(url);
-            return `/api/solvex${urlObj.pathname}`;
+            return `/api/solvex${urlObj.pathname}${urlObj.search}`;
         }
     }
     return url;

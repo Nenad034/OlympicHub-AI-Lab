@@ -41,6 +41,18 @@ export default defineConfig(({ mode }) => {
             });
           }
         },
+        // Proxy for Solvex B2B (Images & JSON API)
+        '/api/solvex-b2b': {
+          target: 'https://b2b.solvex.bg',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api\/solvex-b2b/, ''),
+          configure: (proxy) => {
+            proxy.on('proxyReq', (_proxyReq, req) => {
+              console.log('🖼️ Proxying Solvex Media request:', req.url);
+            });
+          }
+        },
         // Proxy for Solvex API to bypass CORS
         '/api/solvex': {
           target: solvexOrigin,
@@ -50,9 +62,6 @@ export default defineConfig(({ mode }) => {
           configure: (proxy) => {
             proxy.on('proxyReq', (_proxyReq, req) => {
               console.log('🇧🇬 Proxying Solvex API request:', req.url);
-            });
-            proxy.on('proxyRes', (_proxyRes, _req, _res) => {
-              // Handle potential SOAP specific issues if needed
             });
           }
         },

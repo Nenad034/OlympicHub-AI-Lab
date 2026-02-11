@@ -68,6 +68,7 @@ const DestinationRep = React.lazy(() => import('../modules/destination/Destinati
 const FilosTest = React.lazy(() => import('../pages/FilosTest'));
 const PriceListArchitect = React.lazy(() => import('../pages/PriceListArchitect'));
 const ShiftsGeneratorPage = React.lazy(() => import('../pages/ShiftsGeneratorPage'));
+const B2BSettings = React.lazy(() => import('../pages/B2BSettings'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
@@ -346,6 +347,10 @@ export const router = createBrowserRouter([
             {
                 path: 'settings',
                 element: <SettingsModule onBack={() => window.history.back()} lang="sr" userLevel={6} setUserLevel={() => { }} />,
+            },
+            {
+                path: 'b2b-settings',
+                element: <B2BSettings />,
             },
             {
                 path: 'katana',
