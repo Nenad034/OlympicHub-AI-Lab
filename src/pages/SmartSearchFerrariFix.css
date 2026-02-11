@@ -87,6 +87,7 @@
 .light-theme .flight-counter-controls,
 .light-theme .trip-type-selector,
 .light-theme .input-group-flight input,
+.light-theme .budget-input,
 .light-theme .input-group-flight select {
     background: #f1f5f9 !important;
     border-color: #cbd5e1 !important;

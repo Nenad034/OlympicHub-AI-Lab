@@ -1224,11 +1224,8 @@ const GlobalHubSearch: React.FC = () => {
                                             className="budget-input"
                                             style={{
                                                 flex: 1,
-                                                background: 'rgba(255,255,255,0.05)',
-                                                border: '1px solid rgba(255,255,255,0.1)',
                                                 borderRadius: '12px',
                                                 padding: '12px',
-                                                color: '#fff',
                                                 fontSize: '0.85rem',
                                                 outline: 'none',
                                                 width: '100%'
@@ -1242,11 +1239,8 @@ const GlobalHubSearch: React.FC = () => {
                                             className="budget-input"
                                             style={{
                                                 flex: 1,
-                                                background: 'rgba(255,255,255,0.05)',
-                                                border: '1px solid rgba(255,255,255,0.1)',
                                                 borderRadius: '12px',
                                                 padding: '12px',
-                                                color: '#fff',
                                                 fontSize: '0.85rem',
                                                 outline: 'none',
                                                 width: '100%'

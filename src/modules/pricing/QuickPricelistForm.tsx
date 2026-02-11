@@ -18,6 +18,7 @@ import {
     ChevronRight,
     ArrowRight
 } from 'lucide-react';
+import SmartDateInput from './SmartDateInput';
 
 const QuickPricelistForm: React.FC<{ onAddItem?: (item: any) => void, addedItems: any[] }> = ({ onAddItem, addedItems }) => {
     const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
@@ -62,9 +63,9 @@ const QuickPricelistForm: React.FC<{ onAddItem?: (item: any) => void, addedItems
     const [selectedSupplier, setSelectedSupplier] = useState('Solvex');
     const [selectedService, setSelectedService] = useState('HB');
     const [calculationModel, setCalculationModel] = useState('PER_PERSON_DAY');
-    const [globalMarginPercent, setGlobalMarginPercent] = useState(20);
-    const [globalMarginAmount, setGlobalMarginAmount] = useState(5);
-    const [provision, setProvision] = useState(15);
+    const [globalMarginPercent, setGlobalMarginPercent] = useState<number | ''>(20);
+    const [globalMarginAmount, setGlobalMarginAmount] = useState<number | ''>(5);
+    const [provision, setProvision] = useState<number | ''>(15);
     const [hasContract, setHasContract] = useState(true);
     const [contractNumber, setContractNumber] = useState('UG-2026-0045');
 
@@ -115,8 +116,8 @@ const QuickPricelistForm: React.FC<{ onAddItem?: (item: any) => void, addedItems
             const pricelist = await pricingService.createPricelist({
                 title: pricelistName,
                 service_type: selectedService,
-                global_margin_percent: globalMarginPercent,
-                global_margin_amount: globalMarginAmount,
+                global_margin_percent: globalMarginPercent === '' ? 0 : globalMarginPercent,
+                global_margin_amount: globalMarginAmount === '' ? 0 : globalMarginAmount,
                 contract_number: contractNumber,
                 status: 'active',
                 calculation_model: calculationModel
@@ -127,8 +128,8 @@ const QuickPricelistForm: React.FC<{ onAddItem?: (item: any) => void, addedItems
                 date_from: item.dateFrom,
                 date_to: item.dateTo,
                 room_type_name: item.roomType,
-                net_price: item.netPrice,
-                provision_percent: provision,
+                net_price: Number(item.netPrice) || 0,
+                provision_percent: Number(provision) || 0,
                 days_of_week: item.days_of_week || [true, true, true, true, true, true, true],
                 min_stay: 1
             }));
@@ -143,9 +144,14 @@ const QuickPricelistForm: React.FC<{ onAddItem?: (item: any) => void, addedItems
         }
     };
 
-    const calculateBrutoPrice = (netPrice: number) => {
-        const afterProvision = netPrice - (netPrice * provision / 100);
-        const withMargin = afterProvision + (afterProvision * globalMarginPercent / 100) + globalMarginAmount;
+    const calculateBrutoPrice = (net: number | '') => {
+        const netVal = net === '' ? 0 : net;
+        const provVal = provision === '' ? 0 : provision;
+        const margPercentVal = globalMarginPercent === '' ? 0 : globalMarginPercent;
+        const margAmountVal = globalMarginAmount === '' ? 0 : globalMarginAmount;
+
+        const afterProvision = netVal - (netVal * provVal / 100);
+        const withMargin = afterProvision + (afterProvision * margPercentVal / 100) + margAmountVal;
         return withMargin.toFixed(2);
     };
 
@@ -248,7 +254,10 @@ const QuickPricelistForm: React.FC<{ onAddItem?: (item: any) => void, addedItems
                             <input
                                 type="number"
                                 value={globalMarginPercent}
-                                onChange={(e) => setGlobalMarginPercent(Number(e.target.value))}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setGlobalMarginPercent(val === '' ? '' : Number(val));
+                                }}
                                 style={{ width: '60px', background: 'transparent', border: 'none', color: 'var(--accent)', fontWeight: 700, textAlign: 'right', outline: 'none', fontFamily: 'inherit' }}
                             />
                         </div>
@@ -257,7 +266,10 @@ const QuickPricelistForm: React.FC<{ onAddItem?: (item: any) => void, addedItems
                             <input
                                 type="number"
                                 value={globalMarginAmount}
-                                onChange={(e) => setGlobalMarginAmount(Number(e.target.value))}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setGlobalMarginAmount(val === '' ? '' : Number(val));
+                                }}
                                 style={{ width: '60px', background: 'transparent', border: 'none', color: 'var(--accent)', fontWeight: 700, textAlign: 'right', outline: 'none', fontFamily: 'inherit' }}
                             />
                         </div>
@@ -302,12 +314,65 @@ const QuickPricelistForm: React.FC<{ onAddItem?: (item: any) => void, addedItems
                     >
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                             <div>
-                                <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px' }}>VAŽI OD</label>
-                                <input type="date" value={period.dateFrom} style={inputStyle} />
+                                <SmartDateInput
+                                    label="VAŽI OD"
+                                    value={period.dateFrom}
+                                    onChange={(val) => {
+                                        const newList = [...periods];
+                                        newList[idx].dateFrom = val;
+                                        setPeriods(newList);
+                                    }}
+                                    style={inputStyle}
+                                />
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px' }}>VAŽI DO</label>
-                                <input type="date" value={period.dateTo} style={inputStyle} />
+                                <SmartDateInput
+                                    label="VAŽI DO"
+                                    value={period.dateTo}
+                                    onChange={(val) => {
+                                        const newList = [...periods];
+                                        newList[idx].dateTo = val;
+                                        setPeriods(newList);
+                                    }}
+                                    style={inputStyle}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Days of the Week Selector */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                Primeni na dane u nedelji
+                            </label>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                {['PON', 'UTO', 'SRE', 'ČET', 'PET', 'SUB', 'NED'].map((day, dIdx) => (
+                                    <button
+                                        key={dIdx}
+                                        type="button"
+                                        onClick={() => {
+                                            const newList = [...periods];
+                                            newList[idx].days[dIdx] = !newList[idx].days[dIdx];
+                                            setPeriods(newList);
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px 0',
+                                            borderRadius: '10px',
+                                            border: '1px solid',
+                                            borderColor: period.days[dIdx] ? 'var(--accent)' : 'var(--border)',
+                                            background: period.days[dIdx] ? 'var(--accent)' : 'rgba(255,255,255,0.02)',
+                                            color: period.days[dIdx] ? '#fff' : 'var(--text-secondary)',
+                                            fontSize: '10px',
+                                            fontWeight: 800,
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            boxShadow: period.days[dIdx] ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none'
+                                        }}
+                                        title={`${period.days[dIdx] ? 'Isključi' : 'Uključi'} ${day}`}
+                                    >
+                                        {day}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
@@ -329,8 +394,9 @@ const QuickPricelistForm: React.FC<{ onAddItem?: (item: any) => void, addedItems
                                         type="number"
                                         value={period.netPrice}
                                         onChange={(e) => {
+                                            const val = e.target.value;
                                             const newList = [...periods];
-                                            newList[idx].netPrice = Number(e.target.value);
+                                            newList[idx].netPrice = val === '' ? ('' as any) : Number(val);
                                             setPeriods(newList);
                                         }}
                                         style={{ ...inputStyle, paddingLeft: '40px' }}

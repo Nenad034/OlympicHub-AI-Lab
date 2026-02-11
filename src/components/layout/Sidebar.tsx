@@ -12,7 +12,8 @@ import {
     Sparkles,
     ClipboardList,
     Search,
-    DollarSign
+    DollarSign,
+    RefreshCcw
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { GeometricBrain } from '../icons/GeometricBrain';
@@ -141,6 +142,13 @@ const Sidebar: React.FC = () => {
                             title="Pricing Architect"
                         >
                             <DollarSign size={20} /> {!isSidebarCollapsed && 'Pricing Architect'}
+                        </NavLink>
+                        <NavLink
+                            to="/shifts-generator"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Generator Smena"
+                        >
+                            <RefreshCcw size={20} /> {!isSidebarCollapsed && 'Generator Smena'}
                         </NavLink>
                     </div>
                 )}

@@ -20,7 +20,8 @@ import {
     FileText,
     Plug,
     Search,
-    TrendingUp
+    TrendingUp,
+    RefreshCcw
 } from 'lucide-react';
 import { useThemeStore, useAppStore, useAuthStore } from '../stores';
 import { translations } from '../translations';
@@ -62,7 +63,8 @@ const apps: AppConfig[] = [
     { id: 'hotel-importer', name: 'AI Hotel Importer', desc: 'Uvoz i AI obrada hotela iz eksternih sistema (Solvex/OpenGreece).', icon: <Database size={24} />, category: 'system', color: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)', badge: 'New', minLevel: 5, path: '/admin/import' },
     { id: 'destination-rep', name: 'Dest. Predstavnici', desc: 'Operativni rad na destinaciji, provere vaučera i komunikacija sa bazom.', icon: <ShieldCheck size={24} />, category: 'sales', color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', badge: 'Operativa', minLevel: 1, path: '/destination-rep' },
     { id: 'api-connections', name: 'PARTNERI - DOBAVLJAČI', desc: 'Centralno upravljanje partnerima i dostupnim API dobavljačima.', icon: <Plug size={24} />, category: 'system', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', badge: 'Hub', minLevel: 1, path: '/api-connections' },
-    { id: 'subagent-admin', name: 'Subagent Admin', desc: 'Upravljanje subagentima, dozvolama, provizijama i finansijama.', icon: <Users size={24} />, category: 'system', color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', badge: 'New', minLevel: 6, path: '/subagent-admin' }
+    { id: 'subagent-admin', name: 'Subagent Admin', desc: 'Upravljanje subagentima, dozvolama, provizijama i finansijama.', icon: <Users size={24} />, category: 'system', color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', badge: 'New', minLevel: 6, path: '/subagent-admin' },
+    { id: 'shifts-generator', name: 'Generator Smena', desc: 'Globalno upravljanje terminima, kapacitetima i vizuelna upozorenja za popunjenost.', icon: <RefreshCcw size={24} />, category: 'production', color: 'var(--gradient-blue)', badge: 'Critical', minLevel: 3, path: '/shifts-generator' }
 ];
 
 

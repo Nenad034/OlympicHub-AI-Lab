@@ -67,6 +67,7 @@ const YieldDashboard = React.lazy(() => import('../modules/yield/YieldDashboard'
 const DestinationRep = React.lazy(() => import('../modules/destination/DestinationRep'));
 const FilosTest = React.lazy(() => import('../pages/FilosTest'));
 const PriceListArchitect = React.lazy(() => import('../pages/PriceListArchitect'));
+const ShiftsGeneratorPage = React.lazy(() => import('../pages/ShiftsGeneratorPage'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
@@ -369,6 +370,10 @@ export const router = createBrowserRouter([
             {
                 path: 'pricing-intelligence',
                 element: <PricingIntelligence />,
+            },
+            {
+                path: 'shifts-generator',
+                element: <ShiftsGeneratorPage />,
             },
             {
                 path: 'yield-management',

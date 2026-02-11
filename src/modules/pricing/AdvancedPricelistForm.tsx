@@ -11,40 +11,78 @@ import {
     Copy,
     Eye
 } from 'lucide-react';
+import SmartDateInput from './SmartDateInput';
+
+const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '12px 16px',
+    borderRadius: '10px',
+    background: 'var(--bg-input)', // Opaque background for dark mode selects
+    border: '1.5px solid var(--border)',
+    color: 'var(--text-primary)',
+    fontSize: '14px',
+    fontFamily: "'Inter', sans-serif",
+    outline: 'none',
+    transition: 'all 0.2s',
+    boxSizing: 'border-box'
+};
+
+const selectStyle: React.CSSProperties = {
+    ...inputStyle,
+    cursor: 'pointer',
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 12px center',
+    backgroundSize: '16px',
+    backgroundColor: 'var(--bg-input)' // Explicitly opaque
+};
+
+const optionStyle: React.CSSProperties = {
+    background: 'var(--bg-card)',
+    color: 'var(--text-primary)'
+};
+
+const DaySelector: React.FC<{ initialDays?: boolean[] }> = ({ initialDays = [true, true, true, true, true, true, true] }) => {
+    const [days, setDays] = useState(initialDays);
+    const dayLabels = ['PON', 'UTO', 'SRE', 'ČET', 'PET', 'SUB', 'NED'];
+
+    return (
+        <div style={{ display: 'flex', gap: '6px' }}>
+            {dayLabels.map((day, idx) => (
+                <button
+                    key={day}
+                    type="button"
+                    onClick={() => {
+                        const newDays = [...days];
+                        newDays[idx] = !newDays[idx];
+                        setDays(newDays);
+                    }}
+                    style={{
+                        flex: 1,
+                        padding: '10px 0',
+                        borderRadius: '10px',
+                        border: '1px solid',
+                        borderColor: days[idx] ? 'var(--accent)' : 'var(--border)',
+                        background: days[idx] ? 'var(--accent)' : 'rgba(255,255,255,0.02)',
+                        color: days[idx] ? '#fff' : 'var(--text-secondary)',
+                        fontSize: '10px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: days[idx] ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none'
+                    }}
+                >
+                    {day}
+                </button>
+            ))}
+        </div>
+    );
+};
 
 const AdvancedPricelistForm: React.FC<{ onAddItem?: (item: any) => void }> = ({ onAddItem }) => {
     const [currentStep, setCurrentStep] = useState(1);
     const [activeSection, setActiveSection] = useState<'osnove' | 'stavke' | 'doplate' | 'popusti' | 'offers'>('osnove');
-
-    const inputStyle: React.CSSProperties = {
-        width: '100%',
-        padding: '12px 16px',
-        borderRadius: '10px',
-        background: 'var(--bg-input)', // Opaque background for dark mode selects
-        border: '1.5px solid var(--border)',
-        color: 'var(--text-primary)',
-        fontSize: '14px',
-        fontFamily: "'Inter', sans-serif",
-        outline: 'none',
-        transition: 'all 0.2s',
-        boxSizing: 'border-box'
-    };
-
-    const selectStyle: React.CSSProperties = {
-        ...inputStyle,
-        cursor: 'pointer',
-        appearance: 'none',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'right 12px center',
-        backgroundSize: '16px',
-        backgroundColor: 'var(--bg-input)' // Explicitly opaque
-    };
-
-    const optionStyle: React.CSSProperties = {
-        background: 'var(--bg-card)',
-        color: 'var(--text-primary)'
-    };
 
     const handleAddItem = (data: any) => {
         if (!onAddItem) return;
@@ -600,65 +638,37 @@ const CenovneStavkeSection = () => (
                     📅 Periodi Vazenja
                 </h4>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    <div>
-                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                            Rezervacije Od
-                        </label>
-                        <input type="date" style={{
-                            width: '100%',
-                            padding: '12px',
-                            borderRadius: '10px',
-                            background: 'var(--bg-input)',
-                            border: '1px solid var(--border)',
-                            color: 'var(--text-primary)',
-                            fontSize: '13px'
-                        }} />
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                            Rezervacije Do
-                        </label>
-                        <input type="date" style={{
-                            width: '100%',
-                            padding: '12px',
-                            borderRadius: '10px',
-                            background: 'var(--bg-input)',
-                            border: '1px solid var(--border)',
-                            color: 'var(--text-primary)',
-                            fontSize: '13px'
-                        }} />
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                            Boravak Od
-                        </label>
-                        <input type="date" style={{
-                            width: '100%',
-                            padding: '12px',
-                            borderRadius: '10px',
-                            background: 'var(--bg-input)',
-                            border: '1px solid var(--border)',
-                            color: 'var(--text-primary)',
-                            fontSize: '13px'
-                        }} />
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                            Boravak Do
-                        </label>
-                        <input type="date" style={{
-                            width: '100%',
-                            padding: '12px',
-                            borderRadius: '10px',
-                            background: 'var(--bg-input)',
-                            border: '1px solid var(--border)',
-                            color: 'var(--text-primary)',
-                            fontSize: '13px'
-                        }} />
-                        <div style={{ fontSize: '10px', color: 'var(--accent)', marginTop: '4px' }}>
-                            ⚡ Sledeći termin: 01.07.2026
-                        </div>
-                    </div>
+                    <SmartDateInput
+                        label="Rezervacije Od"
+                        value="2026-06-01"
+                        onChange={() => { }}
+                        style={{ ...inputStyle, padding: '12px' }}
+                    />
+                    <SmartDateInput
+                        label="Rezervacije Do"
+                        value="2026-06-30"
+                        onChange={() => { }}
+                        style={{ ...inputStyle, padding: '12px' }}
+                    />
+                    <SmartDateInput
+                        label="Boravak Od"
+                        value="2026-06-01"
+                        onChange={() => { }}
+                        style={{ ...inputStyle, padding: '12px' }}
+                    />
+                    <SmartDateInput
+                        label="Boravak Do"
+                        value="2026-06-30"
+                        onChange={() => { }}
+                        style={{ ...inputStyle, padding: '12px' }}
+                    />
+                </div>
+
+                <div style={{ marginTop: '20px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '10px', fontWeight: 600, textTransform: 'uppercase' }}>
+                        Dani važenja u nedelji
+                    </label>
+                    <DaySelector />
                 </div>
             </div>
 

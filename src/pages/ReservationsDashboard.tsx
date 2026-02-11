@@ -1209,7 +1209,6 @@ ${data.map(r => `  <reservation>
             {/* Advanced Search Module */}
             <div className="search-command-center">
                 <div className="main-search-bar">
-                    <Search size={20} className="search-icon" />
                     <input
                         type="text"
                         placeholder="Unesite pojam i pritisnite Enter da dodate filter..."
@@ -1682,6 +1681,14 @@ ${data.map(r => `  <reservation>
                                                             <span style={{ fontWeight: 600, maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.subject}</span>
                                                         </div>
                                                     ))}
+                                                    {/* Category for items if available (checking first item for example) */}
+                                                    {res.hotelCategory && res.hotelCategory > 0 && (
+                                                        <div style={{ display: 'flex', gap: '1px', marginLeft: '22px' }}>
+                                                            {[...Array(res.hotelCategory)].map((_, i) => (
+                                                                <Star key={i} size={8} fill="#f59e0b" color="#f59e0b" />
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <div className="accommodation-name" style={{
@@ -1897,7 +1904,14 @@ ${data.map(r => `  <reservation>
                                         ) : (
                                             <div className="accommodation-name" style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                 <Building2 size={12} />
-                                                {res.accommodationName}
+                                                <span style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{res.accommodationName}</span>
+                                                {res.hotelCategory && res.hotelCategory > 0 && (
+                                                    <div style={{ display: 'flex', gap: '1px', marginLeft: '6px' }}>
+                                                        {[...Array(res.hotelCategory)].map((_, i) => (
+                                                            <Star key={i} size={8} fill="#f59e0b" color="#f59e0b" />
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>

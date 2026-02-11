@@ -1064,11 +1064,8 @@ const SmartSearch: React.FC = () => {
                                             className="budget-input"
                                             style={{
                                                 flex: 1,
-                                                background: 'rgba(255,255,255,0.05)',
-                                                border: '1px solid rgba(255,255,255,0.1)',
                                                 borderRadius: '12px',
                                                 padding: '12px',
-                                                color: '#fff',
                                                 fontSize: '0.85rem',
                                                 outline: 'none',
                                                 width: '100%'
@@ -1082,11 +1079,8 @@ const SmartSearch: React.FC = () => {
                                             className="budget-input"
                                             style={{
                                                 flex: 1,
-                                                background: 'rgba(255,255,255,0.05)',
-                                                border: '1px solid rgba(255,255,255,0.1)',
                                                 borderRadius: '12px',
                                                 padding: '12px',
-                                                color: '#fff',
                                                 fontSize: '0.85rem',
                                                 outline: 'none',
                                                 width: '100%'
@@ -1188,9 +1182,9 @@ const SmartSearch: React.FC = () => {
                                                             value={age || ''}
                                                             placeholder="Godine"
                                                             onChange={e => {
-                                                                const val = parseInt(e.target.value) || 0;
+                                                                const val = e.target.value;
                                                                 const newAlloc = [...roomAllocations];
-                                                                newAlloc[activeRoomTab].childrenAges[idx] = Math.min(17, Math.max(0, val));
+                                                                newAlloc[activeRoomTab].childrenAges[idx] = val === '' ? ('' as any) : Math.min(17, Math.max(0, parseInt(val)));
                                                                 setRoomAllocations(newAlloc);
                                                             }}
                                                             className="child-age-input mini"

@@ -1,41 +1,100 @@
-/* VS Code Editor Style for Pricing Intelligence */
 :root {
-    --editor-bg: #1e1e1e;
-    --editor-sidebar-bg: #252526;
-    --editor-line-numbers: #858585;
-    --editor-text: #d4d4d4;
-    --editor-keyword: #569cd6;
-    --editor-string: #ce9178;
-    --editor-number: #b5cea8;
-    --editor-function: #dcdcaa;
-    --editor-comment: #6a9955;
-    --editor-property: #9cdcfe;
-    --editor-operator: #d4d4d4;
-    --editor-punctuation: #808080;
-    --editor-selection: #264f78;
-    --editor-active-line: #2a2d2e;
-    --editor-border: #3c3c3c;
-    --editor-scrollbar: #424242;
-    --editor-scrollbar-hover: #4e4e4e;
+    /* DEFAULT: Dark Theme (matches index.css :root) */
+    --bg-dark: #1E293B;
+    --bg-sidebar: #0F172A;
+    --bg-card: #334155;
+    --bg-panel: #334155;
+    --bg-surface: #475569;
+    --bg-input: #1E293B;
+    /* DARK INPUT BACKGROUND */
+    --accent: #60A5FA;
+    --text-primary: #F1F5F9;
+    --text-secondary: #94A3B8;
+    --border: #334155;
+
+    /* Editor Specific */
+    --editor-bg: #0f172a;
+    --editor-sidebar-bg: #1e293b;
+    --editor-line-numbers: #64748b;
+    --editor-text: #f8fafc;
+    --editor-keyword: #60a5fa;
+    --editor-string: #fca5a5;
+    --editor-number: #bef264;
+    --editor-function: #fbbf24;
+    --editor-comment: #94a3b8;
+    --editor-property: #7dd3fc;
+    --editor-operator: #cbd5e1;
+    --editor-punctuation: #94a3b8;
+    --editor-selection: #334155;
+    --editor-active-line: #1e293b;
+    --editor-border: #475569;
+    --editor-scrollbar: #334155;
+    --editor-scrollbar-hover: #475569;
+    --calendar-filter: invert(1);
+
+    --pricing-border: #475569;
+    --pricing-input-border: #64748b;
+    --pricing-input-bg: #1E293B;
 }
 
-/* Light theme overrides */
-.light-theme {
+/* Light theme overrides (matches index.css .light-theme) */
+.pricing-module:not(.navy-theme):not(.dark-mode) {
+    --bg-dark: #F0F9FF;
+    --bg-sidebar: #FFFFFF;
+    --bg-card: #FFFFFF;
+    --bg-panel: #FFFFFF;
+    --bg-surface: #F8FAFC;
+    --bg-input: #FFFFFF;
+    --accent: #3B82F6;
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+    --border: #E2E8F0;
+
     --editor-bg: #ffffff;
-    --editor-sidebar-bg: #f3f3f3;
+    --editor-sidebar-bg: #f8fafc;
     --editor-line-numbers: #237893;
-    --editor-text: #000000;
-    --editor-keyword: #0000ff;
-    --editor-string: #a31515;
-    --editor-number: #098658;
-    --editor-function: #795e26;
-    --editor-comment: #008000;
-    --editor-property: #001080;
-    --editor-operator: #000000;
-    --editor-punctuation: #000000;
-    --editor-selection: #add6ff;
-    --editor-active-line: #f0f0f0;
-    --editor-border: #e5e5e5;
+    --editor-text: #0f172a;
+    --editor-keyword: #2563eb;
+    --editor-string: #991b1b;
+    --editor-number: #166534;
+    --editor-function: #92400e;
+    --editor-comment: #15803d;
+    --editor-property: #0369a1;
+    --editor-operator: #0f172a;
+    --editor-punctuation: #0f172a;
+    --editor-selection: #dbeafe;
+    --editor-active-line: #f1f5f9;
+    --editor-border: #94a3b8;
+    --calendar-filter: none;
+
+    --pricing-border: #cbd5e1;
+    --pricing-input-border: #94a3b8;
+    --pricing-input-bg: #ffffff;
+}
+
+/* Local Dark Mode switch within the module */
+.pricing-module.navy-theme,
+.pricing-module.dark-mode {
+    --bg-dark: #1E293B;
+    --bg-card: #334155;
+    --bg-sidebar: #0F172A;
+    --bg-input: #1E293B;
+    /* DARK INPUT BACKGROUND */
+    --border: #334155;
+    --text-primary: #F1F5F9;
+    --text-secondary: #94A3B8;
+    --accent: #60A5FA;
+
+    --editor-bg: #0a0e17;
+    --editor-sidebar-bg: #111827;
+    --editor-text: #e2e8f0;
+    --editor-border: #334155;
+    --calendar-filter: invert(1);
+
+    /* Pricing specific vars for dark mode */
+    --pricing-border: #334155;
+    --pricing-input-border: #475569;
+    --pricing-input-bg: #0a0e17;
 }
 
 /* Main Pricing Module Container */

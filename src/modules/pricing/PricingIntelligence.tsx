@@ -21,9 +21,12 @@ import {
     CheckCircle2,
     Play,
     Code,
-    Edit3
+    Edit3,
+    Copy,
+    Info
 } from 'lucide-react';
 import './PricingModule.styles.css';
+import { useThemeStore } from '../../stores';
 import { PricingCodeView } from './PricingCodeView';
 import { HOTEL_SERVICES } from '../../data/services/hotelServices';
 import { ROOM_PREFIXES, ROOM_VIEWS, ROOM_TYPES } from '../../data/rooms/roomTypes';
@@ -58,19 +61,20 @@ const styles = {
         padding: '12px 16px',
         borderRadius: '10px',
         background: 'var(--bg-input)',
-        border: '1.5px solid var(--border)',
+        border: '1.5px solid var(--pricing-input-border, var(--border))',
         color: 'var(--text-primary)',
         outline: 'none',
         fontSize: '14px',
         fontFamily: "'Inter', sans-serif",
-        boxSizing: 'border-box' as const
+        boxSizing: 'border-box' as const,
+        transition: 'border-color 0.2s'
     },
     select: {
         width: '100%',
         padding: '12px 16px',
         borderRadius: '10px',
         background: 'var(--bg-input)',
-        border: '1.5px solid var(--border)',
+        border: '1.5px solid var(--pricing-input-border, var(--border))',
         color: 'var(--text-primary)',
         outline: 'none',
         fontSize: '14px',
@@ -81,18 +85,24 @@ const styles = {
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'right 12px center',
         backgroundSize: '16px',
-        backgroundColor: 'var(--bg-input)'
+        backgroundColor: 'var(--bg-input)',
+        transition: 'border-color 0.2s'
     }
 };
 
 const PricingIntelligence: React.FC = () => {
+    const { theme } = useThemeStore();
     const [viewMode, setViewMode] = useState<'code' | 'standard'>('standard');
     const [activeTab, setActiveTab] = useState<'manual' | 'product' | 'periods' | 'rules' | 'ai'>('manual');
     const [messages, setMessages] = useState([
         { role: 'ai', content: 'Detektovao sam tvoj JSON format! Vidim da imaš "API unit showcase". Da li želiš da mapiramo ove jedinice u tvoju bazu smeštaja?' }
     ]);
     const [input, setInput] = useState('');
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(theme === 'navy');
+
+    useEffect(() => {
+        setIsDarkMode(theme === 'navy');
+    }, [theme]);
 
     // Global Pricelist Items state
     const [addedItems, setAddedItems] = useState<any[]>([
@@ -180,6 +190,11 @@ const PricingIntelligence: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [showLoadModal, setShowLoadModal] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [duplicateStatus, setDuplicateStatus] = useState<{ isDuplicate: boolean; originId: string | null; isModified: boolean }>({
+        isDuplicate: false,
+        originId: null,
+        isModified: false
+    });
 
     // Load saved pricelists and existing items
     useEffect(() => {
@@ -227,6 +242,7 @@ const PricingIntelligence: React.FC = () => {
 
     const handleAddNewItem = (item: any) => {
         setAddedItems(prev => [item, ...prev]);
+        markAsModified();
     };
 
     const handleSavePricelist = async (activate: boolean = false) => {
@@ -278,10 +294,11 @@ const PricingIntelligence: React.FC = () => {
         setIsSaving(false);
         if (error) {
             console.error('Error saving:', error);
-            alert('Greška pri čuvanju');
+            alert('Greška pri čuvanju: ' + (error.message || 'Nepoznata greška'));
         } else if (data) {
             setPricelistId(data.id || null);
             setSaveSuccess(true);
+            setDuplicateStatus({ isDuplicate: false, originId: null, isModified: false });
             loadSavedPricelists();
             fetchPricelistItems();
             setTimeout(() => setSaveSuccess(false), 3000);
@@ -290,6 +307,7 @@ const PricingIntelligence: React.FC = () => {
 
     const handleLoadPricelist = async (id: string) => {
         setIsLoadingData(true);
+        setDuplicateStatus({ isDuplicate: false, originId: null, isModified: false });
         setShowLoadModal(false);
         const { pricelist, periods, rules, error } = await getPricelistWithDetails(id);
         if (!error && pricelist) {
@@ -315,6 +333,28 @@ const PricingIntelligence: React.FC = () => {
             setSupplements(rules.map(r => ({ ...r, netPrice: r.net_price, percentValue: r.percent_value })));
         }
         setIsLoadingData(false);
+    };
+
+    const handleDuplicatePricelist = () => {
+        if (!pricelistId) return;
+        const originId = pricelistId;
+        const newTitle = `COPY (${originId})`;
+
+        // Reset current ID to treat it as a new entry
+        setPricelistId(null);
+        setPricelistTitle(newTitle);
+        setDuplicateStatus({
+            isDuplicate: true,
+            originId: originId,
+            isModified: false
+        });
+        setSaveSuccess(false);
+    };
+
+    const markAsModified = () => {
+        if (duplicateStatus.isDuplicate && !duplicateStatus.isModified) {
+            setDuplicateStatus(prev => ({ ...prev, isModified: true }));
+        }
     };
 
     const exportToJSON = () => {
@@ -386,11 +426,38 @@ const PricingIntelligence: React.FC = () => {
                                 <Code size={16} /> Dev Mode
                             </button>
                         </div>
+                        {pricelistId && (
+                            <button onClick={handleDuplicatePricelist} style={{ ...styles.button, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+                                <Copy size={18} /> Dupliciraj
+                            </button>
+                        )}
+                        <button onClick={() => handleSavePricelist(false)} style={{ ...styles.button, background: 'var(--bg-card)', border: '1px solid var(--accent)', color: 'var(--accent)' }}>
+                            <Save size={18} /> Sačuvaj Sve
+                        </button>
                         <button onClick={() => handleSavePricelist(true)} style={{ ...styles.button, background: 'var(--gradient-green)', color: '#fff', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)' }}>
                             <Play size={18} /> Aktiviraj Cenovnik
                         </button>
                     </div>
                 </div>
+
+                {duplicateStatus.isDuplicate && !duplicateStatus.isModified && (
+                    <div style={{
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        border: '1px solid rgba(59, 130, 246, 0.2)',
+                        padding: '12px 24px',
+                        borderRadius: '12px',
+                        marginBottom: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        color: '#60a5fa',
+                        fontSize: '14px',
+                        fontWeight: 600
+                    }}>
+                        <Info size={18} />
+                        Ovo je kopija cenovnika: <strong>{duplicateStatus.originId}</strong>. Svaka promena će kreirati novi jedinstveni cenovnik.
+                    </div>
+                )}
 
                 <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', gap: '30px', marginBottom: '30px', borderBottom: '1px solid var(--border)' }}>
@@ -411,8 +478,8 @@ const PricingIntelligence: React.FC = () => {
                                 <div style={{ background: 'var(--bg-card)', padding: '30px', borderRadius: '20px', border: '1px solid var(--border)' }}>
                                     <h3 style={{ marginTop: 0, marginBottom: '24px', fontSize: '18px' }}>Osnovne Postavke</h3>
                                     <div style={{ display: 'grid', gap: '20px' }}>
-                                        <input value={pricelistTitle} onChange={e => setPricelistTitle(e.target.value)} style={styles.input} placeholder="Naziv cenovnika" />
-                                        <select value={productState.type} onChange={e => setProductState({ ...productState, type: e.target.value })} style={styles.select}>
+                                        <input value={pricelistTitle} onChange={e => { setPricelistTitle(e.target.value); markAsModified(); }} style={styles.input} placeholder="Naziv cenovnika" />
+                                        <select value={productState.type} onChange={e => { setProductState({ ...productState, type: e.target.value }); markAsModified(); }} style={styles.select}>
                                             <option value="" style={{ background: 'var(--bg-input)' }}>Izaberite tip sobe...</option>
                                             {ROOM_TYPES.map(r => <option key={r.id} value={r.id} style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>{r.name}</option>)}
                                         </select>
@@ -476,9 +543,9 @@ const PricingIntelligence: React.FC = () => {
                     onExportJSON={exportToJSON}
                     onSaveDraft={() => handleSavePricelist(false)}
                     onActivate={() => handleSavePricelist(true)}
-                    onProductChange={setProductState as any}
-                    onPeriodsChange={setPricePeriods as any}
-                    onSupplementsChange={setSupplements as any}
+                    onProductChange={(p: any) => { setProductState(p); markAsModified(); }}
+                    onPeriodsChange={(p: any) => { setPricePeriods(p); markAsModified(); }}
+                    onSupplementsChange={(s: any) => { setSupplements(s); markAsModified(); }}
                 />
             ) : renderStandardUI()}
 

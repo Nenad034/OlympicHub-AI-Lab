@@ -1534,9 +1534,6 @@ const ReservationArchitect: React.FC = () => {
                                 <Mail size={18} /> B2B Komunikacija
                             </button>
                         )}
-                        <button className={activeSection === 'rep' ? 'active' : ''} onClick={() => setActiveSection('rep')}>
-                            <Shield size={18} /> Dest. Predstavnik
-                        </button>
                         <button className={activeSection === 'notes' ? 'active' : ''} onClick={() => setActiveSection('notes')}>
                             <FileText size={18} /> Napomene
                         </button>
@@ -1545,6 +1542,9 @@ const ReservationArchitect: React.FC = () => {
                         </button>
                         <button className={activeSection === 'documents' ? 'active' : ''} onClick={() => setActiveSection('documents')}>
                             <FileText size={18} /> Dokumenta
+                        </button>
+                        <button className={activeSection === 'rep' ? 'active' : ''} onClick={() => setActiveSection('rep')}>
+                            <Shield size={18} /> Predstavnik
                         </button>
                         <button className={activeSection === 'history' ? 'active' : ''} onClick={() => setActiveSection('history')}>
                             <History size={18} /> Istorija Izmena
@@ -3527,14 +3527,15 @@ const ReservationArchitect: React.FC = () => {
                                                                         value={p.amount === 0 && p.status !== 'deleted' ? '' : p.amount}
                                                                         placeholder="0"
                                                                         onChange={e => {
-                                                                            const val = parseFloat(e.target.value) || 0;
+                                                                            const val = e.target.value;
                                                                             const newPayments = [...dossier.finance.payments];
-                                                                            newPayments[pidx].amount = val;
+                                                                            newPayments[pidx].amount = val === '' ? ('' as any) : parseFloat(val);
                                                                             // Auto calculate RSD if dossier is in EUR/USD
+                                                                            const numVal = parseFloat(val) || 0;
                                                                             if (p.currency !== 'RSD') {
-                                                                                newPayments[pidx].amountInRsd = val * (p.exchangeRate || 1);
+                                                                                newPayments[pidx].amountInRsd = numVal * (p.exchangeRate || 1);
                                                                             } else {
-                                                                                newPayments[pidx].amountInRsd = val;
+                                                                                newPayments[pidx].amountInRsd = numVal;
                                                                             }
                                                                             setDossier({ ...dossier, finance: { ...dossier.finance, payments: newPayments } });
                                                                         }} /></td>
@@ -3710,8 +3711,9 @@ const ReservationArchitect: React.FC = () => {
                                                                                         <div className="extra-field-group">
                                                                                             <label>Broj rata</label>
                                                                                             <input type="number" min="1" value={p.installmentsCount || ''} placeholder="Npr. 6" onChange={e => {
+                                                                                                const val = e.target.value;
                                                                                                 const next = [...dossier.finance.payments];
-                                                                                                next[pidx].installmentsCount = parseInt(e.target.value) || 0;
+                                                                                                next[pidx].installmentsCount = val === '' ? ('' as any) : parseInt(val);
                                                                                                 setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
                                                                                             }} />
                                                                                         </div>
@@ -3771,9 +3773,10 @@ const ReservationArchitect: React.FC = () => {
                                                                                                             next[pidx].checks![cidx].bank = e.target.value;
                                                                                                             setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
                                                                                                         }} /></td>
-                                                                                                        <td><input type="number" value={check.amount} onChange={e => {
+                                                                                                        <td><input type="number" value={check.amount || ''} onChange={e => {
+                                                                                                            const val = e.target.value;
                                                                                                             const next = [...dossier.finance.payments];
-                                                                                                            next[pidx].checks![cidx].amount = parseFloat(e.target.value) || 0;
+                                                                                                            next[pidx].checks![cidx].amount = val === '' ? ('' as any) : parseFloat(val);
                                                                                                             setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
                                                                                                         }} /></td>
                                                                                                         <td><input type="date" value={check.realizationDate} onChange={e => {
@@ -4456,7 +4459,7 @@ const ReservationArchitect: React.FC = () => {
                             activeSection === 'rep' && (
                                 <section className="res-section fade-in">
                                     <div className="section-title">
-                                        <h3><Shield size={20} color="#10b981" style={{ marginRight: '10px' }} /> Komunikacija sa Predstavnikom na Destinaciji</h3>
+                                        <h3><Shield size={20} color="#10b981" style={{ marginRight: '10px' }} /> Predstavnik</h3>
                                     </div>
 
                                     <div className="rep-chat-container" style={{

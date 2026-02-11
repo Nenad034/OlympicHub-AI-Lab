@@ -173,10 +173,11 @@ const PriceListArchitect: React.FC = () => {
                                         <label>OD</label>
                                         <input
                                             type="number"
-                                            value={cat.minAge}
+                                            value={cat.minAge === 0 ? '0' : (cat.minAge || '')}
                                             onChange={e => {
+                                                const val = e.target.value;
                                                 const updated = [...priceList.ageCategories];
-                                                updated[idx].minAge = parseInt(e.target.value);
+                                                updated[idx].minAge = val === '' ? ('' as any) : parseInt(val);
                                                 updatePriceList({ ageCategories: updated });
                                             }}
                                         />
@@ -186,10 +187,11 @@ const PriceListArchitect: React.FC = () => {
                                         <label>DO</label>
                                         <input
                                             type="number"
-                                            value={cat.maxAge}
+                                            value={cat.maxAge === 0 ? '0' : (cat.maxAge || '')}
                                             onChange={e => {
+                                                const val = e.target.value;
                                                 const updated = [...priceList.ageCategories];
-                                                updated[idx].maxAge = parseInt(e.target.value);
+                                                updated[idx].maxAge = val === '' ? ('' as any) : parseInt(val);
                                                 updatePriceList({ ageCategories: updated });
                                             }}
                                         />
@@ -299,9 +301,10 @@ const PriceListArchitect: React.FC = () => {
                                         </td>
                                         <td>
                                             <div className="amount-input">
-                                                <input type="number" value={entry.amount} onChange={e => {
+                                                <input type="number" value={entry.amount === 0 ? '0' : (entry.amount || '')} onChange={e => {
+                                                    const val = e.target.value;
                                                     const updated = [...priceList.basePrices];
-                                                    updated[idx].amount = parseFloat(e.target.value);
+                                                    updated[idx].amount = val === '' ? ('' as any) : parseFloat(val);
                                                     updatePriceList({ basePrices: updated });
                                                 }} />
                                                 <span>EUR</span>
@@ -459,9 +462,10 @@ const PriceListArchitect: React.FC = () => {
                                 <div className="form-group">
                                     <label>Vrednost</label>
                                     <div className="combined-input">
-                                        <input type="number" value={s.value} onChange={e => {
+                                        <input type="number" value={s.value === 0 ? '0' : (s.value || '')} onChange={e => {
+                                            const val = e.target.value;
                                             const updated = [...priceList.surcharges];
-                                            updated[idx].value = parseFloat(e.target.value);
+                                            updated[idx].value = val === '' ? ('' as any) : parseFloat(val);
                                             updatePriceList({ surcharges: updated });
                                         }} />
                                         <select value={s.valueType} onChange={e => {
@@ -558,9 +562,10 @@ const PriceListArchitect: React.FC = () => {
                                 <div className="form-group">
                                     <label>Vrednost</label>
                                     <div className="combined-input">
-                                        <input type="number" value={d.value} onChange={e => {
+                                        <input type="number" value={d.value === 0 ? '0' : (d.value || '')} onChange={e => {
+                                            const val = e.target.value;
                                             const updated = [...priceList.discounts];
-                                            updated[idx].value = parseFloat(e.target.value);
+                                            updated[idx].value = val === '' ? ('' as any) : parseFloat(val);
                                             updatePriceList({ discounts: updated });
                                         }} />
                                         <select value={d.valueType} onChange={e => {
@@ -658,9 +663,10 @@ const PriceListArchitect: React.FC = () => {
                                 <div className="form-group">
                                     <label>Popust</label>
                                     <div className="combined-input">
-                                        <input type="number" value={o.discountValue} onChange={e => {
+                                        <input type="number" value={o.discountValue === 0 ? '0' : (o.discountValue || '')} onChange={e => {
+                                            const val = e.target.value;
                                             const updated = [...priceList.specialOffers];
-                                            updated[idx].discountValue = parseFloat(e.target.value);
+                                            updated[idx].discountValue = val === '' ? ('' as any) : parseFloat(val);
                                             updatePriceList({ specialOffers: updated });
                                         }} />
                                         <select value={o.discountType} onChange={e => {

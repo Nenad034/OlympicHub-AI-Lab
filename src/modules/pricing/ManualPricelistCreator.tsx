@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { FileText, Zap, Upload, Settings, ChevronUp, ChevronDown, Eye, EyeOff, LayoutPanelLeft } from 'lucide-react';
+import { FileText, Zap, Upload, Settings, ChevronUp, ChevronDown, Eye, EyeOff, LayoutPanelLeft, RefreshCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QuickPricelistForm from './QuickPricelistForm';
 import AdvancedPricelistForm from './AdvancedPricelistForm';
+import ShiftsGenerator from './ShiftsGenerator';
 import PricelistItemsList from './PricelistItemsList';
 
-type SubView = 'quick' | 'advanced' | 'bulk';
+type SubView = 'quick' | 'advanced' | 'shifts' | 'bulk';
 
 interface ManualPricelistCreatorProps {
     onAddItem: (item: any) => void;
@@ -21,6 +22,7 @@ const ManualPricelistCreator: React.FC<ManualPricelistCreatorProps> = ({ onAddIt
     const subTabs = [
         { id: 'quick' as SubView, label: 'Brzo Kreiranje', icon: Zap, description: 'Brzi unos standardnih cenovnika' },
         { id: 'advanced' as SubView, label: 'Napredni Unos', icon: Settings, description: 'Potpuna kontrola i sve opcije' },
+        { id: 'shifts' as SubView, label: 'Generator Smena', icon: RefreshCcw, description: 'Definisanje polazaka i rotacija' },
         { id: 'bulk' as SubView, label: 'Bulk Import', icon: Upload, description: 'Masovni uvoz iz fajlova' },
     ];
 
@@ -154,6 +156,11 @@ const ManualPricelistCreator: React.FC<ManualPricelistCreatorProps> = ({ onAddIt
                                 {activeView === 'advanced' && (
                                     <div style={{ width: '100%' }}>
                                         <AdvancedPricelistForm onAddItem={onAddItem} />
+                                    </div>
+                                )}
+                                {activeView === 'shifts' && (
+                                    <div style={{ width: '100%' }}>
+                                        <ShiftsGenerator />
                                     </div>
                                 )}
                                 {activeView === 'bulk' && (

@@ -505,8 +505,11 @@ const HotelPrices: React.FC = () => {
                                         <div style={{ position: 'relative' }}>
                                             <input
                                                 type="number"
-                                                value={(ageSettings as any)[key]}
-                                                onChange={e => setAgeSettings({ ...ageSettings, [key]: parseInt(e.target.value) })}
+                                                value={(ageSettings as any)[key] === 0 ? '0' : ((ageSettings as any)[key] || '')}
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    setAgeSettings({ ...ageSettings, [key]: val === '' ? ('' as any) : parseInt(val) });
+                                                }}
                                                 style={{
                                                     width: '44px',
                                                     background: 'rgba(255,255,255,0.05)',
@@ -564,10 +567,11 @@ const HotelPrices: React.FC = () => {
                                                         <input
                                                             key={n}
                                                             type="number"
-                                                            value={(rule as any)[`chd${n}Discount`]}
+                                                            value={(rule as any)[`chd${n}Discount`] === 0 ? '0' : ((rule as any)[`chd${n}Discount`] || '')}
                                                             onChange={e => {
+                                                                const val = e.target.value;
                                                                 const updated = [...occupancyRules];
-                                                                (updated[idx] as any)[`chd${n}Discount`] = parseInt(e.target.value);
+                                                                (updated[idx] as any)[`chd${n}Discount`] = val === '' ? ('' as any) : parseInt(val);
                                                                 setOccupancyRules(updated);
                                                             }}
                                                             style={{ width: '45px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', padding: '4px', textAlign: 'center', fontSize: '12px', fontWeight: 700 }}
@@ -581,10 +585,11 @@ const HotelPrices: React.FC = () => {
                                                         <input
                                                             key={n}
                                                             type="number"
-                                                            value={(rule as any)[`adl${n}Discount`] || 0}
+                                                            value={(rule as any)[`adl${n}Discount`] === 0 ? '0' : ((rule as any)[`adl${n}Discount`] || '')}
                                                             onChange={e => {
+                                                                const val = e.target.value;
                                                                 const updated = [...occupancyRules];
-                                                                (updated[idx] as any)[`adl${n}Discount`] = parseInt(e.target.value);
+                                                                (updated[idx] as any)[`adl${n}Discount`] = val === '' ? ('' as any) : parseInt(val);
                                                                 setOccupancyRules(updated);
                                                             }}
                                                             style={{ width: '45px', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#10b981', borderRadius: '6px', padding: '4px', textAlign: 'center', fontSize: '12px', fontWeight: 800 }}
