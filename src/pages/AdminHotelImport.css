@@ -16,8 +16,8 @@
     background: var(--bg-card);
     padding: 24px;
     border-radius: 16px;
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .header-title h1 {
@@ -26,6 +26,7 @@
     margin-bottom: 8px;
     background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     display: flex;
     align-items: center;
@@ -128,7 +129,7 @@
 
 .card-image-placeholder {
     height: 180px;
-    background: linear-gradient(45deg, #1e293b, #0f172a);
+    background: var(--bg-sidebar);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -224,12 +225,12 @@
 }
 
 .ai-modal {
-    background: #1e293b;
+    background: var(--bg-card);
     width: 600px;
     border-radius: 24px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
     overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
     animation: slideUp 0.3s ease-out;
 }
 
@@ -280,13 +281,13 @@
 }
 
 .generated-desc {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--bg-sidebar);
     padding: 20px;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-subtle);
     font-family: 'Inter', sans-serif;
     line-height: 1.6;
-    color: #e2e8f0;
+    color: var(--text-primary);
     margin-bottom: 20px;
     max-height: 300px;
     overflow-y: auto;

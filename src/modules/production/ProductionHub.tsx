@@ -1290,7 +1290,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         return (
             <div className="module-container fade-in" style={{ padding: 0, minHeight: '100vh', background: 'var(--bg-main)' }}>
                 {/* Header Area */}
-                <div style={{ padding: '32px 48px', borderBottom: '1px solid var(--border)', background: 'rgba(255, 255, 255, 0.02)', backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 100 }}>
+                <div style={{ padding: '32px 48px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-card)', backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 100 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
                             <button onClick={() => setViewMode('hub')} className="btn-icon circle" style={{ width: '56px', height: '56px', background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
@@ -1396,25 +1396,24 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                             <style>{`
                                 .search-bar-premium {
                                     display: flex;
-                                    flex-wrap: wrap;
                                     gap: 8px;
                                     align-items: center;
-                                    background: rgba(0, 0, 0, 0.4);
-                                    border: 1px solid rgba(255, 255, 255, 0.08);
+                                    background: var(--bg-sidebar);
+                                    border: 1px solid var(--border);
                                     border-radius: 12px;
                                     padding: 8px 16px;
                                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                                    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+                                    box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
                                 }
                                 .search-bar-premium:focus-within {
-                                    border-color: rgba(59, 130, 246, 0.4);
-                                    background: rgba(0, 0, 0, 0.5);
-                                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 2px 8px rgba(0,0,0,0.5);
+                                    border-color: var(--accent);
+                                    background: var(--bg-sidebar);
+                                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 2px 8px rgba(0,0,0,0.05);
                                 }
                                 .search-bar-premium input {
                                     background: transparent;
                                     border: none;
-                                    color: #fff;
+                                    color: var(--text-primary);
                                     outline: none;
                                     width: 100%;
                                     font-size: 15px;
@@ -1422,7 +1421,8 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                     padding: 0 12px;
                                 }
                                 .search-bar-premium input::placeholder {
-                                    color: rgba(255, 255, 255, 0.4);
+                                    color: var(--text-secondary);
+                                    opacity: 0.5;
                                 }
                                 .filter-btn-premium {
                                     background: transparent;
@@ -1672,12 +1672,12 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ borderBottom: '2px solid var(--border)', background: 'rgba(255,255,255,0.03)' }}>
-                                    <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Status</th>
-                                    <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Objekat</th>
-                                    <th style={{ padding: '24px', textAlign: 'center', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Kat.</th>
-                                    <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Lokacija</th>
-                                    <th style={{ padding: '24px', textAlign: 'center', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Kvalitet Podataka</th>
-                                    <th style={{ padding: '24px', textAlign: 'right', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Upravljanje</th>
+                                    <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Status</th>
+                                    <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Objekat</th>
+                                    <th style={{ padding: '24px', textAlign: 'center', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Kat.</th>
+                                    <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Lokacija</th>
+                                    <th style={{ padding: '24px', textAlign: 'center', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Kvalitet Podataka</th>
+                                    <th style={{ padding: '24px', textAlign: 'right', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Upravljanje</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1688,17 +1688,18 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                             key={h.id}
                                             onClick={() => { setSelectedHotel(h); setViewMode('detail'); }}
                                             style={{
-                                                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                                borderBottom: '1px solid var(--border-subtle)',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                                background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'
+                                                background: idx % 2 === 0 ? 'transparent' : 'var(--bg-card-hover)',
+                                                opacity: 0.95
                                             }}
-                                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.08)'; }}
-                                            onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'; }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-glow)'; }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'var(--bg-card-hover)'; }}
                                         >
                                             <td style={{ padding: '20px 24px' }} onClick={(e) => { e.stopPropagation(); toggleStatus(e, h); }}>
                                                 {h.originalPropertyData?.isActive ?
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#10b981', fontSize: '13px', fontWeight: 900, background: 'rgba(16, 185, 129, 0.15)', padding: '8px 18px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent-green)', fontSize: '13px', fontWeight: 900, background: 'var(--success-bg)', padding: '8px 18px', borderRadius: '12px', border: '1px solid var(--accent-green)', opacity: 0.9 }}>
                                                         <CheckCircle2 size={18} /> LIVE
                                                     </div>
                                                     :
@@ -1741,7 +1742,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                             <td style={{ padding: '20px 24px' }}>
                                                 <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                                                     {missingInfo.length === 0 ? (
-                                                        <div style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', padding: '6px 18px', borderRadius: '12px', fontSize: '11px', fontWeight: 900, border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                                        <div style={{ color: 'var(--accent-green)', background: 'var(--success-bg)', padding: '6px 18px', borderRadius: '12px', fontSize: '11px', fontWeight: 900, border: '1px solid var(--accent-green)' }}>
                                                             <CheckCircle2 size={14} style={{ marginRight: '8px' }} /> KOMPLETNO
                                                         </div>
                                                     ) : (

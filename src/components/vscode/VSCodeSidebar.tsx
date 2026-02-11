@@ -50,7 +50,7 @@ const routeToTabMap: Record<string, { title: string; icon?: React.ReactNode }> =
     '/deep-archive': { title: 'Deep Archive' },
     '/settings': { title: 'Settings' },
     '/notifications': { title: 'Centar za Notifikacije', icon: <Bell size={16} /> },
-    '/mail': { title: 'Olympic Mail', icon: <Mail size={16} /> },
+    '/mail': { title: 'ClickToTravel Mail', icon: <Mail size={16} /> },
     '/orchestrator': { title: 'Master Orchestrator', icon: <Brain size={16} /> },
 };
 
@@ -495,7 +495,7 @@ export const VSCodeSidebar: React.FC<VSCodeSidebarProps> = ({ width }) => {
                 return (
                     <div className="sidebar-panel explorer-panel">
                         <div className="explorer-header">
-                            <span>Olympic B2B</span>
+                            <span>ClickToTravel B2B</span>
                             <div className="explorer-actions">
                                 <button title="New File"><Plus size={14} /></button>
                                 <button title="Refresh"><RefreshCw size={14} /></button>

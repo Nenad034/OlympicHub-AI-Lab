@@ -4,9 +4,9 @@
     align-items: center;
     padding: 0 24px;
     height: 64px;
-    background: rgba(13, 17, 23, 0.82);
+    background: var(--glass-bg);
     backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--border-subtle);
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -15,12 +15,12 @@
 .h-nav-label {
     font-size: 11px;
     font-weight: 800;
-    color: #94a3b8;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 1.5px;
     margin-right: 16px;
     padding: 4px 8px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-card-hover);
     border-radius: 4px;
 }
 
@@ -45,8 +45,8 @@
 }
 
 .h-nav-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
 }
 
 .h-nav-item.active {
@@ -125,7 +125,7 @@
 
 .exit-b2b-btn:hover {
     background: #f59e0b;
-    color: #000;
+    color: var(--bg-dark);
 }
 
 /* Search Wrapper */
@@ -142,11 +142,11 @@
 }
 
 .search-input {
-    background: rgba(31, 41, 55, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
     border-radius: 8px;
     padding: 8px 12px 8px 40px;
-    color: #fff;
+    color: var(--text-primary);
     font-size: 13px;
     width: 240px;
     transition: all 0.2s;

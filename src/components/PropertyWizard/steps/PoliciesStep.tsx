@@ -99,8 +99,8 @@ const PoliciesStep: React.FC<StepProps> = ({ data, onChange }) => {
                     {data.houseRules?.petsAllowed && (
                         <div style={{
                             marginTop: '16px',
-                            padding: '16px',
-                            background: 'rgba(0,0,0,0.2)',
+                            padding: '24px',
+                            background: 'var(--bg-dark)',
                             borderRadius: '12px',
                             border: '1px solid var(--border)'
                         }}>
@@ -251,15 +251,15 @@ const PoliciesStep: React.FC<StepProps> = ({ data, onChange }) => {
             )}
 
             <div style={{
-                background: 'rgba(59, 130, 246, 0.1)',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
+                background: 'var(--bg-sidebar)',
+                border: '1px solid var(--border)',
                 borderRadius: '12px',
                 padding: '16px',
                 marginTop: '24px'
             }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                    <AlertCircle size={20} style={{ color: '#3b82f6', flexShrink: 0, marginTop: '2px' }} />
-                    <div style={{ fontSize: '13px', color: '#3b82f6' }}>
+                    <AlertCircle size={20} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '2px' }} />
+                    <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                         <strong>OTA Compliance Napomena:</strong>
                         <p style={{ margin: '8px 0 0 0', lineHeight: '1.5' }}>
                             Pravila kuće i politike su kritični za Booking.com i Airbnb integraciju.

@@ -43,27 +43,27 @@ interface AppConfig {
 
 
 const apps: AppConfig[] = [
-    { id: 'smart-search', name: 'Smart Search', desc: 'Inteligentna pretraga i preporuka smeštaja sa AI asistencijom i analizom tržišta.', icon: <Sparkles size={24} />, category: 'sales', color: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', badge: 'AI', minLevel: 1, path: '/smart-search' },
+    { id: 'smart-search', name: 'Smart Search', desc: 'Inteligentna pretraga i preporuka smeštaja sa AI asistencijom i analizom tržišta.', icon: <Sparkles size={24} />, category: 'sales', color: 'var(--gradient-blue)', badge: 'AI', minLevel: 1, path: '/smart-search' },
     { id: 'global-hub', name: 'Globalni Hub Search', desc: 'Jedinstvena pretraga za TCT i Open Greece baze.', icon: <Search size={24} />, category: 'sales', color: 'var(--gradient-blue)', badge: 'Beta', minLevel: 1, path: '/hub' },
-    { id: 'reservations', name: 'Rezervacije', desc: 'Centralni pregled i upravljanje svim rezervacijama.', icon: <FileText size={24} />, category: 'sales', color: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', badge: 'Novo', minLevel: 1, path: '/reservations' },
+    { id: 'reservations', name: 'Rezervacije', desc: 'Centralni pregled i upravljanje svim rezervacijama.', icon: <FileText size={24} />, category: 'sales', color: 'var(--gradient-blue)', badge: 'Novo', minLevel: 1, path: '/reservations' },
     { id: 'mars-analysis', name: 'Mars ERP Analitika', desc: 'Finansijska i operativna analiza procesa.', icon: <Database size={24} />, category: 'production', color: 'var(--gradient-blue)', badge: 'Live', minLevel: 1, path: '/mars-analysis' },
     { id: 'production-hub', name: 'Upravljanje Produkcijom', desc: 'Smeštaj, putovanja, transferi i paketi.', icon: <Package size={24} />, category: 'production', color: 'var(--gradient-green)', badge: 'Novo', minLevel: 1, path: '/production' },
-    { id: 'contact-architect', name: 'Master Contact Hub', desc: 'Centralna inteligencija svih kontakata, putnika, dobavljača i subagenata sa AI analitikom.', icon: <Users size={24} />, category: 'production', color: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', badge: 'AI CRM', minLevel: 1, path: '/contact-architect' },
+    { id: 'contact-architect', name: 'Master Contact Hub', desc: 'Centralna inteligencija svih kontakata, putnika, dobavljača i subagenata sa AI analitikom.', icon: <Users size={24} />, category: 'production', color: 'var(--gradient-purple)', badge: 'AI CRM', minLevel: 1, path: '/contact-architect' },
     { id: 'price-generator', name: 'Generator Cenovnika', desc: 'Kreiranje cenovnika i import u Mars.', icon: <BarChart3 size={24} />, category: 'production', color: 'var(--gradient-green)', minLevel: 3, path: '/pricing-intelligence' },
-    { id: 'yield-management', name: 'Revenue Management', desc: 'Dinamičko upravljanje cenama, praćenje konkurencije i optimizacija marži.', icon: <TrendingUp size={24} />, category: 'production', color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', badge: 'Novo', minLevel: 3, path: '/yield-management' },
+    { id: 'yield-management', name: 'Revenue Management', desc: 'Dinamičko upravljanje cenama, praćenje konkurencije i optimizacija marži.', icon: <TrendingUp size={24} />, category: 'production', color: 'var(--gradient-green)', badge: 'Novo', minLevel: 3, path: '/yield-management' },
     { id: 'marketing-ses', name: 'Amazon SES Marketing', desc: 'Slanje newslettera subagentima.', icon: <Mail size={24} />, category: 'marketing', color: 'var(--gradient-orange)', badge: 'Novi', minLevel: 4, path: '/marketing' },
-    { id: 'olympic-mail', name: 'Olympic Mail', desc: 'Centralizovano upravljanje email nalozima i komunikacijom.', icon: <Mail size={24} />, category: 'communication', color: 'var(--gradient-blue)', badge: 'Live', minLevel: 1, path: '/mail' },
-    { id: 'master-orchestrator', name: 'Master Orchestrator', desc: 'AI Agent Management System - Centralno upravljanje sa 6 specijalizovanih AI agenata.', icon: <Brain size={24} />, category: 'ai', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', badge: 'AI', minLevel: 6, path: '/orchestrator' },
-    { id: 'package-builder', name: 'Dynamic Package Builder', desc: 'Kreirajte kompleksne pakete kombinovanjem letova, hotela, transfera i dodatnih usluga.', icon: <Package size={24} />, category: 'sales', color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', badge: 'Novo', minLevel: 1, path: '/packages' },
-    { id: 'daily-activity', name: 'Dnevni Izveštaj Aktivnosti', desc: 'Kompletna analiza svih aktivnosti u sistemu sa detaljnim izveštajima po statusima rezervacija.', icon: <FileText size={24} />, category: 'system', color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', badge: 'Live', minLevel: 3, path: '/settings?tab=daily-activity' },
+    { id: 'olympic-mail', name: 'ClickToTravel Mail', desc: 'Centralizovano upravljanje email nalozima i komunikacijom.', icon: <Mail size={24} />, category: 'communication', color: 'var(--gradient-blue)', badge: 'Live', minLevel: 1, path: '/mail' },
+    { id: 'master-orchestrator', name: 'Master Orchestrator', desc: 'AI Agent Management System - Centralno upravljanje sa 6 specijalizovanih AI agenata.', icon: <Brain size={24} />, category: 'ai', color: 'var(--gradient-purple)', badge: 'AI', minLevel: 6, path: '/orchestrator' },
+    { id: 'package-builder', name: 'Dynamic Package Builder', desc: 'Kreirajte kompleksne pakete kombinovanjem letova, hotela, transfera i dodatnih usluga.', icon: <Package size={24} />, category: 'sales', color: 'var(--gradient-green)', badge: 'Novo', minLevel: 1, path: '/packages' },
+    { id: 'daily-activity', name: 'Dnevni Izveštaj Aktivnosti', desc: 'Kompletna analiza svih aktivnosti u sistemu sa detaljnim izveštajima po statusima rezervacija.', icon: <FileText size={24} />, category: 'system', color: 'var(--gradient-orange)', badge: 'Live', minLevel: 3, path: '/settings?tab=daily-activity' },
     { id: 'katana', name: 'Katana (To-Do)', desc: 'Efikasno upravljanje procesima i zadacima.', icon: <Sword size={24} />, category: 'system', color: 'var(--gradient-blue)', badge: 'Musashi', minLevel: 1, path: '/katana' },
     { id: 'deep-archive', name: 'Duboka Arhiva', desc: 'Centralni registar svih obrisanih i promenjenih stavki.', icon: <ShieldAlert size={24} />, category: 'system', color: 'var(--gradient-purple)', minLevel: 6, path: '/deep-archive' },
     { id: 'fortress', name: 'Fortress Security', desc: 'Command Center za nadzor i bezbednost koda.', icon: <Castle size={24} />, category: 'system', color: 'var(--gradient-purple)', badge: 'Master', minLevel: 6, path: '/fortress' },
-    { id: 'soft-zone', name: 'Vajckin Soft Zone', desc: 'AI-Driven Environmental Reflex System - Inteligentno prilagođavanje tržištu.', icon: <Sparkles size={24} />, category: 'ai', color: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', badge: 'Intelligence', minLevel: 1, path: '/soft-zone' },
-    { id: 'hotel-importer', name: 'AI Hotel Importer', desc: 'Uvoz i AI obrada hotela iz eksternih sistema (Solvex/OpenGreece).', icon: <Database size={24} />, category: 'system', color: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)', badge: 'New', minLevel: 5, path: '/admin/import' },
-    { id: 'destination-rep', name: 'Dest. Predstavnici', desc: 'Operativni rad na destinaciji, provere vaučera i komunikacija sa bazom.', icon: <ShieldCheck size={24} />, category: 'sales', color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', badge: 'Operativa', minLevel: 1, path: '/destination-rep' },
-    { id: 'api-connections', name: 'PARTNERI - DOBAVLJAČI', desc: 'Centralno upravljanje partnerima i dostupnim API dobavljačima.', icon: <Plug size={24} />, category: 'system', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', badge: 'Hub', minLevel: 1, path: '/api-connections' },
-    { id: 'subagent-admin', name: 'Subagent Admin', desc: 'Upravljanje subagentima, dozvolama, provizijama i finansijama.', icon: <Users size={24} />, category: 'system', color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', badge: 'New', minLevel: 6, path: '/subagent-admin' },
+    { id: 'soft-zone', name: 'Vajckin Soft Zone', desc: 'AI-Driven Environmental Reflex System - Inteligentno prilagođavanje tržištu.', icon: <Sparkles size={24} />, category: 'ai', color: 'var(--gradient-blue)', badge: 'Intelligence', minLevel: 1, path: '/soft-zone' },
+    { id: 'hotel-importer', name: 'AI Hotel Importer', desc: 'Uvoz i AI obrada hotela iz eksternih sistema (Solvex/OpenGreece).', icon: <Database size={24} />, category: 'system', color: 'var(--gradient-purple)', badge: 'New', minLevel: 5, path: '/admin/import' },
+    { id: 'destination-rep', name: 'Dest. Predstavnici', desc: 'Operativni rad na destinaciji, provere vaučera i komunikacija sa bazom.', icon: <ShieldCheck size={24} />, category: 'sales', color: 'var(--gradient-green)', badge: 'Operativa', minLevel: 1, path: '/destination-rep' },
+    { id: 'api-connections', name: 'PARTNERI - DOBAVLJAČI', desc: 'Centralno upravljanje partnerima i dostupnim API dobavljačima.', icon: <Plug size={24} />, category: 'system', color: 'var(--gradient-purple)', badge: 'Hub', minLevel: 1, path: '/api-connections' },
+    { id: 'subagent-admin', name: 'Subagent Admin', desc: 'Upravljanje subagentima, dozvolama, provizijama i finansijama.', icon: <Users size={24} />, category: 'system', color: 'var(--gradient-orange)', badge: 'New', minLevel: 6, path: '/subagent-admin' },
     { id: 'shifts-generator', name: 'Generator Smena', desc: 'Globalno upravljanje terminima, kapacitetima i vizuelna upozorenja za popunjenost.', icon: <RefreshCcw size={24} />, category: 'production', color: 'var(--gradient-blue)', badge: 'Critical', minLevel: 3, path: '/shifts-generator' }
 ];
 
@@ -159,7 +159,7 @@ const Dashboard: React.FC = () => {
         navigate(app.path);
     };
 
-    const FEATURED_IDS = ['smart-search', 'global-hub', 'reservations', 'destination-rep'];
+    const FEATURED_IDS = ['smart-search', 'global-hub', 'reservations'];
 
     const featuredApps = userApps.filter(app => FEATURED_IDS.includes(app.id) && userLevel >= app.minLevel);
     const otherApps = userApps.filter(app => !FEATURED_IDS.includes(app.id) && userLevel >= app.minLevel);
@@ -296,9 +296,9 @@ const Dashboard: React.FC = () => {
                                             alignItems: 'center',
                                             gap: '24px'
                                         }}>
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                                                 {app.badge && (
-                                                    <span className="badge" style={{ position: 'static', background: 'rgba(63, 185, 80, 0.1)', color: '#3fb950' }}>
+                                                    <span className="badge" style={{ position: 'static', margin: 0 }}>
                                                         {app.badge}
                                                     </span>
                                                 )}
@@ -314,18 +314,29 @@ const Dashboard: React.FC = () => {
 
                                     {viewMode === 'grid' && (
                                         <>
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
                                                 {app.badge && (
-                                                    <span className="badge" style={{ position: 'static', background: 'rgba(63, 185, 80, 0.1)', color: '#3fb950' }}>
+                                                    <span className="badge">
                                                         {app.badge}
                                                     </span>
                                                 )}
-                                                <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', position: 'absolute', top: '24px', right: '24px' }}>
                                                     <ShieldAlert size={10} /> {getUserRights(app.minLevel)}
                                                 </span>
                                             </div>
-                                            <p className="card-desc">{app.desc}</p>
-                                            <div className="card-footer" style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '600', color: 'var(--accent)' }}>
+                                            <p className="card-desc" style={{ marginBottom: '32px' }}>{app.desc}</p>
+                                            <div className="card-footer" style={{
+                                                position: 'absolute',
+                                                bottom: '20px',
+                                                right: '24px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                fontSize: '12px',
+                                                fontWeight: '800',
+                                                color: 'var(--accent)',
+                                                textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                                            }}>
                                                 {t.openModule} <ChevronRight size={14} />
                                             </div>
                                         </>
@@ -344,11 +355,11 @@ const Dashboard: React.FC = () => {
                         }}>
                             <div className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`} style={{
                                 display: 'grid',
-                                gridTemplateColumns: viewMode === 'list' ? '1fr' : `repeat(${featuredApps.length}, 1fr)`,
-                                maxWidth: '1200px',
+                                gridTemplateColumns: viewMode === 'list' ? '1fr' : 'repeat(3, 1fr)',
+                                maxWidth: '1400px',
                                 margin: '0 auto',
                                 width: '100%',
-                                gap: '20px'
+                                gap: '32px'
                             }}>
 
 
@@ -362,7 +373,8 @@ const Dashboard: React.FC = () => {
                                         onClick={() => handleAppClick(app)}
                                         style={{
                                             border: viewMode === 'list' ? '1px solid var(--border)' : '2px solid var(--accent)',
-                                            boxShadow: viewMode === 'list' ? 'none' : '0 0 20px var(--accent-glow)'
+                                            boxShadow: viewMode === 'list' ? 'none' : '0 0 25px var(--accent-glow)',
+                                            padding: viewMode === 'list' ? '24px' : '36px'
                                         }}
                                     >
                                         <div style={{
@@ -381,12 +393,15 @@ const Dashboard: React.FC = () => {
                                             }}>
                                                 <div className="card-icon" style={{
                                                     background: app.color,
-                                                    width: viewMode === 'list' ? '40px' : '48px',
-                                                    height: viewMode === 'list' ? '40px' : '48px',
-                                                    minWidth: viewMode === 'list' ? '40px' : '48px'
-                                                }}>{app.icon}</div>
+                                                    width: viewMode === 'list' ? '40px' : '64px',
+                                                    height: viewMode === 'list' ? '40px' : '64px',
+                                                    minWidth: viewMode === 'list' ? '40px' : '64px'
+                                                }}>{React.cloneElement(app.icon as React.ReactElement, { size: viewMode === 'list' ? 24 : 32 })}</div>
                                                 <div style={{ flex: 1 }}>
-                                                    <h3 className="card-title" style={{ margin: 0 }}>{app.name}</h3>
+                                                    <h3 className="card-title" style={{
+                                                        margin: 0,
+                                                        fontSize: viewMode === 'list' ? '18px' : '22px'
+                                                    }}>{app.name}</h3>
                                                     {viewMode === 'list' && <p className="card-desc" style={{ marginTop: '4px', marginBottom: 0 }}>{app.desc}</p>}
                                                 </div>
                                             </div>
@@ -397,12 +412,15 @@ const Dashboard: React.FC = () => {
                                                     alignItems: 'center',
                                                     gap: '24px'
                                                 }}>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                                                         {app.badge && (
-                                                            <span className="badge" style={{ position: 'static', background: 'rgba(63, 185, 80, 0.1)', color: '#3fb950' }}>
+                                                            <span className="badge" style={{ position: 'static', margin: 0 }}>
                                                                 {app.badge}
                                                             </span>
                                                         )}
+                                                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                            <ShieldAlert size={10} /> {getUserRights(app.minLevel)}
+                                                        </span>
                                                     </div>
                                                     <div className="card-footer" style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '600', color: 'var(--accent)' }}>
                                                         <ChevronRight size={18} />
@@ -412,15 +430,32 @@ const Dashboard: React.FC = () => {
 
                                             {viewMode === 'grid' && (
                                                 <>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
                                                         {app.badge && (
-                                                            <span className="badge" style={{ position: 'static', background: 'rgba(63, 185, 80, 0.1)', color: '#3fb950' }}>
+                                                            <span className="badge">
                                                                 {app.badge}
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="card-desc">{app.desc}</p>
-                                                    <div className="card-footer" style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '600', color: 'var(--accent)' }}>
+                                                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', position: 'absolute', top: '24px', right: '24px' }}>
+                                                        <ShieldAlert size={10} /> {getUserRights(app.minLevel)}
+                                                    </span>
+                                                    <p className="card-desc" style={{
+                                                        marginBottom: '40px',
+                                                        fontSize: '15px'
+                                                    }}>{app.desc}</p>
+                                                    <div className="card-footer" style={{
+                                                        position: 'absolute',
+                                                        bottom: '20px',
+                                                        right: '24px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                        fontSize: '12px',
+                                                        fontWeight: '800',
+                                                        color: 'var(--accent)',
+                                                        textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                                                    }}>
                                                         {t.openModule} <ChevronRight size={14} />
                                                     </div>
                                                 </>
@@ -577,9 +612,9 @@ const Dashboard: React.FC = () => {
                                                 alignItems: 'center',
                                                 gap: '24px'
                                             }}>
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                                                     {app.badge && (
-                                                        <span className="badge" style={{ position: 'static', background: 'rgba(63, 185, 80, 0.1)', color: '#3fb950' }}>
+                                                        <span className="badge" style={{ position: 'static', margin: 0 }}>
                                                             {app.badge}
                                                         </span>
                                                     )}
@@ -595,18 +630,29 @@ const Dashboard: React.FC = () => {
 
                                         {viewMode === 'grid' && (
                                             <>
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
                                                     {app.badge && (
-                                                        <span className="badge" style={{ position: 'static', background: 'rgba(63, 185, 80, 0.1)', color: '#3fb950' }}>
+                                                        <span className="badge">
                                                             {app.badge}
                                                         </span>
                                                     )}
-                                                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', position: 'absolute', top: '24px', right: '24px' }}>
                                                         <ShieldAlert size={10} /> {getUserRights(app.minLevel)}
                                                     </span>
                                                 </div>
-                                                <p className="card-desc">{app.desc}</p>
-                                                <div className="card-footer" style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '600', color: 'var(--accent)' }}>
+                                                <p className="card-desc" style={{ marginBottom: '32px' }}>{app.desc}</p>
+                                                <div className="card-footer" style={{
+                                                    position: 'absolute',
+                                                    bottom: '20px',
+                                                    right: '24px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    fontSize: '12px',
+                                                    fontWeight: '800',
+                                                    color: 'var(--accent)',
+                                                    textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                                                }}>
                                                     {t.openModule} <ChevronRight size={14} />
                                                 </div>
                                             </>

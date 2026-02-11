@@ -338,7 +338,6 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
                                     <select
                                         value={searchParams.cabinClass}
                                         onChange={e => setSearchParams(prev => ({ ...prev, cabinClass: e.target.value as any }))}
-                                        style={{ padding: '8px 12px', borderRadius: '10px' }}
                                     >
                                         <option value="economy">Ekonomska</option>
                                         <option value="premium_economy">Premium</option>
@@ -454,7 +453,6 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
                                     <select
                                         value={searchParams.cabinClass}
                                         onChange={e => setSearchParams(prev => ({ ...prev, cabinClass: e.target.value as any }))}
-                                        style={{ padding: '8px 12px', borderRadius: '10px' }}
                                     >
                                         <option value="economy">Ekonomska</option>
                                         <option value="premium_economy">Premium</option>

@@ -374,7 +374,7 @@ const ContentStep: React.FC<StepProps> = ({ data, onChange }) => {
                     </div>
 
                     {/* SEO SECTION */}
-                    <div style={{ background: 'rgba(0,0,0,0.1)', padding: '16px', borderRadius: '12px', border: '1px dashed var(--border)', marginTop: '16px' }}>
+                    <div style={{ background: 'var(--bg-app)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border)', marginTop: '24px' }}>
                         <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--accent)' }}>SEO & Meta Podaci (Google Search)</h4>
 
                         <div className="form-group" style={{ marginBottom: '16px' }}>
@@ -417,7 +417,7 @@ const ContentStep: React.FC<StepProps> = ({ data, onChange }) => {
                                 readOnly
                                 value={currentContent.structuredJson || ''}
                                 placeholder="Automatski generisan JSON-LD kod..."
-                                style={{ minHeight: '60px', fontSize: '11px', fontFamily: 'monospace', background: 'rgba(0,0,0,0.2)', opacity: 0.7 }}
+                                style={{ minHeight: '60px', fontSize: '11px', fontFamily: 'monospace', background: 'var(--bg-sidebar)', border: '1px solid var(--border)', opacity: 0.8 }}
                             />
                         </div>
                     </div>

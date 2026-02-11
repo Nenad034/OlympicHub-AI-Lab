@@ -90,9 +90,9 @@ const Sidebar: React.FC = () => {
                         <NavLink
                             to="/mail"
                             className={({ isActive }) => navItemClass(isActive)}
-                            title="Olympic Mail"
+                            title="ClickToTravel Mail"
                         >
-                            <Mail size={20} /> {!isSidebarCollapsed && 'Olympic Mail'}
+                            <Mail size={20} /> {!isSidebarCollapsed && 'ClickToTravel Mail'}
                         </NavLink>
                         <NavLink
                             to="/suppliers"

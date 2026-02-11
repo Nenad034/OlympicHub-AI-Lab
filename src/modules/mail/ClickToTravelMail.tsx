@@ -44,10 +44,10 @@ import { EmailConfigModal } from '../../components/email/EmailConfigModal';
 import { AIOfferModal } from '../../components/email/AIOfferModal';
 import { AIMailRules } from '../../components/email/AIMailRules';
 import { useNotificationCenter } from '../../hooks/useNotificationCenter';
-import './OlympicMail.modern.css';
+import './ClickToTravelMail.css';
 import '../../components/email/AIMailRules.css';
 
-export const OlympicMail: React.FC = () => {
+export const ClickToTravelMail: React.FC = () => {
     const { notify } = useNotificationCenter();
     const {
         accounts,
@@ -627,7 +627,7 @@ export const OlympicMail: React.FC = () => {
                                     type="email"
                                     value={newAccountData.email}
                                     onChange={e => setNewAccountData({ ...newAccountData, email: e.target.value })}
-                                    placeholder="korisnik@olympic.rs"
+                                    placeholder="korisnik@clicktotravel.rs"
                                 />
                             </div>
                             <div className="form-group">
@@ -1121,4 +1121,4 @@ export const OlympicMail: React.FC = () => {
     );
 };
 
-export default OlympicMail;
+export default ClickToTravelMail;

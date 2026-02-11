@@ -288,7 +288,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ data, onChange, searchQ
                 .form-section-title {
                     font-size: 14px;
                     font-weight: 700;
-                    color: #fff;
+                    color: var(--text-primary);
                     margin-bottom: 20px;
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
@@ -312,10 +312,10 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ data, onChange, searchQ
 
                 .form-input, .form-select {
                     width: 100%;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background: var(--bg-input);
+                    border: 1px solid var(--border);
                     padding: 16px 24px;
-                    border-radius: 100px;
+                    border-radius: 12px;
                     color: var(--text-primary);
                     outline: none;
                     transition: 0.3s;
@@ -324,24 +324,24 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ data, onChange, searchQ
 
                 .form-input:focus, .form-select:focus {
                     border-color: var(--accent);
-                    background: rgba(0, 92, 197, 0.1);
-                    box-shadow: 0 0 0 4px rgba(0, 92, 197, 0.1);
+                    background: var(--bg-sidebar);
+                    box-shadow: 0 0 0 4px rgba(0, 92, 197, 0.05);
                 }
 
                 .form-select {
                     appearance: none;
-                    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+                    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
                     background-repeat: no-repeat;
                     background-position: right 16px center;
                     background-size: 16px;
                 }
 
                 .btn-secondary {
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background: var(--bg-sidebar);
+                    border: 1px solid var(--border);
                     color: var(--text-primary);
                     padding: 0 24px;
-                    border-radius: 100px;
+                    border-radius: 12px;
                     cursor: pointer;
                     font-weight: 600;
                     font-size: 13px;
@@ -350,7 +350,8 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ data, onChange, searchQ
                 }
 
                 .btn-secondary:hover {
-                    background: rgba(255, 255, 255, 0.1);
+                    background: var(--bg-input);
+                    border-color: var(--accent);
                     transform: translateY(-1px);
                 }
             `}</style>

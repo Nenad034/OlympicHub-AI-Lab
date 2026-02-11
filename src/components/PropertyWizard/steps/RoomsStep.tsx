@@ -115,8 +115,8 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
                     }
 
                     return (
-                        <div key={setup.id} className="glass-card" style={{ padding: '0', overflow: 'hidden', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
-                            <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '12px 24px', borderBottom: '1px solid rgba(139, 92, 246, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div key={setup.id} className="glass-card" style={{ padding: '0', overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+                            <div style={{ background: 'rgba(139, 92, 246, 0.05)', padding: '12px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div style={{ background: 'var(--accent)', color: '#fff', padding: '4px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 900 }}>
                                     {setup.basic} OSNOVNA + {setup.extra} POMOĆNA
                                 </div>
@@ -168,7 +168,7 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
                                                         }}
                                                     />
                                                 </td>
-                                                <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 900, color: '#fff' }}>
+                                                <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 900, color: 'var(--text-primary)' }}>
                                                     {isSharing ? v.total + 1 : v.total}
                                                 </td>
                                                 <td style={{ padding: '10px 12px' }}>
@@ -215,13 +215,13 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
         if (!room) return null;
 
         return (
-            <div className="wizard-overlay" style={{ backdropFilter: 'blur(10px)', background: 'rgba(11, 15, 26, 0.8)' }}>
-                <div className="wizard-container" style={{ maxWidth: '1400px', margin: 'auto', background: 'transparent', height: '90vh', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
-                    <div className="wizard-main-area" style={{ background: '#0f172a' }}>
-                        <div className="wizard-topbar" style={{ background: 'rgba(30, 41, 59, 0.5)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="wizard-overlay" style={{ backdropFilter: 'blur(10px)', background: 'rgba(239, 243, 248, 0.8)' }}>
+                <div className="wizard-container" style={{ maxWidth: '1400px', margin: 'auto', background: 'transparent', height: '90vh', borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--border)', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }}>
+                    <div className="wizard-main-area" style={{ background: 'var(--bg-dark)' }}>
+                        <div className="wizard-topbar" style={{ background: 'var(--bg-sidebar)', borderBottom: '1px solid var(--border)' }}>
                             <div className="topbar-title">
-                                <span className="topbar-subtitle">MODAL: UREĐIVANJE JEDINICE</span>
-                                <h3>{room.nameInternal || 'Nova Jedinica'}</h3>
+                                <span className="topbar-subtitle" style={{ color: 'var(--text-secondary)' }}>UREĐIVANJE JEDINICE</span>
+                                <h3 style={{ color: 'var(--text-primary)' }}>{room.nameInternal || 'Nova Jedinica'}</h3>
                             </div>
                             <div style={{ display: 'flex', gap: '12px' }}>
                                 <button className="btn-secondary" onClick={() => setEditingRoom(null)}><X size={18} style={{ marginRight: '8px' }} /> Zatvori</button>
@@ -286,7 +286,7 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
 
                                             <div style={{ display: 'grid', gap: '12px', marginBottom: '24px' }}>
                                                 {(room.bedSetupVariants || []).map((setup, idx) => (
-                                                    <div key={setup.id} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                    <div key={setup.id} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', background: 'var(--bg-sidebar)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border)' }}>
                                                         <div style={{ flex: 1 }}>
                                                             <label style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 800, marginBottom: '4px', display: 'block' }}>OSNOVNI</label>
                                                             <input
@@ -320,7 +320,7 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
                                                                 const newVariants = room.bedSetupVariants.filter((_, i) => i !== idx);
                                                                 updateRoom(editingRoom, { bedSetupVariants: newVariants });
                                                             }}
-                                                            style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', height: '36px', width: '36px', borderRadius: '8px', cursor: 'pointer' }}
+                                                            style={{ background: 'rgba(239, 68, 68, 0.08)', border: 'none', color: '#ef4444', height: '36px', width: '36px', borderRadius: '8px', cursor: 'pointer' }}
                                                         >
                                                             <Trash2 size={16} />
                                                         </button>
@@ -390,11 +390,11 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <div className="form-section" style={{ flex: 1, overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                    <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <Bed className="text-blue-500" /> Smeštajne Jedinice
+                    <h2 style={{ fontSize: '24px', fontWeight: 900, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <Bed style={{ color: 'var(--accent)' }} /> Smeštajne Jedinice
                     </h2>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '4px' }}>
+                        <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: '12px', padding: '4px' }}>
                             <button onClick={() => setViewMode('grid')} style={{ padding: '8px 16px', background: viewMode === 'grid' ? 'var(--accent)' : 'transparent', color: viewMode === 'grid' ? '#fff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
                                 <Grid size={16} /> Grid
                             </button>
@@ -437,8 +437,8 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
                                 display: viewMode === 'list' ? 'flex' : 'block',
                                 alignItems: viewMode === 'list' ? 'center' : undefined,
                                 gap: viewMode === 'list' ? '20px' : undefined,
-                                background: 'rgba(15, 23, 42, 0.4)',
-                                border: '1px solid rgba(255,255,255,0.05)'
+                                background: 'var(--bg-card)',
+                                border: '1px solid var(--border)'
                             }}
                             onClick={() => setEditingRoom(roomIndex)}
                         >
@@ -446,8 +446,8 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
                                 <Bed size={28} />
                             </div>
                             <div style={{ flex: 1 }}>
-                                <h4 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', margin: 0 }}>{room.nameInternal || 'Soba bez naziva'}</h4>
-                                <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '4px' }}>#{room.code} • {room.category}</div>
+                                <h4 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>{room.nameInternal || 'Soba bez naziva'}</h4>
+                                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>#{room.code} • {room.category}</div>
 
                                 {/* Bed, Size & View Badge Grid */}
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
@@ -480,17 +480,17 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
                                 >
                                     +
                                 </motion.button>
-                                <motion.button whileTap={{ scale: 0.95 }} className="btn-secondary" style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.05)' }} onClick={(e) => {
+                                <motion.button whileTap={{ scale: 0.95 }} className="btn-secondary" style={{ padding: '8px 12px', background: 'var(--bg-sidebar)', border: '1px solid var(--border)' }} onClick={(e) => {
                                     e.stopPropagation();
                                     const copy = { ...room, roomTypeId: Math.random().toString(36).substr(2, 9), code: `${room.code}_COPY` };
                                     onChange({ roomTypes: [...(data.roomTypes || []), copy] });
                                 }}>
                                     <Copy size={16} />
                                 </motion.button>
-                                <motion.button whileTap={{ scale: 0.95 }} className="btn-secondary" style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.05)' }} onClick={(e) => { e.stopPropagation(); setEditingRoom(roomIndex); }}>
+                                <motion.button whileTap={{ scale: 0.95 }} className="btn-secondary" style={{ padding: '8px 12px', background: 'var(--bg-sidebar)', border: '1px solid var(--border)' }} onClick={(e) => { e.stopPropagation(); setEditingRoom(roomIndex); }}>
                                     Uredi
                                 </motion.button>
-                                <motion.button whileTap={{ scale: 0.95 }} style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', borderRadius: '10px' }} onClick={(e) => { e.stopPropagation(); deleteRoom(roomIndex); }}>
+                                <motion.button whileTap={{ scale: 0.95 }} style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.08)', border: 'none', color: '#ef4444', borderRadius: '10px' }} onClick={(e) => { e.stopPropagation(); deleteRoom(roomIndex); }}>
                                     <Trash2 size={16} />
                                 </motion.button>
                             </div>

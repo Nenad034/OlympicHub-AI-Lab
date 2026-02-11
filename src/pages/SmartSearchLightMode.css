@@ -1,17 +1,17 @@
-/* THE "ZENITH MINIMALIST" UI - EXPERT PROPOSAL */
+/* THE "ZENITH MINIMALIST" UI - PETROLEUM EDITION */
 
 /* Color Palette:
-   1. Primary: #2563eb (Royal Blue) - For actions and trust
-   2. Background: #f8fafc (Ghost White) - For breathing space
-   3. Accent/Text: #1e293b (Midnight Slate) - For authority and focus
+   1. Primary: #0E4B5E (Deep Petroleum) - For structural clarity
+   2. Background: #ffffff (Pure White) - For breathing space
+   3. Accent/Focus: #10B981 (Petroleum Green) - For active highlights
 */
 
 /* Main Container Architecture */
 .light-theme .smart-search-container,
 .light-theme .global-hub-search-v2,
 .light-theme .smart-search-container-v2 {
-    background: #f8fafc !important;
-    /* Extremely clean, non-tiring background */
+    background: #ffffff !important;
+    /* Pure, clean background */
     color: #1e293b !important;
     padding-top: 2rem !important;
     padding-bottom: 10rem !important;
@@ -20,41 +20,40 @@
 /* Header */
 .light-theme .smart-search-header {
     background: #ffffff !important;
-    border-bottom: 1px solid #e2e8f0 !important;
+    border-bottom: 1px solid #E0ECEE !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
     margin: -2rem -2rem 4rem -2rem !important;
 }
 
-/* Search Blocks - The "Floating Paper" Effect */
+/* Search Blocks - Petroleum Subtle Depth */
 .light-theme .search-form-smart,
 .light-theme .search-card-frame,
 .light-theme .provider-toggles-section,
 .light-theme .package-builder-inline,
 .light-theme .flight-search-form,
 .light-theme .wizard-progress.ss-glass-bar {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 24px !important;
-    box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.04) !important;
-    /* Soft premium shadow */
+    background: #E0ECEE !important;
+    border: 1px solid #0E4B5E !important;
+    border-radius: 20px !important;
+    box-shadow: 0 15px 35px -10px rgba(14, 75, 94, 0.04) !important;
     padding: 2.5rem !important;
     margin-bottom: 30px !important;
 }
 
-/* Progress Wizard - Simplified & Clear */
+/* Progress Wizard - Aligned with Theme */
 .light-theme .wizard-progress.ss-glass-bar {
-    background: #f1f5f9 !important;
+    background: #E0ECEE !important;
     border: none !important;
     padding: 1.2rem !important;
 }
 
 .light-theme .p-step-ss .s-num-ss {
     background: #ffffff !important;
-    color: #64748b !important;
+    color: #0E4B5E !important;
 }
 
 .light-theme .p-step-ss.active .s-num-ss {
-    background: #2563eb !important;
+    background: #0E4B5E !important;
     color: #ffffff !important;
 }
 
@@ -63,84 +62,154 @@
     font-weight: 800 !important;
 }
 
-/* Input Fields - Maximum Clarity */
+/* Main Visual Style: Petroleum Light & Deep Petrol Borders */
 .light-theme .smart-input.premium,
-.light-theme .multi-destination-input.premium,
-.light-theme .guest-selector.premium,
 .light-theme .input-box,
-.light-theme .destination-input-wrapper,
 .light-theme .input-group-flight input,
 .light-theme .budget-input,
 .light-theme .input-group-flight select,
-.light-theme .flight-counter-controls {
-    background: #fdfdfd !important;
-    border: 1px solid #cbd5e1 !important;
-    color: #1e293b !important;
+.light-theme .flight-counter-controls,
+.light-theme .flex-pill-selection,
+.light-theme .custom-date-display,
+.light-theme .child-age-input,
+.light-theme .v-filter-btn {
+    background: #E0ECEE !important;
+    border: 2px solid #0E4B5E !important;
+    color: #0E4B5E !important;
     border-radius: 12px !important;
+    padding: 10px 14px !important;
+    font-weight: 600 !important;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: none !important;
+}
+
+/* Specific Height for standard fields */
+.light-theme .input-box,
+.light-theme .input-group-flight input,
+.light-theme .input-group-flight select,
+.light-theme .custom-date-display {
+    height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* Destination Wrapper Fix - allow growth */
+.light-theme .destination-input-wrapper,
+.light-theme .multi-destination-input.premium {
+    min-height: 48px !important;
+    height: auto !important;
+    background: #E0ECEE !important;
+    border: 2px solid #0E4B5E !important;
+    border-radius: 12px;
+    padding: 4px 8px !important;
+}
+
+/* Structural Containers - Unified Auto-height */
+.light-theme .search-card-frame,
+.light-theme .flight-search-form {
+    background: #E0ECEE !important;
+    border: 1px solid #0E4B5E !important;
+    height: auto !important;
+    padding: 2rem !important;
+    margin-bottom: 2rem !important;
+    display: block !important;
+}
+
+/* Tabs Highlights - Petroleum Focus */
+.light-theme .nav-tab-item.active {
+    background: #0E4B5E !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 16px rgba(14, 75, 94, 0.4) !important;
+}
+
+/* Tabs Navigation */
+.light-theme .tabs-nav-container {
+    background: #E0ECEE !important;
+    border: 2px solid #0E4B5E !important;
+    border-radius: 12px !important;
+    padding: 6px !important;
+}
+
+.light-theme .input-group-flight select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230E4B5E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 40px !important;
 }
 
 .light-theme .smart-input.premium:focus,
 .light-theme .multi-destination-input.premium:focus-within,
+.light-theme .input-group-flight input:focus,
+.light-theme .input-group-flight select:focus,
 .light-theme .input-box:hover {
-    border-color: #2563eb !important;
+    border-color: #10B981 !important;
+    /* Petrol Green Focus */
     background: #ffffff !important;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.06) !important;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1) !important;
+}
+
+/* Placeholders Visibility */
+.light-theme ::placeholder {
+    color: rgba(14, 75, 94, 0.5) !important;
 }
 
 /* Labels */
 .light-theme .form-field label,
 .light-theme .field-label,
 .light-theme .field-label-mini {
-    color: #475569 !important;
-    /* Slate 600 - Perfect for scanning */
-    font-weight: 700 !important;
+    color: #0E4B5E !important;
+    /* Deep Petroleum Labels */
+    font-weight: 800 !important;
     text-transform: uppercase;
     font-size: 0.75rem !important;
     letter-spacing: 0.5px;
+    margin-bottom: 8px !important;
+    display: block !important;
 }
 
-/* Primary Action Buttons - The Conversion Driver */
+/* Primary Action Buttons - Petroleum Style */
 .light-theme .btn-search-main,
 .light-theme .btn-book-v4,
 .light-theme .search-flights-btn {
-    background: #2563eb !important;
-    color: #ffffff !important;
-    border: none !important;
+    background: #E0ECEE !important;
+    color: #0E4B5E !important;
+    border: 2px solid #0E4B5E !important;
     font-weight: 800 !important;
     text-transform: uppercase;
     letter-spacing: 1px;
-    box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2) !important;
+    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.1) !important;
     border-radius: 14px !important;
+    transition: all 0.2s ease !important;
+}
+
+.light-theme .btn-search-main:hover,
+.light-theme .btn-book-v4:hover,
+.light-theme .search-flights-btn:hover {
+    background: #ffffff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(14, 75, 94, 0.15) !important;
 }
 
 .light-theme .btn-search-main span {
-    color: #ffffff !important;
+    color: #0E4B5E !important;
 }
 
-/* Floating Navigation Bar */
-.light-theme #floating-wizard-nav.wizard-navigation.ss-floating-nav {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1) !important;
-    border-radius: 24px !important;
-}
-
+/* Results Customization */
 .light-theme .ss-total-amount {
-    color: #2563eb !important;
+    color: #0E4B5E !important;
     font-weight: 950 !important;
 }
 
-/* Result Cards - Soft and Inviting */
 .light-theme .hotel-result-card-premium.unified {
     background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
+    border: 1px solid #E0ECEE !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
 }
 
 .light-theme .hotel-result-card-premium.unified:hover {
-    border-color: #2563eb !important;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08) !important;
+    border-color: #10B981 !important;
+    box-shadow: 0 20px 25px -5px rgba(14, 75, 94, 0.08) !important;
 }
 
 .light-theme .price-val {
@@ -153,6 +222,6 @@
 }
 
 .light-theme .nav-tab-item.active {
-    background: #2563eb !important;
+    background: #0E4B5E !important;
     color: #ffffff !important;
 }

@@ -55,7 +55,7 @@ const HorizontalNav: React.FC = () => {
                             <Package size={18} /> {t.production}
                         </NavLink>
                         <NavLink to="/mail" className={({ isActive }) => navItemClass(isActive)}>
-                            <Mail size={18} /> Olympic Mail
+                            <Mail size={18} /> ClickToTravel Mail
                         </NavLink>
                         {/* <NavLink to="/total-trip" className={({ isActive }) => navItemClass(isActive)}>
                             <Compass size={18} /> Total Trip

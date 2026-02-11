@@ -119,20 +119,21 @@ const ImagesStep: React.FC<StepProps> = ({ data, onChange }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 3fr) minmax(0, 2fr)', gap: '24px', marginBottom: '32px' }}>
                     {/* Column 1: Auto Fetch */}
                     <div style={{
-                        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                        background: 'var(--bg-dark)',
                         border: '1px solid var(--border)',
                         borderRadius: '16px',
                         padding: '24px',
                         display: 'flex',
                         flexDirection: 'column',
-                        justifyContent: 'space-between'
+                        justifyContent: 'space-between',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
                     }}>
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                                <div style={{ padding: '8px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', color: '#3b82f6' }}>
+                                <div style={{ padding: '8px', background: 'rgba(59, 130, 246, 0.08)', borderRadius: '8px', color: 'var(--accent)' }}>
                                     <Sparkles size={18} />
                                 </div>
-                                <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '600' }}>Preuzimanje sa Sajta</h4>
+                                <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)' }}>Preuzimanje sa Sajta</h4>
                             </div>
 
                             <div className="form-group">
@@ -143,7 +144,7 @@ const ImagesStep: React.FC<StepProps> = ({ data, onChange }) => {
                                         placeholder="https://www.hotel.com"
                                         value={websiteUrl}
                                         onChange={e => setWebsiteUrl(e.target.value)}
-                                        style={{ background: 'var(--bg-main)' }}
+                                        style={{ background: 'var(--bg-sidebar)' }}
                                     />
                                     <button
                                         className="btn-primary-glow"
@@ -157,7 +158,7 @@ const ImagesStep: React.FC<StepProps> = ({ data, onChange }) => {
                             </div>
                         </div>
 
-                        <div style={{ marginTop: '20px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '12px', borderRadius: '10px', fontSize: '12px', lineHeight: '1.5' }}>
+                        <div style={{ marginTop: '20px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59,130,246,0.1)', color: 'var(--accent)', padding: '12px', borderRadius: '10px', fontSize: '12px', lineHeight: '1.5' }}>
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '4px', fontWeight: '600' }}>
                                 <AlertCircle size={14} style={{ marginTop: '1px' }} />
                                 Demo Mod Aktiviran
@@ -174,17 +175,17 @@ const ImagesStep: React.FC<StepProps> = ({ data, onChange }) => {
                         padding: '24px'
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                            <div style={{ padding: '8px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', color: '#10b981' }}>
+                            <div style={{ padding: '8px', background: 'rgba(16, 185, 129, 0.08)', borderRadius: '8px', color: 'var(--accent-green)' }}>
                                 <Plus size={18} />
                             </div>
-                            <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '600' }}>Brzi Ručni Unos</h4>
+                            <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)' }}>Brzi Ručni Unos</h4>
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <input type="url" className="form-input" placeholder="https://image-url.com..." value={imageUrl} onChange={e => setImageUrl(e.target.value)} style={{ background: 'var(--bg-main)' }} />
+                            <input type="url" className="form-input" placeholder="https://image-url.com..." value={imageUrl} onChange={e => setImageUrl(e.target.value)} style={{ background: 'var(--bg-sidebar)' }} />
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                <select className="form-select" value={imageCategory} onChange={e => setImageCategory(e.target.value as any)} style={{ background: 'var(--bg-main)' }}>
+                                <select className="form-select" value={imageCategory} onChange={e => setImageCategory(e.target.value as any)} style={{ background: 'var(--bg-sidebar)' }}>
                                     <option value="Exterior">Exterior</option>
                                     <option value="Lobby">Lobby</option>
                                     <option value="Room">Room</option>
@@ -194,7 +195,7 @@ const ImagesStep: React.FC<StepProps> = ({ data, onChange }) => {
                                     <option value="View">View</option>
                                     <option value="Amenity">Amenity</option>
                                 </select>
-                                <button className="btn-secondary" onClick={addImage} disabled={!imageUrl} style={{ justifyContent: 'center', background: 'var(--bg-main)' }}>Dodaj Sliku</button>
+                                <button className="btn-secondary" onClick={addImage} disabled={!imageUrl} style={{ justifyContent: 'center', background: 'var(--bg-sidebar)', color: 'var(--text-primary)' }}>Dodaj Sliku</button>
                             </div>
                         </div>
                     </div>
@@ -225,13 +226,13 @@ const ImagesStep: React.FC<StepProps> = ({ data, onChange }) => {
                                 }}
                             >
                                 <div style={{ height: '160px', background: `url(${image.url}) center/cover`, position: 'relative' }}>
-                                    <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>
+                                    <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(15, 23, 42, 0.8)', color: '#fff', fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>
                                         {image.category}
                                     </div>
                                     <button onClick={(e) => { e.preventDefault(); deleteImage(index); }} style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(239, 68, 68, 0.9)', color: '#fff', border: 'none', borderRadius: '4px', padding: '4px', cursor: 'pointer' }}>
                                         <Trash2 size={12} />
                                     </button>
-                                    <div style={{ position: 'absolute', bottom: 0, right: 0, background: '#fff', color: '#000', fontSize: '10px', padding: '2px 6px', borderTopLeftRadius: '4px', fontWeight: 'bold' }}>
+                                    <div style={{ position: 'absolute', bottom: 0, right: 0, background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: '10px', padding: '2px 6px', borderTopLeftRadius: '4px', fontWeight: 'bold' }}>
                                         #{index + 1}
                                     </div>
                                 </div>

@@ -412,11 +412,11 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    background: #0f172a;
+    background: var(--bg-card);
     padding: 1rem;
     border-radius: 16px;
     margin-bottom: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
     position: relative;
     z-index: 1000;
 }
@@ -623,7 +623,7 @@
 .price-action-section {
     margin-top: auto;
     padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid var(--border-subtle);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -698,13 +698,13 @@
     align-items: center;
     gap: 0.75rem;
     padding: 1rem 1.5rem;
-    background: #ffd700;
-    color: #000;
+    background: var(--accent);
+    color: #fff;
     border: none;
     border-radius: 99px;
     font-weight: 800;
     font-size: 1rem;
-    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 10px 30px var(--accent-glow);
     cursor: pointer;
     z-index: 1000;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

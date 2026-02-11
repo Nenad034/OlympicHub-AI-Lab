@@ -335,10 +335,11 @@ const RatesStep: React.FC<StepProps> = ({ data, onChange }) => {
 
                                     {rate.cancellationPolicy.rules.map((rule, ruleIndex) => (
                                         <div key={ruleIndex} style={{
-                                            background: 'rgba(0,0,0,0.2)',
+                                            background: 'var(--bg-dark)',
                                             padding: '16px',
                                             borderRadius: '12px',
                                             marginBottom: '12px',
+                                            border: '1px solid var(--border)',
                                             display: 'grid',
                                             gridTemplateColumns: '1fr 1fr 1fr 1fr auto',
                                             gap: '12px',
@@ -526,15 +527,15 @@ const RatesStep: React.FC<StepProps> = ({ data, onChange }) => {
             </div>
 
             <div style={{
-                background: 'rgba(34, 197, 94, 0.1)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                background: 'var(--bg-sidebar)',
+                border: '1px solid var(--border)',
                 borderRadius: '12px',
                 padding: '16px',
                 marginTop: '24px'
             }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                    <AlertCircle size={20} style={{ color: '#22c55e', flexShrink: 0, marginTop: '2px' }} />
-                    <div style={{ fontSize: '13px', color: '#22c55e' }}>
+                    <AlertCircle size={20} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '2px' }} />
+                    <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                         <strong>Rate Plans & Pricing:</strong>
                         <p style={{ margin: '8px 0 0 0', lineHeight: '1.5' }}>
                             Rate Plans definišu kako se cene primenjuju na različite sobe i uslove. Cancellation Policy mora biti jasno definisana prema OTA standardima.

@@ -223,21 +223,13 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
                     {/* ROW 1: DESTINATION */}
                     <div className="destination-row" style={{ marginBottom: '20px' }}>
                         <div className="field-label"><MapPin size={14} /> Destinacija ili Smeštaj</div>
-                        <div className="destination-input-wrapper" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px 15px' }}>
+                        <div className="destination-input-wrapper">
                             <input
                                 type="text"
                                 placeholder="Gde putujete? (npr. Bansko, Hotel Perun...)"
                                 value={dest.city}
                                 onChange={(e) => updateDestination(idx, 'city', e.target.value)}
-                                style={{
-                                    background: 'transparent',
-                                    border: 'none',
-                                    outline: 'none',
-                                    width: '100%',
-                                    color: 'white',
-                                    fontSize: '1rem',
-                                    fontWeight: '500'
-                                }}
+                                className="smart-input-inline"
                             />
                         </div>
                     </div>
@@ -512,14 +504,6 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
                                             value={budgetFrom}
                                             onChange={(e) => setBudgetFrom(e.target.value)}
                                             className="budget-input"
-                                            style={{
-                                                flex: 1,
-                                                borderRadius: '12px',
-                                                padding: '12px',
-                                                fontSize: '0.85rem',
-                                                outline: 'none',
-                                                width: '100%'
-                                            }}
                                         />
                                         <input
                                             type="number"
@@ -527,14 +511,6 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
                                             value={budgetTo}
                                             onChange={(e) => setBudgetTo(e.target.value)}
                                             className="budget-input"
-                                            style={{
-                                                flex: 1,
-                                                borderRadius: '12px',
-                                                padding: '12px',
-                                                fontSize: '0.85rem',
-                                                outline: 'none',
-                                                width: '100%'
-                                            }}
                                         />
                                     </div>
                                 </div>

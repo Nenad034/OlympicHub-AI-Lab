@@ -251,8 +251,8 @@ const CapacityStep: React.FC<StepProps> = ({ data, onChange }) => {
                     >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', padding: '0 8px' }}>
                             <div>
-                                <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#fff', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <CalendarIcon className="text-blue-500" />
+                                <h2 style={{ fontSize: '24px', fontWeight: 900, color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <CalendarIcon style={{ color: 'var(--accent)' }} />
                                     Upravljanje Kapacitetima
                                 </h2>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Kliknite na sobu da upravljate kapacitetima kroz AI-vođeni sistem.</p>
@@ -304,8 +304,8 @@ const CapacityStep: React.FC<StepProps> = ({ data, onChange }) => {
                                         <Bed size={24} />
                                     </div>
                                     <div style={{ flex: 1 }}>
-                                        <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#fff', margin: 0 }}>{r.nameInternal || 'Soba bez naziva'}</h4>
-                                        <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>#{r.code} • {r.capacity?.type || 'Allotment'}</div>
+                                        <h4 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>{r.nameInternal || 'Soba bez naziva'}</h4>
+                                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>#{r.code} • {r.capacity?.type || 'Allotment'}</div>
                                     </div>
                                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                         <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '6px', fontWeight: 700 }}>
@@ -337,21 +337,22 @@ const CapacityStep: React.FC<StepProps> = ({ data, onChange }) => {
                         style={{
                             position: 'absolute',
                             inset: '-20px',
-                            background: '#0b0f1a',
+                            background: 'var(--bg-dark)',
                             zIndex: 100,
                             display: 'flex',
                             flexDirection: 'column',
-                            borderRadius: '16px'
+                            borderRadius: '16px',
+                            border: '1px solid var(--border)'
                         }}
                     >
                         {/* Header */}
-                        <div style={{ padding: '20px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15, 23, 42, 0.8)' }}>
+                        <div style={{ padding: '20px 32px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-sidebar)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--gradient-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
                                     <CalendarIcon size={24} />
                                 </div>
                                 <div>
-                                    <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#fff', margin: 0 }}>
+                                    <h2 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)', margin: 0 }}>
                                         {room.nameInternal} - Kapaciteti
                                     </h2>
                                     <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>#{room.code} • {room.capacity?.type || 'Allotment'}</p>
@@ -409,35 +410,35 @@ const CapacityStep: React.FC<StepProps> = ({ data, onChange }) => {
 
                                 {/* LEFT: Capacity Table */}
                                 <div className="glass-card" style={{ padding: '0', display: 'flex', flexDirection: 'column' }}>
-                                    <div style={{ padding: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <h3 style={{ fontSize: '14px', fontWeight: 900, textTransform: 'uppercase', color: '#fff', margin: 0, letterSpacing: '0.05em' }}>Pregled Kapaciteta</h3>
-                                        <div style={{ padding: '6px 14px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', fontSize: '12px', fontWeight: 900 }}>
+                                    <div style={{ padding: '24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <h3 style={{ fontSize: '14px', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-primary)', margin: 0, letterSpacing: '0.05em' }}>Pregled Kapaciteta</h3>
+                                        <div style={{ padding: '6px 14px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.05)', color: 'var(--accent)', fontSize: '12px', fontWeight: 900 }}>
                                             Period: {capacityRange.start} - {capacityRange.end}
                                         </div>
                                     </div>
 
                                     <div style={{ overflow: 'auto', maxHeight: '400px' }} className="glass-scroll">
                                         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
-                                            <thead style={{ position: 'sticky', top: 0, background: 'rgba(15, 23, 42, 0.98)', zIndex: 10 }}>
+                                            <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-sidebar)', zIndex: 10 }}>
                                                 <tr>
-                                                    <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Datum</th>
-                                                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Tip</th>
-                                                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Dodato</th>
-                                                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Prodato</th>
-                                                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 800, color: '#10b981', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Preostalo</th>
+                                                    <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)' }}>Datum</th>
+                                                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)' }}>Tip</th>
+                                                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)' }}>Dodato</th>
+                                                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)' }}>Prodato</th>
+                                                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 800, color: '#10b981', borderBottom: '1px solid var(--border)' }}>Preostalo</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {getCapacityTableData().map((dayData) => (
-                                                    <tr key={dayData.date} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                                                        <td style={{ padding: '12px 24px', fontSize: '13px', color: '#fff', fontWeight: 600 }}>{dayData.date}</td>
+                                                    <tr key={dayData.date} style={{ borderBottom: '1px solid var(--border)' }}>
+                                                        <td style={{ padding: '12px 24px', fontSize: '13px', color: 'var(--text-primary)', fontWeight: 600 }}>{dayData.date}</td>
                                                         <td style={{ padding: '12px', textAlign: 'center' }}>
-                                                            <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', fontSize: '10px', fontWeight: 800 }}>
+                                                            <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.08)', color: 'var(--accent)', fontSize: '10px', fontWeight: 800 }}>
                                                                 {room.capacity?.type || 'ALOTMAN'}
                                                             </span>
                                                         </td>
-                                                        <td style={{ padding: '12px', textAlign: 'center', color: '#fff', fontWeight: 700 }}>{dayData.assigned}</td>
-                                                        <td style={{ padding: '12px', textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>{dayData.sold}</td>
+                                                        <td style={{ padding: '12px', textAlign: 'center', color: 'var(--text-primary)', fontWeight: 700 }}>{dayData.assigned}</td>
+                                                        <td style={{ padding: '12px', textAlign: 'center', color: 'var(--text-secondary)' }}>{dayData.sold}</td>
                                                         <td style={{ padding: '12px', textAlign: 'center', color: '#10b981', fontWeight: 900 }}>{dayData.remaining}</td>
                                                     </tr>
                                                 ))}
@@ -547,18 +548,18 @@ const CapacityStep: React.FC<StepProps> = ({ data, onChange }) => {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
 
                                 {/* LEFT: AI Co-Pilot */}
-                                <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', padding: '0', border: '1px solid rgba(59, 130, 246, 0.2)', background: 'rgba(15, 23, 42, 0.6)', minHeight: '400px' }}>
-                                    <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(59, 130, 246, 0.05)' }}>
+                                <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', padding: '0', border: '1px solid var(--border)', background: 'var(--bg-card)', minHeight: '400px' }}>
+                                    <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(59, 130, 246, 0.04)' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <Sparkles className="text-blue-500" size={20} />
-                                            <span style={{ fontSize: '15px', fontWeight: 900, color: '#fff' }}>AI Co-Pilot</span>
+                                            <Sparkles style={{ color: 'var(--accent)' }} size={20} />
+                                            <span style={{ fontSize: '15px', fontWeight: 900, color: 'var(--text-primary)' }}>AI Co-Pilot</span>
                                         </div>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px rgba(16, 185, 129, 0.5)' }}></div>
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px rgba(16, 185, 129, 0.3)' }}></div>
                                     </div>
 
                                     <div className="glass-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                         {(!data.aiPromptHistory || data.aiPromptHistory.length === 0) ? (
-                                            <div style={{ textAlign: 'center', marginTop: '60px', color: 'rgba(255,255,255,0.2)' }}>
+                                            <div style={{ textAlign: 'center', marginTop: '60px', color: 'var(--text-secondary)' }}>
                                                 <MessageSquare size={48} style={{ margin: '0 auto 16px', opacity: 0.1 }} />
                                                 <p style={{ fontSize: '13px' }}>Nema istorije promptova.<br />Započnite razgovor za automatizaciju.</p>
                                             </div>
@@ -566,7 +567,7 @@ const CapacityStep: React.FC<StepProps> = ({ data, onChange }) => {
                                             data.aiPromptHistory.map((item) => (
                                                 <div key={item.id} style={{ alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
                                                     <div style={{ display: 'flex', justifyContent: item.role === 'user' ? 'flex-end' : 'flex-start', marginBottom: '4px' }}>
-                                                        <span style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>
+                                                        <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
                                                             {item.userName} • {item.timestamp}
                                                         </span>
                                                     </div>
@@ -575,13 +576,13 @@ const CapacityStep: React.FC<StepProps> = ({ data, onChange }) => {
                                                         borderRadius: '16px',
                                                         borderTopRightRadius: item.role === 'user' ? '4px' : '16px',
                                                         borderTopLeftRadius: item.role === 'assistant' ? '4px' : '16px',
-                                                        background: item.role === 'user' ? 'var(--gradient-blue)' : 'rgba(255,255,255,0.05)',
-                                                        border: item.role === 'assistant' ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                                                        color: '#fff',
+                                                        background: item.role === 'user' ? 'var(--accent)' : 'var(--bg-sidebar)',
+                                                        border: '1px solid var(--border)',
+                                                        color: item.role === 'user' ? '#fff' : 'var(--text-primary)',
                                                         fontSize: '13px',
                                                         lineHeight: 1.5,
                                                         whiteSpace: 'pre-line',
-                                                        boxShadow: item.role === 'user' ? '0 4px 12px rgba(59, 130, 246, 0.2)' : 'none'
+                                                        boxShadow: item.role === 'user' ? '0 4px 12px rgba(59, 130, 246, 0.1)' : 'none'
                                                     }}>
                                                         {item.content}
                                                     </div>
@@ -590,7 +591,7 @@ const CapacityStep: React.FC<StepProps> = ({ data, onChange }) => {
                                         )}
                                     </div>
 
-                                    <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(15, 23, 42, 0.4)' }}>
+                                    <div style={{ padding: '20px', borderTop: '1px solid var(--border)', background: 'var(--bg-sidebar)' }}>
                                         <div style={{ position: 'relative' }}>
                                             <textarea
                                                 className="glass-input"
@@ -599,7 +600,7 @@ const CapacityStep: React.FC<StepProps> = ({ data, onChange }) => {
                                                 onChange={(e) => setAiPrompt(e.target.value)}
                                                 onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleAISubmit())}
                                                 placeholder="Pitaj AI (npr: Postavi kapacitet 15 soba od 15.06 do 01.09)..."
-                                                style={{ width: '100%', paddingLeft: '16px', paddingRight: '50px', paddingTop: '16px', fontSize: '13px', minHeight: '80px', resize: 'none' }}
+                                                style={{ width: '100%', paddingLeft: '16px', paddingRight: '50px', paddingTop: '16px', fontSize: '13px', minHeight: '80px', resize: 'none', background: 'var(--bg-dark)' }}
                                             />
                                             <motion.button
                                                 whileHover={{ scale: 1.1 }}

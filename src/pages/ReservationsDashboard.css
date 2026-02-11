@@ -1,4 +1,3 @@
-/* ===== DASHBOARD CONTAINER ===== */
 .reservations-dashboard {
     padding: 30px;
     background: var(--bg-dark);
@@ -6,6 +5,39 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+}
+
+
+/* ===== LIGHT THEME OVERRIDES (High Specificity) ===== */
+.light-theme .reservations-dashboard {
+    background: #ffffff !important;
+}
+
+.light-theme .stat-card,
+.light-theme .search-command-center,
+.light-theme .reservation-row,
+.light-theme .reservation-card {
+    background: #E0ECEE !important;
+    border: 1px solid rgba(14, 75, 94, 0.2) !important;
+    box-shadow: 0 4px 10px rgba(14, 75, 94, 0.05) !important;
+}
+
+.light-theme .reservation-row:hover,
+.light-theme .reservation-card:hover {
+    box-shadow: 0 8px 20px rgba(14, 75, 94, 0.1) !important;
+    border-color: #0E4B5E !important;
+    transform: translateY(-2px);
+}
+
+.light-theme .main-search-bar,
+.light-theme .filter-group select {
+    background: #ffffff !important;
+    border: 1px solid rgba(14, 75, 94, 0.2) !important;
+    color: #0E4B5E !important;
+}
+
+.light-theme .start-icon {
+    background: #E0ECEE !important;
 }
 
 /* ===== HEADER ===== */
@@ -70,6 +102,14 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.light-theme .stat-card {
+    background: #E0ECEE;
+    border: 1px solid rgba(14, 75, 94, 0.2);
+    /* Softer Border */
+    box-shadow: 0 4px 6px rgba(14, 75, 94, 0.05);
 }
 
 .stat-card::before {
@@ -105,47 +145,47 @@
 }
 
 .stat-icon.total {
-    background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+    background: linear-gradient(135deg, #0E4B5E 0%, #164E63 100%);
     color: white;
 }
 
 .stat-icon.active {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: linear-gradient(135deg, #10B981 0%, #0E4B5E 100%);
     color: white;
 }
 
 .stat-icon.reservation {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: linear-gradient(135deg, #0E4B5E 0%, #1E293B 100%);
     color: white;
 }
 
 .stat-icon.offer {
-    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    background: linear-gradient(135deg, #64748b 0%, #0E4B5E 100%);
     color: white;
 }
 
 .stat-icon.requests {
-    background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+    background: linear-gradient(135deg, #0E4B5E 0%, #475569 100%);
     color: white;
 }
 
 .stat-icon.processing {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    background: linear-gradient(135deg, #0E4B5E 0%, #10B981 100%);
     color: white;
 }
 
 .stat-icon.canceled {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
     color: white;
 }
 
 .stat-icon.revenue {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #0E4B5E 0%, #10B981 100%);
     color: white;
 }
 
 .stat-icon.paid {
-    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    background: linear-gradient(135deg, #10b981 0%, #0E4B5E 100%);
     color: white;
 }
 
@@ -182,7 +222,13 @@
     border-radius: 20px;
     padding: 24px;
     margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.light-theme .search-command-center {
+    background: #E0ECEE;
+    border: 1px solid rgba(14, 75, 94, 0.2);
+    box-shadow: 0 4px 6px rgba(14, 75, 94, 0.05);
 }
 
 .main-search-bar {
@@ -196,9 +242,19 @@
     transition: all 0.2s;
 }
 
+.light-theme .main-search-bar {
+    background: #ffffff;
+    border: 1px solid rgba(14, 75, 94, 0.2);
+}
+
 .main-search-bar:focus-within {
     border-color: var(--accent);
     box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+.light-theme .main-search-bar:focus-within {
+    border-color: #10B981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
 }
 
 .search-icon {
@@ -301,10 +357,15 @@
     transition: all 0.2s;
 }
 
+.light-theme .filter-group select {
+    background: #ffffff;
+    border: 1px solid rgba(14, 75, 94, 0.2);
+}
+
 .filter-group select:focus {
-    border-color: var(--accent);
+    border-color: #10B981 !important;
     outline: none;
-    box-shadow: 0 0 0 3px var(--accent-glow);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 /* ===== TOOLBAR ===== */
@@ -370,6 +431,13 @@
     align-items: center;
     cursor: pointer;
     transition: all 0.2s;
+}
+
+.light-theme .reservation-row {
+    background: #E0ECEE;
+    border: 1px solid rgba(14, 75, 94, 0.2);
+    /* Matching the soft image look */
+    box-shadow: 0 2px 4px rgba(14, 75, 94, 0.03);
 }
 
 .reservation-row:hover {
@@ -648,6 +716,10 @@
     border: 1px solid var(--border);
 }
 
+.light-theme .workflow-status-group {
+    background: #ffffff;
+}
+
 .workflow-dot {
     width: 28px;
     height: 28px;
@@ -738,6 +810,12 @@
     display: flex;
     flex-direction: column;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.light-theme .reservation-card {
+    background: #E0ECEE;
+    border: 1px solid rgba(14, 75, 94, 0.2);
+    box-shadow: 0 4px 6px rgba(14, 75, 94, 0.05);
 }
 
 .reservation-card:hover {
@@ -1454,12 +1532,75 @@
     }
 }
 
-/* LIGHT THEME OVERRIDES - FORCE COLORS */
+/* LIGHT THEME OVERRIDES (Petroleum Edition - Final) */
 body.light-theme .reservations-dashboard {
-    --text-primary: #0f172a !important;
+    background: #ffffff !important;
+    --text-primary: #0E4B5E !important;
     --text-secondary: #475569 !important;
-    --bg-card: #ffffff !important;
-    --border: #cbd5e1 !important;
+}
+
+body.light-theme .reservations-dashboard .stat-value,
+body.light-theme .reservations-dashboard .total-price,
+body.light-theme .reservations-dashboard .dashboard-header h1,
+body.light-theme .reservations-dashboard .card-customer h3,
+body.light-theme .reservations-dashboard .results-count strong {
+    color: #0E4B5E !important;
+    background: none !important;
+    -webkit-text-fill-color: #0E4B5E !important;
+    background-clip: unset !important;
+    -webkit-background-clip: unset !important;
+}
+
+body.light-theme .reservations-dashboard .stat-label,
+body.light-theme .reservations-dashboard .subtitle,
+body.light-theme .reservations-dashboard .results-count,
+body.light-theme .reservations-dashboard .card-customer p {
+    color: #475569 !important;
+}
+
+body.light-theme .reservations-dashboard .stat-card,
+body.light-theme .reservations-dashboard .search-command-center,
+body.light-theme .reservations-dashboard .reservation-row,
+body.light-theme .reservations-dashboard .reservation-card {
+    background: #E0ECEE !important;
+    /* Pale Petrol Background */
+    border: 1px solid rgba(14, 75, 94, 0.25) !important;
+    /* Visible Soft Border */
+    box-shadow: 0 4px 8px rgba(14, 75, 94, 0.08) !important;
+}
+
+body.light-theme .reservations-dashboard .reservation-row:hover,
+body.light-theme .reservations-dashboard .reservation-card:hover {
+    background: #dbece0 !important;
+    /* Slightly darker on hover */
+    border-color: #0E4B5E !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(14, 75, 94, 0.15) !important;
+}
+
+body.light-theme .reservations-dashboard .main-search-bar {
+    background: #ffffff !important;
+    border: 2px solid rgba(14, 75, 94, 0.2) !important;
+}
+
+body.light-theme .reservations-dashboard .main-search-bar:focus-within {
+    border-color: #10B981 !important;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1) !important;
+}
+
+body.light-theme .reservations-dashboard .search-input {
+    color: #0E4B5E !important;
+    font-weight: 600 !important;
+}
+
+body.light-theme .reservations-dashboard .search-input::placeholder {
+    color: rgba(14, 75, 94, 0.5) !important;
+}
+
+body.light-theme .reservations-dashboard .filter-group select {
+    background: #ffffff !important;
+    border: 1px solid rgba(14, 75, 94, 0.2) !important;
+    color: #0E4B5E !important;
 }
 
 body.light-theme .reservations-dashboard .stat-value,

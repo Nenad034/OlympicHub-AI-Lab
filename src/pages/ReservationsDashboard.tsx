@@ -129,6 +129,9 @@ const ReservationsDashboard: React.FC = () => {
         tripType: ['all']
     });
 
+    const petroleumAccent = "#0E4B5E";
+    const petroleumLight = "#E0ECEE";
+
     // Trip Type Filter Handler
     const handleTripTypeFilter = (type: string) => {
         setActiveFilters(prev => {
@@ -1197,7 +1200,7 @@ ${data.map(r => `  <reservation>
                             cursor: 'pointer',
                             transition: 'all 0.2s',
                             whiteSpace: 'nowrap',
-                            boxShadow: activeFilters.tripType.includes(type.id) ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none'
+                            boxShadow: activeFilters.tripType.includes(type.id) ? '0 4px 12px rgba(14, 75, 94, 0.3)' : 'none'
                         }}
                     >
                         {type.icon}

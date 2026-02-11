@@ -169,11 +169,11 @@ const AmenitiesStep: React.FC<StepProps> = ({ data, onChange }) => {
                 {/* Selected Amenities Summary */}
                 {data.propertyAmenities && data.propertyAmenities.length > 0 && (
                     <div style={{
-                        background: 'rgba(0,0,0,0.2)',
+                        background: 'var(--bg-dark)',
                         border: '1px solid var(--border)',
                         borderRadius: '16px',
-                        padding: '20px',
-                        marginTop: '24px'
+                        padding: '24px',
+                        marginTop: '32px'
                     }}>
                         <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px' }}>
                             Izabrani Sadržaji ({data.propertyAmenities.length})
@@ -243,15 +243,15 @@ const AmenitiesStep: React.FC<StepProps> = ({ data, onChange }) => {
             </div>
 
             <div style={{
-                background: 'rgba(168, 85, 247, 0.1)',
-                border: '1px solid rgba(168, 85, 247, 0.3)',
+                background: 'var(--bg-sidebar)',
+                border: '1px solid var(--border)',
                 borderRadius: '12px',
                 padding: '16px',
                 marginTop: '24px'
             }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                    <AlertCircle size={20} style={{ color: '#a855f7', flexShrink: 0, marginTop: '2px' }} />
-                    <div style={{ fontSize: '13px', color: '#a855f7' }}>
+                    <AlertCircle size={20} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '2px' }} />
+                    <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                         <strong>OTA Amenity Codes:</strong>
                         <p style={{ margin: '8px 0 0 0', lineHeight: '1.5' }}>
                             Ovi kodovi su standardizovani prema OpenTravel Alliance specifikaciji i koriste se za integraciju sa Booking.com, Expedia i drugim OTA platformama.

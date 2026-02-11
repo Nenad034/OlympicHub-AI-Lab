@@ -26,7 +26,7 @@ const Katana = React.lazy(() => import('../modules/system/Katana'));
 const Fortress = React.lazy(() => import('../modules/system/Fortress'));
 const PricingIntelligence = React.lazy(() => import('../modules/pricing/PricingIntelligence'));
 const TotalTripSearch = React.lazy(() => import('../modules/pricing/TotalTripSearch'));
-const OlympicMail = React.lazy(() => import('../modules/mail/OlympicMail'));
+const ClickToTravelMail = React.lazy(() => import('../modules/mail/ClickToTravelMail'));
 const NotificationCenter = React.lazy(() => import('../modules/system/NotificationCenter'));
 const MasterOrchestrator = React.lazy(() => import('../modules/ai/MasterOrchestrator'));
 const TCTConnectionTest = React.lazy(() => import('../components/tct/TCTConnectionTest'));
@@ -394,7 +394,7 @@ export const router = createBrowserRouter([
             }, */
             {
                 path: 'mail',
-                element: <OlympicMail />,
+                element: <ClickToTravelMail />,
             },
             {
                 path: 'notifications',

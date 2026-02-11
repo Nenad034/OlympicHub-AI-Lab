@@ -28,6 +28,7 @@ interface GeneratedShift {
     soldDeparture: number;
     soldReturn: number;
     status: 'active' | 'sold_out' | 'draft';
+    pricelistName?: string;
 }
 
 interface RecyclePattern {
@@ -39,6 +40,7 @@ interface RecyclePattern {
     scopeHotels: string[];
     scopeDestinations: string[];
     status: 'active' | 'draft';
+    pricelistName?: string;
 }
 
 const ShiftsGeneratorPage: React.FC = () => {
@@ -54,6 +56,8 @@ const ShiftsGeneratorPage: React.FC = () => {
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [generatedShifts, setGeneratedShifts] = useState<GeneratedShift[]>([]);
     const [recyclePatterns, setRecyclePatterns] = useState<RecyclePattern[]>([]);
+    const [allPricelists, setAllPricelists] = useState<any[]>([]);
+    const [scopePricelists, setScopePricelists] = useState<string[]>(['all']);
 
     // Filter States
     const [searchQuery, setSearchQuery] = useState('');
@@ -76,6 +80,9 @@ const ShiftsGeneratorPage: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
 
+    // Editing state
+    const [editingShift, setEditingShift] = useState<GeneratedShift | null>(null);
+
     useEffect(() => {
         const fetchAllData = async () => {
             setIsLoadingData(true);
@@ -83,6 +90,7 @@ const ShiftsGeneratorPage: React.FC = () => {
             const destinationsRes = await loadFromCloud('destinations');
             const savedShiftsRes = await loadFromCloud('generated_shifts');
             const savedPatternsRes = await loadFromCloud('recycle_patterns');
+            const pricelistsRes = await loadFromCloud('pricelists');
 
             let finalDestinations: any[] = [];
             const uniqueDestsMap = new Map<string, string>();
@@ -137,6 +145,10 @@ const ShiftsGeneratorPage: React.FC = () => {
                 setRecyclePatterns([
                     { id: 'p1', from: '2026-06-01', to: '2026-09-01', entryDays: ['1', '4'], exitDays: ['1', '4'], scopeHotels: ['all'], scopeDestinations: ['Tasos'], status: 'active' }
                 ]);
+            }
+
+            if (pricelistsRes.success && pricelistsRes.data) {
+                setAllPricelists(pricelistsRes.data);
             }
 
             setIsLoadingData(false);
@@ -203,6 +215,23 @@ const ShiftsGeneratorPage: React.FC = () => {
         }).map(h => ({ value: h.id, label: h.name }));
     }, [hotels, scopeDestinations]);
 
+    const pricelistsOptions = useMemo(() => {
+        const today = new Date().toISOString().split('T')[0];
+        return allPricelists
+            .filter(pl => {
+                const hotelMatch = scopeHotels.includes('all') || scopeHotels.includes(pl.property_id);
+                const notExpired = !pl.stay_to || pl.stay_to >= today;
+                return hotelMatch && notExpired;
+            })
+            .map(pl => {
+                const hotelName = hotels.find(h => h.id === pl.property_id)?.name || 'Nepoznat hotel';
+                return {
+                    value: pl.id,
+                    label: `${pl.title} (${hotelName})`
+                };
+            });
+    }, [allPricelists, scopeHotels, hotels]);
+
     const handleSave = async () => {
         setIsSaving(true);
         // Save both shifts and patterns to Supabase
@@ -243,7 +272,10 @@ const ShiftsGeneratorPage: React.FC = () => {
                     from, to, nights: batchNights === '' ? 0 : batchNights,
                     capacityDeparture: Number(baseCapacity) || 0,
                     capacityReturn: Number(baseCapacity) || 0,
-                    soldDeparture: 0, soldReturn: 0, status: 'draft'
+                    soldDeparture: 0, soldReturn: 0, status: 'draft',
+                    pricelistName: scopePricelists.includes('all')
+                        ? 'Svi dostupni cenovnici'
+                        : scopePricelists.map(id => allPricelists.find(pl => pl.id === id)?.title).filter(Boolean).join(', ')
                 });
                 current = next;
             }
@@ -262,7 +294,10 @@ const ShiftsGeneratorPage: React.FC = () => {
             exitDays,
             scopeHotels,
             scopeDestinations,
-            status: 'draft'
+            status: 'draft',
+            pricelistName: scopePricelists.includes('all')
+                ? 'Svi dostupni cenovnici'
+                : scopePricelists.map(id => allPricelists.find(pl => pl.id === id)?.title).filter(Boolean).join(', ')
         };
 
         setRecyclePatterns([newPattern, ...recyclePatterns]);
@@ -270,7 +305,7 @@ const ShiftsGeneratorPage: React.FC = () => {
     };
 
     // Styling helpers for clear borders and centered items
-    const commonBorder = '1px solid rgba(255, 255, 255, 0.25)';
+    const commonBorder = '1px solid var(--border)';
 
     const fieldStyle: React.CSSProperties = {
         background: 'var(--bg-input)',
@@ -356,6 +391,9 @@ const ShiftsGeneratorPage: React.FC = () => {
                                 <div style={{ border: commonBorder, borderRadius: '10px', width: '100%' }}>
                                     <MultiSelectDropdown options={hotelsByDest} selected={scopeHotels} onChange={setScopeHotels} placeholder="SVI HOTELI" />
                                 </div>
+                                <div style={{ border: commonBorder, borderRadius: '10px', width: '100%' }}>
+                                    <MultiSelectDropdown options={pricelistsOptions} selected={scopePricelists} onChange={setScopePricelists} placeholder="SVI CENOVNICI" />
+                                </div>
                             </div>
                         </div>
 
@@ -364,13 +402,13 @@ const ShiftsGeneratorPage: React.FC = () => {
                             <div style={sectionTitleStyle}>02. MODUL POLAZAKA (ROBOT)</div>
 
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
-                                <div style={{ display: 'flex', background: 'var(--bg-input)', borderRadius: '10px', overflow: 'hidden', border: commonBorder, flex: 1 }}>
+                                <div style={{ display: 'flex', background: 'var(--bg-sidebar)', borderRadius: '10px', overflow: 'hidden', border: commonBorder, flex: 1 }}>
                                     <div style={{ flex: 1 }}><SmartDateInput label="OD:" value={batchStart} onChange={setBatchStart} style={{ border: 'none', background: 'transparent' }} /></div>
-                                    <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
+                                    <div style={{ width: '1px', background: 'var(--border-subtle)' }}></div>
                                     <div style={{ flex: 1 }}><SmartDateInput label="DO:" value={batchEnd} onChange={setBatchEnd} style={{ border: 'none', background: 'transparent' }} /></div>
                                 </div>
                                 <div style={{ width: '70px' }}>
-                                    <input type="number" placeholder="Noći" value={batchNights} onChange={e => setBatchNights(Number(e.target.value))} style={fieldStyle} />
+                                    <input type="number" placeholder="Noći" value={batchNights} onChange={e => setBatchNights(Number(e.target.value))} style={{ ...fieldStyle, background: 'var(--bg-sidebar)' }} />
                                 </div>
                             </div>
 
@@ -386,9 +424,9 @@ const ShiftsGeneratorPage: React.FC = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             <div style={sectionTitleStyle}>03. ULAZ / IZLAZ (RECIKLUSI)</div>
 
-                            <div style={{ display: 'flex', background: 'var(--bg-input)', borderRadius: '10px', overflow: 'hidden', border: commonBorder, width: '100%' }}>
+                            <div style={{ display: 'flex', background: 'var(--bg-sidebar)', borderRadius: '10px', overflow: 'hidden', border: commonBorder, width: '100%' }}>
                                 <div style={{ flex: 1 }}><SmartDateInput label="OD:" value={patternStart} onChange={setPatternStart} style={{ border: 'none', background: 'transparent' }} /></div>
-                                <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
+                                <div style={{ width: '1px', background: 'var(--border-subtle)' }}></div>
                                 <div style={{ flex: 1 }}><SmartDateInput label="DO:" value={patternEnd} onChange={setPatternEnd} style={{ border: 'none', background: 'transparent' }} /></div>
                             </div>
 
@@ -425,7 +463,7 @@ const ShiftsGeneratorPage: React.FC = () => {
                         placeholder={viewMode === 'shifts' ? "Pretraži smene..." : "Pretraži pravila..."}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        style={{ width: '100%', padding: '12px 16px 12px 48px', borderRadius: '14px', background: 'rgba(0,0,0,0.15)', border: commonBorder, color: 'var(--text-primary)', fontSize: '14px', outline: 'none' }}
+                        style={{ width: '100%', padding: '12px 16px 12px 48px', borderRadius: '14px', background: 'var(--bg-sidebar)', border: commonBorder, color: 'var(--text-primary)', fontSize: '14px', outline: 'none' }}
                     />
                 </div>
 
@@ -450,11 +488,11 @@ const ShiftsGeneratorPage: React.FC = () => {
                             style={{
                                 display: 'grid', gridTemplateColumns: '100px 2fr 1fr 1fr 1fr 100px',
                                 padding: '16px 24px', background: 'var(--bg-card)', border: commonBorder,
-                                borderRadius: '16px', alignItems: 'center', marginBottom: '2px'
+                                borderRadius: '16px', alignItems: 'center', marginBottom: '8px'
                             }}
                         >
                             <div>
-                                <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 900, width: 'fit-content' }}>LIVE</div>
+                                <div style={{ background: 'var(--success-bg)', color: 'var(--accent-green)', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 900, width: 'fit-content' }}>LIVE</div>
                             </div>
                             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                                 <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
@@ -462,21 +500,33 @@ const ShiftsGeneratorPage: React.FC = () => {
                                 </div>
                                 <div>
                                     <div style={{ fontWeight: 800, fontSize: '14px' }}>{new Date(item.from).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })} — {new Date(item.to).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
-                                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                                         <Building2 size={12} style={{ opacity: 0.6 }} /> {item.hotelName}
                                         <span style={{ color: 'var(--accent)', opacity: 0.8 }}>({item.destination})</span>
                                     </div>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 700, marginTop: '6px', background: 'var(--bg-sidebar)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-subtle)', width: 'fit-content', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <Database size={10} style={{ color: 'var(--accent)' }} /> {item.pricelistName || 'Nije dodeljen cenovnik'}
+                                    </div>
                                 </div>
                             </div>
-                            <div style={{ fontSize: '13px', fontWeight: 700 }}>{item.nights} noćenja</div>
-                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <MapPin size={12} /> {item.destination}
+                            <div style={{ fontSize: '13px', fontWeight: 700 }}>
+                                {item.nights} noćenja
+                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 400, marginTop: '4px' }}>Standardno</div>
+                            </div>
+                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={12} /> {item.destination}</div>
+                                <div style={{ fontSize: '10px', opacity: 0.6 }}>Regija: {item.destination}</div>
                             </div>
                             <div style={{ display: 'flex', gap: '6px' }}>
                                 <div style={{ padding: '4px 8px', background: 'var(--bg-input)', borderRadius: '6px', fontSize: '11px', fontWeight: 800 }}>{item.capacityDeparture - item.soldDeparture} SL</div>
                             </div>
                             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                <button style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: 'pointer' }}><Edit3 size={14} /></button>
+                                <button
+                                    onClick={() => setEditingShift(item)}
+                                    style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                                >
+                                    <Edit3 size={14} />
+                                </button>
                             </div>
                         </motion.div>
                     ))
@@ -517,6 +567,9 @@ const ShiftsGeneratorPage: React.FC = () => {
                                             {hotelNames}
                                         </div>
                                         <div style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: 500 }}>Period: {new Date(item.from).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })} — {new Date(item.to).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+                                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 700, marginTop: '4px', background: 'var(--bg-sidebar)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-subtle)', width: 'fit-content', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <Database size={10} style={{ color: 'var(--accent)' }} /> {item.pricelistName || 'Svi cenovnici'}
+                                        </div>
                                     </div>
                                 </div>
                                 <div style={{ fontSize: '12px', fontWeight: 700, display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -549,6 +602,77 @@ const ShiftsGeneratorPage: React.FC = () => {
                 .spin { animation: spin 1s linear infinite; }
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
             `}</style>
+
+            <AnimatePresence>
+                {editingShift && (
+                    <div className="modal-overlay-blur" style={{ zIndex: 9999 }}>
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="modal-content-glass"
+                            style={{ width: '500px' }}
+                        >
+                            <div className="modal-header">
+                                <div>
+                                    <h3 style={{ color: 'var(--text-primary)' }}>Uredi Smenu</h3>
+                                    <div style={{ fontSize: '12px', color: 'var(--accent)' }}>{editingShift.hotelName}</div>
+                                </div>
+                                <button onClick={() => setEditingShift(null)}><X size={20} /></button>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div style={{ display: 'flex', background: 'var(--bg-sidebar)', borderRadius: '10px', overflow: 'hidden', border: commonBorder }}>
+                                    <div style={{ flex: 1 }}><SmartDateInput label="OD:" value={editingShift.from} onChange={(val) => setEditingShift({ ...editingShift, from: val })} style={{ border: 'none', background: 'transparent' }} /></div>
+                                    <div style={{ width: '1px', background: 'var(--border-subtle)' }}></div>
+                                    <div style={{ flex: 1 }}><SmartDateInput label="DO:" value={editingShift.to} onChange={(val) => setEditingShift({ ...editingShift, to: val })} style={{ border: 'none', background: 'transparent' }} /></div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <label style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>KAPACITET</label>
+                                        <input
+                                            type="number"
+                                            value={editingShift.capacityDeparture}
+                                            onChange={(e) => setEditingShift({ ...editingShift, capacityDeparture: Number(e.target.value) })}
+                                            style={fieldStyle}
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <label style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>NOĆENJA</label>
+                                        <input
+                                            type="number"
+                                            value={editingShift.nights}
+                                            onChange={(e) => setEditingShift({ ...editingShift, nights: Number(e.target.value) })}
+                                            style={fieldStyle}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="modal-footer" style={{ display: 'flex', gap: '12px' }}>
+                                <button
+                                    className="btn-secondary"
+                                    style={{ flex: 1 }}
+                                    onClick={() => setEditingShift(null)}
+                                >
+                                    ODUSTANI
+                                </button>
+                                <button
+                                    className="btn-primary-glow"
+                                    style={{ flex: 1 }}
+                                    onClick={() => {
+                                        setGeneratedShifts(generatedShifts.map(s => s.id === editingShift.id ? editingShift : s));
+                                        setEditingShift(null);
+                                    }}
+                                >
+                                    SAČUVAJ IZMENE
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

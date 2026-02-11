@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useThemeStore } from '../../stores';
 
 interface LogoProps {
     height?: number | string;
@@ -6,13 +7,13 @@ interface LogoProps {
     showText?: boolean;
 }
 
-export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 48, className = "" }) => {
+export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 58, className = "" }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [imgLoaded, setImgLoaded] = useState(false);
+    const { theme } = useThemeStore();
 
     useEffect(() => {
         const img = new Image();
-        // Pointing to the file we copied to public/clicktotravel.png
         img.src = "/clicktotravel.png";
         img.crossOrigin = "anonymous";
 
@@ -22,43 +23,42 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 48, className 
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             if (!ctx) return;
 
-            // Maintain aspect ratio
-            const aspect = img.width / img.height;
-            canvas.width = img.width;
-            canvas.height = img.height;
+            const scale = 4;
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
 
+            ctx.scale(scale, scale);
             ctx.drawImage(img, 0, 0);
 
             try {
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imageData.data;
 
-                // Algorithm to strip the checkerboard background (white and light grey pixels)
-                // We target pixels that are neutral (low color variation) and bright.
                 for (let i = 0; i < data.length; i += 4) {
                     const r = data[i];
                     const g = data[i + 1];
                     const b = data[i + 2];
 
-                    // Neutrality check (r, g, b are close to each other)
-                    const isNeutral = Math.abs(r - g) < 15 && Math.abs(g - b) < 15 && Math.abs(r - b) < 15;
-                    // Brightness check
-                    const isBright = r > 185 && g > 185 && b > 185;
+                    const isNeutral = Math.abs(r - g) < 20 && Math.abs(g - b) < 20 && Math.abs(r - b) < 20;
+                    const isBright = r > 180 && g > 180 && b > 180;
 
                     if (isNeutral && isBright) {
-                        data[i + 3] = 0; // Set alpha to 0 (transparent)
+                        data[i + 3] = 0;
+                    } else if (r > 245 && g > 245 && b > 245) {
+                        data[i + 3] = 0;
                     }
                 }
                 ctx.putImageData(imageData, 0, 0);
                 setImgLoaded(true);
             } catch (err) {
                 console.error("Could not process logo pixels:", err);
-                // Fallback: just show the image if canvas processing fails
                 ctx.drawImage(img, 0, 0);
                 setImgLoaded(true);
             }
         };
     }, []);
+
+    const isLight = theme === 'light';
 
     return (
         <div
@@ -68,7 +68,8 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 48, className 
                 display: 'inline-flex',
                 alignItems: 'center',
                 userSelect: 'none',
-                overflow: 'visible'
+                overflow: 'visible',
+                position: 'relative'
             }}
         >
             <canvas
@@ -77,10 +78,19 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 48, className 
                     height: '100%',
                     width: 'auto',
                     display: imgLoaded ? 'block' : 'none',
-                    objectFit: 'contain'
+                    objectFit: 'contain',
+                    position: 'relative',
+                    zIndex: 1,
+                    // Multi-layer shadow for 3D depth - much lighter in light theme
+                    filter: isLight ? 'none' : `
+                        drop-shadow(0 1px 1px rgba(0,0,0,0.2)) 
+                        drop-shadow(0 4px 8px rgba(33, 136, 255, 0.15))
+                        drop-shadow(0 8px 24px rgba(0,0,0,0.1))
+                    `,
+                    imageRendering: 'auto'
                 }}
             />
-            {!imgLoaded && <div style={{ height, width: typeof height === 'number' ? height * 3 : '120px' }} />}
+            {!imgLoaded && <div style={{ height, width: typeof height === 'number' ? height * 3 : '140px' }} />}
         </div>
     );
 };

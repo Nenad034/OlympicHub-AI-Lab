@@ -205,7 +205,7 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
         {
             id: 'mail-agent',
             name: 'Mail Agent',
-            module: 'Olympic Mail',
+            module: 'ClickToTravel Mail',
             status: 'idle',
             capabilities: ['analyze_email', 'generate_response', 'send_email'],
             icon: <Mail size={20} />,

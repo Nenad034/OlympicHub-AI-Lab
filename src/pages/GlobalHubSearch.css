@@ -18,8 +18,10 @@
 }
 
 .global-hub-search .search-launch-btn-v4.unified {
-    background: var(--gradient-indigo, linear-gradient(135deg, #4f46e5, #7c3aed));
-    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+    background: #E0ECEE !important;
+    border: 2px solid #0E4B5E !important;
+    color: #0E4B5E !important;
+    box-shadow: 0 10px 20px rgba(14, 75, 94, 0.15) !important;
 }
 
 .global-hub-search .search-launch-btn-v4.unified:hover {

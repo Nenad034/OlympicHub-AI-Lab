@@ -1056,7 +1056,7 @@ const GlobalHubSearch: React.FC = () => {
                         <div className="destination-row">
                             <div className="field-label"><MapPin size={14} /> Destinacija ili Smeštaj (do 3)</div>
                             <div className="destination-input-wrapper" ref={autocompleteRef}>
-                                <div className="multi-destination-input premium" style={{ border: 'none', padding: 0, height: 'auto', background: 'transparent' }}>
+                                <div className="multi-destination-input premium">
                                     {selectedDestinations.map(dest => (
                                         <div key={dest.id} className="destination-chip">
                                             {dest.type === 'hotel' ? <Hotel size={14} /> : <MapPin size={14} />}
@@ -1073,7 +1073,6 @@ const GlobalHubSearch: React.FC = () => {
                                             onChange={(e) => setDestinationInput(e.target.value)}
                                             className="smart-input-inline"
                                             onFocus={() => { if (destinationInput.length >= 2) setShowSuggestions(true); }}
-                                            style={{ background: 'transparent', border: 'none', width: '100%', height: '100%', fontSize: '1rem', fontStyle: 'italic' }}
                                         />
                                     )}
                                 </div>
@@ -1223,14 +1222,6 @@ const GlobalHubSearch: React.FC = () => {
                                             value={budgetFrom}
                                             onChange={(e) => setBudgetFrom(e.target.value)}
                                             className="budget-input"
-                                            style={{
-                                                flex: 1,
-                                                borderRadius: '12px',
-                                                padding: '12px',
-                                                fontSize: '0.85rem',
-                                                outline: 'none',
-                                                width: '100%'
-                                            }}
                                         />
                                         <input
                                             type="number"
@@ -1238,14 +1229,6 @@ const GlobalHubSearch: React.FC = () => {
                                             value={budgetTo}
                                             onChange={(e) => setBudgetTo(e.target.value)}
                                             className="budget-input"
-                                            style={{
-                                                flex: 1,
-                                                borderRadius: '12px',
-                                                padding: '12px',
-                                                fontSize: '0.85rem',
-                                                outline: 'none',
-                                                width: '100%'
-                                            }}
                                         />
                                     </div>
                                 </div>

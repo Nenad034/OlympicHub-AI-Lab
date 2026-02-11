@@ -34,7 +34,7 @@ const routeToTabMap: Record<string, { title: string; icon?: React.ReactNode }> =
     '/fortress': { title: 'Fortress Security' },
     '/deep-archive': { title: 'Deep Archive' },
     '/settings': { title: 'Settings' },
-    '/mail': { title: 'Olympic Mail', icon: <Mail size={16} /> },
+    '/mail': { title: 'ClickToTravel Mail', icon: <Mail size={16} /> },
 };
 
 export const VSCodeLayout: React.FC = () => {

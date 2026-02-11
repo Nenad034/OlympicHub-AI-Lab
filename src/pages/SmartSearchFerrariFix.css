@@ -66,15 +66,16 @@
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
-/* --- LIGHT MODE SPECIFIC --- */
+/* --- LIGHT MODE SPECIFIC - Aligned with Perla & Navy branding --- */
 .light-theme .smart-search-container-v2,
 .light-theme .search-card-frame,
 .light-theme .flight-search-form,
 .light-theme .package-search-page,
 .light-theme .hotel-result-card-premium {
     background: #ffffff !important;
-    border-color: #e2e8f0 !important;
-    color: #1e293b !important;
+    border-color: #1e3a8a !important;
+    /* Dark Blue border */
+    color: #1e3a8a !important;
 }
 
 .light-theme .tabs-nav-container,
@@ -89,9 +90,11 @@
 .light-theme .input-group-flight input,
 .light-theme .budget-input,
 .light-theme .input-group-flight select {
-    background: #f1f5f9 !important;
-    border-color: #cbd5e1 !important;
-    color: #0f172a !important;
+    background: #EAEFF5 !important;
+    /* Perla color */
+    border-color: #1e3a8a !important;
+    /* Dark Blue border */
+    color: #1e3a8a !important;
 }
 
 .light-theme .field-label,
@@ -104,7 +107,7 @@
 }
 
 .light-theme .nav-tab-item.active {
-    background: #4f46e5 !important;
+    background: #1e3a8a !important;
     color: white !important;
 }
 

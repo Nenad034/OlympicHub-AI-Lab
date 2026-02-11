@@ -237,20 +237,20 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
         <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
             {/* Header */}
             <div style={{ marginBottom: '32px' }}>
-                <h2 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '8px' }}>Cenovnik</h2>
+                <h2 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '8px', color: 'var(--text-primary)' }}>Cenovnik</h2>
                 <p style={{ color: 'var(--text-secondary)' }}>Kreirajte i upravljajte cenovnicima za sve tipove soba</p>
             </div>
 
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border)' }}>
                 <button
                     onClick={() => setActiveTab('basic')}
                     style={{
                         padding: '12px 24px',
-                        background: activeTab === 'basic' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                        background: activeTab === 'basic' ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
                         border: 'none',
-                        borderBottom: activeTab === 'basic' ? '2px solid #3b82f6' : '2px solid transparent',
-                        color: activeTab === 'basic' ? '#3b82f6' : 'rgba(255,255,255,0.6)',
+                        borderBottom: activeTab === 'basic' ? '2px solid var(--accent)' : '2px solid transparent',
+                        color: activeTab === 'basic' ? 'var(--accent)' : 'var(--text-secondary)',
                         cursor: 'pointer',
                         fontSize: '14px',
                         fontWeight: 600,
@@ -263,10 +263,10 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                     onClick={() => setActiveTab('matrix')}
                     style={{
                         padding: '12px 24px',
-                        background: activeTab === 'matrix' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                        background: activeTab === 'matrix' ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
                         border: 'none',
-                        borderBottom: activeTab === 'matrix' ? '2px solid #3b82f6' : '2px solid transparent',
-                        color: activeTab === 'matrix' ? '#3b82f6' : 'rgba(255,255,255,0.6)',
+                        borderBottom: activeTab === 'matrix' ? '2px solid var(--accent)' : '2px solid transparent',
+                        color: activeTab === 'matrix' ? 'var(--accent)' : 'var(--text-secondary)',
                         cursor: 'pointer',
                         fontSize: '14px',
                         fontWeight: 600,
@@ -280,10 +280,10 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                     onClick={() => setActiveTab('rooms')}
                     style={{
                         padding: '12px 24px',
-                        background: activeTab === 'rooms' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                        background: activeTab === 'rooms' ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
                         border: 'none',
-                        borderBottom: activeTab === 'rooms' ? '2px solid #3b82f6' : '2px solid transparent',
-                        color: activeTab === 'rooms' ? '#3b82f6' : 'rgba(255,255,255,0.6)',
+                        borderBottom: activeTab === 'rooms' ? '2px solid var(--accent)' : '2px solid transparent',
+                        color: activeTab === 'rooms' ? 'var(--accent)' : 'var(--text-secondary)',
                         cursor: 'pointer',
                         fontSize: '14px',
                         fontWeight: 600,
@@ -297,10 +297,10 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                     onClick={() => setActiveTab('details')}
                     style={{
                         padding: '12px 24px',
-                        background: activeTab === 'details' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                        background: activeTab === 'details' ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
                         border: 'none',
-                        borderBottom: activeTab === 'details' ? '2px solid #3b82f6' : '2px solid transparent',
-                        color: activeTab === 'details' ? '#3b82f6' : 'rgba(255,255,255,0.6)',
+                        borderBottom: activeTab === 'details' ? '2px solid var(--accent)' : '2px solid transparent',
+                        color: activeTab === 'details' ? 'var(--accent)' : 'var(--text-secondary)',
                         cursor: 'pointer',
                         fontSize: '14px',
                         fontWeight: 600,
@@ -322,20 +322,20 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                 >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
                         <div>
-                            <h3 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '8px', color: '#fff' }}>Grafička Matrica Pravila</h3>
-                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', maxWidth: '600px' }}>
+                            <h3 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '8px', color: 'var(--text-primary)' }}>Grafička Matrica Pravila</h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '600px', opacity: 0.7 }}>
                                 Definišite cene direktno na osnovu vizuelnog sastava gostiju. Odaberite kombinaciju iz menija ispod.
                             </p>
                         </div>
                         <div style={{ padding: '12px 20px', background: 'rgba(59,130,246,0.1)', borderRadius: '14px', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <Sparkles size={18} color="#3b82f6" />
-                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#3b82f6', letterSpacing: '1px' }}>VISUAL MODE</span>
+                            <Sparkles size={18} color="var(--accent)" />
+                            <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--accent)', letterSpacing: '1px' }}>VISUAL MODE</span>
                         </div>
                     </div>
 
                     {/* Variant Selector (Dropdown) */}
-                    <div className="glass-card" style={{ padding: '24px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '32px' }}>
-                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 900, opacity: 0.4, textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '1px' }}>
+                    <div className="glass-card" style={{ padding: '24px', background: 'var(--bg-sidebar)', border: '1px solid var(--border)', marginBottom: '32px' }}>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 900, color: 'var(--text-secondary)', opacity: 0.6, textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '1px' }}>
                             Odaberite Sastav Gostiju (Varijanta)
                         </label>
                         <div style={{ position: 'relative' }}>
@@ -346,9 +346,9 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                                     width: '100%',
                                     padding: '16px 20px',
                                     borderRadius: '16px',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    color: '#fff',
+                                    background: 'var(--bg-input)',
+                                    border: '1px solid var(--border)',
+                                    color: 'var(--text-primary)',
                                     fontSize: '16px',
                                     fontWeight: 700,
                                     appearance: 'none',
@@ -357,12 +357,12 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                                 }}
                             >
                                 {priceList.pricingMatrices?.[0].contexts.map((variant: PricingMatrixContext) => (
-                                    <option key={variant.id} value={variant.id} style={{ background: '#0f172a' }}>
+                                    <option key={variant.id} value={variant.id} style={{ background: 'var(--bg-sidebar)', color: 'var(--text-primary)' }}>
                                         {variant.label}
                                     </option>
                                 ))}
                             </select>
-                            <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5 }}>
+                            <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5, color: 'var(--text-secondary)' }}>
                                 <Layers size={20} />
                             </div>
                         </div>
@@ -380,7 +380,7 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                                 return (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                                         {/* Graphic Sequence */}
-                                        <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(59,130,246,0.03)', borderRadius: '32px', border: '1px solid rgba(59,130,246,0.1)' }}>
+                                        <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(59,130,246,0.03)', borderRadius: '32px', border: '1px solid var(--border)' }}>
                                             <div style={{ display: 'inline-flex', gap: '20px', alignItems: 'center' }}>
                                                 {Object.keys(variant.grid).map((bedKey) => {
                                                     const personCode = Object.keys(variant.grid[bedKey])[0];
@@ -393,18 +393,18 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                                                                 width: '64px',
                                                                 height: '64px',
                                                                 borderRadius: '20px',
-                                                                background: isADL ? '#3b82f6' : (isINF ? '#f59e0b' : '#10b981'),
+                                                                background: isADL ? 'var(--accent)' : (isINF ? '#f59e0b' : 'var(--accent-green)'),
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 justifyContent: 'center',
-                                                                boxShadow: '0 10px 20px rgba(0,0,0,0.2)',
+                                                                boxShadow: '0 10px 20px rgba(0,0,0,0.05)',
                                                                 border: bedKey.includes('BASIC') ? '2px solid rgba(255,255,255,0.3)' : 'none'
                                                             }}>
                                                                 {isADL ? <Building2 size={32} color="#fff" /> : (isINF ? <Baby size={32} color="#fff" /> : <Users size={32} color="#fff" />)}
                                                             </div>
                                                             <div style={{ textAlign: 'center' }}>
-                                                                <div style={{ fontSize: '11px', fontWeight: 900, color: '#fff' }}>{personCode}</div>
-                                                                <div style={{ fontSize: '9px', opacity: 0.4, textTransform: 'uppercase', marginTop: '2px' }}>
+                                                                <div style={{ fontSize: '11px', fontWeight: 900, color: 'var(--text-primary)' }}>{personCode}</div>
+                                                                <div style={{ fontSize: '9px', opacity: 0.5, color: 'var(--text-secondary)', textTransform: 'uppercase', marginTop: '2px' }}>
                                                                     {bedKey.replace('_', ' ')}
                                                                 </div>
                                                             </div>
@@ -424,26 +424,26 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                                                 if (vIdx === -1 || !matrix) return null;
 
                                                 return (
-                                                    <div key={bedKey} className="glass-card" style={{ padding: '24px', background: 'rgba(255,255,255,0.02)', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                                        <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: isBasic ? '#3b82f6' : '#10b981' }} />
+                                                    <div key={bedKey} className="glass-card" style={{ padding: '24px', background: 'var(--bg-input)', position: 'relative', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                                                        <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: isBasic ? 'var(--accent)' : 'var(--accent-green)' }} />
 
                                                         <div style={{ marginBottom: '20px' }}>
                                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                <span style={{ fontSize: '10px', fontWeight: 900, opacity: 0.3, letterSpacing: '1px' }}>{bedKey}</span>
-                                                                <div style={{ padding: '4px 8px', borderRadius: '6px', background: isBasic ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)', fontSize: '9px', fontWeight: 800, color: isBasic ? '#3b82f6' : '#10b981' }}>
+                                                                <span style={{ fontSize: '10px', fontWeight: 900, color: 'var(--text-secondary)', opacity: 0.5, letterSpacing: '1px' }}>{bedKey}</span>
+                                                                <div style={{ padding: '4px 8px', borderRadius: '6px', background: isBasic ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)', fontSize: '9px', fontWeight: 800, color: isBasic ? 'var(--accent)' : 'var(--accent-green)' }}>
                                                                     {isBasic ? 'FIXED' : 'EXTRA'}
                                                                 </div>
                                                             </div>
-                                                            <h5 style={{ margin: '8px 0 2px 0', fontSize: '16px', fontWeight: 800 }}>
+                                                            <h5 style={{ margin: '8px 0 2px 0', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>
                                                                 {personCode === 'ADL' ? 'Odrasla' :
                                                                     personCode === 'INF' ? 'Beba 0-2' :
                                                                         personCode === 'CHD1' ? 'Dete 2-7' : 'Dete 7-12'}
                                                             </h5>
-                                                            <div style={{ fontSize: '11px', opacity: 0.4 }}>Pozicija: {isBasic ? 'Osnovni krev.' : 'Pomoćni krev.'}</div>
+                                                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.6 }}>Pozicija: {isBasic ? 'Osnovni krev.' : 'Pomoćni krev.'}</div>
                                                         </div>
 
                                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                                            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '10px' }}>
+                                                            <div style={{ background: 'var(--bg-sidebar)', borderRadius: '12px', padding: '10px', border: '1px solid var(--border)' }}>
                                                                 <select
                                                                     value={cell.type}
                                                                     onChange={(e) => {
@@ -452,7 +452,7 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                                                                         newMatrices[0].contexts[vIdx].grid[bedKey][personCode].type = e.target.value as any;
                                                                         setPriceList({ ...priceList, pricingMatrices: newMatrices });
                                                                     }}
-                                                                    style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 700, width: '100%', outline: 'none' }}
+                                                                    style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '12px', fontWeight: 700, width: '100%', outline: 'none' }}
                                                                 >
                                                                     <option value="percent">% Od Baze</option>
                                                                     <option value="fixed">€ Fiksna dopl.</option>
@@ -461,7 +461,7 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                                                             </div>
 
                                                             {cell.type !== 'free' && (
-                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '12px', padding: '12px 16px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-sidebar)', borderRadius: '12px', padding: '12px 16px', border: '1px solid var(--accent)' }}>
                                                                     <input
                                                                         type="number"
                                                                         value={cell.value}
@@ -471,9 +471,9 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                                                                             newMatrices[0].contexts[vIdx].grid[bedKey][personCode].value = parseFloat(e.target.value) || 0;
                                                                             setPriceList({ ...priceList, pricingMatrices: newMatrices });
                                                                         }}
-                                                                        style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '24px', fontWeight: 800, width: '100%', outline: 'none' }}
+                                                                        style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '24px', fontWeight: 800, width: '100%', outline: 'none' }}
                                                                     />
-                                                                    <span style={{ fontSize: '18px', fontWeight: 800, color: '#3b82f6' }}>{cell.type === 'percent' ? '%' : '€'}</span>
+                                                                    <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>{cell.type === 'percent' ? '%' : '€'}</span>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -487,10 +487,10 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                         </div>
 
                         {/* Room Apply Selector (Sidebar) */}
-                        <div style={{ borderLeft: '1px solid rgba(255,255,255,0.05)', paddingLeft: '32px' }}>
-                            <div className="glass-card" style={{ padding: '24px', background: 'rgba(255,255,255,0.02)' }}>
-                                <h4 style={{ fontSize: '14px', fontWeight: 800, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <LinkIcon size={18} color="#3b82f6" /> Povezane Sobe
+                        <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: '32px' }}>
+                            <div className="glass-card" style={{ padding: '24px', background: 'var(--bg-input)', border: '1px solid var(--border)' }}>
+                                <h4 style={{ fontSize: '14px', fontWeight: 800, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-primary)' }}>
+                                    <LinkIcon size={18} color="var(--accent)" /> Povezane Sobe
                                 </h4>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                     {property.roomTypes?.map(room => {
@@ -511,8 +511,8 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                                                 style={{
                                                     padding: '12px 16px',
                                                     borderRadius: '12px',
-                                                    background: isLinked ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.03)',
-                                                    border: `1px solid ${isLinked ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.05)'}`,
+                                                    background: isLinked ? 'rgba(59,130,246,0.08)' : 'var(--bg-sidebar)',
+                                                    border: `1px solid ${isLinked ? 'var(--accent)' : 'var(--border)'}`,
                                                     cursor: 'pointer',
                                                     display: 'flex',
                                                     alignItems: 'center',
@@ -520,20 +520,20 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                                                     transition: 'all 0.2s'
                                                 }}
                                             >
-                                                <div style={{ width: '18px', height: '18px', borderRadius: '5px', border: '2px solid #3b82f6', background: isLinked ? '#3b82f6' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <div style={{ width: '18px', height: '18px', borderRadius: '5px', border: '2px solid var(--accent)', background: isLinked ? 'var(--accent)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                     {isLinked && <Check size={12} color="#fff" />}
                                                 </div>
                                                 <div style={{ flex: 1 }}>
-                                                    <div style={{ fontSize: '12px', fontWeight: 700 }}>{room.nameInternal}</div>
-                                                    <div style={{ fontSize: '10px', opacity: 0.4 }}>{room.category}</div>
+                                                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>{room.nameInternal}</div>
+                                                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', opacity: 0.6 }}>{room.category}</div>
                                                 </div>
                                             </div>
                                         );
                                     })}
                                 </div>
-                                <div style={{ marginTop: '32px', padding: '16px', background: 'rgba(255,221,0,0.05)', borderRadius: '12px', border: '1px dashed rgba(255,221,0,0.2)', display: 'flex', gap: '12px' }}>
-                                    <Info size={20} color="#ffdd00" style={{ flexShrink: 0 }} />
-                                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.5 }}>
+                                <div style={{ marginTop: '32px', padding: '16px', background: 'rgba(255,221,0,0.05)', borderRadius: '12px', border: '1px dashed rgba(255,221,0,0.3)', display: 'flex', gap: '12px' }}>
+                                    <Info size={20} color="#f59e0b" style={{ flexShrink: 0 }} />
+                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
                                         Promene će odmah biti primenjene.
                                     </p>
                                 </div>
@@ -726,7 +726,7 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
 
                         {/* Person Categories */}
                         <div className="glass-card" style={{ padding: '24px' }}>
-                            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px' }}>Kategorije Osoba</h3>
+                            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px', color: 'var(--text-primary)' }}>Kategorije Osoba</h3>
 
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
                                 {priceList.personCategories.map((category, index) => {
@@ -738,8 +738,8 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                                             : `${category.code}(${category.ageFrom} - ${category.ageTo})`;
 
                                     return (
-                                        <div key={category.code} className="glass-card" style={{ padding: '16px' }}>
-                                            <div style={{ fontWeight: 700, marginBottom: '12px', color: '#3b82f6' }}>
+                                        <div key={category.code} className="glass-card" style={{ padding: '16px', background: 'var(--bg-sidebar)', border: '1px solid var(--border)' }}>
+                                            <div style={{ fontWeight: 700, marginBottom: '12px', color: 'var(--accent)' }}>
                                                 {category.code}
                                             </div>
 
