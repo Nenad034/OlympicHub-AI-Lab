@@ -1,0 +1,118 @@
+.flight-date-carousel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding: 4px 2px;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+}
+
+.date-carousel-item {
+    flex: 1;
+    min-width: 100px;
+    max-width: 140px;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    user-select: none;
+}
+
+.date-carousel-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color, #3b82f6);
+}
+
+.date-carousel-item.active {
+    background-color: var(--bg-primary-light, #eff6ff);
+    border-color: var(--primary-color, #3b82f6);
+    border-width: 2px;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.carousel-date-day {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #64748b);
+    font-weight: 500;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.carousel-date-full {
+    font-size: 1rem;
+    color: var(--text-primary, #1e293b);
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.carousel-price {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+}
+
+.carousel-price.lowest {
+    color: #10b981;
+    /* Green for lowest price */
+}
+
+/* Optional: specific styling for lowest price indicator */
+.lowest-badge {
+    position: absolute;
+    top: -8px;
+    background-color: #10b981;
+    color: white;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    text-transform: uppercase;
+    z-index: 1;
+}
+
+/* Scroll buttons (if needed later, currently using native scroll) */
+.carousel-nav-btn {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.carousel-nav-btn:hover {
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+@media (max-width: 768px) {
+    .flight-date-carousel {
+        justify-content: flex-start;
+        padding-bottom: 12px;
+    }
+
+    .date-carousel-item {
+        min-width: 80px;
+        padding: 8px 4px;
+    }
+
+    .carousel-date-full {
+        font-size: 0.9rem;
+    }
+}

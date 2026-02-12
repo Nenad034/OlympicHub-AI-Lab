@@ -19,6 +19,7 @@ import MultiCityFlightForm, { type FlightLeg } from '../components/flight/MultiC
 import AirportAutocomplete from '../components/flight/AirportAutocomplete';
 import './FlightSearch.css';
 import './SmartSearchFerrariFix.css';
+import FlightDateCarousel from '../components/flight/FlightDateCarousel';
 
 interface FlightSearchProps {
     isInline?: boolean;
@@ -102,7 +103,9 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
     }, [location.state]);
 
     // Handle search
-    const handleSearch = async () => {
+    const handleSearch = async (paramsOverride?: FlightSearchParams) => {
+        const paramsToUse = paramsOverride || searchParams;
+
         // Validation based on trip type
         if (tripType === 'multi-city') {
             // Validate multi-city legs
@@ -115,13 +118,13 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
             }
         } else {
             // Validate regular search
-            if (!searchParams.origin || !searchParams.destination || !searchParams.departureDate) {
+            if (!paramsToUse.origin || !paramsToUse.destination || !paramsToUse.departureDate) {
                 alert('Molimo popunite sva obavezna polja');
                 return;
             }
 
             // For round-trip, check return date
-            if (tripType === 'round-trip' && !searchParams.returnDate) {
+            if (tripType === 'round-trip' && !paramsToUse.returnDate) {
                 alert('Molimo unesite datum povratka');
                 return;
             }
@@ -133,7 +136,7 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
         try {
             // For multi-city, we would need to convert legs to search params
             // For now, using regular search params
-            const response = await flightSearchManager.searchFlights(searchParams);
+            const response = await flightSearchManager.searchFlights(paramsToUse);
             setSearchResponse(response);
             setResults(response.offers);
         } catch (error) {
@@ -142,6 +145,13 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // Handle date change from carousel
+    const handleDateChange = (newDate: string) => {
+        const newParams = { ...searchParams, departureDate: newDate };
+        setSearchParams(newParams);
+        handleSearch(newParams);
     };
 
     // Sort results
@@ -350,7 +360,7 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
                             {/* Search Button */}
                             <button
                                 className="search-flights-btn"
-                                onClick={handleSearch}
+                                onClick={() => handleSearch()}
                                 disabled={isLoading}
                             >
                                 {isLoading ? (
@@ -465,7 +475,7 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
                             {/* Search Button */}
                             <button
                                 className="search-flights-btn"
-                                onClick={handleSearch}
+                                onClick={() => handleSearch()}
                                 disabled={isLoading}
                             >
                                 {isLoading ? (
@@ -596,6 +606,15 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
             {/* Results */}
             {searchPerformed && !isLoading && (
                 <div className="flight-results-container">
+
+                    {/* Date Carousel */}
+                    <FlightDateCarousel
+                        selectedDate={searchParams.departureDate || ''}
+                        basePrice={results.length > 0 ? Math.min(...results.map(r => r.price.total)) : 500}
+                        currency={searchParams.currency}
+                        onDateSelect={handleDateChange}
+                    />
+
                     {/* Results Header */}
                     <div className="results-header">
                         <div className="results-count">
