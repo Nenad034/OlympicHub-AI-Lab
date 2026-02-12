@@ -53,6 +53,7 @@ export interface RoomTypePricing {
 
     // Generated pricing rules with age categories
     pricingRules: PricingRule[];
+    basePrice?: number; // Base price for the room type (e.g. for 2 adults)
 }
 
 export interface PriceList {

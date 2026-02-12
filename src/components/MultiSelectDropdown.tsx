@@ -88,7 +88,7 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ option
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     fontSize: '13px',
-                    color: selected.includes('all') ? 'var(--text-secondary)' : 'var(--text-primary)',
+                    color: 'inherit',
                     height: '42px',
                     transition: 'all 0.2s'
                 }}

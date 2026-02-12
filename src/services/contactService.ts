@@ -20,6 +20,7 @@ export interface Contact {
     category?: string;
     tags?: string[];
     notes?: string;
+    preferredLanguage?: string;
     lastActivity?: string;
     createdAt?: string;
 }
@@ -36,6 +37,20 @@ export const contactService = {
             return this.getMockContacts();
         }
         return data || this.getMockContacts();
+    },
+
+    async getById(id: string) {
+        const { data, error } = await supabase
+            .from('contacts')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) {
+            const mocks = this.getMockContacts();
+            return mocks.find(m => m.id === id) || mocks[0];
+        }
+        return data;
     },
 
     async save(contact: Partial<Contact>) {

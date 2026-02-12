@@ -439,7 +439,17 @@ export const ClickToTravelMail: React.FC = () => {
 
         setIsLoadingAIOffer(true);
         try {
-            const result = await generateOfferFromEmail(selectedEmail.body);
+            // Find contact's preferred language
+            const { data: contactData } = await supabase
+                .from('contacts')
+                .select('preferredLanguage')
+                .eq('email', selectedEmail.senderEmail)
+                .single();
+
+            const targetLang = contactData?.preferredLanguage || 'sr';
+            console.info(`AI generating offer in language: ${targetLang} for ${selectedEmail.senderEmail}`);
+
+            const result = await generateOfferFromEmail(selectedEmail.body, targetLang);
             if (result.success && result.data) {
                 setAiProposal(result.data);
             } else {

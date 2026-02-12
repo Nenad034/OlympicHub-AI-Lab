@@ -111,16 +111,18 @@
 }
 
 .destination-input-wrapper {
-    background: var(--input-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 0.5rem 1rem;
-    min-height: 64px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    min-height: 72px;
     display: flex;
     align-items: center;
     transition: all 0.2s;
     position: relative;
-    /* CRITICAL: For dropdown absolute positioning */
+    border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+    /* Only bottom line if needed, but user wants to remove lines */
+    border-bottom: none;
 }
 
 .destination-input-wrapper:focus-within {
@@ -129,7 +131,9 @@
 }
 
 .destination-input-wrapper .smart-input-inline {
-    font-size: 1.15rem !important;
+    font-size: 1.3rem !important;
+    width: 100% !important;
+    padding: 10px 0;
 }
 
 .destination-input-wrapper .destination-chip {

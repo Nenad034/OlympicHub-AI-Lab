@@ -54,7 +54,6 @@
 .search-card-frame,
 .tabs-nav-container,
 .input-box,
-.destination-input-wrapper,
 .flex-toggle-group,
 .btn-new-search-tag,
 .vertical-filters-popover,
@@ -64,6 +63,11 @@
 .wizard-progress.ss-glass-bar,
 .wizard-navigation.ss-floating-nav {
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.destination-input-wrapper {
+    border: none !important;
+    background: transparent !important;
 }
 
 /* --- LIGHT MODE SPECIFIC - Aligned with Perla & Navy branding --- */
@@ -265,7 +269,6 @@
 }
 
 .navy-theme .input-box,
-.navy-theme .destination-input-wrapper,
 .navy-theme .flex-toggle-group {
     background: #0f172a !important;
 }

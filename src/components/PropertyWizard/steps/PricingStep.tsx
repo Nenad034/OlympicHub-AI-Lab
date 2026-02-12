@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, FileText, Sparkles, Check, X, AlertCircle, DollarSign, Calendar, Building2, CreditCard, Settings, Layers, Grid3X3, Link as LinkIcon, Info, Users, Baby } from 'lucide-react';
+import { Upload, FileText, Sparkles, Check, X, AlertCircle, DollarSign, Calendar, Building2, CreditCard, Settings, Layers, Grid3X3, Link as LinkIcon, Info, Users, Baby, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Property, RoomType } from '../../../types/property.types';
 import type {
@@ -36,6 +36,12 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
     // Initialize price list with default categories and variant-based matrix
     useEffect(() => {
         if (!priceList) {
+            if (property.priceList) {
+                // Initialize from existing property data
+                setPriceList(property.priceList);
+                return;
+            }
+
             const defaultCategories: PersonCategory[] = [
                 { code: 'ADL', label: 'Odrasli', ageFrom: 18, ageTo: 99 },
                 { code: 'CHD1', label: 'Deca 2-7', ageFrom: 2, ageTo: 7 },
@@ -94,7 +100,14 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                 updatedAt: new Date()
             });
         }
-    }, [property.id, property.roomTypes]);
+    }, [property.id, property.roomTypes, property.priceList]);
+
+    // Sync state back to parent
+    useEffect(() => {
+        if (priceList) {
+            onUpdate({ priceList });
+        }
+    }, [priceList]);
 
     // Handle file upload
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,6 +242,68 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
         });
     };
 
+    // Apply Matrix to a Room Type
+    const handleApplyMatrix = (roomTypeId: string) => {
+        if (!priceList || !priceList.pricingMatrices || priceList.pricingMatrices.length === 0) return;
+
+        const matrix = priceList.pricingMatrices[0];
+        const rtp = priceList.roomTypePricing.find(r => r.roomTypeId === roomTypeId);
+        if (!rtp) return;
+
+        const baseRoomPrice = rtp.basePrice || 0;
+
+        const updatedRules = rtp.pricingRules.map(rule => {
+            // Find matching context in matrix
+            const matchingContext = matrix.contexts.find(ctx => {
+                const ctxKeys = Object.keys(ctx.grid);
+                if (ctxKeys.length !== rule.bedAssignment.length) return false;
+
+                return rule.bedAssignment.every(bed => {
+                    const bedKey = `${bed.bedType === 'osnovni' ? 'BASIC' : 'EXTRA'}_${bed.bedIndex + 1}`;
+                    return ctx.grid[bedKey] && ctx.grid[bedKey][bed.personCategory];
+                });
+            });
+
+            if (!matchingContext) return rule;
+
+            // Calculate total multiplier or fixed additions from matrix
+            let rulePrice = baseRoomPrice;
+            let totalPercent = 0;
+            let totalFixed = 0;
+
+            rule.bedAssignment.forEach(bed => {
+                const bedKey = `${bed.bedType === 'osnovni' ? 'BASIC' : 'EXTRA'}_${bed.bedIndex + 1}`;
+                const cell = matchingContext.grid[bedKey][bed.personCategory];
+
+                if (cell.type === 'percent') {
+                    // Percent is usually of the baseRoomPrice?
+                    // Or is it shared? Let's assume percent of base per person.
+                    // If base is 100€ and matrix says 100% for ADL, then it's 100€ for that ADL.
+                    // Wait, usually the baseRoomPrice is for the WHOLE room for standard occupancy.
+                    // Let's assume baseRoomPrice is the price for 1 Adult in Basic Bed.
+                    totalPercent += cell.value;
+                } else if (cell.type === 'fixed') {
+                    totalFixed += cell.value;
+                }
+            });
+
+            const finalBase = (baseRoomPrice * totalPercent / 100) + totalFixed;
+
+            return {
+                ...rule,
+                basePrice: finalBase,
+                finalPrice: calculateFinalPrice({ ...rule, basePrice: finalBase })
+            };
+        });
+
+        setPriceList({
+            ...priceList,
+            roomTypePricing: priceList.roomTypePricing.map(r =>
+                r.roomTypeId === roomTypeId ? { ...r, pricingRules: updatedRules } : r
+            )
+        });
+    };
+
     if (!priceList) {
         return <div>Loading...</div>;
     }
@@ -312,240 +387,241 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                 </button>
             </div>
 
-            {/* Matrix Builder Tab */}
-            {activeTab === 'matrix' && (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="glass-card"
-                    style={{ padding: '32px' }}
-                >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
-                        <div>
-                            <h3 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '8px', color: 'var(--text-primary)' }}>Grafička Matrica Pravila</h3>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '600px', opacity: 0.7 }}>
-                                Definišite cene direktno na osnovu vizuelnog sastava gostiju. Odaberite kombinaciju iz menija ispod.
-                            </p>
-                        </div>
-                        <div style={{ padding: '12px 20px', background: 'rgba(59,130,246,0.1)', borderRadius: '14px', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <Sparkles size={18} color="var(--accent)" />
-                            <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--accent)', letterSpacing: '1px' }}>VISUAL MODE</span>
-                        </div>
-                    </div>
-
-                    {/* Variant Selector (Dropdown) */}
-                    <div className="glass-card" style={{ padding: '24px', background: 'var(--bg-sidebar)', border: '1px solid var(--border)', marginBottom: '32px' }}>
-                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 900, color: 'var(--text-secondary)', opacity: 0.6, textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '1px' }}>
-                            Odaberite Sastav Gostiju (Varijanta)
-                        </label>
-                        <div style={{ position: 'relative' }}>
-                            <select
-                                value={selectedVariantId}
-                                onChange={(e) => setSelectedVariantId(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '16px 20px',
-                                    borderRadius: '16px',
-                                    background: 'var(--bg-input)',
-                                    border: '1px solid var(--border)',
-                                    color: 'var(--text-primary)',
-                                    fontSize: '16px',
-                                    fontWeight: 700,
-                                    appearance: 'none',
-                                    outline: 'none',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                {priceList.pricingMatrices?.[0].contexts.map((variant: PricingMatrixContext) => (
-                                    <option key={variant.id} value={variant.id} style={{ background: 'var(--bg-sidebar)', color: 'var(--text-primary)' }}>
-                                        {variant.label}
-                                    </option>
-                                ))}
-                            </select>
-                            <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5, color: 'var(--text-secondary)' }}>
-                                <Layers size={20} />
+            {/* Tab Content */}
+            <AnimatePresence mode="wait">
+                {activeTab === 'matrix' && (
+                    <motion.div
+                        key="matrix"
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.98 }}
+                        className="glass-card"
+                        style={{ padding: '32px' }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
+                            <div>
+                                <h3 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '8px', color: 'var(--text-primary)' }}>Grafička Matrica Pravila</h3>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '600px', opacity: 0.7 }}>
+                                    Definišite cene direktno na osnovu vizuelnog sastava gostiju. Odaberite kombinaciju iz menija ispod.
+                                </p>
+                            </div>
+                            <div style={{ padding: '12px 20px', background: 'rgba(59,130,246,0.1)', borderRadius: '14px', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <Sparkles size={18} color="var(--accent)" />
+                                <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--accent)', letterSpacing: '1px' }}>VISUAL MODE</span>
                             </div>
                         </div>
-                    </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '32px' }}>
-                        {/* Interactive Matrix Area */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                            {/* visual Detail Area */}
-                            {(() => {
-                                const matrix = priceList.pricingMatrices?.[0];
-                                const variant: PricingMatrixContext | undefined = matrix?.contexts.find(c => c.id === selectedVariantId);
-                                if (!variant) return null;
+                        {/* Variant Selector (Dropdown) */}
+                        <div className="glass-card" style={{ padding: '24px', background: 'var(--bg-sidebar)', border: '1px solid var(--border)', marginBottom: '32px' }}>
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 900, color: 'var(--text-secondary)', opacity: 0.6, textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '1px' }}>
+                                Odaberite Sastav Gostiju (Varijanta)
+                            </label>
+                            <div style={{ position: 'relative' }}>
+                                <select
+                                    value={selectedVariantId}
+                                    onChange={(e) => setSelectedVariantId(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '16px 20px',
+                                        borderRadius: '16px',
+                                        background: 'var(--bg-input)',
+                                        border: '1px solid var(--border)',
+                                        color: 'var(--text-primary)',
+                                        fontSize: '16px',
+                                        fontWeight: 700,
+                                        appearance: 'none',
+                                        outline: 'none',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    {priceList.pricingMatrices?.[0].contexts.map((variant: PricingMatrixContext) => (
+                                        <option key={variant.id} value={variant.id} style={{ background: 'var(--bg-sidebar)', color: 'var(--text-primary)' }}>
+                                            {variant.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5, color: 'var(--text-secondary)' }}>
+                                    <Layers size={20} />
+                                </div>
+                            </div>
+                        </div>
 
-                                return (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                                        {/* Graphic Sequence */}
-                                        <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(59,130,246,0.03)', borderRadius: '32px', border: '1px solid var(--border)' }}>
-                                            <div style={{ display: 'inline-flex', gap: '20px', alignItems: 'center' }}>
-                                                {Object.keys(variant.grid).map((bedKey) => {
-                                                    const personCode = Object.keys(variant.grid[bedKey])[0];
-                                                    const isADL = personCode === 'ADL';
-                                                    const isINF = personCode === 'INF';
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '32px' }}>
+                            {/* Interactive Matrix Area */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                {/* visual Detail Area */}
+                                {(() => {
+                                    const matrix = priceList.pricingMatrices?.[0];
+                                    const variant: PricingMatrixContext | undefined = matrix?.contexts.find(c => c.id === selectedVariantId);
+                                    if (!variant) return null;
+
+                                    return (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                                            {/* Graphic Sequence */}
+                                            <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(59,130,246,0.03)', borderRadius: '32px', border: '1px solid var(--border)' }}>
+                                                <div style={{ display: 'inline-flex', gap: '20px', alignItems: 'center' }}>
+                                                    {Object.keys(variant.grid).map((bedKey) => {
+                                                        const personCode = Object.keys(variant.grid[bedKey])[0];
+                                                        const isADL = personCode === 'ADL';
+                                                        const isINF = personCode === 'INF';
+
+                                                        return (
+                                                            <div key={bedKey} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                                                                <div style={{
+                                                                    width: '64px',
+                                                                    height: '64px',
+                                                                    borderRadius: '20px',
+                                                                    background: isADL ? 'var(--accent)' : (isINF ? '#f59e0b' : 'var(--accent-green)'),
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    boxShadow: '0 10px 20px rgba(0,0,0,0.05)',
+                                                                    border: bedKey.includes('BASIC') ? '2px solid rgba(255,255,255,0.3)' : 'none'
+                                                                }}>
+                                                                    {isADL ? <Building2 size={32} color="#fff" /> : (isINF ? <Baby size={32} color="#fff" /> : <Users size={32} color="#fff" />)}
+                                                                </div>
+                                                                <div style={{ textAlign: 'center' }}>
+                                                                    <div style={{ fontSize: '11px', fontWeight: 900, color: 'var(--text-primary)' }}>{personCode}</div>
+                                                                    <div style={{ fontSize: '9px', opacity: 0.5, color: 'var(--text-secondary)', textTransform: 'uppercase', marginTop: '2px' }}>
+                                                                        {bedKey.replace('_', ' ')}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+
+                                            {/* Data Inputs */}
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
+                                                {Object.entries(variant.grid).map(([bedKey, personEntry]) => {
+                                                    const personCode = Object.keys(personEntry)[0];
+                                                    const cell = personEntry[personCode];
+                                                    const isBasic = bedKey.includes('BASIC');
+                                                    const vIdx = matrix?.contexts.findIndex(c => c.id === selectedVariantId) ?? -1;
+                                                    if (vIdx === -1 || !matrix) return null;
 
                                                     return (
-                                                        <div key={bedKey} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                                                            <div style={{
-                                                                width: '64px',
-                                                                height: '64px',
-                                                                borderRadius: '20px',
-                                                                background: isADL ? 'var(--accent)' : (isINF ? '#f59e0b' : 'var(--accent-green)'),
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                boxShadow: '0 10px 20px rgba(0,0,0,0.05)',
-                                                                border: bedKey.includes('BASIC') ? '2px solid rgba(255,255,255,0.3)' : 'none'
-                                                            }}>
-                                                                {isADL ? <Building2 size={32} color="#fff" /> : (isINF ? <Baby size={32} color="#fff" /> : <Users size={32} color="#fff" />)}
-                                                            </div>
-                                                            <div style={{ textAlign: 'center' }}>
-                                                                <div style={{ fontSize: '11px', fontWeight: 900, color: 'var(--text-primary)' }}>{personCode}</div>
-                                                                <div style={{ fontSize: '9px', opacity: 0.5, color: 'var(--text-secondary)', textTransform: 'uppercase', marginTop: '2px' }}>
-                                                                    {bedKey.replace('_', ' ')}
+                                                        <div key={bedKey} className="glass-card" style={{ padding: '24px', background: 'var(--bg-input)', position: 'relative', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                                                            <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: isBasic ? 'var(--accent)' : 'var(--accent-green)' }} />
+
+                                                            <div style={{ marginBottom: '20px' }}>
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                    <span style={{ fontSize: '10px', fontWeight: 900, color: 'var(--text-secondary)', opacity: 0.5, letterSpacing: '1px' }}>{bedKey}</span>
+                                                                    <div style={{ padding: '4px 8px', borderRadius: '6px', background: isBasic ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)', fontSize: '9px', fontWeight: 800, color: isBasic ? 'var(--accent)' : 'var(--accent-green)' }}>
+                                                                        {isBasic ? 'FIXED' : 'EXTRA'}
+                                                                    </div>
                                                                 </div>
+                                                                <h5 style={{ margin: '8px 0 2px 0', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                                                                    {personCode === 'ADL' ? 'Odrasla' :
+                                                                        personCode === 'INF' ? 'Beba 0-2' :
+                                                                            personCode === 'CHD1' ? 'Dete 2-7' : 'Dete 7-12'}
+                                                                </h5>
+                                                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.6 }}>Pozicija: {isBasic ? 'Osnovni krev.' : 'Pomoćni krev.'}</div>
+                                                            </div>
+
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                                <div style={{ background: 'var(--bg-sidebar)', borderRadius: '12px', padding: '10px', border: '1px solid var(--border)' }}>
+                                                                    <select
+                                                                        value={cell.type}
+                                                                        onChange={(e) => {
+                                                                            if (!matrix) return;
+                                                                            const newMatrices = [...priceList.pricingMatrices!];
+                                                                            newMatrices[0].contexts[vIdx].grid[bedKey][personCode].type = e.target.value as any;
+                                                                            setPriceList({ ...priceList, pricingMatrices: newMatrices });
+                                                                        }}
+                                                                        style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '12px', fontWeight: 700, width: '100%', outline: 'none' }}
+                                                                    >
+                                                                        <option value="percent">% Od Baze</option>
+                                                                        <option value="fixed">€ Fiksna dopl.</option>
+                                                                        <option value="free">Gratis / Uključ.</option>
+                                                                    </select>
+                                                                </div>
+
+                                                                {cell.type !== 'free' && (
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-sidebar)', borderRadius: '12px', padding: '12px 16px', border: '1px solid var(--accent)' }}>
+                                                                        <input
+                                                                            type="number"
+                                                                            value={cell.value}
+                                                                            onChange={(e) => {
+                                                                                if (!matrix) return;
+                                                                                const newMatrices = [...priceList.pricingMatrices!];
+                                                                                newMatrices[0].contexts[vIdx].grid[bedKey][personCode].value = parseFloat(e.target.value) || 0;
+                                                                                setPriceList({ ...priceList, pricingMatrices: newMatrices });
+                                                                            }}
+                                                                            style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '24px', fontWeight: 800, width: '100%', outline: 'none' }}
+                                                                        />
+                                                                        <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>{cell.type === 'percent' ? '%' : '€'}</span>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     );
                                                 })}
                                             </div>
                                         </div>
+                                    );
+                                })()}
+                            </div>
 
-                                        {/* Data Inputs */}
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
-                                            {Object.entries(variant.grid).map(([bedKey, personEntry]) => {
-                                                const personCode = Object.keys(personEntry)[0];
-                                                const cell = personEntry[personCode];
-                                                const isBasic = bedKey.includes('BASIC');
-                                                const vIdx = matrix?.contexts.findIndex(c => c.id === selectedVariantId) ?? -1;
-                                                if (vIdx === -1 || !matrix) return null;
-
-                                                return (
-                                                    <div key={bedKey} className="glass-card" style={{ padding: '24px', background: 'var(--bg-input)', position: 'relative', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                                                        <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: isBasic ? 'var(--accent)' : 'var(--accent-green)' }} />
-
-                                                        <div style={{ marginBottom: '20px' }}>
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                <span style={{ fontSize: '10px', fontWeight: 900, color: 'var(--text-secondary)', opacity: 0.5, letterSpacing: '1px' }}>{bedKey}</span>
-                                                                <div style={{ padding: '4px 8px', borderRadius: '6px', background: isBasic ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)', fontSize: '9px', fontWeight: 800, color: isBasic ? 'var(--accent)' : 'var(--accent-green)' }}>
-                                                                    {isBasic ? 'FIXED' : 'EXTRA'}
-                                                                </div>
-                                                            </div>
-                                                            <h5 style={{ margin: '8px 0 2px 0', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                                                                {personCode === 'ADL' ? 'Odrasla' :
-                                                                    personCode === 'INF' ? 'Beba 0-2' :
-                                                                        personCode === 'CHD1' ? 'Dete 2-7' : 'Dete 7-12'}
-                                                            </h5>
-                                                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.6 }}>Pozicija: {isBasic ? 'Osnovni krev.' : 'Pomoćni krev.'}</div>
-                                                        </div>
-
-                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                                            <div style={{ background: 'var(--bg-sidebar)', borderRadius: '12px', padding: '10px', border: '1px solid var(--border)' }}>
-                                                                <select
-                                                                    value={cell.type}
-                                                                    onChange={(e) => {
-                                                                        if (!matrix) return;
-                                                                        const newMatrices = [...priceList.pricingMatrices!];
-                                                                        newMatrices[0].contexts[vIdx].grid[bedKey][personCode].type = e.target.value as any;
-                                                                        setPriceList({ ...priceList, pricingMatrices: newMatrices });
-                                                                    }}
-                                                                    style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '12px', fontWeight: 700, width: '100%', outline: 'none' }}
-                                                                >
-                                                                    <option value="percent">% Od Baze</option>
-                                                                    <option value="fixed">€ Fiksna dopl.</option>
-                                                                    <option value="free">Gratis / Uključ.</option>
-                                                                </select>
-                                                            </div>
-
-                                                            {cell.type !== 'free' && (
-                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-sidebar)', borderRadius: '12px', padding: '12px 16px', border: '1px solid var(--accent)' }}>
-                                                                    <input
-                                                                        type="number"
-                                                                        value={cell.value}
-                                                                        onChange={(e) => {
-                                                                            if (!matrix) return;
-                                                                            const newMatrices = [...priceList.pricingMatrices!];
-                                                                            newMatrices[0].contexts[vIdx].grid[bedKey][personCode].value = parseFloat(e.target.value) || 0;
-                                                                            setPriceList({ ...priceList, pricingMatrices: newMatrices });
-                                                                        }}
-                                                                        style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '24px', fontWeight: 800, width: '100%', outline: 'none' }}
-                                                                    />
-                                                                    <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>{cell.type === 'percent' ? '%' : '€'}</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
+                            {/* Room Apply Selector (Sidebar) */}
+                            <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: '32px' }}>
+                                <div className="glass-card" style={{ padding: '24px', background: 'var(--bg-input)', border: '1px solid var(--border)' }}>
+                                    <h4 style={{ fontSize: '14px', fontWeight: 800, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-primary)' }}>
+                                        <LinkIcon size={18} color="var(--accent)" /> Povezane Sobe
+                                    </h4>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        {property.roomTypes?.map(room => {
+                                            const isLinked = priceList.pricingMatrices?.[0].targetRoomTypeIds.includes(room.roomTypeId || '');
+                                            return (
+                                                <div
+                                                    key={room.roomTypeId}
+                                                    onClick={() => {
+                                                        const newMatrices = [...(priceList.pricingMatrices || [])];
+                                                        const currentIds = newMatrices[0].targetRoomTypeIds;
+                                                        if (currentIds.includes(room.roomTypeId!)) {
+                                                            newMatrices[0].targetRoomTypeIds = currentIds.filter(id => id !== room.roomTypeId);
+                                                        } else {
+                                                            newMatrices[0].targetRoomTypeIds = [...currentIds, room.roomTypeId!];
+                                                        }
+                                                        setPriceList({ ...priceList, pricingMatrices: newMatrices });
+                                                    }}
+                                                    style={{
+                                                        padding: '12px 16px',
+                                                        borderRadius: '12px',
+                                                        background: isLinked ? 'rgba(59,130,246,0.08)' : 'var(--bg-sidebar)',
+                                                        border: `1px solid ${isLinked ? 'var(--accent)' : 'var(--border)'}`,
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '12px',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    <div style={{ width: '18px', height: '18px', borderRadius: '5px', border: '2px solid var(--accent)', background: isLinked ? 'var(--accent)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        {isLinked && <Check size={12} color="#fff" />}
                                                     </div>
-                                                );
-                                            })}
-                                        </div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>{room.nameInternal}</div>
+                                                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', opacity: 0.6 }}>{room.category}</div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                );
-                            })()}
-                        </div>
-
-                        {/* Room Apply Selector (Sidebar) */}
-                        <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: '32px' }}>
-                            <div className="glass-card" style={{ padding: '24px', background: 'var(--bg-input)', border: '1px solid var(--border)' }}>
-                                <h4 style={{ fontSize: '14px', fontWeight: 800, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-primary)' }}>
-                                    <LinkIcon size={18} color="var(--accent)" /> Povezane Sobe
-                                </h4>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    {property.roomTypes?.map(room => {
-                                        const isLinked = priceList.pricingMatrices?.[0].targetRoomTypeIds.includes(room.roomTypeId || '');
-                                        return (
-                                            <div
-                                                key={room.roomTypeId}
-                                                onClick={() => {
-                                                    const newMatrices = [...(priceList.pricingMatrices || [])];
-                                                    const currentIds = newMatrices[0].targetRoomTypeIds;
-                                                    if (currentIds.includes(room.roomTypeId!)) {
-                                                        newMatrices[0].targetRoomTypeIds = currentIds.filter(id => id !== room.roomTypeId);
-                                                    } else {
-                                                        newMatrices[0].targetRoomTypeIds = [...currentIds, room.roomTypeId!];
-                                                    }
-                                                    setPriceList({ ...priceList, pricingMatrices: newMatrices });
-                                                }}
-                                                style={{
-                                                    padding: '12px 16px',
-                                                    borderRadius: '12px',
-                                                    background: isLinked ? 'rgba(59,130,246,0.08)' : 'var(--bg-sidebar)',
-                                                    border: `1px solid ${isLinked ? 'var(--accent)' : 'var(--border)'}`,
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '12px',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                <div style={{ width: '18px', height: '18px', borderRadius: '5px', border: '2px solid var(--accent)', background: isLinked ? 'var(--accent)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    {isLinked && <Check size={12} color="#fff" />}
-                                                </div>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>{room.nameInternal}</div>
-                                                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', opacity: 0.6 }}>{room.category}</div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                                <div style={{ marginTop: '32px', padding: '16px', background: 'rgba(255,221,0,0.05)', borderRadius: '12px', border: '1px dashed rgba(255,221,0,0.3)', display: 'flex', gap: '12px' }}>
-                                    <Info size={20} color="#f59e0b" style={{ flexShrink: 0 }} />
-                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
-                                        Promene će odmah biti primenjene.
-                                    </p>
+                                    <div style={{ marginTop: '32px', padding: '16px', background: 'rgba(255,221,0,0.05)', borderRadius: '12px', border: '1px dashed rgba(255,221,0,0.3)', display: 'flex', gap: '12px' }}>
+                                        <Info size={20} color="#f59e0b" style={{ flexShrink: 0 }} />
+                                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                                            Promene će odmah biti primenjene.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                </motion.div>
-            )}
+                    </motion.div>
+                )}
 
-            {/* Tab Content */}
-            <AnimatePresence mode="wait">
                 {activeTab === 'basic' && (
                     <motion.div
                         key="basic"
@@ -818,6 +894,25 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                                     );
                                 })}
                             </div>
+
+                            <button
+                                onClick={() => {
+                                    const newCat: PersonCategory = {
+                                        code: `CHD${priceList.personCategories.length}` as any,
+                                        label: 'Novo dete',
+                                        ageFrom: 0,
+                                        ageTo: 12
+                                    };
+                                    setPriceList({
+                                        ...priceList,
+                                        personCategories: [...priceList.personCategories, newCat]
+                                    });
+                                }}
+                                className="glass-button"
+                                style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent)' }}
+                            >
+                                <Plus size={16} /> Dodaj Kategoriju
+                            </button>
                         </div>
                     </motion.div>
                 )}
@@ -975,14 +1070,45 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                                                 </div>
                                             </div>
 
-                                            <button
-                                                className="glass-button"
-                                                onClick={() => handleGenerateRules(room)}
-                                                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                                            >
-                                                <Sparkles size={16} />
-                                                {roomPricing ? 'Regeneriši Pravila' : 'Generiši Pravila'}
-                                            </button>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                    <label style={{ fontSize: '11px', fontWeight: 700, opacity: 0.6 }}>Osnovna Cena (€)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={roomPricing?.basePrice || 0}
+                                                        onChange={(e) => {
+                                                            const val = parseFloat(e.target.value) || 0;
+                                                            setPriceList({
+                                                                ...priceList,
+                                                                roomTypePricing: priceList.roomTypePricing.map(r =>
+                                                                    r.roomTypeId === room.roomTypeId ? { ...r, basePrice: val } : r
+                                                                )
+                                                            });
+                                                        }}
+                                                        className="glass-input"
+                                                        style={{ width: '120px', padding: '8px 12px' }}
+                                                    />
+                                                </div>
+
+                                                <button
+                                                    className="glass-button"
+                                                    onClick={() => handleApplyMatrix(room.roomTypeId || '')}
+                                                    disabled={!roomPricing}
+                                                    style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent)' }}
+                                                >
+                                                    <Grid3X3 size={16} />
+                                                    Primeni Matricu
+                                                </button>
+
+                                                <button
+                                                    className="glass-button"
+                                                    onClick={() => handleGenerateRules(room)}
+                                                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                                                >
+                                                    <Sparkles size={16} />
+                                                    {roomPricing ? 'Regeneriši' : 'Generiši Pravila'}
+                                                </button>
+                                            </div>
                                         </div>
 
                                         {roomPricing && (
@@ -1115,6 +1241,102 @@ export default function PricingStep({ property, onUpdate }: PricingStepProps) {
                     </motion.div>
                 )}
             </AnimatePresence>
+            {/* AI Assistant Sidebar */}
+            <div style={{
+                position: 'fixed',
+                right: '40px',
+                bottom: '120px',
+                width: '380px',
+                height: '600px',
+                background: 'rgba(15, 23, 42, 0.9)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '32px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                zIndex: 100
+            }}>
+                <div style={{ padding: '24px', background: 'rgba(59, 130, 246, 0.1)', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ padding: '10px', background: 'var(--accent)', borderRadius: '12px' }}>
+                        <Sparkles size={20} color="#fff" />
+                    </div>
+                    <div>
+                        <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>AI Pricing Analyst</h4>
+                        <div style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 700 }}>ONLINE • OPTIMIZACIJA CENOVNIKA</div>
+                    </div>
+                </div>
+
+                <div style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }} className="glass-scroll">
+                    {aiMessages.length === 0 ? (
+                        <div style={{ textAlign: 'center', marginTop: '40px', opacity: 0.5 }}>
+                            <DollarSign size={40} style={{ marginBottom: '16px' }} />
+                            <p style={{ fontSize: '14px' }}>Nema aktivnih analiza.<br />Pitajte me bilo šta o vašim cenama.</p>
+                        </div>
+                    ) : (
+                        aiMessages.map(msg => (
+                            <div key={msg.id} style={{
+                                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                                maxWidth: '85%',
+                                padding: '12px 16px',
+                                borderRadius: msg.role === 'user' ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
+                                background: msg.role === 'user' ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
+                                fontSize: '14px',
+                                lineHeight: 1.5
+                            }}>
+                                {msg.content}
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ position: 'relative' }}>
+                        <input
+                            type="text"
+                            value={aiPrompt}
+                            onChange={(e) => setAiPrompt(e.target.value)}
+                            onKeyPress={(e) => {
+                                if (e.key === 'Enter' && aiPrompt.trim()) {
+                                    const userMsg: AIAssistantMessage = {
+                                        id: `msg_${Date.now()}`,
+                                        role: 'user',
+                                        content: aiPrompt,
+                                        timestamp: new Date()
+                                    };
+                                    setAiMessages(prev => [...prev, userMsg]);
+                                    setAiPrompt('');
+                                    // Simulate AI thinking and response
+                                    setTimeout(() => {
+                                        const aiMsg: AIAssistantMessage = {
+                                            id: `msg_${Date.now() + 1}`,
+                                            role: 'assistant',
+                                            content: 'Analiziram vaše podatke... Trenutno vidim da imate dobru pokrivenost za CHD kategorije, ali preporučujem proveru doplata za 3. odraslu osobu.',
+                                            timestamp: new Date()
+                                        };
+                                        setAiMessages(prev => [...prev, aiMsg]);
+                                    }, 1000);
+                                }
+                            }}
+                            placeholder="Pitajte AI..."
+                            style={{
+                                width: '100%',
+                                padding: '14px 20px',
+                                background: 'rgba(0,0,0,0.2)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '16px',
+                                color: '#fff',
+                                paddingRight: '50px',
+                                outline: 'none'
+                            }}
+                        />
+                        <div style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>
+                            <Sparkles size={18} />
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div >
     );
 }

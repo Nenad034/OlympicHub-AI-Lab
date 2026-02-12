@@ -908,7 +908,7 @@ const SmartSearch: React.FC = () => {
                                             onChange={(e) => setDestinationInput(e.target.value)}
                                             className="smart-input-inline"
                                             onFocus={() => { if (destinationInput.length >= 2) setShowSuggestions(true); }}
-                                            style={{ background: 'transparent', border: 'none', width: '100%', height: '100%', fontSize: '1rem', fontStyle: 'italic' }}
+                                            style={{ background: 'transparent', border: 'none', width: '100%', height: '100%', fontSize: '1.3rem', fontStyle: 'italic' }}
                                         />
                                     )}
                                 </div>
@@ -1566,11 +1566,6 @@ const SmartSearch: React.FC = () => {
                                                                                     <span className="room-type-tag">
                                                                                         {cleanRoomName(room.name || hotel.name || 'Standardna Soba')}
                                                                                     </span>
-                                                                                    {room.description && !room.description.includes('Dest:') && (
-                                                                                        <span className="room-desc-mini">
-                                                                                            {cleanRoomName(room.description)}
-                                                                                        </span>
-                                                                                    )}
                                                                                 </div>
                                                                                 <div className="r-meal">
                                                                                     <span className="meal-tag-v4">

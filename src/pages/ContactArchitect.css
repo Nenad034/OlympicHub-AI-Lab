@@ -469,7 +469,7 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--bg-input);
 }
 
 .checkbox-box.checked {
@@ -504,7 +504,7 @@
 
 /* LABEL BULK MODAL */
 .label-bulk-modal {
-    background: #1a1f2e;
+    background: var(--bg-card);
     border: 1px solid var(--glass-border);
     border-radius: 25px;
     width: 450px;
@@ -524,7 +524,7 @@
 }
 
 .label-input-wrapper {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 12px 15px;
@@ -537,7 +537,7 @@
 .label-input-wrapper input {
     background: transparent;
     border: none;
-    color: white;
+    color: var(--text-primary);
     font-size: 15px;
     outline: none;
     flex: 1;
@@ -551,7 +551,7 @@
 }
 
 .common-labels span {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-surface);
     color: var(--text-secondary);
     padding: 6px 12px;
     border-radius: 8px;
@@ -593,7 +593,7 @@
 
 /* CONTACT FORM MODAL */
 .contact-form-modal {
-    background: #1a1f2e;
+    background: var(--bg-card);
     border: 1px solid var(--glass-border);
     border-radius: 30px;
     width: 700px;
@@ -650,7 +650,7 @@
 }
 
 .type-selector button {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--bg-surface);
     border: 1px solid var(--border);
     color: var(--text-secondary);
     padding: 12px;
@@ -692,11 +692,11 @@
 .form-group input,
 .form-group textarea {
     width: 100%;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 12px 16px;
-    color: white;
+    color: var(--text-primary);
     font-size: 14px;
     outline: none;
     transition: 0.2s;
@@ -705,7 +705,7 @@
 .form-group input:focus,
 .form-group textarea:focus {
     border-color: var(--accent);
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--bg-input);
 }
 
 .form-group textarea {
@@ -721,11 +721,11 @@
 
 .country-select {
     width: 100%;
-    background: rgba(0, 0, 0, 0.2) !important;
+    background: var(--bg-input) !important;
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 12px 16px;
-    color: white;
+    color: var(--text-primary);
     font-size: 14px;
     outline: none;
     cursor: pointer;
@@ -735,12 +735,12 @@
 
 .country-select:focus {
     border-color: var(--accent);
-    background: rgba(0, 0, 0, 0.4) !important;
+    background: var(--bg-input) !important;
 }
 
 .country-select option {
-    background: #1a1f2e;
-    color: white;
+    background: var(--bg-card);
+    color: var(--text-primary);
 }
 
 .form-footer {

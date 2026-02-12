@@ -27,8 +27,9 @@ import { useConfig } from '../context/ConfigContext';
 import { quotaNotificationService } from '../services/quotaNotificationService';
 import { multiKeyAI } from '../services/multiKeyAI';
 import { ActivityLogger } from '../services/activityLogger';
+import { useAppStore } from '../stores';
 
-type ChatPersona = 'specialist' | 'general' | 'group';
+type ChatPersona = 'specialist' | 'general' | 'group' | 'contact';
 
 interface Message {
     role: 'user' | 'ai' | 'player';
@@ -96,9 +97,10 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
     const isResizing = useRef(false);
 
     const getPersonaTitle = () => {
+        if (activePersona === 'contact') return chatContext.contactName || 'Client Chat';
         if (activePersona === 'specialist') return context.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + ' Specialist';
-        if (activePersona === 'general') return lang === 'sr' ? 'Generalni AI' : 'General AI';
-        return lang === 'sr' ? 'Team Live Chat' : 'Team Live Chat';
+        if (activePersona === 'general') return activeLang === 'sr' ? 'Generalni AI' : 'General AI';
+        return activeLang === 'sr' ? 'Team Live Chat' : 'Team Live Chat';
     };
 
     const speak = useCallback((text: string) => {
@@ -125,13 +127,27 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
             const welcomeMsg = {
                 specialist: lang === 'sr' ? `Ja sam vaš ekspert za ${context}. Kako vam mogu pomoći oko ovog modula?` : `I am your expert for ${context}. How can I help you with this module?`,
                 general: lang === 'sr' ? `Ja sam Generalni AI. Imam pristup znanju celog sveta. Pitajte bilo šta.` : `I am General AI. I have access to world knowledge. Ask anything.`,
-                group: lang === 'sr' ? `Dobrodošli u Live Chat grupu. Svi članovi tima i partneri su ovde.` : `Welcome to Live Chat group. All team members and partners are here.`
+                group: lang === 'sr' ? `Dobrodošli u Live Chat grupu. Svi članovi tima i partneri su ovde.` : `Welcome to Live Chat group. All team members and partners are here.`,
+                contact: `Hello! I am ${chatContext.contactName}'s AI representative. How can I assist you today?`
             };
             const welcome = welcomeMsg[activePersona];
             setMessages([{ role: 'ai', text: welcome }]);
             setTimeout(() => speak(welcome), 500);
         }
     }, [isOpen, lang, context, messages.length, speak, activePersona]);
+
+    const { isChatOpen, setChatOpen, chatContext, setChatContext } = useAppStore();
+    const [activeLang, setActiveLang] = useState<'sr' | 'en' | 'ru' | 'it' | 'de' | 'fr' | 'es'>(lang);
+
+    // Sync activeLang with chatContext when it changes
+    useEffect(() => {
+        if (chatContext.type === 'contact' && chatContext.contactLanguage) {
+            setActiveLang(chatContext.contactLanguage as any);
+            setActivePersona('contact');
+        } else {
+            setActiveLang(lang as any);
+        }
+    }, [chatContext, lang]);
 
     useEffect(() => {
         if (config.geminiKey) {
@@ -194,6 +210,14 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
         let usedModelName = "";
 
         const getSystemPrompt = () => {
+            if (activePersona === 'contact') {
+                return `Ti si AI Agent prodaje Olympic Travel-a u B2B i B2C sektoru. 
+                Trenutno komuniciraš sa kontaktom: ${chatContext.contactName} (${chatContext.contactEmail}).
+                Podešeni jezik korisnika: ${chatContext.contactLanguage}.
+                Tvoj cilj je da odgovaraš na pitanja profesionalno, nudiš relevantne hotele i usluge iz baze.
+                Uvek favorizuj "Olympic Travel" verifikovane hotele.
+                Ako klijent promeni jezik (npr. piše na engleskom umesto na ruskom), prilagodi se odmah i nastavi na jeziku koji on koristi.`;
+            }
             if (activePersona === 'specialist') {
                 return `Ti si ekspert za modul "${context}" u sistemu Olympic Hub. 
                 ${context === 'production-hub' ? 'Tvoj fokus je na upravljanju bazom hotela, unosu smeštaja i slikama.' : ''}
@@ -225,7 +249,7 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                 console.log(`🤖 [AI CHAT] Trying model: ${modelName}`);
                 setApiCallCount(prev => prev + 1); // Track quota usage
 
-                const prompt = `System Instructions: ${getSystemPrompt()}\nLanguage: ${lang}\nUser: ${textToSend}`;
+                const prompt = `System Instructions: ${getSystemPrompt()}\nLanguage: ${activeLang}\nUser: ${textToSend}`;
 
                 // Use multiKeyAI service with caching and rate limiting
                 const response = await multiKeyAI.generateContent(prompt, {
@@ -373,9 +397,9 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                         </div>
 
                         <div onPointerDown={e => e.stopPropagation()} style={{ display: 'flex', background: 'rgba(0,0,0,0.15)', padding: '4px', borderRadius: '18px', marginTop: '16px' }}>
-                            <button onClick={() => { setActivePersona('specialist'); setSelectedUserIds([]); setMessages([]); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'specialist' ? '#fff' : 'transparent', color: activePersona === 'specialist' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Specialist</button>
-                            <button onClick={() => { setActivePersona('general'); setSelectedUserIds([]); setMessages([]); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'general' ? '#fff' : 'transparent', color: activePersona === 'general' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>General</button>
-                            <button onClick={() => { setActivePersona('group'); setSelectedUserIds([]); setMessages([]); setShowUserList(true); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'group' ? '#fff' : 'transparent', color: activePersona === 'group' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Live Chat</button>
+                            <button onClick={() => { setActivePersona('specialist'); setSelectedUserIds([]); setMessages([]); setChatContext({ type: 'general' }); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'specialist' ? '#fff' : 'transparent', color: activePersona === 'specialist' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Specialist</button>
+                            <button onClick={() => { setActivePersona('general'); setSelectedUserIds([]); setMessages([]); setChatContext({ type: 'general' }); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'general' ? '#fff' : 'transparent', color: activePersona === 'general' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>General</button>
+                            <button onClick={() => { setActivePersona('group'); setSelectedUserIds([]); setMessages([]); setShowUserList(true); setChatContext({ type: 'general' }); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'group' ? '#fff' : 'transparent', color: activePersona === 'group' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Live Chat</button>
                         </div>
                     </div>
 

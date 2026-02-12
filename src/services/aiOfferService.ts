@@ -137,7 +137,7 @@ export async function searchOffers(params: OfferInquiry): Promise<{ hotels: any[
  * Main workflow: From Email to Proposal
  * Now with Marketing Steered Logic: AI favors "Promoted" or high-value offers.
  */
-export async function generateOfferFromEmail(emailBody: string): Promise<OfferProposal> {
+export async function generateOfferFromEmail(emailBody: string, targetLang: string = 'sr'): Promise<OfferProposal> {
     // 1. Extract params
     const inquiry = await extractInquiryParameters(emailBody);
     if (!inquiry) {
@@ -161,8 +161,19 @@ export async function generateOfferFromEmail(emailBody: string): Promise<OfferPr
     );
 
     // 4. Generate Response Text with Marketing Steering
+    const langMap: Record<string, string> = {
+        'sr': 'SRPSKOM',
+        'en': 'ENGLESKOM',
+        'ru': 'RUSKOM',
+        'it': 'ITALIJANSKOM',
+        'de': 'NEMAČKOM',
+        'fr': 'FRANCUSKOM',
+        'es': 'ŠPANSKOM'
+    };
+    const targetLangName = langMap[targetLang] || 'SRPSKOM';
+
     const responsePrompt = `
-        Na osnovu upita i pronađenih podataka iz baze, sastavi KOMPLETNU ponudu na SRPSKOM JEZIKU.
+        Na osnovu upita i pronađenih podataka iz baze, sastavi KOMPLETNU ponudu na ${targetLangName} JEZIKU.
         
         Kao AI Agent prodaje Olympic Travel-a, tvoj cilj je da klijentu pružiš najbolju uslugu 
         ALI i da istakneš ponude koje su u interesu agencije (označene kao PRIORITET).

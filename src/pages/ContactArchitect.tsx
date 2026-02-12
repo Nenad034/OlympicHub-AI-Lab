@@ -3,11 +3,13 @@ import {
     Users, Search, Plus, Filter, Download, MoreHorizontal, Mail, Phone, MapPin, Building2, User, Briefcase,
     Truck, CheckCircle2, AlertTriangle, Shield, Zap, Sparkles,
     Trash2, Edit3, Eye, Calendar, Globe, Tag, ArrowRight, X,
-    LayoutGrid, List as ListIcon
+    LayoutGrid, List as ListIcon, MessageSquare
 } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { contactService } from '../services/contactService';
 import type { Contact } from '../services/contactService';
+import { useAppStore } from '../stores';
 import './ContactArchitect.css';
 
 const ContactArchitect: React.FC = () => {
@@ -22,11 +24,40 @@ const ContactArchitect: React.FC = () => {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showLabelModal, setShowLabelModal] = useState(false);
     const [newTag, setNewTag] = useState('');
+    const { setChatOpen, setChatContext } = useAppStore();
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    useEffect(() => {
+        fetchContacts();
+    }, []);
+
+    useEffect(() => {
+        if (location.state?.editContactId && contacts.length > 0) {
+            const contactToEdit = contacts.find(c => c.id === location.state.editContactId);
+            if (contactToEdit) {
+                setEditingContact(contactToEdit);
+                setShowAddModal(true);
+                // Clear state to avoid reopening on refresh
+                navigate(location.pathname, { replace: true, state: {} });
+            }
+        }
+    }, [location.state, contacts]);
 
     const COUNTRIES = [
         'Srbija', 'Crna Gora', 'Bosna i Hercegovina', 'Hrvatska', 'Severna Makedonija',
         'Grčka', 'Slovenija', 'Bugarska', 'Mađarska', 'Rumunija', 'Turska', 'Austrija',
         'Nemačka', 'Italija', 'Švajcarska', 'Francuska', 'Ostalo'
+    ];
+
+    const LANGUAGES = [
+        { code: 'sr', name: 'Srpski' },
+        { code: 'en', name: 'Engleski' },
+        { code: 'ru', name: 'Ruski' },
+        { code: 'it', name: 'Italijanski' },
+        { code: 'de', name: 'Nemački' },
+        { code: 'fr', name: 'Francuski' },
+        { code: 'es', name: 'Španski' }
     ];
 
     useEffect(() => {
@@ -83,6 +114,27 @@ const ContactArchitect: React.FC = () => {
             c.pib?.includes(searchQuery);
         return matchesType && matchesSearch;
     });
+
+    const handleOpenContactChat = (contact: Contact) => {
+        setChatContext({
+            type: 'contact',
+            contactId: contact.id,
+            contactEmail: contact.email,
+            contactName: contact.fullName || contact.firmName,
+            contactLanguage: contact.preferredLanguage || 'sr'
+        });
+        setChatOpen(true);
+    };
+
+    const handleViewProfile = (contact: Contact) => {
+        if (contact.type === 'Individual' || contact.type === 'Legal') {
+            navigate(`/customers/${contact.id}`);
+        } else if (contact.type === 'Supplier') {
+            navigate(`/suppliers/${contact.id}`);
+        } else if (contact.type === 'Subagent') {
+            navigate(`/subagent-admin`);
+        }
+    };
 
     const getTypeIcon = (type: string) => {
         switch (type) {
@@ -253,7 +305,15 @@ const ContactArchitect: React.FC = () => {
                                         <div className="type-tag">
                                             {getTypeIcon(contact.type)} {contact.type}
                                         </div>
-                                        <button className="btn-more"><MoreHorizontal size={18} /></button>
+                                        <button
+                                            className="btn-more"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                // More actions menu could be here
+                                            }}
+                                        >
+                                            <MoreHorizontal size={18} />
+                                        </button>
                                     </div>
 
                                     <div className="card-body">
@@ -283,7 +343,13 @@ const ContactArchitect: React.FC = () => {
                                     </div>
 
                                     <div className="card-footer">
-                                        <button className="btn-view" onClick={() => window.open(`/contact-detail?id=${contact.id}`, '_blank')}>
+                                        <button
+                                            className="btn-view"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleViewProfile(contact);
+                                            }}
+                                        >
                                             Profil <ArrowRight size={14} />
                                         </button>
                                         <div className="activity-stamp">Aktivan pre 2h</div>
@@ -312,6 +378,7 @@ const ContactArchitect: React.FC = () => {
                                         <th>Email</th>
                                         <th>Telefon</th>
                                         <th>Lokacija</th>
+                                        <th>Jezik</th>
                                         <th>Status</th>
                                         <th>Akcije</th>
                                     </tr>
@@ -356,10 +423,34 @@ const ContactArchitect: React.FC = () => {
                                             </td>
                                             <td>{contact.phone}</td>
                                             <td>{contact.city ? `${contact.city}, ${contact.country}` : 'N/A'}</td>
+                                            <td>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', textTransform: 'uppercase', fontSize: '12px', fontWeight: 600 }}>
+                                                    <Sparkles size={10} color="#FFD700" /> {contact.preferredLanguage || 'sr'}
+                                                </div>
+                                            </td>
                                             <td><span className="status-badge active">Aktivan</span></td>
                                             <td>
                                                 <div className="table-actions">
-                                                    <button className="btn-table-action" title="View Profile"><Eye size={16} /></button>
+                                                    <button
+                                                        className="btn-table-action"
+                                                        title="Chat with AI"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleOpenContactChat(contact);
+                                                        }}
+                                                    >
+                                                        <MessageSquare size={16} />
+                                                    </button>
+                                                    <button
+                                                        className="btn-table-action"
+                                                        title="View Profile"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleViewProfile(contact);
+                                                        }}
+                                                    >
+                                                        <Eye size={16} />
+                                                    </button>
                                                     <button
                                                         className="btn-table-action"
                                                         title="Edit"
@@ -371,7 +462,16 @@ const ContactArchitect: React.FC = () => {
                                                     >
                                                         <Edit3 size={16} />
                                                     </button>
-                                                    <button className="btn-table-action delete" title="Delete"><Trash2 size={16} /></button>
+                                                    <button
+                                                        className="btn-table-action delete"
+                                                        title="Delete"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            // Delete logic here
+                                                        }}
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
                                                 </div>
                                             </td>
                                         </motion.tr>
@@ -574,6 +674,21 @@ const ContactArchitect: React.FC = () => {
                                             </div>
                                         </>
                                     )}
+
+                                    <div className="form-group">
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <Sparkles size={12} color="#FFD700" /> Primarni Jezik (AI & Chat)
+                                        </label>
+                                        <select
+                                            value={editingContact?.preferredLanguage || 'sr'}
+                                            onChange={e => setEditingContact({ ...editingContact, preferredLanguage: e.target.value })}
+                                            className="country-select"
+                                        >
+                                            {LANGUAGES.map(lang => (
+                                                <option key={lang.code} value={lang.code}>{lang.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
 
                                     <div className="form-group full">
                                         <label>Adresa i Lokacija</label>

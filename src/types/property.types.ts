@@ -235,6 +235,7 @@ export interface Property {
     createdAt: Date;
     updatedAt: Date;
     aiPromptHistory?: AIPromptHistory[];
+    priceList?: any; // Import from pricing.types if possible, but keep as any for now to avoid circular dependency or complex setup
 }
 
 // Validation Rules

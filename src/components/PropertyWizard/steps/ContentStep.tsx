@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Sparkles, Globe } from 'lucide-react';
+import { Sparkles, Globe, DownloadCloud } from 'lucide-react';
 import type { StepProps } from '../types';
 import type { PropertyContent } from '../../../types/property.types';
+import { heuristicTranslate, extractShortDescription } from '../../../services/solvex/solvexTranslationHelper';
 
 const ContentStep: React.FC<StepProps> = ({ data, onChange }) => {
     const [selectedLang, setSelectedLang] = useState('sr');
@@ -226,8 +227,9 @@ const ContentStep: React.FC<StepProps> = ({ data, onChange }) => {
                     maxChildren: 1,
                     maxOccupancy: 3,
                     minOccupancy: 1,
-                    bathroomCount: 1,
-                    bathroomType: 'Private',
+                    osnovniKreveti: 2,
+                    pomocniKreveti: 1,
+                    bedSetupVariants: [{ id: 'v1', basic: 2, extra: 1 }],
                     beddingConfigurations: [{ bedTypeCode: 'DOUBLE', quantity: 1, isExtraBed: false }],
                     amenities: [],
                     images: []
@@ -242,8 +244,9 @@ const ContentStep: React.FC<StepProps> = ({ data, onChange }) => {
                     maxChildren: 2,
                     maxOccupancy: 4,
                     minOccupancy: 1,
-                    bathroomCount: 1,
-                    bathroomType: 'Private',
+                    osnovniKreveti: 2,
+                    pomocniKreveti: 2,
+                    bedSetupVariants: [{ id: 'v1', basic: 2, extra: 2 }],
                     beddingConfigurations: [{ bedTypeCode: 'KING', quantity: 1, isExtraBed: false }, { bedTypeCode: 'SOFA_BED', quantity: 1, isExtraBed: true }],
                     amenities: [],
                     images: []
@@ -263,6 +266,39 @@ const ContentStep: React.FC<StepProps> = ({ data, onChange }) => {
             setIsGenerating(false);
             setShowAiSettings(false);
         }, 1500);
+    };
+
+    const handleImportSolvex = () => {
+        setIsGenerating(true);
+        // Simulate extraction from Solvex "Raw" data context
+        setTimeout(() => {
+            const rawSolvexData = (data as any)._rawSolvex || {
+                HotelName: (data as any).name || "Allegra Balneo & SPA",
+                GeneralInformation: "The hotel description is updated for Summer 2025. ADDRESS: Golden Sands, 9007 Varna. LOCATION: 300 m away from the beach. GENERAL INFORMATION: the hotel was built in year 2004 and renovated in year 2023. CAPACITY: 7-storey building; 2 lifts; 74 double rooms...",
+                Description: "<h3>LOCATION</h3><p>300m from the beach.</p><h3>FACILITIES</h3><ul><li>Outdoor swimming pool</li><li>Free Wi-Fi</li><li>Parking</li></ul>"
+            };
+
+            const srShort = extractShortDescription(rawSolvexData.GeneralInformation);
+            const srLong = heuristicTranslate(rawSolvexData.GeneralInformation, false);
+            const hotelName = rawSolvexData.HotelName;
+            const city = data.address?.city || 'Golden Sands';
+
+            const newContent: PropertyContent = {
+                languageCode: 'sr',
+                officialName: hotelName,
+                displayName: hotelName,
+                shortDescription: srShort,
+                longDescription: srLong,
+                metaTitle: `${hotelName} ${city} - Leto 2026 | Rezervacija`,
+                metaDescription: srShort.substring(0, 160),
+                structuredJson: JSON.stringify({ "@context": "https://schema.org", "@type": "Hotel", "name": hotelName })
+            };
+
+            const otherContent = data.content?.filter(c => c.languageCode !== 'sr') || [];
+            onChange({ content: [...otherContent, newContent] });
+
+            setIsGenerating(false);
+        }, 1000);
     };
 
     return (
@@ -288,6 +324,14 @@ const ContentStep: React.FC<StepProps> = ({ data, onChange }) => {
                             style={{ fontSize: '13px', padding: '6px 12px' }}
                         >
                             {showAiSettings ? 'Sakrij Podešavanja' : 'Podešavanja Prompta'}
+                        </button>
+                        <button
+                            className="btn-secondary"
+                            onClick={handleImportSolvex}
+                            disabled={isGenerating}
+                            style={{ fontSize: '13px', padding: '6px 12px' }}
+                        >
+                            <DownloadCloud size={14} style={{ marginRight: '4px' }} /> Povuci sa Solvex-a
                         </button>
                         <button
                             className="btn-primary-glow"

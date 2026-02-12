@@ -29,6 +29,8 @@ interface GeneratedShift {
     soldReturn: number;
     status: 'active' | 'sold_out' | 'draft';
     pricelistName?: string;
+    entryDayLater?: boolean;
+    exitDayLater?: boolean;
 }
 
 interface RecyclePattern {
@@ -45,6 +47,7 @@ interface RecyclePattern {
 
 const ShiftsGeneratorPage: React.FC = () => {
     const { theme } = useThemeStore();
+    const DARK_BLUE = '#063970';
 
     // UI States
     const [viewMode, setViewMode] = useState<'shifts' | 'patterns'>('shifts');
@@ -70,6 +73,8 @@ const ShiftsGeneratorPage: React.FC = () => {
     const [batchEnd, setBatchEnd] = useState('2026-09-01');
     const [batchNights, setBatchNights] = useState<number | ''>(10);
     const [baseCapacity, setBaseCapacity] = useState<number | ''>(100);
+    const [entryDayLater, setEntryDayLater] = useState(false);
+    const [exitDayLater, setExitDayLater] = useState(false);
 
     // Entry Master State (Reciklusi)
     const [patternStart, setPatternStart] = useState('2026-06-01');
@@ -275,7 +280,9 @@ const ShiftsGeneratorPage: React.FC = () => {
                     soldDeparture: 0, soldReturn: 0, status: 'draft',
                     pricelistName: scopePricelists.includes('all')
                         ? 'Svi dostupni cenovnici'
-                        : scopePricelists.map(id => allPricelists.find(pl => pl.id === id)?.title).filter(Boolean).join(', ')
+                        : scopePricelists.map(id => allPricelists.find(pl => pl.id === id)?.title).filter(Boolean).join(', '),
+                    entryDayLater,
+                    exitDayLater
                 });
                 current = next;
             }
@@ -311,7 +318,7 @@ const ShiftsGeneratorPage: React.FC = () => {
         background: 'var(--bg-input)',
         border: commonBorder,
         borderRadius: '10px',
-        color: 'var(--text-primary)',
+        color: DARK_BLUE,
         padding: '10px 14px',
         fontSize: '13px',
         fontWeight: 600,
@@ -325,7 +332,7 @@ const ShiftsGeneratorPage: React.FC = () => {
     const sectionTitleStyle: React.CSSProperties = {
         fontSize: '10px',
         fontWeight: 900,
-        color: '#3b82f6',
+        color: DARK_BLUE,
         letterSpacing: '2px',
         marginBottom: '16px',
         textAlign: 'center'
@@ -378,7 +385,8 @@ const ShiftsGeneratorPage: React.FC = () => {
                             gap: '32px',
                             position: 'relative',
                             zIndex: 100,
-                            overflow: 'visible'
+                            overflow: 'visible',
+                            color: DARK_BLUE
                         }}
                     >
                         {/* 01. OBIM (OBJEKTI) */}
@@ -402,19 +410,40 @@ const ShiftsGeneratorPage: React.FC = () => {
                             <div style={sectionTitleStyle}>02. MODUL POLAZAKA (ROBOT)</div>
 
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
-                                <div style={{ display: 'flex', background: 'var(--bg-sidebar)', borderRadius: '10px', overflow: 'hidden', border: commonBorder, flex: 1 }}>
+                                <div style={{ display: 'flex', background: 'rgba(0,0,0,0.03)', borderRadius: '10px', overflow: 'hidden', border: commonBorder, flex: 1 }}>
                                     <div style={{ flex: 1 }}><SmartDateInput label="OD:" value={batchStart} onChange={setBatchStart} style={{ border: 'none', background: 'transparent' }} /></div>
                                     <div style={{ width: '1px', background: 'var(--border-subtle)' }}></div>
                                     <div style={{ flex: 1 }}><SmartDateInput label="DO:" value={batchEnd} onChange={setBatchEnd} style={{ border: 'none', background: 'transparent' }} /></div>
                                 </div>
                                 <div style={{ width: '70px' }}>
-                                    <input type="number" placeholder="Noći" value={batchNights} onChange={e => setBatchNights(Number(e.target.value))} style={{ ...fieldStyle, background: 'var(--bg-sidebar)' }} />
+                                    <input type="number" placeholder="Noći" value={batchNights} onChange={e => setBatchNights(Number(e.target.value))} style={{ ...fieldStyle, background: 'rgba(0,0,0,0.03)' }} />
                                 </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', margin: '8px 0' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', color: DARK_BLUE }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={entryDayLater}
+                                        onChange={(e) => setEntryDayLater(e.target.checked)}
+                                        style={{ width: '16px', height: '16px', accentColor: '#3b82f6' }}
+                                    />
+                                    Ulazak dan kasnije
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', color: DARK_BLUE }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={exitDayLater}
+                                        onChange={(e) => setExitDayLater(e.target.checked)}
+                                        style={{ width: '16px', height: '16px', accentColor: '#3b82f6' }}
+                                    />
+                                    Povratak dan kasnije
+                                </label>
                             </div>
 
                             <button
                                 onClick={generateShifts}
-                                style={{ width: '100%', padding: '12px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                                style={{ width: '100%', padding: '12px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: 'auto' }}
                             >
                                 <Zap size={16} fill="#fff" /> GENERIŠI SVE SMENE
                             </button>
@@ -424,7 +453,7 @@ const ShiftsGeneratorPage: React.FC = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             <div style={sectionTitleStyle}>03. ULAZ / IZLAZ (RECIKLUSI)</div>
 
-                            <div style={{ display: 'flex', background: 'var(--bg-sidebar)', borderRadius: '10px', overflow: 'hidden', border: commonBorder, width: '100%' }}>
+                            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.03)', borderRadius: '10px', overflow: 'hidden', border: commonBorder, width: '100%' }}>
                                 <div style={{ flex: 1 }}><SmartDateInput label="OD:" value={patternStart} onChange={setPatternStart} style={{ border: 'none', background: 'transparent' }} /></div>
                                 <div style={{ width: '1px', background: 'var(--border-subtle)' }}></div>
                                 <div style={{ flex: 1 }}><SmartDateInput label="DO:" value={patternEnd} onChange={setPatternEnd} style={{ border: 'none', background: 'transparent' }} /></div>
@@ -441,7 +470,7 @@ const ShiftsGeneratorPage: React.FC = () => {
 
                             <button
                                 onClick={addRecyclePattern}
-                                style={{ width: '100%', padding: '12px', background: 'linear-gradient(to right, #3b82f6, #6366f1)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '13px' }}
+                                style={{ width: '100%', padding: '12px', background: 'linear-gradient(to right, #3b82f6, #6366f1)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '13px', marginTop: 'auto' }}
                             >
                                 <Sparkles size={16} fill="#fff" /> DODAJ PRAVILO RECIKLUSA
                             </button>
@@ -503,6 +532,18 @@ const ShiftsGeneratorPage: React.FC = () => {
                                     <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                                         <Building2 size={12} style={{ opacity: 0.6 }} /> {item.hotelName}
                                         <span style={{ color: 'var(--accent)', opacity: 0.8 }}>({item.destination})</span>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                                        {item.entryDayLater && (
+                                            <div style={{ background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: '4px', fontSize: '9px', fontWeight: 800, border: '1px solid #f59e0b' }}>
+                                                ULAZ DAN KASNIJE
+                                            </div>
+                                        )}
+                                        {item.exitDayLater && (
+                                            <div style={{ background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: '4px', fontSize: '9px', fontWeight: 800, border: '1px solid #f59e0b' }}>
+                                                POVRATAK DAN KASNIJE
+                                            </div>
+                                        )}
                                     </div>
                                     <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 700, marginTop: '6px', background: 'var(--bg-sidebar)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-subtle)', width: 'fit-content', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                         <Database size={10} style={{ color: 'var(--accent)' }} /> {item.pricelistName || 'Nije dodeljen cenovnik'}

@@ -105,7 +105,7 @@ const SmartDateInput: React.FC<SmartDateInputProps> = ({ value, onChange, label,
             className="smart-date-container"
             style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%', position: 'relative' }}
         >
-            {label && <label style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>{label}</label>}
+            {label && <label style={{ fontSize: '11px', color: 'inherit', fontWeight: 600, textTransform: 'uppercase', opacity: 0.8 }}>{label}</label>}
             <div style={{
                 position: 'relative',
                 display: 'flex',
@@ -125,7 +125,7 @@ const SmartDateInput: React.FC<SmartDateInputProps> = ({ value, onChange, label,
                         height: '42px',
                         background: 'transparent',
                         border: 'none',
-                        color: 'var(--text-primary)',
+                        color: 'inherit',
                         textAlign: 'center',
                         fontSize: '13px',
                         fontWeight: 600,
