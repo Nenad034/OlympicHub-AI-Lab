@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       port: 5173,
+      open: false,
       headers: {
         // Security Headers
         'X-Frame-Options': 'DENY',

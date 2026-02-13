@@ -34,7 +34,7 @@ const HorizontalNav: React.FC = () => {
 
     return (
         <div className="horizontal-nav">
-            <ClickToTravelLogo height={48} showText={true} />
+            <ClickToTravelLogo height={72} showText={true} />
 
             <div className="nav-horizontal-items">
                 {/* B2B Sections Label for Subagents */}

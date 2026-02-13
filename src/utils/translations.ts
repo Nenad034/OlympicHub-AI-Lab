@@ -2,7 +2,7 @@ export type Language = 'Srpski' | 'Engleski';
 
 export const translations = {
     Engleski: {
-        docTitle: 'Olympic Hub - Trip Plan',
+        docTitle: 'ClickToTravel Hub - Trip Plan',
         createdAt: 'Created at',
         basicInfo: 'Basic Information',
         destinations: 'Destinations',
@@ -29,7 +29,7 @@ export const translations = {
         description: 'Description',
         transfer: 'Transfer',
         extraService: 'Service',
-        footerTag: 'Olympic Hub - Agentic Trip Planner',
+        footerTag: 'ClickToTravel Hub - Agentic Trip Planner',
         page: 'Page',
         of: 'of',
         resCode: 'Reservation No',
@@ -43,7 +43,7 @@ export const translations = {
         birthDate: 'Birth Date'
     },
     Srpski: {
-        docTitle: 'Olympic Hub - Plan Putovanja',
+        docTitle: 'ClickToTravel Hub - Plan Putovanja',
         createdAt: 'Datum kreiranja',
         basicInfo: 'Osnovne Informacije',
         destinations: 'Destinacije',
@@ -70,7 +70,7 @@ export const translations = {
         description: 'Opis',
         transfer: 'Transfer',
         extraService: 'Usluga',
-        footerTag: 'Olympic Hub - Agentic Trip Planner',
+        footerTag: 'ClickToTravel Hub - Agentic Trip Planner',
         page: 'Strana',
         of: 'od',
         resCode: 'Broj Rezervacije',

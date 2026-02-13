@@ -12,6 +12,7 @@ import {
 import './ReservationsDashboard.css';
 import ReservationEmailModal from '../components/ReservationEmailModal';
 import DateRangeInput from '../components/DateRangeInput.tsx';
+import { useQueryState } from '../hooks/useQueryState';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getUserReservations, saveDossierToDatabase, type DatabaseReservation } from '../services/reservationService';
@@ -100,7 +101,7 @@ const ReservationsDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { userLevel, impersonatedSubagent } = useAuthStore();
     const isSubagent = userLevel < 6 || !!impersonatedSubagent;
-    const [viewMode, setViewMode] = useState<ViewMode>('list');
+    const [viewMode, setViewMode] = useQueryState<ViewMode>('view', 'list');
     const [showStats, setShowStats] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchTerms, setSearchTerms] = useState<string[]>([]); // Multi-term search chips
@@ -742,14 +743,14 @@ const ReservationsDashboard: React.FC = () => {
     const handleExport = (format: 'csv' | 'xml' | 'json' | 'html' | 'pdf') => {
         const data = getReservationsToExport();
         const timestamp = new Date().toISOString().split('T')[0];
-        const fileName = `OlympicHub_Reservations_${timestamp}`;
+        const fileName = `ClickToTravelHub_Reservations_${timestamp}`;
 
         if (format === 'pdf') {
             const doc = new jsPDF();
 
             // Header
             doc.setFontSize(18);
-            doc.text('Olympic Hub - Reservations Report', 14, 22);
+            doc.text('ClickToTravel Hub - Reservations Report', 14, 22);
             doc.setFontSize(11);
             doc.setTextColor(100);
             doc.text(`Generated on: ${new Date().toLocaleDateString('sr-RS')}`, 14, 30);
@@ -817,7 +818,7 @@ ${data.map(r => `  <reservation>
     </style>
 </head>
 <body>
-    <h2>Olympic Hub Reservations Export</h2>
+    <h2>ClickToTravel Hub Reservations Export</h2>
     <p>Date: ${new Date().toLocaleDateString()}</p>
     <table>
         <thead>
@@ -1679,9 +1680,9 @@ ${data.map(r => `  <reservation>
                                             {res.items && res.items.length > 0 ? (
                                                 <div className="res-items-compact" style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                     {res.items.map((item: TripItem) => (
-                                                        <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                                                        <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
                                                             {getTripTypeIcon(item.type)}
-                                                            <span style={{ fontWeight: 600, maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.subject}</span>
+                                                            <span style={{ fontWeight: 800, maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.subject}</span>
                                                         </div>
                                                     ))}
                                                     {/* Category for items if available (checking first item for example) */}
@@ -1695,8 +1696,8 @@ ${data.map(r => `  <reservation>
                                                 </div>
                                             ) : (
                                                 <div className="accommodation-name" style={{
-                                                    fontSize: '11px',
-                                                    fontWeight: 600,
+                                                    fontSize: '13px',
+                                                    fontWeight: 800,
                                                     color: 'var(--text-secondary)',
                                                     marginTop: '4px',
                                                     display: 'flex',
@@ -1731,11 +1732,11 @@ ${data.map(r => `  <reservation>
                                         </div>
 
                                         <div className="res-dates">
-                                            <div className="date-range" style={{ fontSize: '12px', fontWeight: 700 }}>
-                                                <Calendar size={12} style={{ color: 'var(--text-secondary)' }} />
+                                            <div className="date-range" style={{ fontSize: '13px', fontWeight: 800 }}>
+                                                <Calendar size={14} style={{ color: 'var(--accent)' }} />
                                                 <span>{new Date(res.checkIn).toLocaleDateString('sr-RS').replace(/\.$/, '')} - {new Date(res.checkOut).toLocaleDateString('sr-RS').replace(/\.$/, '')}</span>
                                             </div>
-                                            <div className="nights-pax" style={{ fontSize: '11px', opacity: 0.8, marginTop: '4px' }}>
+                                            <div className="nights-pax" style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
                                                 <strong>{res.nights}</strong> noći • <strong>{res.paxCount}</strong> putnika
                                             </div>
                                         </div>
@@ -1896,16 +1897,16 @@ ${data.map(r => `  <reservation>
                                             <div className="res-items-compact" style={{ marginTop: '8px', borderTop: '1px solid var(--border)', paddingTop: '8px' }}>
                                                 {res.items.map((item: TripItem) => (
                                                     <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
                                                             {getTripTypeIcon(item.type)}
-                                                            <span>{item.subject}</span>
+                                                            <span style={{ fontWeight: 800 }}>{item.subject}</span>
                                                         </div>
                                                         <span className="supplier-badge" style={{ fontSize: '9px', padding: '2px 6px' }}>{item.supplier}</span>
                                                     </div>
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div className="accommodation-name" style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <div className="accommodation-name" style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                 <Building2 size={12} />
                                                 <span style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{res.accommodationName}</span>
                                                 {res.hotelCategory && res.hotelCategory > 0 && (

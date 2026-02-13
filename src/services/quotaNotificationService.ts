@@ -125,7 +125,7 @@ class AIQuotaNotificationService {
             `*Provider:* ${providerName}\n` +
             `*Usage:* ${alert.percentage.toFixed(1)}% (${this.formatNumber(alert.used)} / ${this.formatNumber(alert.limit)})\n` +
             `*Status:* ${alert.severity.toUpperCase()}\n\n` +
-            `_Olympic Hub AI Monitor_`;
+            `_ClickToTravel Hub AI Monitor_`;
     }
 
     /**

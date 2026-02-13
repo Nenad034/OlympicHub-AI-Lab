@@ -766,19 +766,19 @@
 }
 
 .hotel-rooms-modal-header {
-    padding: 1.5rem;
+    padding: 1rem 1.5rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     background: linear-gradient(to bottom, #1e293b, #0f172a);
 }
 
 .modal-title-zone h2 {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     color: white;
     margin: 0;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.2rem;
     font-weight: 800;
 }
 
@@ -810,7 +810,7 @@
 }
 
 .modal-body-v4 {
-    padding: 2rem;
+    padding: 1rem 1.5rem;
 }
 
 /* Room Table */
@@ -834,12 +834,13 @@
     letter-spacing: 0.05em;
 }
 
+/* --- COMPACT ROOM ROWS --- */
 .room-row-v4 {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    padding: 1.5rem 1rem;
+    grid-template-columns: 2.5fr 1.2fr 1fr 1.2fr 1fr;
+    padding: 8px 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     transition: background 0.2s;
 }
 
@@ -893,6 +894,46 @@
     background: #4338ca;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.room-type-tag {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.meal-tag-v4 {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    color: var(--text-secondary);
+}
+
+.btn-book-v4 {
+    padding: 6px 16px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Thinner borders globally for search elements */
+.search-card-frame,
+.filters-toolbar-v4.premium,
+.hotel-result-card-premium.unified {
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.section-divider-premium {
+    margin: 15px 0 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 5px;
+}
+
+.room-header-v4 {
+    padding: 10px 25px;
+    font-size: 0.65rem;
+    background: rgba(255, 255, 255, 0.02);
 }
 
 /* EQUAL WIDTH FILTERS FIX */

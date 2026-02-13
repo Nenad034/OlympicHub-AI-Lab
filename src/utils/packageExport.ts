@@ -183,7 +183,7 @@ export const generatePackageHTML = (data: ExportData, lang: Language = 'Srpski')
         </head>
         <body>
             <header>
-                <h1>Olympic Hub</h1>
+                <h1>ClickToTravel Hub</h1>
                 <p class="meta">${t.docTitle} | ${t.createdAt}: ${new Date().toLocaleDateString()}</p>
             </header>
 
@@ -253,7 +253,7 @@ export const generatePackageHTML = (data: ExportData, lang: Language = 'Srpski')
             </div>
 
             <div class="footer">
-                <p>&copy; 2026 Olympic Hub. ${t.footerTag}</p>
+                <p>&copy; 2026 ClickToTravel Hub. ${t.footerTag}</p>
             </div>
         </body>
         </html>

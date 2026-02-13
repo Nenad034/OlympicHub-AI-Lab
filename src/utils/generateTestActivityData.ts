@@ -34,15 +34,15 @@ const generateTestData = () => {
         { type: 'error', module: 'system', action: 'API timeout error', user: 'System', userId: 'system', status: 'error' },
         { type: 'ai_chat', module: 'ai_chat', action: 'AI Chat request (890 tokens)', user: 'Jelena', userId: 'user-jelena', status: 'success' },
 
-        // Olympic Sajt activities
-        { type: 'create', module: 'reservation', action: 'New inquiry from website: Greece package', user: 'Olympic Sajt', userId: 'olympic-website', status: 'success' },
-        { type: 'create', module: 'reservation', action: 'Contact form submission: Request for group travel', user: 'Olympic Sajt', userId: 'olympic-website', status: 'success' },
-        { type: 'search', module: 'reservation', action: 'Website search: Hotels in Athens', user: 'Olympic Sajt', userId: 'olympic-website', status: 'success' },
-        { type: 'create', module: 'reservation', action: 'Online reservation request: RES-WEB-001', user: 'Olympic Sajt', userId: 'olympic-website', status: 'success' },
-        { type: 'email', module: 'email', action: 'Automated confirmation email sent', user: 'Olympic Sajt', userId: 'olympic-website', status: 'success' },
-        { type: 'search', module: 'reservation', action: 'Website search: Last minute deals', user: 'Olympic Sajt', userId: 'olympic-website', status: 'success' },
-        { type: 'create', module: 'reservation', action: 'Newsletter subscription: new@example.com', user: 'Olympic Sajt', userId: 'olympic-website', status: 'success' },
-        { type: 'view', module: 'reservation', action: 'Hotel details viewed: Hotel Acropolis', user: 'Olympic Sajt', userId: 'olympic-website', status: 'success' },
+        // ClickToTravel Web activities
+        { type: 'create', module: 'reservation', action: 'New inquiry from website: Greece package', user: 'ClickToTravel Web', userId: 'clicktotravel-website', status: 'success' },
+        { type: 'create', module: 'reservation', action: 'Contact form submission: Request for group travel', user: 'ClickToTravel Web', userId: 'clicktotravel-website', status: 'success' },
+        { type: 'search', module: 'reservation', action: 'Website search: Hotels in Athens', user: 'ClickToTravel Web', userId: 'clicktotravel-website', status: 'success' },
+        { type: 'create', module: 'reservation', action: 'Online reservation request: RES-WEB-001', user: 'ClickToTravel Web', userId: 'clicktotravel-website', status: 'success' },
+        { type: 'email', module: 'email', action: 'Automated confirmation email sent', user: 'ClickToTravel Web', userId: 'clicktotravel-website', status: 'success' },
+        { type: 'search', module: 'reservation', action: 'Website search: Last minute deals', user: 'ClickToTravel Web', userId: 'clicktotravel-website', status: 'success' },
+        { type: 'create', module: 'reservation', action: 'Newsletter subscription: new@example.com', user: 'ClickToTravel Web', userId: 'clicktotravel-website', status: 'success' },
+        { type: 'view', module: 'reservation', action: 'Hotel details viewed: Hotel Acropolis', user: 'ClickToTravel Web', userId: 'clicktotravel-website', status: 'success' },
     ];
 
     // Generate 50 random activities
@@ -75,7 +75,7 @@ const generateTestData = () => {
         [today]: {
             date: today,
             totalActivities: activities.length,
-            activeUsers: 4, // Nenad, Marko, Jelena, Olympic Sajt
+            activeUsers: 4, // Nenad, Marko, Jelena, ClickToTravel Web
             reservations: {
                 total: 12,
                 byStatus: {

@@ -33,14 +33,11 @@ const Sidebar: React.FC = () => {
 
     return (
         <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
-            <div className="sidebar-header" style={{ position: 'relative', overflow: 'visible', zIndex: 100 }}>
-                {/* Logo wrapper fully decoupled from sidebar width constraints */}
-                <div style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', width: 'max-content' }}>
-                    <ClickToTravelLogo height={48} showText={true} />
+            <div className="sidebar-header">
+                {/* Logo wrapper now follows header flex/padding constraints */}
+                <div className="sidebar-logo-container">
+                    <ClickToTravelLogo height={isSidebarCollapsed ? 32 : 72} showText={!isSidebarCollapsed} />
                 </div>
-                {/* Spacer to push toggle button to the right if using flex */}
-                <div style={{ flex: 1 }}></div>
-                {/* Removed Olympic B2B text as requested */}
                 <button className="collapse-toggle" onClick={toggleSidebar}>
                     {isSidebarCollapsed ? (
                         <ChevronRight size={16} />

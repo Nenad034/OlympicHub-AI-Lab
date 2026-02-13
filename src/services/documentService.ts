@@ -24,7 +24,7 @@ export const documentService = {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(24);
         doc.setFont('helvetica', 'bold');
-        doc.text('OLYMPIC HUB', 20, 25);
+        doc.text('CLICKTOTRAVEL HUB', 20, 25);
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
@@ -110,8 +110,8 @@ export const documentService = {
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(150, 150, 150);
-        doc.text('Ova potvrda služi kao dokaz o izvršenoj rezervaciji preko Olympic Hub platforme.', pageWidth / 2, footerY, { align: 'center' });
-        doc.text('Olympic Hub - Travel B2B Solutions | www.olympichub.rs', pageWidth / 2, footerY + 5, { align: 'center' });
+        doc.text('Ova potvrda služi kao dokaz o izvršenoj rezervaciji preko ClickToTravel Hub platforme.', pageWidth / 2, footerY, { align: 'center' });
+        doc.text('ClickToTravel Hub - Travel B2B Solutions | www.clicktotravel.rs', pageWidth / 2, footerY + 5, { align: 'center' });
 
         // 7. Save / Download
         doc.save(`Voucher_${booking.bookingId}_${booking.hotelName.replace(/\s+/g, '_')}.pdf`);
@@ -167,7 +167,7 @@ export const documentService = {
 <body>
     <div class="container">
         <div class="header">
-            <h1>OLYMPIC HUB</h1>
+            <h1>CLICKTOTRAVEL HUB</h1>
             <p>TRAVEL VOUCHER / POTVRDA REZERVACIJE</p>
         </div>
         <div class="content">
@@ -217,8 +217,8 @@ export const documentService = {
             ` : ''}
         </div>
         <div class="footer">
-            Ova potvrda služi kao dokaz o izvršenoj rezervaciji preko Olympic Hub platforme.<br>
-            Olympic Hub - Travel B2B Solutions | www.olympichub.rs
+            Ova potvrda služi kao dokaz o izvršenoj rezervaciji preko ClickToTravel Hub platforme.<br>
+            ClickToTravel Hub - Travel B2B Solutions | www.clicktotravel.rs
         </div>
     </div>
 </body>

@@ -44,7 +44,7 @@ try {
   console.error("Cleanup error:", e);
 }
 
-console.log("🚀 Booting Olympic Hub...");
+console.log("🚀 Booting ClickToTravel Hub...");
 
 try {
   // Initialize Amadeus on app startup

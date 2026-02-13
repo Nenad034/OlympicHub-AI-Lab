@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import { ModernCalendar } from '../components/ModernCalendar';
+import { useQueryState } from '../hooks/useQueryState';
 import { GoogleAddressAutocomplete } from '../components/GoogleAddressAutocomplete';
 import { NATIONALITIES } from '../constants/nationalities';
 import ReservationEmailModal from '../components/ReservationEmailModal';
@@ -205,7 +206,7 @@ interface Dossier {
 const ReservationArchitect: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [activeSection, setActiveSection] = useState('summary');
+    const [activeSection, setActiveSection] = useQueryState<string>('section', 'summary');
 
     const [advisorType, setAdvisorType] = useState('accomodation');
     const [expandedPassengers, setExpandedPassengers] = useState<string[]>([]);

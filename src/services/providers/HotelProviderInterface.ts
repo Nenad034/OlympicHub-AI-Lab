@@ -157,7 +157,7 @@ export interface RoomOption {
  * Hotel Provider Interface
  * 
  * Any hotel API provider must implement this interface to be integrated
- * into the Olympic Hub system.
+ * into the ClickToTravel Hub system.
  */
 export interface HotelProvider {
     /** Provider name (e.g., "Solvex", "OpenGreece") */

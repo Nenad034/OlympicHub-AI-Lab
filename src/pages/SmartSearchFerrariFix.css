@@ -1,693 +1,254 @@
-/* SmartSearch Ferrari Red & Flat UI - FIX 2026 */
+/* DARK THEME - OBSIDIAN PETROLEUM - HIGH DEFINITION REDESIGN 2026 */
+:root {
+    --bg-main: #020617;
+    --bg-card: #0f172a;
+    --accent: #10B981;
+    --accent-glow: rgba(16, 185, 129, 0.4);
+    --petroleum-deep: #0E4B5E;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-petroleum: #0E4B5E;
+}
 
-/* Force container to allow sticky footer */
-.smart-search-container-v2 {
-    min-height: 100vh;
+/* Base Styles - ONLY apply if NOT light-theme */
+body:not(.light-theme),
+.smart-search-container-v2:not(.light-theme) {
+    background-color: var(--bg-main) !important;
+    color: var(--text-primary) !important;
+}
+
+body.light-theme,
+.smart-search-container-v2.light-theme {
+    background-color: #f8fafc !important;
+    color: #0E4B5E !important;
+}
+
+/* Tabs: Full width to match search form */
+.tabs-nav-container {
+    background: rgba(15, 23, 42, 0.8) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--petroleum-deep) !important;
+    border-radius: 16px !important;
+    padding: 8px !important;
+    margin-bottom: 40px !important;
     display: flex;
-    flex-direction: column;
-    /* Ensure no overflow hidden blocks sticky */
-    overflow: visible !important;
+    justify-content: space-between;
+    /* Space them out */
+    gap: 12px;
+    width: 100%;
+    max-width: 1400px;
+    /* Align with search form */
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.package-builder-inline {
+/* Light Theme Overrides for Tabs Container */
+.light-theme .tabs-nav-container {
+    background: #E0ECEE !important;
+    border: 1px solid #0E4B5E !important;
+}
+
+.nav-tab-item {
     flex: 1;
+    /* Make them equal width */
+    background: rgba(15, 23, 42, 0.5) !important;
+    border: 1px solid transparent !important;
+    transition: all 0.2s ease !important;
+    padding: 12px 24px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    color: #94a3b8 !important;
+    cursor: pointer;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
-.package-search-page {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.search-content {
-    flex: 1;
-}
-
-/* --- GENERAL RESET & FLAT UI --- */
-.search-card-frame,
-.tabs-nav-container,
-.nav-tab-item,
-.nav-tab-item.active,
-.input-box,
-.destination-input-wrapper,
-.flex-toggle-group,
-.btn-new-search-tag,
-.vertical-filters-popover,
-.autocomplete-dropdown.premium,
-.flexible-dates-ribbon-container,
-.flight-results-container,
-.flexible-dates-strip,
-.flight-search-form,
-.wizard-progress.ss-glass-bar,
-.wizard-navigation.ss-floating-nav {
-    box-shadow: none !important;
-    text-shadow: none !important;
-    background-image: none !important;
-}
-
-/* Subtle Borders Everywhere */
-.room-tab-btn,
-.room-tab-btn.active,
-.btn-search-main,
-.search-card-frame,
-.tabs-nav-container,
-.input-box,
-.flex-toggle-group,
-.btn-new-search-tag,
-.vertical-filters-popover,
-.autocomplete-dropdown.premium,
-.flexible-dates-ribbon-container,
-.flight-search-form,
-.wizard-progress.ss-glass-bar,
-.wizard-navigation.ss-floating-nav {
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-}
-
-.destination-input-wrapper {
-    border: none !important;
+.light-theme .nav-tab-item {
     background: transparent !important;
+    color: #0E4B5E !important;
 }
 
-/* --- LIGHT MODE SPECIFIC - Aligned with Perla & Navy branding --- */
-.light-theme .smart-search-container-v2,
-.light-theme .search-card-frame,
-.light-theme .flight-search-form,
-.light-theme .package-search-page,
-.light-theme .hotel-result-card-premium {
-    background: #ffffff !important;
-    border-color: #1e3a8a !important;
-    /* Dark Blue border */
-    color: #1e3a8a !important;
-}
-
-.light-theme .tabs-nav-container,
-.light-theme .input-box,
-.light-theme .destination-input-wrapper,
-.light-theme .flex-toggle-group,
-.light-theme .room-tab-btn,
-.light-theme .wizard-progress.ss-glass-bar,
-.light-theme .wizard-navigation.ss-floating-nav,
-.light-theme .flight-counter-controls,
-.light-theme .trip-type-selector,
-.light-theme .input-group-flight input,
-.light-theme .budget-input,
-.light-theme .input-group-flight select {
-    background: #EAEFF5 !important;
-    /* Perla color */
-    border-color: #1e3a8a !important;
-    /* Dark Blue border */
-    color: #1e3a8a !important;
-}
-
-.light-theme .field-label,
-.light-theme .field-label-mini {
-    color: #475569 !important;
-}
-
-.light-theme .nav-tab-item:not(.active) {
-    color: #64748b !important;
+.nav-tab-item.active {
+    background: var(--petroleum-deep) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 25px rgba(10, 58, 74, 0.5) !important;
+    border-bottom: 3px solid var(--accent) !important;
+    transform: translateY(-2px);
 }
 
 .light-theme .nav-tab-item.active {
-    background: #1e3a8a !important;
-    color: white !important;
+    background: #0E4B5E !important;
+    color: #ffffff !important;
 }
 
-
-.light-theme .destination-chip {
-    background: #e2e8f0 !important;
-    color: #1e293b !important;
-    border: 1px solid #cbd5e1 !important;
-}
-
-.light-theme .input-box span,
-.light-theme .smart-input-inline {
-    color: #1e293b !important;
-}
-
-
-/* --- CLICK TO GET ... (FERRARI RED BRANDING) --- */
-
-/* Header Title (Above Search Card) */
-/* Header Title centered */
-.ss-brand-title-box {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    margin-bottom: 3rem;
-}
-
-.ss-brand-title-main {
-    display: inline-block;
-    padding: 12px 60px;
-    font-weight: 950 !important;
-    font-style: italic;
-    font-size: 2rem;
-    letter-spacing: 3px;
-    position: relative;
-    z-index: 2;
-    color: white !important;
-    text-transform: uppercase;
-}
-
-.ss-brand-title-main::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #ff2800 !important;
-    /* Ferrari Red */
-    transform: skewX(-15deg);
-    /* Slanted sides matching italic */
-    z-index: -1;
-}
-
-/* Light Theme Button: Transparent with border for Ferrari Red text */
-.light-theme .btn-search-main {
-    background: transparent !important;
-    border: 1px solid #cbd5e1 !important;
-}
-
-.light-theme .btn-search-main span {
-    color: #ff2800 !important;
-}
-
-/* Dark Theme Button: Keep purple/blue base */
-.navy-theme .btn-search-main {
-    background: #4f46e5 !important;
-}
-
-.navy-theme .btn-search-main span {
-    color: white !important;
-}
-
-
-
-
-/* SEARCH BUTTON (CLICK TO GET) */
-.btn-search-main {
-    background: #4f46e5 !important;
-    /* Purple base as in image */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 !important;
-    overflow: hidden;
-    position: relative;
-    border: none !important;
-    height: 64px !important;
-    border-radius: 12px !important;
-}
-
-.btn-search-main span {
-    position: relative;
-    z-index: 2;
-    color: white !important;
-    font-weight: 900 !important;
-    font-style: italic;
-    font-size: 1.1rem;
-    padding: 0 40px;
-    display: flex;
-    align-items: center;
-    height: 100%;
-    letter-spacing: 1px;
-}
-
-.btn-search-main span::before {
-    display: none;
-    /* Removed the background box from the button span as per new request */
-}
-
-
-.btn-icon-box {
-    display: none !important;
-    /* Remove icon box entirely */
-}
-
-
-
-/* Force Theme Backgrounds - removing black */
-.package-builder-inline,
-.flight-search-inline,
-.flight-search-page,
-.package-search-page {
-    background: transparent !important;
-}
-
+/* Search Blocks: Premium Glass Petroleum */
 .search-card-frame,
-.flight-search-form,
-.wizard-progress.ss-glass-bar,
-.wizard-navigation.ss-floating-nav {
-    background: #1e293b !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-}
-
-/* --- TABS --- */
-.nav-tab-item.active {
-    background: #4f46e5 !important;
-    /* "Tačno" field color */
-    color: white !important;
-}
-
-.nav-tab-item:not(.active) {
-    background: transparent !important;
-    color: #94a3b8 !important;
-}
-
-.tabs-nav-container {
-    background: #0f172a !important;
-    /* Theme background instead of solid black */
-}
-
-/* --- INPUTS & BACKGROUNDS --- */
-.navy-theme .search-card-frame {
-    background: #1e293b !important;
-}
-
-.navy-theme .input-box,
-.navy-theme .flex-toggle-group {
-    background: #0f172a !important;
-}
-
-/* --- FLEXIBILNOST --- */
-.flex-btn.active {
-    background: #4f46e5 !important;
-}
-
-/* --- DYNAMIC WIZARD (Package Search Inline) --- */
-/* Search Button in Package Builder */
-.package-builder-step-container button[onClick*="onNext"],
-.package-builder-step-container button:contains("POKRENI PRETRAGU PAKETA") {
-    background: #4f46e5 !important;
-}
-
-/* Since the above might not work due to :contains not being standard CSS, 
-   we'll target the btn-search style often used or the inline style */
-.package-builder-step-container>button:last-child {
-    background: #4f46e5 !important;
-}
-
-/* Root variables for consistency */
-:root {
-    --ss-gradient: #4f46e5;
-    --ss-accent: #4f46e5;
-    --primary-gradient: #4f46e5;
-}
-
-/* Room tabs improvement based on image */
-.room-tab-btn.active {
-    background: #4f46e5 !important;
-    color: white !important;
-}
-
-.room-tab-btn {
-    background: #0f172a !important;
-}
-
-/* --- FLIGHT SEARCH TAB --- */
+.search-form-smart,
+.package-builder-inline,
 .flight-search-form {
-    background: #1e293b !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: none !important;
-    padding: 2.5rem !important;
-    border-radius: 20px !important;
-}
-
-.trip-type-btn.active {
-    background: #4f46e5 !important;
-    box-shadow: none !important;
-}
-
-.input-group-flight input,
-.input-group-flight select,
-.flight-counter-controls,
-.trip-type-selector {
-    background: #0f172a !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-}
-
-.search-flights-btn {
-    background: #4f46e5 !important;
-    box-shadow: none !important;
-}
-
-/* --- PACKAGE BUILDER (DYNAMIC WIZARD) --- */
-.wizard-progress.ss-glass-bar {
-    background: #0f172a !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: none !important;
-}
-
-.p-step-ss.active .s-num-ss {
-    background: #4f46e5 !important;
-}
-
-/* Target by ID to override everything - STICKY SOLUTION 2.0 */
-#floating-wizard-nav.wizard-navigation.ss-floating-nav {
-    position: sticky !important;
-    bottom: 30px !important;
-    /* Float 30px from bottom */
-
-    /* Auto width matches parent container exactly */
-    left: auto !important;
-    right: auto !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    transform: none !important;
-    width: 100% !important;
-    max-width: none !important;
-
-    /* Visuals */
-    background: #0f172a !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+    background: rgba(15, 23, 42, 0.7) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--petroleum-deep) !important;
     border-radius: 24px !important;
-    padding: 1.5rem 3rem !important;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    box-sizing: border-box !important;
-    z-index: 1000 !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3) !important;
+    padding: 3rem !important;
+    margin-bottom: 2rem !important;
+    width: 100%;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-
-
-/* Fallback class style (keep as backup) */
-.wizard-navigation.ss-floating-nav {
-    display: none;
-    /* Hide if ID not present to avoid duplicates */
-}
-
-/* Ensure individual steps in wizard also align */
-.wizard-progress.ss-glass-bar {
-    background: #0f172a !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-radius: 16px !important;
-    margin-bottom: 2.5rem !important;
-    padding: 0 !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-.progress-steps-ss {
-    padding: 1.25rem 2rem !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-}
-
-/* --- STEP 6 REVIEW CARDS (WIZARD) --- */
-.flight-offer-card-ss {
-    background: #1e293b !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-radius: 16px !important;
-    box-shadow: none !important;
-    overflow: hidden;
-}
-
-.light-theme .flight-offer-card-ss {
+.light-theme .search-card-frame,
+.light-theme .package-builder-inline {
     background: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
+    border: 1px solid #0E4B5E !important;
+    box-shadow: 0 10px 30px rgba(14, 75, 94, 0.05) !important;
 }
 
-.flight-main-section-ss {
-    padding: 2rem !important;
+/* Inputs & Controls: 1px Petroleum Borders */
+.input-box,
+.smart-input.premium,
+.multi-destination-input.premium,
+.flight-counter-controls,
+.flex-btn,
+.budget-input,
+.v-filter-btn {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid var(--petroleum-deep) !important;
+    border-radius: 12px !important;
+    color: var(--text-primary) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    padding: 12px 16px !important;
 }
 
-.flight-price-sidebar-ss {
-    background: rgba(255, 255, 255, 0.02) !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
-    width: 240px !important;
+.light-theme .input-box,
+.light-theme .smart-input.premium,
+.light-theme .v-filter-btn {
+    background: #ffffff !important;
+    border-color: #0E4B5E !important;
+    color: #0E4B5E !important;
+}
+
+.input-box:hover,
+.smart-input.premium:focus,
+.v-filter-btn:hover {
+    border-color: var(--accent) !important;
+    background: rgba(15, 23, 42, 0.8) !important;
+}
+
+.light-theme .input-box:hover {
+    background: #f8fafc !important;
+    border-color: #10B981 !important;
+}
+
+/* Unified Counter Controls V2 (Flights Style) */
+.counter-controls-v2 button {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px solid var(--petroleum-deep) !important;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
-    padding: 2rem !important;
+    justify-content: center;
 }
 
-.light-theme .flight-price-sidebar-ss {
-    background: #f8fafc !important;
-    border-left: 1px solid #e2e8f0 !important;
-}
-
-.price-value-ss {
-    font-size: 2.25rem !important;
-    font-weight: 900 !important;
-    letter-spacing: -1px;
-}
-
-.light-theme h4,
-.light-theme h5 {
-    color: #0f172a !important;
-}
-
-.light-theme .text-slate-300,
-.light-theme .text-slate-200 {
-    color: #1e293b !important;
-}
-
-.light-theme .text-slate-500 {
-    color: #64748b !important;
-}
-
-.light-theme .bg-white\/\[0\.02\],
-.light-theme .bg-white\/\[0\.03\] {
-    background: #f8fafc !important;
-    border-color: #e2e8f0 !important;
-}
-
-
-/* Sidebar Summary in Step 6 */
-.search-card-frame.sticky {
-    background: #1e293b !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    border-radius: 20px !important;
-}
-
-.light-theme .search-card-frame.sticky {
+.light-theme .counter-controls-v2 button {
     background: #ffffff !important;
-    border-color: #cbd5e1 !important;
+    color: #0E4B5E !important;
+    border-color: #0E4B5E !important;
 }
 
-/* Kreiraj Paket Button in Step 6 */
-.animate-pulse-slow {
-    animation: none !important;
-    /* Remove pulse for flatter look */
+.counter-controls-v2 button:hover {
+    background: var(--petroleum-deep);
+    border-color: var(--accent) !important;
+    color: var(--accent);
 }
 
-/* Export Buttons in Step 6 */
-button[onClick*="generatePackage"] {
-    background: #0f172a !important;
+.light-theme .counter-controls-v2 button:hover {
+    background: #0E4B5E !important;
+    color: #ffffff !important;
+}
+
+.passenger-row-redesign-v2 {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--petroleum-deep) !important;
+    padding: 0 24px;
+    border-radius: 12px;
+    height: 56px;
+    width: 100%;
+}
+
+.light-theme .passenger-row-redesign-v2 {
+    background: #ffffff !important;
+}
+
+/* Main Search Button - Premium Emerald & Petroleum */
+.btn-search-main,
+.btn-search-flights-premium {
+    background: var(--petroleum-deep) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-.light-theme button[onClick*="generatePackage"] {
-    background: #f1f5f9 !important;
-    border-color: #cbd5e1 !important;
-}
-
-/* Map Container in Step 6 */
-.search-card-frame.overflow-hidden {
-    border-radius: 20px !important;
-    box-shadow: none !important;
-    background: #1e293b !important;
-}
-
-/* --- STEP 6 REVIEW OVERHAUL (No Tailwind Dependencies) --- */
-.ss-review-container {
-    width: 100%;
-    margin: 0 auto;
-    color: white;
-}
-
-.ss-review-grid {
-    display: flex;
-    gap: 30px;
-    width: 100%;
-}
-
-.ss-review-main {
-    flex: 2;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.ss-review-side {
-    flex: 1;
-}
-
-/* Fix for the bunched up text in summary */
-.ss-summary-card {
-    background: #1e293b;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 20px;
-    padding: 30px;
-    position: sticky;
-    top: 20px;
-}
-
-.ss-price-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.ss-total-section {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 2px dashed rgba(255, 255, 255, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-}
-
-.ss-total-label-box {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.ss-total-amount {
-    font-size: 2.5rem;
-    font-weight: 900;
-    color: white;
-    line-height: 1;
-}
-
-/* Fix for the slanted buttons */
-.ss-lang-group {
-    display: flex;
-    gap: 10px;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 6px;
-    border-radius: 14px;
-    margin-bottom: 20px;
-}
-
-.ss-lang-btn {
-    flex: 1;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    font-weight: 900;
-    font-size: 0.7rem;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: transparent;
-    color: #64748b;
-    transform: none !important;
-    /* Force reset skew */
-}
-
-.ss-lang-btn.active {
-    background: #4f46e5;
-    color: white;
-}
-
-.ss-confirm-btn {
-    width: 100%;
-    height: 64px;
-    background: #4f46e5;
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 16px;
-    font-weight: 900;
-    font-style: italic;
-    font-size: 1rem;
-    letter-spacing: 2px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    transform: none !important;
-    /* Force reset skew */
-}
-
-.ss-confirm-btn:hover {
-    filter: brightness(1.1);
-}
-
-/* Export Buttons Fix */
-.ss-export-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-}
-
-.ss-export-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 15px 5px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.ss-export-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.ss-export-btn span {
-    font-size: 10px;
-    font-weight: 900;
-    color: #64748b;
-    margin-top: 8px;
+    border-radius: 16px !important;
+    color: #fff !important;
+    font-weight: 900 !important;
     text-transform: uppercase;
+    height: 72px;
+    transition: all 0.2s ease !important;
+    cursor: pointer;
+    font-size: 18px !important;
 }
 
-/* Light Theme Fixes */
-.light-theme .ss-summary-card {
-    background: white;
-    border-color: #cbd5e1;
+.btn-search-main:hover,
+.btn-search-flights-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(14, 75, 94, 0.5) !important;
+    border-color: var(--accent) !important;
+    background: #0a3a4a !important;
 }
 
-.light-theme .ss-total-amount {
-    color: #0f172a;
+/* Results & Cards */
+.hotel-result-card-premium {
+    background: #0f172a !important;
+    border: 1px solid var(--petroleum-deep) !important;
+    border-radius: 20px !important;
 }
 
-.light-theme .ss-price-row span:first-child {
-    color: #64748b;
+.light-theme .hotel-result-card-premium {
+    background: #ffffff !important;
 }
 
-.light-theme .ss-export-btn {
-    background: #f8fafc;
-    border-color: #e2e8f0;
+/* Dynamic Wizard Progress Glass Bar */
+.wizard-progress.ss-glass-bar {
+    background: rgba(15, 23, 42, 0.8) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--petroleum-deep) !important;
+    border-radius: 16px !important;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.ss-review-flex {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.light-theme .wizard-progress.ss-glass-bar {
+    background: #E0ECEE !important;
+    border-color: #0E4B5E !important;
 }
 
-/* Symmetrical width for tabs and search form - 2026 Adjustments */
-.tabs-nav-container,
-.search-card-frame,
-.flight-search-form,
-.package-builder-inline,
-.package-search-page,
-.provider-toggles-section {
-    width: 100% !important;
-    max-width: 1650px !important;
-    /* Increased width for premium feel */
-    margin-left: auto !important;
-    margin-right: auto !important;
-    box-sizing: border-box !important;
+/* --- SCROLLBARS --- */
+:not(.light-theme)::-webkit-scrollbar-track {
+    background: var(--bg-main);
 }
 
-/* Ensure the grid spreads nicely in the wider form */
-.params-grid {
-    grid-template-columns: repeat(5, 1fr) !important;
+:not(.light-theme)::-webkit-scrollbar-thumb {
+    background: var(--petroleum-deep);
+    border-radius: 10px;
 }

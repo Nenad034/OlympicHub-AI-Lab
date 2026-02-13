@@ -25,14 +25,14 @@
     margin: -2rem -2rem 4rem -2rem !important;
 }
 
-/* Search Blocks - Petroleum Subtle Depth */
+/* Search Blocks - Petroleum High Definition */
 .light-theme .search-form-smart,
 .light-theme .search-card-frame,
 .light-theme .provider-toggles-section,
 .light-theme .package-builder-inline,
 .light-theme .flight-search-form,
 .light-theme .wizard-progress.ss-glass-bar {
-    background: #E0ECEE !important;
+    background: #ffffff !important;
     border: 1px solid #0E4B5E !important;
     border-radius: 20px !important;
     box-shadow: 0 15px 35px -10px rgba(14, 75, 94, 0.04) !important;
@@ -62,7 +62,7 @@
     font-weight: 800 !important;
 }
 
-/* Main Visual Style: Petroleum Light & Deep Petrol Borders */
+/* Main Visual Style: 1px Petroleum Borders */
 .light-theme .smart-input.premium,
 .light-theme .input-box,
 .light-theme .input-group-flight input,
@@ -72,9 +72,10 @@
 .light-theme .flex-pill-selection,
 .light-theme .custom-date-display,
 .light-theme .child-age-input,
-.light-theme .v-filter-btn {
-    background: #E0ECEE !important;
-    border: 2px solid #0E4B5E !important;
+.light-theme .v-filter-btn,
+.light-theme .flex-btn {
+    background: #ffffff !important;
+    border: 1px solid #0E4B5E !important;
     color: #0E4B5E !important;
     border-radius: 12px !important;
     padding: 10px 14px !important;
@@ -94,20 +95,27 @@
 }
 
 /* Destination Wrapper Fix - allow growth */
-.light-theme .destination-input-wrapper,
-.light-theme .multi-destination-input.premium {
+.light-theme .destination-input-wrapper {
     min-height: 48px !important;
     height: auto !important;
-    background: #E0ECEE !important;
-    border: 2px solid #0E4B5E !important;
+    background: #ffffff !important;
+    border: 1px solid #0E4B5E !important;
     border-radius: 12px;
     padding: 4px 8px !important;
+}
+
+.light-theme .multi-destination-input.premium {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    min-height: auto !important;
 }
 
 /* Structural Containers - Unified Auto-height */
 .light-theme .search-card-frame,
 .light-theme .flight-search-form {
-    background: #E0ECEE !important;
+    background: #ffffff !important;
     border: 1px solid #0E4B5E !important;
     height: auto !important;
     padding: 2rem !important;
@@ -115,17 +123,31 @@
     display: block !important;
 }
 
-/* Tabs Highlights - Petroleum Focus */
+/* Tabs Highlights - Petroleum Focus with Emerald Underline */
 .light-theme .nav-tab-item.active {
     background: #0E4B5E !important;
     color: #ffffff !important;
     box-shadow: 0 8px 16px rgba(14, 75, 94, 0.4) !important;
+    border-bottom: 3px solid #10B981 !important;
+}
+
+.light-theme .flex-btn.active {
+    background: #0E4B5E !important;
+    color: #ffffff !important;
+    border-color: #0E4B5E !important;
+}
+
+.light-theme .flex-toggle-group {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    gap: 8px !important;
 }
 
 /* Tabs Navigation */
 .light-theme .tabs-nav-container {
-    background: #E0ECEE !important;
-    border: 2px solid #0E4B5E !important;
+    background: #ffffff !important;
+    border: 1px solid #0E4B5E !important;
     border-radius: 12px !important;
     padding: 6px !important;
 }
@@ -224,4 +246,813 @@
 .light-theme .nav-tab-item.active {
     background: #0E4B5E !important;
     color: #ffffff !important;
+}
+
+/* ============================================================================ 
+   EXPANDED HOTEL MODAL - LIGHT THEME (TEGET EDITION)
+   ============================================================================ */
+
+.light-theme .hotel-modal-overlay {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+.light-theme .hotel-details-wide,
+.light-theme .hotel-modal-overlay .modern-calendar-popup.wide {
+    background: #ffffff !important;
+    border: 1px solid #020617 !important;
+    box-shadow: 0 40px 100px -20px rgba(2, 6, 23, 0.15) !important;
+}
+
+.light-theme .hotel-rooms-modal-header {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+/* Navy color for ALL letters and numbers as requested */
+.light-theme .modal-meta,
+.light-theme .modal-meta span,
+.light-theme .modal-meta div,
+.light-theme .modal-body-v4,
+.light-theme .section-divider-premium span,
+.light-theme .room-header-v4 div,
+.light-theme .room-type-tag,
+.light-theme .r-cap,
+.light-theme .notepad-price,
+.light-theme .r-name span,
+.light-theme .modal-title-zone span,
+.light-theme .meal-tag-v4,
+.light-theme .r-price span,
+.light-theme .h-room,
+.light-theme .h-servis,
+.light-theme .h-cap,
+.light-theme .h-price,
+.light-theme .h-action,
+.light-theme .modal-meta span[style*="color: #fbbf24"],
+.light-theme .modal-meta span[style*="color: rgb(251, 191, 36)"] {
+    color: #020617 !important;
+    /* Dark Teget */
+}
+
+/* Section Dividers */
+.light-theme .section-divider-premium {
+    background: rgba(2, 6, 23, 0.05) !important;
+    border-left: 4px solid #020617 !important;
+}
+
+.light-theme .section-divider-premium span {
+    font-weight: 850 !important;
+}
+
+/* Table Headers */
+.light-theme .room-header-v4 {
+    background: #f1f5f9 !important;
+    border-radius: 8px !important;
+    margin-bottom: 8px !important;
+}
+
+/* Room Rows */
+.light-theme .room-row-v4 {
+    border-bottom: 1px solid #f1f5f9 !important;
+    transition: background 0.2s !important;
+}
+
+.light-theme .room-row-v4:hover {
+    background: #f8fafc !important;
+}
+
+/* Meal Tags */
+.light-theme .meal-tag-v4 {
+    background: #e2e8f0 !important;
+    padding: 4px 12px !important;
+    border-radius: 6px !important;
+    font-weight: 700 !important;
+}
+
+/* Buttons in Modal */
+.light-theme .btn-book-v4 {
+    background: #ffffff !important;
+    color: #020617 !important;
+    border: 2px solid #020617 !important;
+    box-shadow: none !important;
+    font-weight: 900 !important;
+}
+
+.light-theme .btn-book-v4:hover {
+    background: #020617 !important;
+    color: #ffffff !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Close Modal Button */
+.light-theme .close-modal-btn {
+    background: #f1f5f9 !important;
+    color: #020617 !important;
+}
+
+.light-theme .close-modal-btn:hover {
+    background: #e2e8f0 !important;
+}
+
+/* Force dark price in modal */
+.light-theme .notepad-price {
+    font-size: 1.1rem !important;
+    letter-spacing: -0.5px !important;
+}
+
+/* ============================================================================ 
+   FLIGHT SEARCH REDESIGN - PETROLEUM PREMIUM
+   ============================================================================ */
+
+.light-theme .trip-type-selector-v2 {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(14, 75, 94, 0.1);
+}
+
+.light-theme .trip-type-pill {
+    padding: 10px 24px;
+    background: #E0ECEE !important;
+    border: 2px solid #0E4B5E !important;
+    border-radius: 50px !important;
+    color: #0E4B5E !important;
+    font-size: 0.75rem !important;
+    font-weight: 800 !important;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.light-theme .trip-type-pill:hover {
+    background: #ffffff !important;
+    transform: translateY(-2px);
+}
+
+.light-theme .trip-type-pill.active {
+    background: #0E4B5E !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.2) !important;
+}
+
+.light-theme .trip-type-pill svg {
+    opacity: 0.7;
+}
+
+.light-theme .trip-type-pill.active svg {
+    opacity: 1;
+}
+
+.light-theme .flight-params-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.light-theme .flight-grid-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.light-theme .flight-col-origin,
+.light-theme .flight-col-destination {
+    flex: 1.5;
+}
+
+.light-theme .flight-col-dates {
+    flex: 2;
+}
+
+.light-theme .flight-col-swap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 5px;
+}
+
+.light-theme .btn-swap-locations {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ffffff !important;
+    border: 2px solid #0E4B5E !important;
+    color: #0E4B5E !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.light-theme .btn-swap-locations:hover {
+    background: #0E4B5E !important;
+    color: #ffffff !important;
+    transform: rotate(180deg);
+}
+
+.light-theme .flight-dates-row {
+    display: flex;
+    gap: 12px;
+}
+
+.light-theme .flight-dates-row .input-group-flight {
+    flex: 1;
+}
+
+.light-theme .passenger-row-redesign-v2 {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: #ffffff !important;
+    border: 1px solid #0E4B5E !important;
+    padding: 6px 20px !important;
+    border-radius: 12px !important;
+    height: 48px;
+}
+
+.light-theme .flight-counter-group-v2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.light-theme .counter-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.light-theme .counter-controls-v2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.light-theme .counter-controls-v2 button {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 1px solid #0E4B5E !important;
+    background: #E0ECEE !important;
+    color: #0E4B5E !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.light-theme .counter-controls-v2 button:hover {
+    background: #0E4B5E !important;
+    color: #ffffff !important;
+}
+
+.light-theme .counter-controls-v2 span {
+    font-weight: 800;
+    color: #0E4B5E;
+    min-width: 12px;
+    text-align: center;
+}
+
+.light-theme .flight-class-selector select {
+    background: transparent !important;
+    border: none !important;
+    color: #0E4B5E !important;
+    font-weight: 800 !important;
+    font-size: 0.85rem !important;
+    cursor: pointer;
+    padding-right: 20px !important;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230E4B5E' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right center !important;
+}
+
+.light-theme .flight-pax-config {
+    flex: 1;
+}
+
+.light-theme .flight-action-row {
+    margin-top: 10px;
+}
+
+.light-theme .flight-search-action {
+    flex: 1;
+}
+
+.light-theme .btn-search-flights-premium {
+    width: 100%;
+    height: 75px;
+    background: #E0ECEE !important;
+    border: 2px solid #0E4B5E !important;
+    border-radius: 16px !important;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden;
+}
+
+.light-theme .btn-search-flights-premium:hover {
+    background: #ffffff !important;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(14, 75, 94, 0.1) !important;
+    border-color: #10B981 !important;
+}
+
+.light-theme .btn-search-flights-premium .btn-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.light-theme .btn-search-flights-premium span {
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: #0E4B5E;
+}
+
+.light-theme .btn-search-flights-premium:hover span {
+    color: #10B981;
+}
+
+.light-theme .flight-search-form {
+    background: #ffffff !important;
+    padding: 3rem !important;
+}
+
+.light-theme .flight-grid-row.second-row {
+    margin-top: 10px;
+}
+
+.light-theme .children-ages-row-v2 {
+    display: flex;
+    gap: 12px;
+    padding-left: 20px;
+    border-left: 1px solid rgba(14, 75, 94, 0.2);
+    margin-left: 10px;
+    align-items: center;
+}
+
+.light-theme .age-input-v2 {
+    display: flex;
+    align-items: center;
+}
+
+.light-theme .age-input-v2 input {
+    width: 85px;
+    height: 36px;
+    background: #ffffff !important;
+    border: 1px solid #0E4B5E !important;
+    border-radius: 8px !important;
+    color: #0E4B5E !important;
+    text-align: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    padding: 0 5px !important;
+}
+
+.light-theme .age-input-v2 input::placeholder {
+    color: rgba(14, 75, 94, 0.5) !important;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.light-theme .age-input-v2 input:focus {
+    border-color: #10B981 !important;
+    outline: none;
+}
+
+/* Explicit Borders for missed light-theme fields */
+.light-theme .airport-input-wrapper,
+.light-theme .date-picker-trigger,
+.light-theme .date-flex-btn,
+.light-theme .stops-btn,
+.light-theme .toggle-advanced-btn {
+    background: #ffffff !important;
+    border: 1px solid #0E4B5E !important;
+    border-radius: 12px !important;
+    transition: all 0.2s ease !important;
+}
+
+.light-theme .airport-input-wrapper:focus-within,
+.light-theme .date-picker-trigger:hover,
+.light-theme .date-flex-btn:hover,
+.light-theme .stops-btn:hover {
+    border-color: #10B981 !important;
+    background: #ffffff !important;
+}
+
+.light-theme .date-flex-btn.active,
+.light-theme .stops-btn.active {
+    background: #0E4B5E !important;
+    color: #ffffff !important;
+}
+
+/* REDESIGNED PASSENGER ROW V2 - LIGHT THEME */
+.light-theme .passenger-row-redesign-v2 {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    background: #ffffff !important;
+    border: 1px solid #0E4B5E !important;
+    padding: 0 24px;
+    border-radius: 12px;
+    height: 56px;
+    width: 100%;
+}
+
+.light-theme .flight-counter-group-v2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.light-theme .counter-label {
+    font-size: 10px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.light-theme .counter-controls-v2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.light-theme .counter-controls-v2 button {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 1px solid #0E4B5E !important;
+    background: #ffffff !important;
+    color: #0E4B5E !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.light-theme .counter-controls-v2 button:hover {
+    background: #0E4B5E !important;
+    color: #ffffff !important;
+    border-color: #10B981 !important;
+}
+
+.light-theme .counter-controls-v2 span {
+    font-weight: 800;
+    color: #0E4B5E !important;
+    min-width: 14px;
+    text-align: center;
+}
+
+.light-theme .flight-class-selector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}
+
+.light-theme .flight-class-selector select {
+    background: transparent !important;
+    border: none !important;
+    color: #0E4B5E !important;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    padding-right: 24px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230E4B5E' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right center !important;
+}
+
+/* SEARCH BUTTON PREMIUM */
+.light-theme .btn-search-flights-premium {
+    width: 100%;
+    height: 72px;
+    background: #0E4B5E !important;
+    border: 1px solid rgba(14, 75, 94, 0.2) !important;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.light-theme .btn-search-flights-premium:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(14, 75, 94, 0.15) !important;
+    background: #0a3a4a !important;
+    border-color: #10B981 !important;
+}
+
+.light-theme .btn-search-flights-premium span {
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* ============================================================================ 
+   FLEXIBLE DATES RIBBON - COMPACT & WIDE
+   ============================================================================ */
+
+.light-theme .flexible-dates-ribbon-container {
+    background: #ffffff !important;
+    border: 1px solid #E0ECEE !important;
+    border-radius: 16px !important;
+}
+
+.light-theme .flexible-dates-strip {
+    gap: 6px !important;
+    padding: 15px !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+}
+
+.light-theme .flex-date-tile-premium {
+    flex: 0 0 140px !important;
+    /* Fixed wider width */
+    background: #f1f5f9 !important;
+    /* Slightly off-white/gray */
+    border: 1px solid #DEE5E7 !important;
+    color: #0E4B5E !important;
+}
+
+.light-theme .flex-date-tile-premium.active {
+    background: #EAF4F6 !important;
+    border: 1.5px solid #0E4B5E !important;
+    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.1) !important;
+}
+
+.light-theme .flex-day-name,
+.light-theme .flex-day-num,
+.light-theme .flex-month {
+    color: #0E4B5E !important;
+    font-weight: 800 !important;
+}
+
+.light-theme .flex-day-num {
+    font-size: 1.4rem !important;
+}
+
+.light-theme .flex-date-tile-premium:hover {
+    transform: translateY(-2px);
+    background: #ffffff !important;
+    border-color: #0E4B5E !important;
+}
+
+/* ============================================================================ 
+   AVAILABILITY HEATMAP - COMPACT & WIDE
+   ============================================================================ */
+
+.light-theme .heatmap-grid {
+    gap: 6px !important;
+    padding-bottom: 20px !important;
+}
+
+.light-theme .heatmap-day {
+    flex: 0 0 140px !important;
+    /* Fixed wider width like flex dates */
+    background: #f1f5f9 !important;
+    border: 1px solid #DEE5E7 !important;
+    color: #0E4B5E !important;
+    padding: 12px 10px !important;
+}
+
+.light-theme .heatmap-day.available {
+    border-color: #DEE5E7 !important;
+}
+
+.light-theme .heatmap-day.requested {
+    background: #EAF4F6 !important;
+    border: 1.5px solid #0E4B5E !important;
+}
+
+.light-theme .h-day-name,
+.light-theme .h-day-num {
+    color: #0E4B5E !important;
+}
+
+.light-theme .h-day-num {
+    font-size: 1.3rem !important;
+    font-weight: 850 !important;
+}
+
+.light-theme .h-price {
+    color: #0E4B5E !important;
+    font-weight: 800 !important;
+    font-size: 11px !important;
+}
+
+.light-theme .heatmap-day:hover {
+    transform: translateY(-2px);
+    background: #ffffff !important;
+    border-color: #0E4B5E !important;
+}
+
+/* ============================================================================ 
+   FLIGHT RESULTS TOOLBAR & FILTERS - LIGHT THEME
+   ============================================================================ */
+
+.light-theme .results-header {
+    background: #ffffff !important;
+    border: 1px solid #0E4B5E !important;
+    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.05) !important;
+}
+
+.light-theme .results-count {
+    color: #0E4B5E !important;
+}
+
+.light-theme .results-filter label,
+.light-theme .results-sort label {
+    color: #64748b !important;
+    font-weight: 700 !important;
+}
+
+.light-theme .results-filter select,
+.light-theme .results-sort select {
+    background: #ffffff !important;
+    border: 1px solid #E0ECEE !important;
+    color: #0E4B5E !important;
+    font-weight: 700 !important;
+}
+
+/* ============================================================================ 
+   EXPANDED FLIGHT DETAILS - LIGHT THEME REDESIGN
+   ============================================================================ */
+
+.light-theme .expand-details-btn {
+    background: #EAF4F6 !important;
+    border: 1px solid #0E4B5E !important;
+    color: #0E4B5E !important;
+    margin: 0 !important;
+    border-radius: 0 0 16px 16px !important;
+    padding: 10px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    font-size: 11px !important;
+    letter-spacing: 0.5px;
+    width: 100% !important;
+}
+
+.light-theme .expand-details-btn:hover {
+    background: #ffffff !important;
+}
+
+.light-theme .flight-details-expanded-compact {
+    background: #ffffff !important;
+    border: 1px solid #0E4B5E !important;
+    box-shadow: inset 0 2px 10px rgba(14, 75, 94, 0.05) !important;
+    margin-top: 10px !important;
+    border-radius: 12px !important;
+    padding: 24px !important;
+}
+
+.light-theme .detail-box {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.light-theme .detail-box h4 {
+    color: #0E4B5E !important;
+    font-weight: 900 !important;
+}
+
+.light-theme .p-row span,
+.light-theme .b-row span {
+    color: #64748b !important;
+}
+
+.light-theme .p-row.bold span {
+    color: #020617 !important;
+    font-weight: 800 !important;
+}
+
+.light-theme .slice-title-mini {
+    color: #0E4B5E !important;
+    border-bottom: 2px solid #EAF4F6 !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 16px !important;
+}
+
+.light-theme .s-time {
+    color: #020617 !important;
+    font-weight: 800 !important;
+}
+
+.light-theme .s-iata {
+    color: #64748b !important;
+}
+
+.light-theme .s-flight-no {
+    color: #0E4B5E !important;
+}
+
+.light-theme .s-line {
+    background: #e2e8f0 !important;
+}
+
+.light-theme .layover-tag-mini {
+    background: #FEF3C7 !important;
+    color: #92400E !important;
+    border-radius: 4px;
+}
+
+.light-theme .amenity-badge {
+    background: #EAF4F6 !important;
+    color: #0E4B5E !important;
+    border: 1px solid #0E4B5E !important;
+}
+
+/* ============================================================================ 
+   SELECT FLIGHT BUTTON - LIGHT THEME
+   ============================================================================ */
+
+.light-theme .select-flight-btn {
+    background: #0E4B5E !important;
+    color: #ffffff !important;
+    border: 1px solid #0E4B5E !important;
+}
+
+.light-theme .select-flight-btn:hover {
+    background: #093642 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.3) !important;
+}
+
+/* ============================================================================ 
+   FLIGHT DATE CAROUSEL - LIGHT THEME
+   ============================================================================ */
+
+.light-theme .flight-date-carousel {
+    justify-content: stretch !important;
+    gap: 8px !important;
+}
+
+.light-theme .date-carousel-item {
+    background: #ffffff !important;
+    border: 1px solid #DEE5E7 !important;
+    flex: 1 1 0 !important;
+    /* Force equal expansion */
+    min-width: 100px !important;
+    max-width: none !important;
+    margin: 0 !important;
+    box-shadow: 0 2px 4px rgba(14, 75, 94, 0.05);
+}
+
+.light-theme .date-carousel-item:hover {
+    background: #f8fafc !important;
+    border-color: #0E4B5E !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.1) !important;
+}
+
+.light-theme .date-carousel-item.active {
+    background: #EAF4F6 !important;
+    border: 2px solid #0E4B5E !important;
+    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.15) !important;
+}
+
+.light-theme .carousel-date-day {
+    color: #64748b !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
+    letter-spacing: 0.5px;
+}
+
+.light-theme .carousel-date-full {
+    color: #0E4B5E !important;
+    font-weight: 800 !important;
+    font-size: 1.0rem !important;
+}
+
+.light-theme .carousel-price {
+    color: #020617 !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+}
+
+.light-theme .carousel-price.lowest {
+    color: #10b981 !important;
+}
+
+.light-theme .lowest-badge {
+    background-color: #10b981 !important;
+    font-size: 0.65rem !important;
+    padding: 3px 6px !important;
 }

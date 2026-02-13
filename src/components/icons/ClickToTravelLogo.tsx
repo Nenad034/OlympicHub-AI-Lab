@@ -7,7 +7,7 @@ interface LogoProps {
     showText?: boolean;
 }
 
-export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 58, className = "" }) => {
+export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className = "" }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [imgLoaded, setImgLoaded] = useState(false);
     const { theme } = useThemeStore();

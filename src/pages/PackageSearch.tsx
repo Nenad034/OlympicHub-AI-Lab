@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     MapPin, Calendar, Users, Plane, Hotel,
     Car, Ticket, Map, ChevronLeft, ChevronRight,
@@ -50,7 +50,11 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
     initialTravelers
 }) => {
     const navigate = useNavigate();
-    const [currentStep, setCurrentStep] = useState<number>(1);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [currentStep, setCurrentStep] = useState<number>(() => {
+        const stepParam = searchParams.get('step');
+        return stepParam ? parseInt(stepParam) : 1;
+    });
     const [steps, setSteps] = useState<WizardStep[]>(WIZARD_STEPS);
     const [basicInfo, setBasicInfo] = useState<BasicInfoData | null>(null);
     const [selectedFlights, setSelectedFlights] = useState<FlightSelectionData | null>(null);
@@ -100,11 +104,31 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
     const goNext = () => {
         if (currentStep < 6) {
             setSteps(prev => prev.map(s => s.id === currentStep ? { ...s, isComplete: true } : s));
-            setCurrentStep(currentStep + 1);
+            const nextStep = currentStep + 1;
+            setCurrentStep(nextStep);
+
+            // Update URL
+            setSearchParams(prev => {
+                const newParams = new URLSearchParams(prev);
+                newParams.set('step', String(nextStep));
+                return newParams;
+            }, { replace: false });
         }
     };
 
-    const goBack = () => currentStep > 1 && setCurrentStep(currentStep - 1);
+    const goBack = () => {
+        if (currentStep > 1) {
+            const prevStep = currentStep - 1;
+            setCurrentStep(prevStep);
+
+            // Update URL
+            setSearchParams(prev => {
+                const newParams = new URLSearchParams(prev);
+                newParams.set('step', String(prevStep));
+                return newParams;
+            }, { replace: false });
+        }
+    };
 
     const renderStep = () => {
         switch (currentStep) {
@@ -126,14 +150,28 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
             {/* 2. PROGRESS STEPS (SMART STYLE) */}
             <div className="wizard-progress ss-glass-bar">
                 <div className="progress-steps-ss">
-                    {steps.map((step, index) => (
-                        <div key={step.id} className={`p-step-ss ${currentStep === step.id ? 'active' : ''} ${step.isComplete ? 'complete' : ''}`} onClick={() => setCurrentStep(step.id)}>
+                    {steps.map((step) => (
+                        <a
+                            href={`/smart-search?tab=package&step=${step.id}`}
+                            key={step.id}
+                            className={`p-step-ss ${currentStep === step.id ? 'active' : ''} ${step.isComplete ? 'complete' : ''}`}
+                            style={{ textDecoration: 'none', cursor: 'pointer', display: 'flex' }}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentStep(step.id);
+                                setSearchParams(prev => {
+                                    const newParams = new URLSearchParams(prev);
+                                    newParams.set('step', String(step.id));
+                                    return newParams;
+                                });
+                            }}
+                        >
                             <div className="s-num-ss">{step.isComplete ? <Check size={14} /> : step.id}</div>
                             <div className="s-info-ss">
                                 <div className="s-title-ss">{step.title}</div>
                                 <div className="s-desc-ss">{step.description}</div>
                             </div>
-                        </div>
+                        </a>
                     ))}
                 </div>
             </div>
@@ -151,14 +189,14 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
                     </button>
                 </div>
 
-                <div className="total-display-middle" style={{ flex: 1, textAlign: 'center' }}>
-                    <div style={{ fontSize: '10px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '2px' }}>Trenutni Total</div>
-                    <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--accent)', letterSpacing: '-2px', lineHeight: 1, fontStyle: 'italic' }}>{totalPrice.toFixed(2)}€</div>
+                <div className="total-display-middle" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(14, 75, 94, 0.4)', borderRadius: '12px', padding: '0 20px', margin: '0 10px', height: '56px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div style={{ fontSize: '9px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', lineHeight: 1, marginBottom: '2px' }}>Trenutni Total</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'white', letterSpacing: '-1px', lineHeight: 1 }}>{totalPrice.toFixed(2)}€</div>
                 </div>
 
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
                     {currentStep < 6 ? (
-                        <button className="nav-btn primary ss-glow-indigo" style={{ minWidth: '240px', height: '56px', fontSize: '13px', fontWeight: 900 }} onClick={goNext}>
+                        <button className="nav-btn primary" style={{ minWidth: '240px', height: '56px', fontSize: '13px', fontWeight: 900, background: '#0E4B5E', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} onClick={goNext}>
                             SLEDEĆI KORAK <ChevronRight size={20} />
                         </button>
                     ) : (
@@ -172,9 +210,10 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
                                 fontStyle: 'italic',
                                 textTransform: 'uppercase',
                                 letterSpacing: '2px',
-                                background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
-                                boxShadow: '0 10px 30px -5px rgba(99, 102, 241, 0.5)',
-                                border: '1px solid rgba(255,255,255,0.2)'
+                                background: '#0E4B5E',
+                                boxShadow: '0 10px 30px -5px rgba(14, 75, 94, 0.5)',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                color: 'white'
                             }}
                             onClick={() => navigate('/packages/created')}
                         >

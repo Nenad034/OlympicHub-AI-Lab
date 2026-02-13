@@ -24,11 +24,11 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
     });
 
     const monthNames = [
-        'Јануар', 'Фебруар', 'Март', 'Април', 'Мај', 'Јун',
-        'Јул', 'Август', 'Септембар', 'Октобар', 'Новембар', 'Децембар'
+        'Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun',
+        'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'
     ];
 
-    const dayNames = ['П', 'У', 'С', 'Ч', 'П', 'С', 'Н'];
+    const dayNames = ['P', 'U', 'S', 'Č', 'P', 'S', 'N'];
 
     const getDaysInMonth = (date: Date) => {
         const year = date.getFullYear();
@@ -103,7 +103,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
     };
 
     const formatDisplayDate = (dateStr: string) => {
-        if (!dateStr) return 'Изаберите датум';
+        if (!dateStr) return 'Izaberite datum';
         const date = new Date(dateStr);
         const day = date.getDate();
         const month = monthNames[date.getMonth()].toLowerCase();
@@ -183,8 +183,8 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                                             disabled={isDateDisabled(day)}
                                         >
                                             {day}
-                                            {isDateSelected(day) && <span className="date-label">Полазак</span>}
-                                            {isReturnDate(day) && <span className="date-label">Повратак</span>}
+                                            {isDateSelected(day) && <span className="date-label">Polazak</span>}
+                                            {isReturnDate(day) && <span className="date-label">Povratak</span>}
                                         </button>
                                     )}
                                 </div>
@@ -197,7 +197,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                                 className="calendar-done-btn"
                                 onClick={() => setIsOpen(false)}
                             >
-                                Готово
+                                Gotovo
                             </button>
                         </div>
                     </div>

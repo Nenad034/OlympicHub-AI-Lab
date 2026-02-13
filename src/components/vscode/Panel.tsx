@@ -20,12 +20,12 @@ interface PanelProps {
 export const Panel: React.FC<PanelProps> = ({ height }) => {
     const [activeTab, setActiveTab] = useState<PanelTab>('terminal');
     const [terminalLines, setTerminalLines] = useState<string[]>([
-        '> Olympic Hub v1.0.0',
+        '> ClickToTravel Hub v1.0.0',
         '> Supabase connected ✓',
         '> Gemini AI ready ✓',
         '> System initialized successfully',
         '',
-        'olympic@hub:~$'
+        'ctt@hub:~$',
     ]);
     const [inputValue, setInputValue] = useState('');
     const { togglePanel } = useVSCodeStore();
@@ -33,29 +33,29 @@ export const Panel: React.FC<PanelProps> = ({ height }) => {
     const handleTerminalInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && inputValue.trim()) {
             const newLines = [...terminalLines];
-            newLines[newLines.length - 1] = `olympic@hub:~$ ${inputValue}`;
-            
+            newLines[newLines.length - 1] = `ctt@hub:~$ ${inputValue}`;
+
             // Simulate some commands
             if (inputValue === 'clear') {
-                setTerminalLines(['olympic@hub:~$']);
+                setTerminalLines(['ctt@hub:~$']);
             } else if (inputValue === 'help') {
                 newLines.push('Available commands: help, clear, status, version');
-                newLines.push('olympic@hub:~$');
+                newLines.push('ctt@hub:~$');
                 setTerminalLines(newLines);
             } else if (inputValue === 'status') {
                 newLines.push('System Status: Online');
                 newLines.push('Database: Connected');
                 newLines.push('AI: Active');
-                newLines.push('olympic@hub:~$');
+                newLines.push('ctt@hub:~$');
                 setTerminalLines(newLines);
             } else if (inputValue === 'version') {
-                newLines.push('Olympic Hub v1.0.0');
+                newLines.push('ClickToTravel Hub v1.0.0');
                 newLines.push('React v19.x | TypeScript v5.x | Vite v7.x');
-                newLines.push('olympic@hub:~$');
+                newLines.push('ctt@hub:~$');
                 setTerminalLines(newLines);
             } else {
                 newLines.push(`Command not found: ${inputValue}`);
-                newLines.push('olympic@hub:~$');
+                newLines.push('ctt@hub:~$');
                 setTerminalLines(newLines);
             }
             setInputValue('');

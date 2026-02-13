@@ -1,7 +1,17 @@
 /* ==========================================================================
-   SMART SEARCH V2 - PREMIUM DESIGN SYSTEM
+   SMART SEARCH V2 - OBSIDIAN PETROLEUM THEME
    ========================================================================== */
 
+:root {
+    --ss-bg-card: rgba(15, 23, 42, 0.7);
+    --ss-bg-inner: rgba(15, 23, 42, 0.6);
+    --ss-border: #0E4B5E;
+    --ss-accent: #10B981;
+    --ss-accent-glow: rgba(16, 185, 129, 0.4);
+    --ss-text-primary: #f8fafc;
+    --ss-text-muted: #94a3b8;
+    --ss-gradient: linear-gradient(135deg, #0E4B5E 0%, #0a3a4a 100%);
+}
 
 /* --- Main Frame --- */
 .search-card-frame {
@@ -11,11 +21,12 @@
     padding: 2.5rem;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     position: relative;
-    max-width: 1800px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 
 /* --- Field Labels --- */
+.field-label,
 .field-label-ss {
     display: flex;
     align-items: center;
@@ -29,7 +40,8 @@
 }
 
 /* --- Inputs --- */
-.ss-input-box {
+.ss-input-box,
+.input-box {
     background: var(--ss-bg-inner);
     border: 1px solid var(--ss-border);
     border-radius: 12px;
@@ -43,246 +55,29 @@
     align-items: center;
 }
 
-.ss-input-box:focus-within {
+.ss-input-box:focus-within,
+.input-box:hover {
     border-color: var(--ss-accent);
-    box-shadow: 0 0 0 2px var(--ss-accent-glow);
+    box-shadow: 0 0 15px var(--ss-accent-glow);
 }
 
-/* --- Multi Destination Chips --- */
-.ss-chips-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    align-items: center;
-}
-
-.ss-chip {
-    background: rgba(99, 102, 241, 0.1);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    color: #e0e7ff;
-    padding: 0.3rem 0.75rem;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.ss-chip-remove {
-    cursor: pointer;
-    opacity: 0.6;
-}
-
-.ss-chip-remove:hover {
-    opacity: 1;
-}
-
-/* --- Params Grid --- */
-.ss-params-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1.2fr 1.2fr;
-    gap: 1.25rem;
-    margin-top: 1.5rem;
-}
-
-/* --- Flexibility Toggle --- */
-.flex-toggle-ss {
-    display: flex;
-    background: var(--ss-bg-inner);
-    border: 1px solid var(--ss-border);
-    border-radius: 12px;
-    padding: 4px;
-    height: 56px;
-    align-items: center;
-}
-
-.flex-opt {
-    flex: 1;
-    height: 100%;
-    border: none;
-    background: transparent;
-    color: var(--ss-text-muted);
-    font-size: 0.85rem;
-    font-weight: 700;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.2s;
-}
-
-.flex-opt.active {
-    background: var(--ss-accent);
-    color: white;
-}
-
-/* --- Room Tabs --- */
-.room-tabs-ss {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-    padding-bottom: 0.5rem;
-}
-
-.room-tab-ss {
-    padding: 0.6rem 1.2rem;
-    background: var(--ss-bg-inner);
-    border: 1px solid var(--ss-border);
-    border-radius: 99px;
-    color: var(--ss-text-muted);
-    font-size: 0.8rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.room-tab-ss.active {
-    border-color: var(--ss-accent);
-    color: white;
-    background: rgba(99, 102, 241, 0.1);
-}
-
-.room-tab-ss .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #4ade80;
-    box-shadow: 0 0 8px #4ade80;
-}
-
-/* --- Pax Counters --- */
-.pax-container-ss {
-    display: flex;
-    gap: 2rem;
-    margin-top: 1.5rem;
-}
-
-.pax-field-ss {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-}
-
-.pax-label-ss {
-    font-size: 0.7rem;
-    font-weight: 800;
-    color: var(--ss-text-muted);
-    text-transform: uppercase;
-}
-
-.counter-box-ss {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    background: var(--ss-bg-inner);
-    border: 1px solid var(--ss-border);
-    padding: 6px;
-    border-radius: 10px;
-}
-
-.btn-ss-mini {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    background: var(--ss-accent);
-    color: white;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-weight: 900;
-}
-
-.pax-val-ss {
-    font-weight: 800;
-    color: white;
-    min-width: 20px;
-    text-align: center;
-}
-
-/* --- MAIN CTA BUTTON --- */
-.btn-search-ss {
-    width: 100%;
-    height: 70px;
-    margin-top: 2.5rem;
-    border-radius: 16px;
-    background: var(--ss-gradient);
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    font-weight: 900;
-    font-style: italic;
-    letter-spacing: 0.1em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1.5rem;
-    cursor: pointer;
-    box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.5);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.btn-search-ss:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 25px 50px -10px rgba(99, 102, 241, 0.6);
-}
-
-.btn-search-ss .icon-aura {
-    background: #ff3c00;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 20px #ff3c00;
-}
-
-/* --- New Search Link --- */
-.new-search-ss {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: var(--ss-text-muted);
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    text-decoration: none;
-    margin-top: 2.5rem;
-    justify-content: center;
-    transition: color 0.2s;
-}
-
-.new-search-ss:hover {
-    color: white;
-}
-
-/* --- Layout Utils --- */
-.grid-cols-ss {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-}
-
-/* === WIZARD PROGRESS BAR === */
+/* --- Wizard Progress Bar --- */
 .ss-glass-bar {
-    background: var(--glass-bg);
+    background: rgba(15, 23, 42, 0.8) !important;
     backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--ss-border);
     padding: 1.5rem 0;
     position: sticky;
     top: 0;
     z-index: 100;
+    width: 100%;
 }
 
 .progress-steps-ss {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    max-width: 1800px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 0 4rem;
 }
@@ -294,29 +89,24 @@
     cursor: pointer;
     opacity: 0.4;
     transition: all 0.3s ease;
-    position: relative;
 }
 
 .p-step-ss.active {
     opacity: 1;
 }
 
-.p-step-ss.complete {
-    opacity: 0.8;
-}
-
 .s-num-ss {
     width: 32px;
     height: 32px;
     border-radius: 10px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
+    background: #0f172a;
+    border: 1px solid var(--ss-border);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.8rem;
     font-weight: 900;
-    color: var(--text-secondary);
+    color: var(--ss-text-muted);
 }
 
 .p-step-ss.active .s-num-ss {
@@ -326,47 +116,19 @@
     border-color: transparent;
 }
 
-.p-step-ss.complete .s-num-ss {
-    background: #10b981;
-    color: white;
-    border-color: transparent;
-}
-
-.s-title-ss {
-    font-size: 0.85rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.s-desc-ss {
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-}
-
-/* === FLOATING NAVIGATION === */
-/* TARGET BY ID FOR HIGHEST SPECIFICITY */
+/* --- Floating Nav --- */
 #floating-wizard-nav.ss-floating-nav {
     position: sticky !important;
     bottom: 30px !important;
-
-    /* Auto width matches parent container exactly */
-    left: auto !important;
-    right: auto !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    transform: none !important;
     width: 100% !important;
-    max-width: none !important;
-
-    background: var(--bg-card) !important;
+    max-width: 1400px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    background: rgba(15, 23, 42, 0.9) !important;
     backdrop-filter: blur(20px) !important;
     padding: 1.25rem 2.5rem !important;
     border-radius: 24px !important;
-    border: 1px solid var(--border) !important;
+    border: 1px solid var(--ss-border) !important;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
@@ -374,95 +136,76 @@
     z-index: 1000 !important;
 }
 
-/* Hide the class-only version to prevent conflicts */
-.ss-floating-nav:not(#floating-wizard-nav) {
-    display: none;
-}
-
-
-
-.ss-glow-indigo {
-    background: var(--ss-gradient) !important;
-    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5) !important;
-}
-
-.ss-glow-muted {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    color: var(--ss-text-muted) !important;
-}
-
-.ss-glow-muted:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
+.nav-btn.primary {
+    background: var(--ss-accent) !important;
     color: white !important;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 900;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 5px 15px var(--ss-accent-glow);
 }
 
-/* === ANIMATIONS === */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.nav-btn.secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--ss-border);
+    color: white;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
 }
 
-.animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
-}
-
-/* === HORIZONTAL OFFER CARDS (REVIEW STEP) === */
-.flight-offer-card-ss {
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px;
-    overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.flight-offer-card-ss:hover {
-    border-color: rgba(99, 102, 241, 0.3);
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-    transform: translateY(-2px);
-}
-
-.card-main-layout {
+/* --- Search Tabs --- */
+.search-tabs {
     display: flex;
-    min-height: 200px;
+    gap: 12px;
+    margin-bottom: 2rem;
+    width: 100%;
 }
 
-.flight-main-section-ss {
+.tab-btn {
     flex: 1;
-    padding: 1.5rem;
-}
-
-.flight-price-sidebar-ss {
-    width: 200px;
+    height: 56px;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid var(--ss-border);
+    border-radius: 12px;
+    color: var(--ss-text-muted);
+    font-size: 0.85rem;
+    font-weight: 700;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-left: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(255, 255, 255, 0.02);
-    padding: 1.5rem;
-    text-align: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
-.price-label-ss {
-    font-size: 9px;
-    font-weight: 900;
-    color: var(--ss-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 0.5rem;
-}
-
-.price-value-ss {
-    font-size: 1.75rem;
-    font-weight: 900;
+.tab-btn.active {
+    background: var(--ss-border);
     color: white;
-    letter-spacing: -1px;
+    border-color: var(--ss-accent);
+}
+
+.tab-btn.complete {
+    border-color: var(--ss-accent);
+}
+
+/* --- Result Cards --- */
+.hotel-result-card-premium,
+.flight-offer-card-ss {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid var(--ss-border) !important;
+    border-radius: 20px !important;
+    transition: all 0.3s ease !important;
+}
+
+.hotel-result-card-premium:hover,
+.flight-offer-card-ss:hover {
+    border-color: var(--ss-accent) !important;
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.1) !important;
+    transform: translateY(-2px);
 }

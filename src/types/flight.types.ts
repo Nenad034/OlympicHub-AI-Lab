@@ -167,6 +167,16 @@ export interface FlightSearchParams {
     preferredCarriers?: string[]; // IATA kodovi
     maxPrice?: number;
 
+    // Time filters (HH:mm)
+    outboundDepartureFrom?: string;
+    outboundDepartureTo?: string;
+    outboundArrivalFrom?: string;
+    outboundArrivalTo?: string;
+    inboundDepartureFrom?: string;
+    inboundDepartureTo?: string;
+    inboundArrivalFrom?: string;
+    inboundArrivalTo?: string;
+
     // Provider-specific
     providerFilters?: {
         amadeus?: any;

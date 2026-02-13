@@ -211,21 +211,21 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
 
         const getSystemPrompt = () => {
             if (activePersona === 'contact') {
-                return `Ti si AI Agent prodaje Olympic Travel-a u B2B i B2C sektoru. 
+                return `Ti si AI Agent prodaje ClickToTravel-a u B2B i B2C sektoru. 
                 Trenutno komuniciraš sa kontaktom: ${chatContext.contactName} (${chatContext.contactEmail}).
                 Podešeni jezik korisnika: ${chatContext.contactLanguage}.
                 Tvoj cilj je da odgovaraš na pitanja profesionalno, nudiš relevantne hotele i usluge iz baze.
-                Uvek favorizuj "Olympic Travel" verifikovane hotele.
+                Uvek favorizuj "ClickToTravel" verifikovane hotele.
                 Ako klijent promeni jezik (npr. piše na engleskom umesto na ruskom), prilagodi se odmah i nastavi na jeziku koji on koristi.`;
             }
             if (activePersona === 'specialist') {
-                return `Ti si ekspert za modul "${context}" u sistemu Olympic Hub. 
+                return `Ti si ekspert za modul "${context}" u sistemu ClickToTravel Hub. 
                 ${context === 'production-hub' ? 'Tvoj fokus je na upravljanju bazom hotela, unosu smeštaja i slikama.' : ''}
                 ${context === 'mars-analysis' ? 'Tvoj fokus je na analizi MARS tabela i finansijskih trendova.' : ''}
                 Analiziraj ove podatke ako su relevantni: ${JSON.stringify(analysisData.slice(0, 30))}`;
             }
             if (activePersona === 'general') {
-                return `Ti si Generalni AI asistent. Pomažeš korisniku oko opštih pitanja o aplikaciji Olymic Hub, ali i o bilo kojoj temi sa interneta.`;
+                return `Ti si Generalni AI asistent. Pomažeš korisniku oko opštih pitanja o aplikaciji ClickToTravel Hub, ali i o bilo kojoj temi sa interneta.`;
             }
             return `Ti si ChatBot u grupnom razgovoru. Pomažeš u moderaciji i odgovaraš na pitanja tima i partnera.`;
         };
@@ -246,10 +246,10 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
         for (const modelName of modelsToTry) {
             if (successfulResponse) break;
             try {
-                console.log(`🤖 [AI CHAT] Trying model: ${modelName}`);
+                console.log(`🤖[AI CHAT] Trying model: ${modelName} `);
                 setApiCallCount(prev => prev + 1); // Track quota usage
 
-                const prompt = `System Instructions: ${getSystemPrompt()}\nLanguage: ${activeLang}\nUser: ${textToSend}`;
+                const prompt = `System Instructions: ${getSystemPrompt()} \nLanguage: ${activeLang} \nUser: ${textToSend} `;
 
                 // Use multiKeyAI service with caching and rate limiting
                 const response = await multiKeyAI.generateContent(prompt, {
@@ -264,12 +264,12 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                 // local state update for UI only
                 const estimatedTokens = Math.ceil(prompt.length / 4) + Math.ceil(response.length / 4);
                 setTotalTokens(prev => prev + estimatedTokens);
-                console.log(`📊 [AI CHAT] Estimated tokens used in this call: ${estimatedTokens}`);
+                console.log(`📊[AI CHAT] Estimated tokens used in this call: ${estimatedTokens} `);
 
-                console.log(`✅ [AI CHAT] Success with model: ${modelName}`);
+                console.log(`✅[AI CHAT] Success with model: ${modelName} `);
             } catch (e: any) {
                 lastError = e.message;
-                console.error(`❌ [AI CHAT] Failed with model ${modelName}:`, e.message);
+                console.error(`❌[AI CHAT] Failed with model ${modelName}: `, e.message);
             }
         }
 
@@ -293,10 +293,10 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                     ? "Vaš API ključ je možda nevažeći ili nije registrovan. Proverite podešavanja na Google AI Studio."
                     : "Your API key might be invalid or unregistered. Check your settings on Google AI Studio.";
             }
-            setMessages(prev => [...prev, { role: 'ai', text: `Error: ${errorMsg}`, isError: true }]);
+            setMessages(prev => [...prev, { role: 'ai', text: `Error: ${errorMsg} `, isError: true }]);
         }
         setIsThinking(false);
-        console.log(`📊 [AI CHAT] Session totals - API Calls: ${apiCallCount + 1} | Tokens: ${totalTokens}`);
+        console.log(`📊[AI CHAT] Session totals - API Calls: ${apiCallCount + 1} | Tokens: ${totalTokens} `);
     };
 
     const startResizing = (e: React.PointerEvent) => {
@@ -367,7 +367,7 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                     exit={{ opacity: 0, scale: 0.9, y: 100 }}
                     style={{
                         position: 'fixed', bottom: '30px', left: '30px',
-                        width: `${dimensions.width}px`, height: `${dimensions.height}px`,
+                        width: `${dimensions.width} px`, height: `${dimensions.height} px`,
                         background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '40px',
                         boxShadow: '0 30px 60px rgba(0,0,0,0.4)', display: 'flex', flexDirection: 'column',
                         zIndex: 99999, backdropFilter: 'blur(30px)', touchAction: 'none', overflow: 'hidden'
@@ -385,7 +385,7 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                                 <div>
                                     <div style={{ fontWeight: 700, fontSize: '15px' }}>{getPersonaTitle()}</div>
                                     <div style={{ fontSize: '11px', opacity: 0.8, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        Olympic Hub • Calls: {apiCallCount} • Tokens: {totalTokens.toLocaleString()}
+                                        ClickToTravel Hub • Calls: {apiCallCount} • Tokens: {totalTokens.toLocaleString()}
                                     </div>
                                 </div>
                             </div>
@@ -510,14 +510,14 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                             >
                                 <Paperclip size={20} color="var(--text-primary)" />
                             </button>
-                            <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} placeholder={selectedUserIds.length > 0 ? `Piši učesnicima (${selectedUserIds.length})...` : "Pošalji poruku asistenti ili timu..."} style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '18px', padding: '12px 18px', color: 'var(--text-primary)', outline: 'none', fontSize: '13px' }} />
+                            <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} placeholder={selectedUserIds.length > 0 ? `Piši učesnicima(${selectedUserIds.length})...` : "Pošalji poruku asistenti ili timu..."} style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '18px', padding: '12px 18px', color: 'var(--text-primary)', outline: 'none', fontSize: '13px' }} />
                             <button onClick={toggleListening} style={{ background: isListening ? '#f87171' : 'var(--glass-bg)', border: '1px solid var(--border)', width: '48px', height: '48px', borderRadius: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{isListening ? <MicOff size={20} color="#fff" /> : <Mic size={20} color="var(--text-primary)" />}</button>
                             <button onClick={() => handleSend()} disabled={isThinking && selectedUserIds.length === 0} style={{ background: 'var(--gradient-blue)', width: '48px', height: '48px', borderRadius: '18px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0, 92, 197, 0.3)' }}><Send size={20} color="#fff" /></button>
                         </div>
                     </div>
                 </motion.div>
             )}
-            <style>{`.rotate { animation: spin 1s linear infinite; } @keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+            <style>{`.rotate { animation: spin 1s linear infinite; } @keyframes spin { 100 % { transform: rotate(360deg); } } `}</style>
         </AnimatePresence>
     );
 }

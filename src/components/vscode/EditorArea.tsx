@@ -41,8 +41,8 @@ export const EditorArea: React.FC = () => {
             <div className="vscode-editor-area">
                 <div className="editor-welcome">
                     <div className="welcome-content">
-                        <ClickToTravelLogo height={96} className="welcome-logo" showText={true} />
-                        <h1>Olympic Hub</h1>
+                        <ClickToTravelLogo height={144} className="welcome-logo" showText={true} />
+                        <h1>ClickToTravel Hub</h1>
                         <p className="welcome-subtitle">Enterprise Resource Planning za turizam</p>
 
                         <div className="welcome-actions">
@@ -112,7 +112,7 @@ export const EditorArea: React.FC = () => {
 
             {/* Breadcrumb */}
             <div className="editor-breadcrumb">
-                <span className="breadcrumb-item">Olympic Hub</span>
+                <span className="breadcrumb-item">ClickToTravel Hub</span>
                 <span className="breadcrumb-separator">/</span>
                 <span className="breadcrumb-item active">
                     {tabs.find((t: Tab) => t.id === activeTabId)?.title || 'Dashboard'}

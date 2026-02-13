@@ -69,10 +69,10 @@ const FlightDateCarousel: React.FC<FlightDateCarouselProps> = ({
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
-        // English/Serbian locale mix based on user context, defaulting to localized short
+        // Force Latin Serbian locale
         return {
-            day: date.toLocaleDateString('sr-RS', { weekday: 'short' }),
-            full: date.toLocaleDateString('sr-RS', { day: 'numeric', month: 'short' })
+            day: date.toLocaleDateString('sr-Latn-RS', { weekday: 'short' }),
+            full: date.toLocaleDateString('sr-Latn-RS', { day: 'numeric', month: 'short' })
         };
     };
 
@@ -109,7 +109,7 @@ const FlightDateCarousel: React.FC<FlightDateCarouselProps> = ({
                             <span className="carousel-date-day">{day}</span>
                             <span className="carousel-date-full">{full}</span>
                             <span className={`carousel-price ${item.isLowest ? 'lowest' : ''}`}>
-                                {item.price.toLocaleString('sr-RS')} {currency}
+                                {item.price.toLocaleString('sr-Latn-RS')} {currency}
                             </span>
                         </div>
                     );

@@ -1259,17 +1259,18 @@ const GlobalHubSearch: React.FC = () => {
                                 </div>
 
                                 <div className="active-room-config full-width animate-fade-in" key={activeRoomTab}>
-                                    <div className="passenger-row-redesign">
-                                        <div className="flight-counter-group">
-                                            <div className="field-label-mini"><Users size={14} /> ODRASLI</div>
-                                            <div className="flight-counter-controls">
-                                                <button className="flight-btn-counter" onClick={() => {
+                                    <div className="passenger-row-redesign-v2">
+                                        {/* Adults */}
+                                        <div className="flight-counter-group-v2">
+                                            <span className="counter-label">Odrasli</span>
+                                            <div className="counter-controls-v2">
+                                                <button onClick={() => {
                                                     const newAlloc = [...roomAllocations];
                                                     newAlloc[activeRoomTab].adults = Math.max(1, newAlloc[activeRoomTab].adults - 1);
                                                     setRoomAllocations(newAlloc);
                                                 }}>−</button>
                                                 <span className="flight-counter-val">{roomAllocations[activeRoomTab].adults}</span>
-                                                <button className="flight-btn-counter" onClick={() => {
+                                                <button onClick={() => {
                                                     const newAlloc = [...roomAllocations];
                                                     newAlloc[activeRoomTab].adults = Math.min(10, newAlloc[activeRoomTab].adults + 1);
                                                     setRoomAllocations(newAlloc);
@@ -1277,10 +1278,11 @@ const GlobalHubSearch: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flight-counter-group">
-                                            <div className="field-label-mini"><Users2 size={14} /> DECA</div>
-                                            <div className="flight-counter-controls">
-                                                <button className="flight-btn-counter" onClick={() => {
+                                        {/* Children */}
+                                        <div className="flight-counter-group-v2">
+                                            <span className="counter-label">Deca</span>
+                                            <div className="counter-controls-v2">
+                                                <button onClick={() => {
                                                     const newAlloc = [...roomAllocations];
                                                     if (newAlloc[activeRoomTab].children > 0) {
                                                         newAlloc[activeRoomTab].children -= 1;
@@ -1289,33 +1291,33 @@ const GlobalHubSearch: React.FC = () => {
                                                     }
                                                 }}>−</button>
                                                 <span className="flight-counter-val">{roomAllocations[activeRoomTab].children}</span>
-                                                <button className="flight-btn-counter" onClick={() => {
+                                                <button onClick={() => {
                                                     if (roomAllocations[activeRoomTab].children < 4) {
                                                         const newAlloc = [...roomAllocations];
                                                         newAlloc[activeRoomTab].children += 1;
-                                                        newAlloc[activeRoomTab].childrenAges.push(7);
+                                                        newAlloc[activeRoomTab].childrenAges.push(0);
                                                         setRoomAllocations(newAlloc);
                                                     }
                                                 }}>+</button>
                                             </div>
                                         </div>
 
+                                        {/* Children Ages In Line */}
                                         {roomAllocations[activeRoomTab].children > 0 && (
-                                            <div className="children-ages-inline-flight">
+                                            <div className="children-ages-row-v2">
                                                 {roomAllocations[activeRoomTab].childrenAges.map((age, idx) => (
-                                                    <div key={idx} className="age-input-compact" title={`${idx + 1}. DETE`}>
+                                                    <div key={idx} className="age-input-v2">
                                                         <input
                                                             type="number"
                                                             min="0" max="17"
                                                             value={age || ''}
-                                                            placeholder="Godine"
+                                                            placeholder={`Dete ${idx + 1}`}
                                                             onChange={e => {
-                                                                const val = parseInt(e.target.value) || 0;
+                                                                const val = e.target.value;
                                                                 const newAlloc = [...roomAllocations];
-                                                                newAlloc[activeRoomTab].childrenAges[idx] = Math.min(17, Math.max(0, val));
+                                                                newAlloc[activeRoomTab].childrenAges[idx] = val === '' ? ('' as any) : Math.min(17, Math.max(0, parseInt(val)));
                                                                 setRoomAllocations(newAlloc);
                                                             }}
-                                                            className="child-age-input mini"
                                                         />
                                                     </div>
                                                 ))}
@@ -1331,7 +1333,7 @@ const GlobalHubSearch: React.FC = () => {
                             <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2' }}>
                                 <span>{isSearching ? 'Pretražujem...' : (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '160px' }}>
-                                        <ClickToTravelLogo height={36} showText={true} />
+                                        <ClickToTravelLogo height={54} showText={true} />
                                     </div>
                                 )}</span>
                             </button>
@@ -1574,11 +1576,7 @@ const GlobalHubSearch: React.FC = () => {
                                                                                 <span className="room-type-tag">
                                                                                     {cleanRoomName(room.name || hotel.name || 'Standardna Soba')}
                                                                                 </span>
-                                                                                {room.description && !room.description.includes('Dest:') && (
-                                                                                    <span className="room-desc-mini">
-                                                                                        {cleanRoomName(room.description)}
-                                                                                    </span>
-                                                                                )}
+
                                                                             </div>
                                                                             {/* Service */}
                                                                             <div className="r-meal">
@@ -1641,13 +1639,13 @@ const GlobalHubSearch: React.FC = () => {
                                                     </div>
                                                     <div className="price-action-section">
                                                         <div className="lowest-price-tag">
-                                                            <span className="price-val">{formatPrice(getFinalDisplayPrice(hotel))} €</span>
+                                                            <span className="price-val">od {formatPrice(getFinalDisplayPrice(hotel))} €</span>
                                                             {roomAllocations.filter(r => r.adults > 0).length > 1 && (
                                                                 <span className="price-label-multi"># Za {roomAllocations.filter(r => r.adults > 0).length} sobe</span>
                                                             )}
                                                         </div>
                                                         {hotel.type === 'hotel' ? (
-                                                            <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji ponude <ArrowRight size={16} /></button>
+                                                            <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji... <ArrowRight size={16} /></button>
                                                         ) : (
                                                             <button className="view-more-btn" onClick={() => handleReserveClick(hotel, 0, hotel)}>Rezerviši odmah <ArrowRight size={16} /></button>
                                                         )}
@@ -1744,9 +1742,7 @@ const GlobalHubSearch: React.FC = () => {
                                                             <div key={room.id || idx} className="room-row-v4">
                                                                 <div className="r-name">
                                                                     <span className="room-type-tag">{cleanRoomName(room.name || 'Standardna Soba')}</span>
-                                                                    {room.description && !room.description.includes('Dest:') && (
-                                                                        <span className="room-desc-mini">{cleanRoomName(room.description)}</span>
-                                                                    )}
+
                                                                 </div>
                                                                 <div className="r-servis">
                                                                     <span className="meal-tag-v4">{getMealPlanDisplayName(room.mealPlan || expandedHotel.mealPlan)}</span>

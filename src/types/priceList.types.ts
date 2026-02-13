@@ -1,4 +1,4 @@
-// Advanced Price List Types for Olympic Hub
+// Advanced Price List Types for ClickToTravel Hub
 import type { RatePlan, CancellationPolicy } from './property.types';
 
 export interface AgeCategory {

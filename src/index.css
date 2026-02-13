@@ -97,7 +97,7 @@ h3,
 
 /* Sidebar Styling */
 .sidebar {
-  width: 260px;
+  width: 320px;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border);
   backdrop-filter: blur(20px);
@@ -107,29 +107,16 @@ h3,
 }
 
 .sidebar-header {
-  padding: 30px 24px;
+  height: 90px;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   gap: 12px;
+  position: relative;
+  background: transparent !important;
 }
 
-.logo-container {
-  width: 40px;
-  height: 40px;
-  background: var(--gradient-green);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 20px rgba(63, 185, 80, 0.3);
-}
 
-.brand-text {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  color: var(--text-primary);
-}
 
 .nav-section {
   flex: 1;

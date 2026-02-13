@@ -1,5 +1,5 @@
 /**
- * Payment System Strategy - Olympic Hub
+ * Payment System Strategy - ClickToTravel Hub
  * 
  * Defines the core types for online payments, link generation, and status tracking.
  */
@@ -40,7 +40,7 @@ export interface PaymentLink {
     expiresAt: string;
     isSingleUse: boolean;
     isActive: boolean;
-    shortCode: string; // For nice URLs like olympichub.rs/pay/xyz
+    shortCode: string; // For nice URLs like clicktotravel.rs/pay/xyz
 }
 
 export interface PaymentGatewayConfig {

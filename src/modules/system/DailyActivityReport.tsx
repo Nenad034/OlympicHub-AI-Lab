@@ -431,7 +431,7 @@ export default function DailyActivityReport() {
                                             width: '40px',
                                             height: '40px',
                                             borderRadius: '10px',
-                                            background: user.userName === 'Olympic Sajt' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                                            background: user.userName === 'ClickToTravel Web' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #3b82f6, #2563eb)',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
@@ -439,7 +439,7 @@ export default function DailyActivityReport() {
                                             fontWeight: 700,
                                             color: '#fff'
                                         }}>
-                                            {user.userName === 'Olympic Sajt' ? '🌐' : user.userName.charAt(0).toUpperCase()}
+                                            {user.userName === 'ClickToTravel Web' ? '🌐' : user.userName.charAt(0).toUpperCase()}
                                         </div>
                                         <div style={{ flex: 1 }}>
                                             <div style={{ fontSize: '14px', fontWeight: 700 }}>{user.userName}</div>
@@ -775,7 +775,7 @@ export default function DailyActivityReport() {
                         ═══════════════════════════════════════════════════════════════════════════════
                     </div>
                     <div style={{ color: '#3b82f6', marginBottom: '12px', fontSize: '14px', fontWeight: 700 }}>
-                        📝 OLYMPIC HUB - ACTIVITY LOG VIEWER
+                        📝 CLICKTOTRAVEL HUB - ACTIVITY LOG VIEWER
                     </div>
                     <div style={{ color: '#94a3b8', marginBottom: '12px' }}>
                         Date: {selectedDate} | Total Entries: {filteredActivities.length}

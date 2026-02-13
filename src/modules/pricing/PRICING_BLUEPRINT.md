@@ -7,7 +7,7 @@
 ---
 
 ## 🎯 Cilj Projekta
-Razvoj intuitivnog, brzog i vizuelno superiornog modula za manuelni unos hotelskih cenovnika unutar **Olympic Hub** platforme. Modul treba da omogući radnicima u back-office-u da unesu kompleksne ugovorne cene bez napora.
+Razvoj intuitivnog, brzog i vizuelno superiornog modula za manuelni unos hotelskih cenovnika unutar **ClickToTravel Hub** platforme. Modul treba da omogući radnicima u back-office-u da unesu kompleksne ugovorne cene bez napora.
 
 ## 🏗️ Arhitektura Rešenja
 

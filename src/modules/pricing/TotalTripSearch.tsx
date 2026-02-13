@@ -333,7 +333,7 @@ const TotalTripSearch: React.FC = () => {
                                 <Compass size={80} strokeWidth={1} />
                             </div>
                             <h2>Spremite se za savršeno putovanje</h2>
-                            <p>Izaberite usluge iznad i unesite detalje za pretragu Olympic Hub baze.</p>
+                            <p>Izaberite usluge iznad i unesite detalje za pretragu ClickToTravel Hub baze.</p>
                         </div>
                     </div>
                 )}

@@ -63,6 +63,7 @@ import {
 import { useAuthStore } from '../../stores/authStore';
 import { getProxiedImageUrl } from '../../utils/imageProxy';
 import { deleteFromCloud } from '../../utils/storageUtils';
+import { useQueryState } from '../../hooks/useQueryState';
 
 // --- TCT-IMC DATA STRUCTURES ---
 
@@ -133,7 +134,7 @@ interface Hotel {
 interface ProductionHubProps {
     onBack: () => void;
     initialTab?: string;
-    initialView?: 'hub' | 'list' | 'detail' | 'transport' | 'services';
+    initialView?: 'hub' | 'accommodations' | 'detail' | 'transport' | 'services';
 }
 
 const translateCountry = (country?: string) => {
@@ -235,10 +236,17 @@ const unifyHotelName = (name: string): string => {
 const wordSlice = (w: string) => w.slice(1);
 
 const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all', initialView = 'hub' }) => {
-    const [viewMode, setViewMode] = useState<'hub' | 'list' | 'detail' | 'transport' | 'services'>(initialView);
+    const [viewMode, setViewMode] = useQueryState<'hub' | 'accommodations' | 'detail' | 'transport' | 'services'>('view', (initialView as string) === 'list' ? 'accommodations' : initialView as any);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchPills, setSearchPills] = useState<string[]>([]);
-    const [activeModuleTab, setActiveModuleTab] = useState(initialTab);
+    const [activeModuleTab, setActiveModuleTab] = useQueryState('tab', initialTab);
+
+    // Legacy redirect for 'list' -> 'accommodations'
+    useEffect(() => {
+        if ((viewMode as any) === 'list') {
+            setViewMode('accommodations');
+        }
+    }, [viewMode, setViewMode]);
 
     const { trackAction, isAnomalyDetected } = useSecurity();
     const { userLevel } = useAuthStore();
@@ -1167,7 +1175,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                             whileHover={{ y: -4, scale: 1.02 }}
                             className="module-card"
                             onClick={() => {
-                                if (s.id === 'accommodation') setViewMode('list');
+                                if (s.id === 'accommodation') setViewMode('accommodations');
                                 if (s.id === 'group_trips') startCreateTour();
                                 if (s.category === 'transport') setViewMode('transport');
                                 if (s.category === 'amenities') setViewMode('services');
@@ -1275,7 +1283,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         );
     }
 
-    if (viewMode === 'list') {
+    if (viewMode === 'accommodations') {
         const startCreate = () => {
             setWizardInitialData(undefined);
             setShowWizard(true);
@@ -1864,7 +1872,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         return (
             <div className="module-container fade-in detail-view">
                 <div className="detail-top-bar">
-                    <button onClick={() => setViewMode('list')} className="btn-back-circle"><ArrowLeft size={20} /></button>
+                    <button onClick={() => setViewMode('accommodations')} className="btn-back-circle"><ArrowLeft size={20} /></button>
                     <div className="breadcrumb">Produkcija / Smeštaj / {selectedHotel.name}</div>
                     <div className="detail-actions">
                         <button className="btn-export" onClick={() => exportToJSON(selectedHotel, `hotel_${selectedHotel.id} `)}>EXPORT</button>

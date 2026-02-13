@@ -77,7 +77,7 @@ const App: React.FC = () => {
         animation: 'spin 1s linear infinite',
         marginBottom: '20px'
       }} />
-      <div style={{ fontSize: '14px', letterSpacing: '2px', color: 'white' }}>CLICKTOTRAVEL LOADING...</div>
+      <div style={{ fontSize: '14px', letterSpacing: '2px', color: 'white' }}>CLICKTOTRAVEL HUB...</div>
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }

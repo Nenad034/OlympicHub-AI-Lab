@@ -129,7 +129,7 @@ export const generateDossierHTML = (dossier: any, lang: Language = 'Srpski') => 
         </head>
         <body>
             <header>
-                <h1>Olympic Travel</h1>
+                <h1>ClickToTravel Hub</h1>
                 <p class="meta">${t.resCode}: ${resCode || cisCode} | ${t.createdAt}: ${new Date().toLocaleDateString()}</p>
             </header>
 

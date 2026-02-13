@@ -235,7 +235,7 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
                     </div>
 
                     {/* ROW 2: PARAMETERS GRID */}
-                    <div className="params-grid" style={{ gridTemplateColumns: 'repeat(9, 1fr)' }}>
+                    <div className="params-grid">
                         {/* Check In */}
                         <div className="col-checkin param-item">
                             <div className="field-label"><Calendar size={14} /> Check-in</div>
@@ -255,175 +255,14 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
                         {/* Nights */}
                         <div className="param-item">
                             <div className="field-label"><Star size={14} /> Noći</div>
-                            <div className="input-box" style={{ justifyContent: 'center', background: 'var(--ss-accent-glow)' }}>
-                                <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--ss-accent)' }}>{dest.nights || 0}</span>
-                            </div>
-                        </div>
-
-                        {/* Room Selection Tabs & Pax Configuration (Integrated from Smart Search) */}
-                        <div className="col-rooms-tabs" style={{ gridColumn: 'span 3', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ display: 'flex', gap: '8px', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '10px' }}>
-                                {roomAllocations.map((room, rIdx) => (
-                                    <button
-                                        key={rIdx}
-                                        className={`room-tab-btn ${activeRoomTab === rIdx ? 'active' : ''} ${room.adults > 0 ? 'is-searching' : 'inactive'}`}
-                                        style={{
-                                            padding: '6px 12px',
-                                            borderRadius: '8px',
-                                            fontSize: '11px',
-                                            fontWeight: 700,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            transition: 'all 0.2s',
-                                            cursor: 'pointer',
-                                            background: activeRoomTab === rIdx ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
-                                            color: activeRoomTab === rIdx ? 'white' : 'var(--text-secondary)',
-                                            border: 'none',
-                                            minWidth: '80px'
-                                        }}
-                                        onClick={() => {
-                                            if (activeRoomTab === rIdx && rIdx !== 0) {
-                                                const newAlloc = [...roomAllocations];
-                                                newAlloc[rIdx] = { adults: 0, children: 0, childrenAges: [] };
-                                                setRoomAllocations(newAlloc);
-                                            } else {
-                                                setActiveRoomTab(rIdx);
-                                            }
-                                        }}
-                                    >
-                                        <div style={{
-                                            width: '6px',
-                                            height: '6px',
-                                            borderRadius: '50%',
-                                            background: room.adults > 0 ? '#10b981' : 'transparent',
-                                            boxShadow: room.adults > 0 ? '0 0 10px #10b981' : 'none'
-                                        }}></div>
-                                        Soba {rIdx + 1}
-                                        {room.adults > 0 && <span style={{ opacity: 0.7, fontSize: '9px', marginLeft: 'auto' }}>{room.adults}+{room.children}</span>}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }} key={activeRoomTab}>
-                                {/* Adults */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <div className="field-label-mini" style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase' }}><Users size={12} style={{ marginBottom: '-2px' }} /> ODRASLI</div>
-                                    <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border)', overflow: 'hidden' }}>
-                                        <button
-                                            style={{ padding: '8px 12px', background: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer' }}
-                                            onClick={() => {
-                                                const newAlloc = [...roomAllocations];
-                                                newAlloc[activeRoomTab].adults = Math.max(1, newAlloc[activeRoomTab].adults - 1);
-                                                setRoomAllocations(newAlloc);
-                                            }}
-                                        >−</button>
-                                        <span style={{ padding: '0 15px', minWidth: '40px', textAlign: 'center', fontWeight: 700 }}>{roomAllocations[activeRoomTab].adults}</span>
-                                        <button
-                                            style={{ padding: '8px 12px', background: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer' }}
-                                            onClick={() => {
-                                                const newAlloc = [...roomAllocations];
-                                                newAlloc[activeRoomTab].adults = Math.min(10, newAlloc[activeRoomTab].adults + 1);
-                                                setRoomAllocations(newAlloc);
-                                            }}
-                                        >+</button>
-                                    </div>
-                                </div>
-
-                                {/* Children */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <div className="field-label-mini" style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase' }}><Users2 size={12} style={{ marginBottom: '-2px' }} /> DECA</div>
-                                    <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border)', overflow: 'hidden' }}>
-                                        <button
-                                            style={{ padding: '8px 12px', background: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer' }}
-                                            onClick={() => {
-                                                const newAlloc = [...roomAllocations];
-                                                if (newAlloc[activeRoomTab].children > 0) {
-                                                    newAlloc[activeRoomTab].children -= 1;
-                                                    newAlloc[activeRoomTab].childrenAges.pop();
-                                                    setRoomAllocations(newAlloc);
-                                                }
-                                            }}
-                                        >−</button>
-                                        <span style={{ padding: '0 15px', minWidth: '40px', textAlign: 'center', fontWeight: 700 }}>{roomAllocations[activeRoomTab].children}</span>
-                                        <button
-                                            style={{ padding: '8px 12px', background: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer' }}
-                                            onClick={() => {
-                                                if (roomAllocations[activeRoomTab].children < 4) {
-                                                    const newAlloc = [...roomAllocations];
-                                                    newAlloc[activeRoomTab].children += 1;
-                                                    newAlloc[activeRoomTab].childrenAges.push(7);
-                                                    setRoomAllocations(newAlloc);
-                                                }
-                                            }}
-                                        >+</button>
-                                    </div>
-                                </div>
-
-                                {/* Children Ages */}
-                                {roomAllocations[activeRoomTab].children > 0 && (
-                                    <div style={{ display: 'flex', gap: '6px' }}>
-                                        {roomAllocations[activeRoomTab].childrenAges.map((age, cIdx) => (
-                                            <div key={cIdx} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                <span style={{ fontSize: '8px', fontWeight: 800, color: 'var(--text-secondary)' }}>DETE {cIdx + 1}</span>
-                                                <input
-                                                    type="number"
-                                                    min="0" max="17"
-                                                    value={age}
-                                                    onChange={e => {
-                                                        const val = parseInt(e.target.value) || 0;
-                                                        const newAlloc = [...roomAllocations];
-                                                        newAlloc[activeRoomTab].childrenAges[cIdx] = Math.min(17, Math.max(0, val));
-                                                        setRoomAllocations(newAlloc);
-                                                    }}
-                                                    style={{ width: '45px', padding: '6px', borderRadius: '6px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'white', fontSize: '11px', textAlign: 'center', outline: 'none' }}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Flexibility (Integrated from Smart Search) */}
-                        <div className="col-flex param-item">
-                            <div className="field-label" style={{ fontStyle: 'italic', color: 'white' }}><ArrowDownWideNarrow size={14} /> FLEKSIBILNOST</div>
-                            <div style={{
-                                width: '100%',
-                                display: 'flex',
-                                background: 'rgba(15, 23, 42, 0.4)',
-                                border: '1px solid rgba(255, 255, 255, 0.05)',
-                                borderRadius: '10px',
-                                padding: '4px',
-                                gap: '4px'
-                            }}>
-                                {[0, 1, 3, 5].map(day => (
-                                    <button
-                                        key={day}
-                                        onClick={() => updateDestination(idx, 'flexibleDays', day)}
-                                        style={{
-                                            flex: 1,
-                                            padding: '8px 4px',
-                                            borderRadius: '8px',
-                                            fontSize: '11px',
-                                            fontWeight: 700,
-                                            border: 'none',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                            background: (dest.flexibleDays || 0) === day ? 'var(--accent)' : 'transparent',
-                                            color: (dest.flexibleDays || 0) === day ? 'white' : 'var(--text-secondary)',
-                                            boxShadow: (dest.flexibleDays || 0) === day ? '0 4px 12px rgba(99, 102, 241, 0.3)' : 'none'
-                                        }}
-                                    >
-                                        {day === 0 ? 'Tačno' : `±${day}`}
-                                    </button>
-                                ))}
+                            <div className="input-box" style={{ justifyContent: 'center', background: 'rgba(16, 185, 129, 0.1)', borderColor: '#10B981' }}>
+                                <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#10B981' }}>{dest.nights || 0}</span>
                             </div>
                         </div>
 
                         {/* Category Selector */}
                         <div className="col-stars param-item" style={{ position: 'relative' }}>
-                            <div className="field-label"><Star size={14} /> Odaberi Kategoriju</div>
+                            <div className="field-label"><Star size={14} /> Kategorija</div>
                             <div className="input-box" onClick={() => setActiveDropdown(activeDropdown?.idx === idx && activeDropdown.field === 'category' ? null : { idx, field: 'category' })} style={{ cursor: 'pointer' }}>
                                 <span style={{ fontSize: '0.85rem' }}>
                                     {getFilterLabel(dest.category, CATEGORY_OPTIONS[0])}
@@ -439,7 +278,7 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
                                             </button>
                                         ))}
                                     </div>
-                                    <div style={{ borderTop: '1px solid var(--border)', padding: '10px', marginTop: '10px' }}>
+                                    <div style={{ borderTop: '1px solid var(--border-color)', padding: '10px', marginTop: '10px' }}>
                                         <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setActiveDropdown(null)}>Zatvori</button>
                                     </div>
                                 </div>
@@ -448,7 +287,7 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
 
                         {/* Meal Selector */}
                         <div className="col-meals param-item" style={{ position: 'relative' }}>
-                            <div className="field-label"><UtensilsCrossed size={14} /> Odaberi Uslugu</div>
+                            <div className="field-label"><UtensilsCrossed size={14} /> Usluga</div>
                             <div className="input-box" onClick={() => setActiveDropdown(activeDropdown?.idx === idx && activeDropdown.field === 'service' ? null : { idx, field: 'service' })} style={{ cursor: 'pointer' }}>
                                 <span style={{ fontSize: '0.85rem' }}>
                                     {getFilterLabel(dest.service, SERVICE_OPTIONS[0])}
@@ -464,56 +303,182 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
                                             </button>
                                         ))}
                                     </div>
-                                    <div style={{ borderTop: '1px solid var(--border)', padding: '10px', marginTop: '10px' }}>
+                                    <div style={{ borderTop: '1px solid var(--border-color)', padding: '10px', marginTop: '10px' }}>
                                         <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setActiveDropdown(null)}>Zatvori</button>
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
 
-                            {/* Nationality & Budget Group - POSITIONED BELOW MEAL SELECTOR */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
-                                {/* Nationality Selector */}
-                                <div style={{ position: 'relative', width: '100%' }}>
-                                    <div className="field-label" style={{ marginBottom: '8px' }}><Globe size={14} /> NACIONALNOST</div>
-                                    <div className="input-box" onClick={() => setShowNationalityPicker(showNationalityPicker === idx ? null : idx)} style={{ cursor: 'pointer' }}>
-                                        <span style={{ fontSize: '0.85rem' }}>
-                                            {NATIONALITY_OPTIONS.find(n => n.code === nationality)?.name || 'Odaberi državu'}
-                                        </span>
-                                        <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-                                    </div>
-                                    {showNationalityPicker === idx && (
-                                        <div className="vertical-filters-popover animate-fade-in-up" style={{ top: '100%', left: 0, minWidth: '220px' }}>
-                                            <div className="vertical-filter-group" style={{ maxHeight: '250px', overflowY: 'auto' }}>
-                                                {NATIONALITY_OPTIONS.map(n => (
-                                                    <button key={n.code} className={`v-filter-btn ${nationality === n.code ? 'active' : ''}`} onClick={() => { setNationality(n.code); setShowNationalityPicker(null); }}>
-                                                        {n.name}
-                                                    </button>
-                                                ))}
-                                            </div>
+                    {/* ROW 3: ROOMS & PAX REDESIGN */}
+                    <div className="rooms-config-row" style={{ marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
+                            {roomAllocations.map((room, rIdx) => (
+                                <button
+                                    key={rIdx}
+                                    className={`room-tab-btn ${activeRoomTab === rIdx ? 'active' : ''} ${room.adults > 0 ? 'is-searching' : 'inactive'}`}
+                                    onClick={() => {
+                                        if (activeRoomTab === rIdx && rIdx !== 0) {
+                                            const newAlloc = [...roomAllocations];
+                                            newAlloc[rIdx] = { adults: 0, children: 0, childrenAges: [] };
+                                            setRoomAllocations(newAlloc);
+                                        } else {
+                                            setActiveRoomTab(rIdx);
+                                        }
+                                    }}
+                                >
+                                    <div className={`status-dot ${room.adults > 0 ? 'enabled' : ''}`}></div>
+                                    Soba {rIdx + 1}
+                                    {room.adults > 0 && <span className="tab-pax-hint">{room.adults}+{room.children}</span>}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="passenger-row-redesign-v2 animate-fade-in" key={activeRoomTab}>
+                            {/* Adults */}
+                            <div className="flight-counter-group-v2">
+                                <span className="counter-label">Odrasli</span>
+                                <div className="counter-controls-v2">
+                                    <button
+                                        onClick={() => {
+                                            const newAlloc = [...roomAllocations];
+                                            newAlloc[activeRoomTab].adults = Math.max(1, newAlloc[activeRoomTab].adults - 1);
+                                            setRoomAllocations(newAlloc);
+                                        }}
+                                    >−</button>
+                                    <span className="flight-counter-val" style={{ color: 'white' }}>{roomAllocations[activeRoomTab].adults}</span>
+                                    <button
+                                        onClick={() => {
+                                            const newAlloc = [...roomAllocations];
+                                            newAlloc[activeRoomTab].adults = Math.min(10, newAlloc[activeRoomTab].adults + 1);
+                                            setRoomAllocations(newAlloc);
+                                        }}
+                                    >+</button>
+                                </div>
+                            </div>
+
+                            {/* Children */}
+                            <div className="flight-counter-group-v2">
+                                <span className="counter-label">Deca</span>
+                                <div className="counter-controls-v2">
+                                    <button
+                                        onClick={() => {
+                                            const newAlloc = [...roomAllocations];
+                                            if (newAlloc[activeRoomTab].children > 0) {
+                                                newAlloc[activeRoomTab].children -= 1;
+                                                newAlloc[activeRoomTab].childrenAges.pop();
+                                                setRoomAllocations(newAlloc);
+                                            }
+                                        }}
+                                    >−</button>
+                                    <span className="flight-counter-val" style={{ color: 'white' }}>{roomAllocations[activeRoomTab].children}</span>
+                                    <button
+                                        onClick={() => {
+                                            if (roomAllocations[activeRoomTab].children < 4) {
+                                                const newAlloc = [...roomAllocations];
+                                                newAlloc[activeRoomTab].children += 1;
+                                                newAlloc[activeRoomTab].childrenAges.push(0);
+                                                setRoomAllocations(newAlloc);
+                                            }
+                                        }}
+                                    >+</button>
+                                </div>
+                            </div>
+
+                            {/* Children Ages In Line */}
+                            {roomAllocations[activeRoomTab].children > 0 && (
+                                <div className="children-ages-row-v2">
+                                    {roomAllocations[activeRoomTab].childrenAges.map((age, cIdx) => (
+                                        <div key={cIdx} className="age-input-v2">
+                                            <input
+                                                type="number"
+                                                min="0" max="17"
+                                                value={age || ''}
+                                                placeholder={`Dete ${cIdx + 1}`}
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    const newAlloc = [...roomAllocations];
+                                                    newAlloc[activeRoomTab].childrenAges[cIdx] = val === '' ? ('' as any) : Math.min(17, Math.max(0, parseInt(val)));
+                                                    setRoomAllocations(newAlloc);
+                                                }}
+                                            />
                                         </div>
-                                    )}
+                                    ))}
                                 </div>
+                            )}
 
-                                {/* Budget Filter */}
-                                <div style={{ width: '100%' }}>
-                                    <div className="field-label" style={{ marginBottom: '8px' }}><DollarSign size={14} /> BUDŽET</div>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        <input
-                                            type="number"
-                                            placeholder="Od"
-                                            value={budgetFrom}
-                                            onChange={(e) => setBudgetFrom(e.target.value)}
-                                            className="budget-input"
-                                        />
-                                        <input
-                                            type="number"
-                                            placeholder="Do"
-                                            value={budgetTo}
-                                            onChange={(e) => setBudgetTo(e.target.value)}
-                                            className="budget-input"
-                                        />
+                            {/* Flexibility */}
+                            <div className="flight-counter-group-v2" style={{ marginLeft: 'auto' }}>
+                                <span className="counter-label" style={{ marginRight: '10px' }}>FLEXIBILNOST</span>
+                                <div className="flex-toggle-group" style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '10px' }}>
+                                    {[0, 1, 3, 5].map(day => (
+                                        <button
+                                            key={day}
+                                            onClick={() => updateDestination(idx, 'flexibleDays', day)}
+                                            style={{
+                                                padding: '8px 12px',
+                                                borderRadius: '8px',
+                                                fontSize: '11px',
+                                                fontWeight: 700,
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                background: (dest.flexibleDays || 0) === day ? '#0E4B5E' : 'transparent',
+                                                color: (dest.flexibleDays || 0) === day ? 'white' : 'var(--text-secondary)'
+                                            }}
+                                        >
+                                            {day === 0 ? 'Tačno' : `±${day}`}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ROW 4: NATIONALITY & BUDGET */}
+                    <div style={{ display: 'flex', gap: '20px' }}>
+                        {/* Nationality */}
+                        <div style={{ flex: 1 }}>
+                            <div className="field-label"><Globe size={14} /> Nacionalnost</div>
+                            <div className="input-box" onClick={() => setShowNationalityPicker(showNationalityPicker === idx ? null : idx)} style={{ cursor: 'pointer' }}>
+                                <span style={{ fontSize: '0.85rem' }}>
+                                    {NATIONALITY_OPTIONS.find(n => n.code === nationality)?.name || 'Srbija'}
+                                </span>
+                                <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                            </div>
+                            {showNationalityPicker === idx && (
+                                <div className="vertical-filters-popover animate-fade-in-up" style={{ zIndex: 110 }}>
+                                    <div className="vertical-filter-group" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                                        {NATIONALITY_OPTIONS.map(n => (
+                                            <button key={n.code} className={`v-filter-btn ${nationality === n.code ? 'active' : ''}`} onClick={() => { setNationality(n.code); setShowNationalityPicker(null); }}>
+                                                {n.name}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
+                            )}
+                        </div>
+
+                        {/* Budget */}
+                        <div style={{ flex: 1.5 }}>
+                            <div className="field-label"><DollarSign size={14} /> Budžet (opciono)</div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <input
+                                    type="number"
+                                    placeholder="Min Cena"
+                                    value={budgetFrom}
+                                    onChange={(e) => setBudgetFrom(e.target.value)}
+                                    className="budget-input"
+                                    style={{ flex: 1 }}
+                                />
+                                <input
+                                    type="number"
+                                    placeholder="Max Cena"
+                                    value={budgetTo}
+                                    onChange={(e) => setBudgetTo(e.target.value)}
+                                    className="budget-input"
+                                    style={{ flex: 1 }}
+                                />
                             </div>
                         </div>
                     </div>

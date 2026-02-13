@@ -201,96 +201,140 @@ class MultiKeyAIService {
         let lastError: Error | null = null;
         const maxAttempts = Math.max(this.apiKeys.length, 1);
 
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            const apiKey = this.getNextKey();
-            if (!apiKey) {
-                throw new Error('No available API keys or proxy');
+        // --- MULTI-TAB REQUEST LOCKING ---
+        const requestHash = this.getSimpleHash(prompt);
+        const lockKey = `ai_pending_${requestHash}`;
+
+        // Check if another tab is already processing this
+        const existingLock = localStorage.getItem(lockKey);
+        if (existingLock) {
+            const lockData = JSON.parse(existingLock);
+            const lockAge = Date.now() - lockData.timestamp;
+
+            // If lock is fresh (< 30s), wait and check cache again instead of calling API
+            if (lockAge < 30000) {
+                console.log(`⏳ [MULTI-KEY] Identical request detected in another tab. Waiting for cache...`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                const cachedAfterWait = aiCache.get(prompt, cacheCategory);
+                if (cachedAfterWait) {
+                    console.log(`✨ [MULTI-KEY] Result retrieved from other tab's cache! Tokens saved.`);
+                    return cachedAfterWait;
+                }
+                // If still not in cache after wait, we'll proceed but this prevents massive parallel spikes
             }
+        }
 
-            try {
-                const startTime = Date.now(); // Track API call duration
+        // Set our own lock
+        localStorage.setItem(lockKey, JSON.stringify({ timestamp: Date.now(), tab: (window as any).name || 'unknown' }));
 
-                // Use rate limiter
-                const response = await aiRateLimiter.queueRequest(async () => {
-                    if (apiKey.isProxy) {
-                        console.log(`📡 [MULTI-KEY] Routing through Supabase Proxy...`);
-                        const { data, error } = await supabase.functions.invoke('gemini-proxy', {
-                            body: {
-                                prompt,
-                                model: model,
-                                temperature: options.temperature,
-                                maxTokens: options.maxOutputTokens
-                            }
-                        });
+        try {
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                const apiKey = this.getNextKey();
+                if (!apiKey) {
+                    throw new Error('No available API keys or proxy');
+                }
 
-                        if (error) throw new Error(`Proxy Error: ${error.message}`);
-                        if (!data?.response) throw new Error('No response from proxy');
-                        return data.response;
-                    } else {
-                        const genAI = new GoogleGenerativeAI(apiKey.key);
-                        const geminiModel = genAI.getGenerativeModel({
-                            model,
-                            generationConfig: {
-                                temperature: options.temperature,
-                                maxOutputTokens: options.maxOutputTokens
-                            }
-                        });
-                        const result = await geminiModel.generateContent(prompt);
-                        return result.response.text();
+                try {
+                    const startTime = Date.now(); // Track API call duration
+
+                    // Use rate limiter
+                    const response = await aiRateLimiter.queueRequest(async () => {
+                        if (apiKey.isProxy) {
+                            console.log(`📡 [MULTI-KEY] Routing through Supabase Proxy...`);
+                            const { data, error } = await supabase.functions.invoke('gemini-proxy', {
+                                body: {
+                                    prompt,
+                                    model: model,
+                                    temperature: options.temperature,
+                                    maxTokens: options.maxOutputTokens
+                                }
+                            });
+
+                            if (error) throw new Error(`Proxy Error: ${error.message}`);
+                            if (!data?.response) throw new Error('No response from proxy');
+                            return data.response;
+                        } else {
+                            const genAI = new GoogleGenerativeAI(apiKey.key);
+                            const geminiModel = genAI.getGenerativeModel({
+                                model,
+                                generationConfig: {
+                                    temperature: options.temperature,
+                                    maxOutputTokens: options.maxOutputTokens
+                                }
+                            });
+                            const result = await geminiModel.generateContent(prompt);
+                            return result.response.text();
+                        }
+                    });
+
+                    // Success! Track usage
+                    const tokens = Math.ceil(prompt.length / 4) + Math.ceil(response.length / 4);
+                    const endTime = Date.now();
+                    const durationMs = endTime - startTime;
+
+                    // Track for Gemini
+                    aiUsageService.recordUsage('gemini', tokens);
+
+                    // Track API call activity
+                    ActivityLogger.logAPICall(
+                        'Gemini',
+                        model || 'gemini-2.0-flash',
+                        durationMs,
+                        true
+                    );
+
+                    // Cache the response
+                    if (useCache) {
+                        aiCache.set(prompt, response, tokens, cacheCategory);
                     }
-                });
 
-                // Success! Track usage
-                const tokens = Math.ceil(prompt.length / 4) + Math.ceil(response.length / 4);
-                const endTime = Date.now();
-                const durationMs = endTime - startTime;
+                    console.log(`✅ [MULTI-KEY] Success with ${apiKey.name} (${tokens} tokens)`);
+                    return response;
 
-                // Track for Gemini
-                aiUsageService.recordUsage('gemini', tokens);
+                } catch (error: any) {
+                    lastError = error;
+                    console.error(`❌ [MULTI-KEY] Failed with ${apiKey.name}:`, error.message);
+                    this.markKeyFailed(apiKey.name);
 
-                // Track API call activity
-                ActivityLogger.logAPICall(
-                    'Gemini',
-                    model || 'gemini-2.0-flash',
-                    durationMs,
-                    true
-                );
+                    // Track failed API call
+                    ActivityLogger.logAPICall(
+                        'Gemini',
+                        model || 'gemini-2.0-flash',
+                        0,
+                        false,
+                        error.message
+                    );
 
-                // Cache the response
-                if (useCache) {
-                    aiCache.set(prompt, response, tokens, cacheCategory);
+                    // If it's a rate limit error, try next key immediately
+                    if (this.isRateLimitError(error)) {
+                        console.log(`⏭️ [MULTI-KEY] Rate limit hit, trying next key...`);
+                        continue;
+                    }
+
+                    // For other errors, throw immediately
+                    throw error;
                 }
-
-                console.log(`✅ [MULTI-KEY] Success with ${apiKey.name} (${tokens} tokens)`);
-                return response;
-
-            } catch (error: any) {
-                lastError = error;
-                console.error(`❌ [MULTI-KEY] Failed with ${apiKey.name}:`, error.message);
-                this.markKeyFailed(apiKey.name);
-
-                // Track failed API call
-                ActivityLogger.logAPICall(
-                    'Gemini',
-                    model || 'gemini-2.0-flash',
-                    0,
-                    false,
-                    error.message
-                );
-
-                // If it's a rate limit error, try next key immediately
-                if (this.isRateLimitError(error)) {
-                    console.log(`⏭️ [MULTI-KEY] Rate limit hit, trying next key...`);
-                    continue;
-                }
-
-                // For other errors, throw immediately
-                throw error;
             }
+        } finally {
+            // ALWAYS remove lock
+            localStorage.removeItem(lockKey);
         }
 
         // All keys failed
         throw lastError || new Error('All API keys failed');
+    }
+
+    /**
+     * Simple numeric hash for prompt deduplication
+     */
+    private getSimpleHash(str: string): string {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return Math.abs(hash).toString(16);
     }
 
     /**

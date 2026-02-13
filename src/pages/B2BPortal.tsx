@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useThemeStore, useAuthStore } from '../stores';
+import { useQueryState } from '../hooks/useQueryState';
 import SmartSearch from './SmartSearch';
 import ReservationsDashboard from './ReservationsDashboard';
 import {
@@ -26,16 +27,9 @@ const B2BPortal: React.FC = () => {
     const navigate = useNavigate();
     const subagentId = searchParams.get('subagentId');
     const { impersonatedSubagent, setImpersonatedSubagent } = useAuthStore();
-    const { theme, cycleTheme, navMode, toggleNavMode } = useThemeStore();
-    const [activeTab, setActiveTab] = useState<'search' | 'reservations' | 'settings'>((searchParams.get('tab') as any) || 'search');
 
-    // Sync tab with URL param
-    useEffect(() => {
-        const tab = searchParams.get('tab');
-        if (tab && (tab === 'search' || tab === 'reservations' || tab === 'settings')) {
-            setActiveTab(tab as any);
-        }
-    }, [searchParams]);
+    const { theme, cycleTheme, navMode, toggleNavMode } = useThemeStore();
+    const [activeTab, setActiveTab] = useQueryState<'search' | 'reservations' | 'settings'>('tab', 'search');
 
     // If no impersonation and no subagentId in URL, redirect or show error
     useEffect(() => {

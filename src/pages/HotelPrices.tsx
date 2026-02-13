@@ -240,7 +240,7 @@ const HotelPrices: React.FC = () => {
 
         // Standard multiKeyAI logic
         try {
-            const prompt = `Ti si Price AI Assistant za Olympic Hub ERP. Upravljaš cenama za hotel ${hotel.name}. 
+            const prompt = `Ti si Price AI Assistant za ClickToTravel Hub ERP. Upravljaš cenama za hotel ${hotel.name}. 
             Korisnik kaže: "${chatInput}"
             Trenutne cene: ${JSON.stringify(prices)}
             Pravila zauzetosti: ${JSON.stringify(occupancyRules)}

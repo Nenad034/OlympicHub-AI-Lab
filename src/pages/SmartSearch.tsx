@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ClickToTravelLogo } from '../components/icons/ClickToTravelLogo';
 import './SmartSearchFerrariFix.css';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../stores';
 import {
     Sparkles, Hotel, Plane, Package, Bus, Compass,
@@ -166,7 +166,18 @@ const SmartSearch: React.FC = () => {
     const isSubagent = userLevel < 6 || !!impersonatedSubagent;
     const navigate = useNavigate();
 
-    const [activeTab, setActiveTab] = useState<'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'ski'>('hotel');
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const activeTab = (searchParams.get('tab') as 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'ski') || 'hotel';
+
+    const setActiveTab = (newTab: 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'ski') => {
+        setSearchParams(prev => {
+            const newParams = new URLSearchParams(prev);
+            newParams.set('tab', newTab);
+            return newParams;
+        }, { replace: true });
+    };
+
     const [selectedDestinations, setSelectedDestinations] = useState<Destination[]>([]);
     const [destinationInput, setDestinationInput] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -846,20 +857,24 @@ const SmartSearch: React.FC = () => {
 
 
             {/* TAB NAVIGATION */}
-            < div className="tabs-nav-container" >
+            <div className="tabs-nav-container">
                 {
                     tabs.map(tab => (
-                        <button
+                        <a
                             key={tab.id}
+                            href={`/smart-search?tab=${tab.id}`}
                             className={`nav-tab-item ${activeTab === tab.id ? 'active' : ''}`}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setActiveTab(tab.id);
+                            }}
                         >
                             <tab.icon size={18} />
                             <span>{tab.label}</span>
-                        </button>
+                        </a>
                     ))
                 }
-            </div >
+            </div>
 
             {/* CONDITIONAL RENDER: SMESHTAJ vs LETOVI vs PAKETI */}
             {activeTab === 'package' ? (
@@ -1118,13 +1133,12 @@ const SmartSearch: React.FC = () => {
                                 </div>
 
                                 <div className="active-room-config full-width animate-fade-in" key={activeRoomTab}>
-                                    <div className="passenger-row-redesign">
+                                    <div className="passenger-row-redesign-v2">
                                         {/* Adults */}
-                                        <div className="flight-counter-group">
-                                            <div className="field-label-mini"><Users size={14} /> ODRASLI</div>
-                                            <div className="flight-counter-controls">
+                                        <div className="flight-counter-group-v2">
+                                            <span className="counter-label">Odrasli</span>
+                                            <div className="counter-controls-v2">
                                                 <button
-                                                    className="flight-btn-counter"
                                                     onClick={() => {
                                                         const newAlloc = [...roomAllocations];
                                                         newAlloc[activeRoomTab].adults = Math.max(1, newAlloc[activeRoomTab].adults - 1);
@@ -1133,7 +1147,6 @@ const SmartSearch: React.FC = () => {
                                                 >−</button>
                                                 <span className="flight-counter-val">{roomAllocations[activeRoomTab].adults}</span>
                                                 <button
-                                                    className="flight-btn-counter"
                                                     onClick={() => {
                                                         const newAlloc = [...roomAllocations];
                                                         newAlloc[activeRoomTab].adults = Math.min(10, newAlloc[activeRoomTab].adults + 1);
@@ -1144,11 +1157,10 @@ const SmartSearch: React.FC = () => {
                                         </div>
 
                                         {/* Children */}
-                                        <div className="flight-counter-group">
-                                            <div className="field-label-mini"><Users2 size={14} /> DECA</div>
-                                            <div className="flight-counter-controls">
+                                        <div className="flight-counter-group-v2">
+                                            <span className="counter-label">Deca</span>
+                                            <div className="counter-controls-v2">
                                                 <button
-                                                    className="flight-btn-counter"
                                                     onClick={() => {
                                                         const newAlloc = [...roomAllocations];
                                                         if (newAlloc[activeRoomTab].children > 0) {
@@ -1160,12 +1172,11 @@ const SmartSearch: React.FC = () => {
                                                 >−</button>
                                                 <span className="flight-counter-val">{roomAllocations[activeRoomTab].children}</span>
                                                 <button
-                                                    className="flight-btn-counter"
                                                     onClick={() => {
                                                         if (roomAllocations[activeRoomTab].children < 4) {
                                                             const newAlloc = [...roomAllocations];
                                                             newAlloc[activeRoomTab].children += 1;
-                                                            newAlloc[activeRoomTab].childrenAges.push(7);
+                                                            newAlloc[activeRoomTab].childrenAges.push(0);
                                                             setRoomAllocations(newAlloc);
                                                         }
                                                     }}
@@ -1175,21 +1186,20 @@ const SmartSearch: React.FC = () => {
 
                                         {/* Children Ages In Line */}
                                         {roomAllocations[activeRoomTab].children > 0 && (
-                                            <div className="children-ages-inline-flight">
+                                            <div className="children-ages-row-v2">
                                                 {roomAllocations[activeRoomTab].childrenAges.map((age, idx) => (
-                                                    <div key={idx} className="age-input-compact" title={`${idx + 1}. DETE`}>
+                                                    <div key={idx} className="age-input-v2">
                                                         <input
                                                             type="number"
                                                             min="0" max="17"
                                                             value={age || ''}
-                                                            placeholder="Godine"
+                                                            placeholder={`Dete ${idx + 1}`}
                                                             onChange={e => {
                                                                 const val = e.target.value;
                                                                 const newAlloc = [...roomAllocations];
                                                                 newAlloc[activeRoomTab].childrenAges[idx] = val === '' ? ('' as any) : Math.min(17, Math.max(0, parseInt(val)));
                                                                 setRoomAllocations(newAlloc);
                                                             }}
-                                                            className="child-age-input mini"
                                                         />
                                                     </div>
                                                 ))}
@@ -1205,7 +1215,7 @@ const SmartSearch: React.FC = () => {
                             <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2' }}>
                                 <span>{isSearching ? 'Pretražujem...' : (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '160px' }}>
-                                        <ClickToTravelLogo height={36} showText={true} />
+                                        <ClickToTravelLogo height={54} showText={true} />
                                     </div>
                                 )}</span>
                             </button>
@@ -1624,12 +1634,12 @@ const SmartSearch: React.FC = () => {
                                                         </div>
                                                         <div className="price-action-section">
                                                             <div className="lowest-price-tag">
-                                                                <span className="price-val">{formatPrice(getFinalDisplayPrice(hotel))} €</span>
+                                                                <span className="price-val">od {formatPrice(getFinalDisplayPrice(hotel))} €</span>
                                                                 {roomAllocations.filter(r => r.adults > 0).length > 1 && (
                                                                     <span className="price-label-multi"># Za {roomAllocations.filter(r => r.adults > 0).length} sobe</span>
                                                                 )}
                                                             </div>
-                                                            <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji ponude <ArrowRight size={16} /></button>
+                                                            <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji... <ArrowRight size={16} /></button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1731,9 +1741,6 @@ const SmartSearch: React.FC = () => {
                                                                 <div key={room.id || idx} className="room-row-v4">
                                                                     <div className="r-name">
                                                                         <span className="room-type-tag">{cleanRoomName(room.name || 'Standardna Soba')}</span>
-                                                                        {room.description && !room.description.includes('Dest:') && (
-                                                                            <span className="room-desc-mini">{cleanRoomName(room.description)}</span>
-                                                                        )}
                                                                     </div>
                                                                     <div className="r-servis">
                                                                         <span className="meal-tag-v4">{getMealPlanDisplayName(room.mealPlan || expandedHotel.mealPlan)}</span>
@@ -1754,9 +1761,6 @@ const SmartSearch: React.FC = () => {
                                                                 <div key={room.id || idx} className="room-row-v4">
                                                                     <div className="r-name">
                                                                         <span className="room-type-tag">{cleanRoomName(room.name || 'Standardna Soba')}</span>
-                                                                        {room.description && !room.description.includes('Dest:') && (
-                                                                            <span className="room-desc-mini">{cleanRoomName(room.description)}</span>
-                                                                        )}
                                                                     </div>
                                                                     <div className="r-servis">
                                                                         <span className="meal-tag-v4">{getMealPlanDisplayName(room.mealPlan || expandedHotel.mealPlan)}</span>
