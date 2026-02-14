@@ -66,6 +66,24 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ option
             const opt = options.find(o => o.value === selected[0]);
             return opt ? opt.label : placeholder;
         }
+
+        // For multiple items, try to create a compact comma-separated list
+        const selectedOptions = options.filter(o => selected.includes(o.value));
+
+        // If it's a category (stars), just show the values (3, 4, 5)
+        if (placeholder.toLowerCase().includes('kategorija')) {
+            return selectedOptions.map(o => o.value).sort().join(', ');
+        }
+
+        // For meal plans, some labels might be long like "ND - Doručak", 
+        // let's try to extract the short code before '-' if present
+        if (placeholder.toLowerCase().includes('usluga')) {
+            return selectedOptions.map(o => {
+                const parts = o.label.split(' - ');
+                return parts[0].trim();
+            }).join(', ');
+        }
+
         return `${selected.length} odabrana`;
     };
 

@@ -985,7 +985,7 @@ const SmartSearch: React.FC = () => {
                                 <div className="field-label"><Star size={14} /> Odaberi Kategoriju</div>
                                 <div className="input-box" onClick={() => setShowStarPicker(!showStarPicker)} style={{ cursor: 'pointer' }}>
                                     <span style={{ fontSize: '0.85rem' }}>
-                                        {selectedStars.includes('all') ? 'Sve kategorije' : `${selectedStars.length} odabrano`}
+                                        {selectedStars.includes('all') ? 'Sve kategorije' : (selectedStars.length === 1 ? CATEGORY_OPTIONS.find(o => o.value === selectedStars[0])?.label : selectedStars.filter(s => s !== 'all').sort().join(', '))}
                                     </span>
                                     <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
                                 </div>
@@ -1011,7 +1011,7 @@ const SmartSearch: React.FC = () => {
                                 <div className="field-label"><UtensilsCrossed size={14} /> Odaberi Uslugu</div>
                                 <div className="input-box" onClick={() => setShowMealPicker(!showMealPicker)} style={{ cursor: 'pointer' }}>
                                     <span style={{ fontSize: '0.85rem' }}>
-                                        {selectedMealPlans.includes('all') ? 'Sve usluge' : `${selectedMealPlans.length} odabrano`}
+                                        {selectedMealPlans.includes('all') ? 'Sve usluge' : (selectedMealPlans.length === 1 ? MEAL_PLAN_OPTIONS.find(o => o.value === selectedMealPlans[0])?.label : selectedMealPlans.filter(p => p !== 'all').join(', '))}
                                     </span>
                                     <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
                                 </div>
