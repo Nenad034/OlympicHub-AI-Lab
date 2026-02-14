@@ -520,6 +520,11 @@ const SmartSearch: React.FC = () => {
             setSearchResults(resultsWithSales);
             setSearchPerformed(true);
 
+            // Access potential errors from performers (using the hack we added in service)
+            if (resultsWithSales.length === 0 && (results as any)._lastError) {
+                setSearchError((results as any)._lastError);
+            }
+
             if (resultsWithSales.length === 0 && !overrideParams) {
                 // START SMART SUGGESTIONS LOGIC
                 setIsSearchingSuggestions(true);
