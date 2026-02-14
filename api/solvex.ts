@@ -7,20 +7,24 @@ export default async function handler(req: any, res: any) {
     }
 
     // Capture the 'path' from the query parameters set in vercel.json rewrite
+    // Source: /api/solvex/(.*)  -> Destination: /api/solvex?path=$1
     const { path: queryPath = '' } = req.query;
-    const targetPath = Array.isArray(queryPath) ? queryPath[0] : queryPath;
+    let actualPath = Array.isArray(queryPath) ? queryPath[0] : queryPath;
 
-    // Fallback: If path is empty, try to get it from the URL manually
-    let actualPath = targetPath;
+    // Manual extraction if rewrite didn't pass it cleanly
     if (!actualPath && req.url) {
-        // e.g., /api/solvex/iservice/integrationservice.asmx -> iservice/integrationservice.asmx
-        const urlMatch = req.url.match(/\/api\/solvex\/(.*?)(\?|$)/);
-        if (urlMatch) actualPath = urlMatch[1];
+        const urlMatch = req.url.split('/api/solvex/')[1];
+        if (urlMatch) actualPath = urlMatch.split('?')[0];
     }
 
+    // Clean leading/trailing slashes and make sure it has the right filename
+    actualPath = actualPath.replace(/^\/+|\/+$/g, '');
+
+    // Safety check: The Solvex production API usually lives at the root or IntegrationService.asmx
     const targetUrl = `https://iservice.solvex.bg/${actualPath}`;
 
     console.log(`[Proxy] Incoming URL: ${req.url}`);
+    console.log(`[Proxy] Actual Path: ${actualPath}`);
     console.log(`[Proxy] Target URL: ${targetUrl}`);
 
     try {
