@@ -61,17 +61,13 @@ export class SolvexProvider implements HotelProvider {
                         provider: 'Solvex'
                     });
                 } else {
-                    const errorMsg = String(result.error || '');
+                    const errorMsg = String(result.error || 'Nepoznata greška u Solvex sistemu');
                     // Suppress network errors from UI notification
                     if (errorMsg.includes('Failed to fetch') || errorMsg.includes('Konekcija sa Solvex sistemom nije uspela')) {
                         console.warn('[SolvexBridge] Solvex system unreachable (handled in provider):', errorMsg);
                     } else {
-                        sentinelEvents.emit({
-                            title: 'Solvex: Greška u pretrazi',
-                            message: `Solvex API je vratio grešku: ${result.error}.`,
-                            type: 'warning',
-                            provider: 'Solvex'
-                        });
+                        // Throw so performSmartSearch can catch it and display in UI
+                        throw new Error(errorMsg);
                     }
                 }
                 return [];

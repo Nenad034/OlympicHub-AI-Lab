@@ -252,9 +252,10 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
     const finalResults = Array.from(finalResultsMap.values());
     console.log('[SmartSearchService] Returning', finalResults.length, 'final results');
 
-    // If no results and we have an error, we might want to propagate it
-    // But for now, we follow the interface and return what we found.
-    // The UI can check for sentinel events or we could enhance the return type.
+    // Attach last error to the array if no results were found
+    if (finalResults.length === 0 && (params as any)._lastError) {
+        (finalResults as any)._lastError = (params as any)._lastError;
+    }
 
     return finalResults;
 }
