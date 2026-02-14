@@ -53,7 +53,7 @@ const getEnvVar = (key: string, fallback: string) => {
     return fallback;
 };
 
-const SOLVEX_BASE_URL = getEnvVar('VITE_SOLVEX_API_URL', 'https://iservice.solvex.bg/iservice/integrationservice.asmx');
+const SOLVEX_BASE_URL = getEnvVar('VITE_SOLVEX_API_URL', 'https://iservice.solvex.bg/IntegrationService.asmx');
 
 /**
  * Helper to convert full URL to proxy path in the browser to bypass CORS
