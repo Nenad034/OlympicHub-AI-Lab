@@ -141,7 +141,7 @@ export class FilosProvider implements HotelProvider {
 
         } catch (error) {
             console.error('[FilosProvider] Search failure:', error);
-            return [];
+            throw error;
         }
     }
 
