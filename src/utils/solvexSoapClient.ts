@@ -53,7 +53,7 @@ const getEnvVar = (key: string, fallback: string) => {
     return fallback;
 };
 
-const SOLVEX_BASE_URL = getEnvVar('VITE_SOLVEX_API_URL', 'https://evaluation.solvex.bg/iservice/integrationservice.asmx');
+const SOLVEX_BASE_URL = getEnvVar('VITE_SOLVEX_API_URL', 'https://iservice.solvex.bg/iservice/integrationservice.asmx');
 
 /**
  * Helper to convert full URL to proxy path in the browser to bypass CORS
@@ -61,8 +61,13 @@ const SOLVEX_BASE_URL = getEnvVar('VITE_SOLVEX_API_URL', 'https://evaluation.sol
 function getTargetUrl(url: string): string {
     // In the browser, always use our internal proxy to avoid CORS
     if (typeof window !== 'undefined') {
-        if (url.includes('evaluation.solvex.bg') || url.includes('iservice.solvex.bg')) {
+        const urlLower = url.toLowerCase();
+        if (urlLower.includes('solvex.bg')) {
             const urlObj = new URL(url);
+            // Check if it's the B2B portal or the IService
+            if (urlLower.includes('b2b.solvex.bg')) {
+                return `/api/solvex-b2b${urlObj.pathname}${urlObj.search}`;
+            }
             return `/api/solvex${urlObj.pathname}${urlObj.search}`;
         }
     }

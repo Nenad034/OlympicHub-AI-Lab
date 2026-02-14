@@ -147,6 +147,8 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                         results.push(...solvexResults);
                     } catch (e) {
                         console.error('Solvex search failed', e);
+                        // Store the error so we can potentially inform the user
+                        (params as any)._lastError = e instanceof Error ? e.message : String(e);
                     }
                 }
 
@@ -249,6 +251,11 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
 
     const finalResults = Array.from(finalResultsMap.values());
     console.log('[SmartSearchService] Returning', finalResults.length, 'final results');
+
+    // If no results and we have an error, we might want to propagate it
+    // But for now, we follow the interface and return what we found.
+    // The UI can check for sentinel events or we could enhance the return type.
+
     return finalResults;
 }
 
