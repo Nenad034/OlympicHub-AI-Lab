@@ -68,7 +68,9 @@ function getTargetUrl(url: string): string {
             if (urlLower.includes('b2b.solvex.bg')) {
                 return `/api/solvex-b2b${urlObj.pathname}${urlObj.search}`;
             }
-            return `/api/solvex${urlObj.pathname}${urlObj.search}`;
+            // Ensure we include the leading slash in the captured path for the proxy
+            const cleanPath = urlObj.pathname.startsWith('/') ? urlObj.pathname.slice(1) : urlObj.pathname;
+            return `/api/solvex/${cleanPath}${urlObj.search}`;
         }
     }
     return url;

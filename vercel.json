@@ -15,7 +15,7 @@
     },
     {
       "source": "/api/solvex/(.*)",
-      "destination": "https://iservice.solvex.bg/$1"
+      "destination": "/api/solvex?path=$1"
     },
     {
       "source": "/api/ors/(.*)",
