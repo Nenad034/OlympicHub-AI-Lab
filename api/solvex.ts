@@ -20,8 +20,13 @@ export default async function handler(req: any, res: any) {
     // Clean leading/trailing slashes and make sure it has the right filename
     actualPath = actualPath.replace(/^\/+|\/+$/g, '');
 
+    // Get the base URL from environment variables, defaulting to production
+    const baseUrl = process.env.VITE_SOLVEX_API_URL || 'https://iservice.solvex.bg/IntegrationService.asmx';
+    const urlObj = new URL(baseUrl);
+    const targetBase = `${urlObj.protocol}//${urlObj.host}`;
+
     // Safety check: The Solvex production API usually lives at the root or IntegrationService.asmx
-    const targetUrl = `https://iservice.solvex.bg/${actualPath}`;
+    const targetUrl = `${targetBase}/${actualPath}`;
 
     console.log(`[Proxy] Incoming URL: ${req.url}`);
     console.log(`[Proxy] Actual Path: ${actualPath}`);
