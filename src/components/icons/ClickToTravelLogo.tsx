@@ -7,7 +7,7 @@ interface LogoProps {
     showText?: boolean;
 }
 
-export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className = "" }) => {
+export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className = "", showText = false }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [imgLoaded, setImgLoaded] = useState(false);
     const { theme } = useThemeStore();
@@ -64,33 +64,55 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className 
         <div
             className={`click-to-travel-logo ${className}`}
             style={{
-                height,
+                height: showText ? 'auto' : height,
                 display: 'inline-flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 userSelect: 'none',
                 overflow: 'visible',
-                position: 'relative'
+                position: 'relative',
+                gap: '8px'
             }}
         >
-            <canvas
-                ref={canvasRef}
-                style={{
-                    height: '100%',
-                    width: 'auto',
-                    display: imgLoaded ? 'block' : 'none',
-                    objectFit: 'contain',
-                    position: 'relative',
-                    zIndex: 1,
-                    // Multi-layer shadow for 3D depth - much lighter in light theme
-                    filter: isLight ? 'none' : `
-                        drop-shadow(0 1px 1px rgba(0,0,0,0.2)) 
-                        drop-shadow(0 4px 8px rgba(33, 136, 255, 0.15))
-                        drop-shadow(0 8px 24px rgba(0,0,0,0.1))
-                    `,
-                    imageRendering: 'auto'
-                }}
-            />
-            {!imgLoaded && <div style={{ height, width: typeof height === 'number' ? height * 3 : '140px' }} />}
+            <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <canvas
+                    ref={canvasRef}
+                    style={{
+                        height: '100%',
+                        width: 'auto',
+                        display: imgLoaded ? 'block' : 'none',
+                        objectFit: 'contain',
+                        position: 'relative',
+                        zIndex: 1,
+                        filter: isLight ? 'none' : `
+                            drop-shadow(0 1px 1px rgba(0,0,0,0.2)) 
+                            drop-shadow(0 4px 8px rgba(33, 136, 255, 0.15))
+                            drop-shadow(0 8px 24px rgba(0,0,0,0.1))
+                        `,
+                        imageRendering: 'auto'
+                    }}
+                />
+                {!imgLoaded && <div style={{ height, width: typeof height === 'number' ? height * 3 : '140px' }} />}
+            </div>
+
+            {showText && (
+                <div
+                    className="logo-slogan"
+                    style={{
+                        fontSize: typeof height === 'number' ? height * 0.16 : '13px',
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        textAlign: 'center',
+                        whiteSpace: 'nowrap',
+                        color: '#1e3a8a',
+                        textShadow: isLight ? 'none' : '0 1px 2px rgba(255,255,255,0.2)',
+                        lineHeight: 1,
+                        marginTop: '4px'
+                    }}
+                >
+                    Klikni. Rezerviši. Putuj...
+                </div>
+            )}
         </div>
     );
 };

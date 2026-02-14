@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Send,
     Loader2,
@@ -19,17 +20,18 @@ import {
     FileText,
     ChevronLeft,
     Check,
-    VolumeX
+    VolumeX,
+    Star
 } from 'lucide-react';
 import { GeometricBrain } from './icons/GeometricBrain';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { useConfig } from '../context/ConfigContext';
 import { quotaNotificationService } from '../services/quotaNotificationService';
 import { multiKeyAI } from '../services/multiKeyAI';
 import { ActivityLogger } from '../services/activityLogger';
 import { useAppStore } from '../stores';
 
-type ChatPersona = 'specialist' | 'general' | 'group' | 'contact';
+type ChatPersona = 'specialist' | 'general' | 'group' | 'contact' | 'concierge' | 'analyst';
 
 interface Message {
     role: 'user' | 'ai' | 'player';
@@ -71,13 +73,19 @@ declare global {
 }
 
 export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context = "Dashboard", analysisData = [] }: Props) {
+    const navigate = useNavigate();
+    const dragControls = useDragControls();
+    const { isChatOpen, setChatOpen, chatContext, setChatContext } = useAppStore();
     const { config } = useConfig();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isThinking, setIsThinking] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [activePersona, setActivePersona] = useState<ChatPersona>('specialist');
-    const [dimensions, setDimensions] = useState({ width: 420, height: 600 });
+    const [dimensions, setDimensions] = useState({
+        width: Math.min(800, Math.max(420, window.innerWidth * 0.5)),
+        height: Math.min(800, Math.max(600, window.innerHeight * 0.7))
+    });
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
     const [showUserList, setShowUserList] = useState(false);
     const [attachments, setAttachments] = useState<{ name: string; type: 'image' | 'file'; url: string } | null>(null);
@@ -100,6 +108,8 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
         if (activePersona === 'contact') return chatContext.contactName || 'Client Chat';
         if (activePersona === 'specialist') return context.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + ' Specialist';
         if (activePersona === 'general') return activeLang === 'sr' ? 'Generalni AI' : 'General AI';
+        if (activePersona === 'concierge') return activeLang === 'sr' ? 'Smart Concierge' : 'Smart Concierge';
+        if (activePersona === 'analyst') return activeLang === 'sr' ? 'Revenue Analyst' : 'Revenue Analyst';
         return activeLang === 'sr' ? 'Team Live Chat' : 'Team Live Chat';
     };
 
@@ -128,7 +138,9 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                 specialist: lang === 'sr' ? `Ja sam vaš ekspert za ${context}. Kako vam mogu pomoći oko ovog modula?` : `I am your expert for ${context}. How can I help you with this module?`,
                 general: lang === 'sr' ? `Ja sam Generalni AI. Imam pristup znanju celog sveta. Pitajte bilo šta.` : `I am General AI. I have access to world knowledge. Ask anything.`,
                 group: lang === 'sr' ? `Dobrodošli u Live Chat grupu. Svi članovi tima i partneri su ovde.` : `Welcome to Live Chat group. All team members and partners are here.`,
-                contact: `Hello! I am ${chatContext.contactName}'s AI representative. How can I assist you today?`
+                contact: `Hello! I am ${chatContext.contactName}'s AI representative. How can I assist you today?`,
+                concierge: lang === 'sr' ? 'Ja sam vaš Smart Concierge. Kako vam mogu pomoći sa rezervacijom?' : 'I am your Smart Concierge. How can I help you with your booking?',
+                analyst: lang === 'sr' ? 'Ja sam vaš Revenue Analitičar. Pripremam jutarnji izveštaj o prihodima.' : 'I am your Revenue Analyst. Preparing the morning revenue report.'
             };
             const welcome = welcomeMsg[activePersona];
             setMessages([{ role: 'ai', text: welcome }]);
@@ -136,7 +148,6 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
         }
     }, [isOpen, lang, context, messages.length, speak, activePersona]);
 
-    const { isChatOpen, setChatOpen, chatContext, setChatContext } = useAppStore();
     const [activeLang, setActiveLang] = useState<'sr' | 'en' | 'ru' | 'it' | 'de' | 'fr' | 'es'>(lang);
 
     // Sync activeLang with chatContext when it changes
@@ -227,20 +238,41 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
             if (activePersona === 'general') {
                 return `Ti si Generalni AI asistent. Pomažeš korisniku oko opštih pitanja o aplikaciji ClickToTravel Hub, ali i o bilo kojoj temi sa interneta.`;
             }
+            if (activePersona === 'concierge') {
+                return `Ti si "ClickToTravel Smart Concierge", napredni AI agent prodaje integrisan u ClickToTravel ERP.
+                CILJEVI: 1. Konverzija upita u rezervacije. 2. Favorizuj hotele sa "Green" statusom. 3. Budi koncizan (max 3 rečenice).
+                PRAVILA: Ako je hotel zauzet, koristi get_smart_offer za alternative. Koristi VCC kao argument sigurnosti.
+                AKO DOBRIŠ PODATKE IZ get_smart_offer, tvoj odgovor MORA sadržati vizuelni blok u formatu:
+                [CARD: {hotel_name} | Price: {price_total} | Risk: {risk_score}] (npr. [CARD: Hotel Mediterranean | 450€ | Green Status])
+                STROGO ZABRANJENO: Ne koristi fraze poput "Kao AI model..." ili "Naravno, rado ću vam pomoći". Pređi odmah na rešenje.`;
+            }
+            if (activePersona === 'analyst') {
+                return `Ti si viši analitičar prihoda (Revenue Analyst) za Olympic Travel. 
+                Tvoj zadatak je da analiziraš logove i pružiš strateški izveštaj suvlasniku.
+                STRUKTURA: 1. Semafor Status. 2. AI Sales Performance. 3. Revenue Loss Prevention. 4. Strateški savet.`;
+            }
             return `Ti si ChatBot u grupnom razgovoru. Pomažeš u moderaciji i odgovaraš na pitanja tima i partnera.`;
         };
 
-        const activeKeys = multiKeyAI.getKeysStatus().filter(k => k.enabled);
-        if (activeKeys.length === 0) {
-            setMessages(prev => [...prev, {
-                role: 'ai',
-                text: lang === 'sr'
-                    ? "Greška: Nijedan AI ključ nije dostupan (ni u .env ni u podešavanjima). Molimo unesite barem jedan API ključ u Podešavanjima."
-                    : "Error: No AI keys are available (neither in .env nor settings). Please enter at least one API key in Settings.",
-                isError: true
-            }]);
-            setIsThinking(false);
-            return;
+        const activeKeys = multiKeyAI.getKeysStatus();
+        const hasEnabledKeys = activeKeys.some(k => k.enabled) || import.meta.env.VITE_AI_DEV_MODE === 'true';
+
+        if (!hasEnabledKeys) {
+            // Attempt a reset as last resort
+            multiKeyAI.resetAllKeys();
+            const afterReset = multiKeyAI.getKeysStatus().some(k => k.enabled);
+
+            if (!afterReset) {
+                setMessages(prev => [...prev, {
+                    role: 'ai',
+                    text: lang === 'sr'
+                        ? "Greška: Nijedan AI ključ nije dostupan. Molimo unesite API ključ u Podešavanjima ili proverite konekciju sa proxy servisom."
+                        : "Error: No AI keys available. Please enter an API key in Settings or check proxy service connection.",
+                    isError: true
+                }]);
+                setIsThinking(false);
+                return;
+            }
         }
 
         for (const modelName of modelsToTry) {
@@ -251,11 +283,16 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
 
                 const prompt = `System Instructions: ${getSystemPrompt()} \nLanguage: ${activeLang} \nUser: ${textToSend} `;
 
+                // Import concierge tools if active
+                const { concierge_tools } = await import('../services/conciergeTools');
+
                 // Use multiKeyAI service with caching and rate limiting
                 const response = await multiKeyAI.generateContent(prompt, {
-                    useCache: true,
+                    useCache: activePersona !== 'concierge', // Disable cache for tool-using persona to ensure fresh results
                     cacheCategory: 'chat',
-                    model: modelName
+                    model: modelName,
+                    tools: activePersona === 'concierge' ? concierge_tools : undefined,
+                    history: messages.map(m => ({ role: m.role, text: m.text }))
                 });
 
                 successfulResponse = response;
@@ -307,8 +344,8 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
         const onPointerMove = (moveEvent: PointerEvent) => {
             if (!isResizing.current) return;
             setDimensions(prev => ({
-                width: Math.max(300, prev.width - moveEvent.movementX),
-                height: Math.max(400, prev.height - moveEvent.movementY)
+                width: Math.max(350, prev.width + moveEvent.movementX),
+                height: Math.max(400, prev.height + moveEvent.movementY)
             }));
         };
 
@@ -361,21 +398,59 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
             {isOpen && (
                 <motion.div
                     key="chat-window"
-                    drag dragMomentum={false}
-                    initial={{ opacity: 0, scale: 0.9, y: 100 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: 100 }}
+                    drag
+                    dragMomentum={false}
+                    dragListener={false}
+                    dragControls={dragControls}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                     style={{
-                        position: 'fixed', bottom: '30px', left: '30px',
-                        width: `${dimensions.width} px`, height: `${dimensions.height} px`,
-                        background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '40px',
-                        boxShadow: '0 30px 60px rgba(0,0,0,0.4)', display: 'flex', flexDirection: 'column',
-                        zIndex: 99999, backdropFilter: 'blur(30px)', touchAction: 'none', overflow: 'hidden'
+                        position: 'fixed',
+                        top: '15vh',
+                        left: '25vw',
+                        width: `${dimensions.width}px`,
+                        height: `${dimensions.height}px`,
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '40px',
+                        boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        zIndex: 99999,
+                        backdropFilter: 'blur(30px)',
+                        touchAction: 'none',
+                        overflow: 'hidden'
                     }}
                 >
-                    <div onPointerDown={startResizing} style={{ position: 'absolute', top: 0, left: 0, width: '40px', height: '40px', cursor: 'nw-resize', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5, background: 'rgba(255,255,255,0.1)', borderRadius: '40px 0 40px 0' }}><Maximize2 size={16} style={{ transform: 'rotate(-45deg)', color: '#fff' }} /></div>
+                    {/* Resize Handle - Bottom Right */}
+                    <div
+                        onPointerDown={startResizing}
+                        style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            right: 0,
+                            width: '30px',
+                            height: '30px',
+                            cursor: 'se-resize',
+                            zIndex: 100,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'rgba(255,255,255,0.05)',
+                            borderRadius: '20px 0 0 0',
+                            borderLeft: '1px solid rgba(255,255,255,0.1)',
+                            borderTop: '1px solid rgba(255,255,255,0.1)'
+                        }}
+                    >
+                        <Maximize2 size={14} style={{ transform: 'rotate(0deg)', color: 'var(--accent)', opacity: 0.7 }} />
+                    </div>
 
-                    <div style={{ padding: '20px', background: 'var(--gradient-blue)', color: '#fff', cursor: 'move', userSelect: 'none', position: 'relative' }}>
+                    <div
+                        onPointerDown={(e) => dragControls.start(e)}
+                        style={{ padding: '20px', background: 'var(--gradient-blue)', color: '#fff', cursor: 'grab', userSelect: 'none', position: 'relative' }}
+                    >
                         <div style={{ position: 'absolute', top: '8px', left: '50%', transform: 'translateX(-50%)', opacity: 0.5 }}><GripHorizontal size={16} /></div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -399,6 +474,8 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                         <div onPointerDown={e => e.stopPropagation()} style={{ display: 'flex', background: 'rgba(0,0,0,0.15)', padding: '4px', borderRadius: '18px', marginTop: '16px' }}>
                             <button onClick={() => { setActivePersona('specialist'); setSelectedUserIds([]); setMessages([]); setChatContext({ type: 'general' }); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'specialist' ? '#fff' : 'transparent', color: activePersona === 'specialist' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Specialist</button>
                             <button onClick={() => { setActivePersona('general'); setSelectedUserIds([]); setMessages([]); setChatContext({ type: 'general' }); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'general' ? '#fff' : 'transparent', color: activePersona === 'general' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>General</button>
+                            <button onClick={() => { setActivePersona('concierge'); setSelectedUserIds([]); setMessages([]); setChatContext({ type: 'general' }); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'concierge' ? '#fff' : 'transparent', color: activePersona === 'concierge' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Concierge</button>
+                            <button onClick={() => { setActivePersona('analyst'); setSelectedUserIds([]); setMessages([]); setChatContext({ type: 'general' }); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'analyst' ? '#fff' : 'transparent', color: activePersona === 'analyst' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Analyst</button>
                             <button onClick={() => { setActivePersona('group'); setSelectedUserIds([]); setMessages([]); setShowUserList(true); setChatContext({ type: 'general' }); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'group' ? '#fff' : 'transparent', color: activePersona === 'group' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Live Chat</button>
                         </div>
                     </div>
@@ -463,7 +540,141 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                                     <div style={{ maxWidth: '85%', position: 'relative' }}>
                                         {m.senderName && <span style={{ fontSize: '10px', fontWeight: 800, marginBottom: '4px', display: 'block', color: 'var(--accent)' }}>{m.senderName}</span>}
                                         <div style={{ padding: '12px 18px', borderRadius: '24px', fontSize: '13px', background: m.role === 'user' ? 'var(--accent)' : 'var(--glass-bg)', color: m.role === 'user' ? '#fff' : 'var(--text-primary)', border: '1px solid var(--border)', lineHeight: 1.5 }}>
-                                            {m.text}
+                                            {m.text.split(/(\[CARD:.*?\])/s).map((part, idx) => {
+                                                if (part.startsWith('[CARD:')) {
+                                                    try {
+                                                        const jsonStr = part.replace('[CARD:', '').replace(']', '').trim();
+                                                        const cardData = JSON.parse(jsonStr);
+
+                                                        const {
+                                                            hotel_name,
+                                                            image_url,
+                                                            rating,
+                                                            price_total,
+                                                            booking_link = '#',
+                                                            risk_score = 'Green'
+                                                        } = cardData;
+
+                                                        const riskLower = risk_score.toLowerCase();
+                                                        let riskColor = '#22c55e';
+                                                        let extraMsg = 'Ovaj smeštaj ispunjava sve kriterijume sigurnosti Olympic Travel-a.';
+
+                                                        if (riskLower.includes('yellow')) {
+                                                            riskColor = '#eab308';
+                                                            extraMsg = 'Velika potražnja: Savetujemo rezervaciju u narednih 30 min.';
+                                                        } else if (riskLower.includes('red')) {
+                                                            riskColor = '#ef4444';
+                                                            extraMsg = 'Trenutno otežana potvrda. Pogledajte alternative.';
+                                                        }
+
+                                                        return (
+                                                            <div key={idx} style={{
+                                                                background: 'var(--bg-card)',
+                                                                borderRadius: '24px',
+                                                                overflow: 'hidden',
+                                                                marginTop: '15px',
+                                                                border: '1px solid var(--border)',
+                                                                boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                                                                maxWidth: '350px'
+                                                            }}>
+                                                                {image_url && (
+                                                                    <div style={{ position: 'relative', height: '160px' }}>
+                                                                        <img src={image_url} alt={hotel_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                                        <div style={{
+                                                                            position: 'absolute', top: '12px', right: '12px',
+                                                                            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)',
+                                                                            padding: '4px 10px', borderRadius: '10px', color: '#fff',
+                                                                            fontSize: '11px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px'
+                                                                        }}>
+                                                                            <Star size={10} color="#facc15" fill="#facc15" /> {rating}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                <div style={{ padding: '18px' }}>
+                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '10px' }}>
+                                                                        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>{hotel_name}</h3>
+                                                                        <span style={{
+                                                                            fontSize: '10px', fontWeight: 800, color: riskColor,
+                                                                            background: `${riskColor}15`, padding: '4px 8px', borderRadius: '8px', border: `1px solid ${riskColor}30`,
+                                                                            whiteSpace: 'nowrap'
+                                                                        }}>
+                                                                            {risk_score} STATUS
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--accent)', marginBottom: '8px' }}>{price_total}</div>
+                                                                    <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', margin: '0 0 15px 0', lineHeight: 1.4 }}>{extraMsg}</p>
+
+                                                                    <a
+                                                                        href={booking_link}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        style={{
+                                                                            display: 'block',
+                                                                            width: '100%',
+                                                                            padding: '12px',
+                                                                            borderRadius: '14px',
+                                                                            background: 'var(--gradient-blue)',
+                                                                            color: '#fff',
+                                                                            textAlign: 'center',
+                                                                            fontWeight: 800,
+                                                                            fontSize: '13px',
+                                                                            textDecoration: 'none',
+                                                                            boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)'
+                                                                        }}
+                                                                    >
+                                                                        Rezerviši sa VCC zaštitom
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    } catch (err) {
+                                                        console.error("Card parsing error:", err);
+                                                        // Fallback to legacy pipe format if JSON fails
+                                                        const match = part.match(/\[CARD:\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\]/);
+                                                        if (match) {
+                                                            const [, name, price, risk] = match;
+                                                            return <div key={idx} style={{ padding: '10px', background: 'var(--bg-card)', borderRadius: '12px', marginTop: '10px' }}>
+                                                                <strong>{name}</strong> - {price} ({risk})
+                                                            </div>;
+                                                        }
+                                                        return <span key={idx}>{part}</span>;
+                                                    }
+                                                }
+                                                if (part.startsWith('[OPEN_SMART_SEARCH]')) {
+                                                    return (
+                                                        <div key={idx} style={{ marginTop: '15px' }}>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setChatOpen(false);
+                                                                    navigate('/smart-search');
+                                                                }}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '14px',
+                                                                    borderRadius: '16px',
+                                                                    background: 'rgba(255, 255, 255, 0.05)',
+                                                                    border: '1px dashed var(--accent)',
+                                                                    color: 'var(--accent)',
+                                                                    fontWeight: 800,
+                                                                    fontSize: '13px',
+                                                                    cursor: 'pointer',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    gap: '10px',
+                                                                    transition: '0.3s'
+                                                                }}
+                                                            >
+                                                                <Globe size={18} />
+                                                                POGREDAJ SVIH 50+ PONUDA U SMART SEARCH-U
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                }
+                                                return <span key={idx}>{part}</span>;
+                                            })}
                                             {m.attachment && (
                                                 <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
                                                     {m.attachment.type === 'image' ? (

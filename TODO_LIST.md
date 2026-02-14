@@ -871,3 +871,35 @@ Booking form system je implementiran ali **Solvex booking metoda nije dokumentov
 - **Status:** BROKEN (2026-02-03)
 - **Issue:** API verification button in Reservation Architect fails.
 - **Next Steps:** Debug SOAP GetReservation payload. Verify if 'ID' or 'ExternalID' is correct parameter.
+
+---
+
+##  **FAZA 1.7: AI LAB - API KEY SETUP** (Prioritet: HIGH)
+
+### ** ČEKA DODAVANJE GEMINI KLJUČA**
+
+**Status:**  PENDING (Trenutno koristi MOCK MODE)  
+**Dodato:** 2026-02-14
+
+####  **Cilj:**
+Aktivirati punu AI snagu (Smart Concierge & Intelligence Service) dodavanjem validnog Google Gemini API ključa.
+
+####  **Specifikacija zadatka:**
+1. **Google AI Studio**
+   - [ ] Otvori [Google AI Studio](https://aistudio.google.com/app/apikey)
+   - [ ] Kreiraj "API Key in new project"
+   - [ ] Kopiraj API ključ
+
+2. **Environment Configuration**
+   - [ ] Otvori .env fajl
+   - [ ] Postavi VITE_GEMINI_API_KEY=TVOJ_KLJUČ_OVDE
+   - [ ] Postavi VITE_AI_DEV_MODE=true
+   - [ ] Restartuj 
+pm run dev
+
+3. **Verification**
+   - [ ] Otvori Chat i pitaj "Daj mi ponudu za Krf"
+   - [ ] Verifikuj da AI vraća realne podatke i aktivira alate (tools)
+
+**Vreme (Procena):** 5-10 minuta  
+**Prioritet:**  HIGH

@@ -38,18 +38,19 @@ const Sidebar: React.FC = () => {
                 <div className="sidebar-logo-container">
                     <ClickToTravelLogo height={isSidebarCollapsed ? 32 : 72} showText={!isSidebarCollapsed} />
                 </div>
-                <button className="collapse-toggle" onClick={toggleSidebar}>
-                    {isSidebarCollapsed ? (
-                        <ChevronRight size={16} />
-                    ) : (
-                        <div style={{ transform: 'rotate(180deg)' }}>
-                            <ChevronRight size={16} />
-                        </div>
-                    )}
-                </button>
             </div>
 
-            <nav className="nav-section">
+            <button className="collapse-toggle" onClick={toggleSidebar}>
+                {isSidebarCollapsed ? (
+                    <ChevronRight size={16} />
+                ) : (
+                    <div style={{ transform: 'rotate(180deg)' }}>
+                        <ChevronRight size={16} />
+                    </div>
+                )}
+            </button>
+
+            <nav className="nav-section" style={{ marginTop: '32px' }}>
                 {/* Main Section - Only for Staff */}
                 {userLevel >= 6 && !impersonatedSubagent && (
                     <div className="nav-group">
@@ -212,7 +213,7 @@ const Sidebar: React.FC = () => {
                     </div>
                 )}
             </nav>
-        </aside>
+        </aside >
     );
 };
 

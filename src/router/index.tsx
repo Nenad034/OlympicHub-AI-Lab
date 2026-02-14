@@ -3,6 +3,9 @@ import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
 
 // Layout Components
 import { Sidebar, TopBar, HorizontalNav } from '../components/layout';
+import { motion, AnimatePresence } from 'framer-motion';
+import { GeometricBrain } from '../components/icons/GeometricBrain';
+import GeneralAIChat from '../components/GeneralAIChat';
 
 // Page Components - Lazy loaded for performance
 const Dashboard = React.lazy(() => import('../pages/Dashboard'));
@@ -75,7 +78,7 @@ const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
 
 
 // Stores
-import { useThemeStore, useAuthStore } from '../stores';
+import { useThemeStore, useAuthStore, useAppStore } from '../stores';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 // Loading fallback
@@ -177,443 +180,457 @@ const OrchestratorPage: React.FC = () => {
     return <MasterOrchestrator onBack={() => navigate('/')} userLevel={userLevel} />;
 };
 
+// Global UI Wrapper for persistent elements that need Router context (like useNavigate)
+const GlobalUIWrapper: React.FC = () => {
+    const { isChatOpen, setChatOpen } = useAppStore();
+    const { lang } = useThemeStore();
+
+    return (
+        <>
+            <Outlet />
+
+            {/* Persistent AI Assistant */}
+            <AnimatePresence>
+                {!isChatOpen && (
+                    <motion.button
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        whileHover={{ scale: 1.1, translateY: -5 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => setChatOpen(true)}
+                        style={{
+                            position: 'fixed',
+                            bottom: '32px',
+                            right: '32px',
+                            width: '64px',
+                            height: '64px',
+                            borderRadius: '22px',
+                            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            boxShadow: '0 12px 36px rgba(37, 99, 235, 0.5)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            zIndex: 9999,
+                            backdropFilter: 'blur(10px)'
+                        }}
+                    >
+                        <GeometricBrain size={34} color="#FFD700" />
+                    </motion.button>
+                )}
+            </AnimatePresence>
+
+            <GeneralAIChat
+                isOpen={isChatOpen}
+                onOpen={() => setChatOpen(true)}
+                onClose={() => setChatOpen(false)}
+                lang={lang}
+                userLevel={6}
+                context="Dashboard"
+                analysisData={[]}
+            />
+        </>
+    );
+};
+
 // Create router configuration with nested routes
 export const router = createBrowserRouter([
     {
-        path: '/login',
-        element: (
-            <React.Suspense fallback={<LoadingFallback />}>
-                <Login />
-            </React.Suspense>
-        ),
-    },
-    {
-        path: '/b2b-portal',
-        element: (
-            <AuthGuard>
-                <React.Suspense fallback={<LoadingFallback />}>
-                    <B2BPortal />
-                </React.Suspense>
-            </AuthGuard>
-        ),
-        errorElement: (
-            <div style={{
-                padding: '40px',
-                textAlign: 'center',
-                background: '#1a1a2e',
-                color: 'white',
-                height: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: 'sans-serif'
-            }}>
-                <h1 style={{ fontSize: '2rem', margin: '0 0 20px 0', color: '#ff6b6b' }}>Greška u B2B Portalu</h1>
-                <p style={{ fontSize: '1.2rem', opacity: 0.8, marginBottom: '30px' }}>
-                    Došlo je do neočekivane greške. Molimo osvežite stranicu ili pokušajte ponovo kasnije.
-                </p>
-                <div style={{ display: 'flex', gap: '15px' }}>
-                    <button
-                        onClick={() => window.location.reload()}
-                        style={{
-                            padding: '12px 24px',
-                            background: '#3182ce',
-                            border: 'none',
-                            borderRadius: '8px',
-                            color: 'white',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            fontSize: '1rem'
-                        }}
-                    >
-                        Osveži stranicu
-                    </button>
-                    <button
-                        onClick={() => window.location.href = '/subagent-admin'}
-                        style={{
-                            padding: '12px 24px',
-                            background: 'rgba(255,255,255,0.1)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            borderRadius: '8px',
-                            color: 'white',
-                            cursor: 'pointer',
-                            fontSize: '1rem'
-                        }}
-                    >
-                        Nazad na Admin
-                    </button>
-                </div>
-            </div>
-        )
-    },
-    {
-        path: '/reservation-architect',
-        element: (
-            <AuthGuard>
-                <React.Suspense fallback={<LoadingFallback />}>
-                    <ReservationArchitect />
-                </React.Suspense>
-            </AuthGuard>
-        ),
-        errorElement: (
-            <div style={{ padding: '20px', color: 'white', background: '#1a1a2e', height: '100vh' }}>
-                <h1>Greška u učitavanju forme za rezervaciju</h1>
-                <p>Molimo osvežite stranicu ili kontaktirajte podršku.</p>
-                <button onClick={() => window.location.reload()}>Osveži</button>
-            </div>
-        )
-    },
-    {
-        path: '/',
-        element: (
-            <AuthGuard>
-                <MainLayout />
-            </AuthGuard>
-        ),
+        element: <GlobalUIWrapper />,
         children: [
             {
-                path: 'price-list-architect',
-                element: <PriceListArchitect />,
-            },
-            // Dashboard
-            {
-                index: true,
-                element: <Dashboard />,
-            },
-            {
-                path: 'mars-analysis',
-                element: <MarsAnalysis onBack={() => window.history.back()} lang="sr" userLevel={6} onOpenChat={() => { }} onDataUpdate={() => { }} />,
-            },
-            {
-                path: 'production',
-                children: [
-                    {
-                        index: true,
-                        element: <ProductionHub onBack={() => window.history.back()} />,
-                    },
-                    {
-                        path: 'hotels',
-                        element: <HotelsList />,
-                    },
-                    {
-                        path: 'hotels/new',
-                        element: <HotelNew />,
-                    },
-                    {
-                        path: 'hotels/:hotelSlug',
-                        element: <HotelDetail />,
-                    },
-                    {
-                        path: 'hotels/:hotelSlug/edit',
-                        element: <HotelEdit />,
-                    },
-                    {
-                        path: 'hotels/:hotelSlug/rooms',
-                        element: <HotelRooms />,
-                    },
-                    {
-                        path: 'hotels/:hotelSlug/prices',
-                        element: <HotelPrices />,
-                    },
-                ],
-            },
-            {
-                path: 'suppliers',
-                children: [
-                    {
-                        index: true,
-                        element: <SuppliersModule onBack={() => window.history.back()} />,
-                    },
-                    {
-                        path: ':supplierId',
-                        element: <SupplierDetail />,
-                    },
-                ],
-            },
-            {
-                path: 'customers',
-                children: [
-                    {
-                        index: true,
-                        element: <CustomersModule onBack={() => window.history.back()} />,
-                    },
-                    {
-                        path: ':customerId',
-                        element: <CustomerDetail />,
-                    },
-                ],
-            },
-            {
-                path: 'settings',
-                element: <SettingsModule onBack={() => window.history.back()} lang="sr" userLevel={6} setUserLevel={() => { }} />,
-            },
-            {
-                path: 'b2b-settings',
-                element: <B2BSettings />,
-            },
-            {
-                path: 'katana',
-                element: <Katana onBack={() => window.history.back()} />,
-            },
-            {
-                path: 'deep-archive',
+                path: '/login',
                 element: (
-                    <ProtectedRoute minLevel={6}>
-                        <DeepArchive onBack={() => window.history.back()} lang="sr" />
-                    </ProtectedRoute>
+                    <React.Suspense fallback={<LoadingFallback />}>
+                        <Login />
+                    </React.Suspense>
                 ),
             },
             {
-                path: 'fortress',
-                element: (
-                    <ProtectedRoute minLevel={6}>
-                        <Fortress onBack={() => window.history.back()} />
-                    </ProtectedRoute>
-                ),
-            },
-            {
-                path: 'pricing-intelligence',
-                element: <PricingIntelligence />,
-            },
-            {
-                path: 'shifts-generator',
-                element: <ShiftsGeneratorPage />,
-            },
-            {
-                path: 'yield-management',
-                element: (
-                    <ProtectedRoute minLevel={3}>
-                        <YieldDashboard />
-                    </ProtectedRoute>
-                ),
-            },
-            /* {
-                path: 'total-trip',
-                element: <TotalTripSearch />,
-            }, */
-            {
-                path: 'mail',
-                element: <ClickToTravelMail />,
-            },
-            {
-                path: 'notifications',
-                element: <NotificationCenter />,
-            },
-            {
-                path: 'orchestrator',
-                element: (
-                    <ProtectedRoute minLevel={6}>
-                        <OrchestratorPage />
-                    </ProtectedRoute>
-                ),
-            },
-            {
-                path: 'tct',
-                element: <TCTDashboard />,
-            },
-            {
-                path: 'watchdog',
-                element: <AIWatchdogDashboard />,
-            },
-            {
-                path: 'hub',
-                element: <GlobalHubSearch />,
-            },
-            {
-                path: 'b2b-search',
-                element: <B2BSearch />,
-            },
-            {
-                path: 'smart-search',
-                element: <SmartSearch />,
-            },
-            {
-                path: 'my-reservations',
-                element: <ReservationsDashboard />,
-            },
-            {
-                path: 'flights',
-                element: <FlightSearch />,
-            },
-            {
-                path: 'booking',
-                element: <FlightBooking />,
-            },
-            {
-                path: 'packages',
-                element: <PackageBuilder />,
-            },
-            {
-                path: 'packages/search',
-                element: <PackageSearch />,
-            },
-            {
-                path: 'packages/created',
-                element: <PackageCreated />,
-            },
-            {
-                path: 'opengreece-test',
-                element: <OpenGreeceTest />,
-            },
-            {
-                path: 'opengreece-search',
-                element: <OpenGreeceSearch />,
-            },
-            {
-                path: 'opengreece-hotel/:hotelCode',
-                element: <OpenGreeceDetail />,
-            },
-            {
-                path: 'solvex-test',
-                element: <SolvexTest />,
-            },
-            {
-                path: 'ors-test',
-                element: <OrsTest />,
-            },
-            {
-                path: 'mars-test',
-                element: <MarsTest />,
-            },
-            {
-                path: 'solvex-hotel/:id',
-                element: <SolvexHotelDetail />,
-            },
-            {
-                path: 'booking/:source/:hotelCode',
-                element: <BookingForm />,
-            },
-            {
-                path: 'soft-zone',
-                element: <SoftZoneDashboard />,
-            },
-            {
-                path: 'contact-architect',
+                path: '/b2b-portal',
                 element: (
                     <AuthGuard>
                         <React.Suspense fallback={<LoadingFallback />}>
-                            <ContactArchitect />
+                            <B2BPortal />
                         </React.Suspense>
                     </AuthGuard>
                 ),
+                errorElement: (
+                    <div style={{
+                        padding: '40px',
+                        textAlign: 'center',
+                        background: '#1a1a2e',
+                        color: 'white',
+                        height: '100vh',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: 'sans-serif'
+                    }}>
+                        <h1 style={{ fontSize: '2rem', margin: '0 0 20px 0', color: '#ff6b6b' }}>Greška u B2B Portalu</h1>
+                        <p style={{ fontSize: '1.2rem', opacity: 0.8, marginBottom: '30px' }}>
+                            Došlo je do neočekivane greške. Molimo osvežite stranicu ili pokušajte ponovo kasnije.
+                        </p>
+                        <div style={{ display: 'flex', gap: '15px' }}>
+                            <button
+                                onClick={() => window.location.reload()}
+                                style={{
+                                    padding: '12px 24px',
+                                    background: '#3182ce',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    fontSize: '1rem'
+                                }}
+                            >
+                                Osveži stranicu
+                            </button>
+                            <button
+                                onClick={() => window.location.href = '/subagent-admin'}
+                                style={{
+                                    padding: '12px 24px',
+                                    background: 'rgba(255,255,255,0.1)',
+                                    border: '1px solid rgba(255,255,255,0.2)',
+                                    borderRadius: '8px',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    fontSize: '1rem'
+                                }}
+                            >
+                                Nazad na Admin
+                            </button>
+                        </div>
+                    </div>
+                )
             },
             {
-                path: 'reservations',
-                element: <ReservationsDashboard />,
-            },
-            {
-                path: 'destination-rep',
+                path: '/reservation-architect',
                 element: (
-                    <ProtectedRoute minLevel={4}>
-                        <DestinationRep />
-                    </ProtectedRoute>
+                    <AuthGuard>
+                        <React.Suspense fallback={<LoadingFallback />}>
+                            <ReservationArchitect />
+                        </React.Suspense>
+                    </AuthGuard>
                 ),
+                errorElement: (
+                    <div style={{ padding: '20px', color: 'white', background: '#1a1a2e', height: '100vh' }}>
+                        <h1>Greška u učitavanju forme za rezervaciju</h1>
+                        <p>Molimo osvežite stranicu ili kontaktirajte podršku.</p>
+                        <button onClick={() => window.location.reload()}>Osveži</button>
+                    </div>
+                )
             },
             {
-                path: 'admin/import',
-                element: <AdminHotelImport />,
-            },
-            {
-                path: 'api-connections',
-                element: <APIConnectionsHub />,
-            },
-            {
-                path: 'amadeus-test',
-                element: <AmadeusTest />,
-            },
-            {
-                path: 'tct-test',
-                element: <TCTTest />,
-            },
-            {
-                path: 'filos-test',
-                element: <FilosTest />,
-            },
-            {
-                path: 'kyte-test',
-                element: <KyteTest />,
-            },
-            /* {
-                path: 'master-search',
-                element: <MasterSearch />,
-            }, */
-            {
-                path: 'subagent-admin',
+                path: '/',
                 element: (
-                    <ProtectedRoute minLevel={6}>
-                        <SubagentAdmin />
-                    </ProtectedRoute>
+                    <AuthGuard>
+                        <MainLayout />
+                    </AuthGuard>
                 ),
-            },
-            {
-                path: 'supplier-admin',
-                element: (
-                    <ProtectedRoute minLevel={6}>
-                        <SupplierAdmin />
-                    </ProtectedRoute>
-                ),
-            },
-            {
-                path: 'hotel-view/:hotelId',
-                element: <HotelView />,
-            },
-            {
-                path: 'demo/docs',
-                element: <DocumentPreviewDemo />,
-            },
-            {
-                path: '*',
-                element: <Navigate to="/" replace />,
-            },
-        ],
-        errorElement: (
-            <div style={{
-                padding: '40px',
-                textAlign: 'center',
-                background: '#1a1a2e',
-                color: 'white',
-                height: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: 'sans-serif'
-            }}>
-                <h1 style={{ fontSize: '4rem', margin: '0', color: '#ff9800' }}>404 / Greška</h1>
-                <p style={{ fontSize: '1.5rem', opacity: 0.8 }}>Došlo je do neočekivane greške ili stranica ne postoji.</p>
-                <div style={{ marginTop: '20px', display: 'flex', gap: '15px' }}>
-                    <button
-                        onClick={() => window.location.href = '/'}
-                        style={{
-                            padding: '12px 24px',
-                            background: '#ff9800',
-                            border: 'none',
-                            borderRadius: '5px',
-                            color: 'white',
-                            cursor: 'pointer',
-                            fontWeight: 'bold'
-                        }}
-                    >
-                        Vrati se na Početnu
-                    </button>
-                    <button
-                        onClick={() => window.location.reload()}
-                        style={{
-                            padding: '12px 24px',
-                            background: 'rgba(255,255,255,0.1)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            borderRadius: '5px',
-                            color: 'white',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Osveži stranicu
-                    </button>
-                </div>
-            </div>
-        )
-    },
+                children: [
+                    {
+                        path: 'price-list-architect',
+                        element: <PriceListArchitect />,
+                    },
+                    // Dashboard
+                    {
+                        index: true,
+                        element: <Dashboard />,
+                    },
+                    {
+                        path: 'mars-analysis',
+                        element: <MarsAnalysis onBack={() => window.history.back()} lang="sr" userLevel={6} onOpenChat={() => { }} onDataUpdate={() => { }} />,
+                    },
+                    {
+                        path: 'production',
+                        children: [
+                            {
+                                index: true,
+                                element: <ProductionHub onBack={() => window.history.back()} />,
+                            },
+                            {
+                                path: 'hotels',
+                                element: <HotelsList />,
+                            },
+                            {
+                                path: 'hotels/new',
+                                element: <HotelNew />,
+                            },
+                            {
+                                path: 'hotels/:hotelSlug',
+                                element: <HotelDetail />,
+                            },
+                            {
+                                path: 'hotels/:hotelSlug/edit',
+                                element: <HotelEdit />,
+                            },
+                            {
+                                path: 'hotels/:hotelSlug/rooms',
+                                element: <HotelRooms />,
+                            },
+                            {
+                                path: 'hotels/:hotelSlug/prices',
+                                element: <HotelPrices />,
+                            },
+                        ],
+                    },
+                    {
+                        path: 'suppliers',
+                        children: [
+                            {
+                                index: true,
+                                element: <SuppliersModule onBack={() => window.history.back()} />,
+                            },
+                            {
+                                path: ':supplierId',
+                                element: <SupplierDetail />,
+                            },
+                        ],
+                    },
+                    {
+                        path: 'customers',
+                        children: [
+                            {
+                                index: true,
+                                element: <CustomersModule onBack={() => window.history.back()} />,
+                            },
+                            {
+                                path: ':customerId',
+                                element: <CustomerDetail />,
+                            },
+                        ],
+                    },
+                    {
+                        path: 'settings',
+                        element: <SettingsModule onBack={() => window.history.back()} lang="sr" userLevel={6} setUserLevel={() => { }} />,
+                    },
+                    {
+                        path: 'b2b-settings',
+                        element: <B2BSettings />,
+                    },
+                    {
+                        path: 'katana',
+                        element: <Katana onBack={() => window.history.back()} />,
+                    },
+                    {
+                        path: 'deep-archive',
+                        element: (
+                            <ProtectedRoute minLevel={6}>
+                                <DeepArchive onBack={() => window.history.back()} lang="sr" />
+                            </ProtectedRoute>
+                        ),
+                    },
+                    {
+                        path: 'fortress',
+                        element: (
+                            <ProtectedRoute minLevel={6}>
+                                <Fortress onBack={() => window.history.back()} />
+                            </ProtectedRoute>
+                        ),
+                    },
+                    {
+                        path: 'pricing-intelligence',
+                        element: <PricingIntelligence />,
+                    },
+                    {
+                        path: 'shifts-generator',
+                        element: <ShiftsGeneratorPage />,
+                    },
+                    {
+                        path: 'yield-management',
+                        element: (
+                            <ProtectedRoute minLevel={3}>
+                                <YieldDashboard />
+                            </ProtectedRoute>
+                        ),
+                    },
+                    /* {
+                        path: 'total-trip',
+                        element: <TotalTripSearch />,
+                    }, */
+                    {
+                        path: 'mail',
+                        element: <ClickToTravelMail />,
+                    },
+                    {
+                        path: 'notifications',
+                        element: <NotificationCenter />,
+                    },
+                    {
+                        path: 'orchestrator',
+                        element: (
+                            <ProtectedRoute minLevel={6}>
+                                <OrchestratorPage />
+                            </ProtectedRoute>
+                        ),
+                    },
+                    {
+                        path: 'tct',
+                        element: <TCTDashboard />,
+                    },
+                    {
+                        path: 'watchdog',
+                        element: <AIWatchdogDashboard />,
+                    },
+                    {
+                        path: 'hub',
+                        element: <GlobalHubSearch />,
+                    },
+                    {
+                        path: 'b2b-search',
+                        element: <B2BSearch />,
+                    },
+                    {
+                        path: 'smart-search',
+                        element: <SmartSearch />,
+                    },
+                    {
+                        path: 'my-reservations',
+                        element: <ReservationsDashboard />,
+                    },
+                    {
+                        path: 'flights',
+                        element: <FlightSearch />,
+                    },
+                    {
+                        path: 'booking',
+                        element: <FlightBooking />,
+                    },
+                    {
+                        path: 'packages',
+                        element: <PackageBuilder />,
+                    },
+                    {
+                        path: 'packages/search',
+                        element: <PackageSearch />,
+                    },
+                    {
+                        path: 'packages/created',
+                        element: <PackageCreated />,
+                    },
+                    {
+                        path: 'opengreece-test',
+                        element: <OpenGreeceTest />,
+                    },
+                    {
+                        path: 'opengreece-search',
+                        element: <OpenGreeceSearch />,
+                    },
+                    {
+                        path: 'opengreece-hotel/:hotelCode',
+                        element: <OpenGreeceDetail />,
+                    },
+                    {
+                        path: 'solvex-test',
+                        element: <SolvexTest />,
+                    },
+                    {
+                        path: 'ors-test',
+                        element: <OrsTest />,
+                    },
+                    {
+                        path: 'mars-test',
+                        element: <MarsTest />,
+                    },
+                    {
+                        path: 'solvex-hotel/:id',
+                        element: <SolvexHotelDetail />,
+                    },
+                    {
+                        path: 'booking/:source/:hotelCode',
+                        element: <BookingForm />,
+                    },
+                    {
+                        path: 'soft-zone',
+                        element: <SoftZoneDashboard />,
+                    },
+                    {
+                        path: 'contact-architect',
+                        element: (
+                            <AuthGuard>
+                                <React.Suspense fallback={<LoadingFallback />}>
+                                    <ContactArchitect />
+                                </React.Suspense>
+                            </AuthGuard>
+                        ),
+                    },
+                    {
+                        path: 'reservations',
+                        element: <ReservationsDashboard />,
+                    },
+                    {
+                        path: 'destination-rep',
+                        element: (
+                            <ProtectedRoute minLevel={4}>
+                                <DestinationRep />
+                            </ProtectedRoute>
+                        ),
+                    },
+                    {
+                        path: 'admin/import',
+                        element: <AdminHotelImport />,
+                    },
+                    {
+                        path: 'api-connections',
+                        element: <APIConnectionsHub />,
+                    },
+                    {
+                        path: 'amadeus-test',
+                        element: <AmadeusTest />,
+                    },
+                    {
+                        path: 'tct-test',
+                        element: <TCTTest />,
+                    },
+                    {
+                        path: 'filos-test',
+                        element: <FilosTest />,
+                    },
+                    {
+                        path: 'kyte-test',
+                        element: <KyteTest />,
+                    },
+                    /* {
+                        path: 'master-search',
+                        element: <MasterSearch />,
+                    }, */
+                    {
+                        path: 'subagent-admin',
+                        element: (
+                            <ProtectedRoute minLevel={6}>
+                                <SubagentAdmin />
+                            </ProtectedRoute>
+                        ),
+                    },
+                    {
+                        path: 'supplier-admin',
+                        element: (
+                            <ProtectedRoute minLevel={6}>
+                                <SupplierAdmin />
+                            </ProtectedRoute>
+                        ),
+                    },
+                    {
+                        path: 'hotel-view/:hotelId',
+                        element: <HotelView />,
+                    },
+                    {
+                        path: 'demo/docs',
+                        element: <DocumentPreviewDemo />,
+                    },
+                    {
+                        path: '*',
+                        element: <Navigate to="/" replace />,
+                    },
+                ],
+            }
+        ]
+    }
 ]);
 
 // Router Provider Component

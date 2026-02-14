@@ -64,7 +64,39 @@ const apps: AppConfig[] = [
     { id: 'destination-rep', name: 'Dest. Predstavnici', desc: 'Operativni rad na destinaciji, provere vaučera i komunikacija sa bazom.', icon: <ShieldCheck size={24} />, category: 'sales', color: 'var(--gradient-green)', badge: 'Operativa', minLevel: 1, path: '/destination-rep' },
     { id: 'api-connections', name: 'PARTNERI - DOBAVLJAČI', desc: 'Centralno upravljanje partnerima i dostupnim API dobavljačima.', icon: <Plug size={24} />, category: 'system', color: 'var(--gradient-purple)', badge: 'Hub', minLevel: 1, path: '/api-connections' },
     { id: 'subagent-admin', name: 'Subagent Admin', desc: 'Upravljanje subagentima, dozvolama, provizijama i finansijama.', icon: <Users size={24} />, category: 'system', color: 'var(--gradient-orange)', badge: 'New', minLevel: 6, path: '/subagent-admin' },
-    { id: 'shifts-generator', name: 'Generator Smena', desc: 'Globalno upravljanje terminima, kapacitetima i vizuelna upozorenja za popunjenost.', icon: <RefreshCcw size={24} />, category: 'production', color: 'var(--gradient-blue)', badge: 'Critical', minLevel: 3, path: '/shifts-generator' }
+    { id: 'shifts-generator', name: 'Generator Smena', desc: 'Globalno upravljanje terminima, kapacitetima i vizuelna upozorenja za popunjenost.', icon: <RefreshCcw size={24} />, category: 'production', color: 'var(--gradient-blue)', badge: 'Critical', minLevel: 3, path: '/shifts-generator' },
+    {
+        id: 'smart-concierge',
+        name: 'Smart Concierge',
+        desc: 'AI prodajni agent sa yield optimizacijom i VCC sigurnosnom zaštitom.',
+        icon: (
+            <div style={{ position: 'relative' }}>
+                <Brain size={24} />
+                <div style={{
+                    position: 'absolute',
+                    top: -10,
+                    right: -10,
+                    background: '#ef4444',
+                    borderRadius: '50%',
+                    width: '18px',
+                    height: '18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: '#fff',
+                    border: '2px solid rgba(255,255,255,0.2)',
+                    boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)'
+                }}>!</div>
+            </div>
+        ),
+        category: 'ai',
+        color: 'var(--gradient-purple)',
+        badge: 'PRIORITET',
+        minLevel: 1,
+        path: '/smart-search'
+    }
 ];
 
 
@@ -159,7 +191,7 @@ const Dashboard: React.FC = () => {
         navigate(app.path);
     };
 
-    const FEATURED_IDS = ['smart-search', 'global-hub', 'reservations'];
+    const FEATURED_IDS = ['smart-concierge', 'smart-search', 'global-hub', 'reservations'];
 
     const featuredApps = userApps.filter(app => FEATURED_IDS.includes(app.id) && userLevel >= app.minLevel);
     const otherApps = userApps.filter(app => !FEATURED_IDS.includes(app.id) && userLevel >= app.minLevel);
@@ -186,70 +218,7 @@ const Dashboard: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
         >
-            {/* Header */}
-            <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px' }}>
-                <div style={{ flex: '1 1 auto' }}>
-                    <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '8px', background: 'linear-gradient(90deg, var(--text-primary), var(--text-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                        {t.welcomeBack}
-                    </h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>{t.hubDesc}</p>
-                </div>
-
-                {/* Dashboard Central Search */}
-                <div style={{ flex: '2 1 400px', maxWidth: '600px', position: 'relative' }}>
-                    <Search
-                        size={20}
-                        color="var(--accent)"
-                        style={{
-                            position: 'absolute',
-                            left: '18px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            opacity: 0.7
-                        }}
-                    />
-                    <input
-                        type="text"
-                        placeholder="Pretraži aplikacije i module..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        style={{
-                            width: '100%',
-                            padding: '16px 24px 16px 52px',
-                            borderRadius: '16px',
-                            background: 'rgba(255, 255, 255, 0.03)',
-                            border: '1px solid var(--border)',
-                            color: 'var(--text-primary)',
-                            fontSize: '16px',
-                            fontWeight: '500',
-                            outline: 'none',
-                            transition: 'all 0.3s ease',
-                            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-                            backdropFilter: 'blur(10px)'
-                        }}
-                        autoFocus
-                    />
-                    {searchQuery && (
-                        <div
-                            onClick={() => setSearchQuery('')}
-                            style={{
-                                position: 'absolute',
-                                right: '18px',
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                cursor: 'pointer',
-                                opacity: 0.5,
-                                fontSize: '12px',
-                                background: 'rgba(255,255,255,0.1)',
-                                padding: '4px 8px',
-                                borderRadius: '6px'
-                            }}
-                        >
-                            ESC
-                        </div>
-                    )}
-                </div>
-            </div>
+            {/* Removed Welcome Header and Central Search */}
 
             {/* Apps Grid */}
             {
@@ -396,7 +365,7 @@ const Dashboard: React.FC = () => {
                                                     width: viewMode === 'list' ? '40px' : '64px',
                                                     height: viewMode === 'list' ? '40px' : '64px',
                                                     minWidth: viewMode === 'list' ? '40px' : '64px'
-                                                }}>{React.cloneElement(app.icon as React.ReactElement, { size: viewMode === 'list' ? 24 : 32 })}</div>
+                                                }}>{React.cloneElement(app.icon as React.ReactElement, { size: viewMode === 'list' ? 24 : 32 } as any)}</div>
                                                 <div style={{ flex: 1 }}>
                                                     <h3 className="card-title" style={{
                                                         margin: 0,

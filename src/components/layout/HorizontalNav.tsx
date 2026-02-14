@@ -34,7 +34,15 @@ const HorizontalNav: React.FC = () => {
 
     return (
         <div className="horizontal-nav">
-            <ClickToTravelLogo height={72} showText={true} />
+            <div style={{
+                marginRight: '32px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                paddingTop: '4px' // Subtle adjustment for 72px logo + slogan in 96px header
+            }}>
+                <ClickToTravelLogo height={72} showText={true} />
+            </div>
 
             <div className="nav-horizontal-items">
                 {/* B2B Sections Label for Subagents */}

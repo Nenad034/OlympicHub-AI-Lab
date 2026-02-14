@@ -7,23 +7,12 @@ const testConnection = async () => {
     console.log("Testing Gemini connection...");
 
     try {
-        // Try flash
-        console.log("Attempting to reach gemini-1.5-flash...");
-        const flashModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const flashResult = await flashModel.generateContent("Hi");
-        console.log("Flash response:", flashResult.response.text());
+        console.log("Attempting to reach gemini-pro...");
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const result = await model.generateContent("Hi");
+        console.log("Response:", result.response.text());
     } catch (e: any) {
-        console.error("Flash failed:", e.message);
-    }
-
-    try {
-        // Try pro
-        console.log("Attempting to reach gemini-1.5-pro...");
-        const proModel = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-        const proResult = await proModel.generateContent("Hi");
-        console.log("Pro response:", proResult.response.text());
-    } catch (e: any) {
-        console.error("Pro failed:", e.message);
+        console.error("Call failed:", e.message);
     }
 };
 

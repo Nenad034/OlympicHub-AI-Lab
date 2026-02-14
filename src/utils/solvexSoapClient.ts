@@ -336,34 +336,49 @@ export function buildHotelSearchParams(params: {
     tariffs?: number[]; // Optional override, defaults to [0, 1993]
 }): Record<string, any> {
     // STRICT ORDER REQUIRED BY WSDL s:sequence for SearchHotelServiceRequest
-    const request: any = {
-        'PageSize': 500,
-        'RowIndexFrom': 0,
-        'DateFrom': formatSolvexDate(params.dateFrom),
-        'DateTo': formatSolvexDate(params.dateTo)
-    };
+    const request: any = {};
 
-    // Dynamically add keys only if present to ensure NO TAG is generated for empty lists
+    // 1-4. Basic Pagination & Dates
+    request['PageSize'] = 500;
+    request['RowIndexFrom'] = 0;
+    request['DateFrom'] = formatSolvexDate(params.dateFrom);
+    request['DateTo'] = formatSolvexDate(params.dateTo);
 
+    // 5. RegionKeys (Skip if empty)
+
+    // 6. CityKeys
     if (params.cityId) {
         request['CityKeys'] = { 'int': [params.cityId] };
     }
 
+    // 7. HotelKeys
     if (params.hotelId) {
         const ids = Array.isArray(params.hotelId) ? params.hotelId : [params.hotelId];
         request['HotelKeys'] = { 'int': ids };
     }
 
+    // 8-9. RoomDescriptionsKeys, PansionKeys (Skip)
+
+    // 10. Ages
     if (params.childrenAges && params.childrenAges.length > 0) {
         request['Ages'] = { 'int': params.childrenAges };
     }
 
-    // Critical fix: Tariffs must be included to get results (0 = Default, 1993 = Standard)
+    // 11. Pax (MANDATORY at this position)
+    request['Pax'] = params.adults + (params.children || 0);
+
+    // 12. Tariffs (Critical for evaluation/results)
     request['Tariffs'] = { 'int': params.tariffs || [0, 1993] };
 
-    request['Pax'] = params.adults + (params.children || 0);
+    // 13. CacheGuid (Skip)
+
+    // 14. ResultView (Strict order: ResultView then Mode)
+    request['ResultView'] = 1;
+
+    // 15. Mode
     request['Mode'] = 0;
-    request['ResultView'] = 1; // 1 = sorting by daily price with grouping by hotels
+
+    // 16. QuotaTypes
     request['QuotaTypes'] = { 'int': [0, 1] }; // 0 = On request, 1 = On quota
 
     return {
