@@ -59,3 +59,10 @@ Svaka stavka duga je povezana sa rezervacijom.
 - [x] **Korak 4: Dashboard UI** -> "Semafor" prikaz za direktora i listu obaveza (Završeno).
 - [x] **Korak 5: VCC Integracija (Mock/API)** -> Simulacija ili povezivanje sa API-jem za kartice (Završeno).
 - [x] **Korak 6: FX Monitoring** -> Praćenje kursnih razlika u realnom vremenu (Završeno).
+
+## Faza 2: Napredna Analitika i Profitabilnost (U RADU)
+- [ ] **Korak 7: Sistem Delimičnih Plaćanja** -> Akontacije i praćenje preostalog duga.
+- [ ] **Korak 8: Arhiva Plaćanja** -> Poseban pregled za istorijat transakcija.
+- [ ] **Korak 9: Yield Reporting (Bruto vs Neto)** -> Izveštaji o zaradi po dobavljaču i rezervaciji.
+- [ ] **Korak 10: Dualni Filteri** -> Filtriranje po datumu rezervacije i datumu boravka.
+- [ ] **Korak 11: Realni vs Predviđeni Neto** -> Potvrda konačnih računa.

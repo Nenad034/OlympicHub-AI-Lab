@@ -55,21 +55,38 @@ export const supplierFinanceService = {
     },
 
     /**
-     * Record a new transaction
+     * Record a new transaction (supports partial payments)
      */
     async recordTransaction(transaction: Partial<SupplierTransaction>): Promise<{ success: boolean; error?: string }> {
         try {
-            // 1. Save Transaction
+            // 1. Fetch current obligation state
+            const { data: ob, error: fetchError } = await supabase
+                .from('supplier_obligations')
+                .select('net_amount, paid_amount, status')
+                .eq('id', transaction.obligation_id)
+                .single();
+
+            if (fetchError) throw fetchError;
+
+            // 2. Save Transaction
             const { error: txError } = await supabase
                 .from('supplier_transactions')
                 .insert([transaction]);
 
             if (txError) throw txError;
 
-            // 2. Update Obligation Status
+            // 3. Calculate new paid amount and status
+            const newPaidAmount = (ob.paid_amount || 0) + (transaction.amount_paid || 0);
+            const isFullyPaid = newPaidAmount >= ob.net_amount;
+            const newStatus = isFullyPaid ? 'paid' : 'partially_paid';
+
+            // 4. Update Obligation
             const { error: obError } = await supabase
                 .from('supplier_obligations')
-                .update({ status: 'paid' })
+                .update({
+                    paid_amount: newPaidAmount,
+                    status: newStatus
+                })
                 .eq('id', transaction.obligation_id);
 
             if (obError) throw obError;
@@ -95,18 +112,20 @@ export const supplierFinanceService = {
     },
 
     /**
-     * Get Dashboard Stats
+     * Get Dashboard Stats including Profitability
      */
     async getDashboardStats(): Promise<SupplierFinanceDashboardStats> {
         const { data: obligations } = await this.getObligations();
         const obs = obligations || [];
 
         return {
-            totalUnpaid: obs.filter(o => o.status === 'unpaid').reduce((sum, o) => sum + o.net_amount, 0),
-            urgentCount: obs.filter(o => o.priority_score >= 80 && o.status === 'unpaid').length,
-            executedToday: 0, // Would need transaction date filter
-            pendingVCC: obs.filter(o => o.payment_method_preferred === 'vcc' && o.status === 'unpaid').length,
-            fxRiskLoss: 0 // Would need exchange rate comparison logic
+            totalUnpaid: obs.filter(o => o.status !== 'paid').reduce((sum, o) => sum + (o.net_amount - o.paid_amount), 0),
+            urgentCount: obs.filter(o => o.priority_score >= 80 && o.status !== 'paid').length,
+            executedToday: 0,
+            pendingVCC: obs.filter(o => o.payment_method_preferred === 'vcc' && o.status !== 'paid').length,
+            fxRiskLoss: 0,
+            totalProfitExpected: obs.reduce((sum, o) => sum + ((o.gross_amount || 0) - o.net_amount), 0),
+            totalProfitRealized: obs.filter(o => o.is_final_net).reduce((sum, o) => sum + ((o.gross_amount || 0) - o.net_amount), 0)
         };
     }
 };

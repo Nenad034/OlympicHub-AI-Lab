@@ -18,12 +18,13 @@ export function calculateObligationPriority(obligation: Partial<SupplierObligati
 
     let score = 0;
 
-    // 1. Time Pressure (max 60 points)
-    if (diffDays <= 0) score += 60; // Overdue or today
-    else if (diffDays <= 1) score += 55;
-    else if (diffDays <= 3) score += 40;
-    else if (diffDays <= 7) score += 20;
-    else if (diffDays <= 14) score += 10;
+    // 1. Time Pressure (max 85 points)
+    if (diffDays <= -1) score += 85; // Overdue
+    else if (diffDays === 0) score += 80; // Today
+    else if (diffDays <= 1) score += 70;
+    else if (diffDays <= 3) score += 50;
+    else if (diffDays <= 7) score += 30;
+    else if (diffDays <= 14) score += 15;
 
     // 2. Amount Factor (max 20 points)
     const amount = obligation.net_amount || 0;

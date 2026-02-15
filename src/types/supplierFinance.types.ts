@@ -3,9 +3,11 @@
  * Handles Accounts Payable (AP), Payment Rules, and Transactions
  */
 
-export type ObligationStatus = 'unpaid' | 'processing' | 'paid' | 'disputed' | 'refund_pending';
+export type ObligationStatus = 'unpaid' | 'processing' | 'paid' | 'disputed' | 'refund_pending' | 'partially_paid';
 
 export type PaymentMethod = 'bank' | 'vcc' | 'cash' | 'compensation';
+
+export type PaymentCategory = 'akontacija' | 'full' | 'balance';
 
 export type RuleType = 'DaysBeforeArrival' | 'DaysAfterBooking' | 'EndOfMonthPlusDays' | 'Manual';
 
@@ -19,19 +21,31 @@ export interface SupplierObligation {
 
     // Financials
     net_amount: number;
+    gross_amount?: number; // Added for Yield reporting
+    paid_amount: number; // For partial payments
     currency: string;
     exchange_rate_at_booking?: number;
 
     // Deadlines
     cancellation_deadline?: string;
     payment_deadline?: string;
+    stay_from?: string; // Added for Stay filters
+    stay_to?: string;
 
     // Status & Score
     status: ObligationStatus;
+    is_final_net: boolean; // Predicted vs Real
     priority_score: number;
 
     // Methods
     payment_method_preferred: PaymentMethod;
+
+    // Advanced Analytics Dimensions
+    country_id?: string;
+    destination_id?: string;
+    property_name?: string;
+    subagent_id?: string;
+    office_id?: string;
 
     // Metadata
     notes?: string;
@@ -56,6 +70,7 @@ export interface SupplierTransaction {
     amount_paid: number;
     currency: string;
     payment_method: string;
+    payment_category: PaymentCategory; // Added for partial payments
     bank_name?: string;
     transaction_ref?: string;
     vcc_id?: string;
@@ -79,4 +94,6 @@ export interface SupplierFinanceDashboardStats {
     executedToday: number;
     pendingVCC: number;
     fxRiskLoss: number;
+    totalProfitExpected: number; // Added for reporting
+    totalProfitRealized: number; // Added for reporting
 }

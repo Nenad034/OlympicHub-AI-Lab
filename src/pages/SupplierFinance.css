@@ -259,22 +259,120 @@
     color: #34d399;
 }
 
+/* Tabs & Layout Phase 2 */
+.tab-switcher {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.tab-switcher button {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tab-switcher button.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.yield-positive {
+    color: #10b981;
+    font-weight: 700;
+}
+
+.yield-neutral {
+    color: var(--text-secondary);
+}
+
+.profit-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.payment-type-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.payment-type-card {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.payment-type-card.active {
+    border-color: var(--accent);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.payment-type-card span {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.payment-type-card small {
+    font-size: 9px;
+    opacity: 0.6;
+}
+
+/* FX Ticker Styles */
 .fx-ticker {
     display: flex;
-    gap: 20px;
-    background: rgba(255, 255, 255, 0.03);
-    padding: 8px 16px;
-    border-radius: 100px;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px 20px;
+    border-radius: 12px;
     border: 1px solid var(--border);
     margin-bottom: 24px;
-    font-size: 12px;
-    width: fit-content;
+    font-size: 13px;
+    width: 100%;
+    backdrop-filter: blur(10px);
+}
+
+.fx-ticker-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-right: 1px solid var(--border);
+    padding-right: 16px;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .fx-item {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .fx-trend-up {
@@ -416,4 +514,44 @@
 .payment-option-card.active {
     border-color: var(--accent);
     background: rgba(16, 185, 129, 0.05);
+}
+
+/* Analytics Charts */
+.analytics-charts-grid {
+    margin-bottom: 32px;
+}
+
+.chart-container-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.chart-container-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.chart-container-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+/* Recharts Customization Overlay */
+.recharts-legend-item-text {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 12px !important;
+}
+
+.recharts-cartesian-axis-tick-value {
+    font-size: 10px;
+    font-family: inherit;
 }
