@@ -33,19 +33,36 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className 
             try {
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imageData.data;
+                const width = canvas.width;
+                const height = canvas.height;
+
+                // Crop threshold: AGGRESSIVE - remove bottom 35% of image (removes the reflection)
+                const cropY = Math.floor(height * 0.65);
 
                 for (let i = 0; i < data.length; i += 4) {
+                    const pixelIndex = i / 4;
+                    const y = Math.floor(pixelIndex / width);
+
+                    // Crop bottom artifact
+                    if (y > cropY) {
+                        data[i + 3] = 0;
+                        continue;
+                    }
+
                     const r = data[i];
                     const g = data[i + 1];
                     const b = data[i + 2];
 
-                    const isNeutral = Math.abs(r - g) < 20 && Math.abs(g - b) < 20 && Math.abs(r - b) < 20;
-                    const isBright = r > 180 && g > 180 && b > 180;
+                    // Calculate distance from white
+                    const distFromWhite = Math.sqrt((255 - r) ** 2 + (255 - g) ** 2 + (255 - b) ** 2);
 
-                    if (isNeutral && isBright) {
-                        data[i + 3] = 0;
-                    } else if (r > 245 && g > 245 && b > 245) {
-                        data[i + 3] = 0;
+                    // Thresholds for removing white/gray background alias
+                    if (distFromWhite < 60) {
+                        data[i + 3] = 0; // Transparent for white/near-white
+                    } else if (distFromWhite < 100) {
+                        // Soft fade for anti-aliased edges (remove white halo)
+                        const alpha = ((distFromWhite - 60) / 40) * 255;
+                        data[i + 3] = alpha;
                     }
                 }
                 ctx.putImageData(imageData, 0, 0);
@@ -71,9 +88,17 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className 
                 userSelect: 'none',
                 overflow: 'visible',
                 position: 'relative',
-                gap: '8px'
+                gap: '0px',
+                animation: 'floatLogo 6s ease-in-out infinite'
             }}
         >
+            <style>{`
+                @keyframes floatLogo {
+                    0% { transform: translateY(0px); }
+                    50% { transform: translateY(-5px); }
+                    100% { transform: translateY(0px); }
+                }
+            `}</style>
             <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <canvas
                     ref={canvasRef}
@@ -85,9 +110,8 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className 
                         position: 'relative',
                         zIndex: 1,
                         filter: isLight ? 'none' : `
-                            drop-shadow(0 1px 1px rgba(0,0,0,0.2)) 
-                            drop-shadow(0 4px 8px rgba(33, 136, 255, 0.15))
-                            drop-shadow(0 8px 24px rgba(0,0,0,0.1))
+                            drop-shadow(0 0 15px rgba(59, 130, 246, 0.4))
+                            drop-shadow(0 0 30px rgba(59, 130, 246, 0.2))
                         `,
                         imageRendering: 'auto'
                     }}
@@ -99,15 +123,18 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className 
                 <div
                     className="logo-slogan"
                     style={{
-                        fontSize: typeof height === 'number' ? height * 0.16 : '13px',
+                        fontSize: typeof height === 'number' ? Math.round(height * 0.16) + 'px' : '13px', // Round to integer for sharpness
                         fontWeight: 700,
                         letterSpacing: '0.04em',
                         textAlign: 'center',
                         whiteSpace: 'nowrap',
                         color: '#1e3a8a',
-                        textShadow: isLight ? 'none' : '0 1px 2px rgba(255,255,255,0.2)',
-                        lineHeight: 1,
-                        marginTop: '4px'
+                        textShadow: 'none', // Removed sloppy shadow
+                        lineHeight: 1.2,
+                        marginTop: '-4px',
+                        WebkitFontSmoothing: 'antialiased', // Sharp text
+                        MozOsxFontSmoothing: 'grayscale',
+                        opacity: 0.9
                     }}
                 >
                     Klikni. Rezerviši. Putuj...

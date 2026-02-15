@@ -23,6 +23,7 @@ export interface DestinationInput {
         tip: string;
         image: string;
     };
+    type?: 'destination' | 'hotel';
 }
 
 export interface BasicInfoData {

@@ -21,7 +21,8 @@ import {
     Plug,
     Search,
     TrendingUp,
-    RefreshCcw
+    RefreshCcw,
+    DollarSign
 } from 'lucide-react';
 import { useThemeStore, useAppStore, useAuthStore } from '../stores';
 import { translations } from '../translations';
@@ -64,6 +65,7 @@ const apps: AppConfig[] = [
     { id: 'destination-rep', name: 'Dest. Predstavnici', desc: 'Operativni rad na destinaciji, provere vaučera i komunikacija sa bazom.', icon: <ShieldCheck size={24} />, category: 'sales', color: 'var(--gradient-green)', badge: 'Operativa', minLevel: 1, path: '/destination-rep' },
     { id: 'api-connections', name: 'PARTNERI - DOBAVLJAČI', desc: 'Centralno upravljanje partnerima i dostupnim API dobavljačima.', icon: <Plug size={24} />, category: 'system', color: 'var(--gradient-purple)', badge: 'Hub', minLevel: 1, path: '/api-connections' },
     { id: 'subagent-admin', name: 'Subagent Admin', desc: 'Upravljanje subagentima, dozvolama, provizijama i finansijama.', icon: <Users size={24} />, category: 'system', color: 'var(--gradient-orange)', badge: 'New', minLevel: 6, path: '/subagent-admin' },
+    { id: 'supplier-finance', name: 'Finansije Dobavljača', desc: 'Upravljanje plaćanjima, VCC karticama i yield analitikom dobavljača.', icon: <DollarSign size={24} />, category: 'finance', color: 'var(--gradient-blue)', badge: 'Phase 2', minLevel: 1, path: '/supplier-finance' },
     { id: 'shifts-generator', name: 'Generator Smena', desc: 'Globalno upravljanje terminima, kapacitetima i vizuelna upozorenja za popunjenost.', icon: <RefreshCcw size={24} />, category: 'production', color: 'var(--gradient-blue)', badge: 'Critical', minLevel: 3, path: '/shifts-generator' },
     {
         id: 'smart-concierge',
@@ -191,10 +193,12 @@ const Dashboard: React.FC = () => {
         navigate(app.path);
     };
 
-    const FEATURED_IDS = ['smart-concierge', 'smart-search', 'global-hub', 'reservations'];
+    const ROW1_IDS = ['smart-search', 'global-hub', 'reservations'];
+    const ROW2_IDS = ['supplier-finance', 'mars-analysis', 'subagent-admin'];
 
-    const featuredApps = userApps.filter(app => FEATURED_IDS.includes(app.id) && userLevel >= app.minLevel);
-    const otherApps = userApps.filter(app => !FEATURED_IDS.includes(app.id) && userLevel >= app.minLevel);
+    const row1Apps = userApps.filter(app => ROW1_IDS.includes(app.id) && userLevel >= app.minLevel);
+    const row2Apps = userApps.filter(app => ROW2_IDS.includes(app.id) && userLevel >= app.minLevel);
+    const otherApps = userApps.filter(app => !ROW1_IDS.includes(app.id) && !ROW2_IDS.includes(app.id) && userLevel >= app.minLevel);
 
     const filteredOtherApps = otherApps.filter(app => {
         if (activeCategory === 'all') return true;
@@ -316,7 +320,52 @@ const Dashboard: React.FC = () => {
                     </div>
                 ) : (
                     <>
-                        {/* Featured Apps Section - Centered */}
+                        {/* Row 1: Search & Reservations */}
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            marginBottom: '20px'
+                        }}>
+                            <div className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`} style={{
+                                display: 'grid',
+                                gridTemplateColumns: viewMode === 'list' ? '1fr' : 'repeat(3, 1fr)',
+                                maxWidth: '1400px',
+                                margin: '0 auto',
+                                width: '100%',
+                                gap: '24px'
+                            }}>
+                                {row1Apps.map((app: AppConfig, idx: number) => (
+                                    <motion.div
+                                        key={app.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: idx * 0.1 }}
+                                        className={`module-card featured ${viewMode === 'list' ? 'list-item' : ''}`}
+                                        onClick={() => handleAppClick(app)}
+                                        style={{
+                                            border: viewMode === 'list' ? '1px solid var(--border)' : '1px solid var(--accent)',
+                                            boxShadow: viewMode === 'list' ? 'none' : '0 10px 30px rgba(59, 130, 246, 0.1)',
+                                            padding: viewMode === 'list' ? '20px' : '24px'
+                                        }}
+                                    >
+                                        {/* Original content remains the same */}
+                                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                                            <div className="card-icon" style={{ background: app.color, width: '56px', height: '56px' }}>
+                                                {app.icon}
+                                            </div>
+                                            <div>
+                                                <h3 className="card-title" style={{ margin: 0, fontSize: '18px' }}>{app.name}</h3>
+                                                <p className="card-desc" style={{ margin: '4px 0 0', fontSize: '12px', opacity: 0.7 }}>{app.desc.substring(0, 60)}...</p>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div style={{ width: '100%', height: '1px', background: 'var(--border)', margin: '20px 0', opacity: 0.3 }}></div>
+
+                        {/* Row 2: Payments & Finance */}
                         <div style={{
                             display: 'flex',
                             justifyContent: 'center',
@@ -328,107 +377,29 @@ const Dashboard: React.FC = () => {
                                 maxWidth: '1400px',
                                 margin: '0 auto',
                                 width: '100%',
-                                gap: '32px'
+                                gap: '24px'
                             }}>
-
-
-                                {featuredApps.map((app, idx) => (
+                                {row2Apps.map((app: AppConfig, idx: number) => (
                                     <motion.div
                                         key={app.id}
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: idx * 0.1 }}
-                                        className={`module-card featured ${viewMode === 'list' ? 'list-item' : ''}`}
+                                        transition={{ delay: (idx + 3) * 0.1 }}
+                                        className={`module-card ${viewMode === 'list' ? 'list-item' : ''}`}
                                         onClick={() => handleAppClick(app)}
                                         style={{
-                                            border: viewMode === 'list' ? '1px solid var(--border)' : '2px solid var(--accent)',
-                                            boxShadow: viewMode === 'list' ? 'none' : '0 0 25px var(--accent-glow)',
-                                            padding: viewMode === 'list' ? '24px' : '36px'
+                                            background: 'rgba(255, 255, 255, 0.02)',
+                                            padding: viewMode === 'list' ? '20px' : '24px'
                                         }}
                                     >
-                                        <div style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: viewMode === 'list' ? 'center' : 'flex-start',
-                                            flexDirection: viewMode === 'list' ? 'row' : 'column',
-                                            gap: viewMode === 'list' ? '20px' : '0',
-                                            width: '100%'
-                                        }}>
-                                            <div style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '16px',
-                                                flex: 1
-                                            }}>
-                                                <div className="card-icon" style={{
-                                                    background: app.color,
-                                                    width: viewMode === 'list' ? '40px' : '64px',
-                                                    height: viewMode === 'list' ? '40px' : '64px',
-                                                    minWidth: viewMode === 'list' ? '40px' : '64px'
-                                                }}>{React.cloneElement(app.icon as React.ReactElement, { size: viewMode === 'list' ? 24 : 32 } as any)}</div>
-                                                <div style={{ flex: 1 }}>
-                                                    <h3 className="card-title" style={{
-                                                        margin: 0,
-                                                        fontSize: viewMode === 'list' ? '18px' : '22px'
-                                                    }}>{app.name}</h3>
-                                                    {viewMode === 'list' && <p className="card-desc" style={{ marginTop: '4px', marginBottom: 0 }}>{app.desc}</p>}
-                                                </div>
+                                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                                            <div className="card-icon" style={{ background: app.color, width: '56px', height: '56px' }}>
+                                                {app.icon}
                                             </div>
-
-                                            {viewMode === 'list' && (
-                                                <div style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '24px'
-                                                }}>
-                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                                        {app.badge && (
-                                                            <span className="badge" style={{ position: 'static', margin: 0 }}>
-                                                                {app.badge}
-                                                            </span>
-                                                        )}
-                                                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                            <ShieldAlert size={10} /> {getUserRights(app.minLevel)}
-                                                        </span>
-                                                    </div>
-                                                    <div className="card-footer" style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '600', color: 'var(--accent)' }}>
-                                                        <ChevronRight size={18} />
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {viewMode === 'grid' && (
-                                                <>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
-                                                        {app.badge && (
-                                                            <span className="badge">
-                                                                {app.badge}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', position: 'absolute', top: '24px', right: '24px' }}>
-                                                        <ShieldAlert size={10} /> {getUserRights(app.minLevel)}
-                                                    </span>
-                                                    <p className="card-desc" style={{
-                                                        marginBottom: '40px',
-                                                        fontSize: '15px'
-                                                    }}>{app.desc}</p>
-                                                    <div className="card-footer" style={{
-                                                        position: 'absolute',
-                                                        bottom: '20px',
-                                                        right: '24px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '4px',
-                                                        fontSize: '12px',
-                                                        fontWeight: '800',
-                                                        color: 'var(--accent)',
-                                                        textShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                                                    }}>
-                                                        {t.openModule} <ChevronRight size={14} />
-                                                    </div>
-                                                </>
-                                            )}
+                                            <div>
+                                                <h3 className="card-title" style={{ margin: 0, fontSize: '18px' }}>{app.name}</h3>
+                                                <p className="card-desc" style={{ margin: '4px 0 0', fontSize: '12px', opacity: 0.7 }}>{app.desc.substring(0, 60)}...</p>
+                                            </div>
                                         </div>
                                     </motion.div>
                                 ))}

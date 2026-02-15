@@ -63,8 +63,8 @@ export interface HotelSearchParams {
     /** Specific provider identifier (e.g. Solvex HotelKey or CityKey) */
     providerId?: string | number;
 
-    /** Specific provider type (e.g. 'hotel', 'city') */
-    providerType?: 'hotel' | 'city';
+    /** Specific provider type (e.g. 'hotel', 'city', 'country') */
+    providerType?: 'hotel' | 'city' | 'country';
 
     /** If providerId is specified, which provider does it belong to? */
     targetProvider?: string;

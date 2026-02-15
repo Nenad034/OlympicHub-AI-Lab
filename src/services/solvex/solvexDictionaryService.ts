@@ -9,6 +9,110 @@ import type {
 import { connect } from './solvexAuthService';
 
 /**
+ * Search for destinations (Countries, Cities, Hotels)
+ * Used by Narrative Search
+ */
+export async function searchDestinations(query: string): Promise<any[]> {
+    if (!query || query.length < 3) return [];
+
+    try {
+        const lowerQuery = query.toLowerCase();
+
+        // 1. Get Countries
+        const countriesRes = await getCountries();
+        let matches: any[] = [];
+
+        if (countriesRes.success && countriesRes.data) {
+            countriesRes.data.forEach(c => {
+                if (c.name.toLowerCase().includes(lowerQuery)) {
+                    matches.push({
+                        id: c.id,
+                        name: c.name,
+                        type: 'country',
+                        country_name: c.name,
+                        country_code: c.code
+                    });
+                }
+            });
+        }
+
+        // 2. Napredna pretraga: Ako je upit naziv neke države (npr. "Bugarska"), dodaj gradove iz te države
+        if (countriesRes.data) {
+            const countryQueryMatch = countriesRes.data.filter(c =>
+                c.name.toLowerCase() === lowerQuery ||
+                lowerQuery.includes(c.name.toLowerCase()) ||
+                c.name.toLowerCase().includes(lowerQuery)
+            );
+
+            for (const country of countryQueryMatch) {
+                const citiesRes = await getCities(country.id);
+                if (citiesRes.success && citiesRes.data) {
+                    citiesRes.data.forEach(city => {
+                        // Dodajemo gradove te države, ali pazimo da ne dupliramo
+                        if (!matches.find(m => m.id === city.id && m.type === 'city')) {
+                            matches.push({
+                                id: city.id,
+                                name: city.nameLat || city.name,
+                                type: 'city',
+                                country_name: country.name,
+                                country_code: country.code,
+                                region_id: city.regionId
+                            });
+                        }
+                    });
+                }
+            }
+        }
+
+        // 3. Dopunska pretraga: Pretraga gradova po nazivu ako nema dovoljno rezultata
+        if (matches.length < 10 && countriesRes.data) {
+            const commonCountries = countriesRes.data.filter(c => {
+                const n = c.name.toLowerCase();
+                return n.includes('bugarska') || n.includes('bulgaria') ||
+                    n.includes('grčka') || n.includes('greece') ||
+                    n.includes('turska') || n.includes('turkey') ||
+                    n.includes('egipat') || n.includes('egypt') ||
+                    n.includes('crna gora') || n.includes('montenegro');
+            });
+
+            for (const country of commonCountries) {
+                const citiesRes = await getCities(country.id);
+                if (citiesRes.success && citiesRes.data) {
+                    citiesRes.data.forEach(city => {
+                        const cityName = city.name.toLowerCase();
+                        const cityNameLat = (city.nameLat || '').toLowerCase();
+
+                        if (cityName.includes(lowerQuery) || cityNameLat.includes(lowerQuery)) {
+                            if (!matches.find(m => m.id === city.id && m.type === 'city')) {
+                                matches.push({
+                                    id: city.id,
+                                    name: city.nameLat || city.name,
+                                    type: 'city',
+                                    country_name: country.name,
+                                    country_code: country.code,
+                                    region_id: city.regionId
+                                });
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        // 3. Hotels (Deep search) - Only if query is long enough
+        if (query.length > 4 && matches.length < 10) {
+            // This is hard without a global search endpoint. 
+            // We'll skip for now to avoid performance hit on every keystroke
+        }
+
+        return matches.slice(0, 10);
+    } catch (e) {
+        console.error('SearchDestinations failed:', e);
+        return [];
+    }
+}
+
+/**
  * Get list of countries
  */
 export async function getCountries(): Promise<SolvexApiResponse<SolvexCountry[]>> {
@@ -278,7 +382,7 @@ export async function getHotelFullContent(hotelId: number): Promise<SolvexApiRes
                 });
 
                 if (searchRes.success && searchRes.data && searchRes.data.length > 0) {
-                    const firstMatch = searchRes.data[0];
+                    const firstMatch = searchRes.data[0] as any;
                     if (firstMatch.images && firstMatch.images.length > 0) {
                         images = [...new Set([...images, ...firstMatch.images])];
                     }
@@ -323,6 +427,7 @@ export async function getHotelFullContent(hotelId: number): Promise<SolvexApiRes
 }
 
 export default {
+    searchDestinations,
     getCountries,
     getCities,
     getRegions,

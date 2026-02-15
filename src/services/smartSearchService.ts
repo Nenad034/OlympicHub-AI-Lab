@@ -3,7 +3,7 @@
  * Connects SmartSearch UI with appropriate providers based on search type
  */
 
-import { SolvexAiProvider } from './providers/SolvexAiProvider';
+import { SolvexProvider } from './providers/SolvexProvider';
 import { FilosProvider } from './providers/FilosProvider';
 
 export interface RoomAllocation {
@@ -17,7 +17,7 @@ export interface SmartSearchParams {
     destinations: Array<{
         id: string;
         name: string;
-        type: 'destination' | 'hotel';
+        type: 'destination' | 'hotel' | 'country';
         country?: string;
         provider?: string;
     }>;
@@ -95,7 +95,7 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
         return [];
     }
 
-    const solvexAi = new SolvexAiProvider();
+    const solvexProvider = new SolvexProvider();
     const filosProvider = new FilosProvider();
     const finalResultsMap = new Map<string, SmartSearchResult>();
 
@@ -131,18 +131,18 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                 if (isSolvexEnabled || !params.enabledProviders) {
                     try {
                         // Authenticate only when Solvex is enabled
-                        await solvexAi.authenticate();
+                        await solvexProvider.authenticate();
 
-                        const solvexResults = await solvexAi.search({
+                        const solvexResults = await solvexProvider.search({
                             destination: dest.name,
                             checkIn: new Date(params.checkIn),
                             checkOut: new Date(params.checkOut),
                             adults: config.adults,
                             children: config.children,
                             childrenAges: config.ages,
-                            providerId: dest.id.startsWith('solvex-') ? dest.id.split('-').pop() : dest.id,
+                            providerId: String(dest.id).startsWith('solvex-') ? String(dest.id).split('-').pop() : dest.id,
                             providerType: dest.type === 'destination' ? 'city' : 'hotel',
-                            targetProvider: dest.id.startsWith('solvex-') || dest.provider === 'Solvex' ? 'Solvex' : undefined
+                            targetProvider: String(dest.id).startsWith('solvex-') || dest.provider === 'Solvex' ? 'Solvex' : undefined
                         });
                         results.push(...solvexResults);
                     } catch (e) {
@@ -162,7 +162,7 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                             adults: config.adults,
                             children: config.children,
                             childrenAges: config.ages,
-                            providerId: dest.id.startsWith('filos-') ? dest.id.split('-').pop() : undefined
+                            providerId: String(dest.id).startsWith('filos-') ? String(dest.id).split('-').pop() : undefined
                         });
                         console.log('[SmartSearchService] Filos returned:', filosResults.length, 'results');
                         results.push(...filosResults);
@@ -206,7 +206,7 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                     if (hotelsInAllConfigs.has(hotelKey)) {
                         if (!finalResultsMap.has(hotelKey)) {
                             finalResultsMap.set(hotelKey, {
-                                provider: h.id.startsWith('filos-') ? 'Filos' : 'Solvex AI',
+                                provider: String(h.id).startsWith('filos-') ? 'Filos' : 'Solvex',
                                 type: 'hotel',
                                 id: h.id,
                                 name: h.hotelName,

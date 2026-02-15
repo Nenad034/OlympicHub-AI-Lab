@@ -137,15 +137,32 @@ export class SolvexProvider implements HotelProvider {
      * Internal Param Translation (Bridge Logic)
      */
     private bridgeSearchParams(params: HotelSearchParams): any {
-        let cityId = this.mapDestinationToCityId(params.destination);
+        let cityIds: number[] = [];
         let hotelId: number | undefined = undefined;
+        const destLower = params.destination.toLowerCase();
 
-        // Use direct provider info if it matches Solvex
+        // 1. Agresivno mapiranje države (Bugarska)
+        const isBulgaria = destLower.includes('bugarska') || destLower.includes('bulgaria') || params.providerId === 1;
+        const isGreece = destLower.includes('grčka') || destLower.includes('greece') || params.providerId === 2;
+
+        if (isBulgaria && params.providerType !== 'city' && params.providerType !== 'hotel') {
+            console.log('[SolvexBridge] Detected Bulgaria search, mapping to all resorts...');
+            cityIds = [33, 68, 1, 9, 6, 10, 31, 26, 7, 34, 42, 43, 22, 28, 5, 12, 17, 38]; // Proširena lista
+        } else if (isGreece && params.providerType !== 'city' && params.providerType !== 'hotel') {
+            cityIds = [121, 122];
+        } else {
+            // Standardno mapiranje gradova
+            const mappedId = this.mapDestinationToCityId(params.destination);
+            if (mappedId) cityIds.push(mappedId);
+        }
+
+        // 2. Override sa direktnim ID-evima ako postoje (prioritet imaju konkretni gradovi/hoteli)
         if (params.targetProvider === 'Solvex' && params.providerId) {
+            const pid = Number(params.providerId);
             if (params.providerType === 'city') {
-                cityId = Number(params.providerId);
+                cityIds = [pid];
             } else if (params.providerType === 'hotel') {
-                hotelId = Number(params.providerId);
+                hotelId = pid;
             }
         }
 
@@ -157,7 +174,8 @@ export class SolvexProvider implements HotelProvider {
             childrenAges: params.childrenAges || [],
             rooms: params.rooms || 1,
             destination: params.destination,
-            cityId: cityId,
+            cityId: cityIds.length === 1 ? cityIds[0] : (cityIds.length > 1 ? cityIds : undefined),
+            hotelIds: cityIds.length > 1 ? cityIds : undefined, // Compatibility
             hotelId: hotelId
         };
     }

@@ -348,7 +348,8 @@ export function buildHotelSearchParams(params: {
 
     // 6. CityKeys
     if (params.cityId) {
-        request['CityKeys'] = { 'int': [params.cityId] };
+        const ids = Array.isArray(params.cityId) ? params.cityId : [params.cityId];
+        request['CityKeys'] = { 'int': ids };
     }
 
     // 7. HotelKeys

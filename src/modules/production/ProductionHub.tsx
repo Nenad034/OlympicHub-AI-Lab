@@ -1298,7 +1298,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         return (
             <div className="module-container fade-in" style={{ padding: 0, minHeight: '100vh', background: 'var(--bg-main)' }}>
                 {/* Header Area */}
-                <div style={{ padding: '32px 48px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-card)', backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 100 }}>
+                <div style={{ padding: '32px 48px', margin: '24px', borderRadius: '32px', border: '1px solid var(--border)', background: 'var(--bg-card)', backdropFilter: 'blur(20px)', position: 'sticky', top: '24px', zIndex: 100, boxShadow: '0 20px 50px rgba(0,0,0,0.2)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
                             <button onClick={() => setViewMode('hub')} className="btn-icon circle" style={{ width: '56px', height: '56px', background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
@@ -1306,102 +1306,116 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                             </button>
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                    <h1 style={{ margin: 0, fontSize: '42px', fontWeight: 900, letterSpacing: '-1.5px', color: 'var(--text-main)', textTransform: 'uppercase' }}>Baza Smeštaja</h1>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', background: 'rgba(16, 185, 129, 0.15)', padding: '6px 14px', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                                            <CloudCheck size={18} /> Cloud Active
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6', fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', background: 'rgba(59, 130, 246, 0.15)', padding: '6px 14px', borderRadius: '10px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-                                            <Zap size={18} fill="#3b82f6" strokeWidth={0} /> {dataSource === 'supabase' ? 'SUPABASE' : 'CACHE'}
-                                        </div>
-                                    </div>
+                                    <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 900, letterSpacing: '-0.5px', color: 'var(--text-main)', textTransform: 'uppercase' }}>Baza Smeštaja</h1>
                                 </div>
-                                <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)', fontSize: '18px', fontWeight: 500, opacity: 0.7 }}>
-                                    Pronađeno <span style={{ color: '#fff', fontWeight: 900 }}>{filteredHotels.length}</span> objekata u realnom vremenu
+                                <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 500, opacity: 0.7 }}>
+                                    Pronađeno <span style={{ color: 'var(--text-main)', fontWeight: 900 }}>{filteredHotels.length}</span> objekata u realnom vremenu
                                 </p>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '16px' }}>
 
-                            <button className="btn-primary" onClick={startCreate} style={{ height: '56px', padding: '0 40px', borderRadius: '16px', fontWeight: 900, fontSize: '16px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 10px 20px rgba(37, 99, 235, 0.3)', border: 'none' }}>
-                                <Plus size={26} style={{ marginRight: '12px' }} /> KREIRAJ OBJEKAT
+                            <button className="btn-primary" onClick={startCreate} style={{ height: '44px', padding: '0 24px', borderRadius: '12px', fontWeight: 700, fontSize: '13px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)', border: 'none' }}>
+                                <Plus size={18} style={{ marginRight: '8px' }} /> KREIRAJ OBJEKAT
                             </button>
                         </div>
                     </div>
 
-                    {/* Premium Controls Row */}
-                    <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-                        {/* Status Filter Group */}
-                        {/* Improved Status Filter Group */}
-                        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '18px', border: '1px solid var(--border)', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-                            {[
-                                { id: 'all', icon: <List size={22} />, label: 'Svi' },
-                                { id: 'active', icon: <CheckCircle2 size={22} />, label: 'Aktivni' },
-                                { id: 'inactive', icon: <Power size={22} />, label: 'Neaktivni' }
-                            ].map(item => (
-                                <button
-                                    key={item.id}
-                                    onClick={() => setStatusFilter(item.id as any)}
-                                    className={`filter-btn-premium ${statusFilter === item.id ? 'active' : ''}`}
-                                    style={{ height: '44px', width: '56px', borderRadius: '12px' }}
-                                    title={item.label}
-                                >
-                                    {item.icon}
-                                </button>
-                            ))}
+                    {/* Premium Controls Row - Grouped by Function */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                            {/* Status Filter Group */}
+                            <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-secondary)', padding: '6px', borderRadius: '18px', border: '1px solid var(--border)', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                                {[
+                                    { id: 'all', icon: <List size={22} />, label: 'Svi' },
+                                    { id: 'active', icon: <CheckCircle2 size={22} />, label: 'Aktivni' },
+                                    { id: 'inactive', icon: <Power size={22} />, label: 'Neaktivni' }
+                                ].map(item => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => setStatusFilter(item.id as any)}
+                                        className={`filter-btn-premium ${statusFilter === item.id ? 'active' : ''}`}
+                                        style={{ height: '44px', width: '56px', borderRadius: '12px' }}
+                                        title={item.label}
+                                    >
+                                        {item.icon}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Star Filter Group */}
+                            <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-secondary)', padding: '6px', borderRadius: '18px', border: '1px solid var(--border)' }}>
+                                {[5, 4, 3, 2, 1, 0].map(star => (
+                                    <button
+                                        key={star}
+                                        onClick={() => setSelectedStars(prev => prev.includes(star) && prev.length === 1 ? [] : [star])}
+                                        className={`filter-btn-premium ${selectedStars.includes(star) ? 'active' : ''}`}
+                                        style={{ height: '44px', minWidth: '64px', padding: '0 12px', borderRadius: '12px', color: selectedStars.includes(star) ? '#fbbf24' : 'var(--text-secondary)' }}
+                                    >
+                                        {star === 0 ? (
+                                            <span style={{ fontSize: '10px', fontWeight: 900, whiteSpace: 'nowrap', opacity: selectedStars.includes(0) ? 1 : 0.6 }}>BEZ KAT.</span>
+                                        ) : (
+                                            <>
+                                                <span style={{ fontSize: '16px', fontWeight: 900, marginRight: '4px' }}>{star}</span>
+                                                <Star size={14} fill={selectedStars.includes(star) ? '#fbbf24' : 'none'} strokeWidth={selectedStars.includes(star) ? 0 : 2.5} />
+                                            </>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Star Filter Group */}
-                        {/* Expanded Star Filter Group */}
-                        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '18px', border: '1px solid var(--border)' }}>
-                            {[5, 4, 3, 2, 1, 0].map(star => (
+                        {/* Integrity Quick Toggles */}
+                        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-secondary)', padding: '6px', borderRadius: '18px', border: '1px solid var(--border)' }}>
+                                {[
+                                    { key: 'img', icon: <ImageIcon size={22} />, label: 'Slike' },
+                                    { key: 'desc', icon: <FileText size={22} />, label: 'Opis' },
+                                    { key: 'amen', icon: <Shield size={22} />, label: 'Sadržaji' },
+                                    { key: 'map', icon: <MapPin size={22} />, label: 'Mapa' }
+                                ].map(item => (
+                                    <button
+                                        key={item.key}
+                                        onClick={() => setIntegrityFilter(prev => prev.includes(item.key) ? prev.filter(k => k !== item.key) : [...prev, item.key])}
+                                        className={`filter-btn-premium ${integrityFilter.includes(item.key) ? 'active' : ''}`}
+                                        style={{ height: '44px', width: '56px', borderRadius: '12px' }}
+                                        title={`Filtriraj hotele koji imaju: ${item.label}`}
+                                    >
+                                        {item.icon}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {(selectedStars.length > 0 || statusFilter !== 'all' || integrityFilter.length > 0 || searchQuery !== '') && (
                                 <button
-                                    key={star}
-                                    onClick={() => setSelectedStars(prev => prev.includes(star) && prev.length === 1 ? [] : [star])}
-                                    className={`filter-btn-premium ${selectedStars.includes(star) ? 'active' : ''}`}
-                                    style={{ height: '44px', minWidth: star === 0 ? 'auto' : '64px', padding: '0 12px', borderRadius: '12px', color: selectedStars.includes(star) ? '#fbbf24' : 'var(--text-secondary)' }}
+                                    onClick={() => {
+                                        setSelectedStars([]);
+                                        setStatusFilter('all');
+                                        setIntegrityFilter([]);
+                                        setSearchQuery('');
+                                        setSearchPills([]);
+                                    }}
+                                    style={{
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                                        color: '#ef4444',
+                                        padding: '0 16px',
+                                        borderRadius: '12px',
+                                        fontSize: '12px',
+                                        fontWeight: 800,
+                                        cursor: 'pointer',
+                                        height: '44px'
+                                    }}
                                 >
-                                    {star === 0 ? (
-                                        <span style={{ fontSize: '10px', fontWeight: 900, whiteSpace: 'nowrap', opacity: selectedStars.includes(0) ? 1 : 0.6 }}>BEZ KAT.</span>
-                                    ) : (
-                                        <>
-                                            <span style={{ fontSize: '16px', fontWeight: 900, marginRight: '4px' }}>{star}</span>
-                                            <Star size={14} fill={selectedStars.includes(star) ? '#fbbf24' : 'none'} strokeWidth={selectedStars.includes(star) ? 0 : 2.5} />
-                                        </>
-                                    )}
+                                    PONIŠTI SVE
                                 </button>
-                            ))}
+                            )}
                         </div>
+                    </div>
 
-                        {(selectedStars.length > 0 || statusFilter !== 'all' || integrityFilter.length > 0 || searchQuery !== '') && (
-                            <button
-                                onClick={() => {
-                                    setSelectedStars([]);
-                                    setStatusFilter('all');
-                                    setIntegrityFilter([]);
-                                    setSearchQuery('');
-                                    setSearchPills([]);
-                                }}
-                                style={{
-                                    background: 'rgba(239, 68, 68, 0.1)',
-                                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                                    color: '#ef4444',
-                                    padding: '0 16px',
-                                    borderRadius: '12px',
-                                    fontSize: '12px',
-                                    fontWeight: 800,
-                                    cursor: 'pointer',
-                                    height: '44px'
-                                }}
-                            >
-                                PONIŠTI SVE
-                            </button>
-                        )}
-
-                        {/* Search Bar - Main Centerpiece */}
-                        {/* Refined Search Bar matching user screenshot */}
-                        <div style={{ flex: 1, position: 'relative' }}>
-                            <style>{`
+                    {/* Search Bar Row - Full Width for better UX */}
+                    <div style={{ marginTop: '24px', position: 'relative' }}>
+                        <style>{`
                                 .search-bar-premium {
                                     display: flex;
                                     gap: 8px;
@@ -1443,8 +1457,8 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                     color: var(--text-secondary);
                                 }
                                 .filter-btn-premium:hover {
-                                    background: rgba(255, 255, 255, 0.05);
-                                    border-color: rgba(255, 255, 255, 0.1);
+                                    background: var(--bg-card-hover);
+                                    border-color: var(--border);
                                 }
                                 .filter-btn-premium.active {
                                     background: rgba(59, 130, 246, 0.12);
@@ -1503,183 +1517,163 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                     border-radius: 10px;
                                 }
                             `}</style>
-                            <div className="search-bar-premium" style={{ minHeight: '52px' }}>
-                                <Search size={22} color="rgba(59, 130, 246, 0.6)" />
+                        <div className="search-bar-premium" style={{ minHeight: '52px' }}>
+                            <Search size={22} color="rgba(59, 130, 246, 0.6)" />
 
-                                {searchPills.map((pill, idx) => (
-                                    <div
-                                        key={idx}
-                                        style={{
-                                            background: 'rgba(59, 130, 246, 0.15)',
-                                            border: '1px solid rgba(59, 130, 246, 0.3)',
-                                            padding: '4px 10px',
-                                            borderRadius: '8px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            color: '#fff',
-                                            fontSize: '13px',
-                                            fontWeight: 600
-                                        }}
-                                    >
-                                        {pill}
-                                        <button
-                                            onClick={() => setSearchPills(prev => prev.filter((_, i) => i !== idx))}
-                                            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', padding: 0, cursor: 'pointer', display: 'flex' }}
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    </div>
-                                ))}
-
-                                <input
-                                    type="text"
-                                    placeholder={searchPills.length > 0 ? "" : "Pretražite po nazivu hotela, mestu ili ID-u..."}
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && searchQuery.trim()) {
-                                            setSearchPills(prev => [...prev, searchQuery.trim()]);
-                                            setSearchQuery('');
-                                        } else if (e.key === 'Backspace' && !searchQuery && searchPills.length > 0) {
-                                            setSearchPills(prev => prev.slice(0, -1));
-                                        }
+                            {searchPills.map((pill, idx) => (
+                                <div
+                                    key={idx}
+                                    style={{
+                                        background: 'rgba(59, 130, 246, 0.15)',
+                                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                                        padding: '4px 10px',
+                                        borderRadius: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        color: 'var(--accent)',
+                                        fontSize: '13px',
+                                        fontWeight: 600
                                     }}
-                                    style={{ flex: 1, minWidth: '150px' }}
-                                />
-                                {(searchQuery || searchPills.length > 0) && (
+                                >
+                                    {pill}
                                     <button
-                                        onClick={() => { setSearchQuery(''); setSearchPills([]); }}
-                                        style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', padding: '4px', cursor: 'pointer', display: 'flex', color: 'rgba(255,255,255,0.4)' }}
+                                        onClick={() => setSearchPills(prev => prev.filter((_, i) => i !== idx))}
+                                        style={{ background: 'transparent', border: 'none', color: 'var(--accent)', padding: 0, cursor: 'pointer', display: 'flex', opacity: 0.7 }}
                                     >
-                                        <X size={16} />
+                                        <X size={14} />
                                     </button>
-                                )}
-                            </div>
-                            <div style={{ position: 'absolute', right: '12px', top: '-25px', fontSize: '11px', fontWeight: 900, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '4px 10px', borderRadius: '8px' }}>
+                                </div>
+                            ))}
+
+                            <input
+                                type="text"
+                                placeholder={searchPills.length > 0 ? "" : "Pretražite po nazivu hotela, mestu ili ID-u..."}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && searchQuery.trim()) {
+                                        setSearchPills(prev => [...prev, searchQuery.trim()]);
+                                        setSearchQuery('');
+                                    } else if (e.key === 'Backspace' && !searchQuery && searchPills.length > 0) {
+                                        setSearchPills(prev => prev.slice(0, -1));
+                                    }
+                                }}
+                                style={{ flex: 1, minWidth: '150px' }}
+                            />
+                            {(searchQuery || searchPills.length > 0) && (
+                                <button
+                                    onClick={() => { setSearchQuery(''); setSearchPills([]); }}
+                                    style={{ background: 'var(--bg-secondary)', border: 'none', borderRadius: '50%', padding: '4px', cursor: 'pointer', display: 'flex', color: 'var(--text-secondary)' }}
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
+                            <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', fontWeight: 900, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '6px 12px', borderRadius: '8px', pointerEvents: 'none' }}>
                                 {filteredHotels.length} / {hotels.length} objekata
                             </div>
+                        </div>
 
-                            {searchQuery.length > 1 && (
-                                <div className="suggestions-panel">
-                                    <div style={{ padding: '8px 16px 16px', fontSize: '11px', fontWeight: 900, color: 'rgba(255,255,255,0.3)', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
-                                        Rezultati pretrage
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                        {(() => {
-                                            const suggestions: { label: string, type: 'city' | 'hotel' | 'country', sub: string, icon: any }[] = [];
-                                            const q = searchQuery.toLowerCase();
+                        {searchQuery.length > 1 && (
+                            <div className="suggestions-panel">
+                                <div style={{ padding: '8px 16px 16px', fontSize: '11px', fontWeight: 900, color: 'rgba(255,255,255,0.3)', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+                                    Rezultati pretrage
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    {(() => {
+                                        const suggestions: { label: string, type: 'city' | 'hotel' | 'country', sub: string, icon: any }[] = [];
+                                        const q = searchQuery.toLowerCase();
 
-                                            // 1. Check for Countries and their cities
-                                            const uniqueCountries = new Set<string>();
+                                        // 1. Check for Countries and their cities
+                                        const uniqueCountries = new Set<string>();
+                                        hotels.forEach(h => {
+                                            const country = translateCountry(h.originalPropertyData?.address?.country);
+                                            if (country && country.toLowerCase().includes(q)) {
+                                                uniqueCountries.add(country);
+                                            }
+                                        });
+
+                                        uniqueCountries.forEach(country => {
+                                            // Find cities in this country
+                                            const cities = new Set<string>();
                                             hotels.forEach(h => {
-                                                const country = translateCountry(h.originalPropertyData?.address?.country);
-                                                if (country && country.toLowerCase().includes(q)) {
-                                                    uniqueCountries.add(country);
+                                                if (translateCountry(h.originalPropertyData?.address?.country) === country) {
+                                                    const city = h.location.place || (h.originalPropertyData as any)?.address?.city;
+                                                    if (city) cities.add(hasCyrillic(city) ? transliterate(city) : city);
                                                 }
                                             });
-
-                                            uniqueCountries.forEach(country => {
-                                                // Find cities in this country
-                                                const cities = new Set<string>();
-                                                hotels.forEach(h => {
-                                                    if (translateCountry(h.originalPropertyData?.address?.country) === country) {
-                                                        const city = h.location.place || (h.originalPropertyData as any)?.address?.city;
-                                                        if (city) cities.add(hasCyrillic(city) ? transliterate(city) : city);
-                                                    }
-                                                });
-                                                cities.forEach(city => {
-                                                    suggestions.push({
-                                                        label: city,
-                                                        type: 'city',
-                                                        sub: `Destinacija u državi: ${country}`,
-                                                        icon: <MapPin size={18} />
-                                                    });
-                                                });
-                                            });
-
-                                            // 2. Direct City Matches (if not already added)
-                                            hotels.forEach(h => {
-                                                const p = h.location.place;
-                                                const dataCity = (h.originalPropertyData as any)?.address?.city;
-                                                [p, dataCity].filter(Boolean).forEach(c => {
-                                                    const translit = hasCyrillic(c!) ? transliterate(c!) : c!;
-                                                    if (translit.toLowerCase().includes(q) && !suggestions.find(s => s.label === translit)) {
-                                                        suggestions.push({
-                                                            label: translit,
-                                                            type: 'city',
-                                                            sub: translateCountry(h.originalPropertyData?.address?.country),
-                                                            icon: <Navigation size={18} />
-                                                        });
-                                                    }
-                                                });
-                                            });
-
-                                            // 3. Hotel Matches
-                                            hotels.filter(h => h.name.toLowerCase().includes(q)).slice(0, 5).forEach(h => {
+                                            cities.forEach(city => {
                                                 suggestions.push({
-                                                    label: h.name,
-                                                    type: 'hotel',
-                                                    sub: `${translateCountry(h.originalPropertyData?.address?.country)} • ${h.location.place}`,
-                                                    icon: <Building2 size={18} />
+                                                    label: city,
+                                                    type: 'city',
+                                                    sub: `Destinacija u državi: ${country}`,
+                                                    icon: <MapPin size={18} />
                                                 });
                                             });
+                                        });
 
-                                            return suggestions.slice(0, 10);
-                                        })().map((s, idx) => (
-                                            <button
-                                                key={idx}
-                                                onClick={() => {
-                                                    setSearchQuery(s.label);
-                                                    if (s.type === 'hotel') {
-                                                        const h = hotels.find(hotel => hotel.name === s.label);
-                                                        if (h) { setSelectedHotel(h); setViewMode('detail'); }
-                                                    }
-                                                }}
-                                                className="suggestion-item-premium"
-                                            >
-                                                <div className="suggestion-icon-box">
-                                                    {s.icon}
-                                                </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>{s.label}</span>
-                                                    <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>{s.sub}</span>
-                                                </div>
-                                                <ChevronRight size={16} style={{ marginLeft: 'auto', opacity: 0.3 }} />
-                                            </button>
-                                        ))}
-                                    </div>
+                                        // 2. Direct City Matches (if not already added)
+                                        hotels.forEach(h => {
+                                            const p = h.location.place;
+                                            const dataCity = (h.originalPropertyData as any)?.address?.city;
+                                            [p, dataCity].filter(Boolean).forEach(c => {
+                                                const translit = hasCyrillic(c!) ? transliterate(c!) : c!;
+                                                if (translit.toLowerCase().includes(q) && !suggestions.find(s => s.label === translit)) {
+                                                    suggestions.push({
+                                                        label: translit,
+                                                        type: 'city',
+                                                        sub: translateCountry(h.originalPropertyData?.address?.country),
+                                                        icon: <Navigation size={18} />
+                                                    });
+                                                }
+                                            });
+                                        });
+
+                                        // 3. Hotel Matches
+                                        hotels.filter(h => h.name.toLowerCase().includes(q)).slice(0, 5).forEach(h => {
+                                            suggestions.push({
+                                                label: h.name,
+                                                type: 'hotel',
+                                                sub: `${translateCountry(h.originalPropertyData?.address?.country)} • ${h.location.place}`,
+                                                icon: <Building2 size={18} />
+                                            });
+                                        });
+
+                                        return suggestions.slice(0, 10);
+                                    })().map((s, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => {
+                                                setSearchQuery(s.label);
+                                                if (s.type === 'hotel') {
+                                                    const h = hotels.find(hotel => hotel.name === s.label);
+                                                    if (h) { setSelectedHotel(h); setViewMode('detail'); }
+                                                }
+                                            }}
+                                            className="suggestion-item-premium"
+                                        >
+                                            <div className="suggestion-icon-box">
+                                                {s.icon}
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>{s.label}</span>
+                                                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>{s.sub}</span>
+                                            </div>
+                                            <ChevronRight size={16} style={{ marginLeft: 'auto', opacity: 0.3 }} />
+                                        </button>
+                                    ))}
                                 </div>
-                            )}
-                        </div>
-
-                        {/* Integrity Quick Toggles */}
-                        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.03)', padding: '6px', borderRadius: '18px', border: '1px solid var(--border)' }}>
-                            {[
-                                { key: 'img', icon: <ImageIcon size={22} />, label: 'Slike' },
-                                { key: 'desc', icon: <FileText size={22} />, label: 'Opis' },
-                                { key: 'amen', icon: <Shield size={22} />, label: 'Sadržaji' },
-                                { key: 'map', icon: <MapPin size={22} />, label: 'Mapa' }
-                            ].map(item => (
-                                <button
-                                    key={item.key}
-                                    onClick={() => setIntegrityFilter(prev => prev.includes(item.key) ? prev.filter(k => k !== item.key) : [...prev, item.key])}
-                                    className={`filter-btn-premium ${integrityFilter.includes(item.key) ? 'active' : ''}`}
-                                    style={{ height: '48px', width: '56px', borderRadius: '12px' }}
-                                    title={`Filtriraj hotele koji imaju: ${item.label}`}
-                                >
-                                    {item.icon}
-                                </button>
-                            ))}
-                        </div>
+                            </div>
+                        )}
                     </div>
+
                 </div>
 
                 <div style={{ padding: '0 48px 48px' }}>
-                    <div style={{ marginTop: '32px', background: 'rgba(255,255,255,0.01)', borderRadius: '32px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 20px 60px -10px rgba(0,0,0,0.5)' }}>
+                    <div style={{ marginTop: '32px', background: 'var(--bg-card)', borderRadius: '32px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 20px 60px -10px rgba(0,0,0,0.5)' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ borderBottom: '2px solid var(--border)', background: 'rgba(255,255,255,0.03)' }}>
+                                <tr style={{ borderBottom: '2px solid var(--border)', background: 'var(--bg-secondary)' }}>
                                     <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Status</th>
                                     <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Objekat</th>
                                     <th style={{ padding: '24px', textAlign: 'center', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Kat.</th>

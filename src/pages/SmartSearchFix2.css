@@ -57,12 +57,13 @@
 /* View switcher in toolbar */
 .view-mode-switcher {
     display: flex;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 4px;
-    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.6) !important;
+    padding: 6px;
+    border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    align-items: center;
+    gap: 4px;
     margin-left: auto;
-    /* Push to right if space permits */
 }
 
 /* Summary Bar V4 */
@@ -85,8 +86,40 @@
 
 .sort-actions {
     display: flex;
-    gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.03);
-    padding: 4px;
-    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.6) !important;
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    align-items: center;
+    gap: 4px;
+}
+
+.view-btn {
+    background: transparent !important;
+    border: none !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.8rem !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    font-style: italic !important;
+    min-width: 40px;
+}
+
+.view-btn:hover {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.view-btn.active {
+    background: #6366f1 !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4) !important;
 }

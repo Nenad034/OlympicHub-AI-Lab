@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../stores';
 import {
-    Sparkles, Hotel, Plane, Package, Bus, Compass,
+    Sparkles, Hotel, Plane, Package, Bus, Compass, LayoutTemplate,
     MapPin, Calendar, CalendarDays, Users, UtensilsCrossed, Star,
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
     LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
@@ -149,7 +149,7 @@ const cleanRoomName = (name: string): string => {
 interface Destination {
     id: string;
     name: string;
-    type: 'destination' | 'hotel';
+    type: 'destination' | 'hotel' | 'country';
     country?: string;
     stars?: number;
     provider?: string;
@@ -161,12 +161,25 @@ interface RoomAllocation {
     childrenAges: number[];
 }
 
+import { NarrativeSearch } from '../components/packages/Steps/NarrativeSearch';
+import { ImmersiveSearch } from '../components/packages/Steps/ImmersiveSearch';
+import type { BasicInfoData, DestinationInput } from '../types/packageSearch.types';
+
+
 const SmartSearch: React.FC = () => {
     const { userLevel, impersonatedSubagent } = useAuthStore();
     const isSubagent = userLevel < 6 || !!impersonatedSubagent;
     const navigate = useNavigate();
 
     const [searchParams, setSearchParams] = useSearchParams();
+
+    // MODE SWITCH
+    const [searchMode, setSearchMode] = useState<'classic' | 'narrative' | 'immersive'>('immersive');
+
+    // Reset search performed when mode changes so the wizard is visible
+    useEffect(() => {
+        setSearchPerformed(false);
+    }, [searchMode]);
 
     const activeTab = (searchParams.get('tab') as 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'ski') || 'hotel';
 
@@ -187,8 +200,16 @@ const SmartSearch: React.FC = () => {
     // Recent searches state kept but not used for display anymore
     const [recentSearches, setRecentSearches] = useState<Destination[]>([]);
 
-    const [checkIn, setCheckIn] = useState('');
-    const [checkOut, setCheckOut] = useState('');
+    const [checkIn, setCheckIn] = useState(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        return d.toISOString().split('T')[0];
+    });
+    const [checkOut, setCheckOut] = useState(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 8);
+        return d.toISOString().split('T')[0];
+    });
     const [nights, setNights] = useState(7);
     const [activeCalendar, setActiveCalendar] = useState<'in' | 'out' | null>(null);
     const [flexibleDays, setFlexibleDays] = useState(0);
@@ -209,6 +230,108 @@ const SmartSearch: React.FC = () => {
 
     const [mealPlan, setMealPlan] = useState('');
     const [nationality, setNationality] = useState('RS');
+
+    // NARRATIVE TO SMART SEARCH ADAPTER
+    const handleNarrativeUpdate = (data: BasicInfoData) => {
+        let mappedDestinations = selectedDestinations;
+        let mappedCheckIn = checkIn;
+        let mappedCheckOut = checkOut;
+        let mappedAllocations = roomAllocations;
+
+        // 1. Map Destinations
+        if (data.destinations && data.destinations.length > 0) {
+            const dest = data.destinations[0];
+
+            let finalId = dest.id;
+            let finalType = (dest as any).type || 'destination';
+            let finalCountry = (dest as any).country_name || dest.country || 'Bugarska';
+
+            const isRealProviderId = finalId && !String(finalId).startsWith('narrative');
+
+            if (!isRealProviderId) {
+                const existingDest = mockDestinations.find(d => d.name.toLowerCase() === dest.city.toLowerCase());
+                if (existingDest) {
+                    finalId = existingDest.id;
+                    finalType = existingDest.type;
+                    finalCountry = existingDest.country;
+                } else {
+                    finalId = `narrative-${dest.city}`;
+                }
+            }
+
+            const newDest: Destination = {
+                id: finalId,
+                name: dest.city,
+                type: finalType as 'destination' | 'hotel' | 'country',
+                country: finalCountry
+            };
+
+            mappedDestinations = [newDest];
+            if (selectedDestinations.length === 0 || selectedDestinations[0].id !== newDest.id || selectedDestinations[0].name !== newDest.name) {
+                setSelectedDestinations(mappedDestinations);
+            }
+        }
+
+        // 2. Map Dates
+        if (data.startDate !== checkIn) {
+            mappedCheckIn = data.startDate;
+            setCheckIn(mappedCheckIn);
+        }
+        if (data.endDate !== checkOut) {
+            mappedCheckOut = data.endDate;
+            setCheckOut(mappedCheckOut);
+        }
+        if (data.totalDays !== nights) setNights(data.totalDays || 0);
+
+        // 3. Map Travelers
+        const travelers = data.travelers;
+        if (travelers) {
+            const newAllocations = [...roomAllocations];
+            newAllocations[0] = {
+                adults: travelers.adults,
+                children: travelers.children,
+                childrenAges: travelers.childrenAges || []
+            };
+            mappedAllocations = newAllocations;
+            const current = roomAllocations[0];
+            if (current.adults !== travelers.adults || current.children !== travelers.children || JSON.stringify(current.childrenAges) !== JSON.stringify(travelers.childrenAges)) {
+                setRoomAllocations(mappedAllocations);
+            }
+        }
+
+        return {
+            destinations: mappedDestinations,
+            checkIn: mappedCheckIn,
+            checkOut: mappedCheckOut,
+            allocations: mappedAllocations
+        };
+    };
+
+    // Prepare Initial Data for Narrative Search
+    const getInitialNarrativeData = (): BasicInfoData => {
+        return {
+            destinations: [{
+                id: '1',
+                city: selectedDestinations[0]?.name || '',
+                checkIn: checkIn,
+                checkOut: checkOut,
+                nights: nights,
+                travelers: roomAllocations[0],
+                category: [],
+                service: [],
+                flexibleDays: 0,
+                country: '',
+                countryCode: '',
+                airportCode: ''
+            }],
+            travelers: roomAllocations[0],
+            nationality: nationality,
+            currency: 'EUR',
+            startDate: checkIn,
+            endDate: checkOut,
+            totalDays: nights
+        };
+    };
 
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<SmartSearchResult[]>([]);
@@ -471,11 +594,18 @@ const SmartSearch: React.FC = () => {
         }
     };
 
-    const handleSearch = async (overrideParams?: { checkIn?: string, checkOut?: string }) => {
+    const handleSearch = async (overrideParams?: {
+        checkIn?: string,
+        checkOut?: string,
+        destinations?: Destination[],
+        allocations?: RoomAllocation[]
+    }) => {
         const activeCheckIn = overrideParams?.checkIn || checkIn;
         const activeCheckOut = overrideParams?.checkOut || checkOut;
+        const activeDestinations = overrideParams?.destinations || selectedDestinations;
+        const activeAllocations = (overrideParams?.allocations || roomAllocations).filter(r => r.adults > 0);
 
-        if (selectedDestinations.length === 0) {
+        if (activeDestinations.length === 0) {
             setSearchError('Molimo odaberite najmanje jednu destinaciju');
             return;
         }
@@ -493,7 +623,6 @@ const SmartSearch: React.FC = () => {
         setSelectedArrivalDate(activeCheckIn);
 
         try {
-            const activeAllocations = roomAllocations.filter(r => r.adults > 0);
             if (activeAllocations.length === 0) {
                 setSearchError('Molimo definišite bar jednu sobu sa odraslim putnicima.');
                 setIsSearching(false);
@@ -502,7 +631,11 @@ const SmartSearch: React.FC = () => {
 
             const results = await performSmartSearch({
                 searchType: activeTab,
-                destinations: selectedDestinations,
+                destinations: activeDestinations.map(d => ({
+                    id: String(d.id).replace('solvex-c-', ''),
+                    name: d.name,
+                    type: d.type
+                })),
                 checkIn: activeCheckIn,
                 checkOut: activeCheckOut,
                 rooms: activeAllocations,
@@ -534,7 +667,7 @@ const SmartSearch: React.FC = () => {
 
                 // We try specific offsets to build a small timeline
                 // Fallback Logic: Try current nights, then nights-1, then nights-2 if nothing found
-                const offsets = [1, -1, 2, -2, 3, -3, 4, -4, 5, -5];
+                const offsets = [1, -1, 2, -2, 3]; // Reduced offsets to avoid rate limits
                 const timeline: Record<string, { available: boolean, price?: number, isCheapest?: boolean, nights?: number }> = {};
                 timeline[activeCheckIn] = { available: false }; // Init original date as unavailable
 
@@ -564,7 +697,11 @@ const SmartSearch: React.FC = () => {
 
                         const flexTestResults = await performSmartSearch({
                             searchType: activeTab,
-                            destinations: selectedDestinations,
+                            destinations: activeDestinations.map(d => ({
+                                id: String(d.id).replace('solvex-c-', ''),
+                                name: d.name,
+                                type: d.type
+                            })),
                             checkIn: sCheckIn,
                             checkOut: sCheckOut,
                             rooms: activeAllocations,
@@ -648,6 +785,9 @@ const SmartSearch: React.FC = () => {
     };
 
     const filteredResults = searchResults.filter(hotel => {
+        // TEMPORARY: Only show Solvex results as other APIs are undergoing maintenance
+        if (hotel.provider.toLowerCase() !== 'solvex') return false;
+
         if (hotelNameFilter) {
             const searchTerm = hotelNameFilter.toLowerCase();
             const matchesName = hotel.name.toLowerCase().includes(searchTerm);
@@ -905,332 +1045,440 @@ const SmartSearch: React.FC = () => {
                 </div>
             ) : (
                 <>
-                    <div className="search-card-frame">
-
-                        {/* ROW 1: DESTINATION */}
-                        < div className="destination-row" >
-                            <div className="field-label"><MapPin size={14} /> Destinacija ili Smeštaj (do 3)</div>
-                            <div className="destination-input-wrapper" ref={autocompleteRef}>
-                                <div className="multi-destination-input premium" style={{ border: 'none', padding: 0, height: 'auto', background: 'transparent' }}>
-                                    {selectedDestinations.map(dest => (
-                                        <div key={dest.id} className="destination-chip">
-                                            {dest.type === 'hotel' ? <Hotel size={14} /> : <MapPin size={14} />}
-                                            <span>{dest.name}</span>
-                                            <button className="chip-remove" onClick={() => setSelectedDestinations(selectedDestinations.filter(d => d.id !== dest.id))}><X size={14} /></button>
-                                        </div>
-                                    ))}
-                                    {selectedDestinations.length < 3 && (
-                                        <input
-                                            ref={inputRef}
-                                            type="text"
-                                            placeholder={selectedDestinations.length === 0 ? "npr. Golden Sands, Hotel Park..." : "Dodaj još..."}
-                                            value={destinationInput}
-                                            onChange={(e) => setDestinationInput(e.target.value)}
-                                            className="smart-input-inline"
-                                            onFocus={() => { if (destinationInput.length >= 2) setShowSuggestions(true); }}
-                                            style={{ background: 'transparent', border: 'none', width: '100%', height: '100%', fontSize: '1.3rem', fontStyle: 'italic' }}
-                                        />
-                                    )}
-                                </div>
-                                {/* Suggestions Dropdown */}
-                                {showSuggestions && suggestions.length > 0 && (
-                                    <div className="autocomplete-dropdown premium" style={{ top: '100%', left: 0, right: 0, width: '100%' }}>
-                                        {suggestions.map(s => (
-                                            <div key={s.id} className="suggestion-item" onClick={() => handleAddDestination(s)}>
-                                                {s.type === 'hotel' ? <Hotel size={16} className="suggestion-icon hotel" /> : <MapPin size={16} className="suggestion-icon destination" />}
-                                                <div className="suggestion-content">
-                                                    <span className="suggestion-name">{s.name}</span>
-                                                    <span className="suggestion-meta">
-                                                        {s.type === 'hotel' ? (s.stars ? `${s.stars}★ ${s.provider}` : s.provider) : s.country}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div >
-
-                        {/* ROW 2: PARAMETERS GRID */}
-                        < div className="params-grid" >
-                            {/* Check In */}
-                            < div className="col-checkin param-item" >
-                                <div className="field-label"><CalendarIcon size={14} /> Check-in</div>
-                                <div className="input-box" onClick={() => setActiveCalendar('in')} style={{ cursor: 'pointer' }}>
-                                    {checkIn ? formatDate(checkIn) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
-                                </div>
-                            </div >
-
-                            {/* Check Out */}
-                            < div className="col-checkout param-item" >
-                                <div className="field-label"><CalendarIcon size={14} /> Check-out</div>
-                                <div className="input-box" onClick={() => setActiveCalendar('out')} style={{ cursor: 'pointer' }}>
-                                    {checkOut ? formatDate(checkOut) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
-                                </div>
-                            </div >
-
-                            {/* Flexibility */}
-                            < div className="col-flex param-item" >
-                                <div className="field-label"><ArrowDownWideNarrow size={14} /> Fleksibilnost</div>
-                                <div className="flex-toggle-group">
-                                    {[0, 1, 3, 5].map(day => (
-                                        <button
-                                            key={day}
-                                            className={`flex-btn ${flexibleDays === day ? 'active' : ''}`}
-                                            onClick={() => setFlexibleDays(day)}
-                                        >
-                                            {day === 0 ? 'Tačno' : `±${day}`}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div >
-
-                            {/* Category Selector */}
-                            <div className="col-stars param-item" style={{ position: 'relative' }}>
-                                <div className="field-label"><Star size={14} /> Odaberi Kategoriju</div>
-                                <div className="input-box" onClick={() => setShowStarPicker(!showStarPicker)} style={{ cursor: 'pointer' }}>
-                                    <span style={{ fontSize: '0.85rem' }}>
-                                        {selectedStars.includes('all') ? 'Sve kategorije' : (selectedStars.length === 1 ? CATEGORY_OPTIONS.find(o => o.value === selectedStars[0])?.label : selectedStars.filter(s => s !== 'all').sort().join(', '))}
-                                    </span>
-                                    <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-                                </div>
-                                {showStarPicker && (
-                                    <div className="vertical-filters-popover animate-fade-in-up">
-                                        <div className="vertical-filter-group">
-                                            <button className={`v-filter-btn ${selectedStars.includes('all') ? 'active' : ''}`} onClick={() => { toggleStarFilter('all'); setShowStarPicker(false); }}>Sve</button>
-                                            {[5, 4, 3, 2, 0].map(s => (
-                                                <button key={s} className={`v-filter-btn ${selectedStars.includes(s.toString()) ? 'active' : ''}`} onClick={() => toggleStarFilter(s.toString())}>
-                                                    {renderStarsMini(s)}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '10px', marginTop: '10px' }}>
-                                            <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setShowStarPicker(false)}>Zatvori</button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Meal Selector */}
-                            <div className="col-meals param-item" style={{ position: 'relative' }}>
-                                <div className="field-label"><UtensilsCrossed size={14} /> Odaberi Uslugu</div>
-                                <div className="input-box" onClick={() => setShowMealPicker(!showMealPicker)} style={{ cursor: 'pointer' }}>
-                                    <span style={{ fontSize: '0.85rem' }}>
-                                        {selectedMealPlans.includes('all') ? 'Sve usluge' : (selectedMealPlans.length === 1 ? MEAL_PLAN_OPTIONS.find(o => o.value === selectedMealPlans[0])?.label : selectedMealPlans.filter(p => p !== 'all').join(', '))}
-                                    </span>
-                                    <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-                                </div>
-                                {showMealPicker && (
-                                    <div className="vertical-filters-popover animate-fade-in-up">
-                                        <div className="vertical-filter-group">
-                                            <button className={`v-filter-btn ${selectedMealPlans.includes('all') ? 'active' : ''}`} onClick={() => { toggleMealPlanFilter('all'); setShowMealPicker(false); }}>Sve usluge</button>
-                                            {[
-                                                { id: 'RO', label: 'Na - Najam' },
-                                                { id: 'BB', label: 'ND - Doručak' },
-                                                { id: 'HB', label: 'HB - Polupansion' },
-                                                { id: 'FB', label: 'FB - Pun pansion' },
-                                                { id: 'AI', label: 'All - All Inclusive' },
-                                                { id: 'UAI', label: 'UAll - Ultra Inclusive' }
-                                            ].map(mp => (
-                                                <button key={mp.id} className={`v-filter-btn ${selectedMealPlans.includes(mp.id) ? 'active' : ''}`} onClick={() => toggleMealPlanFilter(mp.id)}>
-                                                    {mp.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '10px', marginTop: '10px' }}>
-                                            <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setShowMealPicker(false)}>Zatvori</button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="col-nationality" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                {/* Nationality Selector */}
-                                <div className="param-item" style={{ position: 'relative' }}>
-                                    <div className="field-label"><Globe size={14} /> NACIONALNOST</div>
-                                    <div className="input-box" onClick={() => setShowNationalityPicker(!showNationalityPicker)} style={{ cursor: 'pointer' }}>
-                                        <span style={{ fontSize: '0.85rem' }}>
-                                            {NATIONALITY_OPTIONS.find(n => n.code === nationality)?.name || 'Odaberi državu'}
-                                        </span>
-                                        <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-                                    </div>
-                                    {showNationalityPicker && (
-                                        <div className="vertical-filters-popover animate-fade-in-up">
-                                            <div className="vertical-filter-group" style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '10px' }}>
-                                                {NATIONALITY_OPTIONS.map(n => (
-                                                    <button
-                                                        key={n.code}
-                                                        className={`v-filter-btn ${nationality === n.code ? 'active' : ''}`}
-                                                        onClick={() => {
-                                                            setNationality(n.code);
-                                                            setShowNationalityPicker(false);
-                                                        }}
-                                                    >
-                                                        {n.name}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Budget Filter */}
-                                <div className="param-item">
-                                    <div className="field-label"><DollarSign size={14} /> BUDŽET</div>
-                                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                                        <input
-                                            type="number"
-                                            placeholder="Od"
-                                            value={budgetFrom}
-                                            onChange={(e) => setBudgetFrom(e.target.value)}
-                                            className="budget-input"
-                                            style={{
-                                                flex: 1,
-                                                borderRadius: '12px',
-                                                padding: '12px',
-                                                fontSize: '0.85rem',
-                                                outline: 'none',
-                                                width: '100%'
-                                            }}
-                                        />
-                                        <input
-                                            type="number"
-                                            placeholder="Do"
-                                            value={budgetTo}
-                                            onChange={(e) => setBudgetTo(e.target.value)}
-                                            className="budget-input"
-                                            style={{
-                                                flex: 1,
-                                                borderRadius: '12px',
-                                                padding: '12px',
-                                                fontSize: '0.85rem',
-                                                outline: 'none',
-                                                width: '100%'
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Room Tabs & Pax Configuration */}
-                            <div className="col-rooms-tabs">
-                                <div className="room-tabs-header" style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px' }}>
-                                    {roomAllocations.map((room, idx) => (
-                                        <button
-                                            key={idx}
-                                            className={`room-tab-btn ${activeRoomTab === idx ? 'active' : ''} ${room.adults > 0 ? 'is-searching' : 'inactive'}`}
-                                            onClick={() => {
-                                                if (activeRoomTab === idx && idx !== 0) {
-                                                    // Reset room if clicked while active (except for Room 1)
-                                                    const newAlloc = [...roomAllocations];
-                                                    newAlloc[idx] = { adults: 0, children: 0, childrenAges: [] };
-                                                    setRoomAllocations(newAlloc);
-                                                } else {
-                                                    setActiveRoomTab(idx);
-                                                }
-                                            }}
-                                        >
-                                            <div className={`status-dot ${room.adults > 0 ? 'enabled' : ''}`}></div>
-                                            Soba {idx + 1}
-                                            {room.adults > 0 && <span className="tab-pax-hint">{room.adults}+{room.children}</span>}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <div className="active-room-config full-width animate-fade-in" key={activeRoomTab}>
-                                    <div className="passenger-row-redesign-v2">
-                                        {/* Adults */}
-                                        <div className="flight-counter-group-v2">
-                                            <span className="counter-label">Odrasli</span>
-                                            <div className="counter-controls-v2">
-                                                <button
-                                                    onClick={() => {
-                                                        const newAlloc = [...roomAllocations];
-                                                        newAlloc[activeRoomTab].adults = Math.max(1, newAlloc[activeRoomTab].adults - 1);
-                                                        setRoomAllocations(newAlloc);
-                                                    }}
-                                                >−</button>
-                                                <span className="flight-counter-val">{roomAllocations[activeRoomTab].adults}</span>
-                                                <button
-                                                    onClick={() => {
-                                                        const newAlloc = [...roomAllocations];
-                                                        newAlloc[activeRoomTab].adults = Math.min(10, newAlloc[activeRoomTab].adults + 1);
-                                                        setRoomAllocations(newAlloc);
-                                                    }}
-                                                >+</button>
-                                            </div>
-                                        </div>
-
-                                        {/* Children */}
-                                        <div className="flight-counter-group-v2">
-                                            <span className="counter-label">Deca</span>
-                                            <div className="counter-controls-v2">
-                                                <button
-                                                    onClick={() => {
-                                                        const newAlloc = [...roomAllocations];
-                                                        if (newAlloc[activeRoomTab].children > 0) {
-                                                            newAlloc[activeRoomTab].children -= 1;
-                                                            newAlloc[activeRoomTab].childrenAges.pop();
-                                                            setRoomAllocations(newAlloc);
-                                                        }
-                                                    }}
-                                                >−</button>
-                                                <span className="flight-counter-val">{roomAllocations[activeRoomTab].children}</span>
-                                                <button
-                                                    onClick={() => {
-                                                        if (roomAllocations[activeRoomTab].children < 4) {
-                                                            const newAlloc = [...roomAllocations];
-                                                            newAlloc[activeRoomTab].children += 1;
-                                                            newAlloc[activeRoomTab].childrenAges.push(0);
-                                                            setRoomAllocations(newAlloc);
-                                                        }
-                                                    }}
-                                                >+</button>
-                                            </div>
-                                        </div>
-
-                                        {/* Children Ages In Line */}
-                                        {roomAllocations[activeRoomTab].children > 0 && (
-                                            <div className="children-ages-row-v2">
-                                                {roomAllocations[activeRoomTab].childrenAges.map((age, idx) => (
-                                                    <div key={idx} className="age-input-v2">
-                                                        <input
-                                                            type="number"
-                                                            min="0" max="17"
-                                                            value={age || ''}
-                                                            placeholder={`Dete ${idx + 1}`}
-                                                            onChange={e => {
-                                                                const val = e.target.value;
-                                                                const newAlloc = [...roomAllocations];
-                                                                newAlloc[activeRoomTab].childrenAges[idx] = val === '' ? ('' as any) : Math.min(17, Math.max(0, parseInt(val)));
-                                                                setRoomAllocations(newAlloc);
-                                                            }}
-                                                        />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div >
-                        </div>
-
-                        {/* SEARCH BUTTONS ROW */}
-                        <div className="action-row-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', marginTop: '10px' }}>
-                            <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2' }}>
-                                <span>{isSearching ? 'Pretražujem...' : (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '160px' }}>
-                                        <ClickToTravelLogo height={54} showText={false} />
-                                    </div>
-                                )}</span>
+                    {/* NARRATIVE MODE TOGGLE IN HEADER */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 2rem 1rem 0' }}>
+                        <div className="mode-toggle-group">
+                            <button
+                                className={`mode-switch-btn ${searchMode === 'classic' ? 'active' : ''}`}
+                                onClick={() => setSearchMode('classic')}
+                            >
+                                <LayoutTemplate size={14} style={{ marginRight: 6 }} />
+                                Klasična
                             </button>
-
-                            <button className="btn-new-search-tag" onClick={handleNewSearchTab}>
-                                <Plus size={16} />
-                                <span>POKRENI JOŠ JEDNU PRETRAGU</span>
+                            <button
+                                className={`mode-switch-btn ${searchMode === 'narrative' ? 'active' : ''}`}
+                                onClick={() => setSearchMode('narrative')}
+                            >
+                                <Sparkles size={14} style={{ marginRight: 6 }} />
+                                Futuristička
+                            </button>
+                            <button
+                                className={`mode-switch-btn ${searchMode === 'immersive' ? 'active' : ''}`}
+                                onClick={() => setSearchMode('immersive')}
+                            >
+                                <Zap size={14} style={{ marginRight: 6 }} />
+                                Immersive
                             </button>
                         </div>
                     </div>
+
+                    {/* IMMERSIVE SEARCH UI */}
+                    {searchMode === 'immersive' && !searchPerformed && (
+                        <ImmersiveSearch
+                            onSearch={(data) => {
+                                // Map immersive data to standard format and trigger search
+                                const cin = new Date(data.checkIn);
+                                const cout = new Date(data.checkOut);
+                                const nights = Math.ceil((cout.getTime() - cin.getTime()) / (1000 * 60 * 60 * 24)) || 7;
+
+                                const mappedData: BasicInfoData = {
+                                    destinations: data.destinations.map((d: any) => ({
+                                        id: d.id,
+                                        city: d.name,
+                                        country: d.country_name || 'Unknown',
+                                        countryCode: d.country_code || 'XX',
+                                        airportCode: 'BEG',
+                                        checkIn: data.checkIn,
+                                        checkOut: data.checkOut,
+                                        nights: nights,
+                                        travelers: {
+                                            adults: data.adults,
+                                            children: data.children,
+                                            childrenAges: data.childrenAges
+                                        },
+                                        type: d.type
+                                    })),
+                                    startDate: data.checkIn,
+                                    endDate: data.checkOut,
+                                    totalDays: nights,
+                                    currency: 'EUR',
+                                    travelers: {
+                                        adults: data.adults,
+                                        children: data.children,
+                                        childrenAges: data.childrenAges
+                                    }
+                                };
+                                const updates = handleNarrativeUpdate(mappedData);
+                                handleSearch({
+                                    destinations: updates.destinations,
+                                    checkIn: updates.checkIn,
+                                    checkOut: updates.checkOut,
+                                    allocations: updates.allocations
+                                });
+                            }}
+                        />
+                    )}
+
+                    {/* NARRATIVE SEARCH UI */}
+                    {searchMode === 'narrative' && !searchPerformed && (
+                        <div className="narrative-mode-container" style={{ padding: '0 2rem 2rem 2rem' }}>
+                            <NarrativeSearch
+                                basicInfo={getInitialNarrativeData()}
+                                onUpdate={(data: any) => handleNarrativeUpdate(data)}
+                                onNext={(data: any) => {
+                                    const updates = handleNarrativeUpdate(data);
+                                    handleSearch({
+                                        destinations: updates.destinations,
+                                        checkIn: updates.checkIn,
+                                        checkOut: updates.checkOut,
+                                        allocations: updates.allocations
+                                    });
+                                }}
+                            />
+                            {isSearching && (
+                                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+                                    <Loader2 className="spin-slow" size={40} color="#00f2fe" />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* IMMERSIVE SEARCH LOADER */}
+                    {searchMode === 'immersive' && isSearching && !searchPerformed && (
+                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+                            <Loader2 className="spin-slow" size={40} color="#00f2fe" />
+                        </div>
+                    )}
+
+                    {/* CLASSIC SEARCH UI */}
+                    {searchMode === 'classic' && (
+                        <div className="search-card-frame">
+
+                            {/* ROW 1: DESTINATION */}
+                            < div className="destination-row" >
+                                <div className="field-label"><MapPin size={14} /> Destinacija ili Smeštaj (do 3)</div>
+                                <div className="destination-input-wrapper" ref={autocompleteRef}>
+                                    <div className="multi-destination-input premium" style={{ border: 'none', padding: 0, height: 'auto', background: 'transparent' }}>
+                                        {selectedDestinations.map(dest => (
+                                            <div key={dest.id} className="destination-chip">
+                                                {dest.type === 'hotel' ? <Hotel size={14} /> : <MapPin size={14} />}
+                                                <span>{dest.name}</span>
+                                                <button className="chip-remove" onClick={() => setSelectedDestinations(selectedDestinations.filter(d => d.id !== dest.id))}><X size={14} /></button>
+                                            </div>
+                                        ))}
+                                        {selectedDestinations.length < 3 && (
+                                            <input
+                                                ref={inputRef}
+                                                type="text"
+                                                placeholder={selectedDestinations.length === 0 ? "npr. Golden Sands, Hotel Park..." : "Dodaj još..."}
+                                                value={destinationInput}
+                                                onChange={(e) => setDestinationInput(e.target.value)}
+                                                className="smart-input-inline"
+                                                onFocus={() => { if (destinationInput.length >= 2) setShowSuggestions(true); }}
+                                                style={{ background: 'transparent', border: 'none', width: '100%', height: '100%', fontSize: '1.3rem', fontStyle: 'italic' }}
+                                            />
+                                        )}
+                                    </div>
+                                    {/* Suggestions Dropdown */}
+                                    {showSuggestions && suggestions.length > 0 && (
+                                        <div className="autocomplete-dropdown premium" style={{ top: '100%', left: 0, right: 0, width: '100%' }}>
+                                            {suggestions.map(s => (
+                                                <div key={s.id} className="suggestion-item" onClick={() => handleAddDestination(s)}>
+                                                    {s.type === 'hotel' ? <Hotel size={16} className="suggestion-icon hotel" /> : <MapPin size={16} className="suggestion-icon destination" />}
+                                                    <div className="suggestion-content">
+                                                        <span className="suggestion-name">{s.name}</span>
+                                                        <span className="suggestion-meta">
+                                                            {s.type === 'hotel' ? (s.stars ? `${s.stars}★ ${s.provider}` : s.provider) : s.country}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div >
+
+                            {/* ROW 2: PARAMETERS GRID */}
+                            < div className="params-grid" >
+                                {/* Check In */}
+                                < div className="col-checkin param-item" >
+                                    <div className="field-label"><CalendarIcon size={14} /> Check-in</div>
+                                    <div className="input-box" onClick={() => setActiveCalendar('in')} style={{ cursor: 'pointer' }}>
+                                        {checkIn ? formatDate(checkIn) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
+                                    </div>
+                                </div >
+
+                                {/* Check Out */}
+                                < div className="col-checkout param-item" >
+                                    <div className="field-label"><CalendarIcon size={14} /> Check-out</div>
+                                    <div className="input-box" onClick={() => setActiveCalendar('out')} style={{ cursor: 'pointer' }}>
+                                        {checkOut ? formatDate(checkOut) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
+                                    </div>
+                                </div >
+
+                                {/* Flexibility */}
+                                < div className="col-flex param-item" >
+                                    <div className="field-label"><ArrowDownWideNarrow size={14} /> Fleksibilnost</div>
+                                    <div className="flex-toggle-group">
+                                        {[0, 1, 3, 5].map(day => (
+                                            <button
+                                                key={day}
+                                                className={`flex-btn ${flexibleDays === day ? 'active' : ''}`}
+                                                onClick={() => setFlexibleDays(day)}
+                                            >
+                                                {day === 0 ? 'Tačno' : `±${day}`}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div >
+
+                                {/* Category Selector */}
+                                <div className="col-stars param-item" style={{ position: 'relative' }}>
+                                    <div className="field-label"><Star size={14} /> Odaberi Kategoriju</div>
+                                    <div className="input-box" onClick={() => setShowStarPicker(!showStarPicker)} style={{ cursor: 'pointer' }}>
+                                        <span style={{ fontSize: '0.85rem' }}>
+                                            {selectedStars.includes('all') ? 'Sve kategorije' : (selectedStars.length === 1 ? CATEGORY_OPTIONS.find(o => o.value === selectedStars[0])?.label : selectedStars.filter(s => s !== 'all').sort().join(', '))}
+                                        </span>
+                                        <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                                    </div>
+                                    {showStarPicker && (
+                                        <div className="vertical-filters-popover animate-fade-in-up">
+                                            <div className="vertical-filter-group">
+                                                <button className={`v-filter-btn ${selectedStars.includes('all') ? 'active' : ''}`} onClick={() => { toggleStarFilter('all'); setShowStarPicker(false); }}>Sve</button>
+                                                {[5, 4, 3, 2, 0].map(s => (
+                                                    <button key={s} className={`v-filter-btn ${selectedStars.includes(s.toString()) ? 'active' : ''}`} onClick={() => toggleStarFilter(s.toString())}>
+                                                        {renderStarsMini(s)}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '10px', marginTop: '10px' }}>
+                                                <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setShowStarPicker(false)}>Zatvori</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Meal Selector */}
+                                <div className="col-meals param-item" style={{ position: 'relative' }}>
+                                    <div className="field-label"><UtensilsCrossed size={14} /> Odaberi Uslugu</div>
+                                    <div className="input-box" onClick={() => setShowMealPicker(!showMealPicker)} style={{ cursor: 'pointer' }}>
+                                        <span style={{ fontSize: '0.85rem' }}>
+                                            {selectedMealPlans.includes('all') ? 'Sve usluge' : (selectedMealPlans.length === 1 ? MEAL_PLAN_OPTIONS.find(o => o.value === selectedMealPlans[0])?.label : selectedMealPlans.filter(p => p !== 'all').join(', '))}
+                                        </span>
+                                        <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                                    </div>
+                                    {showMealPicker && (
+                                        <div className="vertical-filters-popover animate-fade-in-up">
+                                            <div className="vertical-filter-group">
+                                                <button className={`v-filter-btn ${selectedMealPlans.includes('all') ? 'active' : ''}`} onClick={() => { toggleMealPlanFilter('all'); setShowMealPicker(false); }}>Sve usluge</button>
+                                                {[
+                                                    { id: 'RO', label: 'Na - Najam' },
+                                                    { id: 'BB', label: 'ND - Doručak' },
+                                                    { id: 'HB', label: 'HB - Polupansion' },
+                                                    { id: 'FB', label: 'FB - Pun pansion' },
+                                                    { id: 'AI', label: 'All - All Inclusive' },
+                                                    { id: 'UAI', label: 'UAll - Ultra Inclusive' }
+                                                ].map(mp => (
+                                                    <button key={mp.id} className={`v-filter-btn ${selectedMealPlans.includes(mp.id) ? 'active' : ''}`} onClick={() => toggleMealPlanFilter(mp.id)}>
+                                                        {mp.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '10px', marginTop: '10px' }}>
+                                                <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setShowMealPicker(false)}>Zatvori</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="col-nationality" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                    {/* Nationality Selector */}
+                                    <div className="param-item" style={{ position: 'relative' }}>
+                                        <div className="field-label"><Globe size={14} /> NACIONALNOST</div>
+                                        <div className="input-box" onClick={() => setShowNationalityPicker(!showNationalityPicker)} style={{ cursor: 'pointer' }}>
+                                            <span style={{ fontSize: '0.85rem' }}>
+                                                {NATIONALITY_OPTIONS.find(n => n.code === nationality)?.name || 'Odaberi državu'}
+                                            </span>
+                                            <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                                        </div>
+                                        {showNationalityPicker && (
+                                            <div className="vertical-filters-popover animate-fade-in-up">
+                                                <div className="vertical-filter-group" style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '10px' }}>
+                                                    {NATIONALITY_OPTIONS.map(n => (
+                                                        <button
+                                                            key={n.code}
+                                                            className={`v-filter-btn ${nationality === n.code ? 'active' : ''}`}
+                                                            onClick={() => {
+                                                                setNationality(n.code);
+                                                                setShowNationalityPicker(false);
+                                                            }}
+                                                        >
+                                                            {n.name}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Budget Filter */}
+                                    <div className="param-item">
+                                        <div className="field-label"><DollarSign size={14} /> BUDŽET</div>
+                                        <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                                            <input
+                                                type="number"
+                                                placeholder="Od"
+                                                value={budgetFrom}
+                                                onChange={(e) => setBudgetFrom(e.target.value)}
+                                                className="budget-input"
+                                                style={{
+                                                    flex: 1,
+                                                    borderRadius: '12px',
+                                                    padding: '12px',
+                                                    fontSize: '0.85rem',
+                                                    outline: 'none',
+                                                    width: '100%'
+                                                }}
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Do"
+                                                value={budgetTo}
+                                                onChange={(e) => setBudgetTo(e.target.value)}
+                                                className="budget-input"
+                                                style={{
+                                                    flex: 1,
+                                                    borderRadius: '12px',
+                                                    padding: '12px',
+                                                    fontSize: '0.85rem',
+                                                    outline: 'none',
+                                                    width: '100%'
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Room Tabs & Pax Configuration */}
+                                <div className="col-rooms-tabs">
+                                    <div className="room-tabs-header" style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px' }}>
+                                        {roomAllocations.map((room, idx) => (
+                                            <button
+                                                key={idx}
+                                                className={`room-tab-btn ${activeRoomTab === idx ? 'active' : ''} ${room.adults > 0 ? 'is-searching' : 'inactive'}`}
+                                                onClick={() => {
+                                                    if (activeRoomTab === idx && idx !== 0) {
+                                                        // Reset room if clicked while active (except for Room 1)
+                                                        const newAlloc = [...roomAllocations];
+                                                        newAlloc[idx] = { adults: 0, children: 0, childrenAges: [] };
+                                                        setRoomAllocations(newAlloc);
+                                                    } else {
+                                                        setActiveRoomTab(idx);
+                                                    }
+                                                }}
+                                            >
+                                                <div className={`status-dot ${room.adults > 0 ? 'enabled' : ''}`}></div>
+                                                Soba {idx + 1}
+                                                {room.adults > 0 && <span className="tab-pax-hint">{room.adults}+{room.children}</span>}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="active-room-config full-width animate-fade-in" key={activeRoomTab}>
+                                        <div className="passenger-row-redesign-v2">
+                                            {/* Adults */}
+                                            <div className="flight-counter-group-v2">
+                                                <span className="counter-label">Odrasli</span>
+                                                <div className="counter-controls-v2">
+                                                    <button
+                                                        onClick={() => {
+                                                            const newAlloc = [...roomAllocations];
+                                                            newAlloc[activeRoomTab].adults = Math.max(1, newAlloc[activeRoomTab].adults - 1);
+                                                            setRoomAllocations(newAlloc);
+                                                        }}
+                                                    >−</button>
+                                                    <span className="flight-counter-val">{roomAllocations[activeRoomTab].adults}</span>
+                                                    <button
+                                                        onClick={() => {
+                                                            const newAlloc = [...roomAllocations];
+                                                            newAlloc[activeRoomTab].adults = Math.min(10, newAlloc[activeRoomTab].adults + 1);
+                                                            setRoomAllocations(newAlloc);
+                                                        }}
+                                                    >+</button>
+                                                </div>
+                                            </div>
+
+                                            {/* Children */}
+                                            <div className="flight-counter-group-v2">
+                                                <span className="counter-label">Deca</span>
+                                                <div className="counter-controls-v2">
+                                                    <button
+                                                        onClick={() => {
+                                                            const newAlloc = [...roomAllocations];
+                                                            if (newAlloc[activeRoomTab].children > 0) {
+                                                                newAlloc[activeRoomTab].children -= 1;
+                                                                newAlloc[activeRoomTab].childrenAges.pop();
+                                                                setRoomAllocations(newAlloc);
+                                                            }
+                                                        }}
+                                                    >−</button>
+                                                    <span className="flight-counter-val">{roomAllocations[activeRoomTab].children}</span>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (roomAllocations[activeRoomTab].children < 4) {
+                                                                const newAlloc = [...roomAllocations];
+                                                                newAlloc[activeRoomTab].children += 1;
+                                                                newAlloc[activeRoomTab].childrenAges.push(0);
+                                                                setRoomAllocations(newAlloc);
+                                                            }
+                                                        }}
+                                                    >+</button>
+                                                </div>
+                                            </div>
+
+                                            {/* Children Ages In Line */}
+                                            {roomAllocations[activeRoomTab].children > 0 && (
+                                                <div className="children-ages-row-v2">
+                                                    {roomAllocations[activeRoomTab].childrenAges.map((age, idx) => (
+                                                        <div key={idx} className="age-input-v2">
+                                                            <input
+                                                                type="number"
+                                                                min="0" max="17"
+                                                                value={age || ''}
+                                                                placeholder={`Dete ${idx + 1}`}
+                                                                onChange={e => {
+                                                                    const val = e.target.value;
+                                                                    const newAlloc = [...roomAllocations];
+                                                                    newAlloc[activeRoomTab].childrenAges[idx] = val === '' ? ('' as any) : Math.min(17, Math.max(0, parseInt(val)));
+                                                                    setRoomAllocations(newAlloc);
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div >
+                            </div>
+
+                            {/* SEARCH BUTTONS ROW */}
+                            <div className="action-row-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', marginTop: '10px' }}>
+                                <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2' }}>
+                                    <span>{isSearching ? 'Pretražujem...' : (
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '160px' }}>
+                                            <ClickToTravelLogo height={54} showText={false} />
+                                        </div>
+                                    )}</span>
+                                </button>
+
+                                <button className="btn-new-search-tag" onClick={() => { setSearchPerformed(false); setSearchResults([]); setSearchError(null); }}>
+                                    <Plus size={16} />
+                                    <span>POKRENI NOVU PRETRAGU</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {/* FLEXIBLE DATES RIBBON */}
                     {
@@ -1260,11 +1508,11 @@ const SmartSearch: React.FC = () => {
                                                 onClick={() => {
                                                     if (!isActive) {
                                                         setCheckIn(dateStr);
-                                                        // Auto-update checkout while keeping nights same
                                                         const newOut = new Date(dateStr);
                                                         newOut.setDate(newOut.getDate() + nights);
-                                                        setCheckOut(newOut.toISOString().split('T')[0]);
-                                                        handleSearch();
+                                                        const newOutStr = newOut.toISOString().split('T')[0];
+                                                        setCheckOut(newOutStr);
+                                                        handleSearch({ checkIn: dateStr, checkOut: newOutStr });
                                                     }
                                                 }}
                                             >
@@ -1314,8 +1562,9 @@ const SmartSearch: React.FC = () => {
                                                                     setCheckIn(date);
                                                                     const newOut = new Date(date);
                                                                     newOut.setDate(newOut.getDate() + nights);
-                                                                    setCheckOut(newOut.toISOString().split('T')[0]);
-                                                                    handleSearch({ checkIn: date, checkOut: newOut.toISOString().split('T')[0] });
+                                                                    const newOutStr = newOut.toISOString().split('T')[0];
+                                                                    setCheckOut(newOutStr);
+                                                                    handleSearch({ checkIn: date, checkOut: newOutStr });
                                                                 }
                                                             }}
                                                         >
@@ -1377,9 +1626,23 @@ const SmartSearch: React.FC = () => {
                     {/* ERROR ALERT */}
                     {
                         searchError && (
-                            <div className="search-error animate-fade-in" style={{ marginTop: '2rem' }}>
-                                <Info size={18} />
-                                <span>{searchError}</span>
+                            <div className="search-error animate-fade-in" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <Info size={18} />
+                                    <span>{searchError}</span>
+                                </div>
+                                <button
+                                    className="new-search-pill"
+                                    onClick={() => {
+                                        setSearchMode('immersive');
+                                        setSearchPerformed(false);
+                                        setSearchResults([]);
+                                        setSearchError(null);
+                                        setSmartSuggestions(null);
+                                    }}
+                                >
+                                    <Sparkles size={14} /> POKRENI NOVU PRETRAGU
+                                </button>
                             </div>
                         )
                     }
@@ -1417,8 +1680,20 @@ const SmartSearch: React.FC = () => {
                                 </div>
 
                                 <div className="results-summary-bar-v4 premium">
-                                    <div className="summary-info">
+                                    <div className="summary-info" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                                         <span>REZULTATA: <strong>{filteredResults.length}</strong></span>
+                                        <button
+                                            className="new-search-pill"
+                                            onClick={() => {
+                                                setSearchMode('immersive');
+                                                setSearchPerformed(false);
+                                                setSearchResults([]);
+                                                setSearchError(null);
+                                                setSmartSuggestions(null);
+                                            }}
+                                        >
+                                            <Sparkles size={14} /> POKRENI NOVU PRETRAGU
+                                        </button>
                                     </div>
                                     <div className="sort-actions">
                                         <button className={`view-btn ${sortBy === 'smart' ? 'active' : ''}`} onClick={() => setSortBy('smart')}>Smart</button>
