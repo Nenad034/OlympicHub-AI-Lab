@@ -35,6 +35,11 @@ export const ModernCalendar: React.FC<ModernCalendarProps> = ({ startDate, endDa
     const handleDayClick = (date: Date) => {
         // Normalizing date to avoid time issues
         const clicked = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Filos and other providers often require future dates
+        if (clicked <= today) return;
 
         if (!selStart || (selStart && selEnd)) {
             setSelStart(clicked);
@@ -60,14 +65,19 @@ export const ModernCalendar: React.FC<ModernCalendarProps> = ({ startDate, endDa
         const totalDays = getDaysInMonth(displayYear, displayMonth);
         const firstDay = getFirstDayOfMonth(displayYear, displayMonth);
 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         const days = [];
         for (let i = 0; i < firstDay; i++) days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
 
         for (let i = 1; i <= totalDays; i++) {
             const date = new Date(displayYear, displayMonth, i);
             const time = date.getTime();
+            const isPast = date <= today;
 
             let className = "calendar-day";
+            if (isPast) className += " disabled";
 
             // Selection logic
             const sTime = selStart?.getTime();
@@ -80,7 +90,7 @@ export const ModernCalendar: React.FC<ModernCalendarProps> = ({ startDate, endDa
                 <div
                     key={i}
                     className={className}
-                    onClick={() => handleDayClick(date)}
+                    onClick={() => !isPast && handleDayClick(date)}
                 >
                     {i}
                 </div>

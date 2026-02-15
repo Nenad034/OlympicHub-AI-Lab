@@ -134,30 +134,30 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
                 // Hack: if empty (api limit/error), provide defaults for major countries
                 if (cities.length === 0) {
                     if (selectedCountry.name === 'Bugarska') setAvailableDestinations([
-                        { id: 33, name: 'Zlatni Pjasci', type: 'city' },
-                        { id: 68, name: 'Sunčev Breg', type: 'city' },
-                        { id: 1, name: 'Nesebar', type: 'city' },
-                        { id: 9, name: 'Bansko', type: 'city' },
-                        { id: 6, name: 'Borovec', type: 'city' },
-                        { id: 10, name: 'Pamporovo', type: 'city' }
+                        { id: 33, name: 'Zlatni Pjasci', type: 'destination' },
+                        { id: 68, name: 'Sunčev Breg', type: 'destination' },
+                        { id: 1, name: 'Nesebar', type: 'destination' },
+                        { id: 9, name: 'Bansko', type: 'destination' },
+                        { id: 6, name: 'Borovec', type: 'destination' },
+                        { id: 10, name: 'Pamporovo', type: 'destination' }
                     ]);
                     else if (selectedCountry.name === 'Grčka') setAvailableDestinations([
-                        { id: 101, name: 'Halkidiki', type: 'city' },
-                        { id: 102, name: 'Tasos', type: 'city' },
-                        { id: 103, name: 'Olimpska Regija', type: 'city' },
-                        { id: 104, name: 'Krf', type: 'city' },
-                        { id: 105, name: 'Rodos', type: 'city' }
+                        { id: 101, name: 'Halkidiki', type: 'destination' },
+                        { id: 102, name: 'Tasos', type: 'destination' },
+                        { id: 103, name: 'Olimpska Regija', type: 'destination' },
+                        { id: 104, name: 'Krf', type: 'destination' },
+                        { id: 105, name: 'Rodos', type: 'destination' }
                     ]);
                     else if (selectedCountry.name === 'Turska') setAvailableDestinations([
-                        { id: 201, name: 'Antalija', type: 'city' },
-                        { id: 202, name: 'Kemer', type: 'city' },
-                        { id: 203, name: 'Belek', type: 'city' },
-                        { id: 204, name: 'Side', type: 'city' },
-                        { id: 205, name: 'Alanja', type: 'city' }
+                        { id: 201, name: 'Antalija', type: 'destination' },
+                        { id: 202, name: 'Kemer', type: 'destination' },
+                        { id: 203, name: 'Belek', type: 'destination' },
+                        { id: 204, name: 'Side', type: 'destination' },
+                        { id: 205, name: 'Alanja', type: 'destination' }
                     ]);
                     else if (selectedCountry.name === 'Egipat') setAvailableDestinations([
-                        { id: 301, name: 'Hurgada', type: 'city' },
-                        { id: 302, name: 'Šarm el Šeik', type: 'city' }
+                        { id: 301, name: 'Hurgada', type: 'destination' },
+                        { id: 302, name: 'Šarm el Šeik', type: 'destination' }
                     ]);
                     else {
                         setAvailableDestinations(results);

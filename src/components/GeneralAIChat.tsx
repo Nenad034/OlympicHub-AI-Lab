@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Send,
@@ -230,10 +230,22 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                 Ako klijent promeni jezik (npr. piše na engleskom umesto na ruskom), prilagodi se odmah i nastavi na jeziku koji on koristi.`;
             }
             if (activePersona === 'specialist') {
+                const safeAnalysisData = (() => {
+                    try {
+                        // Attempt to stringify a copy to check for circular refs or JSX
+                        return JSON.stringify(analysisData.slice(0, 30), (key, value) => {
+                            if (React.isValidElement(value)) return `[React Component: ${key}]`;
+                            return value;
+                        });
+                    } catch (e) {
+                        return "[Complex Data - Unstringifiable]";
+                    }
+                })();
+
                 return `Ti si ekspert za modul "${context}" u sistemu ClickToTravel Hub. 
                 ${context === 'production-hub' ? 'Tvoj fokus je na upravljanju bazom hotela, unosu smeštaja i slikama.' : ''}
                 ${context === 'mars-analysis' ? 'Tvoj fokus je na analizi MARS tabela i finansijskih trendova.' : ''}
-                Analiziraj ove podatke ako su relevantni: ${JSON.stringify(analysisData.slice(0, 30))}`;
+                Analiziraj ove podatke ako su relevantni: ${safeAnalysisData}`;
             }
             if (activePersona === 'general') {
                 return `Ti si Generalni AI asistent. Pomažeš korisniku oko opštih pitanja o aplikaciji ClickToTravel Hub, ali i o bilo kojoj temi sa interneta.`;

@@ -240,34 +240,38 @@ const SmartSearch: React.FC = () => {
 
         // 1. Map Destinations
         if (data.destinations && data.destinations.length > 0) {
-            const dest = data.destinations[0];
+            const newMappedDestinations = data.destinations.map(dest => {
+                let finalId = dest.id;
+                let finalType = (dest as any).type || 'destination';
+                let finalCountry = (dest as any).country_name || dest.country || 'Bugarska';
 
-            let finalId = dest.id;
-            let finalType = (dest as any).type || 'destination';
-            let finalCountry = (dest as any).country_name || dest.country || 'Bugarska';
+                const isRealProviderId = finalId && !String(finalId).startsWith('narrative');
 
-            const isRealProviderId = finalId && !String(finalId).startsWith('narrative');
-
-            if (!isRealProviderId) {
-                const existingDest = mockDestinations.find(d => d.name.toLowerCase() === dest.city.toLowerCase());
-                if (existingDest) {
-                    finalId = existingDest.id;
-                    finalType = existingDest.type;
-                    finalCountry = existingDest.country;
-                } else {
-                    finalId = `narrative-${dest.city}`;
+                if (!isRealProviderId) {
+                    const existingDest = mockDestinations.find(d => d.name.toLowerCase() === dest.city.toLowerCase());
+                    if (existingDest) {
+                        finalId = existingDest.id;
+                        finalType = existingDest.type;
+                        finalCountry = existingDest.country;
+                    } else {
+                        finalId = `narrative-${dest.city}`;
+                    }
                 }
-            }
 
-            const newDest: Destination = {
-                id: finalId,
-                name: dest.city,
-                type: finalType as 'destination' | 'hotel' | 'country',
-                country: finalCountry
-            };
+                return {
+                    id: finalId,
+                    name: dest.city,
+                    type: finalType as 'destination' | 'hotel' | 'country',
+                    country: finalCountry
+                };
+            });
 
-            mappedDestinations = [newDest];
-            if (selectedDestinations.length === 0 || selectedDestinations[0].id !== newDest.id || selectedDestinations[0].name !== newDest.name) {
+            mappedDestinations = newMappedDestinations;
+
+            // Only update state if effectively changed
+            const currentIds = selectedDestinations.map(d => d.id).sort().join(',');
+            const newIds = mappedDestinations.map(d => d.id).sort().join(',');
+            if (currentIds !== newIds) {
                 setSelectedDestinations(mappedDestinations);
             }
         }
@@ -791,8 +795,16 @@ const SmartSearch: React.FC = () => {
         if (hotelNameFilter) {
             const searchTerm = hotelNameFilter.toLowerCase();
             const matchesName = hotel.name.toLowerCase().includes(searchTerm);
-            const matchesLocation = hotel.location && hotel.location.toLowerCase().includes(searchTerm);
-            if (!matchesName && !matchesLocation) return false;
+            const matchesLocation = (hotel.location || '').toLowerCase().includes(searchTerm);
+
+            // Check original data for more specific destination info if available
+            const matchesOriginal = (
+                (hotel.originalData?.hotel?.city?.name || '').toLowerCase().includes(searchTerm) ||
+                (hotel.originalData?.hotel?.country?.name || '').toLowerCase().includes(searchTerm) ||
+                (hotel.originalData?.location?.city || '').toLowerCase().includes(searchTerm)
+            );
+
+            if (!matchesName && !matchesLocation && !matchesOriginal) return false;
         }
 
         if (selectedStars.length > 0 && !selectedStars.includes('all')) {
@@ -1661,7 +1673,7 @@ const SmartSearch: React.FC = () => {
                                             type="text"
                                             className="smart-input premium"
                                             style={{ width: '100%', paddingLeft: '40px', height: '48px' }}
-                                            placeholder="Traži po nazivu..."
+                                            placeholder="Traži po hotelu ili destinaciji..."
                                             value={hotelNameFilter}
                                             onChange={(e) => setHotelNameFilter(e.target.value)}
                                         />

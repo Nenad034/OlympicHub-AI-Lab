@@ -119,6 +119,13 @@
     background: transparent;
 }
 
+.calendar-day.disabled {
+    cursor: not-allowed;
+    opacity: 0.2;
+    background: transparent;
+    pointer-events: none;
+}
+
 .calendar-day:not(.empty):hover {
     background: rgba(255, 255, 255, 0.1);
     color: white;

@@ -70,9 +70,14 @@ export class FilosProvider implements HotelProvider {
                             }
 
                             // Match by location or hotel name
-                            return hotelLocation.includes(destLower) ||
-                                hotelLocation.includes('corfu') && destLower.includes('krf') ||
-                                hotelLocation.includes('athens') && destLower.includes('atina');
+                            const isMatch = hotelLocation.includes(destLower) ||
+                                (hotelLocation.includes('corfu') && destLower.includes('krf')) ||
+                                (hotelLocation.includes('athens') && destLower.includes('atina')) ||
+                                (hotelLocation.includes('golden sands') && (destLower.includes('zlatni pjasci') || destLower.includes('zlatni pjasici'))) ||
+                                (hotelLocation.includes('sunny beach') && (destLower.includes('suncev breg') || destLower.includes('sunčev breg'))) ||
+                                (hotelLocation.includes('nessebar') && (destLower.includes('nesebar') || destLower.includes('nesebat')));
+
+                            return isMatch;
                         });
 
                         if (matchingHotels.length > 0) {
@@ -89,9 +94,23 @@ export class FilosProvider implements HotelProvider {
                 }
             }
 
+            // Filos API requires check-in to be in the future
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+
+            const effectiveCheckIn = params.checkIn < tomorrow ? tomorrow : params.checkIn;
+            const effectiveCheckOut = params.checkOut <= effectiveCheckIn ? new Date(effectiveCheckIn.getTime() + (params.checkOut.getTime() - params.checkIn.getTime())) : params.checkOut;
+
+            if (params.checkOut <= effectiveCheckIn) {
+                // If original stay was X nights, preserve it
+                const nights = Math.max(1, Math.ceil((params.checkOut.getTime() - params.checkIn.getTime()) / (1000 * 60 * 60 * 24)));
+                effectiveCheckOut.setDate(effectiveCheckIn.getDate() + nights);
+            }
+
             const filosParams = {
-                start_date: formatDate(params.checkIn),
-                end_date: formatDate(params.checkOut),
+                start_date: formatDate(effectiveCheckIn),
+                end_date: formatDate(effectiveCheckOut),
                 nationality: 'RS',
                 rooms: [{
                     adults: params.adults,

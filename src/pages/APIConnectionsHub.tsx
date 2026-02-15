@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Plug, Database, Globe, Plane, CheckCircle, XCircle,
@@ -10,97 +10,19 @@ import GeneralAIChat from '../components/GeneralAIChat';
 import { aiMonitor } from '../services/aiMonitor';
 import './APIConnectionsHub.css';
 
+console.log('🚀 [API Hub] Module evaluating...');
+
 interface APIConnection {
     id: string;
     name: string;
     provider: string;
     description: string;
-    icon: React.ReactNode;
+    iconName: 'database' | 'globe' | 'plane';
     status: 'active' | 'inactive' | 'error' | 'testing';
     color: string;
     testPath: string;
     features: string[];
 }
-
-const connections: APIConnection[] = [
-    {
-        id: 'solvex',
-        name: 'Solvex (Master-Interlook)',
-        provider: 'B&A e-Travel SA',
-        description: 'Bulgarian hotel inventory - Ski resorts, beach destinations, city hotels',
-        icon: <Database size={32} />,
-        status: 'active',
-        color: '#e91e63',
-        testPath: '/solvex-test',
-        features: ['Hotel Search', 'Availability', 'Booking', 'Cancellation']
-    },
-    {
-        id: 'opengreece',
-        name: 'OpenGreece',
-        provider: 'OpenGreece API',
-        description: 'Greek hotel inventory - Islands, mainland, all-inclusive resorts',
-        icon: <Globe size={32} />,
-        status: 'active',
-        color: '#43a047',
-        testPath: '/opengreece-test',
-        features: ['Hotel Search', 'Real-time Availability', 'Instant Booking']
-    },
-    {
-        id: 'tct',
-        name: 'TCT (Travel Compositor)',
-        provider: 'TCT API',
-        description: 'Multi-destination hotel aggregator - Worldwide coverage',
-        icon: <Database size={32} />,
-        status: 'active',
-        color: '#fb8c00',
-        testPath: '/tct-test',
-        features: ['Global Search', 'Multi-currency', 'Dynamic Pricing']
-    },
-    {
-        id: 'ors',
-        name: 'ORS (Online Reservation System)',
-        provider: 'ORS Travel',
-        description: 'Multi-operator platform - Hotels, packages, organized trips',
-        icon: <Globe size={32} />,
-        status: 'active',
-        color: '#9c27b0',
-        testPath: '/ors-test',
-        features: ['Hotel Search', 'Package Deals', 'Organized Trips', 'Optional Bookings', 'GIATA IDs']
-    },
-    {
-        id: 'mars',
-        name: 'Mars API',
-        provider: 'Neolab',
-        description: 'Accommodation management system - Detailed content, pricing, amenities',
-        icon: <Database size={32} />,
-        status: 'testing',
-        color: '#dc2626',
-        testPath: '/mars-test',
-        features: ['Accommodation Details', 'Complex Pricing', 'Rich Amenities', 'GPS Coordinates', 'Image Gallery']
-    },
-    {
-        id: 'amadeus',
-        name: 'Amadeus Flights',
-        provider: 'Amadeus GDS',
-        description: 'Flight search and booking - Global airline inventory',
-        icon: <Plane size={32} />,
-        status: 'inactive',
-        color: '#667eea',
-        testPath: '/amadeus-test',
-        features: ['Flight Search', 'Multi-city', 'Fare Rules', 'Ticketing']
-    },
-    {
-        id: 'filos',
-        name: 'Filos (One Tourismo)',
-        provider: 'Filos Travel / One Tourismo',
-        description: 'Greek travel market specialist - Extensive hotel inventory, transfers and activities',
-        icon: <Globe size={32} />,
-        status: 'testing',
-        color: '#0277bd',
-        testPath: '/filos-test',
-        features: ['B2B XML/JSON API', 'Greek Hotels', 'Transfers', 'Activities', 'Static Data Sync']
-    }
-];
 
 const APIConnectionsHub: React.FC = () => {
     const navigate = useNavigate();
@@ -108,6 +30,96 @@ const APIConnectionsHub: React.FC = () => {
     const [isAiChatOpen, setIsAiChatOpen] = useState(false);
     const [healthStats, setHealthStats] = useState<any>(null);
     const [monitorStatus, setMonitorStatus] = useState<any>(null);
+
+    // Dynamic Connections Data to avoid module-level JSX issues
+    const connections = useMemo<APIConnection[]>(() => [
+        {
+            id: 'solvex',
+            name: 'Solvex (Master-Interlook)',
+            provider: 'B&A e-Travel SA',
+            description: 'Bulgarian hotel inventory - Ski resorts, beach destinations, city hotels',
+            iconName: 'database',
+            status: 'active',
+            color: '#e91e63',
+            testPath: '/solvex-test',
+            features: ['Hotel Search', 'Availability', 'Booking', 'Cancellation']
+        },
+        {
+            id: 'opengreece',
+            name: 'OpenGreece',
+            provider: 'OpenGreece API',
+            description: 'Greek hotel inventory - Islands, mainland, all-inclusive resorts',
+            iconName: 'globe',
+            status: 'active',
+            color: '#43a047',
+            testPath: '/opengreece-test',
+            features: ['Hotel Search', 'Real-time Availability', 'Instant Booking']
+        },
+        {
+            id: 'tct',
+            name: 'TCT (Travel Compositor)',
+            provider: 'TCT API',
+            description: 'Multi-destination hotel aggregator - Worldwide coverage',
+            iconName: 'database',
+            status: 'active',
+            color: '#fb8c00',
+            testPath: '/tct-test',
+            features: ['Global Search', 'Multi-currency', 'Dynamic Pricing']
+        },
+        {
+            id: 'ors',
+            name: 'ORS (Online Reservation System)',
+            provider: 'ORS Travel',
+            description: 'Multi-operator platform - Hotels, packages, organized trips',
+            iconName: 'globe',
+            status: 'active',
+            color: '#9c27b0',
+            testPath: '/ors-test',
+            features: ['Hotel Search', 'Package Deals', 'Organized Trips', 'Optional Bookings', 'GIATA IDs']
+        },
+        {
+            id: 'mars',
+            name: 'Mars API',
+            provider: 'Neolab',
+            description: 'Accommodation management system - Detailed content, pricing, amenities',
+            iconName: 'database',
+            status: 'testing',
+            color: '#dc2626',
+            testPath: '/mars-test',
+            features: ['Accommodation Details', 'Complex Pricing', 'Rich Amenities', 'GPS Coordinates', 'Image Gallery']
+        },
+        {
+            id: 'amadeus',
+            name: 'Amadeus Flights',
+            provider: 'Amadeus GDS',
+            description: 'Flight search and booking - Global airline inventory',
+            iconName: 'plane',
+            status: 'inactive',
+            color: '#667eea',
+            testPath: '/amadeus-test',
+            features: ['Flight Search', 'Multi-city', 'Fare Rules', 'Ticketing']
+        },
+        {
+            id: 'filos',
+            name: 'Filos (One Tourismo)',
+            provider: 'Filos Travel / One Tourismo',
+            description: 'Greek travel market specialist - Extensive hotel inventory, transfers and activities',
+            iconName: 'globe',
+            status: 'testing',
+            color: '#0277bd',
+            testPath: '/filos-test',
+            features: ['B2B XML/JSON API', 'Greek Hotels', 'Transfers', 'Activities', 'Static Data Sync']
+        }
+    ], []);
+
+    const renderIcon = (name: string, size: number = 32) => {
+        switch (name) {
+            case 'database': return <Database size={size} />;
+            case 'globe': return <Globe size={size} />;
+            case 'plane': return <Plane size={size} />;
+            default: return <Plug size={size} />;
+        }
+    };
 
     // Refresh function for stats
     const refreshStats = () => {
@@ -117,9 +129,13 @@ const APIConnectionsHub: React.FC = () => {
 
     // Auto-refresh stats every 5 seconds for the AI
     useEffect(() => {
+        console.log('✅ [API Hub] Component mounted');
         refreshStats();
         const interval = setInterval(refreshStats, 5000);
-        return () => clearInterval(interval);
+        return () => {
+            console.log('❌ [API Hub] Component unmounting');
+            clearInterval(interval);
+        };
     }, []);
 
     const getStatusIcon = (status: string) => {
@@ -198,7 +214,7 @@ const APIConnectionsHub: React.FC = () => {
                         <div key={conn.id} className="connection-card">
                             <div className="card-header">
                                 <div className="icon-wrapper" style={{ background: `${conn.color}20`, color: conn.color }}>
-                                    {conn.icon}
+                                    {renderIcon(conn.iconName)}
                                 </div>
                                 <div className="status-badge">
                                     {getStatusIcon(conn.status)}

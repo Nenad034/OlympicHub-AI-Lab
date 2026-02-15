@@ -579,6 +579,57 @@ export const router = createBrowserRouter([
                     {
                         path: 'api-connections',
                         element: <APIConnectionsHub />,
+                        errorElement: (
+                            <div style={{
+                                padding: '40px',
+                                textAlign: 'center',
+                                background: 'var(--bg-main)',
+                                color: 'var(--text-primary)',
+                                height: '100vh',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderRadius: '20px',
+                                border: '1px solid var(--border)',
+                                margin: '20px'
+                            }}>
+                                <h1 style={{ color: 'var(--accent)', marginBottom: '20px' }}>⚠️ API Hub Loading Error</h1>
+                                <p style={{ maxWidth: '600px', marginBottom: '30px', color: 'var(--text-secondary)' }}>
+                                    We encountered an error while trying to load the API Connections Hub.
+                                    This might be due to a connection issue or a temporary server error.
+                                </p>
+                                <div style={{ display: 'flex', gap: '15px' }}>
+                                    <button
+                                        onClick={() => window.location.reload()}
+                                        style={{
+                                            padding: '12px 24px',
+                                            background: 'var(--accent)',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        Retry Loading
+                                    </button>
+                                    <button
+                                        onClick={() => window.history.back()}
+                                        style={{
+                                            padding: '12px 24px',
+                                            background: 'rgba(255,255,255,0.1)',
+                                            color: 'var(--text-secondary)',
+                                            border: '1px solid var(--border)',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Go Back
+                                    </button>
+                                </div>
+                            </div>
+                        )
                     },
                     {
                         path: 'amadeus-test',
