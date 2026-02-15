@@ -114,6 +114,13 @@ const Sidebar: React.FC = () => {
                             <ClipboardList size={20} /> {!isSidebarCollapsed && t.reservations}
                         </NavLink>
                         <NavLink
+                            to="/supplier-finance"
+                            className={({ isActive }) => navItemClass(isActive)}
+                            title="Plaćanja"
+                        >
+                            <DollarSign size={20} /> {!isSidebarCollapsed && 'Plaćanja'}
+                        </NavLink>
+                        <NavLink
                             to="/subagent-admin"
                             className={({ isActive }) => navItemClass(isActive)}
                             title="Subagent Admin"

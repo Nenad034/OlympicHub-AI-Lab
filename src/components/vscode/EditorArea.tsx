@@ -41,7 +41,7 @@ export const EditorArea: React.FC = () => {
             <div className="vscode-editor-area">
                 <div className="editor-welcome">
                     <div className="welcome-content">
-                        <ClickToTravelLogo height={144} className="welcome-logo" showText={true} />
+                        <ClickToTravelLogo height={144} className="welcome-logo" showText={false} />
                         <h1>ClickToTravel Hub</h1>
                         <p className="welcome-subtitle">Enterprise Resource Planning za turizam</p>
 

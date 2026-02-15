@@ -66,6 +66,7 @@ const HotelView = React.lazy(() => import('../pages/HotelView'));
 const DocumentPreviewDemo = React.lazy(() => import('../pages/DocumentPreviewDemo'));
 const ContactArchitect = React.lazy(() => import('../pages/ContactArchitect'));
 const KyteTest = React.lazy(() => import('../pages/KyteTest'));
+const SupplierFinance = React.lazy(() => import('../pages/SupplierFinance'));
 const YieldDashboard = React.lazy(() => import('../modules/yield/YieldDashboard'));
 const DestinationRep = React.lazy(() => import('../modules/destination/DestinationRep'));
 const FilosTest = React.lazy(() => import('../pages/FilosTest'));
@@ -582,6 +583,10 @@ export const router = createBrowserRouter([
                     {
                         path: 'amadeus-test',
                         element: <AmadeusTest />,
+                    },
+                    {
+                        path: 'supplier-finance',
+                        element: <SupplierFinance />,
                     },
                     {
                         path: 'tct-test',

@@ -77,6 +77,9 @@ const HorizontalNav: React.FC = () => {
                         <NavLink to="/reservations" className={({ isActive }) => navItemClass(isActive)}>
                             <ClipboardList size={18} /> {t.reservations}
                         </NavLink>
+                        <NavLink to="/supplier-finance" className={({ isActive }) => navItemClass(isActive)}>
+                            <DollarSign size={18} /> Plaćanja
+                        </NavLink>
                         <NavLink to="/subagent-admin" className={({ isActive }) => navItemClass(isActive)}>
                             <Users size={18} /> Subagent Admin
                         </NavLink>

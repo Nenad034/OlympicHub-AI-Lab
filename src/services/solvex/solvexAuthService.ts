@@ -3,30 +3,24 @@ import { makeSoapRequest } from '../../utils/solvexSoapClient';
 import type { SolvexAuthResponse, SolvexApiResponse } from '../../types/solvex.types';
 
 const getEnvVar = (key: string) => {
-    // 1. Try process.env first (for scripts/Node)
-    if (typeof process !== 'undefined' && process.env && process.env[key]) {
+    // 1. Try Vite env (for frontend) - PRIMARY for web apps
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key] !== undefined) {
+        // @ts-ignore
+        const val = import.meta.env[key];
+        return val;
+    }
+
+    // 2. Try process.env (for scripts/Node)
+    if (typeof process !== 'undefined' && process.env && process.env[key] !== undefined) {
         return process.env[key];
     }
-    // 2. Try Vite env (for frontend)
-    // @ts-ignore
-    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
-        // @ts-ignore
-        return import.meta.env[key];
-    }
+
     return undefined;
 };
 
 const SOLVEX_LOGIN = getEnvVar('VITE_SOLVEX_LOGIN');
 const SOLVEX_PASSWORD = getEnvVar('VITE_SOLVEX_PASSWORD');
-
-// Validate that credentials are configured
-if (!SOLVEX_LOGIN || !SOLVEX_PASSWORD) {
-    console.error(
-        '[Solvex Auth] CRITICAL: Solvex credentials not configured!\n' +
-        'Please set VITE_SOLVEX_LOGIN and VITE_SOLVEX_PASSWORD in your .env file.\n' +
-        'See .env.example for template.'
-    );
-}
 
 // Token cache
 let cachedToken: string | null = null;
@@ -47,12 +41,25 @@ export async function connect(): Promise<SolvexApiResponse<string>> {
             };
         }
 
+        const login = getEnvVar('VITE_SOLVEX_LOGIN') || SOLVEX_LOGIN;
+        const password = getEnvVar('VITE_SOLVEX_PASSWORD') || SOLVEX_PASSWORD;
+
+        // VALIDATION: Prevent empty parameters which cause 400 Bad Request
+        if (!login || !password) {
+            console.error('[Solvex Auth] Missing credentials!', { login: !!login, password: !!password });
+            throw new Error('Solvex kredencijali nisu konfigurisani. Proverite .env fajl (VITE_SOLVEX_LOGIN i VITE_SOLVEX_PASSWORD).');
+        }
+
         console.log('[Solvex Auth] Requesting new token...');
 
         const result = await makeSoapRequest<string>('Connect', {
-            'login': getEnvVar('VITE_SOLVEX_LOGIN') || SOLVEX_LOGIN,
-            'password': getEnvVar('VITE_SOLVEX_PASSWORD') || SOLVEX_PASSWORD
+            'login': login,
+            'password': password
         });
+
+        if (!result) {
+            throw new Error('Solvex API nije vratio token (prazan odgovor)');
+        }
 
         // Cache the token
         cachedToken = result;

@@ -179,7 +179,7 @@ const Login = () => {
             >
                 <div className="login-header">
                     <div className="logo-box">
-                        <ClickToTravelLogo height={108} showText={true} />
+                        <ClickToTravelLogo height={108} showText={false} />
                     </div>
                     <h2 className="brand-title">ClickToTravel <span>034</span></h2>
                     <p className="subtitle">Advanced Management System</p>
