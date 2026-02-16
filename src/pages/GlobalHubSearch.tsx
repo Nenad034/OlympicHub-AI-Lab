@@ -236,6 +236,8 @@ const GlobalHubSearch: React.FC = () => {
     const [selectedMealPlans, setSelectedMealPlans] = useState<string[]>(['all']);
     const [budgetFrom, setBudgetFrom] = useState<string>('');
     const [budgetTo, setBudgetTo] = useState<string>('');
+    const [budgetType, setBudgetType] = useState<'total' | 'person'>('person');
+    const [showModes, setShowModes] = useState(true);
 
     // Booking states
     const [expandedHotel, setExpandedHotel] = useState<SmartSearchResult | null>(null);
@@ -567,6 +569,7 @@ const GlobalHubSearch: React.FC = () => {
         }
 
         // CHECK PREFETCH CACHE
+        const activeAllocations = roomAllocations.filter(r => r.adults > 0);
         const currentKey = `${selectedDestinations.map(d => d.id).sort().join(',')}|${activeCheckIn}|${activeCheckOut}|${JSON.stringify(roomAllocations)}`;
         if (prefetchedResults.length > 0 && prefetchKey === currentKey) {
             console.log('[GlobalHub] Using prefetched results! Instant display.');
@@ -584,7 +587,6 @@ const GlobalHubSearch: React.FC = () => {
         setSelectedArrivalDate(activeCheckIn);
 
         try {
-            const activeAllocations = roomAllocations.filter(r => r.adults > 0);
             if (activeAllocations.length === 0) {
                 setSearchError('Molimo definišite bar jednu sobu sa odraslim putnicima.');
                 setIsSearching(false);
@@ -800,7 +802,10 @@ const GlobalHubSearch: React.FC = () => {
             if (!selectedMealPlans.includes(normalized)) return false;
         }
 
-        const price = getFinalDisplayPrice(hotel);
+        const totalPrice = getFinalDisplayPrice(hotel);
+        const totalPax = roomAllocations.filter(r => r.adults > 0).reduce((sum, r) => sum + r.adults + r.children, 0) || 1;
+        const price = budgetType === 'person' ? (totalPrice / totalPax) : totalPrice;
+
         if (budgetFrom && price < Number(budgetFrom)) return false;
         if (budgetTo && price > Number(budgetTo)) return false;
 
@@ -1289,7 +1294,43 @@ const GlobalHubSearch: React.FC = () => {
 
                                 {/* Budget Filter */}
                                 <div className="param-item">
-                                    <div className="field-label"><DollarSign size={14} /> BUDŽET</div>
+                                    <div className="field-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <DollarSign size={14} /> BUDŽET
+                                        </div>
+                                        <div className="budget-type-toggle" style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', padding: '2px' }}>
+                                            <button
+                                                onClick={() => setBudgetType('person')}
+                                                style={{
+                                                    padding: '2px 8px',
+                                                    fontSize: '0.65rem',
+                                                    borderRadius: '4px',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    background: budgetType === 'person' ? 'var(--accent)' : 'transparent',
+                                                    color: '#fff',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                PO OSOBI
+                                            </button>
+                                            <button
+                                                onClick={() => setBudgetType('total')}
+                                                style={{
+                                                    padding: '2px 8px',
+                                                    fontSize: '0.65rem',
+                                                    borderRadius: '4px',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    background: budgetType === 'total' ? 'var(--accent)' : 'transparent',
+                                                    color: '#fff',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                UKUPNO
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
                                         <input
                                             type="number"
