@@ -24,7 +24,6 @@ interface Step2Props {
     onUpdate: (data: FlightSelectionData) => void;
     onNext: () => void;
     onBack: () => void;
-    prefetchedOffers?: Record<number, UnifiedFlightOffer[]>;
 }
 
 interface FlightHop {
@@ -42,16 +41,15 @@ const Step2_FlightSelection: React.FC<Step2Props> = ({
     data,
     onUpdate,
     onNext,
-    onBack,
-    prefetchedOffers
+    onBack
 }) => {
     // 1. Calculate Hops based on ITINERARY
     const hops = useMemo(() => {
         if (!basicInfo) return [];
 
         const result: FlightHop[] = [];
-        const origin = basicInfo.originCode || 'BEG';
-        const originCity = basicInfo.originCity || 'Beograd (BEG)';
+        const origin = 'BEG'; // Standard hub
+        const originCity = 'Beograd';
 
         // Leg 1: Origin to First Destination
         result.push({
@@ -113,15 +111,9 @@ const Step2_FlightSelection: React.FC<Step2Props> = ({
     // Effect to trigger search when active hop changes
     useEffect(() => {
         if (hops.length > 0 && !hopOffers[activeHopIndex]) {
-            // Check prefetch first
-            if (prefetchedOffers && prefetchedOffers[activeHopIndex]) {
-                setHopOffers(prev => ({ ...prev, [activeHopIndex]: prefetchedOffers[activeHopIndex] }));
-                // console.log(`[Step2] Using prefetched data for hop ${activeHopIndex}`);
-            } else {
-                searchForHop(activeHopIndex);
-            }
+            searchForHop(activeHopIndex);
         }
-    }, [activeHopIndex, hops, hopOffers, prefetchedOffers]);
+    }, [activeHopIndex, hops, hopOffers]);
 
     const searchForHop = async (index: number) => {
         const hop = hops[index];
@@ -337,7 +329,7 @@ const Step2_FlightSelection: React.FC<Step2Props> = ({
                                                     <div className="segment-content-ss">
                                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                                                             <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'white' }}>
-                                                                {formatTime(seg.departure)} — {seg.origin.city} ({seg.origin.iataCode})
+                                                                {formatTime(seg.departure)} — {seg.origin.city} ({seg.origin.code})
                                                             </div>
                                                             <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>
                                                                 {seg.carrierName} {seg.flightNumber}
@@ -347,7 +339,7 @@ const Step2_FlightSelection: React.FC<Step2Props> = ({
                                                             Trajanje: {formatDuration(seg.duration)} • Avion: {seg.aircraft || 'Commercial Jet'}
                                                         </p>
                                                         <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'white', marginTop: '1rem' }}>
-                                                            {formatTime(seg.arrival)} — {seg.destination.city} ({seg.destination.iataCode})
+                                                            {formatTime(seg.arrival)} — {seg.destination.city} ({seg.destination.code})
                                                         </div>
 
                                                         {idx < offer.slices[0].segments.length - 1 && (

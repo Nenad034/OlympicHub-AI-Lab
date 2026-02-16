@@ -2,27 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { ClickToTravelLogo } from '../../icons/ClickToTravelLogo';
 import { createPortal } from 'react-dom';
 import {
-    MapPin, Calendar, Star,
+    MapPin, Calendar, Users, Star,
     Search, Plus, X, Minus, ChevronDown, UtensilsCrossed, Users2, ArrowDownWideNarrow,
-    Globe, DollarSign, Plane
+    Globe, DollarSign
 } from 'lucide-react';
 import { ModernCalendar } from '../../../components/ModernCalendar';
 import { formatDate } from '../../../utils/dateUtils';
-
-const AIRPORT_OPTIONS = [
-    { code: 'BEG', city: 'Beograd', name: 'Nikola Tesla' },
-    { code: 'INI', city: 'Niš', name: 'Konstantin Veliki' },
-    { code: 'ZAG', city: 'Zagreb', name: 'Franjo Tuđman' },
-    { code: 'SJJ', city: 'Sarajevo', name: 'Butmir' },
-    { code: 'TGD', city: 'Podgorica', name: 'Golubovci' },
-    { code: 'TIV', city: 'Tivat', name: 'Tivat' },
-    { code: 'SKP', city: 'Skopje', name: 'International' },
-    { code: 'BUD', city: 'Budimpešta', name: 'Ferenc Liszt' },
-    { code: 'VIE', city: 'Beč', name: 'Schwechat' },
-    { code: 'MUC', city: 'Minhen', name: 'Franz Josef Strauss' },
-    { code: 'FRA', city: 'Frankfurt', name: 'Main' },
-    { code: 'IST', city: 'Istanbul', name: 'Istanbul' },
-];
 import '../../../pages/SmartSearchRedesign.css';
 import '../../../pages/SmartSearchFerrariFix.css';
 import type {
@@ -124,11 +109,6 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
     const [budgetTo, setBudgetTo] = useState(basicInfo?.budgetTo?.toString() || '');
     const [nationality, setNationality] = useState(basicInfo?.nationality || 'RS');
     const [showNationalityPicker, setShowNationalityPicker] = useState<number | null>(null);
-    const [budgetType, setBudgetType] = useState<'total' | 'person'>(basicInfo?.budgetType || 'person');
-
-    const [originCity, setOriginCity] = useState(basicInfo?.originCity || 'Beograd (BEG)');
-    const [originCode, setOriginCode] = useState(basicInfo?.originCode || 'BEG'); // Initially 'BEG'
-    const [showOriginSuggestions, setShowOriginSuggestions] = useState(false);
 
     const [activeDropdown, setActiveDropdown] = useState<{ idx: number, field: 'category' | 'service' } | null>(null);
     const [activeCalendar, setActiveCalendar] = useState<{ index: number } | null>(null);
@@ -142,19 +122,16 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
         onUpdate({
             destinations: destinations.map(d => ({ ...d, travelers: primaryRoom })),
             travelers: primaryRoom,
-            originCity: originCity.replace(/\s\([^)]+\)/, ''), // Remove code from city name for storage
-            originCode: originCode,
             budget: budgetTo ? Number(budgetTo) : basicInfo?.budget,
             budgetFrom: budgetFrom ? Number(budgetFrom) : undefined,
             budgetTo: budgetTo ? Number(budgetTo) : undefined,
-            budgetType: budgetType,
             nationality: nationality,
             currency: basicInfo?.currency || 'EUR',
             startDate: destinations[0]?.checkIn || '',
             endDate: destinations[destinations.length - 1]?.checkOut || '',
             totalDays: destinations.reduce((sum, d) => sum + (d.nights || 0), 0)
         });
-    }, [destinations, roomAllocations, budgetFrom, budgetTo, budgetType, nationality, originCode, originCity]);
+    }, [destinations, roomAllocations, budgetFrom, budgetTo, nationality]);
 
     const addDestination = () => {
         if (destinations.length >= 3) return;
@@ -222,94 +199,6 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
 
     return (
         <div className="package-builder-step-container" style={{ width: '100%', maxWidth: 'none' }}>
-            {/* 0. ORIGIN SELECTION */}
-            <div className="search-card-frame animate-fade-in-up" style={{ marginBottom: '2rem', padding: '1.5rem 2.5rem', width: '100%', maxWidth: 'none', background: 'rgba(15, 23, 42, 0.4)' }}>
-                <div className="field-label" style={{ marginBottom: '8px' }}><Plane size={14} style={{ transform: 'rotate(-45deg)' }} /> POLAZIŠTE (ODAKLE KREĆETE NA PUTOVANJE?)</div>
-                <div style={{ position: 'relative' }}>
-                    <input
-                        type="text"
-                        placeholder="Unesite grad polaska (npr. Beograd)"
-                        value={originCity}
-                        onFocus={() => setShowOriginSuggestions(true)}
-                        onBlur={() => setTimeout(() => setShowOriginSuggestions(false), 200)}
-                        onChange={(e) => {
-                            setOriginCity(e.target.value);
-                            setShowOriginSuggestions(true);
-                            // Basic auto-detect just in case they don't click suggestion
-                            const val = e.target.value.toUpperCase();
-                            const match = AIRPORT_OPTIONS.find(a => a.city.toUpperCase().startsWith(val) || a.code.startsWith(val));
-                            if (match) setOriginCode(match.code);
-                            else setOriginCode('');
-                        }}
-                        className="smart-input-inline"
-                        style={{
-                            background: 'var(--ss-bg-inner)',
-                            border: '1px solid var(--ss-border)',
-                            paddingLeft: '3.5rem',
-                            height: '42px', // Reduced height as requested
-                            color: 'var(--ss-text-primary)'
-                        }}
-                    />
-                    <MapPin size={18} style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--ss-text-muted)' }} />
-
-                    {/* AIRPORT SUGGESTIONS DROPDOWN */}
-                    {showOriginSuggestions && (
-                        <div className="start-suggestions-dropdown animate-fade-in-up" style={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            right: 0,
-                            background: 'var(--ss-bg-card)',
-                            border: '1px solid var(--ss-border)',
-                            borderRadius: '12px',
-                            zIndex: 1000,
-                            marginTop: '4px',
-                            maxHeight: '250px',
-                            overflowY: 'auto',
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
-                        }}>
-                            {AIRPORT_OPTIONS.filter(a =>
-                                a.city.toLowerCase().includes(originCity.toLowerCase()) ||
-                                a.code.toLowerCase().includes(originCity.toLowerCase()) ||
-                                a.name.toLowerCase().includes(originCity.toLowerCase())
-                            ).map((airport) => (
-                                <div
-                                    key={airport.code}
-                                    onClick={() => {
-                                        setOriginCity(`${airport.city} (${airport.code})`);
-                                        setOriginCode(airport.code);
-                                        setShowOriginSuggestions(false);
-                                    }}
-                                    style={{
-                                        padding: '10px 15px',
-                                        borderBottom: '1px solid var(--ss-border)',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        color: 'var(--ss-text-primary)'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                >
-                                    <div>
-                                        <div style={{ fontWeight: 700 }}>{airport.city}</div>
-                                        <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>{airport.name}</div>
-                                    </div>
-                                    <div style={{
-                                        fontWeight: 900,
-                                        background: 'rgba(255,255,255,0.1)',
-                                        padding: '2px 6px',
-                                        borderRadius: '4px',
-                                        fontSize: '0.8rem'
-                                    }}>{airport.code}</div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div>
-
             {destinations.map((dest, idx) => (
                 <div key={dest.id} className="search-card-frame" style={{
                     marginBottom: '2rem',
@@ -572,66 +461,24 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
 
                         {/* Budget */}
                         <div style={{ flex: 1.5 }}>
-                            <div className="field-label" style={{ justifyContent: 'space-between' }}>
-                                <span><DollarSign size={14} /> Budžet (opciono)</span>
-                                <div className="budget-type-toggle" style={{ display: 'flex', background: 'rgba(255,255,255,0.1)', borderRadius: '6px', padding: '2px' }}>
-                                    <button
-                                        onClick={() => setBudgetType('person')}
-                                        style={{
-                                            background: budgetType === 'person' ? '#10B981' : 'transparent',
-                                            color: budgetType === 'person' ? 'white' : '#94a3b8',
-                                            border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '10px',
-                                            fontWeight: 700, cursor: 'pointer'
-                                        }}
-                                    >Po osobi</button>
-                                    <button
-                                        onClick={() => setBudgetType('total')}
-                                        style={{
-                                            background: budgetType === 'total' ? '#10B981' : 'transparent',
-                                            color: budgetType === 'total' ? 'white' : '#94a3b8',
-                                            border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '10px',
-                                            fontWeight: 700, cursor: 'pointer'
-                                        }}
-                                    >Ukupno</button>
-                                </div>
-                            </div>
+                            <div className="field-label"><DollarSign size={14} /> Budžet (opciono)</div>
                             <div style={{ display: 'flex', gap: '8px' }}>
-                                <div style={{ position: 'relative', flex: 1 }}>
-                                    <input
-                                        type="number"
-                                        placeholder="Min"
-                                        value={budgetFrom}
-                                        onChange={(e) => setBudgetFrom(e.target.value)}
-                                        className="budget-input"
-                                        style={{
-                                            width: '100%',
-                                            padding: '0 1rem',
-                                            height: '42px',
-                                            borderRadius: '12px',
-                                            background: 'var(--ss-bg-inner, rgba(255,255,255,0.05))',
-                                            border: '1px solid var(--ss-border, rgba(255,255,255,0.1))',
-                                            color: 'var(--ss-text-primary, #fff)'
-                                        }}
-                                    />
-                                </div>
-                                <div style={{ position: 'relative', flex: 1 }}>
-                                    <input
-                                        type="number"
-                                        placeholder="Max"
-                                        value={budgetTo}
-                                        onChange={(e) => setBudgetTo(e.target.value)}
-                                        className="budget-input"
-                                        style={{
-                                            width: '100%',
-                                            padding: '0 1rem',
-                                            height: '42px',
-                                            borderRadius: '12px',
-                                            background: 'var(--ss-bg-inner, rgba(255,255,255,0.05))',
-                                            border: '1px solid var(--ss-border, rgba(255,255,255,0.1))',
-                                            color: 'var(--ss-text-primary, #fff)'
-                                        }}
-                                    />
-                                </div>
+                                <input
+                                    type="number"
+                                    placeholder="Min Cena"
+                                    value={budgetFrom}
+                                    onChange={(e) => setBudgetFrom(e.target.value)}
+                                    className="budget-input"
+                                    style={{ flex: 1 }}
+                                />
+                                <input
+                                    type="number"
+                                    placeholder="Max Cena"
+                                    value={budgetTo}
+                                    onChange={(e) => setBudgetTo(e.target.value)}
+                                    className="budget-input"
+                                    style={{ flex: 1 }}
+                                />
                             </div>
                         </div>
                     </div>

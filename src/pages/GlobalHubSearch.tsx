@@ -5,8 +5,8 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores';
 import {
-    Sparkles, Hotel, Plane, Package, Bus, Compass, LayoutTemplate,
-    MapPin, CalendarDays, Users, UtensilsCrossed, Star,
+    Sparkles, Hotel, Plane, Package, Bus, Compass,
+    MapPin, Calendar, CalendarDays, Users, UtensilsCrossed, Star,
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
     LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
     CheckCircle2, CheckCircle, XCircle, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
@@ -169,8 +169,6 @@ const GlobalHubSearch: React.FC = () => {
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState<'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'charter' | 'cruise' | 'event' | 'ski'>('hotel');
-    const [searchMode, setSearchMode] = useState<'classic' | 'narrative' | 'immersive'>('classic');
-    const [showModes, setShowModes] = useState(true);
     const [selectedDestinations, setSelectedDestinations] = useState<Destination[]>([]);
     const [destinationInput, setDestinationInput] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -238,7 +236,6 @@ const GlobalHubSearch: React.FC = () => {
     const [selectedMealPlans, setSelectedMealPlans] = useState<string[]>(['all']);
     const [budgetFrom, setBudgetFrom] = useState<string>('');
     const [budgetTo, setBudgetTo] = useState<string>('');
-    const [budgetType, setBudgetType] = useState<'total' | 'person'>('person');
 
     // Booking states
     const [expandedHotel, setExpandedHotel] = useState<SmartSearchResult | null>(null);
@@ -803,16 +800,9 @@ const GlobalHubSearch: React.FC = () => {
             if (!selectedMealPlans.includes(normalized)) return false;
         }
 
-        const totalPrice = getFinalDisplayPrice(hotel);
-
-        let priceToCheck = totalPrice;
-        if (budgetType === 'person') {
-            const totalPax = roomAllocations.reduce((acc, r) => acc + r.adults + r.children, 0) || 1;
-            priceToCheck = totalPrice / totalPax;
-        }
-
-        if (budgetFrom && priceToCheck < Number(budgetFrom)) return false;
-        if (budgetTo && priceToCheck > Number(budgetTo)) return false;
+        const price = getFinalDisplayPrice(hotel);
+        if (budgetFrom && price < Number(budgetFrom)) return false;
+        if (budgetTo && price > Number(budgetTo)) return false;
 
         return true;
     }).sort((a, b) => {
@@ -1057,8 +1047,8 @@ const GlobalHubSearch: React.FC = () => {
 
 
 
-            {/* TAB NAVIGATION - CENTERED */}
-            <div className="tabs-nav-container" style={{ margin: '0 auto 15px auto' }}>
+            {/* TAB NAVIGATION */}
+            <div className="tabs-nav-container">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
@@ -1069,60 +1059,6 @@ const GlobalHubSearch: React.FC = () => {
                         <span>{tab.label}</span>
                     </button>
                 ))}
-            </div>
-
-            {/* SEARCH MODES TOGGLE - CONSISTENT WITH SMART SEARCH */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px', position: 'relative' }}>
-                <button
-                    onClick={() => setShowModes(!showModes)}
-                    style={{
-                        background: 'rgba(255,255,255,0.05)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '20px',
-                        padding: '4px 12px',
-                        fontSize: '10px',
-                        color: 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        marginBottom: showModes ? '15px' : '0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '1px'
-                    }}
-                >
-                    {showModes ? <Zap size={10} /> : <Sparkles size={10} />}
-                    {showModes ? 'SAKRIJ MODOVE PRETRAGE' : 'PRIKAŽI MODOVE PRETRAGE'}
-                </button>
-
-                {showModes && (
-                    <div className="animate-fade-in" style={{ display: 'flex', justifyContent: 'center' }}>
-                        <div className="mode-toggle-group">
-                            <button
-                                className={`mode-switch-btn ${searchMode === 'classic' ? 'active' : ''}`}
-                                onClick={() => setSearchMode('classic')}
-                            >
-                                <LayoutTemplate size={16} style={{ marginRight: 8 }} />
-                                Klasična
-                            </button>
-                            <button
-                                className={`mode-switch-btn ${searchMode === 'narrative' ? 'active' : ''}`}
-                                onClick={() => setSearchMode('narrative')}
-                            >
-                                <Sparkles size={16} style={{ marginRight: 8 }} />
-                                Futuristička
-                            </button>
-                            <button
-                                className={`mode-switch-btn ${searchMode === 'immersive' ? 'active' : ''}`}
-                                onClick={() => setSearchMode('immersive')}
-                            >
-                                <Zap size={16} style={{ marginRight: 8 }} />
-                                Immersive
-                            </button>
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* CONDITIONAL RENDER: SMESHTAJ vs LETOVI vs PAKETI */}
@@ -1353,63 +1289,21 @@ const GlobalHubSearch: React.FC = () => {
 
                                 {/* Budget Filter */}
                                 <div className="param-item">
-                                    <div className="filter-header-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                        <div className="filter-label"><DollarSign size={14} /> Budžet</div>
-                                        <div className="budget-type-toggle" style={{ display: 'flex', background: 'rgba(255,255,255,0.1)', borderRadius: '6px', padding: '2px' }}>
-                                            <button
-                                                onClick={() => setBudgetType('person')}
-                                                style={{
-                                                    background: budgetType === 'person' ? '#10B981' : 'transparent',
-                                                    color: budgetType === 'person' ? 'white' : '#94a3b8',
-                                                    border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '10px',
-                                                    fontWeight: 700, cursor: 'pointer'
-                                                }}
-                                            >Po osobi</button>
-                                            <button
-                                                onClick={() => setBudgetType('total')}
-                                                style={{
-                                                    background: budgetType === 'total' ? '#10B981' : 'transparent',
-                                                    color: budgetType === 'total' ? 'white' : '#94a3b8',
-                                                    border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '10px',
-                                                    fontWeight: 700, cursor: 'pointer'
-                                                }}
-                                            >Ukupno</button>
-                                        </div>
-                                    </div>
-                                    <div className="budget-inputs-row" style={{ display: 'flex', gap: '8px' }}>
+                                    <div className="field-label"><DollarSign size={14} /> BUDŽET</div>
+                                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
                                         <input
                                             type="number"
-                                            placeholder="Min"
+                                            placeholder="Od"
                                             value={budgetFrom}
                                             onChange={(e) => setBudgetFrom(e.target.value)}
                                             className="budget-input"
-                                            style={{
-                                                flex: 1,
-                                                padding: '0 1rem',
-                                                height: '42px',
-                                                borderRadius: '12px',
-                                                background: 'var(--ss-bg-inner, rgba(255,255,255,0.05))',
-                                                border: '1px solid var(--ss-border, rgba(255,255,255,0.1))',
-                                                color: 'var(--ss-text-primary, #fff)',
-                                                outline: 'none'
-                                            }}
                                         />
                                         <input
                                             type="number"
-                                            placeholder="Max"
+                                            placeholder="Do"
                                             value={budgetTo}
                                             onChange={(e) => setBudgetTo(e.target.value)}
                                             className="budget-input"
-                                            style={{
-                                                flex: 1,
-                                                padding: '0 1rem',
-                                                height: '42px',
-                                                borderRadius: '12px',
-                                                background: 'var(--ss-bg-inner, rgba(255,255,255,0.05))',
-                                                border: '1px solid var(--ss-border, rgba(255,255,255,0.1))',
-                                                color: 'var(--ss-text-primary, #fff)',
-                                                outline: 'none'
-                                            }}
                                         />
                                     </div>
                                 </div>

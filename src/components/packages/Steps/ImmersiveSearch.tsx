@@ -5,7 +5,7 @@ import './ImmersiveSearch.css';
 import { ModernCalendar } from '../../ModernCalendar';
 
 // Define the steps
-type Step = 'origin' | 'country' | 'destination' | 'dates' | 'travelers' | 'experiences' | 'confirm';
+type Step = 'country' | 'destination' | 'dates' | 'travelers' | 'experiences' | 'confirm';
 
 // Define the updated data structure for partial updates
 export interface ImmersiveSearchData {
@@ -25,7 +25,6 @@ export interface ImmersiveSearchData {
 interface ImmersiveSearchProps {
     onSearch: (data: ImmersiveSearchData) => void;
     onPartialUpdate?: (data: ImmersiveSearchData) => void;
-    activeTab: 'hotel' | 'flight' | 'package' | 'ski' | 'bus';
 }
 
 const COMMON_COUNTRIES = [
@@ -39,8 +38,8 @@ const COMMON_COUNTRIES = [
     { id: 8, name: 'Španija', code: 'ES' },
 ];
 
-export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPartialUpdate, activeTab }) => {
-    const [step, setStep] = useState<Step>(activeTab === 'flight' ? 'origin' : 'country');
+export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPartialUpdate }) => {
+    const [step, setStep] = useState<Step>('country');
     const [selectedCountry, setSelectedCountry] = useState<{ id: number, name: string } | null>(null);
     const [availableDestinations, setAvailableDestinations] = useState<any[]>([]);
     const [selectedDestinations, setSelectedDestinations] = useState<any[]>([]);
@@ -132,12 +131,6 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
     const [nationality, setNationality] = useState('RS'); // Mandatory
     const [budgetFrom, setBudgetFrom] = useState('');     // Optional
     const [budgetTo, setBudgetTo] = useState('');         // Optional
-
-    // Flight specific
-    const [originCity, setOriginCity] = useState('Beograd');
-    const [originCode, setOriginCode] = useState('BEG');
-    const [cabinClass, setCabinClass] = useState('economy');
-    const [originSuggestions, setOriginSuggestions] = useState<any[]>([]);
 
     const [activeCalendar, setActiveCalendar] = useState<'in' | 'out' | null>(null);
 
@@ -269,19 +262,17 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
                 children: roomAllocations.reduce((sum, r) => sum + r.children, 0),
                 childrenAges: roomAllocations.flatMap(r => r.childrenAges),
                 roomAllocations,
-                categories: activeTab === 'flight' ? [cabinClass] : selectedCategories,
+                categories: selectedCategories,
                 services: selectedServices,
                 nationality,
                 budget: {
                     from: budgetFrom ? Number(budgetFrom) : undefined,
                     to: budgetTo ? Number(budgetTo) : undefined
-                },
-                // Pass origin for flights
-                ...(activeTab === 'flight' && { originCity, originCode })
+                }
             };
             onPartialUpdate(data);
         }
-    }, [selectedDestinations, selectedCountry, checkIn, checkOut, roomAllocations, selectedCategories, selectedServices, nationality, budgetFrom, budgetTo, originCity, originCode, cabinClass, onPartialUpdate]);
+    }, [selectedDestinations, selectedCountry, checkIn, checkOut, roomAllocations, selectedCategories, selectedServices, nationality, budgetFrom, budgetTo, onPartialUpdate]);
 
     const handleFinalSearch = () => {
         // Construct search data
@@ -300,15 +291,13 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
             roomAllocations, // Pass full structure
 
             // New structure
-            categories: activeTab === 'flight' ? [cabinClass] : selectedCategories,
+            categories: selectedCategories,
             services: selectedServices,
             nationality,
             budget: {
                 from: budgetFrom ? Number(budgetFrom) : undefined,
                 to: budgetTo ? Number(budgetTo) : undefined
-            },
-            originCity: activeTab === 'flight' ? originCity : undefined,
-            originCode: activeTab === 'flight' ? originCode : undefined
+            }
         };
 
         // Basic validation for mandatory fields
@@ -361,36 +350,6 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
                 </button>
             )}
             {/* STEP 1: COUNTRY */}
-            {activeTab === 'flight' && step === 'origin' && (
-                <div className="immersive-step-container">
-                    <div className="immersive-input-group" style={{ maxWidth: '400px', margin: '0 auto' }}>
-                        <label className="immersive-label">Odakle letite?</label>
-                        <input
-                            type="text"
-                            className="immersive-input"
-                            style={{ textAlign: 'center', fontSize: '1.5rem' }}
-                            placeholder="npr. Beograd"
-                            value={originCity}
-                            onChange={(e) => setOriginCity(e.target.value)}
-                        />
-                        <div className="immersive-tags-grid" style={{ marginTop: '1.5rem' }}>
-                            {['Beograd', 'Niš', 'Kraljevo', 'Budimpešta', 'Temišvar'].map(city => (
-                                <div key={city} className={`immersive-tag ${originCity === city ? 'selected' : ''}`} onClick={() => { setOriginCity(city); setStep('country'); }}>
-                                    {city}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="immersive-step-footer">
-                        {originCity && (
-                            <button className="immersive-next-btn icon-only" onClick={() => setStep('country')}>
-                                <ArrowRightCircle size={36} />
-                            </button>
-                        )}
-                    </div>
-                </div>
-            )}
-
             {step === 'country' && (
                 <div className="immersive-step-container">
                     <div className="immersive-tags-grid">
@@ -631,35 +590,17 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
                     <div className="immersive-inputs-grid-expanded">
                         <div className="immersive-input-group">
                             <label className="immersive-label">Kategorija (Zvezdice) <span className="req">*</span></label>
-                            {activeTab === 'flight' ? (
-                                <div className="immersive-tags-row">
-                                    {[
-                                        { id: 'economy', label: 'Ekonomska' },
-                                        { id: 'business', label: 'Biznis' },
-                                        { id: 'first', label: 'Prva' }
-                                    ].map(c => (
-                                        <div
-                                            key={c.id}
-                                            className={`immersive-filter-tag ${cabinClass === c.id ? 'selected' : ''}`}
-                                            onClick={() => setCabinClass(c.id)}
-                                        >
-                                            {c.label}
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="immersive-tags-row">
-                                    {['2', '3', '4', '5'].map(star => (
-                                        <div
-                                            key={star}
-                                            className={`immersive-filter-tag ${selectedCategories.includes(star) ? 'selected' : ''}`}
-                                            onClick={() => toggleCategory(star)}
-                                        >
-                                            {star} ★
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            <div className="immersive-tags-row">
+                                {['2', '3', '4', '5'].map(star => (
+                                    <div
+                                        key={star}
+                                        className={`immersive-filter-tag ${selectedCategories.includes(star) ? 'selected' : ''}`}
+                                        onClick={() => toggleCategory(star)}
+                                    >
+                                        {star} ★
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         <div className="immersive-input-group">
