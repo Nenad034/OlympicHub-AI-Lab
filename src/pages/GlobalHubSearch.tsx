@@ -244,6 +244,11 @@ const GlobalHubSearch: React.FC = () => {
     const [selectedRoomForBooking, setSelectedRoomForBooking] = useState<any>(null);
     const [bookingSuccessData, setBookingSuccessData] = useState<{ id: string, code: string, provider: string } | null>(null);
     const [bookingAlertError, setBookingAlertError] = useState<string | null>(null);
+
+    // Background Search State
+    const [prefetchedResults, setPrefetchedResults] = useState<SmartSearchResult[]>([]);
+    const [prefetchKey, setPrefetchKey] = useState<string>('');
+    const [isPrefetching, setIsPrefetching] = useState(false);
     const tabId = useRef(Math.random().toString(36).substring(2, 11));
 
     const inputRef = useRef<HTMLInputElement>(null);
@@ -561,6 +566,16 @@ const GlobalHubSearch: React.FC = () => {
             return;
         }
 
+        // CHECK PREFETCH CACHE
+        const currentKey = `${selectedDestinations.map(d => d.id).sort().join(',')}|${activeCheckIn}|${activeCheckOut}|${JSON.stringify(roomAllocations)}`;
+        if (prefetchedResults.length > 0 && prefetchKey === currentKey) {
+            console.log('[GlobalHub] Using prefetched results! Instant display.');
+            setSearchResults(prefetchedResults);
+            setSearchPerformed(true);
+            setIsSearching(false);
+            return;
+        }
+
         setIsSearching(true);
         setSearchError(null);
         setSearchResults([]);
@@ -690,6 +705,66 @@ const GlobalHubSearch: React.FC = () => {
             setSearchError(error instanceof Error ? error.message : 'Greška pri pretrazi');
         } finally {
             setIsSearching(false);
+        }
+    };
+
+    // Background Search Trigger
+    useEffect(() => {
+        if (selectedDestinations.length > 0 && checkIn && checkOut && roomAllocations.length > 0) {
+            handleBackgroundSearch({
+                destinations: selectedDestinations,
+                checkIn,
+                checkOut,
+                allocations: roomAllocations
+            });
+        }
+    }, [selectedDestinations, checkIn, checkOut, roomAllocations]);
+
+    const handleBackgroundSearch = async (data: {
+        destinations: any[],
+        checkIn: string,
+        checkOut: string,
+        allocations: any[]
+    }) => {
+        const { destinations, checkIn, checkOut, allocations } = data;
+        const activeAllocations = allocations.filter(r => r.adults > 0);
+
+        if (destinations.length === 0 || !checkIn || !checkOut || activeAllocations.length === 0) return;
+
+        const currentKey = `${destinations.map(d => d.id).sort().join(',')}|${checkIn}|${checkOut}|${JSON.stringify(allocations)}`;
+        if (prefetchKey === currentKey || isSearching || isPrefetching) return;
+
+        console.log('[GlobalHub] Starting background pre-fetch for key:', currentKey);
+        setIsPrefetching(true);
+
+        try {
+            const results = await performSmartSearch({
+                searchType: 'hotel', // Default to hotel for global hub main search
+                destinations: destinations.map(d => ({
+                    id: String(d.id).replace('solvex-c-', ''),
+                    name: d.name,
+                    type: d.type
+                })),
+                checkIn,
+                checkOut,
+                rooms: activeAllocations,
+                mealPlan: 'all',
+                currency: 'EUR',
+                nationality: 'RS',
+            });
+
+            const resultsWithSales = await Promise.all(results.map(async (h) => {
+                const count = await getMonthlyReservationCount(h.name);
+                return { ...h, salesCount: count };
+            }));
+
+            setPrefetchedResults(resultsWithSales);
+            setPrefetchKey(currentKey);
+            console.log('[GlobalHub] Background pre-fetch complete.', resultsWithSales.length, 'results found.');
+        } catch (error) {
+            console.warn('[GlobalHub] Background pre-fetch failed:', error);
+        } finally {
+            setIsPrefetching(false);
         }
     };
 
@@ -1641,7 +1716,7 @@ const GlobalHubSearch: React.FC = () => {
                                                         <div className="lowest-price-tag">
                                                             <span className="price-val">od {formatPrice(getFinalDisplayPrice(hotel))} €</span>
                                                             {roomAllocations.filter(r => r.adults > 0).length > 1 && (
-                                                                <span className="price-label-multi"># Za {roomAllocations.filter(r => r.adults > 0).length} sobe</span>
+                                                                <span className="price-label-multi"># Za {roomAllocations.reduce((sum, r) => sum + r.adults + r.children, 0)} osoba</span>
                                                             )}
                                                         </div>
                                                         {hotel.type === 'hotel' ? (

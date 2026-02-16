@@ -14,6 +14,7 @@ export interface DestinationInput {
     checkOut: string; // ISO date
     nights: number;
     travelers: TravelerCount;
+    roomAllocations?: TravelerCount[];
     category?: string[]; // e.g. ["5 Zvezdica", "4 Zvezdice"]
     service?: string[];  // e.g. ["All Inclusive"]
     flexibleDays?: number;
@@ -29,6 +30,7 @@ export interface DestinationInput {
 export interface BasicInfoData {
     destinations: DestinationInput[];
     travelers: TravelerCount;
+    roomAllocations?: TravelerCount[];
     budget?: number;
     budgetFrom?: number;
     budgetTo?: number;

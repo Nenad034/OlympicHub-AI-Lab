@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import './ReservationsDashboard.css';
 import ReservationEmailModal from '../components/ReservationEmailModal';
-import DateRangeInput from '../components/DateRangeInput.tsx';
+import DateRangeInput from '../components/DateRangeInput';
 import { useQueryState } from '../hooks/useQueryState';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';

@@ -3,7 +3,7 @@ import './NarrativeSearch.css';
 import { createPortal } from 'react-dom';
 import { ModernCalendar } from '../../../components/ModernCalendar';
 import { formatDate } from '../../../utils/dateUtils';
-import type { BasicInfoData, DestinationInput } from '../../../types/packageSearch.types';
+import type { BasicInfoData, DestinationInput, TravelerCount } from '../../../types/packageSearch.types';
 import { X, Search, Users, Baby } from 'lucide-react';
 import solvexDictionaryService from '../../../services/solvex/solvexDictionaryService';
 
@@ -15,49 +15,111 @@ interface NarrativeSearchProps {
 
 type ActiveField = 'destination' | 'date' | 'nights' | 'travelers' | null;
 
+const NATIONALITY_OPTIONS = [
+    { code: 'RS', name: 'Srbija' },
+    { code: 'BA', name: 'Bosna i Hercegovina' },
+    { code: 'ME', name: 'Crna Gora' },
+    { code: 'MK', name: 'Severna Makedonija' },
+    { code: 'HR', name: 'Hrvatska' },
+    { code: 'BG', name: 'Bugarska' },
+    { code: 'RO', name: 'Rumunija' },
+    { code: 'HU', name: 'Mađarska' },
+    { code: 'GR', name: 'Grčka' },
+    { code: 'AL', name: 'Albanija' },
+    { code: 'TR', name: 'Turska' },
+    { code: 'DE', name: 'Nemačka' },
+    { code: 'AT', name: 'Austrija' },
+    { code: 'CH', name: 'Švajcarska' },
+    { code: 'RU', name: 'Rusija' },
+    { code: 'US', name: 'SAD' },
+    { code: 'GB', name: 'Velika Britanija' },
+    { code: 'IT', name: 'Italija' },
+    { code: 'FR', name: 'Francuska' },
+    { code: 'ES', name: 'Španija' },
+];
+
+const COUNTRY_DESTINATIONS: Record<string, string[]> = {
+    'Bugarska': ['Sunčev Breg', 'Zlatni Pjasci', 'Nesebar', 'Varna', 'Bansko', 'Borovec'],
+    'Grčka': ['Tasos', 'Lefkada', 'Halkidiki', 'Krit', 'Rodos', 'Krf', 'Zakintos', 'Paralija'],
+    'Egipat': ['Hurgada', 'Šarm El Šeik', 'Marsa Alam', 'Kairo'],
+    'Turska': ['Antalija', 'Alanja', 'Belek', 'Kemer', 'Side', 'Kušadasi', 'Bodrum', 'Marmaris'],
+    'Crna Gora': ['Budva', 'Bečići', 'Kotor', 'Herceg Novi', 'Ulcinj', 'Petrovac']
+};
+
 export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onUpdate, onNext }) => {
-    // Local state for the "Sentence"
-    // We init from basicInfo but simplified for the demo
-    const [activeField, setActiveField] = useState<ActiveField>(null);
+    const handleNightsChange = (delta: number) => {
+        const newNights = Math.max(1, Math.min(30, nights + delta));
+        setNights(newNights);
+        if (checkIn) {
+            const s = new Date(checkIn);
+            s.setDate(s.getDate() + newNights);
+            setCheckOut(s.toISOString().split('T')[0]);
+        }
+    };
+    const [activeField, setActiveField] = useState<ActiveField | 'rooms' | 'category' | 'service' | 'nationality' | 'budget'>(null);
     const [destination, setDestination] = useState<string>(basicInfo?.destinations[0]?.city || '');
     const [checkIn, setCheckIn] = useState<string>(basicInfo?.destinations[0]?.checkIn || '');
     const [checkOut, setCheckOut] = useState<string>(basicInfo?.destinations[0]?.checkOut || '');
     const [nights, setNights] = useState<number>(basicInfo?.destinations[0]?.nights || 7);
-    const [adults, setAdults] = useState<number>(basicInfo?.travelers?.adults || 2);
-    const [children, setChildren] = useState<number>(basicInfo?.travelers?.children || 0);
-    const [childrenAges, setChildrenAges] = useState<number[]>(basicInfo?.travelers?.childrenAges || []);
+
+    // Multi-room state
+    const [rooms, setRooms] = useState(basicInfo?.roomAllocations?.length || 1);
+    const [roomAllocations, setRoomAllocations] = useState<TravelerCount[]>(
+        basicInfo?.roomAllocations?.map(r => ({ ...r, childrenAges: r.childrenAges || [] })) || [{ adults: 2, children: 0, childrenAges: [] }]
+    );
+
+    // New immersive fields
+    const [selectedCategories, setSelectedCategories] = useState<string[]>(basicInfo?.destinations[0]?.category || ['5']);
+    const [selectedServices, setSelectedServices] = useState<string[]>(basicInfo?.destinations[0]?.service || ['all']);
+    const [nationality, setNationality] = useState(basicInfo?.nationality || 'RS');
+    const [budgetFrom, setBudgetFrom] = useState<string>(basicInfo?.budgetFrom?.toString() || '');
+    const [budgetTo, setBudgetTo] = useState<string>(basicInfo?.budgetTo?.toString() || '');
+
+    const [activeCountryTag, setActiveCountryTag] = useState<string | null>(null);
+
     const [suggestions, setSuggestions] = useState<any[]>([]);
-
     const [selectedDestination, setSelectedDestination] = useState<any>(basicInfo?.destinations[0] || null);
-
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Sync back to parent when values change
+    // Sync roomAllocations length with rooms count
     useEffect(() => {
-        // Construct standard data format for parent compatibility
-        // USE REAL DATA FROM selectedDestination if available
+        if (roomAllocations.length < rooms) {
+            const newRooms = [...roomAllocations];
+            while (newRooms.length < rooms) {
+                newRooms.push({ adults: 2, children: 0, childrenAges: [] });
+            }
+            setRoomAllocations(newRooms);
+        } else if (roomAllocations.length > rooms) {
+            setRoomAllocations(roomAllocations.slice(0, rooms));
+        }
+    }, [rooms]);
+
+    // Sync back to parent
+    useEffect(() => {
         const standardDest: DestinationInput = {
             id: selectedDestination?.id || 'narrative-1',
-            city: selectedDestination?.name || destination, // Use name from object if valid
+            city: selectedDestination?.name || destination,
             country: selectedDestination?.country_name || '',
             countryCode: selectedDestination?.country_code || '',
             airportCode: '',
             checkIn: checkIn,
             checkOut: checkOut,
             nights: nights,
-            travelers: { adults, children, childrenAges },
-            category: ["Sve kategorije"], // Defaults for now
-            service: ["Sve usluge"],
+            travelers: roomAllocations[0], // For legacy compatibility
+            roomAllocations: roomAllocations, // NEW
+            category: selectedCategories,
+            service: selectedServices,
             flexibleDays: 0,
-            // Pass provider info if available
             type: selectedDestination?.type || 'destination'
         };
 
         const newData: BasicInfoData = {
             destinations: [standardDest],
-            travelers: { adults, children, childrenAges },
-            budget: basicInfo?.budget,
-            nationality: basicInfo?.nationality || 'RS',
+            travelers: roomAllocations[0],
+            roomAllocations: roomAllocations,
+            budgetFrom: budgetFrom ? Number(budgetFrom) : undefined,
+            budgetTo: budgetTo ? Number(budgetTo) : undefined,
+            nationality: nationality,
             currency: 'EUR',
             startDate: checkIn,
             endDate: checkOut,
@@ -65,13 +127,11 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
         };
 
         onUpdate(newData);
-    }, [destination, selectedDestination, checkIn, checkOut, nights, adults, children, childrenAges]);
+    }, [destination, selectedDestination, checkIn, checkOut, nights, roomAllocations, selectedCategories, selectedServices, nationality, budgetFrom, budgetTo]);
 
-    // Click outside to close popovers
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (activeField && containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                // If clicking calendar portal, don't close. Simplified check:
                 if ((event.target as HTMLElement).closest('.modern-calendar-overlay')) return;
                 setActiveField(null);
             }
@@ -80,248 +140,322 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [activeField]);
 
-    // Fetch Suggestions Effect
     useEffect(() => {
         const fetchSuggestions = async () => {
-            if (destination.length >= 3) {
-                // Don't search if we haven't changed the input from the selected destination name
+            if (destination.length >= 2) {
                 if (selectedDestination && destination === selectedDestination.name) return;
-
                 try {
                     const results = await solvexDictionaryService.searchDestinations(destination);
                     setSuggestions(results || []);
-                } catch (e) {
-                    console.error(e);
-                }
-            } else {
-                setSuggestions([]);
-            }
+                } catch (e) { console.error(e); }
+            } else { setSuggestions([]); }
         };
         const debounce = setTimeout(fetchSuggestions, 300);
         return () => clearTimeout(debounce);
     }, [destination, selectedDestination]);
 
     const handleDateSelect = (start: string, end: string) => {
-        // ModernCalendar returns YYYY-MM-DD strings
         setCheckIn(start);
         setCheckOut(end);
         if (start && end) {
             const s = new Date(start);
             const e = new Date(end);
-            const n = Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24));
-            setNights(n);
+            setNights(Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)));
         }
         setActiveField(null);
     };
 
-    const handleNightsChange = (delta: number) => {
-        const newNights = Math.max(1, Math.min(30, nights + delta));
-        setNights(newNights);
-
-        // If checkIn exists, update checkOut
-        if (checkIn) {
-            const s = new Date(checkIn);
-            s.setDate(s.getDate() + newNights);
-            setCheckOut(s.toISOString().split('T')[0]);
+    const updateRoom = (index: number, field: 'adults' | 'children', delta: number) => {
+        const newAllocations = [...roomAllocations];
+        const room = { ...newAllocations[index] };
+        if (field === 'adults') room.adults = Math.max(1, room.adults + delta);
+        else {
+            room.children = Math.max(0, Math.min(4, room.children + delta));
+            const ages = room.childrenAges || [];
+            if (ages.length < room.children) {
+                while (ages.length < room.children) ages.push(7);
+            } else if (ages.length > room.children) {
+                room.childrenAges = ages.slice(0, room.children);
+            } else {
+                room.childrenAges = ages;
+            }
         }
+        newAllocations[index] = room;
+        setRoomAllocations(newAllocations);
+    };
+
+    const updateChildAge = (roomIndex: number, childIndex: number, age: number) => {
+        const newAllocations = [...roomAllocations];
+        const room = { ...newAllocations[roomIndex] };
+        const ages = [...(room.childrenAges || [])];
+        ages[childIndex] = Math.max(0, Math.min(17, age));
+        room.childrenAges = ages;
+        newAllocations[roomIndex] = room;
+        setRoomAllocations(newAllocations);
+    };
+
+    const toggleCategory = (cat: string) => {
+        setSelectedCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
+    };
+
+    const toggleService = (srv: string) => {
+        setSelectedServices(prev => prev.includes(srv) ? prev.filter(s => s !== srv) : [...prev, srv]);
     };
 
     return (
         <div className={`narrative-wrapper ${activeField ? 'has-active-field' : ''} field-active-${activeField || 'none'}`}>
             <div className="narrative-background-glow"></div>
 
-            <div className="narrative-container" ref={containerRef}>
+            <div className={`narrative-container ${activeField ? 'panel-is-open' : ''}`} ref={containerRef}>
                 <div className="narrative-sentence">
-                    Odaberite Državu, destinaciju ili hotel u
-                    <span
-                        className={`narrative-input ${activeField === 'destination' ? 'active' : ''}`}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveField(activeField === 'destination' ? null : 'destination');
-                        }}
-                    >
+                    Tražim smeštaj u
+                    <span className={`narrative-input ${activeField === 'destination' ? 'active' : ''}`} onClick={() => setActiveField('destination')}>
                         {selectedDestination?.name || destination || "Bilo gde"}
-                        {activeField === 'destination' && (
-                            <div className="narrative-popover" onClick={e => e.stopPropagation()}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                                    <Search size={18} color="rgba(255,255,255,0.5)" />
-                                    <span style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Gde želite da idete?</span>
-                                </div>
-                                <input
-                                    autoFocus
-                                    className="narrative-search-input"
-                                    placeholder="npr. Grčka, Turska, Kopaonik..."
-                                    value={destination}
-                                    onChange={(e) => {
-                                        setDestination(e.target.value);
-                                        // Clear selection if user types
-                                        if (selectedDestination && e.target.value !== selectedDestination.name) {
-                                            setSelectedDestination(null);
-                                        }
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                                {suggestions.length > 0 ? (
-                                    <div className="narrative-suggestions-list">
-                                        {suggestions.map((s: any) => (
-                                            <div
-                                                key={s.id}
-                                                className="narrative-suggestion-item"
-                                                onClick={() => {
-                                                    setDestination(s.name);
-                                                    setSelectedDestination(s); // STORE FULL OBJECT
-                                                    setActiveField(null);
-                                                }}
-                                            >
-                                                <span style={{ opacity: 0.7 }}>{s.type === 'hotel' ? '🏨' : '📍'}</span>
-                                                <div>
-                                                    <div style={{ fontWeight: 'bold' }}>{s.name}</div>
-                                                    <div style={{ fontSize: '0.8rem', opacity: 0.6 }}>{s.type === 'hotel' ? s.stars + '★ ' + s.country_name : s.country_name}</div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div style={{ marginTop: '15px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                        {['Grčka', 'Bugarska', 'Turska', 'Egipat', 'Maldivi', 'Zlatibor'].map(place => (
-                                            <button
-                                                key={place}
-                                                onClick={() => {
-                                                    setDestination(place);
-                                                    // For hardcoded, likely no ID, or we mock one. 
-                                                    // Ideally check if these exist in basic dictionary or just set text
-                                                    setSelectedDestination({ id: 'mock-' + place, name: place, type: 'destination' });
-                                                    setActiveField(null);
-                                                }}
-                                                style={{
-                                                    background: 'rgba(255,255,255,0.1)',
-                                                    border: '1px solid rgba(255,255,255,0.2)',
-                                                    borderRadius: '20px',
-                                                    padding: '5px 12px',
-                                                    color: 'white',
-                                                    cursor: 'pointer',
-                                                    fontSize: '0.85rem'
-                                                }}
-                                            >
-                                                {place}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
                     </span>
-                    <br />
                     polazak
-                    <span
-                        className={`narrative-input ${activeField === 'date' ? 'active' : ''}`}
-                        onClick={() => setActiveField(activeField === 'date' ? null : 'date')}
-                    >
+                    <span className={`narrative-input ${activeField === 'date' ? 'active' : ''}`} onClick={() => setActiveField('date')}>
                         {checkIn ? formatDate(checkIn) : "bilo kad"}
                     </span>
                     na
-                    <span
-                        className={`narrative-input ${activeField === 'nights' ? 'active' : ''}`}
-                        onClick={() => setActiveField(activeField === 'nights' ? null : 'nights')}
-                    >
+                    <span className={`narrative-input ${activeField === 'nights' ? 'active' : ''}`} onClick={() => setActiveField('nights')}>
                         {nights} noći
-                        {activeField === 'nights' && (
-                            <div className="narrative-popover" onClick={e => e.stopPropagation()}>
-                                <div className="narrative-number-control">
-                                    <button className="narrative-btn-round" onClick={() => handleNightsChange(-1)}>-</button>
-                                    <span className="narrative-value">{nights}</span>
-                                    <button className="narrative-btn-round" onClick={() => handleNightsChange(1)}>+</button>
-                                </div>
-                                <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '0.9rem', color: '#94a3b8' }}>Trajanje putovanja</div>
-                            </div>
-                        )}
                     </span>
                     .
                     <br />
-                    Putuje nas
-                    <span
-                        className={`narrative-input ${activeField === 'travelers' ? 'active' : ''}`}
-                        onClick={() => setActiveField(activeField === 'travelers' ? null : 'travelers')}
-                    >
-                        {adults + children}
-                        {activeField === 'travelers' && (
-                            <div className="narrative-popover" onClick={e => e.stopPropagation()} style={{ width: '280px', padding: '1.25rem' }}>
-                                <div className="narrative-number-control" style={{ marginBottom: '8px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                                        <Users size={18} color="#4facfe" />
-                                        <span style={{ fontSize: '0.95rem', fontWeight: '500' }}>Odrasli</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <button className="narrative-btn-round compact" onClick={() => setAdults(Math.max(1, adults - 1))}>-</button>
-                                        <span className="narrative-value compact">{adults}</span>
-                                        <button className="narrative-btn-round compact" onClick={() => setAdults(Math.min(10, adults + 1))}>+</button>
-                                    </div>
-                                </div>
-                                <div className="narrative-number-control">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                                        <Baby size={18} color="#4facfe" />
-                                        <span style={{ fontSize: '0.95rem', fontWeight: '500' }}>Deca</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <button className="narrative-btn-round compact" onClick={() => {
-                                            if (children > 0) {
-                                                setChildren(children - 1);
-                                                setChildrenAges(prev => prev.slice(0, -1));
-                                            }
-                                        }}>-</button>
-                                        <span className="narrative-value compact">{children}</span>
-                                        <button className="narrative-btn-round compact" onClick={() => {
-                                            if (children < 4) {
-                                                setChildren(children + 1);
-                                                setChildrenAges(prev => [...prev, 7]);
-                                            }
-                                        }}>+</button>
-                                    </div>
-                                </div>
+                    Rezerviši mi
+                    <span className={`narrative-input ${activeField === 'rooms' ? 'active' : ''}`} onClick={() => setActiveField('rooms')}>
+                        {rooms} {rooms === 1 ? 'sobu' : 'sobe'}
+                    </span>
+                    za ukupno
+                    <span className={`narrative-input ${activeField === 'travelers' ? 'active' : ''}`} onClick={() => setActiveField('travelers')}>
+                        {roomAllocations.reduce((acc, r) => acc + r.adults + r.children, 0)} osoba
+                    </span>
+                    .
+                    <br />
+                    Želim hotel sa
+                    <span className={`narrative-input ${activeField === 'category' ? 'active' : ''}`} onClick={() => setActiveField('category')}>
+                        {selectedCategories.includes('all') ? 'sve' : selectedCategories.join(', ')} ★
+                    </span>
+                    i uslugom
+                    <span className={`narrative-input ${activeField === 'service' ? 'active' : ''}`} onClick={() => setActiveField('service')}>
+                        {selectedServices.includes('all') ? 'bilo kojom' : selectedServices.map(s => s === 'AI' ? 'All Incl.' : s).join(', ')}
+                    </span>
+                    .
+                    <br />
+                    Putnici su
+                    <span className={`narrative-input ${activeField === 'nationality' ? 'active' : ''}`} onClick={() => setActiveField('nationality')}>
+                        {NATIONALITY_OPTIONS.find(n => n.code === nationality)?.name || 'RS'}
+                    </span>
+                    nacionalnosti, sa budžetom do
+                    <span className={`narrative-input ${activeField === 'budget' ? 'active' : ''}`} onClick={() => setActiveField('budget')}>
+                        {budgetTo || 'neograničeno'} EUR
+                    </span>
+                    .
+                </div>
 
-                                {children > 0 && (
-                                    <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px' }}>
-                                        <div style={{ fontSize: '0.85rem', marginBottom: '8px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                            <span>Urast dece:</span>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                            {childrenAges.map((age, idx) => (
-                                                <input
-                                                    key={idx}
-                                                    type="number"
-                                                    value={age}
-                                                    onChange={(e) => {
-                                                        const val = parseInt(e.target.value);
-                                                        const newAges = [...childrenAges];
-                                                        newAges[idx] = Math.max(0, Math.min(17, isNaN(val) ? 0 : val));
-                                                        setChildrenAges(newAges);
-                                                    }}
-                                                    className="narrative-search-input compact"
-                                                    style={{ width: '50px', padding: '6px', textAlign: 'center', fontSize: '0.85rem' }}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                {/* MODAL / POPOVER PANEL - CENTERED */}
+                {activeField && activeField !== 'date' && (
+                    <div className="narrative-centered-panel animate-popover-in">
+                        <button className="panel-close-btn" onClick={() => setActiveField(null)}><X size={20} /></button>
 
-                                <div style={{ marginTop: '15px', display: 'flex', justifyContent: 'center' }}>
-                                    <button
-                                        className="narrative-confirm-btn"
-                                        style={{ width: '100%', padding: '8px 20px', fontSize: '0.9rem' }}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setActiveField(null);
-                                        }}
-                                    >
-                                        POTVRDI
-                                    </button>
+                        {activeField === 'destination' && (
+                            <div className="panel-content">
+                                <h3>Gde želite da putujete?</h3>
+                                <div className="panel-search-box">
+                                    <Search size={20} />
+                                    <input autoFocus placeholder="npr. Bugarska, Turska, Tasos..." value={destination} onChange={(e) => {
+                                        setDestination(e.target.value);
+                                        setActiveCountryTag(null);
+                                        if (selectedDestination && e.target.value !== selectedDestination.name) setSelectedDestination(null);
+                                    }} />
+                                    {destination && (
+                                        <button className="clear-input-btn" onClick={() => { setDestination(''); setSuggestions([]); setSelectedDestination(null); setActiveCountryTag(null); }}>
+                                            <X size={16} />
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="panel-suggestions">
+                                    {suggestions.map(s => (
+                                        <div key={s.id} className="panel-suggestion-item" onClick={() => { setDestination(s.name); setSelectedDestination(s); setActiveField(null); }}>
+                                            <span>{s.type === 'hotel' ? '🏨' : '📍'}</span>
+                                            <div>
+                                                <strong>{s.name}</strong>
+                                                <small>{s.country_name}</small>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {suggestions.length === 0 && (
+                                        <div className="destination-tags-wrapper">
+                                            <div className="panel-quick-tags country-tags">
+                                                {Object.keys(COUNTRY_DESTINATIONS).map(t => (
+                                                    <button
+                                                        key={t}
+                                                        className={activeCountryTag === t ? 'active' : ''}
+                                                        onClick={() => setActiveCountryTag(activeCountryTag === t ? null : t)}
+                                                    >
+                                                        {t}
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            {activeCountryTag && (
+                                                <div className="panel-quick-tags destination-tags animate-fade-in">
+                                                    {COUNTRY_DESTINATIONS[activeCountryTag].map(d => (
+                                                        <button
+                                                            key={d}
+                                                            className="dest-tag"
+                                                            onClick={() => {
+                                                                setDestination(d);
+                                                                setSelectedDestination({
+                                                                    id: 'm-' + d,
+                                                                    name: d,
+                                                                    type: 'destination',
+                                                                    country_name: activeCountryTag
+                                                                });
+                                                                setActiveField(null);
+                                                            }}
+                                                        >
+                                                            {d}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
-                    </span>
-                </div>
 
-                <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center' }}>
+                        {activeField === 'nights' && (
+                            <div className="panel-content">
+                                <h3>Trajanje putovanja</h3>
+                                <div className="panel-counter-large">
+                                    <button onClick={() => handleNightsChange(-1)}>-</button>
+                                    <span>{nights}</span>
+                                    <button onClick={() => handleNightsChange(1)}>+</button>
+                                </div>
+                                <p className="panel-hint">Broj noćenja u izabranom smeštaju</p>
+                            </div>
+                        )}
+
+                        {activeField === 'rooms' && (
+                            <div className="panel-content">
+                                <h3>Broj smeštajnih jedinica</h3>
+                                <div className="panel-counter-large">
+                                    <button onClick={() => setRooms(Math.max(1, rooms - 1))}>-</button>
+                                    <span>{rooms}</span>
+                                    <button onClick={() => setRooms(Math.min(5, rooms + 1))}>+</button>
+                                </div>
+                                <p className="panel-hint">Odaberite koliko soba ili apartmana vam je potrebno</p>
+                            </div>
+                        )}
+
+                        {activeField === 'travelers' && (
+                            <div className="panel-content">
+                                <h3>Konfiguracija putnika po sobama</h3>
+                                <div className="panel-rooms-scroll">
+                                    {roomAllocations.map((room, rIdx) => (
+                                        <div key={rIdx} className="panel-room-card">
+                                            <div className="room-header">SOBA {rIdx + 1}</div>
+                                            <div className="room-controls">
+                                                <div className="control-item">
+                                                    <span>Odrasli</span>
+                                                    <div className="counter-small">
+                                                        <button onClick={() => updateRoom(rIdx, 'adults', -1)}>-</button>
+                                                        <span>{room.adults}</span>
+                                                        <button onClick={() => updateRoom(rIdx, 'adults', 1)}>+</button>
+                                                    </div>
+                                                </div>
+                                                <div className="control-item">
+                                                    <span>Deca</span>
+                                                    <div className="counter-small">
+                                                        <button onClick={() => updateRoom(rIdx, 'children', -1)}>-</button>
+                                                        <span>{room.children}</span>
+                                                        <button onClick={() => updateRoom(rIdx, 'children', 1)}>+</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {room.children > 0 && (
+                                                <div className="room-ages">
+                                                    {(room.childrenAges || []).map((age, cIdx) => (
+                                                        <input key={cIdx} type="number" value={age} onChange={(e) => updateChildAge(rIdx, cIdx, parseInt(e.target.value) || 0)} placeholder="God" />
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeField === 'category' && (
+                            <div className="panel-content">
+                                <h3>Kategorizacija hotela</h3>
+                                <div className="panel-selection-grid">
+                                    {['2', '3', '4', '5'].map(star => (
+                                        <button key={star} className={`panel-select-btn ${selectedCategories.includes(star) ? 'active' : ''}`} onClick={() => toggleCategory(star)}>
+                                            {star} ★
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="panel-hint">Izaberite jednu ili više kategorija</p>
+                            </div>
+                        )}
+
+                        {activeField === 'service' && (
+                            <div className="panel-content">
+                                <h3>Usluga u hotelu</h3>
+                                <div className="panel-selection-grid wide">
+                                    {[
+                                        { code: 'RO', label: 'Najam' },
+                                        { code: 'BB', label: 'Noćenje/Doručak' },
+                                        { code: 'HB', label: 'Polupansion' },
+                                        { code: 'AI', label: 'All Inclusive' },
+                                        { code: 'UAI', label: 'Ultra All Incl.' }
+                                    ].map(s => (
+                                        <button key={s.code} className={`panel-select-btn ${selectedServices.includes(s.code) ? 'active' : ''}`} onClick={() => toggleService(s.code)}>
+                                            {s.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeField === 'nationality' && (
+                            <div className="panel-content">
+                                <h3>Nacionalnost putnika</h3>
+                                <div className="panel-list-scroll">
+                                    {NATIONALITY_OPTIONS.map(n => (
+                                        <button key={n.code} className={`panel-list-item ${nationality === n.code ? 'active' : ''}`} onClick={() => { setNationality(n.code); setActiveField(null); }}>
+                                            {n.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeField === 'budget' && (
+                            <div className="panel-content">
+                                <h3>Vaš maksimalni budžet</h3>
+                                <div className="panel-budget-input">
+                                    <input type="number" placeholder="npr. 1500" value={budgetTo} onChange={(e) => setBudgetTo(e.target.value)} />
+                                    <span>EUR</span>
+                                </div>
+                                <div className="panel-quick-tags">
+                                    {['500', '1000', '2000', '5000'].map(v => (
+                                        <button key={v} onClick={() => setBudgetTo(v)}>{v}€</button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="panel-footer">
+                            <button className="narrative-confirm-btn" onClick={() => setActiveField(null)}>POTVRDI IZBOR</button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="narrative-footer">
                     <button className="narrative-action-btn" onClick={() => {
                         const standardDest: DestinationInput = {
                             id: selectedDestination?.id || 'narrative-1',
@@ -332,18 +466,20 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
                             checkIn: checkIn,
                             checkOut: checkOut,
                             nights: nights,
-                            travelers: { adults, children, childrenAges },
-                            category: ["Sve kategorije"],
-                            service: ["Sve usluge"],
+                            travelers: roomAllocations[0],
+                            roomAllocations: roomAllocations,
+                            category: selectedCategories,
+                            service: selectedServices,
                             flexibleDays: 0,
                             type: selectedDestination?.type || 'destination'
                         };
-
                         const newData: BasicInfoData = {
                             destinations: [standardDest],
-                            travelers: { adults, children, childrenAges },
-                            budget: basicInfo?.budget,
-                            nationality: basicInfo?.nationality || 'RS',
+                            travelers: roomAllocations[0],
+                            roomAllocations: roomAllocations,
+                            budgetFrom: budgetFrom ? Number(budgetFrom) : undefined,
+                            budgetTo: budgetTo ? Number(budgetTo) : undefined,
+                            nationality: nationality,
                             currency: 'EUR',
                             startDate: checkIn,
                             endDate: checkOut,
@@ -351,19 +487,13 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
                         };
                         onNext(newData);
                     }}>
-                        Pronađi moje putovanje
+                        PRONAĐI MOJE PUTOVANJE <Search size={20} style={{ marginLeft: '10px' }} />
                     </button>
                 </div>
             </div>
 
-            {/* Render Calendar Portal when "date" is active */}
             {activeField === 'date' && createPortal(
-                <ModernCalendar
-                    startDate={checkIn}
-                    endDate={checkOut}
-                    onChange={handleDateSelect}
-                    onClose={() => setActiveField(null)}
-                />,
+                <ModernCalendar startDate={checkIn} endDate={checkOut} onChange={handleDateSelect} onClose={() => setActiveField(null)} />,
                 document.getElementById('portal-root') || document.body
             )}
         </div>

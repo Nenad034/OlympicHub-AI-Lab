@@ -162,7 +162,7 @@ interface RoomAllocation {
 }
 
 import { NarrativeSearch } from '../components/packages/Steps/NarrativeSearch';
-import { ImmersiveSearch } from '../components/packages/Steps/ImmersiveSearch';
+import { ImmersiveSearch, type ImmersiveSearchData } from '../components/packages/Steps/ImmersiveSearch';
 import type { BasicInfoData, DestinationInput } from '../types/packageSearch.types';
 
 
@@ -288,18 +288,38 @@ const SmartSearch: React.FC = () => {
         if (data.totalDays !== nights) setNights(data.totalDays || 0);
 
         // 3. Map Travelers
-        const travelers = data.travelers;
-        if (travelers) {
-            const newAllocations = [...roomAllocations];
-            newAllocations[0] = {
+        if (data.roomAllocations && data.roomAllocations.length > 0) {
+            mappedAllocations = data.roomAllocations.map(r => ({
+                adults: r.adults,
+                children: r.children,
+                childrenAges: r.childrenAges || []
+            }));
+            if (JSON.stringify(roomAllocations) !== JSON.stringify(mappedAllocations)) {
+                setRoomAllocations(mappedAllocations);
+            }
+        } else if (data.travelers) {
+            const travelers = data.travelers;
+            const newAllocations = [{
                 adults: travelers.adults,
                 children: travelers.children,
                 childrenAges: travelers.childrenAges || []
-            };
+            }];
             mappedAllocations = newAllocations;
             const current = roomAllocations[0];
-            if (current.adults !== travelers.adults || current.children !== travelers.children || JSON.stringify(current.childrenAges) !== JSON.stringify(travelers.childrenAges)) {
+            if (roomAllocations.length !== 1 || current.adults !== travelers.adults || current.children !== travelers.children || JSON.stringify(current.childrenAges) !== JSON.stringify(travelers.childrenAges)) {
                 setRoomAllocations(mappedAllocations);
+            }
+        }
+
+        // 4. Map Advanced Filters
+        if (data.nationality && data.nationality !== nationality) {
+            setNationality(data.nationality);
+        }
+
+        if (data.destinations[0]?.service && data.destinations[0].service.length > 0) {
+            const service = data.destinations[0].service[0];
+            if (service !== mealPlan && service !== 'all') {
+                setMealPlan(service);
             }
         }
 
@@ -369,6 +389,9 @@ const SmartSearch: React.FC = () => {
     const [selectedRoomForBooking, setSelectedRoomForBooking] = useState<any>(null);
     const [bookingSuccessData, setBookingSuccessData] = useState<{ id: string, code: string, provider: string } | null>(null);
     const [bookingAlertError, setBookingAlertError] = useState<string | null>(null);
+    const [prefetchedResults, setPrefetchedResults] = useState<SmartSearchResult[]>([]);
+    const [prefetchKey, setPrefetchKey] = useState<string>('');
+    const [isPrefetching, setIsPrefetching] = useState(false);
     const tabId = useRef(Math.random().toString(36).substring(2, 11));
 
     const inputRef = useRef<HTMLInputElement>(null);
@@ -571,6 +594,71 @@ const SmartSearch: React.FC = () => {
         return () => clearTimeout(timer);
     }, [destinationInput, selectedDestinations]); // recentSearches REMOVED from dependency array
 
+    // Trigger background search for Classic and Futuristic modes when state changes
+    useEffect(() => {
+        if (selectedDestinations.length > 0 && checkIn && checkOut && searchMode !== 'immersive') {
+            handleBackgroundSearch({
+                destinations: selectedDestinations,
+                checkIn,
+                checkOut,
+                allocations: roomAllocations
+            });
+        }
+    }, [selectedDestinations, checkIn, checkOut, roomAllocations, searchMode]);
+
+    const handleBackgroundSearch = async (params: {
+        destinations: Destination[],
+        checkIn: string,
+        checkOut: string,
+        allocations: RoomAllocation[]
+    }) => {
+        const { destinations, checkIn, checkOut, allocations } = params;
+
+        if (destinations.length === 0 || !checkIn || !checkOut || allocations.filter(r => r.adults > 0).length === 0) {
+            setPrefetchedResults([]);
+            setPrefetchKey('');
+            return;
+        }
+
+        const currentKey = `${destinations.map(d => d.id).sort().join(',')}|${checkIn}|${checkOut}|${JSON.stringify(allocations)}`;
+        if (prefetchKey === currentKey) {
+            return; // Already prefetched or currently prefetching this exact query
+        }
+
+        setIsPrefetching(true);
+        setPrefetchKey(currentKey);
+
+        try {
+            const results = await performSmartSearch({
+                searchType: activeTab,
+                destinations: destinations.map(d => ({
+                    id: String(d.id).replace('solvex-c-', ''),
+                    name: d.name,
+                    type: d.type
+                })),
+                checkIn: checkIn,
+                checkOut: checkOut,
+                rooms: allocations.filter(r => r.adults > 0),
+                mealPlan,
+                currency: 'EUR',
+                nationality: nationality || 'RS',
+            });
+
+            const resultsWithSales = await Promise.all(results.map(async (h) => {
+                const count = await getMonthlyReservationCount(h.name);
+                return { ...h, salesCount: count };
+            }));
+
+            setPrefetchedResults(resultsWithSales);
+        } catch (error) {
+            console.error('Background search prefetch failed:', error);
+            setPrefetchedResults([]);
+            setPrefetchKey(''); // Clear key on error to allow re-attempt
+        } finally {
+            setIsPrefetching(false);
+        }
+    };
+
     const generateFlexDates = (baseDate: string, range: number) => {
         if (!baseDate) return [];
         const dates = [];
@@ -616,6 +704,16 @@ const SmartSearch: React.FC = () => {
 
         if (!activeCheckIn || !activeCheckOut) {
             setSearchError('Molimo unesite datume');
+            return;
+        }
+
+        // CHECK PREFETCH CACHE
+        const currentKey = `${activeDestinations.map(d => d.id).sort().join(',')}|${activeCheckIn}|${activeCheckOut}|${JSON.stringify(activeAllocations)}`;
+        if (prefetchedResults.length > 0 && prefetchKey === currentKey) {
+            console.log('[SmartSearch] Using prefetched results! Instant display.');
+            setSearchResults(prefetchedResults);
+            setSearchPerformed(true);
+            setIsSearching(false);
             return;
         }
 
@@ -771,6 +869,7 @@ const SmartSearch: React.FC = () => {
             setIsSearching(false);
         }
     };
+
 
     const getPriceWithMargin = (price: number) => Math.round(price * 1.15);
 
@@ -1087,11 +1186,34 @@ const SmartSearch: React.FC = () => {
                     {/* IMMERSIVE SEARCH UI */}
                     {searchMode === 'immersive' && !searchPerformed && (
                         <ImmersiveSearch
-                            onSearch={(data) => {
+                            onPartialUpdate={(data: ImmersiveSearchData) => {
+                                // Trigger background search when enough data is present
+                                if (data.destinations.length > 0 && data.checkIn && data.checkOut) {
+                                    handleBackgroundSearch({
+                                        destinations: data.destinations,
+                                        checkIn: data.checkIn,
+                                        checkOut: data.checkOut,
+                                        allocations: data.roomAllocations
+                                    });
+                                }
+                            }}
+                            onSearch={(data: ImmersiveSearchData) => {
                                 // Map immersive data to standard format and trigger search
                                 const cin = new Date(data.checkIn);
                                 const cout = new Date(data.checkOut);
                                 const nights = Math.ceil((cout.getTime() - cin.getTime()) / (1000 * 60 * 60 * 24)) || 7;
+
+                                // Sync filters and budget from ImmersiveSearch to SmartSearch states
+                                if (data.categories && data.categories.length > 0) {
+                                    setSelectedStars(data.categories);
+                                }
+                                if (data.services && data.services.length > 0) {
+                                    setSelectedMealPlans(data.services);
+                                }
+                                if (data.budget) {
+                                    setBudgetFrom(data.budget.from?.toString() || '');
+                                    setBudgetTo(data.budget.to?.toString() || '');
+                                }
 
                                 const mappedData: BasicInfoData = {
                                     destinations: data.destinations.map((d: any) => ({
@@ -1108,6 +1230,7 @@ const SmartSearch: React.FC = () => {
                                             children: data.children,
                                             childrenAges: data.childrenAges
                                         },
+                                        roomAllocations: data.roomAllocations,
                                         type: d.type
                                     })),
                                     startDate: data.checkIn,
@@ -1118,7 +1241,8 @@ const SmartSearch: React.FC = () => {
                                         adults: data.adults,
                                         children: data.children,
                                         childrenAges: data.childrenAges
-                                    }
+                                    },
+                                    roomAllocations: data.roomAllocations
                                 };
                                 const updates = handleNarrativeUpdate(mappedData);
                                 handleSearch({
@@ -1758,14 +1882,16 @@ const SmartSearch: React.FC = () => {
 
                                                     {/* Body */}
                                                     <div style={{ padding: '2rem' }}>
-                                                        {(() => {
-                                                            const allRooms = (hotel.allocationResults && hotel.allocationResults[0] ? [...hotel.allocationResults[0]].sort((a, b) => (a.price || 0) - (b.price || 0)) : (hotel.rooms || [hotel]));
+                                                        {roomAllocations.map((alloc, roomIdx) => {
+                                                            if (alloc.adults === 0) return null;
+
+                                                            const allRooms = (hotel.allocationResults && hotel.allocationResults[roomIdx] ? [...hotel.allocationResults[roomIdx]].sort((a, b) => (a.price || 0) - (b.price || 0)) : (hotel.rooms || [hotel]));
                                                             const activeMealFilter = notepadMealFilters[hotel.id] || 'all';
                                                             const filteredRooms = allRooms.filter(r => activeMealFilter === 'all' || (r.mealPlan || hotel.mealPlan) === activeMealFilter);
                                                             const uniqueMealPlans = Array.from(new Set(allRooms.map(r => r.mealPlan || hotel.mealPlan))).filter(Boolean);
 
                                                             return (
-                                                                <>
+                                                                <div key={roomIdx} style={{ marginBottom: roomIdx < roomAllocations.filter(r => r.adults > 0).length - 1 ? '40px' : '0' }}>
                                                                     <div style={{
                                                                         display: 'grid',
                                                                         gridTemplateColumns: '2.5fr 1.2fr 1fr 1.2fr 1fr',
@@ -1836,7 +1962,7 @@ const SmartSearch: React.FC = () => {
                                                                                 boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)',
                                                                                 width: 'fit-content'
                                                                             }}>
-                                                                                PONUDA ZA SOBU 1 - {roomAllocations[0].adults} ODRASLE OSOBE {roomAllocations[0].children > 0 ? `I ${roomAllocations[0].children} DECE` : ''}
+                                                                                {formatRoomConfigLabel(alloc, roomIdx)}
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -1876,7 +2002,7 @@ const SmartSearch: React.FC = () => {
                                                                                 </div>
                                                                                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                                                     <Users size={14} />
-                                                                                    {roomAllocations[0].adults}+{roomAllocations[0].children}
+                                                                                    {alloc.adults}+{alloc.children}
                                                                                 </div>
                                                                                 <div className="r-price">
                                                                                     <span className="p-val">
@@ -1884,16 +2010,16 @@ const SmartSearch: React.FC = () => {
                                                                                     </span>
                                                                                 </div>
                                                                                 <div>
-                                                                                    <button className="btn-book-v4" onClick={() => handleReserveClick(room, 0, hotel)}>
+                                                                                    <button className="btn-book-v4" onClick={() => handleReserveClick(room, roomIdx, hotel)}>
                                                                                         REZERVIŠI
                                                                                     </button>
                                                                                 </div>
                                                                             </div>
                                                                         );
                                                                     })}
-                                                                </>
+                                                                </div>
                                                             );
-                                                        })()}
+                                                        })}
                                                     </div>
                                                 </div>
                                             ))}
@@ -1928,7 +2054,7 @@ const SmartSearch: React.FC = () => {
                                                             <div className="lowest-price-tag">
                                                                 <span className="price-val">od {formatPrice(getFinalDisplayPrice(hotel))} €</span>
                                                                 {roomAllocations.filter(r => r.adults > 0).length > 1 && (
-                                                                    <span className="price-label-multi"># Za {roomAllocations.filter(r => r.adults > 0).length} sobe</span>
+                                                                    <span className="price-label-multi"># Za {roomAllocations.reduce((sum, r) => sum + r.adults + r.children, 0)} osoba</span>
                                                                 )}
                                                             </div>
                                                             <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji... <ArrowRight size={16} /></button>

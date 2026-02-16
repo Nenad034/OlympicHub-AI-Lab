@@ -240,6 +240,57 @@ const GlobalUIWrapper: React.FC = () => {
 export const router = createBrowserRouter([
     {
         element: <GlobalUIWrapper />,
+        errorElement: (
+            <div style={{
+                padding: '40px',
+                textAlign: 'center',
+                background: '#0e1117',
+                color: 'white',
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'sans-serif'
+            }}>
+                <h1 style={{ fontSize: '2.5rem', marginBottom: '20px', color: '#ff4d4d' }}>System Application Error</h1>
+                <p style={{ fontSize: '1.2rem', opacity: 0.8, maxWidth: '600px', marginBottom: '30px' }}>
+                    The application encountered a critical error while loading this module.
+                    This is usually caused by a network issue or a temporary server synchronization error.
+                </p>
+                <div style={{ display: 'flex', gap: '20px' }}>
+                    <button
+                        onClick={() => window.location.reload()}
+                        style={{
+                            padding: '12px 28px',
+                            background: '#3fb950',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            fontSize: '1rem'
+                        }}
+                    >
+                        Reload Application
+                    </button>
+                    <button
+                        onClick={() => window.location.href = '/'}
+                        style={{
+                            padding: '12px 28px',
+                            background: 'rgba(255,255,255,0.1)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            borderRadius: '8px',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontSize: '1rem'
+                        }}
+                    >
+                        Go to Dashboard
+                    </button>
+                </div>
+            </div>
+        ),
         children: [
             {
                 path: '/login',
@@ -493,6 +544,13 @@ export const router = createBrowserRouter([
                     {
                         path: 'my-reservations',
                         element: <ReservationsDashboard />,
+                        errorElement: (
+                            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-primary)' }}>
+                                <h2>⚠️ Reservations Dashboard Error</h2>
+                                <p>Failed to load the reservations module. Please try again.</p>
+                                <button className="btn-primary" onClick={() => window.location.reload()}>Retry</button>
+                            </div>
+                        )
                     },
                     {
                         path: 'flights',
@@ -562,7 +620,18 @@ export const router = createBrowserRouter([
                     },
                     {
                         path: 'reservations',
-                        element: <ReservationsDashboard />,
+                        element: (
+                            <React.Suspense fallback={<LoadingFallback />}>
+                                <ReservationsDashboard />
+                            </React.Suspense>
+                        ),
+                        errorElement: (
+                            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-primary)' }}>
+                                <h2>⚠️ Reservations Dashboard Error</h2>
+                                <p>Failed to load the reservations module. Please try again.</p>
+                                <button className="btn-primary" onClick={() => window.location.reload()}>Retry</button>
+                            </div>
+                        )
                     },
                     {
                         path: 'destination-rep',

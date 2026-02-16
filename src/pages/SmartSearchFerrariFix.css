@@ -112,17 +112,44 @@ body.light-theme,
 /* Inputs & Controls: 1px Petroleum Borders */
 .input-box,
 .smart-input.premium,
-.multi-destination-input.premium,
-.flight-counter-controls,
-.flex-btn,
-.budget-input,
-.v-filter-btn {
+.multi-destination-input.premium {
     background: rgba(15, 23, 42, 0.6) !important;
     border: 1px solid var(--petroleum-deep) !important;
     border-radius: 12px !important;
     color: var(--text-primary) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    padding: 12px 16px !important;
+    padding: 10px 16px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-height: 64px !important;
+    align-items: center !important;
+}
+
+.smart-input-inline {
+    flex: 1 !important;
+    min-width: 200px !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: white !important;
+    font-size: 1.2rem !important;
+    font-style: italic !important;
+    height: 100% !important;
+}
+
+.destination-chip {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background: var(--petroleum-deep) !important;
+    color: white !important;
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .light-theme .input-box,

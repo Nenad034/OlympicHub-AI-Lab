@@ -1,14 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { getCountries, searchDestinations } from '../../../services/solvex/solvexDictionaryService';
-import { ChevronRight, ArrowLeft, Calendar as CalendarIcon, Users as UsersIcon, Search } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Calendar as CalendarIcon, Users as UsersIcon, Search, ArrowLeftCircle, ArrowRightCircle, RefreshCcw } from 'lucide-react';
 import './ImmersiveSearch.css';
 import { ModernCalendar } from '../../ModernCalendar';
 
 // Define the steps
 type Step = 'country' | 'destination' | 'dates' | 'travelers' | 'experiences' | 'confirm';
 
+// Define the updated data structure for partial updates
+export interface ImmersiveSearchData {
+    destinations: any[];
+    checkIn: string;
+    checkOut: string;
+    adults: number;
+    children: number;
+    childrenAges: number[];
+    roomAllocations: any[]; // Using any[] here to match existing structure, but should ideally be typed
+    categories?: string[];
+    services?: string[];
+    nationality?: string;
+    budget?: { from?: number; to?: number };
+}
+
 interface ImmersiveSearchProps {
-    onSearch: (data: any) => void;
+    onSearch: (data: ImmersiveSearchData) => void;
+    onPartialUpdate?: (data: ImmersiveSearchData) => void;
 }
 
 const COMMON_COUNTRIES = [
@@ -22,7 +38,7 @@ const COMMON_COUNTRIES = [
     { id: 8, name: 'Španija', code: 'ES' },
 ];
 
-export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) => {
+export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPartialUpdate }) => {
     const [step, setStep] = useState<Step>('country');
     const [selectedCountry, setSelectedCountry] = useState<{ id: number, name: string } | null>(null);
     const [availableDestinations, setAvailableDestinations] = useState<any[]>([]);
@@ -31,6 +47,7 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
     const [showAllDestinations, setShowAllDestinations] = useState(false);
     const [destinationSearchTerm, setDestinationSearchTerm] = useState('');
     const [isSearchingDestinations, setIsSearchingDestinations] = useState(false);
+    const [activeRegion, setActiveRegion] = useState<any | null>(null);
 
     // Date & pax state
     const [checkIn, setCheckIn] = useState<string>('');
@@ -142,7 +159,16 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
                         { id: 10, name: 'Pamporovo', type: 'destination' }
                     ]);
                     else if (selectedCountry.name === 'Grčka') setAvailableDestinations([
-                        { id: 101, name: 'Halkidiki', type: 'destination' },
+                        {
+                            id: 101,
+                            name: 'Halkidiki',
+                            type: 'destination',
+                            children: [
+                                { id: 1011, name: 'Kasandra', type: 'destination' },
+                                { id: 1012, name: 'Sitonija', type: 'destination' },
+                                { id: 1013, name: 'Atos', type: 'destination' }
+                            ]
+                        },
                         { id: 102, name: 'Tasos', type: 'destination' },
                         { id: 103, name: 'Olimpska Regija', type: 'destination' },
                         { id: 104, name: 'Krf', type: 'destination' },
@@ -192,7 +218,13 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
         }
     };
 
-    const handleDestinationToggle = (dest: any) => {
+    const handleDestinationToggle = (dest: any, isSelectionOnly: boolean = false) => {
+        // Handle Drill-down
+        if (!isSelectionOnly && dest.children && dest.children.length > 0) {
+            setActiveRegion(dest);
+            return;
+        }
+
         const isSelected = selectedDestinations.find(d => d.id === dest.id);
         if (isSelected) {
             setSelectedDestinations(prev => prev.filter(d => d.id !== dest.id));
@@ -218,6 +250,29 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
             setActiveCalendar(null);
         }
     };
+
+    // Effect for partial updates (Background Search Trigger)
+    useEffect(() => {
+        if (onPartialUpdate) {
+            const data: ImmersiveSearchData = {
+                destinations: selectedDestinations.length > 0 ? selectedDestinations : (selectedCountry ? [{ id: selectedCountry.id, name: selectedCountry.name, type: 'country' }] : []),
+                checkIn: checkIn || '',
+                checkOut: checkOut || '',
+                adults: roomAllocations.reduce((sum, r) => sum + r.adults, 0),
+                children: roomAllocations.reduce((sum, r) => sum + r.children, 0),
+                childrenAges: roomAllocations.flatMap(r => r.childrenAges),
+                roomAllocations,
+                categories: selectedCategories,
+                services: selectedServices,
+                nationality,
+                budget: {
+                    from: budgetFrom ? Number(budgetFrom) : undefined,
+                    to: budgetTo ? Number(budgetTo) : undefined
+                }
+            };
+            onPartialUpdate(data);
+        }
+    }, [selectedDestinations, selectedCountry, checkIn, checkOut, roomAllocations, selectedCategories, selectedServices, nationality, budgetFrom, budgetTo, onPartialUpdate]);
 
     const handleFinalSearch = () => {
         // Construct search data
@@ -275,14 +330,28 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
         }
     };
 
+    const handleReset = () => {
+        setStep('country');
+        setSelectedCountry(null);
+        setSelectedDestinations([]);
+        setActiveRegion(null);
+        setCheckIn('');
+        setCheckOut('');
+        setNights(7);
+        setRooms(1);
+        setRoomAllocations([{ adults: 2, children: 0, childrenAges: [] }]);
+    };
+
     return (
         <div className="immersive-wrapper">
-            {/* Background Particles could go here */}
-
+            {step !== 'country' && (
+                <button className="immersive-reset-link" onClick={handleReset}>
+                    <RefreshCcw size={14} /> Vrati na početak
+                </button>
+            )}
             {/* STEP 1: COUNTRY */}
             {step === 'country' && (
                 <div className="immersive-step-container">
-                    <h2 className="immersive-title">Gde želite da putujete?</h2>
                     <div className="immersive-tags-grid">
                         {COMMON_COUNTRIES.map(country => (
                             <div
@@ -300,20 +369,11 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
             {/* STEP 2: DESTINATIONS */}
             {step === 'destination' && (
                 <div className="immersive-step-container">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', gap: '1rem' }}>
-                        <button className="immersive-back-btn" onClick={() => { setStep('country'); setSelectedCountry(null); setSelectedDestinations([]); }}>
-                            <ArrowLeft size={20} /> Nazad
-                        </button>
-                        <h2 className="immersive-title" style={{ margin: 0 }}>
-                            {selectedCountry?.name}: Izaberite do 3 destinacije
-                        </h2>
-                    </div>
 
                     {isLoadingDestinations ? (
                         <div style={{ color: 'white', opacity: 0.7 }}>Učitavam destinacije...</div>
                     ) : (
                         <div className="immersive-tags-grid">
-                            {/* Show Search Input if requested */}
                             {isSearchingDestinations && (
                                 <div style={{ width: '100%', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
                                     <input
@@ -328,7 +388,17 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
                                 </div>
                             )}
 
-                            {displayedDestinations.map(dest => (
+                            {activeRegion && (
+                                <div
+                                    className={`immersive-tag ${selectedDestinations.find(d => d.id === activeRegion.id) ? 'selected' : ''}`}
+                                    onClick={() => handleDestinationToggle(activeRegion, true)}
+                                    style={{ borderStyle: 'solid', borderColor: '#00f2fe' }}
+                                >
+                                    Ceo {activeRegion.name}
+                                </div>
+                            )}
+
+                            {(activeRegion ? activeRegion.children : filteredDestinations).slice(0, isSearchingDestinations ? 50 : (showAllDestinations ? 50 : 15)).map((dest: any) => (
                                 <div
                                     key={dest.id}
                                     className={`immersive-tag ${selectedDestinations.find(d => d.id === dest.id) ? 'selected' : ''}`}
@@ -338,8 +408,7 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
                                 </div>
                             ))}
 
-                            {/* "Pretraži..." trigger if not searching and we have more items */}
-                            {!isSearchingDestinations && availableDestinations.length > 10 && (
+                            {!isSearchingDestinations && !activeRegion && availableDestinations.length > 15 && (
                                 <div
                                     className="immersive-tag search-trigger"
                                     onClick={() => setIsSearchingDestinations(true)}
@@ -351,10 +420,23 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
                         </div>
                     )}
 
-                    <div className="immersive-actions" style={{ opacity: 1 }}> {/* Always visible here */}
-                        <button className="immersive-next-btn" onClick={() => setStep('dates')}>
-                            Dalje <ChevronRight size={20} style={{ marginLeft: 5 }} />
+                    <div className="immersive-step-footer">
+                        <button className="immersive-back-btn icon-only" onClick={() => {
+                            if (activeRegion) {
+                                setActiveRegion(null);
+                            } else {
+                                setStep('country');
+                                setSelectedCountry(null);
+                                setSelectedDestinations([]);
+                            }
+                        }}>
+                            <ArrowLeftCircle size={36} />
                         </button>
+                        {(selectedDestinations.length > 0 || activeRegion) && (
+                            <button className="immersive-next-btn icon-only" onClick={() => setStep('dates')}>
+                                <ArrowRightCircle size={36} />
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
@@ -362,12 +444,6 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
             {/* STEP 3: DATES */}
             {step === 'dates' && (
                 <div className="immersive-step-container" style={{ position: 'relative' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2rem', gap: '1.5rem' }}>
-                        <button className="immersive-back-btn" onClick={() => setStep('destination')}>
-                            <ArrowLeft size={20} /> Nazad
-                        </button>
-                        <h2 className="immersive-title" style={{ margin: 0 }}>Izaberite trajanje</h2>
-                    </div>
 
                     <div className="immersive-inputs-grid-expanded" style={{ maxWidth: '750px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -404,7 +480,6 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
                         </div>
                     </div>
 
-                    {/* Calendar Popover */}
                     {activeCalendar && (
                         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 100, background: '#0f172a', padding: '1rem', borderRadius: '20px', boxShadow: '0 0 50px rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)' }}>
                             <ModernCalendar
@@ -420,28 +495,26 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
                         </div>
                     )}
 
-                    <div className="immersive-actions" style={{ opacity: 1, marginTop: '3rem' }}>
-                        <button className="immersive-next-btn" onClick={() => setStep('travelers')}>
-                            Dalje <ChevronRight size={20} style={{ marginLeft: 5 }} />
+                    <div className="immersive-step-footer">
+                        <button className="immersive-back-btn icon-only" onClick={() => setStep('destination')}>
+                            <ArrowLeftCircle size={36} />
                         </button>
+                        {checkIn && checkOut && (
+                            <button className="immersive-next-btn icon-only" onClick={() => setStep('travelers')}>
+                                <ArrowRightCircle size={36} />
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
 
-            {/* STEP 4: TRAVELERS (Rooms & Pax) */}
+            {/* STEP 4: TRAVELERS */}
             {step === 'travelers' && (
                 <div className="immersive-step-container">
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '3rem', gap: '1.5rem' }}>
-                        <button className="immersive-back-btn" onClick={() => setStep('dates')}>
-                            <ArrowLeft size={20} /> Nazad
-                        </button>
-                        <h2 className="immersive-title" style={{ margin: 0 }}>Ko putuje?</h2>
-                    </div>
 
                     <div className="immersive-inputs-grid-expanded">
                         <div className="immersive-section-row" style={rooms > 1 ? { gridTemplateColumns: '1fr' } : {}}>
                             <div style={{ display: 'flex', gap: '1.5rem', width: '100%', flexDirection: rooms > 1 ? 'column' : 'row' }}>
-                                {/* Rooms Counter Column */}
                                 <div className="immersive-input-group" style={{ height: 'auto', alignSelf: 'flex-start', minWidth: '200px' }}>
                                     <label className="immersive-label">Broj Soba</label>
                                     <div className="immersive-counter">
@@ -451,7 +524,6 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
                                     </div>
                                 </div>
 
-                                {/* Travelers Per Room Column */}
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                     {roomAllocations.map((room, index) => (
                                         <div key={index} className="immersive-input-group" style={{ height: 'auto' }}>
@@ -475,7 +547,6 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
                                                     </div>
                                                 </div>
 
-                                                {/* Child Ages if any */}
                                                 {room.children > 0 && (
                                                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem' }}>
                                                         <span className="counter-label" style={{ fontSize: '0.8rem' }}>Uzrast dece:</span>
@@ -501,26 +572,22 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
                         </div>
                     </div>
 
-                    <div className="immersive-actions" style={{ opacity: 1, marginTop: '3rem' }}>
-                        <button className="immersive-next-btn" onClick={() => setStep('experiences')}>
-                            Dalje <ChevronRight size={20} style={{ marginLeft: 5 }} />
+                    <div className="immersive-step-footer">
+                        <button className="immersive-back-btn icon-only" onClick={() => setStep('dates')}>
+                            <ArrowLeftCircle size={36} />
+                        </button>
+                        <button className="immersive-next-btn icon-only" onClick={() => setStep('experiences')}>
+                            <ArrowRightCircle size={36} />
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* STEP 5: EXPERIENCES (Category, Service, Budget) */}
+            {/* STEP 5: EXPERIENCES */}
             {step === 'experiences' && (
                 <div className="immersive-step-container">
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2rem', gap: '1.5rem' }}>
-                        <button className="immersive-back-btn" onClick={() => setStep('travelers')}>
-                            <ArrowLeft size={20} /> Nazad
-                        </button>
-                        <h2 className="immersive-title" style={{ margin: 0 }}>Detalji putovanja</h2>
-                    </div>
 
                     <div className="immersive-inputs-grid-expanded">
-                        {/* CATEGORY */}
                         <div className="immersive-input-group">
                             <label className="immersive-label">Kategorija (Zvezdice) <span className="req">*</span></label>
                             <div className="immersive-tags-row">
@@ -536,7 +603,6 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
                             </div>
                         </div>
 
-                        {/* SERVICE */}
                         <div className="immersive-input-group">
                             <label className="immersive-label">Usluga <span className="opt">(Opciono)</span></label>
                             <div className="immersive-tags-row">
@@ -558,7 +624,6 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
                             </div>
                         </div>
 
-                        {/* NATIONALITY & BUDGET */}
                         <div className="immersive-section-row">
                             <div className="immersive-input-group">
                                 <label className="immersive-label">Nacionalnost <span className="req">*</span></label>
@@ -599,9 +664,35 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch }) =>
                         </div>
                     </div>
 
-                    <div className="immersive-actions" style={{ opacity: 1, marginTop: '3rem' }}>
-                        <button className="narrative-action-btn" onClick={handleFinalSearch}>
-                            PRONAĐI PUTOVANJE <Search size={24} style={{ marginLeft: 10 }} />
+                    <div className="immersive-step-footer">
+                        <button className="immersive-back-btn icon-only" onClick={() => setStep('travelers')}>
+                            <ArrowLeftCircle size={36} />
+                        </button>
+                        <button className="immersive-next-btn icon-only" onClick={() => setStep('confirm')}>
+                            <ArrowRightCircle size={36} />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* STEP 6: CONFIRM */}
+            {step === 'confirm' && (
+                <div className="immersive-step-container">
+
+                    <div className="immersive-inputs-grid" style={{ gridTemplateColumns: '1fr' }}>
+                        <div className="immersive-input-group" style={{ textAlign: 'center' }}>
+                            <p style={{ fontSize: '1.2rem', opacity: 0.8 }}>
+                                Vaša pretraga za {selectedDestinations.length > 0 ? selectedDestinations.map(d => d.name).join(', ') : selectedCountry?.name} je spremna.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="immersive-step-footer">
+                        <button className="immersive-back-btn icon-only" onClick={() => setStep('experiences')}>
+                            <ArrowLeftCircle size={36} />
+                        </button>
+                        <button className="immersive-next-btn luxury-btn" onClick={handleFinalSearch}>
+                            PRETRAŽI <Search size={20} />
                         </button>
                     </div>
                 </div>
