@@ -920,8 +920,20 @@ const SmartSearch: React.FC = () => {
         }
 
         const price = getFinalDisplayPrice(hotel);
-        if (budgetFrom && price < Number(budgetFrom)) return false;
-        if (budgetTo && price > Number(budgetTo)) return false;
+
+        // Robust filtering
+        if (budgetFrom) {
+            const minBudget = Number(budgetFrom);
+            if (!isNaN(minBudget) && price < minBudget) return false;
+        }
+        if (budgetTo) {
+            const maxBudget = Number(budgetTo);
+            // Debug log for specific failing case
+            if (maxBudget === 1000 && price > 1000) {
+                console.log(`[SmartSearch] FILTERING: ${hotel.name} (${price}) > ${maxBudget}. Should be hidden.`);
+            }
+            if (!isNaN(maxBudget) && price > maxBudget) return false;
+        }
 
         return true;
     }).sort((a, b) => {
@@ -1294,7 +1306,7 @@ const SmartSearch: React.FC = () => {
                             < div className="destination-row" >
                                 <div className="field-label"><MapPin size={14} /> Destinacija ili Smeštaj (do 3)</div>
                                 <div className="destination-input-wrapper" ref={autocompleteRef}>
-                                    <div className="multi-destination-input premium" style={{ border: 'none', padding: 0, height: 'auto', background: 'transparent' }}>
+                                    <div className="multi-destination-input premium">
                                         {selectedDestinations.map(dest => (
                                             <div key={dest.id} className="destination-chip">
                                                 {dest.type === 'hotel' ? <Hotel size={14} /> : <MapPin size={14} />}
@@ -1311,13 +1323,12 @@ const SmartSearch: React.FC = () => {
                                                 onChange={(e) => setDestinationInput(e.target.value)}
                                                 className="smart-input-inline"
                                                 onFocus={() => { if (destinationInput.length >= 2) setShowSuggestions(true); }}
-                                                style={{ background: 'transparent', border: 'none', width: '100%', height: '100%', fontSize: '1.3rem', fontStyle: 'italic' }}
                                             />
                                         )}
                                     </div>
                                     {/* Suggestions Dropdown */}
                                     {showSuggestions && suggestions.length > 0 && (
-                                        <div className="autocomplete-dropdown premium" style={{ top: '100%', left: 0, right: 0, width: '100%' }}>
+                                        <div className="autocomplete-dropdown premium">
                                             {suggestions.map(s => (
                                                 <div key={s.id} className="suggestion-item" onClick={() => handleAddDestination(s)}>
                                                     {s.type === 'hotel' ? <Hotel size={16} className="suggestion-icon hotel" /> : <MapPin size={16} className="suggestion-icon destination" />}

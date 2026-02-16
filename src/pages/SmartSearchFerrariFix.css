@@ -279,3 +279,134 @@ body.light-theme,
     background: var(--petroleum-deep);
     border-radius: 10px;
 }
+
+/* ==========================================================================
+   AUTOCOMPLETE DROPDOWN REFINEMENTS (The "Golden Sands" Fix)
+   ========================================================================== */
+
+/* Wrapper must be relative for absolute dropdown positioning */
+.destination-input-wrapper {
+    position: relative !important;
+    width: 100%;
+}
+
+/* Dropdown Container */
+.autocomplete-dropdown.premium {
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    /* Slight gap */
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    background: rgba(15, 23, 42, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid var(--petroleum-deep) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+    z-index: 9999 !important;
+    overflow: hidden !important;
+    padding: 8px !important;
+    max-height: 400px !important;
+    overflow-y: auto !important;
+    animation: fadeInDropdown 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+/* Light Mode Override */
+.light-theme .autocomplete-dropdown.premium {
+    background: #ffffff !important;
+    border-color: #0E4B5E !important;
+    box-shadow: 0 15px 40px rgba(14, 75, 94, 0.2) !important;
+}
+
+/* Individual Item */
+.suggestion-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    padding: 12px 16px !important;
+    border-radius: 10px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none !important;
+}
+
+.suggestion-item:hover {
+    background: rgba(16, 185, 129, 0.1) !important;
+    /* Accent Glow */
+    transform: translateX(4px);
+}
+
+.light-theme .suggestion-item:hover {
+    background: rgba(14, 75, 94, 0.08) !important;
+}
+
+/* Icon Styling */
+.suggestion-icon {
+    flex-shrink: 0 !important;
+    color: #94a3b8 !important;
+    transition: all 0.2s !important;
+}
+
+.suggestion-item:hover .suggestion-icon {
+    color: var(--accent) !important;
+    transform: scale(1.1);
+}
+
+.light-theme .suggestion-icon {
+    color: #64748b !important;
+}
+
+.light-theme .suggestion-item:hover .suggestion-icon {
+    color: #0E4B5E !important;
+}
+
+/* Content Layout (Text Stack) */
+.suggestion-content {
+    display: flex !important;
+    flex-direction: column !important;
+    /* Force stack */
+    gap: 2px !important;
+    flex: 1 !important;
+}
+
+/* Main Name */
+.suggestion-name {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    line-height: 1.2 !important;
+}
+
+.light-theme .suggestion-name {
+    color: #0E4B5E !important;
+}
+
+/* Secondary Meta (Country/Provider) */
+.suggestion-meta {
+    font-size: 12px !important;
+    color: var(--text-secondary) !important;
+    font-weight: 500 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.light-theme .suggestion-meta {
+    color: #64748b !important;
+}
+
+@keyframes fadeInDropdown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

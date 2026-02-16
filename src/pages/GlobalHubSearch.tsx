@@ -1152,7 +1152,7 @@ const GlobalHubSearch: React.FC = () => {
                                     )}
                                 </div>
                                 {showSuggestions && suggestions.length > 0 && (
-                                    <div className="autocomplete-dropdown premium" style={{ top: '100%', left: 0, right: 0, width: '100%' }}>
+                                    <div className="autocomplete-dropdown premium">
                                         {suggestions.map(s => (
                                             <div key={s.id} className="suggestion-item" onClick={() => handleAddDestination(s)}>
                                                 {s.type === 'hotel' ? <Hotel size={16} className="suggestion-icon hotel" /> : <MapPin size={16} className="suggestion-icon destination" />}
