@@ -36,18 +36,12 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className 
                 const width = canvas.width;
                 const height = canvas.height;
 
-                // Crop threshold: AGGRESSIVE - remove bottom 35% of image (removes the reflection)
-                const cropY = Math.floor(height * 0.65);
+                // Crop threshold removed for new logo
 
                 for (let i = 0; i < data.length; i += 4) {
                     const pixelIndex = i / 4;
-                    const y = Math.floor(pixelIndex / width);
+                    // const y = Math.floor(pixelIndex / width); // y not needed if no vertical crop
 
-                    // Crop bottom artifact
-                    if (y > cropY) {
-                        data[i + 3] = 0;
-                        continue;
-                    }
 
                     const r = data[i];
                     const g = data[i + 1];
@@ -110,8 +104,8 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className 
                         position: 'relative',
                         zIndex: 1,
                         filter: isLight ? 'none' : `
-                            drop-shadow(0 0 15px rgba(59, 130, 246, 0.4))
-                            drop-shadow(0 0 30px rgba(59, 130, 246, 0.2))
+                            invert(1) brightness(2) contrast(1.2)
+                            drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))
                         `,
                         imageRendering: 'auto'
                     }}
@@ -119,27 +113,7 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className 
                 {!imgLoaded && <div style={{ height, width: typeof height === 'number' ? height * 3 : '140px' }} />}
             </div>
 
-            {showText && (
-                <div
-                    className="logo-slogan"
-                    style={{
-                        fontSize: typeof height === 'number' ? Math.round(height * 0.16) + 'px' : '13px', // Round to integer for sharpness
-                        fontWeight: 700,
-                        letterSpacing: '0.04em',
-                        textAlign: 'center',
-                        whiteSpace: 'nowrap',
-                        color: '#1e3a8a',
-                        textShadow: 'none', // Removed sloppy shadow
-                        lineHeight: 1.2,
-                        marginTop: '-4px',
-                        WebkitFontSmoothing: 'antialiased', // Sharp text
-                        MozOsxFontSmoothing: 'grayscale',
-                        opacity: 0.9
-                    }}
-                >
-                    Klikni. Rezerviši. Putuj...
-                </div>
-            )}
+
         </div>
     );
 };

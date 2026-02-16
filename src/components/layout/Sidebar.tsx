@@ -36,7 +36,7 @@ const Sidebar: React.FC = () => {
             <div className="sidebar-header">
                 {/* Logo wrapper now follows header flex/padding constraints */}
                 <div className="sidebar-logo-container">
-                    <ClickToTravelLogo height={isSidebarCollapsed ? 32 : 72} showText={!isSidebarCollapsed} />
+                    <ClickToTravelLogo height={isSidebarCollapsed ? 128 : 288} showText={!isSidebarCollapsed} />
                 </div>
             </div>
 

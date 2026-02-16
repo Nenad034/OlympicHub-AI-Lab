@@ -229,7 +229,7 @@ body.light-theme,
     color: #fff !important;
     font-weight: 900 !important;
     text-transform: uppercase;
-    height: 72px;
+    height: 250px !important;
     transition: all 0.2s ease !important;
     cursor: pointer;
     font-size: 18px !important;

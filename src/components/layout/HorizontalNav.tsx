@@ -41,7 +41,7 @@ const HorizontalNav: React.FC = () => {
                 justifyContent: 'center',
                 paddingTop: '4px' // Subtle adjustment for 72px logo + slogan in 96px header
             }}>
-                <ClickToTravelLogo height={72} showText={true} />
+                <ClickToTravelLogo height={288} />
             </div>
 
             <div className="nav-horizontal-items">

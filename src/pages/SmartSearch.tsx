@@ -1742,7 +1742,7 @@ const SmartSearch: React.FC = () => {
                                         <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2' }}>
                                             <span>{isSearching ? 'Pretražujem...' : (
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '160px' }}>
-                                                    <ClickToTravelLogo height={54} showText={false} />
+                                                    <ClickToTravelLogo height={216} showText={false} />
                                                 </div>
                                             )}</span>
                                         </button>

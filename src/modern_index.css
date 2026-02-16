@@ -216,7 +216,7 @@ h3,
 }
 
 .sidebar-header {
-  height: 90px;
+  height: 320px;
   padding: 0 24px;
   display: flex;
   align-items: center;
@@ -226,7 +226,7 @@ h3,
 }
 
 .sidebar.collapsed .sidebar-header {
-  height: 90px;
+  height: 160px;
   padding: 0 18px;
   justify-content: center;
 }
@@ -342,7 +342,7 @@ h3,
 }
 
 .horizontal-nav {
-  height: 90px;
+  height: 320px;
   background: var(--bg-sidebar);
   border-bottom: 1px solid var(--border);
   display: flex;

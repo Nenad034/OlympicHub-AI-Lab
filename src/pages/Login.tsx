@@ -179,7 +179,7 @@ const Login = () => {
             >
                 <div className="login-header">
                     <div className="logo-box">
-                        <ClickToTravelLogo height={108} showText={false} />
+                        <ClickToTravelLogo height={432} showText={false} />
                     </div>
                     <h2 className="brand-title">ClickToTravel <span>034</span></h2>
                     <p className="subtitle">Advanced Management System</p>
@@ -297,7 +297,7 @@ const Login = () => {
                     box-shadow: 0 0 15px rgba(187, 154, 247, 0.3);
                 }
                 .login-card {
-                    width: 420px;
+                    width: 600px;
                     background: var(--bg-card, rgba(13, 17, 23, 0.85));
                     backdrop-filter: blur(40px);
                     border: 1px solid var(--border, rgba(255,255,255,0.1));
@@ -325,8 +325,8 @@ const Login = () => {
                     margin-bottom: 32px;
                 }
                 .logo-box {
-                    width: 80px;
-                    height: 80px;
+                    width: 450px;
+                    height: 450px;
                     background: var(--accent-glow, rgba(63, 185, 80, 0.1));
                     padding: 2px;
                     border-radius: 24px;
