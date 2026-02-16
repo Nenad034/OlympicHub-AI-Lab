@@ -20,9 +20,10 @@ interface Step3Props {
     onUpdate: (data: HotelSelectionData[]) => void;
     onNext: () => void;
     onBack: () => void;
+    prefetchedResults?: Record<number, InternalHotelResult[]>;
 }
 
-interface InternalHotelResult {
+export interface InternalHotelResult {
     id: string;
     source: 'TCT' | 'OpenGreece';
     name: string;
@@ -160,7 +161,8 @@ const Step3_HotelSelection: React.FC<Step3Props> = ({
     data,
     onUpdate,
     onNext,
-    onBack
+    onBack,
+    prefetchedResults
 }) => {
     const [activeDestIndex, setActiveDestIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
@@ -176,9 +178,14 @@ const Step3_HotelSelection: React.FC<Step3Props> = ({
 
     useEffect(() => {
         if (currentDest) {
-            handleSearch();
+            if (prefetchedResults && prefetchedResults[activeDestIndex]) {
+                setResults(prefetchedResults[activeDestIndex]);
+                // console.log(`[Step3] Using prefetched hotels for destination ${activeDestIndex}`);
+            } else {
+                handleSearch();
+            }
         }
-    }, [activeDestIndex]);
+    }, [activeDestIndex, prefetchedResults]);
 
     const handleSearch = async () => {
         if (!currentDest || !basicInfo) return;

@@ -9,11 +9,12 @@ import solvexDictionaryService from '../../../services/solvex/solvexDictionarySe
 
 interface NarrativeSearchProps {
     basicInfo: BasicInfoData | null;
+    activeTab: 'hotel' | 'flight' | 'package' | 'ski' | 'bus';
     onUpdate: (data: BasicInfoData) => void;
     onNext: (data: BasicInfoData) => void;
 }
 
-type ActiveField = 'destination' | 'date' | 'nights' | 'travelers' | null;
+type ActiveField = 'destination' | 'origin' | 'date' | 'nights' | 'travelers' | null;
 
 const NATIONALITY_OPTIONS = [
     { code: 'RS', name: 'Srbija' },
@@ -46,7 +47,7 @@ const COUNTRY_DESTINATIONS: Record<string, string[]> = {
     'Crna Gora': ['Budva', 'Bečići', 'Kotor', 'Herceg Novi', 'Ulcinj', 'Petrovac']
 };
 
-export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onUpdate, onNext }) => {
+export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, activeTab, onUpdate, onNext }) => {
     const handleNightsChange = (delta: number) => {
         const newNights = Math.max(1, Math.min(30, nights + delta));
         setNights(newNights);
@@ -74,6 +75,11 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
     const [nationality, setNationality] = useState(basicInfo?.nationality || 'RS');
     const [budgetFrom, setBudgetFrom] = useState<string>(basicInfo?.budgetFrom?.toString() || '');
     const [budgetTo, setBudgetTo] = useState<string>(basicInfo?.budgetTo?.toString() || '');
+
+    // Flight specific
+    const [origin, setOrigin] = useState<string>(basicInfo?.originCity || 'Beograd');
+    const [cabinClass, setCabinClass] = useState<string>('economy');
+    const [tripType, setTripType] = useState<'round' | 'one-way'>('round');
 
     const [activeCountryTag, setActiveCountryTag] = useState<string | null>(null);
 
@@ -105,8 +111,8 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
             checkIn: checkIn,
             checkOut: checkOut,
             nights: nights,
-            travelers: roomAllocations[0], // For legacy compatibility
-            roomAllocations: roomAllocations, // NEW
+            travelers: roomAllocations[0],
+            roomAllocations: roomAllocations,
             category: selectedCategories,
             service: selectedServices,
             flexibleDays: 0,
@@ -123,11 +129,12 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
             currency: 'EUR',
             startDate: checkIn,
             endDate: checkOut,
-            totalDays: nights
+            totalDays: nights,
+            originCity: origin, // Added for flights
         };
 
         onUpdate(newData);
-    }, [destination, selectedDestination, checkIn, checkOut, nights, roomAllocations, selectedCategories, selectedServices, nationality, budgetFrom, budgetTo]);
+    }, [destination, origin, selectedDestination, checkIn, checkOut, nights, roomAllocations, selectedCategories, selectedServices, nationality, budgetFrom, budgetTo, activeTab]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -208,45 +215,137 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
 
             <div className={`narrative-container ${activeField ? 'panel-is-open' : ''}`} ref={containerRef}>
                 <div className="narrative-sentence">
-                    Tražim smeštaj u
-                    <span className={`narrative-input ${activeField === 'destination' ? 'active' : ''}`} onClick={() => setActiveField('destination')}>
-                        {selectedDestination?.name || destination || "Bilo gde"}
-                    </span>
-                    polazak
-                    <span className={`narrative-input ${activeField === 'date' ? 'active' : ''}`} onClick={() => setActiveField('date')}>
-                        {checkIn ? formatDate(checkIn) : "bilo kad"}
-                    </span>
-                    na
-                    <span className={`narrative-input ${activeField === 'nights' ? 'active' : ''}`} onClick={() => setActiveField('nights')}>
-                        {nights} noći
-                    </span>
-                    .
+                    {activeTab === 'hotel' && (
+                        <>
+                            Tražim smeštaj u
+                            <span className={`narrative-input ${activeField === 'destination' ? 'active' : ''}`} onClick={() => setActiveField('destination')}>
+                                {selectedDestination?.name || destination || "Bilo gde"}
+                            </span>
+                            polazak
+                            <span className={`narrative-input ${activeField === 'date' ? 'active' : ''}`} onClick={() => setActiveField('date')}>
+                                {checkIn ? formatDate(checkIn) : "bilo kad"}
+                            </span>
+                            na
+                            <span className={`narrative-input ${activeField === 'nights' ? 'active' : ''}`} onClick={() => setActiveField('nights')}>
+                                {nights} noći
+                            </span>
+                            .
+                            <br />
+                            Rezerviši mi
+                            <span className={`narrative-input ${activeField === 'rooms' ? 'active' : ''}`} onClick={() => setActiveField('rooms')}>
+                                {rooms} {rooms === 1 ? 'sobu' : 'sobe'}
+                            </span>
+                            za ukupno
+                            <span className={`narrative-input ${activeField === 'travelers' ? 'active' : ''}`} onClick={() => setActiveField('travelers')}>
+                                {roomAllocations.reduce((acc, r) => acc + r.adults + r.children, 0)} osoba
+                            </span>
+                            .
+                            <br />
+                            Želim hotel sa
+                            <span className={`narrative-input ${activeField === 'category' ? 'active' : ''}`} onClick={() => setActiveField('category')}>
+                                {selectedCategories.includes('all') ? 'sve' : selectedCategories.join(', ')} ★
+                            </span>
+                            i uslugom
+                            <span className={`narrative-input ${activeField === 'service' ? 'active' : ''}`} onClick={() => setActiveField('service')}>
+                                {selectedServices.includes('all') ? 'bilo kojom' : selectedServices.map(s => s === 'AI' ? 'All Incl.' : s).join(', ')}
+                            </span>
+                            .
+                        </>
+                    )}
+
+                    {activeTab === 'flight' && (
+                        <>
+                            Tražim let iz
+                            <span className={`narrative-input ${activeField === 'origin' ? 'active' : ''}`} onClick={() => setActiveField('origin')}>
+                                {origin || "Polazni grad"}
+                            </span>
+                            za
+                            <span className={`narrative-input ${activeField === 'destination' ? 'active' : ''}`} onClick={() => setActiveField('destination')}>
+                                {selectedDestination?.name || destination || "Bilo gde"}
+                            </span>
+                            .
+                            Polazak
+                            <span className={`narrative-input ${activeField === 'date' ? 'active' : ''}`} onClick={() => setActiveField('date')}>
+                                {checkIn ? formatDate(checkIn) : "bilo kad"}
+                            </span>
+                            {checkOut && (
+                                <>
+                                    i povratak
+                                    <span className={`narrative-input ${activeField === 'date' ? 'active' : ''}`} onClick={() => setActiveField('date')}>
+                                        {formatDate(checkOut)}
+                                    </span>
+                                </>
+                            )}
+                            .
+                            <br />
+                            Putuju
+                            <span className={`narrative-input ${activeField === 'travelers' ? 'active' : ''}`} onClick={() => setActiveField('travelers')}>
+                                {roomAllocations.reduce((acc, r) => acc + r.adults + r.children, 0)} osoba
+                            </span>
+                            u
+                            <span className={`narrative-input ${activeField === 'category' ? 'active' : ''}`} onClick={() => setActiveField('category')}>
+                                {cabinClass === 'economy' ? 'Ekonomskoj' : cabinClass === 'business' ? 'Biznis' : 'Prvoj'}
+                            </span>
+                            klasi.
+                        </>
+                    )}
+
+                    {activeTab === 'package' && (
+                        <>
+                            Tražim paket aranžman za
+                            <span className={`narrative-input ${activeField === 'destination' ? 'active' : ''}`} onClick={() => setActiveField('destination')}>
+                                {selectedDestination?.name || destination || "Bilo gde"}
+                            </span>
+                            polazak oko
+                            <span className={`narrative-input ${activeField === 'date' ? 'active' : ''}`} onClick={() => setActiveField('date')}>
+                                {checkIn ? formatDate(checkIn) : "bilo kad"}
+                            </span>
+                            na
+                            <span className={`narrative-input ${activeField === 'nights' ? 'active' : ''}`} onClick={() => setActiveField('nights')}>
+                                {nights} dana
+                            </span>
+                            .
+                            <br />
+                            Potrebno za
+                            <span className={`narrative-input ${activeField === 'travelers' ? 'active' : ''}`} onClick={() => setActiveField('travelers')}>
+                                {roomAllocations.reduce((acc, r) => acc + r.adults + r.children, 0)} osoba
+                            </span>
+                            sa hotelom od
+                            <span className={`narrative-input ${activeField === 'category' ? 'active' : ''}`} onClick={() => setActiveField('category')}>
+                                {selectedCategories.includes('all') ? 'sve' : selectedCategories.join(', ')} ★
+                            </span>
+                            .
+                        </>
+                    )}
+
+                    {activeTab === 'ski' && (
+                        <>
+                            Planiram ski putovanje u
+                            <span className={`narrative-input ${activeField === 'destination' ? 'active' : ''}`} onClick={() => setActiveField('destination')}>
+                                {selectedDestination?.name || destination || "Planinski centar"}
+                            </span>
+                            u terminu
+                            <span className={`narrative-input ${activeField === 'date' ? 'active' : ''}`} onClick={() => setActiveField('date')}>
+                                {checkIn ? formatDate(checkIn) : "bilo kad"}
+                            </span>
+                            .
+                            <br />
+                            Tražim smeštaj za
+                            <span className={`narrative-input ${activeField === 'travelers' ? 'active' : ''}`} onClick={() => setActiveField('travelers')}>
+                                {roomAllocations.reduce((acc, r) => acc + r.adults + r.children, 0)} osoba
+                            </span>
+                            blizu staze, kategorije
+                            <span className={`narrative-input ${activeField === 'category' ? 'active' : ''}`} onClick={() => setActiveField('category')}>
+                                {selectedCategories.includes('all') ? 'sve' : selectedCategories.join(', ')} ★
+                            </span>
+                            .
+                        </>
+                    )}
                     <br />
-                    Rezerviši mi
-                    <span className={`narrative-input ${activeField === 'rooms' ? 'active' : ''}`} onClick={() => setActiveField('rooms')}>
-                        {rooms} {rooms === 1 ? 'sobu' : 'sobe'}
-                    </span>
-                    za ukupno
-                    <span className={`narrative-input ${activeField === 'travelers' ? 'active' : ''}`} onClick={() => setActiveField('travelers')}>
-                        {roomAllocations.reduce((acc, r) => acc + r.adults + r.children, 0)} osoba
-                    </span>
-                    .
-                    <br />
-                    Želim hotel sa
-                    <span className={`narrative-input ${activeField === 'category' ? 'active' : ''}`} onClick={() => setActiveField('category')}>
-                        {selectedCategories.includes('all') ? 'sve' : selectedCategories.join(', ')} ★
-                    </span>
-                    i uslugom
-                    <span className={`narrative-input ${activeField === 'service' ? 'active' : ''}`} onClick={() => setActiveField('service')}>
-                        {selectedServices.includes('all') ? 'bilo kojom' : selectedServices.map(s => s === 'AI' ? 'All Incl.' : s).join(', ')}
-                    </span>
-                    .
-                    <br />
-                    Putnici su
+                    Državljanin sam
                     <span className={`narrative-input ${activeField === 'nationality' ? 'active' : ''}`} onClick={() => setActiveField('nationality')}>
                         {NATIONALITY_OPTIONS.find(n => n.code === nationality)?.name || 'RS'}
-                    </span>
-                    nacionalnosti, sa budžetom do
+                    </span>, sa budžetom do
                     <span className={`narrative-input ${activeField === 'budget' ? 'active' : ''}`} onClick={() => setActiveField('budget')}>
                         {budgetTo || 'neograničeno'} EUR
                     </span>
@@ -277,10 +376,10 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
                                 <div className="panel-suggestions">
                                     {suggestions.map(s => (
                                         <div key={s.id} className="panel-suggestion-item" onClick={() => { setDestination(s.name); setSelectedDestination(s); setActiveField(null); }}>
-                                            <span>{s.type === 'hotel' ? '🏨' : '📍'}</span>
+                                            <span>{s.type === 'hotel' ? '🏨' : s.type === 'city' ? '📍' : '✈️'}</span>
                                             <div>
                                                 <strong>{s.name}</strong>
-                                                <small>{s.country_name}</small>
+                                                <small>{s.country_name} {s.iata ? `(${s.iata})` : ''}</small>
                                             </div>
                                         </div>
                                     ))}
@@ -322,6 +421,21 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
                                             )}
                                         </div>
                                     )}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeField === 'origin' && (
+                            <div className="panel-content">
+                                <h3>Odakle putujete?</h3>
+                                <div className="panel-search-box">
+                                    <Search size={20} />
+                                    <input autoFocus placeholder="npr. Beograd, Niš..." value={origin} onChange={(e) => setOrigin(e.target.value)} />
+                                </div>
+                                <div className="panel-quick-tags">
+                                    {['Beograd', 'Niš', 'Kraljevo', 'Budimpešta', 'Temišvar'].map(city => (
+                                        <button key={city} onClick={() => { setOrigin(city); setActiveField(null); }}>{city}</button>
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -390,15 +504,34 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
 
                         {activeField === 'category' && (
                             <div className="panel-content">
-                                <h3>Kategorizacija hotela</h3>
-                                <div className="panel-selection-grid">
-                                    {['2', '3', '4', '5'].map(star => (
-                                        <button key={star} className={`panel-select-btn ${selectedCategories.includes(star) ? 'active' : ''}`} onClick={() => toggleCategory(star)}>
-                                            {star} ★
-                                        </button>
-                                    ))}
-                                </div>
-                                <p className="panel-hint">Izaberite jednu ili više kategorija</p>
+                                {activeTab === 'flight' ? (
+                                    <>
+                                        <h3>Klasa putovanja</h3>
+                                        <div className="panel-selection-grid">
+                                            {[
+                                                { id: 'economy', label: 'Ekonomska' },
+                                                { id: 'business', label: 'Biznis' },
+                                                { id: 'first', label: 'Prva' }
+                                            ].map(c => (
+                                                <button key={c.id} className={`panel-select-btn ${cabinClass === c.id ? 'active' : ''}`} onClick={() => { setCabinClass(c.id); setActiveField(null); }}>
+                                                    {c.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <h3>Kategorizacija hotela</h3>
+                                        <div className="panel-selection-grid">
+                                            {['2', '3', '4', '5'].map(star => (
+                                                <button key={star} className={`panel-select-btn ${selectedCategories.includes(star) ? 'active' : ''}`} onClick={() => toggleCategory(star)}>
+                                                    {star} ★
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="panel-hint">Izaberite jednu ili više kategorija</p>
+                                    </>
+                                )}
                             </div>
                         )}
 

@@ -7,7 +7,7 @@ import { useAuthStore } from '../stores';
 import {
     Sparkles, Hotel, Plane, Package, Bus, Compass, LayoutTemplate,
     MapPin, Calendar, CalendarDays, Users, UtensilsCrossed, Star,
-    Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
+    Search, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
     LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
     CheckCircle2, CheckCircle, XCircle, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
     Plus, Globe, AlignLeft, Mountain, DollarSign
@@ -174,7 +174,8 @@ const SmartSearch: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
 
     // MODE SWITCH
-    const [searchMode, setSearchMode] = useState<'classic' | 'narrative' | 'immersive'>('immersive');
+    const [searchMode, setSearchMode] = useState<'classic' | 'narrative' | 'immersive'>('classic');
+    const [showModes, setShowModes] = useState(true);
 
     // Reset search performed when mode changes so the wizard is visible
     useEffect(() => {
@@ -230,6 +231,19 @@ const SmartSearch: React.FC = () => {
 
     const [mealPlan, setMealPlan] = useState('');
     const [nationality, setNationality] = useState('RS');
+
+    // Added missing states for Flight and Pax support
+    const [showPax, setShowPax] = useState(false);
+    const [originCity, setOriginCity] = useState('Beograd');
+    const [originCode, setOriginCode] = useState('BEG');
+    const [cabinClass, setCabinClass] = useState<'economy' | 'business' | 'first'>('economy');
+    const [showOriginDropdown, setShowOriginDropdown] = useState(false);
+    const [showCabinDropdown, setShowCabinDropdown] = useState(false);
+    const [originInput, setOriginInput] = useState('');
+    const [originSuggestions, setOriginSuggestions] = useState<Destination[]>([]);
+    const paxRef = useRef<HTMLDivElement>(null);
+    const originRef = useRef<HTMLDivElement>(null);
+    const cabinRef = useRef<HTMLDivElement>(null);
 
     // NARRATIVE TO SMART SEARCH ADAPTER
     const handleNarrativeUpdate = (data: BasicInfoData) => {
@@ -323,6 +337,14 @@ const SmartSearch: React.FC = () => {
             }
         }
 
+        // 5. Map Flight Specifics
+        if (data.originCity && data.originCity !== originCity) {
+            setOriginCity(data.originCity);
+        }
+        if (data.originCode && data.originCode !== originCode) {
+            setOriginCode(data.originCode);
+        }
+
         return {
             destinations: mappedDestinations,
             checkIn: mappedCheckIn,
@@ -353,8 +375,33 @@ const SmartSearch: React.FC = () => {
             currency: 'EUR',
             startDate: checkIn,
             endDate: checkOut,
-            totalDays: nights
+            totalDays: nights,
+            originCity: originCity,
+            originCode: originCode
         };
+    };
+
+    const updateRoom = (rIdx: number, field: 'adults' | 'children', delta: number) => {
+        const newAlloc = [...roomAllocations];
+        if (field === 'adults') {
+            newAlloc[rIdx].adults = Math.max(1, Math.min(10, newAlloc[rIdx].adults + delta));
+        } else {
+            const currentChildren = newAlloc[rIdx].children;
+            const newChildren = Math.max(0, Math.min(4, currentChildren + delta));
+            newAlloc[rIdx].children = newChildren;
+            if (delta > 0) {
+                newAlloc[rIdx].childrenAges.push(0);
+            } else if (delta < 0 && currentChildren > 0) {
+                newAlloc[rIdx].childrenAges.pop();
+            }
+        }
+        setRoomAllocations(newAlloc);
+    };
+
+    const addRoom = () => {
+        if (roomAllocations.length < 5) {
+            setRoomAllocations([...roomAllocations, { adults: 2, children: 0, childrenAges: [] }]);
+        }
     };
 
     const [isSearching, setIsSearching] = useState(false);
@@ -381,6 +428,7 @@ const SmartSearch: React.FC = () => {
     const [selectedMealPlans, setSelectedMealPlans] = useState<string[]>(['all']);
     const [budgetFrom, setBudgetFrom] = useState<string>('');
     const [budgetTo, setBudgetTo] = useState<string>('');
+    const [budgetType, setBudgetType] = useState<'total' | 'person'>('person');
 
     // Booking states
     const [expandedHotel, setExpandedHotel] = useState<SmartSearchResult | null>(null);
@@ -497,6 +545,15 @@ const SmartSearch: React.FC = () => {
             if (autocompleteRef.current && !autocompleteRef.current.contains(event.target as Node)) {
                 setShowSuggestions(false);
             }
+            if (paxRef.current && !paxRef.current.contains(event.target as Node)) {
+                setShowPax(false);
+            }
+            if (originRef.current && !originRef.current.contains(event.target as Node)) {
+                setShowOriginDropdown(false);
+            }
+            if (cabinRef.current && !cabinRef.current.contains(event.target as Node)) {
+                setShowCabinDropdown(false);
+            }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
@@ -610,9 +667,12 @@ const SmartSearch: React.FC = () => {
         destinations: Destination[],
         checkIn: string,
         checkOut: string,
-        allocations: RoomAllocation[]
+        allocations: RoomAllocation[],
+        originCity?: string,
+        originCode?: string,
+        cabinClass?: 'economy' | 'business' | 'first'
     }) => {
-        const { destinations, checkIn, checkOut, allocations } = params;
+        const { destinations, checkIn, checkOut, allocations, originCity: pOriginCity, originCode: pOriginCode, cabinClass: pCabinClass } = params;
 
         if (destinations.length === 0 || !checkIn || !checkOut || allocations.filter(r => r.adults > 0).length === 0) {
             setPrefetchedResults([]);
@@ -620,7 +680,7 @@ const SmartSearch: React.FC = () => {
             return;
         }
 
-        const currentKey = `${destinations.map(d => d.id).sort().join(',')}|${checkIn}|${checkOut}|${JSON.stringify(allocations)}`;
+        const currentKey = `${destinations.map(d => d.id).sort().join(',')}|${checkIn}|${checkOut}|${JSON.stringify(allocations)}|${pOriginCity || originCity}|${pCabinClass || cabinClass}`;
         if (prefetchKey === currentKey) {
             return; // Already prefetched or currently prefetching this exact query
         }
@@ -642,6 +702,9 @@ const SmartSearch: React.FC = () => {
                 mealPlan,
                 currency: 'EUR',
                 nationality: nationality || 'RS',
+                originCity: pOriginCity || originCity,
+                originCode: pOriginCode || originCode,
+                cabinClass: pCabinClass || cabinClass,
             });
 
             const resultsWithSales = await Promise.all(results.map(async (h) => {
@@ -690,12 +753,18 @@ const SmartSearch: React.FC = () => {
         checkIn?: string,
         checkOut?: string,
         destinations?: Destination[],
-        allocations?: RoomAllocation[]
+        allocations?: RoomAllocation[],
+        originCity?: string,
+        originCode?: string,
+        cabinClass?: 'economy' | 'business' | 'first'
     }) => {
         const activeCheckIn = overrideParams?.checkIn || checkIn;
         const activeCheckOut = overrideParams?.checkOut || checkOut;
         const activeDestinations = overrideParams?.destinations || selectedDestinations;
         const activeAllocations = (overrideParams?.allocations || roomAllocations).filter(r => r.adults > 0);
+        const activeOriginCity = overrideParams?.originCity || originCity;
+        const activeOriginCode = overrideParams?.originCode || originCode;
+        const activeCabinClass = overrideParams?.cabinClass || cabinClass;
 
         if (activeDestinations.length === 0) {
             setSearchError('Molimo odaberite najmanje jednu destinaciju');
@@ -708,7 +777,7 @@ const SmartSearch: React.FC = () => {
         }
 
         // CHECK PREFETCH CACHE
-        const currentKey = `${activeDestinations.map(d => d.id).sort().join(',')}|${activeCheckIn}|${activeCheckOut}|${JSON.stringify(activeAllocations)}`;
+        const currentKey = `${activeDestinations.map(d => d.id).sort().join(',')}|${activeCheckIn}|${activeCheckOut}|${JSON.stringify(activeAllocations)}|${activeOriginCity}|${activeCabinClass}`;
         if (prefetchedResults.length > 0 && prefetchKey === currentKey) {
             console.log('[SmartSearch] Using prefetched results! Instant display.');
             setSearchResults(prefetchedResults);
@@ -744,6 +813,9 @@ const SmartSearch: React.FC = () => {
                 mealPlan,
                 currency: 'EUR',
                 nationality: nationality || 'RS',
+                originCity: activeOriginCity,
+                originCode: activeOriginCode,
+                cabinClass: activeCabinClass,
             });
 
             // ENHANCE WITH CRM SALES DATA
@@ -921,18 +993,20 @@ const SmartSearch: React.FC = () => {
 
         const price = getFinalDisplayPrice(hotel);
 
+        let priceToCheck = price;
+        if (budgetType === 'person') {
+            const totalPax = roomAllocations.reduce((acc, r) => acc + r.adults + r.children, 0) || 1;
+            priceToCheck = price / totalPax;
+        }
+
         // Robust filtering
         if (budgetFrom) {
             const minBudget = Number(budgetFrom);
-            if (!isNaN(minBudget) && price < minBudget) return false;
+            if (!isNaN(minBudget) && priceToCheck < minBudget) return false;
         }
         if (budgetTo) {
             const maxBudget = Number(budgetTo);
-            // Debug log for specific failing case
-            if (maxBudget === 1000 && price > 1000) {
-                console.log(`[SmartSearch] FILTERING: ${hotel.name} (${price}) > ${maxBudget}. Should be hidden.`);
-            }
-            if (!isNaN(maxBudget) && price > maxBudget) return false;
+            if (!isNaN(maxBudget) && priceToCheck > maxBudget) return false;
         }
 
         return true;
@@ -1125,7 +1199,7 @@ const SmartSearch: React.FC = () => {
 
 
             {/* TAB NAVIGATION */}
-            <div className="tabs-nav-container">
+            <div className="tabs-nav-container" style={{ margin: '0 auto 15px auto' }}>
                 {
                     tabs.map(tab => (
                         <a
@@ -1144,492 +1218,69 @@ const SmartSearch: React.FC = () => {
                 }
             </div>
 
-            {/* CONDITIONAL RENDER: SMESHTAJ vs LETOVI vs PAKETI */}
-            {activeTab === 'package' ? (
-                <div className="package-builder-inline animate-fade-in" style={{ marginTop: '2rem' }}>
-                    <PackageSearch
-                        initialDestinations={selectedDestinations}
-                        initialCheckIn={checkIn}
-                        initialCheckOut={checkOut}
-                        initialTravelers={roomAllocations}
-                    />
-                </div>
-            ) : activeTab === 'flight' ? (
-                <div className="flight-search-inline animate-fade-in" style={{ marginTop: '2rem' }}>
-                    <FlightSearch isInline={true} />
-                </div>
-            ) : activeTab === 'ski' ? (
-                <div className="ski-search-wrapper animate-fade-in" style={{ marginTop: '2rem' }}>
-                    <div className="search-card-frame" style={{ textAlign: 'center', padding: '60px' }}>
-                        <Mountain size={48} color="var(--accent)" style={{ marginBottom: '20px', opacity: 0.5 }} />
-                        <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)' }}>SKI SEARCH - COMING SOON</h2>
-                        <p style={{ color: 'var(--text-secondary)', marginTop: '10px' }}>Uskoro: Najbolje ski ponude, ski pass i oprema na jednom mestu.</p>
-                    </div>
-                </div>
-            ) : (
-                <>
-                    {/* NARRATIVE MODE TOGGLE IN HEADER */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 2rem 1rem 0' }}>
+            {/* NARRATIVE MODE TOGGLE IN HEADER - MOVED OUTSIDE FOR ALL TABS */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '35px', position: 'relative' }}>
+                <button
+                    onClick={() => setShowModes(!showModes)}
+                    style={{
+                        background: showModes ? 'rgba(255,255,255,0.05)' : 'rgba(59, 130, 246, 0.1)',
+                        border: `1px solid ${showModes ? 'rgba(255,255,255,0.2)' : 'rgba(59, 130, 246, 0.5)'}`,
+                        borderRadius: '24px',
+                        padding: '6px 20px',
+                        fontSize: '11px',
+                        color: showModes ? 'var(--text-secondary)' : '#60a5fa',
+                        cursor: 'pointer',
+                        marginBottom: showModes ? '20px' : '0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '1.5px',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: showModes ? 'none' : '0 0 15px rgba(59, 130, 246, 0.2)'
+                    }}
+                >
+                    {showModes ? <Zap size={12} /> : <Sparkles size={12} />}
+                    {showModes ? 'SAKRIJ MODE SELEKTOR' : 'PRIKAŽI MODE SELEKTOR'}
+                </button>
+
+                {showModes && (
+                    <div className="animate-fade-in" style={{ display: 'flex', justifyContent: 'center' }}>
                         <div className="mode-toggle-group">
                             <button
                                 className={`mode-switch-btn ${searchMode === 'classic' ? 'active' : ''}`}
                                 onClick={() => setSearchMode('classic')}
                             >
-                                <LayoutTemplate size={14} style={{ marginRight: 6 }} />
+                                <LayoutTemplate size={16} style={{ marginRight: 8 }} />
                                 Klasična
                             </button>
                             <button
                                 className={`mode-switch-btn ${searchMode === 'narrative' ? 'active' : ''}`}
                                 onClick={() => setSearchMode('narrative')}
                             >
-                                <Sparkles size={14} style={{ marginRight: 6 }} />
+                                <Sparkles size={16} style={{ marginRight: 8 }} />
                                 Futuristička
                             </button>
                             <button
                                 className={`mode-switch-btn ${searchMode === 'immersive' ? 'active' : ''}`}
                                 onClick={() => setSearchMode('immersive')}
                             >
-                                <Zap size={14} style={{ marginRight: 6 }} />
+                                <Zap size={16} style={{ marginRight: 8 }} />
                                 Immersive
                             </button>
                         </div>
                     </div>
+                )}
+            </div>
 
-                    {/* IMMERSIVE SEARCH UI */}
-                    {searchMode === 'immersive' && !searchPerformed && (
-                        <ImmersiveSearch
-                            onPartialUpdate={(data: ImmersiveSearchData) => {
-                                // Trigger background search when enough data is present
-                                if (data.destinations.length > 0 && data.checkIn && data.checkOut) {
-                                    handleBackgroundSearch({
-                                        destinations: data.destinations,
-                                        checkIn: data.checkIn,
-                                        checkOut: data.checkOut,
-                                        allocations: data.roomAllocations
-                                    });
-                                }
-                            }}
-                            onSearch={(data: ImmersiveSearchData) => {
-                                // Map immersive data to standard format and trigger search
-                                const cin = new Date(data.checkIn);
-                                const cout = new Date(data.checkOut);
-                                const nights = Math.ceil((cout.getTime() - cin.getTime()) / (1000 * 60 * 60 * 24)) || 7;
 
-                                // Sync filters and budget from ImmersiveSearch to SmartSearch states
-                                if (data.categories && data.categories.length > 0) {
-                                    setSelectedStars(data.categories);
-                                }
-                                if (data.services && data.services.length > 0) {
-                                    setSelectedMealPlans(data.services);
-                                }
-                                if (data.budget) {
-                                    setBudgetFrom(data.budget.from?.toString() || '');
-                                    setBudgetTo(data.budget.to?.toString() || '');
-                                }
-
-                                const mappedData: BasicInfoData = {
-                                    destinations: data.destinations.map((d: any) => ({
-                                        id: d.id,
-                                        city: d.name,
-                                        country: d.country_name || 'Unknown',
-                                        countryCode: d.country_code || 'XX',
-                                        airportCode: 'BEG',
-                                        checkIn: data.checkIn,
-                                        checkOut: data.checkOut,
-                                        nights: nights,
-                                        travelers: {
-                                            adults: data.adults,
-                                            children: data.children,
-                                            childrenAges: data.childrenAges
-                                        },
-                                        roomAllocations: data.roomAllocations,
-                                        type: d.type
-                                    })),
-                                    startDate: data.checkIn,
-                                    endDate: data.checkOut,
-                                    totalDays: nights,
-                                    currency: 'EUR',
-                                    travelers: {
-                                        adults: data.adults,
-                                        children: data.children,
-                                        childrenAges: data.childrenAges
-                                    },
-                                    roomAllocations: data.roomAllocations
-                                };
-                                const updates = handleNarrativeUpdate(mappedData);
-                                handleSearch({
-                                    destinations: updates.destinations,
-                                    checkIn: updates.checkIn,
-                                    checkOut: updates.checkOut,
-                                    allocations: updates.allocations
-                                });
-                            }}
-                        />
-                    )}
-
-                    {/* NARRATIVE SEARCH UI */}
-                    {searchMode === 'narrative' && !searchPerformed && (
-                        <div className="narrative-mode-container" style={{ padding: '0 2rem 2rem 2rem' }}>
-                            <NarrativeSearch
-                                basicInfo={getInitialNarrativeData()}
-                                onUpdate={(data: any) => handleNarrativeUpdate(data)}
-                                onNext={(data: any) => {
-                                    const updates = handleNarrativeUpdate(data);
-                                    handleSearch({
-                                        destinations: updates.destinations,
-                                        checkIn: updates.checkIn,
-                                        checkOut: updates.checkOut,
-                                        allocations: updates.allocations
-                                    });
-                                }}
-                            />
-                            {isSearching && (
-                                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
-                                    <Loader2 className="spin-slow" size={40} color="#00f2fe" />
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* IMMERSIVE SEARCH LOADER */}
-                    {searchMode === 'immersive' && isSearching && !searchPerformed && (
-                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
-                            <Loader2 className="spin-slow" size={40} color="#00f2fe" />
-                        </div>
-                    )}
-
-                    {/* CLASSIC SEARCH UI */}
-                    {searchMode === 'classic' && (
-                        <div className="search-card-frame">
-
-                            {/* ROW 1: DESTINATION */}
-                            < div className="destination-row" >
-                                <div className="field-label"><MapPin size={14} /> Destinacija ili Smeštaj (do 3)</div>
-                                <div className="destination-input-wrapper" ref={autocompleteRef}>
-                                    <div className="multi-destination-input premium">
-                                        {selectedDestinations.map(dest => (
-                                            <div key={dest.id} className="destination-chip">
-                                                {dest.type === 'hotel' ? <Hotel size={14} /> : <MapPin size={14} />}
-                                                <span>{dest.name}</span>
-                                                <button className="chip-remove" onClick={() => setSelectedDestinations(selectedDestinations.filter(d => d.id !== dest.id))}><X size={14} /></button>
-                                            </div>
-                                        ))}
-                                        {selectedDestinations.length < 3 && (
-                                            <input
-                                                ref={inputRef}
-                                                type="text"
-                                                placeholder={selectedDestinations.length === 0 ? "npr. Golden Sands, Hotel Park..." : "Dodaj još..."}
-                                                value={destinationInput}
-                                                onChange={(e) => setDestinationInput(e.target.value)}
-                                                className="smart-input-inline"
-                                                onFocus={() => { if (destinationInput.length >= 2) setShowSuggestions(true); }}
-                                            />
-                                        )}
-                                    </div>
-                                    {/* Suggestions Dropdown */}
-                                    {showSuggestions && suggestions.length > 0 && (
-                                        <div className="autocomplete-dropdown premium">
-                                            {suggestions.map(s => (
-                                                <div key={s.id} className="suggestion-item" onClick={() => handleAddDestination(s)}>
-                                                    {s.type === 'hotel' ? <Hotel size={16} className="suggestion-icon hotel" /> : <MapPin size={16} className="suggestion-icon destination" />}
-                                                    <div className="suggestion-content">
-                                                        <span className="suggestion-name">{s.name}</span>
-                                                        <span className="suggestion-meta">
-                                                            {s.type === 'hotel' ? (s.stars ? `${s.stars}★ ${s.provider}` : s.provider) : s.country}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div >
-
-                            {/* ROW 2: PARAMETERS GRID */}
-                            < div className="params-grid" >
-                                {/* Check In */}
-                                < div className="col-checkin param-item" >
-                                    <div className="field-label"><CalendarIcon size={14} /> Check-in</div>
-                                    <div className="input-box" onClick={() => setActiveCalendar('in')} style={{ cursor: 'pointer' }}>
-                                        {checkIn ? formatDate(checkIn) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
-                                    </div>
-                                </div >
-
-                                {/* Check Out */}
-                                < div className="col-checkout param-item" >
-                                    <div className="field-label"><CalendarIcon size={14} /> Check-out</div>
-                                    <div className="input-box" onClick={() => setActiveCalendar('out')} style={{ cursor: 'pointer' }}>
-                                        {checkOut ? formatDate(checkOut) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
-                                    </div>
-                                </div >
-
-                                {/* Flexibility */}
-                                < div className="col-flex param-item" >
-                                    <div className="field-label"><ArrowDownWideNarrow size={14} /> Fleksibilnost</div>
-                                    <div className="flex-toggle-group">
-                                        {[0, 1, 3, 5].map(day => (
-                                            <button
-                                                key={day}
-                                                className={`flex-btn ${flexibleDays === day ? 'active' : ''}`}
-                                                onClick={() => setFlexibleDays(day)}
-                                            >
-                                                {day === 0 ? 'Tačno' : `±${day}`}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div >
-
-                                {/* Category Selector */}
-                                <div className="col-stars param-item" style={{ position: 'relative' }}>
-                                    <div className="field-label"><Star size={14} /> Odaberi Kategoriju</div>
-                                    <div className="input-box" onClick={() => setShowStarPicker(!showStarPicker)} style={{ cursor: 'pointer' }}>
-                                        <span style={{ fontSize: '0.85rem' }}>
-                                            {selectedStars.includes('all') ? 'Sve kategorije' : (selectedStars.length === 1 ? CATEGORY_OPTIONS.find(o => o.value === selectedStars[0])?.label : selectedStars.filter(s => s !== 'all').sort().join(', '))}
-                                        </span>
-                                        <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-                                    </div>
-                                    {showStarPicker && (
-                                        <div className="vertical-filters-popover animate-fade-in-up">
-                                            <div className="vertical-filter-group">
-                                                <button className={`v-filter-btn ${selectedStars.includes('all') ? 'active' : ''}`} onClick={() => { toggleStarFilter('all'); setShowStarPicker(false); }}>Sve</button>
-                                                {[5, 4, 3, 2, 0].map(s => (
-                                                    <button key={s} className={`v-filter-btn ${selectedStars.includes(s.toString()) ? 'active' : ''}`} onClick={() => toggleStarFilter(s.toString())}>
-                                                        {renderStarsMini(s)}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '10px', marginTop: '10px' }}>
-                                                <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setShowStarPicker(false)}>Zatvori</button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Meal Selector */}
-                                <div className="col-meals param-item" style={{ position: 'relative' }}>
-                                    <div className="field-label"><UtensilsCrossed size={14} /> Odaberi Uslugu</div>
-                                    <div className="input-box" onClick={() => setShowMealPicker(!showMealPicker)} style={{ cursor: 'pointer' }}>
-                                        <span style={{ fontSize: '0.85rem' }}>
-                                            {selectedMealPlans.includes('all') ? 'Sve usluge' : (selectedMealPlans.length === 1 ? MEAL_PLAN_OPTIONS.find(o => o.value === selectedMealPlans[0])?.label : selectedMealPlans.filter(p => p !== 'all').join(', '))}
-                                        </span>
-                                        <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-                                    </div>
-                                    {showMealPicker && (
-                                        <div className="vertical-filters-popover animate-fade-in-up">
-                                            <div className="vertical-filter-group">
-                                                <button className={`v-filter-btn ${selectedMealPlans.includes('all') ? 'active' : ''}`} onClick={() => { toggleMealPlanFilter('all'); setShowMealPicker(false); }}>Sve usluge</button>
-                                                {[
-                                                    { id: 'RO', label: 'Na - Najam' },
-                                                    { id: 'BB', label: 'ND - Doručak' },
-                                                    { id: 'HB', label: 'HB - Polupansion' },
-                                                    { id: 'FB', label: 'FB - Pun pansion' },
-                                                    { id: 'AI', label: 'All - All Inclusive' },
-                                                    { id: 'UAI', label: 'UAll - Ultra Inclusive' }
-                                                ].map(mp => (
-                                                    <button key={mp.id} className={`v-filter-btn ${selectedMealPlans.includes(mp.id) ? 'active' : ''}`} onClick={() => toggleMealPlanFilter(mp.id)}>
-                                                        {mp.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '10px', marginTop: '10px' }}>
-                                                <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setShowMealPicker(false)}>Zatvori</button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="col-nationality" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                    {/* Nationality Selector */}
-                                    <div className="param-item" style={{ position: 'relative' }}>
-                                        <div className="field-label"><Globe size={14} /> NACIONALNOST</div>
-                                        <div className="input-box" onClick={() => setShowNationalityPicker(!showNationalityPicker)} style={{ cursor: 'pointer' }}>
-                                            <span style={{ fontSize: '0.85rem' }}>
-                                                {NATIONALITY_OPTIONS.find(n => n.code === nationality)?.name || 'Odaberi državu'}
-                                            </span>
-                                            <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-                                        </div>
-                                        {showNationalityPicker && (
-                                            <div className="vertical-filters-popover animate-fade-in-up">
-                                                <div className="vertical-filter-group" style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '10px' }}>
-                                                    {NATIONALITY_OPTIONS.map(n => (
-                                                        <button
-                                                            key={n.code}
-                                                            className={`v-filter-btn ${nationality === n.code ? 'active' : ''}`}
-                                                            onClick={() => {
-                                                                setNationality(n.code);
-                                                                setShowNationalityPicker(false);
-                                                            }}
-                                                        >
-                                                            {n.name}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Budget Filter */}
-                                    <div className="param-item">
-                                        <div className="field-label"><DollarSign size={14} /> BUDŽET</div>
-                                        <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                                            <input
-                                                type="number"
-                                                placeholder="Od"
-                                                value={budgetFrom}
-                                                onChange={(e) => setBudgetFrom(e.target.value)}
-                                                className="budget-input"
-                                                style={{
-                                                    flex: 1,
-                                                    borderRadius: '12px',
-                                                    padding: '12px',
-                                                    fontSize: '0.85rem',
-                                                    outline: 'none',
-                                                    width: '100%'
-                                                }}
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Do"
-                                                value={budgetTo}
-                                                onChange={(e) => setBudgetTo(e.target.value)}
-                                                className="budget-input"
-                                                style={{
-                                                    flex: 1,
-                                                    borderRadius: '12px',
-                                                    padding: '12px',
-                                                    fontSize: '0.85rem',
-                                                    outline: 'none',
-                                                    width: '100%'
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Room Tabs & Pax Configuration */}
-                                <div className="col-rooms-tabs">
-                                    <div className="room-tabs-header" style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px' }}>
-                                        {roomAllocations.map((room, idx) => (
-                                            <button
-                                                key={idx}
-                                                className={`room-tab-btn ${activeRoomTab === idx ? 'active' : ''} ${room.adults > 0 ? 'is-searching' : 'inactive'}`}
-                                                onClick={() => {
-                                                    if (activeRoomTab === idx && idx !== 0) {
-                                                        // Reset room if clicked while active (except for Room 1)
-                                                        const newAlloc = [...roomAllocations];
-                                                        newAlloc[idx] = { adults: 0, children: 0, childrenAges: [] };
-                                                        setRoomAllocations(newAlloc);
-                                                    } else {
-                                                        setActiveRoomTab(idx);
-                                                    }
-                                                }}
-                                            >
-                                                <div className={`status-dot ${room.adults > 0 ? 'enabled' : ''}`}></div>
-                                                Soba {idx + 1}
-                                                {room.adults > 0 && <span className="tab-pax-hint">{room.adults}+{room.children}</span>}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <div className="active-room-config full-width animate-fade-in" key={activeRoomTab}>
-                                        <div className="passenger-row-redesign-v2">
-                                            {/* Adults */}
-                                            <div className="flight-counter-group-v2">
-                                                <span className="counter-label">Odrasli</span>
-                                                <div className="counter-controls-v2">
-                                                    <button
-                                                        onClick={() => {
-                                                            const newAlloc = [...roomAllocations];
-                                                            newAlloc[activeRoomTab].adults = Math.max(1, newAlloc[activeRoomTab].adults - 1);
-                                                            setRoomAllocations(newAlloc);
-                                                        }}
-                                                    >−</button>
-                                                    <span className="flight-counter-val">{roomAllocations[activeRoomTab].adults}</span>
-                                                    <button
-                                                        onClick={() => {
-                                                            const newAlloc = [...roomAllocations];
-                                                            newAlloc[activeRoomTab].adults = Math.min(10, newAlloc[activeRoomTab].adults + 1);
-                                                            setRoomAllocations(newAlloc);
-                                                        }}
-                                                    >+</button>
-                                                </div>
-                                            </div>
-
-                                            {/* Children */}
-                                            <div className="flight-counter-group-v2">
-                                                <span className="counter-label">Deca</span>
-                                                <div className="counter-controls-v2">
-                                                    <button
-                                                        onClick={() => {
-                                                            const newAlloc = [...roomAllocations];
-                                                            if (newAlloc[activeRoomTab].children > 0) {
-                                                                newAlloc[activeRoomTab].children -= 1;
-                                                                newAlloc[activeRoomTab].childrenAges.pop();
-                                                                setRoomAllocations(newAlloc);
-                                                            }
-                                                        }}
-                                                    >−</button>
-                                                    <span className="flight-counter-val">{roomAllocations[activeRoomTab].children}</span>
-                                                    <button
-                                                        onClick={() => {
-                                                            if (roomAllocations[activeRoomTab].children < 4) {
-                                                                const newAlloc = [...roomAllocations];
-                                                                newAlloc[activeRoomTab].children += 1;
-                                                                newAlloc[activeRoomTab].childrenAges.push(0);
-                                                                setRoomAllocations(newAlloc);
-                                                            }
-                                                        }}
-                                                    >+</button>
-                                                </div>
-                                            </div>
-
-                                            {/* Children Ages In Line */}
-                                            {roomAllocations[activeRoomTab].children > 0 && (
-                                                <div className="children-ages-row-v2">
-                                                    {roomAllocations[activeRoomTab].childrenAges.map((age, idx) => (
-                                                        <div key={idx} className="age-input-v2">
-                                                            <input
-                                                                type="number"
-                                                                min="0" max="17"
-                                                                value={age || ''}
-                                                                placeholder={`Dete ${idx + 1}`}
-                                                                onChange={e => {
-                                                                    const val = e.target.value;
-                                                                    const newAlloc = [...roomAllocations];
-                                                                    newAlloc[activeRoomTab].childrenAges[idx] = val === '' ? ('' as any) : Math.min(17, Math.max(0, parseInt(val)));
-                                                                    setRoomAllocations(newAlloc);
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div >
-                            </div>
-
-                            {/* SEARCH BUTTONS ROW */}
-                            <div className="action-row-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', marginTop: '10px' }}>
-                                <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2' }}>
-                                    <span>{isSearching ? 'Pretražujem...' : (
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '160px' }}>
-                                            <ClickToTravelLogo height={54} showText={false} />
-                                        </div>
-                                    )}</span>
-                                </button>
-
-                                <button className="btn-new-search-tag" onClick={() => { setSearchPerformed(false); setSearchResults([]); setSearchError(null); }}>
-                                    <Plus size={16} />
-                                    <span>POKRENI NOVU PRETRAGU</span>
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* FLEXIBLE DATES RIBBON */}
-                    {
-                        searchPerformed && flexibleDays > 0 && (
+            {/* SEARCH AREA: INPUTS or RESULTS */}
+            {
+                searchPerformed ? (
+                    <>
+                        {/* FLEXIBLE DATES RIBBON */}
+                        {flexibleDays > 0 && (
                             <div className="flexible-dates-ribbon-container animate-fade-in" style={{ marginBottom: '2rem' }}>
                                 <div className="ribbon-header-v4">
                                     <div className="header-left-v4">
@@ -1671,12 +1322,10 @@ const SmartSearch: React.FC = () => {
                                     })}
                                 </div>
                             </div>
-                        )
-                    }
+                        )}
 
-                    {/* SMART SUGGESTIONS SECTION */}
-                    {
-                        (smartSuggestions || isSearchingSuggestions) && (
+                        {/* SMART SUGGESTIONS SECTION */}
+                        {(smartSuggestions || isSearchingSuggestions) && (
                             <div className="smart-suggestions-box animate-fade-in">
                                 <div className="ss-header">
                                     <Sparkles size={18} className="ss-icon" />
@@ -1694,7 +1343,6 @@ const SmartSearch: React.FC = () => {
                                             <span>{smartSuggestions?.message}</span>
                                         </div>
 
-                                        {/* Availability Heatmap Timeline */}
                                         <div className="ss-availability-heatmap">
                                             <div className="heatmap-label"><Calendar size={12} /> Uporedni prikaz dostupnosti:</div>
                                             <div className="heatmap-grid">
@@ -1729,7 +1377,6 @@ const SmartSearch: React.FC = () => {
                                         </div>
                                         <div className="ss-results-mini">
                                             {smartSuggestions?.data.slice(0, 3).map(hotel => {
-                                                // Real CRM logic: If hotel has > 5 reservations in last 30 days, it's a Best Seller
                                                 const isBestSeller = (hotel.salesCount || 0) > 5;
                                                 return (
                                                     <div key={hotel.id} className={`ss-result-item ${isBestSeller ? 'best-seller' : ''}`}>
@@ -1747,15 +1394,6 @@ const SmartSearch: React.FC = () => {
                                                         <div className="ss-res-price">
                                                             <span className="p-sm">od</span>
                                                             <span className="p-val">{formatPrice(getFinalDisplayPrice(hotel))} €</span>
-                                                            <button className="ss-apply-btn" onClick={() => {
-                                                                // Re-run search with these specific dates
-                                                                // Find date in timeline that matches this price if possible or just use the firstAvailableDate
-                                                                if (smartSuggestions.type === 'flexible_dates') {
-                                                                    // We apply the date and trigger search
-                                                                }
-                                                            }}>
-                                                                Izaberi
-                                                            </button>
                                                         </div>
                                                     </div>
                                                 );
@@ -1767,473 +1405,401 @@ const SmartSearch: React.FC = () => {
                                     </div>
                                 )}
                             </div>
-                        )
-                    }
+                        )}
 
-                    {/* ERROR ALERT */}
-                    {
-                        searchError && (
+                        {/* RESULTS SECTION */}
+                        <div className="content-workflow animate-fade-in" style={{ marginTop: '3rem' }}>
+                            <div className="filters-toolbar-v4 premium" style={{ display: 'flex', flexWrap: 'nowrap', gap: '16px', alignItems: 'center' }}>
+                                <div className="name-filter-wrapper" style={{ flex: 1, minWidth: '0' }}>
+                                    <Search size={14} className="filter-icon" />
+                                    <input
+                                        type="text"
+                                        className="smart-input premium"
+                                        style={{ width: '100%', paddingLeft: '40px', height: '48px' }}
+                                        placeholder="Traži po hotelu ili destinaciji..."
+                                        value={hotelNameFilter}
+                                        onChange={(e) => setHotelNameFilter(e.target.value)}
+                                    />
+                                </div>
+                                <div style={{ flex: 1, minWidth: '0' }}>
+                                    <MultiSelectDropdown options={CATEGORY_OPTIONS} selected={selectedStars} onChange={setSelectedStars} placeholder="Kategorija" />
+                                </div>
+                                <div style={{ flex: 1, minWidth: '0' }}>
+                                    <MultiSelectDropdown options={MEAL_PLAN_OPTIONS} selected={selectedMealPlans} onChange={setSelectedMealPlans} placeholder="Usluga" />
+                                </div>
+                                <div className="view-mode-switcher" style={{ flexShrink: 0 }}>
+                                    <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid"><LayoutGrid size={18} /></button>
+                                    <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List"><ListIcon size={18} /></button>
+                                    <button className={`view-btn ${viewMode === 'notepad' ? 'active' : ''}`} onClick={() => setViewMode('notepad')} title="Notepad"><AlignLeft size={18} /></button>
+                                </div>
+                            </div>
+
+                            <div className="results-summary-bar-v4 premium">
+                                <div className="summary-info" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                    <span>REZULTATA: <strong>{filteredResults.length}</strong></span>
+                                    <button
+                                        className="new-search-pill"
+                                        onClick={() => {
+                                            setSearchPerformed(false);
+                                            setSearchResults([]);
+                                            setSearchError(null);
+                                            setSmartSuggestions(null);
+                                        }}
+                                    >
+                                        <Sparkles size={14} /> POKRENI NOVU PRETRAGU
+                                    </button>
+                                </div>
+                                <div className="sort-actions">
+                                    <button className={`view-btn ${sortBy === 'smart' ? 'active' : ''}`} onClick={() => setSortBy('smart')}>Smart</button>
+                                    <button
+                                        className={`view-btn ${sortBy.startsWith('price') ? 'active' : ''}`}
+                                        onClick={() => setSortBy(sortBy === 'price_low' ? 'price_high' : 'price_low')}
+                                    >
+                                        Cena {sortBy === 'price_low' ? '↑' : sortBy === 'price_high' ? '↓' : '↕'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className={`results-container ${viewMode}-view`}>
+                                {viewMode === 'notepad' ? (
+                                    <div className="notepad-view-v2 animate-fade-in" style={{ padding: '0', width: '100%' }}>
+                                        {filteredResults.map((hotel) => (
+                                            <div key={hotel.id} className="hotel-notepad-card" style={{
+                                                background: 'var(--bg-card)',
+                                                border: '1px solid var(--border)',
+                                                borderRadius: '20px',
+                                                marginBottom: '2rem',
+                                                overflow: 'hidden',
+                                                boxShadow: 'var(--shadow-lg, 0 10px 30px rgba(0,0,0,0.3))'
+                                            }}>
+                                                <div style={{
+                                                    padding: '1.5rem 2rem',
+                                                    background: 'rgba(255,255,255,0.02)',
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    borderBottom: '1px solid rgba(255,255,255,0.05)'
+                                                }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                                                        <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                            {hotel.name}
+                                                            <span style={{ display: 'flex', color: '#fbbf24' }}>
+                                                                {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
+                                                            </span>
+                                                        </h3>
+                                                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center' }}>
+                                                            <MapPin size={14} style={{ marginRight: '6px' }} />
+                                                            {hotel.location}
+                                                        </span>
+                                                    </div>
+                                                    <div style={{ color: '#fbbf24', fontSize: '1.1rem', fontWeight: 800, whiteSpace: 'nowrap', fontStyle: 'italic' }}>
+                                                        UKUPNA CENA OD: {formatPrice(getFinalDisplayPrice(hotel))} EUR
+                                                    </div>
+                                                </div>
+                                                <div className="modal-body-v4" style={{ padding: '1.5rem 2rem' }}>
+                                                    {roomAllocations.map((alloc, rIdx) => {
+                                                        if (alloc.adults === 0) return null;
+                                                        return (
+                                                            <div key={rIdx} className="room-allocation-section" style={{ marginTop: rIdx > 0 ? '20px' : '0' }}>
+                                                                <div className="section-divider-premium" style={{ marginBottom: '15px' }}>
+                                                                    <span>{formatRoomConfigLabel(alloc, rIdx)}</span>
+                                                                </div>
+                                                                <div className="rooms-comparison-table">
+                                                                    {(hotel.allocationResults?.[rIdx] || hotel.rooms || []).map((room: any, idx: number) => (
+                                                                        <div key={room.id || idx} className="room-row-v4">
+                                                                            <div className="r-name"><span className="room-type-tag">{room.name || 'Standardna Soba'}</span></div>
+                                                                            <div className="r-servis"><span className="meal-tag-v4">{getMealPlanDisplayName(room.mealPlan || hotel.mealPlan)}</span></div>
+                                                                            <div className="r-cap"><Users size={14} /> {room.capacity || `${alloc.adults}+${alloc.children}`}</div>
+                                                                            <div className="r-price"><span className="notepad-price">{formatPrice(room.price)} EUR</span></div>
+                                                                            <div className="r-action"><button className="btn-book-v4" onClick={() => handleReserveClick(room, rIdx)}>Rezerviši</button></div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`}>
+                                        {filteredResults.map(hotel => (
+                                            <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase().replace(/\s+/g, '')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
+                                                <div className="hotel-card-image" onClick={() => navigate('/hotel-view/' + hotel.id)}>
+                                                    <img src={getProxiedImageUrl(hotel.images?.[0]) || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
+                                                    <div className="meal-plan-badge">{getMealPlanDisplayName(hotel.mealPlan)}</div>
+                                                    <div className="hotel-stars-badge">
+                                                        {Array(Math.floor(Number(hotel.stars || 0))).fill(0).map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
+                                                    </div>
+                                                </div>
+                                                <div className="hotel-card-content">
+                                                    <div className="hotel-info-text">
+                                                        <div className="hotel-title-row">
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => navigate('/hotel-view/' + hotel.id)}>
+                                                                <h3 style={{ margin: 0 }}>{hotel.name}</h3>
+                                                                {(hotel.salesCount || 0) > 5 && (
+                                                                    <span className="best-seller-mini-badge" title={`Preko ${hotel.salesCount} rezervacija u poslednjih 30 dana`}>
+                                                                        <TrendingUp size={10} /> BEST SELLER
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="hotel-location-tag"><MapPin size={14} /> <span>{hotel.location}</span></div>
+                                                            <div className="hotel-date-badge"><CalendarDays size={14} /> <span>{formatDate(checkIn)} - {formatDate(checkOut)} ({nights} noćenja)</span></div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="price-action-section">
+                                                        <div className="lowest-price-tag">
+                                                            <span className="price-val">od {formatPrice(getFinalDisplayPrice(hotel))} €</span>
+                                                            {roomAllocations.filter(r => r.adults > 0).length > 1 && (
+                                                                <span className="price-label-multi"># Za {roomAllocations.reduce((sum, r) => sum + r.adults + r.children, 0)} osoba</span>
+                                                            )}
+                                                        </div>
+                                                        <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji... <ArrowRight size={16} /></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        {/* ERROR ALERT */}
+                        {searchError && (
                             <div className="search-error animate-fade-in" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     <Info size={18} />
                                     <span>{searchError}</span>
                                 </div>
-                                <button
-                                    className="new-search-pill"
-                                    onClick={() => {
-                                        setSearchMode('immersive');
-                                        setSearchPerformed(false);
-                                        setSearchResults([]);
-                                        setSearchError(null);
-                                        setSmartSuggestions(null);
+                                <button className="new-search-pill" onClick={() => { setSearchError(null); }}>PONUŠTI</button>
+                            </div>
+                        )}
+
+                        {/* SEARCH INPUTS */}
+                        {searchMode === 'classic' ? (
+                            <>
+                                {activeTab === 'package' ? (
+                                    <div className="package-builder-inline animate-fade-in" style={{ marginTop: '2rem' }}>
+                                        <PackageSearch initialDestinations={selectedDestinations} initialCheckIn={checkIn} initialCheckOut={checkOut} initialTravelers={roomAllocations} />
+                                    </div>
+                                ) : activeTab === 'flight' ? (
+                                    <div className="flight-search-inline animate-fade-in" style={{ marginTop: '2rem' }}>
+                                        <FlightSearch isInline />
+                                    </div>
+                                ) : activeTab === 'ski' ? (
+                                    <div className="ski-search-wrapper animate-fade-in" style={{ marginTop: '2rem' }}>
+                                        <div className="search-card-frame" style={{ textAlign: 'center', padding: '60px' }}>
+                                            <Mountain size={48} color="var(--accent)" style={{ marginBottom: '20px', opacity: 0.5 }} />
+                                            <h2 style={{ fontSize: '24px', fontWeight: 800 }}>SKI PRETRAGA - USKORO</h2>
+                                        </div>
+                                    </div>
+                                ) : (activeTab === 'hotel' || activeTab === 'transfer' || activeTab === 'tour') ? (
+                                    <div className="search-card-frame">
+                                        {/* Destination Input Row */}
+                                        <div className="destination-row">
+                                            <div className="field-label"><MapPin size={14} /> Destinacija ili Smeštaj (do 3)</div>
+                                            <div className="destination-input-wrapper" ref={autocompleteRef}>
+                                                <div className="multi-destination-input premium">
+                                                    {selectedDestinations.map(dest => (
+                                                        <div key={dest.id} className="destination-chip">
+                                                            {dest.type === 'hotel' ? <Hotel size={14} /> : <MapPin size={14} />}
+                                                            <span>{dest.name}</span>
+                                                            <button className="chip-remove" onClick={() => setSelectedDestinations(selectedDestinations.filter(d => d.id !== dest.id))}><X size={14} /></button>
+                                                        </div>
+                                                    ))}
+                                                    {selectedDestinations.length < 3 && (
+                                                        <input
+                                                            ref={inputRef}
+                                                            className="smart-input-inline"
+                                                            placeholder={selectedDestinations.length === 0 ? "npr. Golden Sands, Hotel Park..." : "Dodaj još..."}
+                                                            value={destinationInput}
+                                                            onChange={(e) => setDestinationInput(e.target.value)}
+                                                            onFocus={() => { if (destinationInput.length >= 2) setShowSuggestions(true); }}
+                                                        />
+                                                    )}
+                                                </div>
+                                                {showSuggestions && suggestions.length > 0 && (
+                                                    <div className="autocomplete-dropdown premium">
+                                                        {suggestions.map(s => (
+                                                            <div key={s.id} className="suggestion-item" onClick={() => handleAddDestination(s)}>
+                                                                {s.type === 'hotel' ? <Hotel size={16} className="suggestion-icon" /> : <MapPin size={16} className="suggestion-icon" />}
+                                                                <div className="suggestion-info">
+                                                                    <strong>{s.name}</strong>
+                                                                    <small>{s.country}</small>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {/* Parameters Grid */}
+                                        <div className="params-grid" style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', alignItems: 'end' }}>
+                                            <div className="param-item" onClick={() => setActiveCalendar('in')} style={{ cursor: 'pointer', background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <div className="field-label" style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '4px', textTransform: 'uppercase' }}><CalendarIcon size={14} /> Check-in</div>
+                                                <div className="input-box" style={{ fontWeight: 700, fontSize: '0.95rem' }}>{checkIn ? formatDate(checkIn) : 'mm/dd/yyyy'}</div>
+                                            </div>
+                                            <div className="param-item" onClick={() => setActiveCalendar('out')} style={{ cursor: 'pointer', background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <div className="field-label" style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '4px', textTransform: 'uppercase' }}><CalendarIcon size={14} /> Check-out</div>
+                                                <div className="input-box" style={{ fontWeight: 700, fontSize: '0.95rem' }}>{checkOut ? formatDate(checkOut) : 'mm/dd/yyyy'}</div>
+                                            </div>
+
+                                            <div className="param-item" onClick={() => setShowPax(true)} style={{ cursor: 'pointer', background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+                                                <div className="field-label" style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '4px', textTransform: 'uppercase' }}><Users size={14} /> Putnici</div>
+                                                <div className="input-box" style={{ fontWeight: 700, fontSize: '0.95rem' }}>{roomAllocations.length} Soba, {roomAllocations.reduce((acc, r) => acc + r.adults + r.children, 0)} Putnika</div>
+                                                {showPax && (
+                                                    <div className="pax-dropdown-v4" ref={paxRef} onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 10px)', left: 0, zIndex: 100, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '15px', padding: '20px', boxShadow: 'var(--shadow-xl)', width: '320px' }}>
+                                                        {roomAllocations.map((room, rIdx) => (
+                                                            <div key={rIdx} className="room-allocation-card" style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                                                <div className="room-title" style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent)', marginBottom: '10px' }}>SOBA {rIdx + 1}</div>
+                                                                <div className="pax-control" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                                    <span style={{ fontSize: '0.9rem' }}>Odrasli</span>
+                                                                    <div className="counter-btn-group" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                                        <button onClick={() => updateRoom(rIdx, 'adults', -1)} style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid var(--border)', background: 'transparent', color: 'white', cursor: 'pointer' }}>-</button>
+                                                                        <span style={{ fontWeight: 700, width: '20px', textAlign: 'center' }}>{room.adults}</span>
+                                                                        <button onClick={() => updateRoom(rIdx, 'adults', 1)} style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid var(--border)', background: 'transparent', color: 'white', cursor: 'pointer' }}>+</button>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="pax-control" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                    <span style={{ fontSize: '0.9rem' }}>Deca</span>
+                                                                    <div className="counter-btn-group" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                                        <button onClick={() => updateRoom(rIdx, 'children', -1)} style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid var(--border)', background: 'transparent', color: 'white', cursor: 'pointer' }}>-</button>
+                                                                        <span style={{ fontWeight: 700, width: '20px', textAlign: 'center' }}>{room.children}</span>
+                                                                        <button onClick={() => updateRoom(rIdx, 'children', 1)} style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid var(--border)', background: 'transparent', color: 'white', cursor: 'pointer' }}>+</button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                                            <button onClick={addRoom} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px dashed var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}>+ Dodaj sobu</button>
+                                                            <button onClick={() => setShowPax(false)} style={{ flex: 1, padding: '10px', borderRadius: '10px', background: 'var(--accent)', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer' }}>Potvrdi</button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ background: 'var(--accent)', color: 'white', border: 'none', height: '48px', borderRadius: '12px', fontWeight: 800, cursor: 'pointer', padding: '0 24px' }}>
+                                                {isSearching ? <Loader2 className="animate-spin" size={24} /> : 'PRETRAŽI'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : null}
+                            </>
+                        ) : searchMode === 'narrative' ? (
+                            <div className="narrative-mode-container" style={{ padding: '0 2rem' }}>
+                                <NarrativeSearch
+                                    activeTab={activeTab as any}
+                                    basicInfo={getInitialNarrativeData()}
+                                    onUpdate={(data) => handleNarrativeUpdate(data)}
+                                    onNext={(data) => {
+                                        const updates = handleNarrativeUpdate(data);
+                                        handleSearch(updates);
                                     }}
-                                >
-                                    <Sparkles size={14} /> POKRENI NOVU PRETRAGU
-                                </button>
+                                />
                             </div>
-                        )
-                    }
+                        ) : (
+                            <ImmersiveSearch
+                                activeTab={activeTab as any}
+                                onPartialUpdate={() => { }}
+                                onSearch={(data) => {
+                                    const cin = new Date(data.checkIn);
+                                    const cout = new Date(data.checkOut);
+                                    const nights = Math.ceil((cout.getTime() - cin.getTime()) / (1000 * 60 * 60 * 24)) || 7;
+                                    const mappedData: BasicInfoData = {
+                                        destinations: data.destinations.map((d: any) => ({
+                                            ...d,
+                                            city: d.name,
+                                            checkIn: data.checkIn,
+                                            checkOut: data.checkOut,
+                                            nights: nights,
+                                            roomAllocations: data.roomAllocations
+                                        })),
+                                        startDate: data.checkIn,
+                                        endDate: data.checkOut,
+                                        totalDays: nights,
+                                        currency: 'EUR',
+                                        roomAllocations: data.roomAllocations,
+                                        travelers: { adults: data.adults, children: data.children, childrenAges: data.childrenAges }
+                                    };
+                                    const updates = handleNarrativeUpdate(mappedData);
+                                    handleSearch(updates);
+                                }}
+                            />
+                        )}
+                    </>
+                )
+            }
 
-                    {/* RESULTS SECTION (EXISTING LOGIC) */}
-
-
-                    {
-                        searchPerformed && (
-                            <div className="content-workflow animate-fade-in" style={{ marginTop: '3rem' }}>
-                                {/* Force Single Row Toolbar */}
-                                <div className="filters-toolbar-v4 premium" style={{ display: 'flex', flexWrap: 'nowrap', gap: '16px', alignItems: 'center' }}>
-                                    <div className="name-filter-wrapper" style={{ flex: 1, minWidth: '0' }}>
-                                        <Search size={14} className="filter-icon" />
-                                        <input
-                                            type="text"
-                                            className="smart-input premium"
-                                            style={{ width: '100%', paddingLeft: '40px', height: '48px' }}
-                                            placeholder="Traži po hotelu ili destinaciji..."
-                                            value={hotelNameFilter}
-                                            onChange={(e) => setHotelNameFilter(e.target.value)}
-                                        />
-                                    </div>
-                                    <div style={{ flex: 1, minWidth: '0' }}>
-                                        <MultiSelectDropdown options={CATEGORY_OPTIONS} selected={selectedStars} onChange={setSelectedStars} placeholder="Kategorija" />
-                                    </div>
-                                    <div style={{ flex: 1, minWidth: '0' }}>
-                                        <MultiSelectDropdown options={MEAL_PLAN_OPTIONS} selected={selectedMealPlans} onChange={setSelectedMealPlans} placeholder="Usluga" />
-                                    </div>
-                                    <div className="view-mode-switcher" style={{ flexShrink: 0 }}>
-                                        <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid"><LayoutGrid size={18} /></button>
-                                        <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List"><ListIcon size={18} /></button>
-                                        <button className={`view-btn ${viewMode === 'notepad' ? 'active' : ''}`} onClick={() => setViewMode('notepad')} title="Notepad"><AlignLeft size={18} /></button>
-                                    </div>
-                                </div>
-
-                                <div className="results-summary-bar-v4 premium">
-                                    <div className="summary-info" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                        <span>REZULTATA: <strong>{filteredResults.length}</strong></span>
-                                        <button
-                                            className="new-search-pill"
-                                            onClick={() => {
-                                                setSearchMode('immersive');
-                                                setSearchPerformed(false);
-                                                setSearchResults([]);
-                                                setSearchError(null);
-                                                setSmartSuggestions(null);
-                                            }}
-                                        >
-                                            <Sparkles size={14} /> POKRENI NOVU PRETRAGU
-                                        </button>
-                                    </div>
-                                    <div className="sort-actions">
-                                        <button className={`view-btn ${sortBy === 'smart' ? 'active' : ''}`} onClick={() => setSortBy('smart')}>Smart</button>
-                                        <button
-                                            className={`view-btn ${sortBy.startsWith('price') ? 'active' : ''}`}
-                                            onClick={() => setSortBy(sortBy === 'price_low' ? 'price_high' : 'price_low')}
-                                        >
-                                            Cena {sortBy === 'price_low' ? '↑' : sortBy === 'price_high' ? '↓' : '↕'}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className={`results-container ${viewMode}-view`}>
-                                    {viewMode === 'notepad' ? (
-                                        <div className="notepad-view-v2 animate-fade-in" style={{ padding: '0', width: '100%' }}>
-                                            {filteredResults.map((hotel, hIdx) => (
-                                                <div key={hotel.id} className="hotel-notepad-card" style={{
-                                                    background: 'var(--bg-card)',
-                                                    border: '1px solid var(--border)',
-                                                    borderRadius: '20px',
-                                                    marginBottom: '2rem',
-                                                    overflow: 'hidden',
-                                                    boxShadow: 'var(--shadow-lg, 0 10px 30px rgba(0,0,0,0.3))'
-                                                }}>
-                                                    {/* Header */}
-                                                    <div style={{
-                                                        padding: '1.5rem 2rem',
-                                                        background: 'rgba(255,255,255,0.02)',
-                                                        display: 'flex',
-                                                        justifyContent: 'space-between',
-                                                        alignItems: 'center',
-                                                        borderBottom: '1px solid rgba(255,255,255,0.05)'
-                                                    }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                                                            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                                {hotel.name}
-                                                                <span style={{ display: 'flex', color: '#fbbf24' }}>
-                                                                    {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
-                                                                </span>
-                                                            </h3>
-                                                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center' }}>
-                                                                <MapPin size={14} style={{ marginRight: '6px' }} />
-                                                                {hotel.location}
-                                                            </span>
-                                                        </div>
-                                                        <div style={{ color: '#fbbf24', fontSize: '1.1rem', fontWeight: 800, whiteSpace: 'nowrap', fontStyle: 'italic' }}>
-                                                            UKUPNA CENA OD: {formatPrice(getFinalDisplayPrice(hotel))} EUR
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Body */}
-                                                    <div style={{ padding: '2rem' }}>
-                                                        {roomAllocations.map((alloc, roomIdx) => {
-                                                            if (alloc.adults === 0) return null;
-
-                                                            const allRooms = (hotel.allocationResults && hotel.allocationResults[roomIdx] ? [...hotel.allocationResults[roomIdx]].sort((a, b) => (a.price || 0) - (b.price || 0)) : (hotel.rooms || [hotel]));
-                                                            const activeMealFilter = notepadMealFilters[hotel.id] || 'all';
-                                                            const filteredRooms = allRooms.filter(r => activeMealFilter === 'all' || (r.mealPlan || hotel.mealPlan) === activeMealFilter);
-                                                            const uniqueMealPlans = Array.from(new Set(allRooms.map(r => r.mealPlan || hotel.mealPlan))).filter(Boolean);
-
-                                                            return (
-                                                                <div key={roomIdx} style={{ marginBottom: roomIdx < roomAllocations.filter(r => r.adults > 0).length - 1 ? '40px' : '0' }}>
-                                                                    <div style={{
-                                                                        display: 'grid',
-                                                                        gridTemplateColumns: '2.5fr 1.2fr 1fr 1.2fr 1fr',
-                                                                        gap: '15px',
-                                                                        alignItems: 'end',
-                                                                        marginBottom: '1.5rem',
-                                                                        padding: '0 25px'
-                                                                    }}>
-                                                                        <div style={{
-                                                                            display: 'flex',
-                                                                            alignItems: 'center',
-                                                                            gap: '12px',
-                                                                            fontSize: '0.85rem',
-                                                                            fontWeight: 700,
-                                                                            color: 'var(--text-secondary)',
-                                                                            background: 'rgba(255, 255, 255, 0.03)',
-                                                                            padding: '8px 16px',
-                                                                            borderRadius: '12px',
-                                                                            border: '1px solid rgba(255, 255, 255, 0.05)',
-                                                                            width: 'fit-content'
-                                                                        }}>
-                                                                            <CalendarDays size={16} className="text-indigo-400" />
-                                                                            <span>
-                                                                                {checkIn ? new Date(checkIn).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'} - {checkOut ? new Date(checkOut).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}
-                                                                            </span>
-                                                                            <span style={{ opacity: 0.5 }}>|</span>
-                                                                            <span style={{ color: 'var(--text-primary)' }}>{nights} noćenja</span>
-                                                                        </div>
-
-                                                                        {/* REDESIGNED MEAL FILTER - Now aligned with 'Usluga' column */}
-                                                                        {allRooms.length > 10 ? (
-                                                                            <div className="notepad-filter-section">
-                                                                                <div className="notepad-filter-title">
-                                                                                    <Star size={12} fill="currentColor" />
-                                                                                    ODABERI USLUGU
-                                                                                </div>
-                                                                                <div className="notepad-filter-select-container">
-                                                                                    <select
-                                                                                        className="notepad-filter-select-v2"
-                                                                                        value={activeMealFilter}
-                                                                                        onChange={(e) => setNotepadMealFilters(prev => ({ ...prev, [hotel.id]: e.target.value }))}
-                                                                                    >
-                                                                                        <option value="all">Sve usluge</option>
-                                                                                        {uniqueMealPlans.map(mp => (
-                                                                                            <option key={mp} value={mp}>{getMealPlanDisplayName(mp)}</option>
-                                                                                        ))}
-                                                                                    </select>
-                                                                                    <ChevronDown size={16} className="notepad-filter-chevron-v2" />
-                                                                                </div>
-                                                                            </div>
-                                                                        ) : <div />}
-
-                                                                        <div style={{
-                                                                            gridColumn: '3 / span 3',
-                                                                            display: 'flex',
-                                                                            justifyContent: 'flex-end'
-                                                                        }}>
-                                                                            <div style={{
-                                                                                background: 'linear-gradient(90deg, #6366f1, #818cf8)',
-                                                                                padding: '8px 24px',
-                                                                                borderRadius: '20px',
-                                                                                color: 'white',
-                                                                                fontSize: '0.75rem',
-                                                                                fontWeight: 800,
-                                                                                fontStyle: 'italic',
-                                                                                textTransform: 'uppercase',
-                                                                                letterSpacing: '1px',
-                                                                                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)',
-                                                                                width: 'fit-content'
-                                                                            }}>
-                                                                                {formatRoomConfigLabel(alloc, roomIdx)}
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div className="room-header-v4" style={{
-                                                                        display: 'grid',
-                                                                        gridTemplateColumns: '2.5fr 1.2fr 1fr 1.2fr 1fr',
-                                                                        padding: '15px 25px',
-                                                                        background: 'rgba(255,255,255,0.04)',
-                                                                        borderBottom: '1px solid rgba(255,255,255,0.1)',
-                                                                        color: 'var(--text-secondary)',
-                                                                        fontSize: '0.7rem',
-                                                                        fontWeight: 800,
-                                                                        textTransform: 'uppercase',
-                                                                        letterSpacing: '1px'
-                                                                    }}>
-                                                                        <div>TIP SMEŠTAJA</div>
-                                                                        <div>USLUGA</div>
-                                                                        <div>KAPACITET</div>
-                                                                        <div>CENA (UKUPNO)</div>
-                                                                        <div>AKCIJA</div>
-                                                                    </div>
-
-                                                                    {filteredRooms.slice(0, 50).map((room: any, rIdx: number) => {
-                                                                        const displayPrice = isSubagent ? getPriceWithMargin(room.price || hotel.price) : Number(room.price || hotel.price);
-                                                                        return (
-                                                                            <div key={rIdx} className="room-row-v4">
-                                                                                <div className="r-name">
-                                                                                    <span className="room-type-tag">
-                                                                                        {cleanRoomName(room.name || hotel.name || 'Standardna Soba')}
-                                                                                    </span>
-                                                                                </div>
-                                                                                <div className="r-meal">
-                                                                                    <span className="meal-tag-v4">
-                                                                                        {getMealPlanDisplayName(room.mealPlan || hotel.mealPlan)}
-                                                                                    </span>
-                                                                                </div>
-                                                                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                                    <Users size={14} />
-                                                                                    {alloc.adults}+{alloc.children}
-                                                                                </div>
-                                                                                <div className="r-price">
-                                                                                    <span className="p-val">
-                                                                                        {formatPrice(displayPrice)} EUR
-                                                                                    </span>
-                                                                                </div>
-                                                                                <div>
-                                                                                    <button className="btn-book-v4" onClick={() => handleReserveClick(room, roomIdx, hotel)}>
-                                                                                        REZERVIŠI
-                                                                                    </button>
-                                                                                </div>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`}>
-                                            {filteredResults.map(hotel => (
-                                                <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase().replace(/\s+/g, '')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
-                                                    <div className="hotel-card-image" onClick={() => navigate('/hotel-view/' + hotel.id)}>
-                                                        <img src={getProxiedImageUrl(hotel.images?.[0]) || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
-                                                        <div className="meal-plan-badge">{getMealPlanDisplayName(hotel.mealPlan)}</div>
-                                                        <div className="hotel-stars-badge">
-                                                            {Array(Math.floor(Number(hotel.stars || 0))).fill(0).map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
-                                                        </div>
-                                                    </div>
-                                                    <div className="hotel-card-content">
-                                                        <div className="hotel-info-text">
-                                                            <div className="hotel-title-row">
-                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => navigate('/hotel-view/' + hotel.id)}>
-                                                                    <h3 style={{ margin: 0 }}>{hotel.name}</h3>
-                                                                    {(hotel.salesCount || 0) > 5 && (
-                                                                        <span className="best-seller-mini-badge" title={`Preko ${hotel.salesCount} rezervacija u poslednjih 30 dana`}>
-                                                                            <TrendingUp size={10} /> BEST SELLER
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                <div className="hotel-location-tag"><MapPin size={14} /> <span>{hotel.location}</span></div>
-                                                                <div className="hotel-date-badge"><CalendarDays size={14} /> <span>{formatDate(checkIn)} - {formatDate(checkOut)} ({nights} noćenja)</span></div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="price-action-section">
-                                                            <div className="lowest-price-tag">
-                                                                <span className="price-val">od {formatPrice(getFinalDisplayPrice(hotel))} €</span>
-                                                                {roomAllocations.filter(r => r.adults > 0).length > 1 && (
-                                                                    <span className="price-label-multi"># Za {roomAllocations.reduce((sum, r) => sum + r.adults + r.children, 0)} osoba</span>
-                                                                )}
-                                                            </div>
-                                                            <button className="view-more-btn" onClick={() => setExpandedHotel(hotel)}>Detalji... <ArrowRight size={16} /></button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    }
-
-                    {/* Calendars */}
-                    {
-                        activeCalendar && (
+            {/* SHARED OVERLAYS */}
+            {
+                activeCalendar && createPortal(
+                    <div className="modern-calendar-overlay" onClick={() => setActiveCalendar(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div onClick={(e) => e.stopPropagation()}>
                             <ModernCalendar
-                                startDate={checkIn} endDate={checkOut}
-                                onChange={(s, e) => {
-                                    setCheckIn(s);
-                                    if (e) { setCheckOut(e); syncNightsFromDates(s, e); }
-                                    setActiveCalendar(null);
+                                startDate={checkIn}
+                                endDate={checkOut}
+                                onChange={(start, end) => {
+                                    setCheckIn(start);
+                                    setCheckOut(end);
+                                    if (start && end) {
+                                        const s = new Date(start);
+                                        const e = new Date(end);
+                                        setNights(Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)));
+                                        setActiveCalendar(null);
+                                    }
                                 }}
                                 onClose={() => setActiveCalendar(null)}
                             />
-                        )
-                    }
+                        </div>
+                    </div>,
+                    document.getElementById('portal-root') || document.body
+                )
+            }
 
-
-
-                    {/* Hotel Details Modal - RENDERED IN PORTAL */}
-                    {
-                        expandedHotel && !isBookingModalOpen && createPortal(
-                            <div
-                                className="modern-calendar-overlay hotel-modal-overlay"
-                                onClick={() => setExpandedHotel(null)}
-                                style={{
-                                    position: 'fixed',
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    width: '100vw',
-                                    height: '100vh',
-                                    background: 'rgba(2, 6, 23, 0.95)',
-                                    backdropFilter: 'blur(20px) saturate(180%)',
-                                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    padding: '40px 20px',
-                                    overflowY: 'auto',
-                                    zIndex: 9999999
-                                }}
-                            >
-                                <div
-                                    className="modern-calendar-popup wide hotel-details-wide animate-fade-in"
-                                    onClick={e => e.stopPropagation()}
-                                    style={{
-                                        margin: 'auto',
-                                        maxHeight: '85vh',
-                                        maxWidth: '1400px',
-                                        width: '95%'
-                                    }}
-                                >
-                                    <div className="hotel-rooms-modal-header" style={{ padding: '12px 25px', background: '#1e293b' }}>
-                                        <div className="modal-title-zone">
-                                            <div className="modal-meta" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                                                <span style={{ color: 'white', marginRight: '15px' }}>{expandedHotel.name.toUpperCase()}</span>
-                                                <div style={{ marginRight: '15px', display: 'flex', gap: '2px', color: '#fbbf24' }}>
-                                                    {Array(expandedHotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
-                                                </div>
-                                                <MapPin size={14} /> {expandedHotel.location}
-                                                <span style={{ marginLeft: '20px', color: '#fbbf24', fontWeight: 800 }}>
-                                                    Ukupna cena od: {formatPrice(getFinalDisplayPrice(expandedHotel))} {expandedHotel.currency}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <button className="close-modal-btn" onClick={() => setExpandedHotel(null)}><X size={18} /></button>
-                                    </div>
-                                    <div className="modal-body-v4">
-                                        {roomAllocations.map((alloc, rIdx) => {
-                                            if (alloc.adults === 0) return null;
-                                            return (
-                                                <div key={rIdx} className="room-allocation-section" style={{ marginTop: rIdx > 0 ? '30px' : '0' }}>
-                                                    <div className="section-divider-premium">
-                                                        <span>{formatRoomConfigLabel(alloc, rIdx)}</span>
-                                                    </div>
-                                                    <div className="rooms-comparison-table">
-                                                        <div className="room-header-v4">
-                                                            <div className="h-room">TIP SMEŠTAJA</div>
-                                                            <div className="h-servis">USLUGA</div>
-                                                            <div className="h-cap">KAPACITET</div>
-                                                            <div className="h-price">CENA (UKUPNO)</div>
-                                                            <div className="h-action">AKCIJA</div>
-                                                        </div>
-
-                                                        {(expandedHotel.allocationResults && expandedHotel.allocationResults[rIdx]) ? (
-                                                            expandedHotel.allocationResults[rIdx].map((room: any, idx: number) => (
-                                                                <div key={room.id || idx} className="room-row-v4">
-                                                                    <div className="r-name">
-                                                                        <span className="room-type-tag">{cleanRoomName(room.name || 'Standardna Soba')}</span>
-                                                                    </div>
-                                                                    <div className="r-servis">
-                                                                        <span className="meal-tag-v4">{getMealPlanDisplayName(room.mealPlan || expandedHotel.mealPlan)}</span>
-                                                                    </div>
-                                                                    <div className="r-cap"><Users size={14} /> {room.capacity || `${alloc.adults}+${alloc.children}`}</div>
-                                                                    <div className="r-price">
-                                                                        <span className="notepad-price" style={{ fontSize: '1rem', fontWeight: 800, fontStyle: 'italic' }}>
-                                                                            {isSubagent ? getPriceWithMargin(room.price) : Math.round(Number(room.price))} {expandedHotel.currency}
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="r-action">
-                                                                        <button className="btn-book-v4" onClick={() => handleReserveClick(room, rIdx)}>Rezerviši</button>
-                                                                    </div>
-                                                                </div>
-                                                            ))
-                                                        ) : expandedHotel.rooms && expandedHotel.rooms.length > 0 ? (
-                                                            expandedHotel.rooms.map((room, idx) => (
-                                                                <div key={room.id || idx} className="room-row-v4">
-                                                                    <div className="r-name">
-                                                                        <span className="room-type-tag">{cleanRoomName(room.name || 'Standardna Soba')}</span>
-                                                                    </div>
-                                                                    <div className="r-servis">
-                                                                        <span className="meal-tag-v4">{getMealPlanDisplayName(room.mealPlan || expandedHotel.mealPlan)}</span>
-                                                                    </div>
-                                                                    <div className="r-cap"><Users size={14} /> {room.capacity || `${alloc.adults}+${alloc.children}`}</div>
-                                                                    <div className="r-price">
-                                                                        <span className="notepad-price" style={{ fontSize: '1rem', fontWeight: 800, fontStyle: 'italic' }}>
-                                                                            {isSubagent ? getPriceWithMargin(room.price) : Math.round(Number(room.price))} {expandedHotel.currency}
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="r-action">
-                                                                        <button className="btn-book-v4" onClick={() => handleReserveClick(room, rIdx)}>Rezerviši</button>
-                                                                    </div>
-                                                                </div>
-                                                            ))
-                                                        ) : (
-                                                            <div className="room-row-v4">
-                                                                <div className="r-name"><span className="room-type-tag">Standardna Soba</span></div>
-                                                                <div className="r-servis"><span className="meal-tag-v4">{getMealPlanDisplayName(expandedHotel.mealPlan)}</span></div>
-                                                                <div className="r-cap"><Users size={14} /> {alloc.adults}+{alloc.children}</div>
-                                                                <div className="r-price">
-                                                                    <span className="notepad-price" style={{ fontSize: '1rem', fontWeight: 800, fontStyle: 'italic' }}>
-                                                                        {isSubagent ? getPriceWithMargin(expandedHotel.price) : Math.round(Number(expandedHotel.price))} {expandedHotel.currency}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="r-action">
-                                                                    <button className="btn-book-v4" onClick={() => handleReserveClick({ id: 'default', name: 'Standardna Soba', price: expandedHotel.price }, rIdx)}>Rezerviši</button>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
+            {
+                expandedHotel && createPortal(
+                    <div className="hotel-details-modal animate-fade-in" onClick={() => setExpandedHotel(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', zIndex: 99999, padding: '40px 20px', overflowY: 'auto', display: 'flex', justifyContent: 'center' }}>
+                        <div className="modal-content-v4 animate-popover-in" onClick={(e) => e.stopPropagation()} style={{ background: 'var(--bg-card)', width: '100%', maxWidth: '1200px', borderRadius: '30px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', alignSelf: 'start' }}>
+                            <div className="modal-header-v4" style={{ padding: '30px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <h2 style={{ margin: 0, fontSize: '1.8rem' }}>{expandedHotel.name}</h2>
+                                    <div style={{ display: 'flex', gap: '4px', color: '#fbbf24', marginTop: '8px' }}>
+                                        {Array(expandedHotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
                                     </div>
                                 </div>
-                            </div>,
-                            document.getElementById('portal-root') || document.body
-                        )
-                    }
-                </>
-            )
+                                <button onClick={() => setExpandedHotel(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={24} /></button>
+                            </div>
+                            <div className="modal-body-v4" style={{ padding: '30px' }}>
+                                {roomAllocations.map((alloc, rIdx) => {
+                                    if (alloc.adults === 0) return null;
+                                    return (
+                                        <div key={rIdx} style={{ marginBottom: '40px' }}>
+                                            <div style={{ padding: '10px 20px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', marginBottom: '20px', fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                                                KONFIGURACIJA ZA SOBU {rIdx + 1}: {alloc.adults} odraslih, {alloc.children} dece
+                                            </div>
+                                            <div className="rooms-table" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                {(expandedHotel.allocationResults?.[rIdx] || expandedHotel.rooms || []).map((room: any, idx: number) => (
+                                                    <div key={room.id || idx} style={{ display: 'grid', gridTemplateColumns: '1fr 140px 100px 140px 140px', gap: '20px', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '15px', alignItems: 'center' }}>
+                                                        <div style={{ fontWeight: 600 }}>{room.name || 'Standardna Soba'}</div>
+                                                        <div style={{ color: 'var(--accent)', fontWeight: 700, fontSize: '0.85rem' }}>{getMealPlanDisplayName(room.mealPlan || expandedHotel.mealPlan)}</div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}><Users size={16} /> {room.capacity || (alloc.adults + alloc.children)}</div>
+                                                        <div style={{ fontSize: '1.2rem', fontWeight: 800, textAlign: 'right' }}>{formatPrice(room.price || expandedHotel.price)} €</div>
+                                                        <button className="btn-book-v4" onClick={() => handleReserveClick(room, rIdx)} style={{ background: 'var(--accent)', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}>Rezerviši</button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>,
+                    document.getElementById('portal-root') || document.body
+                )
             }
-        </div >
+        </div>
     );
 };
 

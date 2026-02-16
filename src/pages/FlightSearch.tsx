@@ -82,6 +82,10 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
     const [sortBy, setSortBy] = useState<'price' | 'duration' | 'departure'>('price');
     const [selectedAirline, setSelectedAirline] = useState<string>('all');
 
+    // Background Search State
+    const [prefetchedResults, setPrefetchedResults] = useState<UnifiedFlightOffer[]>([]);
+    const [prefetchKey, setPrefetchKey] = useState<string>('');
+
     // Initialize dates
     useEffect(() => {
         const tomorrow = new Date();
@@ -115,6 +119,48 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
         }
     }, [location.state]);
 
+    // BACKGROUND SEARCH IMPLEMENTATION
+    const handleBackgroundSearch = async () => {
+        // Basic validation before prefetching
+        if (!searchParams.origin || !searchParams.destination || !searchParams.departureDate) return;
+        if (tripType === 'round-trip' && !searchParams.returnDate) return;
+
+        const currentKey = JSON.stringify(searchParams);
+        if (currentKey === prefetchKey) return; // Already fetched for this
+
+        try {
+            // Enhance params
+            const enhancedParams = {
+                ...searchParams,
+                outboundDepartureFrom,
+                outboundDepartureTo,
+                outboundArrivalFrom,
+                outboundArrivalTo,
+                inboundDepartureFrom,
+                inboundDepartureTo,
+                inboundArrivalFrom,
+                inboundArrivalTo
+            };
+
+            const response = await flightSearchManager.searchFlights(enhancedParams);
+            if (response && response.offers) {
+                setPrefetchedResults(response.offers);
+                setPrefetchKey(currentKey);
+                // console.log('Flight background search success:', response.offers.length);
+            }
+        } catch (err) {
+            // Background search failed silently
+        }
+    };
+
+    // Trigger background search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            handleBackgroundSearch();
+        }, 1000); // 1s debounce
+        return () => clearTimeout(timer);
+    }, [searchParams, tripType]);
+
     // Handle search
     const handleSearch = async (paramsOverride?: FlightSearchParams) => {
         const paramsToUse = paramsOverride || searchParams;
@@ -145,6 +191,15 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
 
         setIsLoading(true);
         setSearchPerformed(true);
+
+        // CHECK PREFETCHED DATA
+        const currentKey = JSON.stringify(paramsToUse);
+        if (currentKey === prefetchKey && prefetchedResults.length > 0) {
+            // console.log('Using prefetched flight results!');
+            setResults(prefetchedResults);
+            setIsLoading(false);
+            return;
+        }
 
         // Enhance params with time filters if available
         const enhancedParams = {
@@ -204,7 +259,6 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
                 return 0;
         }
     });
-
     const formatTime = (isoString: string) => {
         return new Date(isoString).toLocaleTimeString('sr-Latn-RS', {
             hour: '2-digit',

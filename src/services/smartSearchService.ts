@@ -28,6 +28,9 @@ export interface SmartSearchParams {
     currency?: string;
     nationality?: string;
     enabledProviders?: Record<string, boolean>;
+    originCity?: string;
+    originCode?: string;
+    cabinClass?: 'economy' | 'business' | 'first';
 }
 
 export interface SmartSearchResult {
