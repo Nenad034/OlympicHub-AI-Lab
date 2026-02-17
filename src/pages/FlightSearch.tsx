@@ -405,9 +405,15 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
                                     onClick={() => handleSearch()}
                                     disabled={isLoading}
                                 >
-                                    <div className="btn-content">
-                                        <ClickToTravelLogo height={32} />
-                                        <span>{isLoading ? 'PRETRAŽUJEM...' : 'PRONAĐI NAJBOLJE LETOVE'}</span>
+                                    <div className="btn-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                                        <div style={{ opacity: isLoading ? 0.2 : 1, transition: 'all 0.3s ease' }}>
+                                            <ClickToTravelLogo height={65} iconOnly={true} iconScale={2.2} />
+                                        </div>
+                                        {isLoading && (
+                                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Loader2 className="spin" size={32} color="#fff" />
+                                            </div>
+                                        )}
                                     </div>
                                 </button>
                             </div>
@@ -518,12 +524,12 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
                                 disabled={isLoading}
                             >
                                 {isLoading ? (
-                                    <>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <Loader2 size={20} className="spin" />
-                                        Pretražujem...
-                                    </>
+                                        <span>Pretražujem...</span>
+                                    </div>
                                 ) : (
-                                    <ClickToTravelLogo height={32} />
+                                    <ClickToTravelLogo height={32} iconOnly={true} />
                                 )}
                             </button>
                         </div>

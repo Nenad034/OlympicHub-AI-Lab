@@ -14,7 +14,7 @@ import {
     X,
     DollarSign
 } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { ClickToTravelLogo } from '../icons/ClickToTravelLogo';
 import { useThemeStore, useAppStore, useAuthStore } from '../../stores';
 import { translations } from '../../translations';
@@ -34,15 +34,17 @@ const HorizontalNav: React.FC = () => {
 
     return (
         <div className="horizontal-nav">
-            <div style={{
-                marginRight: '32px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                paddingTop: '4px' // Subtle adjustment for 72px logo + slogan in 96px header
-            }}>
-                <ClickToTravelLogo height={288} />
-            </div>
+            <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+                <div style={{
+                    marginRight: '32px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    paddingTop: '4px' // Subtle adjustment for 72px logo + slogan in 96px header
+                }}>
+                    <ClickToTravelLogo height={288} />
+                </div>
+            </Link>
 
             <div className="nav-horizontal-items">
                 {/* B2B Sections Label for Subagents */}

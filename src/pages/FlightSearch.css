@@ -44,9 +44,10 @@
 
 .flight-search-header h1 {
     font-size: 36px;
-    font-weight: 700;
+    font-family: 'Montserrat', sans-serif !important;
+    font-weight: 700 !important;
     margin-bottom: 12px;
-    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    background: linear-gradient(135deg, #8E24AC 0%, #6A1B9A 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -100,10 +101,10 @@
 }
 
 .trip-type-pill.active {
-    background: #0E4B5E;
+    background: #8E24AC;
     color: white;
     border-color: transparent;
-    box-shadow: 0 4px 15px rgba(14, 75, 94, 0.4);
+    box-shadow: 0 4px 15px rgba(142, 36, 172, 0.4);
 }
 
 /* Flight Params Grid */
@@ -150,8 +151,8 @@
 }
 
 .btn-swap-locations:hover {
-    background: #0E4B5E;
-    color: #10B981;
+    background: #8E24AC;
+    color: #ffffff;
     transform: rotate(180deg);
 }
 
@@ -215,9 +216,9 @@
 }
 
 .counter-controls-v2 button:hover {
-    background: #0E4B5E;
-    border-color: #10B981;
-    color: #10B981;
+    background: #8E24AC;
+    border-color: #8E24AC;
+    color: #ffffff;
 }
 
 .counter-controls-v2 span {
@@ -261,8 +262,8 @@
 
 .btn-search-flights-premium {
     width: 100%;
-    height: 72px;
-    background: #0E4B5E;
+    height: 85px;
+    background: #8E24AC;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
     cursor: pointer;
@@ -273,9 +274,9 @@
 
 .btn-search-flights-premium:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(14, 75, 94, 0.5);
-    background: #0a3a4a;
-    border-color: #10B981;
+    box-shadow: 0 12px 30px rgba(142, 36, 172, 0.5);
+    background: #6A1B9A;
+    border-color: #8E24AC;
 }
 
 .btn-search-flights-premium:disabled {
@@ -439,10 +440,10 @@
 }
 
 .date-flex-btn.active {
-    background: #0E4B5E;
+    background: #8E24AC;
     border-color: transparent;
     color: white;
-    box-shadow: 0 4px 15px rgba(14, 75, 94, 0.4);
+    box-shadow: 0 4px 15px rgba(142, 36, 172, 0.4);
 }
 
 /* Stops Options */
@@ -1478,4 +1479,64 @@
     .select-flight-btn {
         width: 100%;
     }
+}
+
+/* === PRIME THEME OVERRIDES FOR FLIGHT SEARCH === */
+body.prime-theme .flight-search-page,
+body.prime-theme .flight-search-inline {
+    background-color: #FFFFFF !important;
+}
+
+body.prime-theme .flight-search-header h1 {
+    color: #1A2B3C !important;
+}
+
+body.prime-theme .flight-search-header p {
+    color: #546E7A !important;
+}
+
+body.prime-theme .trip-type-pill {
+    background: #F4F6F8 !important;
+    color: #546E7A !important;
+    border: 1px solid #CFD8DC !important;
+}
+
+body.prime-theme .trip-type-pill.active {
+    background: #8E24AC !important;
+    color: #FFFFFF !important;
+    border-color: #8E24AC !important;
+    box-shadow: 0 4px 12px rgba(142, 36, 172, 0.2) !important;
+}
+
+body.prime-theme .flight-offer-card {
+    background: #FFFFFF !important;
+    border: 1px solid #B0BEC5 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.prime-theme .slice-main-row .t-code {
+    color: #1A2B3C !important;
+}
+
+body.prime-theme .slice-main-row .t-time {
+    color: #1A2B3C !important;
+}
+
+body.prime-theme .p-duration {
+    color: #546E7A !important;
+}
+
+body.prime-theme .airline-name-compact {
+    color: #1A2B3C !important;
+}
+
+body.prime-theme .price-amount {
+    color: #4A148C !important;
+    /* Deep Purple */
+}
+
+body.prime-theme .flight-counter-controls button {
+    background: #F5F5F5 !important;
+    color: #1A2B3C !important;
+    border: 1px solid #CFD8DC !important;
 }

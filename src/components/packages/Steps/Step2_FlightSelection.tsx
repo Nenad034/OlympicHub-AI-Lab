@@ -203,47 +203,47 @@ const Step2_FlightSelection: React.FC<Step2Props> = ({
                         className={`tab-btn ${activeHopIndex === idx ? 'active' : ''} ${selectedOffers[idx] ? 'complete' : ''}`}
                         onClick={() => setActiveHopIndex(idx)}
                     >
-                        <Plane size={14} style={{ color: activeHopIndex === idx ? 'white' : '#818cf8' }} />
+                        <Plane size={14} className="tab-icon" />
                         <span className="font-bold">{hop.fromCity}</span>
-                        <ArrowRight size={12} style={{ opacity: 0.4 }} />
+                        <ArrowRight size={12} className="tab-arrow" />
                         <span className="font-bold">{hop.toCity}</span>
-                        {selectedOffers[idx] && <Check size={14} style={{ marginLeft: '8px', color: '#4ade80' }} />}
+                        {selectedOffers[idx] && <Check size={14} className="tab-check-icon" />}
                     </button>
                 ))}
             </div>
 
             {/* 2. CONTEXT BANNER */}
-            <div className="info-summary-card mb-8" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem' }}>
-                <div style={{ display: 'flex', gap: '2rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <Calendar size={18} style={{ color: '#818cf8' }} />
-                        <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <div className="info-summary-card mb-8">
+                <div className="summary-info-left">
+                    <div className="summary-info-item">
+                        <Calendar size={18} className="info-icon" />
+                        <span className="info-text">
                             {formatDate(currentHop?.date || '')}
                         </span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <Globe size={18} style={{ color: '#818cf8' }} />
-                        <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    <div className="summary-info-item">
+                        <Globe size={18} className="info-icon" />
+                        <span className="info-text">
                             {currentHop?.fromCity} &rarr; {currentHop?.toCity}
                         </span>
                     </div>
                 </div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
+                <div className="summary-info-hint">
                     Odaberi let za deonicu #{activeHopIndex + 1}
                 </div>
             </div>
 
             {/* 3. FLIGHT OFFERS */}
             {isLoading ? (
-                <div className="loading-state" style={{ padding: '4rem 0', textAlign: 'center' }}>
-                    <Loader2 size={48} className="spin" style={{ color: '#6366f1', marginBottom: '1.5rem', display: 'inline-block' }} />
-                    <p style={{ color: '#94a3b8', fontWeight: 900, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '2px' }}>Tražimo najbolje letove...</p>
+                <div className="loading-state">
+                    <Loader2 size={48} className="spin main-loader" />
+                    <p className="loading-text">Tražimo najbolje letove...</p>
                 </div>
             ) : error ? (
-                <div className="error-banner" style={{ padding: '2.5rem', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '20px' }}>
-                    <AlertCircle size={40} style={{ color: '#ef4444', marginBottom: '1rem', display: 'inline-block' }} />
-                    <p style={{ color: 'white', fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '1.5rem' }}>{error}</p>
-                    <button onClick={() => searchForHop(activeHopIndex)} className="nav-btn primary" style={{ padding: '0 2.5rem' }}>Pokušaj ponovo</button>
+                <div className="error-banner">
+                    <AlertCircle size={40} className="error-icon" />
+                    <p className="error-text">{error}</p>
+                    <button onClick={() => searchForHop(activeHopIndex)} className="nav-btn primary retry-btn">Pokušaj ponovo</button>
                 </div>
             ) : (
                 <div style={{ display: 'grid', gap: '1.5rem' }}>
@@ -327,19 +327,19 @@ const Step2_FlightSelection: React.FC<Step2Props> = ({
                                                 <div key={idx} className="segment-row-ss">
                                                     <div className="segment-dot-ss"></div>
                                                     <div className="segment-content-ss">
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                                            <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'white' }}>
-                                                                {formatTime(seg.departure)} — {seg.origin.city} ({seg.origin.code})
+                                                        <div className="segment-main-info">
+                                                            <div className="segment-times">
+                                                                {formatTime(seg.departure)} — {seg.origin.city} ({seg.origin.iataCode})
                                                             </div>
-                                                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>
+                                                            <div className="segment-carrier">
                                                                 {seg.carrierName} {seg.flightNumber}
                                                             </div>
                                                         </div>
-                                                        <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                                        <p className="segment-misc">
                                                             Trajanje: {formatDuration(seg.duration)} • Avion: {seg.aircraft || 'Commercial Jet'}
                                                         </p>
-                                                        <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'white', marginTop: '1rem' }}>
-                                                            {formatTime(seg.arrival)} — {seg.destination.city} ({seg.destination.code})
+                                                        <div className="segment-arrival">
+                                                            {formatTime(seg.arrival)} — {seg.destination.city} ({seg.destination.iataCode})
                                                         </div>
 
                                                         {idx < offer.slices[0].segments.length - 1 && (

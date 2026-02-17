@@ -42,7 +42,10 @@ const App: React.FC = () => {
     // Start Sentinel Network Monitoring
     startNetworkMonitoring();
 
-    let themeClass = theme === 'light' ? 'light-theme' : 'navy-theme';
+    let themeClass;
+    if (theme === 'light') themeClass = 'light-theme';
+    else if (theme === 'prime') themeClass = 'prime-theme';
+    else themeClass = 'navy-theme';
 
     if (isPrism) {
       themeClass += ' prism-mode';

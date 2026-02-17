@@ -1,4 +1,96 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* 
+   OLYMPIC HUB - BRANDING SYSTEM 2026
+   Midnight Blue (#1A2B3C) | Electric Purple (#8E24AC) | Silver Slate (#B0BEC5)
+*/
+
+body.prime-theme,
+body.light-theme {
+  --bg-dark: #F8FAFC;
+  --bg-sidebar: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F1F5F9;
+  --text-primary: #1A2B3C;
+  --text-secondary: #546E7A;
+  --accent: #8E24AC;
+  --accent-glow: rgba(142, 36, 172, 0.1);
+  --border: #B0BEC5;
+  /* Silver Slate */
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: #B0BEC5;
+  --gradient-brand: linear-gradient(135deg, #8E24AC 0%, #6A1B9A 100%);
+
+  background-color: var(--bg-dark) !important;
+  color: var(--text-primary) !important;
+}
+
+body.navy-theme {
+  --bg-dark: #1A2B3C;
+  --bg-sidebar: #152230;
+  --bg-card: #1E2E3E;
+  --bg-card-hover: #253648;
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0BEC5;
+  --accent: #8E24AC;
+  --accent-glow: rgba(142, 36, 172, 0.2);
+  --border: #2A3B4C;
+  --glass-bg: rgba(21, 34, 48, 0.8);
+  --glass-border: #B0BEC5;
+
+  background-color: var(--bg-dark) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Typography Enforcement */
+.prime-theme,
+.light-theme,
+.navy-theme {
+  font-family: 'Roboto', sans-serif !important;
+}
+
+.prime-theme h1,
+.prime-theme h2,
+.prime-theme h3,
+.prime-theme .brand-text,
+.light-theme h1,
+.light-theme h2,
+.light-theme h3,
+.light-theme .brand-text,
+.navy-theme h1,
+.navy-theme h2,
+.navy-theme h3,
+.navy-theme .brand-text {
+  font-family: 'Montserrat', sans-serif !important;
+  font-weight: 700 !important;
+}
+
+.prime-theme div {
+  font-family: 'Roboto', 'Open Sans', sans-serif;
+}
+
+/* Prime Theme Specific Component Styling */
+.prime-theme .sidebar {
+  border-right: 1px solid var(--border);
+  box-shadow: 4px 0 24px rgba(26, 43, 60, 0.04);
+  /* Soft Midnight shadow */
+}
+
+.prime-theme .card,
+.prime-theme .stat-card {
+  border: 1px solid rgba(176, 190, 197, 0.4);
+  /* Subtle Silver Slate border */
+  box-shadow: 0 4px 12px rgba(26, 43, 60, 0.06);
+  /* Soft Midnight shadow */
+}
+
+.prime-theme button.primary-btn {
+  background: var(--gradient-purple);
+  box-shadow: 0 4px 14px rgba(142, 36, 172, 0.3);
+  /* Purple glow */
+  border: none;
+}
+
 
 :root {
   --bg-dark: #050608;
@@ -1757,4 +1849,128 @@ h3,
   .security-promise-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* === OLYMPIC HUB: FINAL BRANDING OVERRIDES === */
+
+/* 1. TYPOGRAPHY - Global Consistency */
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+div,
+button,
+input,
+select,
+textarea {
+  font-family: 'Roboto', 'Open Sans', sans-serif;
+}
+
+h1,
+h2,
+h3,
+.brand-text {
+  font-family: 'Montserrat', sans-serif !important;
+  font-weight: 700 !important;
+}
+
+/* 2. LIGHT VERSION (LIGHT THEME) */
+body.light-theme {
+  background-color: #F8FAFC !important;
+  color: #1A2B3C !important;
+}
+
+/* Precise thin lines for cards and fields in Light Mode */
+body.light-theme .card,
+body.light-theme .stat-card,
+body.light-theme .app-card,
+body.light-theme .tabs-nav-container,
+body.light-theme .master-search-container,
+body.light-theme input,
+body.light-theme select {
+  border: 0.5px solid #B0BEC5 !important;
+  /* Silver Slate thin line */
+  background-color: #FFFFFF !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+}
+
+body.light-theme .btn-secondary {
+  background-color: #FFFFFF !important;
+  border: 0.5px solid #B0BEC5 !important;
+  color: #1A2B3C !important;
+}
+
+/* 3. DARK VERSION (NAVY THEME) */
+body.navy-theme {
+  background-color: #1A2B3C !important;
+  /* Midnight Blue */
+  color: #FFFFFF !important;
+}
+
+/* DARK MODE: DROPDOWN MENUS (Pure Brand Dark) */
+body.navy-theme .dropdown-menu,
+body.navy-theme .select__menu,
+body.navy-theme div[class*="-menu"],
+body.navy-theme .modal-content {
+  background-color: #152230 !important;
+  /* Deep Midnight */
+  border: 1px solid #B0BEC5 !important;
+  color: #FFFFFF !important;
+}
+
+body.navy-theme .dropdown-item,
+body.navy-theme .select__option,
+body.navy-theme div[class*="-option"] {
+  background-color: transparent !important;
+  color: #FFFFFF !important;
+}
+
+body.navy-theme .dropdown-item:hover,
+body.navy-theme .select__option--is-focused,
+body.navy-theme div[class*="-option"]:hover {
+  background-color: #8E24AC !important;
+  /* Electric Purple */
+  color: #FFFFFF !important;
+}
+
+/* Ensure text is visible in Dark mode */
+body.navy-theme p,
+body.navy-theme span,
+body.navy-theme label {
+  color: #FFFFFF !important;
+}
+
+body.navy-theme .text-secondary {
+  color: #B0BEC5 !important;
+}
+
+/* 4. GLOBAL BRAND ACCENTS */
+.btn-primary,
+.button-primary,
+.action-btn {
+  background: linear-gradient(135deg, #8E24AC 0%, #6A1B9A 100%) !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(142, 36, 172, 0.2) !important;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(142, 36, 172, 0.3) !important;
+}
+
+/* Scrollbar Branding */
+::-webkit-scrollbar-thumb {
+  background: #B0BEC5 !important;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }

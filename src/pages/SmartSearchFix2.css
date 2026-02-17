@@ -16,12 +16,13 @@
 .filters-toolbar-v4.premium {
     display: flex !important;
     align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    margin-bottom: 1.5rem;
+    gap: 1.5rem;
+    padding: 0.45rem 1.25rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: var(--border-thin);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
     flex-wrap: wrap;
     position: relative;
     z-index: 1000;
@@ -71,25 +72,35 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border: var(--border-thin);
+    padding: 0.35rem 1.25rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .summary-info span {
     color: var(--text-secondary);
     font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .summary-info strong {
-    color: white;
-    font-size: 1.1rem;
+    color: var(--accent);
+    font-size: 1.3rem;
+    margin-left: 8px;
 }
 
 .sort-actions {
     display: flex;
-    background: rgba(15, 23, 42, 0.6) !important;
-    padding: 6px;
+    background: var(--bg-input) !important;
+    padding: 4px;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: var(--border-thin);
     align-items: center;
     gap: 4px;
 }
@@ -97,29 +108,28 @@
 .view-btn {
     background: transparent !important;
     border: none !important;
-    color: rgba(255, 255, 255, 0.5) !important;
-    padding: 8px 12px !important;
+    color: var(--text-secondary) !important;
+    padding: 4px 10px !important;
+
     border-radius: 8px !important;
     cursor: pointer !important;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 0.8rem !important;
+    font-size: 0.75rem !important;
     font-weight: 800 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.5px !important;
-    font-style: italic !important;
-    min-width: 40px;
 }
 
 .view-btn:hover {
-    color: white !important;
+    color: var(--text-primary) !important;
     background: rgba(255, 255, 255, 0.05) !important;
 }
 
 .view-btn.active {
-    background: #6366f1 !important;
+    background: var(--accent) !important;
     color: white !important;
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4) !important;
+    box-shadow: 0 4px 15px var(--accent-glow) !important;
 }

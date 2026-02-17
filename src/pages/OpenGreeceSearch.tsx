@@ -332,7 +332,7 @@ const OpenGreeceSearch: React.FC = () => {
                             onClick={handleSearch}
                             disabled={isSearching || !selectedHotel}
                         >
-                            {isSearching ? <Loader2 className="spin" /> : <ClickToTravelLogo height={32} />}
+                            {isSearching ? <Loader2 className="spin" size={24} color="#fff" /> : <ClickToTravelLogo height={45} iconOnly={true} iconScale={2.2} />}
                         </button>
                     </div>
                 </div>

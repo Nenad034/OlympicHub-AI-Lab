@@ -1,39 +1,158 @@
-/* GRID LAYOUT DEFINITIVE FIX V3 */
+/* GRID LAYOUT DEFINITIVE FIX V4 - AGGRESSIVE & RESPONSIVE */
 
-/* Force main container width */
+.results-mosaic.grid-layout,
+.results-mosaic.list-layout {
+    font-family: 'Roboto', sans-serif !important;
+}
+
+.grid-layout h3,
+.list-layout h3 {
+    font-family: 'Montserrat', sans-serif !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+}
+
 .results-container {
     width: 100% !important;
+    max-width: 1550px !important;
+    margin: 0 auto !important;
+    padding: 0 20px !important;
     box-sizing: border-box !important;
-    max-width: 100% !important;
 }
 
-/* Force Grid Layout - Enhanced for reliability with auto-fill */
+/* Force Grid Layout for Mosaic - FIXED TO 4 COLUMNS AS REQUESTED */
 .results-mosaic.grid-layout {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
-    gap: 30px !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 25px !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    padding-bottom: 40px !important;
+    padding-bottom: 60px !important;
 }
 
-/* Ensure card content is vertical in grid mode */
-.grid-layout .hotel-card-content {
+/* Explicit Flex Column for Vertical Cards */
+.grid-layout .hotel-result-card-premium.unified {
+    display: flex !important;
     flex-direction: column !important;
-    padding: 1.25rem !important;
-}
-
-.grid-layout .price-action-section {
     width: 100% !important;
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
-    padding-top: 1rem !important;
-    margin-top: auto !important;
+    height: 540px !important;
+    /* Increased height for more information space */
+    background: #1A2B3C !important;
+    /* Midnight Blue */
+    border: 1px solid #B0BEC5 !important;
+    /* Silver Slate */
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    position: relative !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
 }
 
-/* LIST LAYOUT - Explicit Override */
+.grid-layout .hotel-result-card-premium.unified:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Force Image Container to stay at top */
+.grid-layout .hotel-card-image {
+    height: 240px !important;
+    min-height: 240px !important;
+    width: 100% !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
+    order: 1 !important;
+    overflow: hidden !important;
+}
+
+.grid-layout .hotel-card-image img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+/* Force Content Container to stay below image */
+.grid-layout .hotel-card-content {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    padding: 1.25rem 1.5rem !important;
+    background: transparent !important;
+    position: relative !important;
+    order: 2 !important;
+    gap: 0.5rem !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+}
+
+.grid-layout .hotel-card-content h3 {
+    font-size: 1.15rem !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
+}
+
+.grid-layout .hotel-location-tag {
+    color: #B0BEC5 !important;
+    /* Silver Slate */
+    font-size: 0.85rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+.grid-layout .hotel-date-badge {
+    color: #B0BEC5 !important;
+    font-size: 0.8rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    opacity: 0.8 !important;
+}
+
+/* Ensure Price Section is at bottom */
+.grid-layout .price-action-section {
+    margin-top: auto !important;
+    padding-top: 1rem !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    /* Stack price and button in grid */
+    align-items: stretch !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+
+.grid-layout .lowest-price-tag .price-val {
+    color: var(--accent) !important;
+    font-size: 1.2rem !important;
+    font-weight: 800 !important;
+}
+
+.grid-layout .view-more-btn {
+    background: #8E24AC !important;
+    /* Electric Purple */
+    color: white !important;
+    border: none !important;
+    padding: 10px 16px !important;
+    border-radius: 12px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    font-size: 0.8rem !important;
+    letter-spacing: 0.5px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    transition: all 0.2s ease !important;
+    width: 100% !important;
+}
+
+.grid-layout .view-more-btn:hover {
+    background: #6A1B9A !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 15px rgba(142, 36, 172, 0.4) !important;
+}
+
+/* LIST LAYOUT - Explicit Flex Row */
 .results-mosaic.list-layout {
     display: flex !important;
     flex-direction: column !important;
@@ -41,51 +160,43 @@
     width: 100% !important;
 }
 
-/* CARD FIXES */
-.hotel-result-card-premium.unified {
-    width: 100% !important;
-    max-width: none !important;
-    display: flex !important;
-    flex-direction: column;
-    min-width: 0 !important;
-    box-sizing: border-box !important;
-    height: 100% !important;
-    /* Ensure equal height in grid */
-}
-
-/* Image Height Force */
-.hotel-card-image {
-    height: 220px !important;
-    width: 100% !important;
-}
-
-/* Horizontal / List View Specifics */
 .list-layout .hotel-result-card-premium.unified {
+    display: flex !important;
     flex-direction: row !important;
-    height: 240px !important;
+    height: 250px !important;
+    background: var(--bg-card) !important;
+    border-radius: 20px !important;
 }
 
 .list-layout .hotel-card-image {
-    width: 350px !important;
+    width: 380px !important;
     height: 100% !important;
     flex-shrink: 0 !important;
 }
 
-/* Reset for Grid View to prevent horizontal styles bleeding */
-.grid-layout .hotel-result-card-premium.unified.horizontal {
+.list-layout .hotel-card-content {
+    flex: 1 !important;
+    display: flex !important;
     flex-direction: column !important;
-    height: auto !important;
+    padding: 1.5rem 2rem !important;
 }
 
-.grid-layout .hotel-card-image {
-    width: 100% !important;
+/* Responsive adjustments */
+@media (max-width: 1600px) {
+    .results-mosaic.grid-layout {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
 }
 
-/* Mobile Adjustments */
-@media (max-width: 480px) {
+@media (max-width: 1200px) {
+    .results-mosaic.grid-layout {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 768px) {
     .results-mosaic.grid-layout {
         grid-template-columns: 1fr !important;
-        gap: 16px !important;
     }
 
     .list-layout .hotel-result-card-premium.unified {
@@ -95,6 +206,79 @@
 
     .list-layout .hotel-card-image {
         width: 100% !important;
-        height: 200px !important;
+        height: 220px !important;
     }
+}
+
+/* Force Stars to Brand Purple Always */
+.hotel-stars-badge svg,
+.star-row-mini svg,
+.star-rating-filter svg {
+    color: var(--accent) !important;
+    fill: var(--accent) !important;
+}
+
+/* === LIGHT THEME COMPATIBILITY (PREMIUM LIGHT) === */
+.light-theme .grid-layout .hotel-result-card-premium.unified,
+.light-theme .list-layout .hotel-result-card-premium.unified,
+.light-theme .hotel-notepad-card {
+    background: #ffffff !important;
+    border: 1px solid #E2E8F0 !important;
+}
+
+.light-theme .grid-layout h3,
+.light-theme .list-layout h3,
+.light-theme .grid-layout h3 span,
+.light-theme .list-layout h3 span,
+.light-theme .hotel-card-content h3,
+.light-theme .hotel-notepad-card h3 {
+    color: #1A2B3C !important;
+}
+
+.light-theme .grid-layout .hotel-location-tag,
+.light-theme .grid-layout .hotel-date-badge,
+.light-theme .list-layout .hotel-location-tag,
+.light-theme .list-layout .hotel-date-badge,
+.light-theme .hotel-notepad-card .hotel-location-tag {
+    color: #64748B !important;
+    opacity: 1 !important;
+}
+
+.light-theme .price-label-multi,
+.light-theme .p-count,
+.light-theme .lowest-price-tag .price-label-multi,
+.light-theme .lowest-price-tag .p-count {
+    color: #1A2B3C !important;
+    font-weight: 850 !important;
+    opacity: 1 !important;
+    display: inline-block !important;
+    margin-top: 4px !important;
+}
+
+.light-theme .grid-layout .price-action-section,
+.light-theme .list-layout .price-action-section {
+    border-top: 1px solid #F1F5F9 !important;
+}
+
+.light-theme .hotel-stars-badge {
+    background: rgba(255, 255, 255, 0.95) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid #E2E8F0 !important;
+    padding: 2px 6px !important;
+}
+
+.light-theme .hotel-stars-badge svg {
+    color: var(--accent) !important;
+    fill: var(--accent) !important;
+}
+
+.light-theme .best-seller-mini-badge {
+    background: rgba(142, 36, 172, 0.1) !important;
+    color: var(--accent) !important;
+    border: 1px solid rgba(142, 36, 172, 0.2) !important;
+}
+
+.light-theme .meal-plan-badge {
+    background: #1A2B3C !important;
+    color: #ffffff !important;
 }

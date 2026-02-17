@@ -1,51 +1,52 @@
-/* DARK THEME - OBSIDIAN PETROLEUM - HIGH DEFINITION REDESIGN 2026 */
+/* DARK THEME - BRAND OLYMPIC HUB - HIGH DEFINITION REDESIGN 2026 */
 :root {
-    --bg-main: #020617;
-    --bg-card: #0f172a;
-    --accent: #10B981;
-    --accent-glow: rgba(16, 185, 129, 0.4);
-    --petroleum-deep: #0E4B5E;
+    --bg-main: var(--bg-dark);
+    --bg-card: var(--bg-card);
+    --accent: #8E24AC;
+    /* Electric Purple */
+    --accent-glow: rgba(142, 36, 172, 0.4);
+    --midnight-blue: #1A2B3C;
     --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --border-petroleum: #0E4B5E;
+    --text-secondary: #B0BEC5;
+    --border-brand: #B0BEC5;
 }
 
 /* Base Styles - ONLY apply if NOT light-theme */
 body:not(.light-theme),
 .smart-search-container-v2:not(.light-theme) {
-    background-color: var(--bg-main) !important;
+    background-color: var(--bg-dark) !important;
     color: var(--text-primary) !important;
 }
 
 body.light-theme,
-.smart-search-container-v2.light-theme {
+body.prime-theme,
+.smart-search-container-v2.light-theme,
+.smart-search-container-v2.prime-theme {
     background-color: #f8fafc !important;
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
 }
 
 /* Tabs: Full width to match search form */
 .tabs-nav-container {
-    background: rgba(15, 23, 42, 0.8) !important;
+    background: var(--bg-card) !important;
     backdrop-filter: blur(12px);
-    border: 1px solid var(--petroleum-deep) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 16px !important;
     padding: 8px !important;
-    margin-bottom: 40px !important;
+    margin-bottom: 2rem !important;
     display: flex;
     justify-content: space-between;
-    /* Space them out */
     gap: 12px;
     width: 100%;
-    max-width: 1400px;
-    /* Align with search form */
+    max-width: 1550px;
     margin-left: auto;
     margin-right: auto;
 }
 
 /* Light Theme Overrides for Tabs Container */
 .light-theme .tabs-nav-container {
-    background: #E0ECEE !important;
-    border: 1px solid #0E4B5E !important;
+    background: #FFFFFF !important;
+    border: 1px solid #B0BEC5 !important;
 }
 
 .nav-tab-item {
@@ -68,11 +69,11 @@ body.light-theme,
 
 .light-theme .nav-tab-item {
     background: transparent !important;
-    color: #0E4B5E !important;
+    color: #546E7A !important;
 }
 
 .nav-tab-item.active {
-    background: var(--petroleum-deep) !important;
+    background: var(--midnight-blue) !important;
     color: #fff !important;
     box-shadow: 0 8px 25px rgba(10, 58, 74, 0.5) !important;
     border-bottom: 3px solid var(--accent) !important;
@@ -80,41 +81,43 @@ body.light-theme,
 }
 
 .light-theme .nav-tab-item.active {
-    background: #0E4B5E !important;
+    background: var(--accent) !important;
     color: #ffffff !important;
+    border-bottom: 3px solid #E1BEE7 !important;
 }
 
-/* Search Blocks: Premium Glass Petroleum */
+/* Search Blocks: Premium Glass Midnight Blue */
 .search-card-frame,
 .search-form-smart,
 .package-builder-inline,
 .flight-search-form {
-    background: rgba(15, 23, 42, 0.7) !important;
+    background: var(--bg-card) !important;
     backdrop-filter: blur(20px);
-    border: 1px solid var(--petroleum-deep) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 24px !important;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3) !important;
     padding: 3rem !important;
     margin-bottom: 2rem !important;
     width: 100%;
-    max-width: 1400px;
+    max-width: 1550px;
     margin-left: auto;
     margin-right: auto;
 }
 
 .light-theme .search-card-frame,
-.light-theme .package-builder-inline {
+.light-theme .package-builder-inline,
+.light-theme .flight-search-form {
     background: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
-    box-shadow: 0 10px 30px rgba(14, 75, 94, 0.05) !important;
+    border: 1px solid #B0BEC5 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* Inputs & Controls: 1px Petroleum Borders */
+/* Inputs & Controls: 1px Midnight Blue Borders */
 .input-box,
 .smart-input.premium,
 .multi-destination-input.premium {
     background: rgba(15, 23, 42, 0.6) !important;
-    border: 1px solid var(--petroleum-deep) !important;
+    border: 1px solid var(--midnight-blue) !important;
     border-radius: 12px !important;
     color: var(--text-primary) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -143,7 +146,7 @@ body.light-theme,
     display: flex !important;
     align-items: center !important;
     gap: 8px !important;
-    background: var(--petroleum-deep) !important;
+    background: var(--midnight-blue) !important;
     color: white !important;
     padding: 6px 12px !important;
     border-radius: 8px !important;
@@ -156,8 +159,8 @@ body.light-theme,
 .light-theme .smart-input.premium,
 .light-theme .v-filter-btn {
     background: #ffffff !important;
-    border-color: #0E4B5E !important;
-    color: #0E4B5E !important;
+    border-color: #B0BEC5 !important;
+    color: #1A2B3C !important;
 }
 
 .input-box:hover,
@@ -168,8 +171,8 @@ body.light-theme,
 }
 
 .light-theme .input-box:hover {
-    background: #f8fafc !important;
-    border-color: #10B981 !important;
+    background: #F4F6F8 !important;
+    border-color: var(--accent) !important;
 }
 
 /* Unified Counter Controls V2 (Flights Style) */
@@ -177,7 +180,7 @@ body.light-theme,
     width: 28px;
     height: 28px;
     border-radius: 8px;
-    border: 1px solid var(--petroleum-deep) !important;
+    border: 1px solid var(--midnight-blue) !important;
     background: rgba(255, 255, 255, 0.05);
     color: white;
     font-weight: 700;
@@ -188,20 +191,21 @@ body.light-theme,
 }
 
 .light-theme .counter-controls-v2 button {
-    background: #ffffff !important;
-    color: #0E4B5E !important;
-    border-color: #0E4B5E !important;
+    background: #F4F6F8 !important;
+    color: #1A2B3C !important;
+    border-color: #B0BEC5 !important;
 }
 
 .counter-controls-v2 button:hover {
-    background: var(--petroleum-deep);
+    background: var(--midnight-blue);
     border-color: var(--accent) !important;
     color: var(--accent);
 }
 
 .light-theme .counter-controls-v2 button:hover {
-    background: #0E4B5E !important;
-    color: #ffffff !important;
+    background: #E1BEE7 !important;
+    color: var(--accent) !important;
+    border-color: var(--accent) !important;
 }
 
 .passenger-row-redesign-v2 {
@@ -209,7 +213,7 @@ body.light-theme,
     align-items: center;
     gap: 24px;
     background: rgba(15, 23, 42, 0.6);
-    border: 1px solid var(--petroleum-deep) !important;
+    border: 1px solid var(--midnight-blue) !important;
     padding: 0 24px;
     border-radius: 12px;
     height: 56px;
@@ -217,48 +221,56 @@ body.light-theme,
 }
 
 .light-theme .passenger-row-redesign-v2 {
-    background: #ffffff !important;
+    background: #FFFFFF !important;
+    border-color: #B0BEC5 !important;
 }
 
-/* Main Search Button - Premium Emerald & Petroleum */
+/* Main Search Button - Premium Electric Purple */
 .btn-search-main,
 .btn-search-flights-premium {
-    background: var(--petroleum-deep) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: linear-gradient(135deg, #8E24AC 0%, #6A1B9A 100%) !important;
+    border: none !important;
     border-radius: 16px !important;
     color: #fff !important;
     font-weight: 900 !important;
     text-transform: uppercase;
-    height: 250px !important;
-    transition: all 0.2s ease !important;
+    height: 85px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     cursor: pointer;
     font-size: 18px !important;
+    box-shadow: 0 10px 25px rgba(142, 36, 172, 0.3) !important;
 }
 
 .btn-search-main:hover,
 .btn-search-flights-premium:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(14, 75, 94, 0.5) !important;
-    border-color: var(--accent) !important;
-    background: #0a3a4a !important;
+    box-shadow: 0 15px 35px rgba(142, 36, 172, 0.5) !important;
+    background: linear-gradient(135deg, #a236c2 0%, #7b1fa2 100%) !important;
 }
 
 /* Results & Cards */
 .hotel-result-card-premium {
-    background: #0f172a !important;
-    border: 1px solid var(--petroleum-deep) !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 20px !important;
 }
 
-.light-theme .hotel-result-card-premium {
-    background: #ffffff !important;
+.hotel-card-image {
+    height: 220px !important;
+    width: 100% !important;
+}
+
+.results-mosaic.grid-layout {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 30px !important;
 }
 
 /* Dynamic Wizard Progress Glass Bar */
 .wizard-progress.ss-glass-bar {
     background: rgba(15, 23, 42, 0.8) !important;
     backdrop-filter: blur(12px);
-    border: 1px solid var(--petroleum-deep) !important;
+    border: 1px solid var(--midnight-blue) !important;
     border-radius: 16px !important;
     max-width: 1400px;
     margin-left: auto;
@@ -266,9 +278,10 @@ body.light-theme,
 }
 
 .light-theme .wizard-progress.ss-glass-bar {
-    background: #E0ECEE !important;
-    border-color: #0E4B5E !important;
+    background: #FFFFFF !important;
+    border-bottom: 1px solid #B0BEC5 !important;
 }
+
 
 /* --- SCROLLBARS --- */
 :not(.light-theme)::-webkit-scrollbar-track {
@@ -276,7 +289,7 @@ body.light-theme,
 }
 
 :not(.light-theme)::-webkit-scrollbar-thumb {
-    background: var(--petroleum-deep);
+    background: var(--midnight-blue);
     border-radius: 10px;
 }
 
@@ -300,7 +313,7 @@ body.light-theme,
     width: 100% !important;
     background: rgba(15, 23, 42, 0.95) !important;
     backdrop-filter: blur(20px) !important;
-    border: 1px solid var(--petroleum-deep) !important;
+    border: 1px solid var(--midnight-blue) !important;
     border-radius: 16px !important;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
     z-index: 9999 !important;
@@ -312,10 +325,11 @@ body.light-theme,
 }
 
 /* Light Mode Override */
-.light-theme .autocomplete-dropdown.premium {
+.light-theme .autocomplete-dropdown.premium,
+.prime-theme .autocomplete-dropdown.premium {
     background: #ffffff !important;
-    border-color: #0E4B5E !important;
-    box-shadow: 0 15px 40px rgba(14, 75, 94, 0.2) !important;
+    border-color: #B0BEC5 !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Individual Item */
@@ -341,7 +355,7 @@ body.light-theme,
 }
 
 .light-theme .suggestion-item:hover {
-    background: rgba(14, 75, 94, 0.08) !important;
+    background: rgba(26, 43, 60, 0.08) !important;
 }
 
 /* Icon Styling */
@@ -361,7 +375,7 @@ body.light-theme,
 }
 
 .light-theme .suggestion-item:hover .suggestion-icon {
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
 }
 
 /* Content Layout (Text Stack) */
@@ -382,7 +396,7 @@ body.light-theme,
 }
 
 .light-theme .suggestion-name {
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
 }
 
 /* Secondary Meta (Country/Provider) */

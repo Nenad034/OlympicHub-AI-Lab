@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ClickToTravelLogo } from '../components/icons/ClickToTravelLogo';
 import './SmartSearchFerrariFix.css';
 import { createPortal } from 'react-dom';
@@ -8,7 +8,7 @@ import {
     Sparkles, Hotel, Plane, Package, Bus, Compass,
     MapPin, Calendar, CalendarDays, Users, UtensilsCrossed, Star,
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
-    LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
+    LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide, LayoutTemplate,
     CheckCircle2, CheckCircle, XCircle, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
     Plus, Globe, AlignLeft, Database, Power, Building2, Ship, Anchor, Ticket, Mountain, Settings, DollarSign
 } from 'lucide-react';
@@ -18,6 +18,7 @@ import { getMonthlyReservationCount } from '../services/reservationService';
 import solvexDictionaryService from '../services/solvex/solvexDictionaryService';
 import filosApiService from '../services/filos/api/filosApiService';
 import { ModernCalendar } from '../components/ModernCalendar';
+import { BudgetTypeToggle } from '../components/BudgetTypeToggle';
 import { MultiSelectDropdown } from '../components/MultiSelectDropdown';
 import { BookingModal } from '../components/booking/BookingModal';
 import { BookingSuccessModal } from '../components/booking/BookingSuccessModal';
@@ -35,6 +36,9 @@ import './SmartSearchRedesign.css';
 import './SmartSearchGridFix.css';
 import './ModalFixDefinitive.css';
 import './SmartSearchZoom.css';
+import { NarrativeSearch } from '../components/packages/Steps/NarrativeSearch';
+import { ImmersiveSearch, type ImmersiveSearchData } from '../components/packages/Steps/ImmersiveSearch';
+import type { BasicInfoData } from '../types/packageSearch.types';
 
 /**
  * Constants for filtering
@@ -151,7 +155,7 @@ const cleanRoomName = (name: string): string => {
 interface Destination {
     id: string;
     name: string;
-    type: 'destination' | 'hotel';
+    type: 'destination' | 'hotel' | 'country';
     country?: string;
     stars?: number;
     provider?: string;
@@ -247,11 +251,245 @@ const GlobalHubSearch: React.FC = () => {
     const [bookingSuccessData, setBookingSuccessData] = useState<{ id: string, code: string, provider: string } | null>(null);
     const [bookingAlertError, setBookingAlertError] = useState<string | null>(null);
 
+    // MODE SWITCH
+    const [searchMode, setSearchMode] = useState<'classic' | 'narrative' | 'immersive'>('classic');
+
+    // Reset search performed when mode changes so the wizard is visible
+    useEffect(() => {
+        setSearchPerformed(false);
+    }, [searchMode]);
+
+    // NARRATIVE TO SMART SEARCH ADAPTER
+    const handleNarrativeUpdate = (data: BasicInfoData) => {
+        let mappedDestinations = selectedDestinations;
+        let mappedCheckIn = checkIn;
+        let mappedCheckOut = checkOut;
+        let mappedAllocations = roomAllocations;
+
+        // 1. Map Destinations
+        if (data.destinations && data.destinations.length > 0) {
+            const newMappedDestinations = data.destinations.map(dest => {
+                let finalId = dest.id;
+                let finalType = (dest as any).type || 'destination';
+                let finalCountry = (dest as any).country_name || dest.country || 'Bugarska';
+
+                const isRealProviderId = finalId && !String(finalId).startsWith('narrative');
+
+                if (!isRealProviderId) {
+                    const existingDest = mockDestinations.find(d => d.name.toLowerCase() === dest.city.toLowerCase());
+                    if (existingDest) {
+                        finalId = existingDest.id;
+                        finalType = existingDest.type;
+                        finalCountry = existingDest.country;
+                    } else {
+                        finalId = `narrative-${dest.city}`;
+                    }
+                }
+
+                return {
+                    id: finalId,
+                    name: dest.city,
+                    type: finalType as 'destination' | 'hotel' | 'country',
+                    country: finalCountry
+                };
+            });
+
+            mappedDestinations = newMappedDestinations;
+
+            // Only update state if effectively changed
+            const currentIds = selectedDestinations.map(d => d.id).sort().join(',');
+            const newIds = mappedDestinations.map(d => d.id).sort().join(',');
+            if (currentIds !== newIds) {
+                setSelectedDestinations(mappedDestinations);
+            }
+        }
+
+        // 2. Map Dates
+        if (data.startDate !== checkIn) {
+            mappedCheckIn = data.startDate;
+            setCheckIn(mappedCheckIn);
+        }
+        if (data.endDate !== checkOut) {
+            mappedCheckOut = data.endDate;
+            setCheckOut(mappedCheckOut);
+        }
+        if (data.totalDays !== nights) setNights(data.totalDays || 0);
+
+        // 3. Map Travelers
+        if (data.roomAllocations && data.roomAllocations.length > 0) {
+            mappedAllocations = data.roomAllocations.map(r => ({
+                adults: r.adults,
+                children: r.children,
+                childrenAges: r.childrenAges || []
+            }));
+            if (JSON.stringify(roomAllocations) !== JSON.stringify(mappedAllocations)) {
+                setRoomAllocations(mappedAllocations);
+            }
+        } else if (data.travelers) {
+            const travelers = data.travelers;
+            const newAllocations = [{
+                adults: travelers.adults,
+                children: travelers.children,
+                childrenAges: travelers.childrenAges || []
+            }];
+            mappedAllocations = newAllocations;
+            const current = roomAllocations[0];
+            if (roomAllocations.length !== 1 || current.adults !== travelers.adults || current.children !== travelers.children || JSON.stringify(current.childrenAges) !== JSON.stringify(travelers.childrenAges)) {
+                setRoomAllocations(mappedAllocations);
+            }
+        }
+
+        // 4. Map Advanced Filters
+        if (data.nationality && data.nationality !== nationality) {
+            setNationality(data.nationality);
+        }
+
+        if (data.destinations[0]?.service && data.destinations[0].service.length > 0) {
+            const service = data.destinations[0].service[0];
+            if (service !== mealPlan && service !== 'all') {
+                setMealPlan(service);
+            }
+        }
+
+        if (data.budgetType && data.budgetType !== budgetType) {
+            setBudgetType(data.budgetType);
+        }
+
+        return {
+            destinations: mappedDestinations,
+            checkIn: mappedCheckIn,
+            checkOut: mappedCheckOut,
+            allocations: mappedAllocations
+        };
+    };
+
+    // Prepare Initial Data for Narrative Search
+    const getInitialNarrativeData = (): BasicInfoData => {
+        return {
+            destinations: [{
+                id: '1',
+                city: selectedDestinations[0]?.name || '',
+                checkIn: checkIn,
+                checkOut: checkOut,
+                nights: nights,
+                travelers: roomAllocations[0],
+                category: [],
+                service: [],
+                flexibleDays: 0,
+                country: '',
+                countryCode: '',
+                airportCode: ''
+            }],
+            travelers: roomAllocations[0],
+            budgetFrom: budgetFrom ? Number(budgetFrom) : undefined,
+            budgetTo: budgetTo ? Number(budgetTo) : undefined,
+            budgetType: budgetType,
+            nationality: nationality,
+            currency: 'EUR',
+            startDate: checkIn,
+            endDate: checkOut,
+            totalDays: nights
+        };
+    };
+
     // Background Search State
     const [prefetchedResults, setPrefetchedResults] = useState<SmartSearchResult[]>([]);
     const [prefetchKey, setPrefetchKey] = useState<string>('');
     const [isPrefetching, setIsPrefetching] = useState(false);
     const tabId = useRef(Math.random().toString(36).substring(2, 11));
+    const prefetchKeyRef = useRef<string>('');
+    const backgroundTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const backgroundAbortControllerRef = useRef<AbortController | null>(null);
+
+    const handleBackgroundSearch = useCallback(async (data: {
+        destinations: any[],
+        checkIn: string,
+        checkOut: string,
+        allocations: any[],
+        meal: string,
+        nat: string,
+        searchType: string
+    }) => {
+        const { destinations, checkIn, checkOut, allocations, meal, nat, searchType } = data;
+        const activeAllocations = allocations.filter(r => r.adults > 0);
+
+        // SKIP broad background searches for countries (too many results)
+        const hasBroadSearch = destinations.some(d => d.type === 'country');
+        if (destinations.length === 0 || !checkIn || !checkOut || activeAllocations.length === 0 || hasBroadSearch) {
+            setPrefetchedResults([]);
+            setPrefetchKey('');
+            prefetchKeyRef.current = '';
+            return;
+        }
+
+        const currentKey = `${destinations.map(d => d.id).sort().join(',')}|${checkIn}|${checkOut}|${JSON.stringify(allocations)}|${meal}|${nat}|${searchType}`;
+        if (prefetchKeyRef.current === currentKey || isSearching) return;
+
+        if (backgroundTimeoutRef.current) clearTimeout(backgroundTimeoutRef.current);
+
+        backgroundTimeoutRef.current = setTimeout(async () => {
+            // Cancel previous active fetch
+            if (backgroundAbortControllerRef.current) {
+                backgroundAbortControllerRef.current.abort();
+            }
+            backgroundAbortControllerRef.current = new AbortController();
+
+            console.log('[GlobalHub] Starting background pre-fetch...');
+            const requestKey = currentKey;
+            prefetchKeyRef.current = currentKey;
+            setPrefetchKey(''); // Sync marker
+            setIsPrefetching(true);
+
+            try {
+                const results = await performSmartSearch({
+                    searchType: searchType as any,
+                    destinations: destinations.map(d => ({
+                        id: String(d.id).replace('solvex-c-', ''),
+                        name: d.name,
+                        type: d.type
+                    })),
+                    checkIn,
+                    checkOut,
+                    rooms: activeAllocations,
+                    mealPlan: meal || 'all',
+                    currency: 'EUR',
+                    nationality: nat || 'RS',
+                });
+
+                // Check for abortion or outdated key
+                if (prefetchKeyRef.current === requestKey) {
+                    setPrefetchedResults(results);
+                    setPrefetchKey(requestKey);
+                    console.log('[GlobalHub] Background pre-fetch finished.');
+                }
+            } catch (error) {
+                if (error instanceof Error && error.name === 'AbortError') {
+                    console.log('[GlobalHub] Background search aborted.');
+                } else {
+                    console.error('Background search prefetch failed:', error);
+                    setPrefetchedResults([]);
+                    prefetchKeyRef.current = '';
+                }
+            } finally {
+                setIsPrefetching(false);
+            }
+        }, 400);
+    }, [isSearching]);
+
+    const handleImmersiveUpdate = useCallback((data: ImmersiveSearchData) => {
+        // Trigger background search when enough data is present
+        if (data.destinations.length > 0 && data.checkIn && data.checkOut) {
+            handleBackgroundSearch({
+                destinations: data.destinations as any,
+                checkIn: data.checkIn,
+                checkOut: data.checkOut,
+                allocations: data.roomAllocations,
+                searchType: activeTab,
+                meal: (data.services && data.services.length > 0) ? data.services[0] : mealPlan,
+                nat: data.nationality || nationality
+            });
+        }
+    }, [handleBackgroundSearch, activeTab, mealPlan, nationality]);
 
     const inputRef = useRef<HTMLInputElement>(null);
     const autocompleteRef = useRef<HTMLDivElement>(null);
@@ -570,7 +808,9 @@ const GlobalHubSearch: React.FC = () => {
 
         // CHECK PREFETCH CACHE
         const activeAllocations = roomAllocations.filter(r => r.adults > 0);
-        const currentKey = `${selectedDestinations.map(d => d.id).sort().join(',')}|${activeCheckIn}|${activeCheckOut}|${JSON.stringify(roomAllocations)}`;
+        // Include meal and nat in key to match background search key 
+        const currentKey = `${selectedDestinations.map(d => d.id).sort().join(',')}|${activeCheckIn}|${activeCheckOut}|${JSON.stringify(roomAllocations)}|${mealPlan}|${nationality}|${activeTab}`;
+
         if (prefetchedResults.length > 0 && prefetchKey === currentKey) {
             console.log('[GlobalHub] Using prefetched results! Instant display.');
             setSearchResults(prefetchedResults);
@@ -578,6 +818,9 @@ const GlobalHubSearch: React.FC = () => {
             setIsSearching(false);
             return;
         }
+
+        // Prevent background search from triggering for these same params while we search or after
+        prefetchKeyRef.current = currentKey;
 
         setIsSearching(true);
         setSearchError(null);
@@ -615,92 +858,8 @@ const GlobalHubSearch: React.FC = () => {
             setSearchPerformed(true);
 
             if (resultsWithSales.length === 0 && !overrideParams) {
-                // START SMART SUGGESTIONS LOGIC
-                setIsSearchingSuggestions(true);
-                setAvailabilityTimeline({});
-
-                const offsets = [1, -1, 2, -2, 3, -3, 4, -4, 5, -5];
-                const timeline: Record<string, { available: boolean, price?: number, isCheapest?: boolean, nights?: number }> = {};
-                timeline[activeCheckIn] = { available: false };
-
-                let minPriceFound = Infinity;
-                let firstAvailableDate: { in: string, out: string, nights: number } | null = null;
-                let bestDateResults: SmartSearchResult[] = [];
-
-                const durationDiffs = [0, -1, -2];
-
-                for (const dDiff of durationDiffs) {
-                    const testNights = nights + dDiff;
-                    if (testNights < 1) continue;
-
-                    let foundForThisDuration = false;
-
-                    for (const offset of offsets) {
-                        const dIn = new Date(activeCheckIn);
-                        dIn.setDate(dIn.getDate() + offset);
-                        const dOut = new Date(dIn);
-                        dOut.setDate(dOut.getDate() + testNights);
-
-                        const sCheckIn = dIn.toISOString().split('T')[0];
-                        const sCheckOut = dOut.toISOString().split('T')[0];
-
-                        if (timeline[sCheckIn]?.available) continue;
-
-                        const flexTestResults = await performSmartSearch({
-                            searchType: activeTab as any,
-                            destinations: selectedDestinations,
-                            checkIn: sCheckIn,
-                            checkOut: sCheckOut,
-                            rooms: activeAllocations,
-                            mealPlan,
-                            currency: 'EUR',
-                            nationality: nationality || 'RS',
-                        });
-
-                        if (flexTestResults.length > 0) {
-                            const currentMinPrice = Math.min(...flexTestResults.map(r => getFinalDisplayPrice(r)));
-                            timeline[sCheckIn] = { available: true, price: currentMinPrice, nights: testNights };
-                            foundForThisDuration = true;
-
-                            if (currentMinPrice < minPriceFound) {
-                                minPriceFound = currentMinPrice;
-                                firstAvailableDate = { in: sCheckIn, out: sCheckOut, nights: testNights };
-
-                                const topCandidates = flexTestResults.slice(0, 5);
-                                bestDateResults = await Promise.all(topCandidates.map(async (r) => {
-                                    const count = await getMonthlyReservationCount(r.name);
-                                    return { ...r, salesCount: count };
-                                }));
-                            }
-                        } else {
-                            if (!timeline[sCheckIn]) {
-                                timeline[sCheckIn] = { available: false };
-                            }
-                        }
-                    }
-                    if (foundForThisDuration) break;
-                }
-
-                if (firstAvailableDate) {
-                    timeline[firstAvailableDate.in].isCheapest = true;
-                }
-
-                setAvailabilityTimeline(timeline);
-
-                if (firstAvailableDate) {
-                    setSmartSuggestions({
-                        type: 'flexible_dates',
-                        data: bestDateResults.sort((a, b) => {
-                            const priceDiff = getFinalDisplayPrice(a) - getFinalDisplayPrice(b);
-                            if (Math.abs(priceDiff) < 5) return (b.salesCount || 0) - (a.salesCount || 0);
-                            return priceDiff;
-                        }),
-                        message: `Olimpijski asistent je pronašao dostupnost za ${firstAvailableDate.nights} noći! Najpovoljnija opcija je za termin ${formatDate(firstAvailableDate.in)}.`
-                    });
-                } else {
-                    setSearchError('Nažalost, nema slobodnih mesta ni u proširenom periodu (+/- 5 dana). Pokušajte sa drugim hotelom ili destinacijom.');
-                }
-                setIsSearchingSuggestions(false);
+                // SOLVEX AI ASSISTANT DISABLED - PURE API MODE
+                setSearchError('Nažalost, nema slobodnih mesta za izabrane parametre. Pokušajte sa drugim datumima ili destinacijom.');
             }
         } catch (error) {
             console.error('[GlobalHubSearch] Search error:', error);
@@ -710,6 +869,8 @@ const GlobalHubSearch: React.FC = () => {
         }
     };
 
+
+
     // Background Search Trigger
     useEffect(() => {
         if (selectedDestinations.length > 0 && checkIn && checkOut && roomAllocations.length > 0) {
@@ -717,58 +878,13 @@ const GlobalHubSearch: React.FC = () => {
                 destinations: selectedDestinations,
                 checkIn,
                 checkOut,
-                allocations: roomAllocations
+                allocations: roomAllocations,
+                meal: mealPlan,
+                nat: nationality,
+                searchType: activeTab
             });
         }
-    }, [selectedDestinations, checkIn, checkOut, roomAllocations]);
-
-    const handleBackgroundSearch = async (data: {
-        destinations: any[],
-        checkIn: string,
-        checkOut: string,
-        allocations: any[]
-    }) => {
-        const { destinations, checkIn, checkOut, allocations } = data;
-        const activeAllocations = allocations.filter(r => r.adults > 0);
-
-        if (destinations.length === 0 || !checkIn || !checkOut || activeAllocations.length === 0) return;
-
-        const currentKey = `${destinations.map(d => d.id).sort().join(',')}|${checkIn}|${checkOut}|${JSON.stringify(allocations)}`;
-        if (prefetchKey === currentKey || isSearching || isPrefetching) return;
-
-        console.log('[GlobalHub] Starting background pre-fetch for key:', currentKey);
-        setIsPrefetching(true);
-
-        try {
-            const results = await performSmartSearch({
-                searchType: 'hotel', // Default to hotel for global hub main search
-                destinations: destinations.map(d => ({
-                    id: String(d.id).replace('solvex-c-', ''),
-                    name: d.name,
-                    type: d.type
-                })),
-                checkIn,
-                checkOut,
-                rooms: activeAllocations,
-                mealPlan: 'all',
-                currency: 'EUR',
-                nationality: 'RS',
-            });
-
-            const resultsWithSales = await Promise.all(results.map(async (h) => {
-                const count = await getMonthlyReservationCount(h.name);
-                return { ...h, salesCount: count };
-            }));
-
-            setPrefetchedResults(resultsWithSales);
-            setPrefetchKey(currentKey);
-            console.log('[GlobalHub] Background pre-fetch complete.', resultsWithSales.length, 'results found.');
-        } catch (error) {
-            console.warn('[GlobalHub] Background pre-fetch failed:', error);
-        } finally {
-            setIsPrefetching(false);
-        }
-    };
+    }, [selectedDestinations, checkIn, checkOut, roomAllocations, mealPlan, nationality, activeTab, handleBackgroundSearch]);
 
     const getPriceWithMargin = (price: number) => Math.round(price * 1.15);
     const formatPrice = (val: number) => val.toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -877,12 +993,12 @@ const GlobalHubSearch: React.FC = () => {
     };
 
     const renderStarsMini = (count: number) => {
-        const goldOld = '#fbbf24';
+        const brandPurple = '#8E24AC';
         if (count === 0) return <span style={{ fontSize: '10px' }}>Bez kategorije</span>;
         return (
             <div className="star-row-mini">
                 {[...Array(count)].map((_, i) => (
-                    <Star key={i} size={10} fill={goldOld} color={goldOld} />
+                    <Star key={i} size={10} fill={brandPurple} color={brandPurple} />
                 ))}
             </div>
         );
@@ -1130,336 +1246,482 @@ const GlobalHubSearch: React.FC = () => {
                     </div>
                 </div>
             ) : (
-                <>
-                    <div className="search-card-frame">
-                        {/* ROW 1: DESTINATION */}
-                        <div className="destination-row">
-                            <div className="field-label"><MapPin size={14} /> Destinacija ili Smeštaj (do 3)</div>
-                            <div className="destination-input-wrapper" ref={autocompleteRef}>
-                                <div className="multi-destination-input premium">
-                                    {selectedDestinations.map(dest => (
-                                        <div key={dest.id} className="destination-chip">
-                                            {dest.type === 'hotel' ? <Hotel size={14} /> : <MapPin size={14} />}
-                                            <span>{dest.name}</span>
-                                            <button className="chip-remove" onClick={() => setSelectedDestinations(selectedDestinations.filter(d => d.id !== dest.id))}><X size={14} /></button>
-                                        </div>
-                                    ))}
-                                    {selectedDestinations.length < 3 && (
-                                        <input
-                                            ref={inputRef}
-                                            type="text"
-                                            placeholder={selectedDestinations.length === 0 ? "npr. Golden Sands, Hotel Park..." : "Dodaj još..."}
-                                            value={destinationInput}
-                                            onChange={(e) => setDestinationInput(e.target.value)}
-                                            className="smart-input-inline"
-                                            onFocus={() => { if (destinationInput.length >= 2) setShowSuggestions(true); }}
-                                        />
-                                    )}
+                <div className="search-layout-wrapper" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ position: 'relative', width: '100%' }}>
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            marginBottom: '1.5rem',
+                            gap: '10px'
+                        }}>
+                            <button
+                                onClick={() => setShowModes(!showModes)}
+                                className="mode-visibility-toggle"
+                            >
+                                {showModes ? <Zap size={10} style={{ color: 'var(--accent)' }} /> : <Sparkles size={10} style={{ color: 'var(--accent)' }} />}
+                                {showModes ? 'SAKRIJ MODOVE PRETRAGE' : 'PROMENI MOD PRETRAGE'}
+                            </button>
+
+                            {showModes && (
+                                <div className="mode-toggle-group animate-fade-in-up" style={{
+                                    display: 'flex',
+                                    background: 'var(--bg-card)',
+                                    padding: '5px',
+                                    borderRadius: '30px',
+                                    border: 'var(--border-thin)',
+                                    backdropFilter: 'blur(20px)',
+                                    boxShadow: 'var(--shadow-lg)'
+                                }}>
+                                    <button
+                                        className={`mode-switch-btn ${searchMode === 'classic' ? 'active' : ''}`}
+                                        onClick={() => { setSearchMode('classic'); setShowModes(false); }}
+                                        style={{
+                                            padding: '10px 24px',
+                                            borderRadius: '25px',
+                                            border: 'none',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 600,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s',
+                                            background: searchMode === 'classic' ? 'var(--accent)' : 'transparent',
+                                            color: searchMode === 'classic' ? '#fff' : 'var(--text-secondary)'
+                                        }}
+                                    >
+                                        <LayoutTemplate size={14} /> Klasična
+                                    </button>
+                                    <button
+                                        className={`mode-switch-btn ${searchMode === 'narrative' ? 'active' : ''}`}
+                                        onClick={() => { setSearchMode('narrative'); setShowModes(false); }}
+                                        style={{
+                                            padding: '10px 24px',
+                                            borderRadius: '25px',
+                                            border: 'none',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 600,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s',
+                                            background: searchMode === 'narrative' ? 'var(--accent)' : 'transparent',
+                                            color: searchMode === 'narrative' ? '#fff' : 'rgba(255,255,255,0.5)'
+                                        }}
+                                    >
+                                        <Sparkles size={14} /> Futuristička
+                                    </button>
+                                    <button
+                                        className={`mode-switch-btn ${searchMode === 'immersive' ? 'active' : ''}`}
+                                        onClick={() => { setSearchMode('immersive'); setShowModes(false); }}
+                                        style={{
+                                            padding: '10px 24px',
+                                            borderRadius: '25px',
+                                            border: 'none',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 600,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s',
+                                            background: searchMode === 'immersive' ? 'var(--accent)' : 'transparent',
+                                            color: searchMode === 'immersive' ? '#fff' : 'var(--text-secondary)'
+                                        }}
+                                    >
+                                        <Zap size={14} /> Immersive
+                                    </button>
                                 </div>
-                                {showSuggestions && suggestions.length > 0 && (
-                                    <div className="autocomplete-dropdown premium">
-                                        {suggestions.map(s => (
-                                            <div key={s.id} className="suggestion-item" onClick={() => handleAddDestination(s)}>
-                                                {s.type === 'hotel' ? <Hotel size={16} className="suggestion-icon hotel" /> : <MapPin size={16} className="suggestion-icon destination" />}
-                                                <div className="suggestion-content">
-                                                    <span className="suggestion-name">{s.name}</span>
-                                                    <span className="suggestion-meta">
-                                                        {s.type === 'hotel' ? (s.stars ? `${s.stars}★ ${s.provider}` : s.provider) : s.country}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            )}
                         </div>
 
-                        {/* ROW 2: PARAMETERS GRID */}
-                        <div className="params-grid">
-                            <div className="col-checkin param-item">
-                                <div className="field-label"><CalendarIcon size={14} /> Check-in</div>
-                                <div className="input-box" onClick={() => setActiveCalendar('in')} style={{ cursor: 'pointer' }}>
-                                    {checkIn ? formatDate(checkIn) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
-                                </div>
-                            </div>
+                        {/* IMMERSIVE SEARCH UI */}
+                        {searchMode === 'immersive' && !searchPerformed && (
+                            <ImmersiveSearch
+                                onPartialUpdate={handleImmersiveUpdate}
+                                onSearch={(data: ImmersiveSearchData) => {
+                                    // Map immersive data to standard format to sync state
+                                    const cin = new Date(data.checkIn);
+                                    const cout = new Date(data.checkOut);
+                                    const nightsCount = Math.ceil((cout.getTime() - cin.getTime()) / (1000 * 60 * 60 * 24)) || 7;
 
-                            <div className="col-checkout param-item">
-                                <div className="field-label"><CalendarIcon size={14} /> Check-out</div>
-                                <div className="input-box" onClick={() => setActiveCalendar('out')} style={{ cursor: 'pointer' }}>
-                                    {checkOut ? formatDate(checkOut) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
-                                </div>
-                            </div>
+                                    const mappedData: BasicInfoData = {
+                                        destinations: data.destinations.map((d: any) => ({
+                                            id: d.id,
+                                            city: d.name || d.city,
+                                            country: d.country_name || d.country || 'Unknown',
+                                            countryCode: d.country_code || 'XX',
+                                            airportCode: 'BEG',
+                                            checkIn: data.checkIn,
+                                            checkOut: data.checkOut,
+                                            nights: nightsCount,
+                                            travelers: {
+                                                adults: data.adults,
+                                                children: data.children,
+                                                childrenAges: data.childrenAges
+                                            },
+                                            roomAllocations: data.roomAllocations,
+                                            type: d.type
+                                        })),
+                                        startDate: data.checkIn,
+                                        endDate: data.checkOut,
+                                        totalDays: nightsCount,
+                                        currency: 'EUR',
+                                        travelers: {
+                                            adults: data.adults,
+                                            children: data.children,
+                                            childrenAges: data.childrenAges
+                                        },
+                                        roomAllocations: data.roomAllocations,
+                                        nationality: data.nationality
+                                    };
 
-                            <div className="col-flex param-item">
-                                <div className="field-label"><ArrowDownWideNarrow size={14} /> Fleksibilnost</div>
-                                <div className="flex-toggle-group">
-                                    {[0, 1, 3, 5].map(day => (
-                                        <button
-                                            key={day}
-                                            className={`flex-btn ${flexibleDays === day ? 'active' : ''}`}
-                                            onClick={() => setFlexibleDays(day)}
-                                        >
-                                            {day === 0 ? 'Tačno' : `±${day}`}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                                    const updates = handleNarrativeUpdate(mappedData);
+                                    handleSearch({
+                                        checkIn: updates.checkIn,
+                                        checkOut: updates.checkOut
+                                    });
+                                }}
+                            />
+                        )}
 
-                            <div className="col-stars param-item" style={{ position: 'relative' }}>
-                                <div className="field-label"><Star size={14} /> Odaberi Kategoriju</div>
-                                <div className="input-box" onClick={() => setShowStarPicker(!showStarPicker)} style={{ cursor: 'pointer' }}>
-                                    <span style={{ fontSize: '0.85rem' }}>
-                                        {selectedStars.includes('all') ? 'Sve kategorije' : `${selectedStars.length} odabrano`}
-                                    </span>
-                                    <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-                                </div>
-                                {showStarPicker && (
-                                    <div className="vertical-filters-popover animate-fade-in-up">
-                                        <div className="vertical-filter-group">
-                                            <button className={`v-filter-btn ${selectedStars.includes('all') ? 'active' : ''}`} onClick={() => { toggleStarFilter('all'); setShowStarPicker(false); }}>Sve</button>
-                                            {[5, 4, 3, 2, 0].map(s => (
-                                                <button key={s} className={`v-filter-btn ${selectedStars.includes(s.toString()) ? 'active' : ''}`} onClick={() => toggleStarFilter(s.toString())}>
-                                                    {renderStarsMini(s)}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '10px', marginTop: '10px' }}>
-                                            <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setShowStarPicker(false)}>Zatvori</button>
-                                        </div>
+                        {/* NARRATIVE SEARCH UI */}
+                        {searchMode === 'narrative' && !searchPerformed && (
+                            <div className="narrative-mode-container" style={{ padding: '0 2rem 2rem 2rem' }}>
+                                <NarrativeSearch
+                                    basicInfo={getInitialNarrativeData()}
+                                    onUpdate={(data: any) => handleNarrativeUpdate(data)}
+                                    onNext={(data: any) => {
+                                        const updates = handleNarrativeUpdate(data);
+                                        handleSearch({
+                                            checkIn: updates.checkIn,
+                                            checkOut: updates.checkOut
+                                        });
+                                    }}
+                                />
+                                {isSearching && (
+                                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+                                        <Loader2 className="spin-slow" size={40} color="#8E24AC" />
                                     </div>
                                 )}
                             </div>
+                        )}
 
-                            <div className="col-meals param-item" style={{ position: 'relative' }}>
-                                <div className="field-label"><UtensilsCrossed size={14} /> Odaberi Uslugu</div>
-                                <div className="input-box" onClick={() => setShowMealPicker(!showMealPicker)} style={{ cursor: 'pointer' }}>
-                                    <span style={{ fontSize: '0.85rem' }}>
-                                        {selectedMealPlans.includes('all') ? 'Sve usluge' : `${selectedMealPlans.length} odabrano`}
-                                    </span>
-                                    <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-                                </div>
-                                {showMealPicker && (
-                                    <div className="vertical-filters-popover animate-fade-in-up">
-                                        <div className="vertical-filter-group">
-                                            <button className={`v-filter-btn ${selectedMealPlans.includes('all') ? 'active' : ''}`} onClick={() => { toggleMealPlanFilter('all'); setShowMealPicker(false); }}>Sve usluge</button>
-                                            {[
-                                                { id: 'RO', label: 'Na - Najam' },
-                                                { id: 'BB', label: 'ND - Doručak' },
-                                                { id: 'HB', label: 'HB - Polupansion' },
-                                                { id: 'FB', label: 'FB - Pun pansion' },
-                                                { id: 'AI', label: 'All - All Inclusive' },
-                                                { id: 'UAI', label: 'UAll - Ultra Inclusive' }
-                                            ].map(mp => (
-                                                <button key={mp.id} className={`v-filter-btn ${selectedMealPlans.includes(mp.id) ? 'active' : ''}`} onClick={() => toggleMealPlanFilter(mp.id)}>
-                                                    {mp.label}
-                                                </button>
+                        {/* IMMERSIVE SEARCH LOADER */}
+                        {searchMode === 'immersive' && isSearching && !searchPerformed && (
+                            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+                                <Loader2 className="spin-slow" size={40} color="#8E24AC" />
+                            </div>
+                        )}
+
+                        {searchMode === 'classic' && (
+                            <div className="search-card-frame">
+                                {/* ROW 1: DESTINATION */}
+                                <div className="destination-row">
+                                    <div className="field-label"><MapPin size={14} /> Destinacija ili Smeštaj (do 3)</div>
+                                    <div className="destination-input-wrapper" ref={autocompleteRef}>
+                                        <div className="multi-destination-input premium">
+                                            {selectedDestinations.map(dest => (
+                                                <div key={dest.id} className="destination-chip">
+                                                    {dest.type === 'hotel' ? <Hotel size={14} /> : <MapPin size={14} />}
+                                                    <span>{dest.name}</span>
+                                                    <button className="chip-remove" onClick={() => setSelectedDestinations(selectedDestinations.filter(d => d.id !== dest.id))}><X size={14} /></button>
+                                                </div>
                                             ))}
+                                            {selectedDestinations.length < 3 && (
+                                                <input
+                                                    ref={inputRef}
+                                                    type="text"
+                                                    placeholder={selectedDestinations.length === 0 ? "npr. Golden Sands, Hotel Park..." : "Dodaj još..."}
+                                                    value={destinationInput}
+                                                    onChange={(e) => setDestinationInput(e.target.value)}
+                                                    className="smart-input-inline"
+                                                    onFocus={() => { if (destinationInput.length >= 2) setShowSuggestions(true); }}
+                                                />
+                                            )}
                                         </div>
-                                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '10px', marginTop: '10px' }}>
-                                            <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setShowMealPicker(false)}>Zatvori</button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="col-nationality" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                {/* Nationality Selector */}
-                                <div className="param-item" style={{ position: 'relative' }}>
-                                    <div className="field-label"><Globe size={14} /> NACIONALNOST</div>
-                                    <div className="input-box" onClick={() => setShowNationalityPicker(!showNationalityPicker)} style={{ cursor: 'pointer' }}>
-                                        <span style={{ fontSize: '0.85rem' }}>
-                                            {NATIONALITY_OPTIONS.find(n => n.code === nationality)?.name || 'Odaberi državu'}
-                                        </span>
-                                        <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-                                    </div>
-                                    {showNationalityPicker && (
-                                        <div className="vertical-filters-popover animate-fade-in-up">
-                                            <div className="vertical-filter-group" style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '10px' }}>
-                                                {NATIONALITY_OPTIONS.map(n => (
-                                                    <button
-                                                        key={n.code}
-                                                        className={`v-filter-btn ${nationality === n.code ? 'active' : ''}`}
-                                                        onClick={() => {
-                                                            setNationality(n.code);
-                                                            setShowNationalityPicker(false);
-                                                        }}
-                                                    >
-                                                        {n.name}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Budget Filter */}
-                                <div className="param-item">
-                                    <div className="field-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <DollarSign size={14} /> BUDŽET
-                                        </div>
-                                        <div className="budget-type-toggle" style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', padding: '2px' }}>
-                                            <button
-                                                onClick={() => setBudgetType('person')}
-                                                style={{
-                                                    padding: '2px 8px',
-                                                    fontSize: '0.65rem',
-                                                    borderRadius: '4px',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    background: budgetType === 'person' ? 'var(--accent)' : 'transparent',
-                                                    color: '#fff',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                PO OSOBI
-                                            </button>
-                                            <button
-                                                onClick={() => setBudgetType('total')}
-                                                style={{
-                                                    padding: '2px 8px',
-                                                    fontSize: '0.65rem',
-                                                    borderRadius: '4px',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    background: budgetType === 'total' ? 'var(--accent)' : 'transparent',
-                                                    color: '#fff',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                UKUPNO
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                                        <input
-                                            type="number"
-                                            placeholder="Od"
-                                            value={budgetFrom}
-                                            onChange={(e) => setBudgetFrom(e.target.value)}
-                                            className="budget-input"
-                                        />
-                                        <input
-                                            type="number"
-                                            placeholder="Do"
-                                            value={budgetTo}
-                                            onChange={(e) => setBudgetTo(e.target.value)}
-                                            className="budget-input"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Room Configuration */}
-                            <div className="col-rooms-tabs">
-                                <div className="room-tabs-header" style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px' }}>
-                                    {roomAllocations.map((room, idx) => (
-                                        <button
-                                            key={idx}
-                                            className={`room-tab-btn ${activeRoomTab === idx ? 'active' : ''} ${room.adults > 0 ? 'is-searching' : 'inactive'}`}
-                                            onClick={() => {
-                                                if (activeRoomTab === idx && idx !== 0) {
-                                                    const newAlloc = [...roomAllocations];
-                                                    newAlloc[idx] = { adults: 0, children: 0, childrenAges: [] };
-                                                    setRoomAllocations(newAlloc);
-                                                } else {
-                                                    setActiveRoomTab(idx);
-                                                }
-                                            }}
-                                        >
-                                            <div className={`status-dot ${room.adults > 0 ? 'enabled' : ''}`}></div>
-                                            Soba {idx + 1}
-                                            {room.adults > 0 && <span className="tab-pax-hint">{room.adults}+{room.children}</span>}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <div className="active-room-config full-width animate-fade-in" key={activeRoomTab}>
-                                    <div className="passenger-row-redesign-v2">
-                                        {/* Adults */}
-                                        <div className="flight-counter-group-v2">
-                                            <span className="counter-label">Odrasli</span>
-                                            <div className="counter-controls-v2">
-                                                <button onClick={() => {
-                                                    const newAlloc = [...roomAllocations];
-                                                    newAlloc[activeRoomTab].adults = Math.max(1, newAlloc[activeRoomTab].adults - 1);
-                                                    setRoomAllocations(newAlloc);
-                                                }}>−</button>
-                                                <span className="flight-counter-val">{roomAllocations[activeRoomTab].adults}</span>
-                                                <button onClick={() => {
-                                                    const newAlloc = [...roomAllocations];
-                                                    newAlloc[activeRoomTab].adults = Math.min(10, newAlloc[activeRoomTab].adults + 1);
-                                                    setRoomAllocations(newAlloc);
-                                                }}>+</button>
-                                            </div>
-                                        </div>
-
-                                        {/* Children */}
-                                        <div className="flight-counter-group-v2">
-                                            <span className="counter-label">Deca</span>
-                                            <div className="counter-controls-v2">
-                                                <button onClick={() => {
-                                                    const newAlloc = [...roomAllocations];
-                                                    if (newAlloc[activeRoomTab].children > 0) {
-                                                        newAlloc[activeRoomTab].children -= 1;
-                                                        newAlloc[activeRoomTab].childrenAges.pop();
-                                                        setRoomAllocations(newAlloc);
-                                                    }
-                                                }}>−</button>
-                                                <span className="flight-counter-val">{roomAllocations[activeRoomTab].children}</span>
-                                                <button onClick={() => {
-                                                    if (roomAllocations[activeRoomTab].children < 4) {
-                                                        const newAlloc = [...roomAllocations];
-                                                        newAlloc[activeRoomTab].children += 1;
-                                                        newAlloc[activeRoomTab].childrenAges.push(0);
-                                                        setRoomAllocations(newAlloc);
-                                                    }
-                                                }}>+</button>
-                                            </div>
-                                        </div>
-
-                                        {/* Children Ages In Line */}
-                                        {roomAllocations[activeRoomTab].children > 0 && (
-                                            <div className="children-ages-row-v2">
-                                                {roomAllocations[activeRoomTab].childrenAges.map((age, idx) => (
-                                                    <div key={idx} className="age-input-v2">
-                                                        <input
-                                                            type="number"
-                                                            min="0" max="17"
-                                                            value={age || ''}
-                                                            placeholder={`Dete ${idx + 1}`}
-                                                            onChange={e => {
-                                                                const val = e.target.value;
-                                                                const newAlloc = [...roomAllocations];
-                                                                newAlloc[activeRoomTab].childrenAges[idx] = val === '' ? ('' as any) : Math.min(17, Math.max(0, parseInt(val)));
-                                                                setRoomAllocations(newAlloc);
-                                                            }}
-                                                        />
+                                        {showSuggestions && suggestions.length > 0 && (
+                                            <div className="autocomplete-dropdown premium">
+                                                {suggestions.map(s => (
+                                                    <div key={s.id} className="suggestion-item" onClick={() => handleAddDestination(s)}>
+                                                        {s.type === 'hotel' ? <Hotel size={16} className="suggestion-icon hotel" /> : <MapPin size={16} className="suggestion-icon destination" />}
+                                                        <div className="suggestion-content">
+                                                            <span className="suggestion-name">{s.name}</span>
+                                                            <span className="suggestion-meta">
+                                                                {s.type === 'hotel' ? (s.stars ? `${s.stars}★ ${s.provider}` : s.provider) : s.country}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
                                         )}
                                     </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        {/* SEARCH BUTTONS ROW */}
-                        <div className="action-row-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', marginTop: '10px' }}>
-                            <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2' }}>
-                                <span>{isSearching ? 'Pretražujem...' : (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '160px' }}>
-                                        <ClickToTravelLogo height={216} showText={false} />
+                                {/* ROW 2: PARAMETERS GRID */}
+                                <div className="params-grid">
+                                    <div className="col-checkin param-item">
+                                        <div className="field-label"><CalendarIcon size={14} /> Check-in</div>
+                                        <div className="input-box" onClick={() => setActiveCalendar('in')} style={{ cursor: 'pointer' }}>
+                                            {checkIn ? formatDate(checkIn) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
+                                        </div>
                                     </div>
-                                )}</span>
-                            </button>
-                            <button className="btn-new-search-tag" onClick={handleNewSearchTab}>
-                                <Plus size={16} />
-                                <span>POKRENI JOŠ JEDNU PRETRAGU</span>
-                            </button>
-                        </div>
-                    </div>
 
+                                    <div className="col-checkout param-item">
+                                        <div className="field-label"><CalendarIcon size={14} /> Check-out</div>
+                                        <div className="input-box" onClick={() => setActiveCalendar('out')} style={{ cursor: 'pointer' }}>
+                                            {checkOut ? formatDate(checkOut) : <span style={{ color: '#64748b' }}>mm/dd/yyyy</span>}
+                                        </div>
+                                    </div>
+
+                                    <div className="col-flex param-item">
+                                        <div className="field-label"><ArrowDownWideNarrow size={14} /> Fleksibilnost</div>
+                                        <div className="flex-toggle-group">
+                                            {[0, 1, 3, 5].map(day => (
+                                                <button
+                                                    key={day}
+                                                    className={`flex-btn ${flexibleDays === day ? 'active' : ''}`}
+                                                    onClick={() => setFlexibleDays(day)}
+                                                >
+                                                    {day === 0 ? 'Tačno' : `±${day}`}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="col-stars param-item" style={{ position: 'relative' }}>
+                                        <div className="field-label"><Star size={14} /> Odaberi Kategoriju</div>
+                                        <div className="input-box" onClick={() => setShowStarPicker(!showStarPicker)} style={{ cursor: 'pointer' }}>
+                                            <span style={{ fontSize: '0.85rem' }}>
+                                                {selectedStars.includes('all') ? 'Sve kategorije' : `${selectedStars.length} odabrano`}
+                                            </span>
+                                            <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                                        </div>
+                                        {showStarPicker && (
+                                            <div className="vertical-filters-popover animate-fade-in-up">
+                                                <div className="vertical-filter-group">
+                                                    <button className={`v-filter-btn ${selectedStars.includes('all') ? 'active' : ''}`} onClick={() => { toggleStarFilter('all'); setShowStarPicker(false); }}>Sve</button>
+                                                    {[5, 4, 3, 2, 0].map(s => (
+                                                        <button key={s} className={`v-filter-btn ${selectedStars.includes(s.toString()) ? 'active' : ''}`} onClick={() => toggleStarFilter(s.toString())}>
+                                                            {renderStarsMini(s)}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '10px', marginTop: '10px' }}>
+                                                    <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setShowStarPicker(false)}>Zatvori</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="col-meals param-item" style={{ position: 'relative' }}>
+                                        <div className="field-label"><UtensilsCrossed size={14} /> Odaberi Uslugu</div>
+                                        <div className="input-box" onClick={() => setShowMealPicker(!showMealPicker)} style={{ cursor: 'pointer' }}>
+                                            <span style={{ fontSize: '0.85rem' }}>
+                                                {selectedMealPlans.includes('all') ? 'Sve usluge' : `${selectedMealPlans.length} odabrano`}
+                                            </span>
+                                            <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                                        </div>
+                                        {showMealPicker && (
+                                            <div className="vertical-filters-popover animate-fade-in-up">
+                                                <div className="vertical-filter-group">
+                                                    <button className={`v-filter-btn ${selectedMealPlans.includes('all') ? 'active' : ''}`} onClick={() => { toggleMealPlanFilter('all'); setShowMealPicker(false); }}>Sve usluge</button>
+                                                    {[
+                                                        { id: 'RO', label: 'Na - Najam' },
+                                                        { id: 'BB', label: 'ND - Doručak' },
+                                                        { id: 'HB', label: 'HB - Polupansion' },
+                                                        { id: 'FB', label: 'FB - Pun pansion' },
+                                                        { id: 'AI', label: 'All - All Inclusive' },
+                                                        { id: 'UAI', label: 'UAll - Ultra Inclusive' }
+                                                    ].map(mp => (
+                                                        <button key={mp.id} className={`v-filter-btn ${selectedMealPlans.includes(mp.id) ? 'active' : ''}`} onClick={() => toggleMealPlanFilter(mp.id)}>
+                                                            {mp.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '10px', marginTop: '10px' }}>
+                                                    <button className="v-filter-btn active" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setShowMealPicker(false)}>Zatvori</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="col-nationality" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                        {/* Nationality Selector */}
+                                        <div className="param-item" style={{ position: 'relative' }}>
+                                            <div className="field-label"><Globe size={14} /> NACIONALNOST</div>
+                                            <div className="input-box" onClick={() => setShowNationalityPicker(!showNationalityPicker)} style={{ cursor: 'pointer' }}>
+                                                <span style={{ fontSize: '0.85rem' }}>
+                                                    {NATIONALITY_OPTIONS.find(n => n.code === nationality)?.name || 'Odaberi državu'}
+                                                </span>
+                                                <ChevronDown size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                                            </div>
+                                            {showNationalityPicker && (
+                                                <div className="vertical-filters-popover animate-fade-in-up">
+                                                    <div className="vertical-filter-group" style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '10px' }}>
+                                                        {NATIONALITY_OPTIONS.map(n => (
+                                                            <button
+                                                                key={n.code}
+                                                                className={`v-filter-btn ${nationality === n.code ? 'active' : ''}`}
+                                                                onClick={() => {
+                                                                    setNationality(n.code);
+                                                                    setShowNationalityPicker(false);
+                                                                }}
+                                                            >
+                                                                {n.name}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Budget Filter */}
+                                        <div className="param-item">
+                                            <div className="field-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <DollarSign size={14} /> BUDŽET
+                                                </div>
+                                                <BudgetTypeToggle
+                                                    type={budgetType}
+                                                    onChange={setBudgetType}
+                                                />
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                                                <input
+                                                    type="number"
+                                                    placeholder="Od"
+                                                    value={budgetFrom}
+                                                    onChange={(e) => setBudgetFrom(e.target.value)}
+                                                    className="budget-input"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    placeholder="Do"
+                                                    value={budgetTo}
+                                                    onChange={(e) => setBudgetTo(e.target.value)}
+                                                    className="budget-input"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Room Configuration */}
+                                    <div className="col-rooms-tabs">
+                                        <div className="room-tabs-header" style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px' }}>
+                                            {roomAllocations.map((room, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    className={`room-tab-btn ${activeRoomTab === idx ? 'active' : ''} ${room.adults > 0 ? 'is-searching' : 'inactive'}`}
+                                                    onClick={() => {
+                                                        if (activeRoomTab === idx && idx !== 0) {
+                                                            const newAlloc = [...roomAllocations];
+                                                            newAlloc[idx] = { adults: 0, children: 0, childrenAges: [] };
+                                                            setRoomAllocations(newAlloc);
+                                                        } else {
+                                                            setActiveRoomTab(idx);
+                                                        }
+                                                    }}
+                                                >
+                                                    <div className={`status-dot ${room.adults > 0 ? 'enabled' : ''}`}></div>
+                                                    Soba {idx + 1}
+                                                    {room.adults > 0 && <span className="tab-pax-hint">{room.adults}+{room.children}</span>}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="active-room-config full-width animate-fade-in" key={activeRoomTab}>
+                                            <div className="passenger-row-redesign-v2">
+                                                {/* Adults */}
+                                                <div className="flight-counter-group-v2">
+                                                    <span className="counter-label">Odrasli</span>
+                                                    <div className="counter-controls-v2">
+                                                        <button onClick={() => {
+                                                            const newAlloc = [...roomAllocations];
+                                                            newAlloc[activeRoomTab].adults = Math.max(1, newAlloc[activeRoomTab].adults - 1);
+                                                            setRoomAllocations(newAlloc);
+                                                        }}>−</button>
+                                                        <span className="flight-counter-val">{roomAllocations[activeRoomTab].adults}</span>
+                                                        <button onClick={() => {
+                                                            const newAlloc = [...roomAllocations];
+                                                            newAlloc[activeRoomTab].adults = Math.min(10, newAlloc[activeRoomTab].adults + 1);
+                                                            setRoomAllocations(newAlloc);
+                                                        }}>+</button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Children */}
+                                                <div className="flight-counter-group-v2">
+                                                    <span className="counter-label">Deca</span>
+                                                    <div className="counter-controls-v2">
+                                                        <button onClick={() => {
+                                                            const newAlloc = [...roomAllocations];
+                                                            if (newAlloc[activeRoomTab].children > 0) {
+                                                                newAlloc[activeRoomTab].children -= 1;
+                                                                newAlloc[activeRoomTab].childrenAges.pop();
+                                                                setRoomAllocations(newAlloc);
+                                                            }
+                                                        }}>−</button>
+                                                        <span className="flight-counter-val">{roomAllocations[activeRoomTab].children}</span>
+                                                        <button onClick={() => {
+                                                            if (roomAllocations[activeRoomTab].children < 4) {
+                                                                const newAlloc = [...roomAllocations];
+                                                                newAlloc[activeRoomTab].children += 1;
+                                                                newAlloc[activeRoomTab].childrenAges.push(0);
+                                                                setRoomAllocations(newAlloc);
+                                                            }
+                                                        }}>+</button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Children Ages In Line */}
+                                                {roomAllocations[activeRoomTab].children > 0 && (
+                                                    <div className="children-ages-row-v2">
+                                                        {roomAllocations[activeRoomTab].childrenAges.map((age, idx) => (
+                                                            <div key={idx} className="age-input-v2">
+                                                                <input
+                                                                    type="number"
+                                                                    min="0" max="17"
+                                                                    value={age || ''}
+                                                                    placeholder={`Dete ${idx + 1}`}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value;
+                                                                        const newAlloc = [...roomAllocations];
+                                                                        newAlloc[activeRoomTab].childrenAges[idx] = val === '' ? ('' as any) : Math.min(17, Math.max(0, parseInt(val)));
+                                                                        setRoomAllocations(newAlloc);
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* SEARCH BUTTONS ROW */}
+                                <div className="action-row-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', marginTop: '10px' }}>
+                                    <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                                        <div style={{ opacity: isSearching ? 0.2 : 1, transition: 'all 0.3s ease' }}>
+                                            <ClickToTravelLogo height={65} iconOnly={true} iconScale={4.4} forceOutline={true} />
+                                        </div>
+                                        {isSearching && (
+                                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Loader2 className="spin" size={32} color="#fff" />
+                                            </div>
+                                        )}
+                                    </button>
+                                    <button className="btn-new-search-tag" onClick={handleNewSearchTab}>
+                                        <Plus size={16} />
+                                        <span>POKRENI JOŠ JEDNU PRETRAGU</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     {/* SMART SUGGESTIONS SECTION */}
                     {(smartSuggestions || isSearchingSuggestions) && (
                         <div className="smart-suggestions-box animate-fade-in">
@@ -1521,8 +1783,8 @@ const GlobalHubSearch: React.FC = () => {
 
                     {/* RESULTS SECTION */}
                     {searchPerformed && (
-                        <div className="content-workflow animate-fade-in" style={{ marginTop: '3rem' }}>
-                            <div className="filters-toolbar-v4 premium" style={{ display: 'flex', flexWrap: 'nowrap', gap: '16px', alignItems: 'center' }}>
+                        <div className="content-workflow animate-fade-in" style={{ marginTop: '3rem', width: '100%', maxWidth: '1550px', margin: '3rem auto 0' }}>
+                            <div className="filters-toolbar-v4 premium" style={{ display: 'flex', flexWrap: 'nowrap', gap: '16px', alignItems: 'center', width: '100%', padding: '0.4rem 1.25rem' }}>
                                 <div className="name-filter-wrapper" style={{ flex: 1 }}>
                                     <Search size={14} className="filter-icon" />
                                     <input
@@ -1546,7 +1808,7 @@ const GlobalHubSearch: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className={`results-container ${viewMode}-view`}>
+                            <div className={`results-container ${viewMode}-view`} style={{ width: '100%' }}>
                                 {viewMode === 'notepad' ? (
                                     <div className="notepad-view-v2 animate-fade-in" style={{ padding: '0', width: '100%' }}>
                                         {filteredResults.map((hotel, hIdx) => (
@@ -1561,11 +1823,11 @@ const GlobalHubSearch: React.FC = () => {
                                                 {/* Header */}
                                                 <div style={{
                                                     padding: '1.5rem 2rem',
-                                                    background: 'rgba(255,255,255,0.02)',
+                                                    background: 'var(--glass-bg)',
                                                     display: 'flex',
                                                     justifyContent: 'space-between',
                                                     alignItems: 'center',
-                                                    borderBottom: '1px solid rgba(255,255,255,0.05)'
+                                                    borderBottom: 'var(--border-thin)'
                                                 }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                                                         <h3
@@ -1573,8 +1835,8 @@ const GlobalHubSearch: React.FC = () => {
                                                             style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
                                                         >
                                                             {hotel.name}
-                                                            <span style={{ display: 'flex', color: '#fbbf24' }}>
-                                                                {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
+                                                            <span style={{ display: 'flex', color: 'var(--accent)' }}>
+                                                                {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={16} fill="#8E24AC" color="#8E24AC" />)}
                                                             </span>
                                                         </h3>
                                                         <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center' }}>
@@ -1582,7 +1844,7 @@ const GlobalHubSearch: React.FC = () => {
                                                             {hotel.location}
                                                         </span>
                                                     </div>
-                                                    <div style={{ color: '#fbbf24', fontSize: '1.1rem', fontWeight: 800, whiteSpace: 'nowrap', fontStyle: 'italic' }}>
+                                                    <div style={{ color: 'var(--accent)', fontSize: '1.1rem', fontWeight: 800, whiteSpace: 'nowrap', fontStyle: 'italic' }}>
                                                         UKUPNA CENA OD: {formatPrice(getFinalDisplayPrice(hotel))} EUR
                                                     </div>
                                                 </div>
@@ -1728,14 +1990,14 @@ const GlobalHubSearch: React.FC = () => {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`}>
+                                    <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`} style={{ width: '100%' }}>
                                         {filteredResults.map(hotel => (
                                             <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase().replace(/\s+/g, '')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
                                                 <div className="hotel-card-image" onClick={() => navigate('/hotel-view/' + hotel.id)}>
                                                     <img src={hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
                                                     <div className="meal-plan-badge">{getMealPlanDisplayName(hotel.mealPlan)}</div>
                                                     <div className="hotel-stars-badge">
-                                                        {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
+                                                        {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={10} fill="#8E24AC" color="#8E24AC" />)}
                                                     </div>
                                                 </div>
                                                 <div className="hotel-card-content">
@@ -1800,7 +2062,7 @@ const GlobalHubSearch: React.FC = () => {
                                 bottom: 0,
                                 width: '100vw',
                                 height: '100vh',
-                                background: 'rgba(2, 6, 23, 0.95)',
+                                background: 'rgba(26, 43, 60, 0.95)',
                                 backdropFilter: 'blur(20px) saturate(180%)',
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -1818,18 +2080,22 @@ const GlobalHubSearch: React.FC = () => {
                                     margin: 'auto',
                                     maxHeight: '85vh',
                                     maxWidth: '1400px',
-                                    width: '95%'
+                                    width: '95%',
+                                    background: 'var(--bg-card)',
+                                    border: 'var(--border-thin)',
+                                    borderRadius: '24px',
+                                    overflow: 'hidden'
                                 }}
                             >
-                                <div className="hotel-rooms-modal-header" style={{ padding: '12px 25px', background: '#1e293b' }}>
+                                <div className="hotel-rooms-modal-header" style={{ padding: '12px 25px', background: 'var(--glass-bg)', borderBottom: 'var(--border-thin)' }}>
                                     <div className="modal-title-zone">
                                         <div className="modal-meta" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
                                             <span style={{ color: 'white', marginRight: '15px' }}>{expandedHotel.name.toUpperCase()}</span>
-                                            <div style={{ marginRight: '15px', display: 'flex', gap: '2px', color: '#fbbf24' }}>
+                                            <div style={{ marginRight: '15px', display: 'flex', gap: '2px', color: 'var(--accent)' }}>
                                                 {Array(expandedHotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
                                             </div>
                                             <MapPin size={14} /> {expandedHotel.location}
-                                            <span style={{ marginLeft: '20px', color: '#fbbf24', fontWeight: 800 }}>
+                                            <span style={{ marginLeft: '20px', color: 'var(--accent)', fontWeight: 800 }}>
                                                 Ukupna cena od: {formatPrice(getFinalDisplayPrice(expandedHotel))} EUR
                                             </span>
                                         </div>
@@ -1901,7 +2167,7 @@ const GlobalHubSearch: React.FC = () => {
                         </div>,
                         document.body
                     )}
-                </>
+                </div>
             )}
         </div>
     );

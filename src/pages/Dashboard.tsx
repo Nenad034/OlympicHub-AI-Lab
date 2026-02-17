@@ -224,6 +224,73 @@ const Dashboard: React.FC = () => {
         >
             {/* Removed Welcome Header and Central Search */}
 
+            {/* Dashboard Application Search - Moved outside conditional to keep it visible while typing */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginBottom: '40px',
+                marginTop: '20px'
+            }}>
+                <div style={{
+                    width: '100%',
+                    maxWidth: '600px',
+                    position: 'relative'
+                }}>
+                    <Search
+                        size={20}
+                        color="var(--accent)"
+                        style={{
+                            position: 'absolute',
+                            left: '20px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            opacity: 0.7
+                        }}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Brza pretraga aplikacija..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        style={{
+                            width: '100%',
+                            padding: '16px 24px 16px 56px',
+                            borderRadius: '16px',
+                            background: 'var(--bg-card)',
+                            border: '1px solid var(--accent)',
+                            color: 'var(--text-primary)',
+                            fontSize: '16px',
+                            fontWeight: '500',
+                            outline: 'none',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 10px 30px rgba(142, 36, 172, 0.15)'
+                        }}
+                    />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery('')}
+                            style={{
+                                position: 'absolute',
+                                right: '16px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                cursor: 'pointer',
+                                opacity: 0.6,
+                                border: 'none',
+                                background: 'var(--accent-glow)',
+                                color: 'var(--accent)',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                fontSize: '11px',
+                                fontWeight: '700'
+                            }}
+                        >
+                            ESC
+                        </button>
+                    )}
+                </div>
+            </div>
+
             {/* Apps Grid */}
             {
                 searchQuery ? (
@@ -320,6 +387,7 @@ const Dashboard: React.FC = () => {
                     </div>
                 ) : (
                     <>
+
                         {/* Row 1: Search & Reservations */}
                         <div style={{
                             display: 'flex',

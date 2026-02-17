@@ -5,9 +5,19 @@ interface LogoProps {
     height?: number | string;
     className?: string;
     showText?: boolean;
+    iconOnly?: boolean;
+    iconScale?: number;
+    forceOutline?: boolean;
 }
 
-export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className = "", showText = false }) => {
+export const ClickToTravelLogo: React.FC<LogoProps> = ({
+    height = 87,
+    className = "",
+    showText = false,
+    iconOnly = false,
+    iconScale,
+    forceOutline = false
+}) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [imgLoaded, setImgLoaded] = useState(false);
     const { theme } = useThemeStore();
@@ -23,26 +33,20 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className 
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             if (!ctx) return;
 
-            const scale = 4;
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
+            const resolutionScale = 4;
+            // If iconOnly, we assume the icon is the leftmost square part of the image
+            const targetWidth = iconOnly ? img.height : img.width;
+            canvas.width = targetWidth * resolutionScale;
+            canvas.height = img.height * resolutionScale;
 
-            ctx.scale(scale, scale);
+            ctx.scale(resolutionScale, resolutionScale);
             ctx.drawImage(img, 0, 0);
 
             try {
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imageData.data;
-                const width = canvas.width;
-                const height = canvas.height;
-
-                // Crop threshold removed for new logo
 
                 for (let i = 0; i < data.length; i += 4) {
-                    const pixelIndex = i / 4;
-                    // const y = Math.floor(pixelIndex / width); // y not needed if no vertical crop
-
-
                     const r = data[i];
                     const g = data[i + 1];
                     const b = data[i + 2];
@@ -67,7 +71,7 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className 
                 setImgLoaded(true);
             }
         };
-    }, []);
+    }, [iconOnly]);
 
     const isLight = theme === 'light';
 
@@ -100,20 +104,23 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({ height = 87, className 
                         height: '100%',
                         width: 'auto',
                         display: imgLoaded ? 'block' : 'none',
-                        objectFit: 'contain',
-                        position: 'relative',
-                        zIndex: 1,
-                        filter: isLight ? 'none' : `
-                            invert(1) brightness(2) contrast(1.2)
-                            drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))
-                        `,
+                        transition: 'all 0.3s ease',
+                        transform: iconScale ? `scale(${iconScale})` : (iconOnly ? 'scale(1.4)' : 'scale(1.1)'),
+                        filter: (forceOutline || !isLight) ? `
+                            drop-shadow(2px 0 0 #fff)
+                            drop-shadow(-2px 0 0 #fff)
+                            drop-shadow(0 2px 0 #fff)
+                            drop-shadow(0 -1px 0 #fff)
+                            drop-shadow(1.5px 1.5px 0 #fff)
+                            drop-shadow(-1.5px -1.5px 0 #fff)
+                            drop-shadow(1.5px -1.5px 0 #fff)
+                            drop-shadow(-1.5px 1.5px 0 #fff)
+                        ` : 'none',
                         imageRendering: 'auto'
                     }}
                 />
-                {!imgLoaded && <div style={{ height, width: typeof height === 'number' ? height * 3 : '140px' }} />}
+                {!imgLoaded && <div style={{ height, width: typeof height === 'number' ? (height as number) * 3 : '140px' }} />}
             </div>
-
-
         </div>
     );
 };

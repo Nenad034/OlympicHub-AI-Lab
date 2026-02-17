@@ -1,9 +1,9 @@
 ﻿/* THE "ZENITH MINIMALIST" UI - PETROLEUM EDITION */
 
 /* Color Palette:
-   1. Primary: #0E4B5E (Deep Petroleum) - For structural clarity
+   1. Primary: #1A2B3C (Deep Midnight Blue) - For structural clarity
    2. Background: #ffffff (Pure White) - For breathing space
-   3. Accent/Focus: #10B981 (Petroleum Green) - For active highlights
+   3. Accent/Focus: #8E24AC (Midnight Blue Green) - For active highlights
 */
 
 /* Main Container Architecture */
@@ -20,12 +20,12 @@
 /* Header */
 .light-theme .smart-search-header {
     background: #ffffff !important;
-    border-bottom: 1px solid #E0ECEE !important;
+    border-bottom: 1px solid #F1F5F9 !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
     margin: -2rem -2rem 4rem -2rem !important;
 }
 
-/* Search Blocks - Petroleum High Definition */
+/* Search Blocks - Midnight Blue High Definition */
 .light-theme .search-form-smart,
 .light-theme .search-card-frame,
 .light-theme .provider-toggles-section,
@@ -33,27 +33,27 @@
 .light-theme .flight-search-form,
 .light-theme .wizard-progress.ss-glass-bar {
     background: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
+    border: 1px solid #1A2B3C !important;
     border-radius: 20px !important;
-    box-shadow: 0 15px 35px -10px rgba(14, 75, 94, 0.04) !important;
+    box-shadow: 0 15px 35px -10px rgba(26, 43, 60, 0.04) !important;
     padding: 2.5rem !important;
     margin-bottom: 30px !important;
 }
 
 /* Progress Wizard - Aligned with Theme */
 .light-theme .wizard-progress.ss-glass-bar {
-    background: #E0ECEE !important;
+    background: #F1F5F9 !important;
     border: none !important;
     padding: 1.2rem !important;
 }
 
 .light-theme .p-step-ss .s-num-ss {
     background: #ffffff !important;
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
 }
 
 .light-theme .p-step-ss.active .s-num-ss {
-    background: #0E4B5E !important;
+    background: #1A2B3C !important;
     color: #ffffff !important;
 }
 
@@ -62,7 +62,7 @@
     font-weight: 800 !important;
 }
 
-/* Main Visual Style: 1px Petroleum Borders */
+/* Main Visual Style: 1px Midnight Blue Borders */
 .light-theme .smart-input.premium,
 .light-theme .input-box,
 .light-theme .input-group-flight input,
@@ -75,8 +75,8 @@
 .light-theme .v-filter-btn,
 .light-theme .flex-btn {
     background: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
-    color: #0E4B5E !important;
+    border: 1px solid #1A2B3C !important;
+    color: #1A2B3C !important;
     border-radius: 12px !important;
     padding: 10px 14px !important;
     font-weight: 600 !important;
@@ -99,7 +99,7 @@
     min-height: 48px !important;
     height: auto !important;
     background: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
+    border: 1px solid #1A2B3C !important;
     border-radius: 12px;
     padding: 4px 8px !important;
 }
@@ -116,25 +116,25 @@
 .light-theme .search-card-frame,
 .light-theme .flight-search-form {
     background: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
+    border: 1px solid #1A2B3C !important;
     height: auto !important;
     padding: 2rem !important;
     margin-bottom: 2rem !important;
     display: block !important;
 }
 
-/* Tabs Highlights - Petroleum Focus with Emerald Underline */
+/* Tabs Highlights - Midnight Blue Focus with Emerald Underline */
 .light-theme .nav-tab-item.active {
-    background: #0E4B5E !important;
+    background: #1A2B3C !important;
     color: #ffffff !important;
-    box-shadow: 0 8px 16px rgba(14, 75, 94, 0.4) !important;
-    border-bottom: 3px solid #10B981 !important;
+    box-shadow: 0 8px 16px rgba(26, 43, 60, 0.4) !important;
+    border-bottom: 3px solid #8E24AC !important;
 }
 
 .light-theme .flex-btn.active {
-    background: #0E4B5E !important;
+    background: #1A2B3C !important;
     color: #ffffff !important;
-    border-color: #0E4B5E !important;
+    border-color: #1A2B3C !important;
 }
 
 .light-theme .flex-toggle-group {
@@ -147,7 +147,7 @@
 /* Tabs Navigation */
 .light-theme .tabs-nav-container {
     background: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
+    border: 1px solid #1A2B3C !important;
     border-radius: 12px !important;
     padding: 6px !important;
 }
@@ -165,23 +165,23 @@
 .light-theme .input-group-flight input:focus,
 .light-theme .input-group-flight select:focus,
 .light-theme .input-box:hover {
-    border-color: #10B981 !important;
+    border-color: #8E24AC !important;
     /* Petrol Green Focus */
     background: #ffffff !important;
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1) !important;
+    box-shadow: 0 0 0 4px rgba(142, 36, 172, 0.1) !important;
 }
 
 /* Placeholders Visibility */
 .light-theme ::placeholder {
-    color: rgba(14, 75, 94, 0.5) !important;
+    color: rgba(26, 43, 60, 0.5) !important;
 }
 
 /* Labels */
 .light-theme .form-field label,
 .light-theme .field-label,
 .light-theme .field-label-mini {
-    color: #0E4B5E !important;
-    /* Deep Petroleum Labels */
+    color: #1A2B3C !important;
+    /* Deep Midnight Blue Labels */
     font-weight: 800 !important;
     text-transform: uppercase;
     font-size: 0.75rem !important;
@@ -190,48 +190,50 @@
     display: block !important;
 }
 
-/* Primary Action Buttons - Petroleum Style */
+/* Primary Action Buttons - Midnight Blue Style */
 .light-theme .btn-search-main,
 .light-theme .btn-book-v4,
-.light-theme .search-flights-btn {
-    background: #E0ECEE !important;
-    color: #0E4B5E !important;
-    border: 2px solid #0E4B5E !important;
+.light-theme .search-flights-btn,
+.light-theme .view-more-btn {
+    background: #F1F5F9 !important;
+    color: #1A2B3C !important;
+    border: 2px solid #1A2B3C !important;
     font-weight: 800 !important;
     text-transform: uppercase;
     letter-spacing: 1px;
-    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.1) !important;
+    box-shadow: 0 4px 12px rgba(26, 43, 60, 0.1) !important;
     border-radius: 14px !important;
     transition: all 0.2s ease !important;
 }
 
 .light-theme .btn-search-main:hover,
 .light-theme .btn-book-v4:hover,
-.light-theme .search-flights-btn:hover {
+.light-theme .search-flights-btn:hover,
+.light-theme .view-more-btn:hover {
     background: #ffffff !important;
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(14, 75, 94, 0.15) !important;
+    box-shadow: 0 8px 20px rgba(26, 43, 60, 0.15) !important;
 }
 
 .light-theme .btn-search-main span {
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
 }
 
 /* Results Customization */
 .light-theme .ss-total-amount {
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
     font-weight: 950 !important;
 }
 
 .light-theme .hotel-result-card-premium.unified {
     background: #ffffff !important;
-    border: 1px solid #E0ECEE !important;
+    border: 1px solid #F1F5F9 !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
 }
 
 .light-theme .hotel-result-card-premium.unified:hover {
-    border-color: #10B981 !important;
-    box-shadow: 0 20px 25px -5px rgba(14, 75, 94, 0.08) !important;
+    border-color: #8E24AC !important;
+    box-shadow: 0 20px 25px -5px rgba(26, 43, 60, 0.08) !important;
 }
 
 .light-theme .price-val {
@@ -244,7 +246,7 @@
 }
 
 .light-theme .nav-tab-item.active {
-    background: #0E4B5E !important;
+    background: #1A2B3C !important;
     color: #ffffff !important;
 }
 
@@ -369,15 +371,15 @@
     gap: 12px;
     margin-bottom: 2rem;
     padding-bottom: 1.5rem;
-    border-bottom: 1px solid rgba(14, 75, 94, 0.1);
+    border-bottom: 1px solid rgba(26, 43, 60, 0.1);
 }
 
 .light-theme .trip-type-pill {
     padding: 10px 24px;
-    background: #E0ECEE !important;
-    border: 2px solid #0E4B5E !important;
+    background: #F1F5F9 !important;
+    border: 2px solid #1A2B3C !important;
     border-radius: 50px !important;
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
     font-size: 0.75rem !important;
     font-weight: 800 !important;
     display: flex;
@@ -393,9 +395,9 @@
 }
 
 .light-theme .trip-type-pill.active {
-    background: #0E4B5E !important;
+    background: #1A2B3C !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.2) !important;
+    box-shadow: 0 4px 12px rgba(26, 43, 60, 0.2) !important;
 }
 
 .light-theme .trip-type-pill svg {
@@ -439,8 +441,8 @@
     height: 40px;
     border-radius: 50%;
     background: #ffffff !important;
-    border: 2px solid #0E4B5E !important;
-    color: #0E4B5E !important;
+    border: 2px solid #1A2B3C !important;
+    color: #1A2B3C !important;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -449,7 +451,7 @@
 }
 
 .light-theme .btn-swap-locations:hover {
-    background: #0E4B5E !important;
+    background: #1A2B3C !important;
     color: #ffffff !important;
     transform: rotate(180deg);
 }
@@ -468,7 +470,7 @@
     align-items: center;
     gap: 20px;
     background: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
+    border: 1px solid #1A2B3C !important;
     padding: 6px 20px !important;
     border-radius: 12px !important;
     height: 48px;
@@ -497,9 +499,9 @@
     width: 24px;
     height: 24px;
     border-radius: 6px;
-    border: 1px solid #0E4B5E !important;
-    background: #E0ECEE !important;
-    color: #0E4B5E !important;
+    border: 1px solid #1A2B3C !important;
+    background: #F1F5F9 !important;
+    color: #1A2B3C !important;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -509,13 +511,13 @@
 }
 
 .light-theme .counter-controls-v2 button:hover {
-    background: #0E4B5E !important;
+    background: #1A2B3C !important;
     color: #ffffff !important;
 }
 
 .light-theme .counter-controls-v2 span {
     font-weight: 800;
-    color: #0E4B5E;
+    color: #1A2B3C;
     min-width: 12px;
     text-align: center;
 }
@@ -523,7 +525,7 @@
 .light-theme .flight-class-selector select {
     background: transparent !important;
     border: none !important;
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
     font-weight: 800 !important;
     font-size: 0.85rem !important;
     cursor: pointer;
@@ -549,8 +551,8 @@
 .light-theme .btn-search-flights-premium {
     width: 100%;
     height: 75px;
-    background: #E0ECEE !important;
-    border: 2px solid #0E4B5E !important;
+    background: #F1F5F9 !important;
+    border: 2px solid #1A2B3C !important;
     border-radius: 16px !important;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -560,8 +562,8 @@
 .light-theme .btn-search-flights-premium:hover {
     background: #ffffff !important;
     transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(14, 75, 94, 0.1) !important;
-    border-color: #10B981 !important;
+    box-shadow: 0 10px 25px rgba(26, 43, 60, 0.1) !important;
+    border-color: #8E24AC !important;
 }
 
 .light-theme .btn-search-flights-premium .btn-content {
@@ -574,11 +576,11 @@
 .light-theme .btn-search-flights-premium span {
     font-weight: 900;
     letter-spacing: 1px;
-    color: #0E4B5E;
+    color: #1A2B3C;
 }
 
 .light-theme .btn-search-flights-premium:hover span {
-    color: #10B981;
+    color: #8E24AC;
 }
 
 .light-theme .flight-search-form {
@@ -594,7 +596,7 @@
     display: flex;
     gap: 12px;
     padding-left: 20px;
-    border-left: 1px solid rgba(14, 75, 94, 0.2);
+    border-left: 1px solid rgba(26, 43, 60, 0.2);
     margin-left: 10px;
     align-items: center;
 }
@@ -608,9 +610,9 @@
     width: 85px;
     height: 36px;
     background: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
+    border: 1px solid #1A2B3C !important;
     border-radius: 8px !important;
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
     text-align: center;
     font-weight: 800;
     font-size: 0.85rem;
@@ -618,13 +620,13 @@
 }
 
 .light-theme .age-input-v2 input::placeholder {
-    color: rgba(14, 75, 94, 0.5) !important;
+    color: rgba(26, 43, 60, 0.5) !important;
     font-size: 0.75rem;
     font-weight: 700;
 }
 
 .light-theme .age-input-v2 input:focus {
-    border-color: #10B981 !important;
+    border-color: #8E24AC !important;
     outline: none;
 }
 
@@ -635,7 +637,7 @@
 .light-theme .stops-btn,
 .light-theme .toggle-advanced-btn {
     background: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
+    border: 1px solid #1A2B3C !important;
     border-radius: 12px !important;
     transition: all 0.2s ease !important;
 }
@@ -644,13 +646,13 @@
 .light-theme .date-picker-trigger:hover,
 .light-theme .date-flex-btn:hover,
 .light-theme .stops-btn:hover {
-    border-color: #10B981 !important;
+    border-color: #8E24AC !important;
     background: #ffffff !important;
 }
 
 .light-theme .date-flex-btn.active,
 .light-theme .stops-btn.active {
-    background: #0E4B5E !important;
+    background: #1A2B3C !important;
     color: #ffffff !important;
 }
 
@@ -660,7 +662,7 @@
     align-items: center;
     gap: 24px;
     background: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
+    border: 1px solid #1A2B3C !important;
     padding: 0 24px;
     border-radius: 12px;
     height: 56px;
@@ -691,9 +693,9 @@
     width: 24px;
     height: 24px;
     border-radius: 6px;
-    border: 1px solid #0E4B5E !important;
+    border: 1px solid #1A2B3C !important;
     background: #ffffff !important;
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -703,14 +705,14 @@
 }
 
 .light-theme .counter-controls-v2 button:hover {
-    background: #0E4B5E !important;
+    background: #1A2B3C !important;
     color: #ffffff !important;
-    border-color: #10B981 !important;
+    border-color: #8E24AC !important;
 }
 
 .light-theme .counter-controls-v2 span {
     font-weight: 800;
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
     min-width: 14px;
     text-align: center;
 }
@@ -725,7 +727,7 @@
 .light-theme .flight-class-selector select {
     background: transparent !important;
     border: none !important;
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
     font-weight: 800;
     font-size: 14px;
     cursor: pointer;
@@ -740,8 +742,8 @@
 .light-theme .btn-search-flights-premium {
     width: 100%;
     height: 72px;
-    background: #0E4B5E !important;
-    border: 1px solid rgba(14, 75, 94, 0.2) !important;
+    background: #1A2B3C !important;
+    border: 1px solid rgba(26, 43, 60, 0.2) !important;
     border-radius: 16px;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -754,9 +756,9 @@
 
 .light-theme .btn-search-flights-premium:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(14, 75, 94, 0.15) !important;
-    background: #0a3a4a !important;
-    border-color: #10B981 !important;
+    box-shadow: 0 12px 30px rgba(26, 43, 60, 0.15) !important;
+    background: #253648 !important;
+    border-color: #8E24AC !important;
 }
 
 .light-theme .btn-search-flights-premium span {
@@ -770,7 +772,7 @@
 
 .light-theme .flexible-dates-ribbon-container {
     background: #ffffff !important;
-    border: 1px solid #E0ECEE !important;
+    border: 1px solid #F1F5F9 !important;
     border-radius: 16px !important;
 }
 
@@ -789,19 +791,19 @@
     background: #f1f5f9 !important;
     /* Slightly off-white/gray */
     border: 1px solid #DEE5E7 !important;
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
 }
 
 .light-theme .flex-date-tile-premium.active {
-    background: #EAF4F6 !important;
-    border: 1.5px solid #0E4B5E !important;
-    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.1) !important;
+    background: #F8FAFC !important;
+    border: 1.5px solid #1A2B3C !important;
+    box-shadow: 0 4px 12px rgba(26, 43, 60, 0.1) !important;
 }
 
 .light-theme .flex-day-name,
 .light-theme .flex-day-num,
 .light-theme .flex-month {
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
     font-weight: 800 !important;
 }
 
@@ -812,7 +814,7 @@
 .light-theme .flex-date-tile-premium:hover {
     transform: translateY(-2px);
     background: #ffffff !important;
-    border-color: #0E4B5E !important;
+    border-color: #1A2B3C !important;
 }
 
 /* ============================================================================ 
@@ -829,7 +831,7 @@
     /* Fixed wider width like flex dates */
     background: #f1f5f9 !important;
     border: 1px solid #DEE5E7 !important;
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
     padding: 12px 10px !important;
 }
 
@@ -838,13 +840,13 @@
 }
 
 .light-theme .heatmap-day.requested {
-    background: #EAF4F6 !important;
-    border: 1.5px solid #0E4B5E !important;
+    background: #F8FAFC !important;
+    border: 1.5px solid #1A2B3C !important;
 }
 
 .light-theme .h-day-name,
 .light-theme .h-day-num {
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
 }
 
 .light-theme .h-day-num {
@@ -853,7 +855,7 @@
 }
 
 .light-theme .h-price {
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
     font-weight: 800 !important;
     font-size: 11px !important;
 }
@@ -861,7 +863,7 @@
 .light-theme .heatmap-day:hover {
     transform: translateY(-2px);
     background: #ffffff !important;
-    border-color: #0E4B5E !important;
+    border-color: #1A2B3C !important;
 }
 
 /* ============================================================================ 
@@ -870,12 +872,12 @@
 
 .light-theme .results-header {
     background: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
-    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.05) !important;
+    border: 1px solid #1A2B3C !important;
+    box-shadow: 0 4px 12px rgba(26, 43, 60, 0.05) !important;
 }
 
 .light-theme .results-count {
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
 }
 
 .light-theme .results-filter label,
@@ -887,8 +889,8 @@
 .light-theme .results-filter select,
 .light-theme .results-sort select {
     background: #ffffff !important;
-    border: 1px solid #E0ECEE !important;
-    color: #0E4B5E !important;
+    border: 1px solid #F1F5F9 !important;
+    color: #1A2B3C !important;
     font-weight: 700 !important;
 }
 
@@ -897,9 +899,9 @@
    ============================================================================ */
 
 .light-theme .expand-details-btn {
-    background: #EAF4F6 !important;
-    border: 1px solid #0E4B5E !important;
-    color: #0E4B5E !important;
+    background: #F8FAFC !important;
+    border: 1px solid #1A2B3C !important;
+    color: #1A2B3C !important;
     margin: 0 !important;
     border-radius: 0 0 16px 16px !important;
     padding: 10px !important;
@@ -916,8 +918,8 @@
 
 .light-theme .flight-details-expanded-compact {
     background: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
-    box-shadow: inset 0 2px 10px rgba(14, 75, 94, 0.05) !important;
+    border: 1px solid #1A2B3C !important;
+    box-shadow: inset 0 2px 10px rgba(26, 43, 60, 0.05) !important;
     margin-top: 10px !important;
     border-radius: 12px !important;
     padding: 24px !important;
@@ -929,7 +931,7 @@
 }
 
 .light-theme .detail-box h4 {
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
     font-weight: 900 !important;
 }
 
@@ -944,8 +946,8 @@
 }
 
 .light-theme .slice-title-mini {
-    color: #0E4B5E !important;
-    border-bottom: 2px solid #EAF4F6 !important;
+    color: #1A2B3C !important;
+    border-bottom: 2px solid #F8FAFC !important;
     padding-bottom: 8px !important;
     margin-bottom: 16px !important;
 }
@@ -960,7 +962,7 @@
 }
 
 .light-theme .s-flight-no {
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
 }
 
 .light-theme .s-line {
@@ -974,9 +976,9 @@
 }
 
 .light-theme .amenity-badge {
-    background: #EAF4F6 !important;
-    color: #0E4B5E !important;
-    border: 1px solid #0E4B5E !important;
+    background: #F8FAFC !important;
+    color: #1A2B3C !important;
+    border: 1px solid #1A2B3C !important;
 }
 
 /* ============================================================================ 
@@ -984,15 +986,15 @@
    ============================================================================ */
 
 .light-theme .select-flight-btn {
-    background: #0E4B5E !important;
+    background: #1A2B3C !important;
     color: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
+    border: 1px solid #1A2B3C !important;
 }
 
 .light-theme .select-flight-btn:hover {
     background: #093642 !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(26, 43, 60, 0.3) !important;
 }
 
 /* ============================================================================ 
@@ -1012,20 +1014,20 @@
     min-width: 100px !important;
     max-width: none !important;
     margin: 0 !important;
-    box-shadow: 0 2px 4px rgba(14, 75, 94, 0.05);
+    box-shadow: 0 2px 4px rgba(26, 43, 60, 0.05);
 }
 
 .light-theme .date-carousel-item:hover {
     background: #f8fafc !important;
-    border-color: #0E4B5E !important;
+    border-color: #1A2B3C !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.1) !important;
+    box-shadow: 0 4px 12px rgba(26, 43, 60, 0.1) !important;
 }
 
 .light-theme .date-carousel-item.active {
-    background: #EAF4F6 !important;
-    border: 2px solid #0E4B5E !important;
-    box-shadow: 0 4px 12px rgba(14, 75, 94, 0.15) !important;
+    background: #F8FAFC !important;
+    border: 2px solid #1A2B3C !important;
+    box-shadow: 0 4px 12px rgba(26, 43, 60, 0.15) !important;
 }
 
 .light-theme .carousel-date-day {
@@ -1036,7 +1038,7 @@
 }
 
 .light-theme .carousel-date-full {
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
     font-weight: 800 !important;
     font-size: 1.0rem !important;
 }
@@ -1064,13 +1066,16 @@
 .light-theme .multi-destination-input.premium,
 .light-theme .destination-input-wrapper input,
 .light-theme .smart-input-inline::placeholder {
-    color: #0E4B5E !important; /* Deep Petroleum / Tamno Plava */
+    color: #1A2B3C !important;
+    /* Deep Midnight Blue / Tamno Plava */
 }
 
 .light-theme .destination-chip {
-    background: #E0ECEE !important; /* Light Petroleum bg */
-    border: 1px solid #0E4B5E !important;
-    color: #0E4B5E !important; /* Tamno plava slova u čipu */
+    background: #F1F5F9 !important;
+    /* Light Midnight Blue bg */
+    border: 1px solid #1A2B3C !important;
+    color: #1A2B3C !important;
+    /* Tamno plava slova u čipu */
     padding: 2px 10px !important;
     border-radius: 8px !important;
     font-weight: 700 !important;
@@ -1080,7 +1085,7 @@
 }
 
 .light-theme .chip-remove {
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
     opacity: 0.8 !important;
     display: flex !important;
     align-items: center !important;
@@ -1088,7 +1093,8 @@
 }
 
 .light-theme .chip-remove:hover {
-    color: #10B981 !important; /* Emerald on hover */
+    color: #8E24AC !important;
+    /* Emerald on hover */
     opacity: 1 !important;
 }
 
@@ -1103,28 +1109,293 @@
 /* AUTOCOMPLETE SUGGESTIONS FIX - LIGHT MODE */
 .light-theme .autocomplete-dropdown.premium {
     background: #ffffff !important;
-    border: 1px solid #0E4B5E !important;
-    box-shadow: 0 10px 40px rgba(14, 75, 94, 0.15) !important;
+    border: 1px solid #1A2B3C !important;
+    box-shadow: 0 10px 40px rgba(26, 43, 60, 0.15) !important;
 }
 
 .light-theme .suggestion-name {
-    color: #0E4B5E !important; /* Tamno plava */
+    color: #1A2B3C !important;
+    /* Tamno plava */
     font-weight: 700 !important;
 }
 
 .light-theme .suggestion-meta {
-    color: rgba(14, 75, 94, 0.7) !important; /* Petroleum muted */
+    color: rgba(26, 43, 60, 0.7) !important;
+    /* Midnight Blue muted */
     font-weight: 500 !important;
 }
 
 .light-theme .suggestion-item:hover {
-    background: #f1f8f9 !important; /* Very light petroleum tint */
+    background: #f1f8f9 !important;
+    /* Very light petroleum tint */
 }
 
 .light-theme .suggestion-icon.hotel {
-    color: #10B981 !important; /* Petroleum green/emerald */
+    color: #8E24AC !important;
+    /* Midnight Blue green/emerald */
 }
 
 .light-theme .suggestion-icon.destination {
-    color: #0E4B5E !important;
+    color: #1A2B3C !important;
+}
+
+/* ============================================================================ 
+   IMMERSIVE SEARCH - LIGHT THEME (SOFT PETROLEUM)
+   ============================================================================ */
+.light-theme .immersive-wrapper {
+    background: #F1F5F9 !important;
+    /* Light grayish petroleum tint */
+    color: #1A2B3C !important;
+    border: 1.5px solid #1A2B3C !important;
+    /* Solid brand border */
+    box-shadow: 0 15px 50px rgba(26, 43, 60, 0.1) !important;
+}
+
+.light-theme .immersive-title {
+    background: none !important;
+    -webkit-text-fill-color: #1A2B3C !important;
+    color: #1A2B3C !important;
+    text-shadow: none !important;
+    font-weight: 800 !important;
+}
+
+.light-theme .immersive-tag {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    color: #1A2B3C !important;
+    box-shadow: 0 2px 8px rgba(26, 43, 60, 0.05) !important;
+}
+
+.light-theme .immersive-tag:hover {
+    background: #F1F5F9 !important;
+    border-color: #8E24AC !important;
+    color: #1A2B3C !important;
+    box-shadow: 0 4px 12px rgba(142, 36, 172, 0.2) !important;
+}
+
+.light-theme .immersive-tag.selected {
+    background: linear-gradient(135deg, #1A2B3C 0%, #8E24AC 100%) !important;
+    color: white !important;
+    border-color: transparent !important;
+    box-shadow: 0 8px 25px rgba(142, 36, 172, 0.25) !important;
+}
+
+.light-theme .immersive-tag.search-trigger {
+    background: #FFFFFF !important;
+    border: 1px dashed #1A2B3C !important;
+    color: #1A2B3C !important;
+    opacity: 0.7;
+}
+
+.light-theme .immersive-input-group {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02) !important;
+}
+
+.light-theme .immersive-label {
+    color: #1A2B3C !important;
+    opacity: 0.8;
+}
+
+.light-theme .immersive-date-display {
+    color: #1A2B3C !important;
+    border-bottom-color: #E2E8F0 !important;
+}
+
+.light-theme .immersive-date-display:hover {
+    color: #8E24AC !important;
+    border-bottom-color: #8E24AC !important;
+}
+
+.light-theme .immersive-counter span {
+    color: #8E24AC !important;
+}
+
+.light-theme .immersive-counter button {
+    border-color: #E2E8F0 !important;
+    color: #64748B !important;
+}
+
+.light-theme .immersive-counter button:hover {
+    background: #1A2B3C !important;
+    border-color: #1A2B3C !important;
+    color: #FFFFFF !important;
+}
+
+.light-theme .immersive-filter-tag {
+    background: #F1F5F9 !important;
+    border-color: #E2E8F0 !important;
+    color: #1A2B3C !important;
+}
+
+.light-theme .immersive-filter-tag.selected {
+    background: #8E24AC !important;
+    color: white !important;
+}
+
+.light-theme .immersive-select,
+.light-theme .immersive-input {
+    color: #1A2B3C !important;
+    border-bottom-color: #E2E8F0 !important;
+}
+
+.light-theme .immersive-reset-link {
+    color: #1A2B3C !important;
+    opacity: 1 !important;
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    font-weight: 700 !important;
+}
+
+.light-theme .immersive-reset-link:hover {
+    color: #EF4444 !important;
+    background: #FEF2F2 !important;
+    opacity: 1;
+}
+
+.light-theme .immersive-back-btn.icon-only,
+.light-theme .immersive-next-btn.icon-only {
+    background: #F1F5F9 !important;
+    border: 1px solid #E2E8F0 !important;
+    color: #1A2B3C !important;
+}
+
+.light-theme .immersive-back-btn.icon-only:hover,
+.light-theme .immersive-next-btn.icon-only:hover {
+    border-color: #8E24AC !important;
+    background: #FFFFFF !important;
+}
+
+/* ============================================================================ 
+   NARRATIVE SEARCH - LIGHT THEME (BREATHING LIGHT)
+   ============================================================================ */
+.light-theme .narrative-wrapper {
+    color: #1A2B3C !important;
+}
+
+.light-theme .narrative-container {
+    background: #FFFFFF !important;
+    border: 1px solid rgba(26, 43, 60, 0.15) !important;
+    box-shadow: 0 20px 60px rgba(26, 43, 60, 0.08) !important;
+}
+
+.light-theme .narrative-sentence {
+    color: #1A2B3C !important;
+}
+
+.light-theme .narrative-input {
+    border-bottom-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.light-theme .narrative-input:hover,
+.light-theme .narrative-input.active {
+    border-bottom-color: #8E24AC !important;
+}
+
+.light-theme .narrative-centered-panel {
+    background: #FFFFFF !important;
+    border-color: #8E24AC !important;
+    box-shadow: 0 40px 80px rgba(26, 43, 60, 0.1) !important;
+}
+
+.light-theme .panel-search-box {
+    background: #F8FAFC !important;
+    border-color: #E2E8F0 !important;
+}
+
+.light-theme .panel-search-box input {
+    color: #1A2B3C !important;
+}
+
+.light-theme .panel-close-btn {
+    background: #F1F5F9 !important;
+    color: #64748B !important;
+}
+
+.light-theme .panel-suggestion-item strong {
+    color: #1A2B3C !important;
+}
+
+.light-theme .panel-counter-large button {
+    background: #F1F5F9 !important;
+    border-color: #E2E8F0 !important;
+    color: #1A2B3C !important;
+}
+
+.light-theme .panel-select-btn {
+    background: #F8FAFC !important;
+    border-color: #E2E8F0 !important;
+    color: #1A2B3C !important;
+}
+
+.light-theme .panel-select-btn.active {
+    background: linear-gradient(135deg, #8E24AC, #059669) !important;
+    color: white !important;
+}
+
+.light-theme .panel-room-card {
+    background: #F8FAFC !important;
+    border-color: #E2E8F0 !important;
+}
+
+.light-theme .panel-list-item {
+    background: #F8FAFC !important;
+    color: #1A2B3C !important;
+}
+
+.light-theme .panel-list-item.active {
+    border-color: #8E24AC !important;
+    color: #8E24AC !important;
+}
+
+.light-theme .panel-budget-input input {
+    background: #FFFFFF !important;
+    color: #1A2B3C !important;
+    border-color: #8E24AC !important;
+}
+
+.light-theme .panel-footer {
+    border-top-color: #F1F5F9 !important;
+}
+
+.light-theme .panel-quick-tags button {
+    background: #F1F5F9 !important;
+    border-color: #E2E8F0 !important;
+    color: #64748B !important;
+}
+
+.light-theme .panel-quick-tags button:hover {
+    border-color: #8E24AC !important;
+    color: #8E24AC !important;
+}
+
+/* ============================================================================ 
+   MODE SELECTOR - LIGHT THEME
+   ============================================================================ */
+.light-theme .mode-visibility-toggle {
+    background: #FFFFFF !important;
+    border: 1.5px solid #1A2B3C !important;
+    color: #1A2B3C !important;
+    box-shadow: 0 4px 12px rgba(26, 43, 60, 0.1) !important;
+    font-weight: 800 !important;
+}
+
+.light-theme .mode-toggle-group {
+    background: #FFFFFF !important;
+    border: 1px solid #1A2B3C !important;
+    box-shadow: 0 10px 30px rgba(26, 43, 60, 0.1) !important;
+}
+
+.light-theme .mode-switch-btn {
+    color: #64748B !important;
+}
+
+.light-theme .mode-switch-btn.active {
+    color: white !important;
+}
+
+.light-theme .mode-switch-btn:not(.active):hover {
+    background: #F1F5F9 !important;
+    color: #1A2B3C !important;
 }

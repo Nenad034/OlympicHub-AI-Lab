@@ -3,6 +3,8 @@ import { getCountries, searchDestinations } from '../../../services/solvex/solve
 import { ChevronRight, ArrowLeft, Calendar as CalendarIcon, Users as UsersIcon, Search, ArrowLeftCircle, ArrowRightCircle, RefreshCcw } from 'lucide-react';
 import './ImmersiveSearch.css';
 import { ModernCalendar } from '../../ModernCalendar';
+import { BudgetTypeToggle } from '../../BudgetTypeToggle';
+import { ClickToTravelLogo } from '../../icons/ClickToTravelLogo';
 
 // Define the steps
 type Step = 'country' | 'destination' | 'dates' | 'travelers' | 'experiences' | 'confirm';
@@ -19,7 +21,7 @@ export interface ImmersiveSearchData {
     categories?: string[];
     services?: string[];
     nationality?: string;
-    budget?: { from?: number; to?: number };
+    budget?: { from?: number; to?: number; type?: 'person' | 'total' };
 }
 
 interface ImmersiveSearchProps {
@@ -50,8 +52,16 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
     const [activeRegion, setActiveRegion] = useState<any | null>(null);
 
     // Date & pax state
-    const [checkIn, setCheckIn] = useState<string>('');
-    const [checkOut, setCheckOut] = useState<string>('');
+    const [checkIn, setCheckIn] = useState<string>(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        return d.toISOString().split('T')[0];
+    });
+    const [checkOut, setCheckOut] = useState<string>(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 8);
+        return d.toISOString().split('T')[0];
+    });
     const [nights, setNights] = useState<number>(7);
     const [rooms, setRooms] = useState(1);
     const [roomAllocations, setRoomAllocations] = useState<{ adults: number, children: number, childrenAges: number[] }[]>([
@@ -131,6 +141,7 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
     const [nationality, setNationality] = useState('RS'); // Mandatory
     const [budgetFrom, setBudgetFrom] = useState('');     // Optional
     const [budgetTo, setBudgetTo] = useState('');         // Optional
+    const [budgetType, setBudgetType] = useState<'person' | 'total'>('person');
 
     const [activeCalendar, setActiveCalendar] = useState<'in' | 'out' | null>(null);
 
@@ -267,12 +278,13 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
                 nationality,
                 budget: {
                     from: budgetFrom ? Number(budgetFrom) : undefined,
-                    to: budgetTo ? Number(budgetTo) : undefined
+                    to: budgetTo ? Number(budgetTo) : undefined,
+                    type: budgetType
                 }
             };
             onPartialUpdate(data);
         }
-    }, [selectedDestinations, selectedCountry, checkIn, checkOut, roomAllocations, selectedCategories, selectedServices, nationality, budgetFrom, budgetTo, onPartialUpdate]);
+    }, [selectedDestinations, selectedCountry, checkIn, checkOut, roomAllocations, selectedCategories, selectedServices, nationality, budgetFrom, budgetTo, budgetType, onPartialUpdate]);
 
     const handleFinalSearch = () => {
         // Construct search data
@@ -296,7 +308,8 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
             nationality,
             budget: {
                 from: budgetFrom ? Number(budgetFrom) : undefined,
-                to: budgetTo ? Number(budgetTo) : undefined
+                to: budgetTo ? Number(budgetTo) : undefined,
+                type: budgetType
             }
         };
 
@@ -392,7 +405,7 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
                                 <div
                                     className={`immersive-tag ${selectedDestinations.find(d => d.id === activeRegion.id) ? 'selected' : ''}`}
                                     onClick={() => handleDestinationToggle(activeRegion, true)}
-                                    style={{ borderStyle: 'solid', borderColor: '#00f2fe' }}
+                                    style={{ borderStyle: 'solid', borderColor: '#8E24AC' }}
                                 >
                                     Ceo {activeRegion.name}
                                 </div>
@@ -473,7 +486,7 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
                             </div>
 
                             {checkIn && checkOut && (
-                                <div style={{ textAlign: 'center', color: 'rgba(0, 242, 254, 0.8)', fontSize: '1.1rem', background: 'rgba(0, 242, 254, 0.1)', padding: '0.8rem', borderRadius: '15px' }}>
+                                <div style={{ textAlign: 'center', color: '#8E24AC', fontSize: '1.1rem', background: 'rgba(142, 36, 172, 0.1)', padding: '0.8rem', borderRadius: '15px' }}>
                                     Boravak od <strong>{new Date(checkIn).toLocaleDateString('sr-RS')}</strong> do <strong>{new Date(checkOut).toLocaleDateString('sr-RS')}</strong> ({nights} {nights === 1 ? 'noćenje' : 'noćenja'})
                                 </div>
                             )}
@@ -481,7 +494,18 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
                     </div>
 
                     {activeCalendar && (
-                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 100, background: '#0f172a', padding: '1rem', borderRadius: '20px', boxShadow: '0 0 50px rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            zIndex: 100,
+                            background: 'var(--bg-card)',
+                            padding: '1rem',
+                            borderRadius: '20px',
+                            boxShadow: 'var(--shadow-lg)',
+                            border: 'var(--border-thin)'
+                        }}>
                             <ModernCalendar
                                 startDate={checkIn || null}
                                 endDate={checkOut || null}
@@ -642,7 +666,10 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
                                 </select>
                             </div>
                             <div className="immersive-input-group">
-                                <label className="immersive-label">Budžet (EUR) <span className="opt">(Opciono)</span></label>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                    <label className="immersive-label">Budžet (EUR) <span className="opt">(Opciono)</span></label>
+                                    <BudgetTypeToggle type={budgetType} onChange={setBudgetType} />
+                                </div>
                                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                                     <input
                                         type="number"
@@ -691,8 +718,8 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
                         <button className="immersive-back-btn icon-only" onClick={() => setStep('experiences')}>
                             <ArrowLeftCircle size={36} />
                         </button>
-                        <button className="immersive-next-btn luxury-btn" onClick={handleFinalSearch}>
-                            PRETRAŽI <Search size={20} />
+                        <button className="immersive-next-btn luxury-btn" onClick={handleFinalSearch} style={{ minWidth: '200px', height: '60px' }}>
+                            <ClickToTravelLogo height={58} iconOnly={true} iconScale={2.2} />
                         </button>
                     </div>
                 </div>

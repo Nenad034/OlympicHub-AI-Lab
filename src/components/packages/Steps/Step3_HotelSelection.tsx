@@ -333,24 +333,24 @@ const Step3_HotelSelection: React.FC<Step3Props> = ({
             </div>
 
             <div className="filters-toolbar-v4" style={{
-                background: 'rgba(15, 23, 42, 0.4)',
+                background: 'var(--glass-bg)',
                 backdropFilter: 'blur(20px)',
                 padding: '1rem 2rem',
                 borderRadius: '18px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: 'var(--border-thin)',
                 display: 'flex',
                 gap: '1.5rem',
                 alignItems: 'center',
                 marginBottom: '2rem'
             }}>
                 <div style={{ position: 'relative', flex: 1.5 }}>
-                    <Search size={18} style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+                    <Search size={18} style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                     <input
                         type="text"
                         placeholder="Traži po nazivu..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ width: '100%', height: '52px', background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '0 1.25rem 0 3.5rem', color: 'white', fontSize: '0.9rem' }}
+                        style={{ width: '100%', height: '52px', background: 'var(--bg-input)', border: 'var(--border-thin)', borderRadius: '12px', padding: '0 1.25rem 0 3.5rem', color: 'var(--text-primary)', fontSize: '0.9rem' }}
                     />
                 </div>
 
@@ -358,37 +358,37 @@ const Step3_HotelSelection: React.FC<Step3Props> = ({
                     <select
                         value={selectedStars}
                         onChange={(e) => setSelectedStars(e.target.value)}
-                        style={{ width: '100%', height: '52px', background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '0 1.25rem', color: '#94a3b8', appearance: 'none', fontSize: '0.9rem' }}
+                        style={{ width: '100%', height: '52px', background: 'var(--bg-input)', border: 'var(--border-thin)', borderRadius: '12px', padding: '0 1.25rem', color: 'var(--text-secondary)', appearance: 'none', fontSize: '0.9rem' }}
                     >
                         {CATEGORY_OPTIONS.map(opt => <option key={opt}>{opt}</option>)}
                     </select>
-                    <ChevronDown size={14} style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
+                    <ChevronDown size={14} style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none' }} />
                 </div>
 
                 <div style={{ flex: 1, position: 'relative' }}>
                     <select
                         value={selectedMeal}
                         onChange={(e) => setSelectedMeal(e.target.value)}
-                        style={{ width: '100%', height: '52px', background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '0 1.25rem', color: '#94a3b8', appearance: 'none', fontSize: '0.9rem' }}
+                        style={{ width: '100%', height: '52px', background: 'var(--bg-input)', border: 'var(--border-thin)', borderRadius: '12px', padding: '0 1.25rem', color: 'var(--text-secondary)', appearance: 'none', fontSize: '0.9rem' }}
                     >
                         {SERVICE_OPTIONS.map(opt => <option key={opt}>{opt}</option>)}
                     </select>
-                    <ChevronDown size={14} style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
+                    <ChevronDown size={14} style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none' }} />
                 </div>
 
-                <div style={{ display: 'flex', background: '#0f172a', padding: '4px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                    <button onClick={() => setViewMode('grid')} style={{ width: '44px', height: '44px', borderRadius: '10px', background: viewMode === 'grid' ? '#6366f1' : 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}><LayoutGrid size={20} /></button>
-                    <button onClick={() => setViewMode('list')} style={{ width: '44px', height: '44px', borderRadius: '10px', background: viewMode === 'list' ? '#6366f1' : 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}><ListIcon size={20} /></button>
+                <div style={{ display: 'flex', background: 'var(--bg-input)', padding: '4px', borderRadius: '12px', border: 'var(--border-thin)' }}>
+                    <button onClick={() => setViewMode('grid')} style={{ width: '44px', height: '44px', borderRadius: '10px', background: viewMode === 'grid' ? 'var(--accent)' : 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}><LayoutGrid size={20} /></button>
+                    <button onClick={() => setViewMode('list')} style={{ width: '44px', height: '44px', borderRadius: '10px', background: viewMode === 'list' ? 'var(--accent)' : 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}><ListIcon size={20} /></button>
                 </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', padding: '0 0.5rem' }}>
-                <div style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    REZULTATA: <span style={{ color: 'white' }}>{filteredResults.length}</span>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    REZULTATA: <span style={{ color: 'var(--text-primary)' }}>{filteredResults.length}</span>
                 </div>
-                <div style={{ display: 'flex', background: 'rgba(15, 23, 42, 0.4)', padding: '4px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                    <button onClick={() => setSortBy('smart')} style={{ padding: '0 1.5rem', height: '36px', borderRadius: '8px', background: sortBy === 'smart' ? '#6366f1' : 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>Smart</button>
-                    <button onClick={() => setSortBy('price')} style={{ padding: '0 1.5rem', height: '36px', borderRadius: '8px', background: sortBy === 'price' ? '#6366f1' : 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>Cena &uarr;&darr;</button>
+                <div style={{ display: 'flex', background: 'var(--bg-input)', padding: '4px', borderRadius: '12px', border: 'var(--border-thin)' }}>
+                    <button onClick={() => setSortBy('smart')} style={{ padding: '0 1.5rem', height: '36px', borderRadius: '8px', background: sortBy === 'smart' ? 'var(--accent)' : 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>Smart</button>
+                    <button onClick={() => setSortBy('price')} style={{ padding: '0 1.5rem', height: '36px', borderRadius: '8px', background: sortBy === 'price' ? 'var(--accent)' : 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>Cena &uarr;&darr;</button>
                 </div>
             </div>
 
@@ -403,7 +403,7 @@ const Step3_HotelSelection: React.FC<Step3Props> = ({
                         const isSelected = selectedHotels[activeDestIndex]?.hotel.id === hotel.id;
                         return (
                             <div key={hotel.id} className={`hotel-result-card-premium ${isSelected ? 'selected-border' : ''}`}
-                                style={{ background: '#0f172a', borderRadius: '20px', border: '1px solid rgba(255, 255, 255, 0.08)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '420px', transition: 'all 0.3s ease', cursor: 'pointer', position: 'relative' }}
+                                style={{ background: 'var(--bg-card)', borderRadius: '20px', border: 'var(--border-thin)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '420px', transition: 'all 0.3s ease', cursor: 'pointer', position: 'relative' }}
                                 onClick={() => handleSelectHotel(hotel)}>
                                 <div style={{ height: '200px', width: '100%', position: 'relative', overflow: 'hidden' }}>
                                     <img src={hotel.image} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -412,18 +412,18 @@ const Step3_HotelSelection: React.FC<Step3Props> = ({
                                         {Array(hotel.stars).fill(0).map((_, i) => (<Star key={i} size={10} fill="#fbbf24" color="#fbbf24" />))}
                                     </div>
                                     {isSelected && (
-                                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(99, 102, 241, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <div style={{ background: 'white', color: '#6366f1', padding: '6px 16px', borderRadius: '8px', fontWeight: 900, fontSize: '10px', textTransform: 'uppercase' }}>IZABRAN SMEŠTAJ</div>
+                                        <div style={{ position: 'absolute', inset: 0, background: 'var(--accent-glow)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <div style={{ background: 'white', color: 'var(--accent)', padding: '6px 16px', borderRadius: '8px', fontWeight: 900, fontSize: '10px', textTransform: 'uppercase' }}>IZABRAN SMEŠTAJ</div>
                                         </div>
                                     )}
                                 </div>
                                 <div style={{ padding: '1.25rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                    <h4 style={{ fontSize: '1rem', fontWeight: 900, color: 'white', marginBottom: '0.5rem', lineHeight: 1.2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{hotel.name}</h4>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '11px', fontWeight: 700, marginBottom: '0.4rem' }}><MapPin size={12} style={{ color: '#818cf8' }} /> {hotel.location}</div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '11px', fontWeight: 700 }}><Calendar size={12} style={{ color: '#818cf8' }} /> {formatDateRange(currentDest?.checkIn || '', currentDest?.checkOut || '')}</div>
+                                    <h4 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-primary)', marginBottom: '0.5rem', lineHeight: 1.2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{hotel.name}</h4>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '11px', fontWeight: 700, marginBottom: '0.4rem' }}><MapPin size={12} style={{ color: 'var(--accent)' }} /> {hotel.location}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '11px', fontWeight: 700 }}><Calendar size={12} style={{ color: 'var(--accent)' }} /> {formatDateRange(currentDest?.checkIn || '', currentDest?.checkOut || '')}</div>
                                     <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                                         <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#fbbf24', letterSpacing: '-1px' }}>{Math.round(hotel.price)}€</div>
-                                        <button style={{ background: '#6366f1', border: 'none', borderRadius: '10px', padding: '8px 14px', color: 'white', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)' }}>
+                                        <button style={{ background: 'var(--accent)', border: 'none', borderRadius: '10px', padding: '8px 14px', color: 'white', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', boxShadow: '0 4px 12px var(--accent-glow)' }}>
                                             Detalji ponude <ArrowRight size={12} />
                                         </button>
                                     </div>

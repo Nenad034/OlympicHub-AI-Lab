@@ -4,7 +4,9 @@ import { createPortal } from 'react-dom';
 import { ModernCalendar } from '../../../components/ModernCalendar';
 import { formatDate } from '../../../utils/dateUtils';
 import type { BasicInfoData, DestinationInput, TravelerCount } from '../../../types/packageSearch.types';
-import { X, Search, Users, Baby } from 'lucide-react';
+import { Plus, X, Calendar as CalendarIcon, Users, MapPin, Search, ChevronDown, DollarSign, Star, Sliders, Globe } from 'lucide-react';
+import { ClickToTravelLogo } from '../../icons/ClickToTravelLogo';
+import { BudgetTypeToggle } from '../../BudgetTypeToggle';
 import solvexDictionaryService from '../../../services/solvex/solvexDictionaryService';
 
 interface NarrativeSearchProps {
@@ -74,6 +76,7 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
     const [nationality, setNationality] = useState(basicInfo?.nationality || 'RS');
     const [budgetFrom, setBudgetFrom] = useState<string>(basicInfo?.budgetFrom?.toString() || '');
     const [budgetTo, setBudgetTo] = useState<string>(basicInfo?.budgetTo?.toString() || '');
+    const [budgetType, setBudgetType] = useState<'person' | 'total'>('person');
 
     const [activeCountryTag, setActiveCountryTag] = useState<string | null>(null);
 
@@ -119,6 +122,7 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
             roomAllocations: roomAllocations,
             budgetFrom: budgetFrom ? Number(budgetFrom) : undefined,
             budgetTo: budgetTo ? Number(budgetTo) : undefined,
+            budgetType: budgetType,
             nationality: nationality,
             currency: 'EUR',
             startDate: checkIn,
@@ -127,7 +131,7 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
         };
 
         onUpdate(newData);
-    }, [destination, selectedDestination, checkIn, checkOut, nights, roomAllocations, selectedCategories, selectedServices, nationality, budgetFrom, budgetTo]);
+    }, [destination, selectedDestination, checkIn, checkOut, nights, roomAllocations, selectedCategories, selectedServices, nationality, budgetFrom, budgetTo, budgetType]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -436,7 +440,10 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
 
                         {activeField === 'budget' && (
                             <div className="panel-content">
-                                <h3>Vaš maksimalni budžet</h3>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <h3 style={{ margin: 0 }}>Vaš maksimalni budžet</h3>
+                                    <BudgetTypeToggle type={budgetType} onChange={setBudgetType} />
+                                </div>
                                 <div className="panel-budget-input">
                                     <input type="number" placeholder="npr. 1500" value={budgetTo} onChange={(e) => setBudgetTo(e.target.value)} />
                                     <span>EUR</span>
@@ -457,6 +464,7 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
 
                 <div className="narrative-footer">
                     <button className="narrative-action-btn" onClick={() => {
+                        // ... existing logic ...
                         const standardDest: DestinationInput = {
                             id: selectedDestination?.id || 'narrative-1',
                             city: selectedDestination?.name || destination,
@@ -486,8 +494,8 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
                             totalDays: nights
                         };
                         onNext(newData);
-                    }}>
-                        PRONAĐI MOJE PUTOVANJE <Search size={20} style={{ marginLeft: '10px' }} />
+                    }} style={{ height: '70px', minWidth: '250px' }}>
+                        <ClickToTravelLogo height={55} iconOnly={true} iconScale={2.2} />
                     </button>
                 </div>
             </div>

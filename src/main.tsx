@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './classic_index.css'
+import './modern_index.css'
 import App from './App.tsx'
 import { ConfigProvider } from './context/ConfigContext'
 import ErrorBoundary from './components/ErrorBoundary'

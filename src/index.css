@@ -1,68 +1,76 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Slate (Dark Theme) - Primary */
-  --bg-dark: #1E293B;
-  /* Slate 800 - Lighter blue instead of black */
-  --bg-sidebar: #0F172A;
-  /* Slate 900 - Darker sidebar for depth */
-  --bg-card: #334155;
-  /* Slate 700 - Lighter card to pop against bg-dark */
-  --bg-panel: #334155;
-  --bg-surface: #475569;
-  --bg-input: #1E293B;
-  --accent: #60A5FA;
-  --accent-glow: rgba(96, 165, 250, 0.15);
-  --text-primary: #F1F5F9;
-  --text-secondary: #94A3B8;
-  --border: #334155;
-  --glass-bg: rgba(30, 41, 59, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --bg-card-hover: #475569;
-  --panel-radius: 20px;
-  --gradient-blue: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-  --gradient-green: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  --gradient-purple: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
-  --gradient-orange: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  /* Brand Colors - Midnight Blue (Dark Theme Default) */
+  --bg-dark: #1A2B3C;
+  --bg-sidebar: #152230;
+  --bg-card: #1E2E3E;
+  --bg-panel: #1E2E3E;
+  --bg-surface: #253648;
+  --bg-input: #152230;
+
+  --accent: #8E24AC;
+  /* Electric Purple */
+  --accent-glow: rgba(142, 36, 172, 0.2);
+
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0BEC5;
+  /* Silver Slate */
+
+  --border: #2A3B4C;
+  --border-brand: #B0BEC5;
+  --border-thin: 0.5px solid #B0BEC5;
+
+  --glass-bg: rgba(26, 43, 60, 0.8);
+  --glass-border: rgba(176, 190, 197, 0.1);
+  --bg-card-hover: #253648;
+
+  --panel-radius: 12px;
+  --gradient-brand: linear-gradient(135deg, #8E24AC 0%, #6A1B9A 100%);
 }
 
 .light-theme {
-  /* Pearl (Light Theme) */
-  --bg-dark: #F0F9FF;
-  /* Sky 50 - Very light blue background instead of white/gray */
+  /* Light Theme Branding */
+  --bg-dark: #F8FAFC;
   --bg-sidebar: #FFFFFF;
   --bg-card: #FFFFFF;
   --bg-panel: #FFFFFF;
-  --bg-surface: #F8FAFC;
+  --bg-surface: #F1F5F9;
   --bg-input: #FFFFFF;
-  --accent: #3B82F6;
-  --accent-glow: rgba(59, 130, 246, 0.1);
-  --text-primary: #1E293B;
-  --text-secondary: #64748B;
-  --border: #E2E8F0;
-  --glass-bg: rgba(255, 255, 255, 0.82);
-  --glass-border: rgba(15, 23, 42, 0.1);
+
+  --accent: #8E24AC;
+  /* Electric Purple as touch of attention */
+  --accent-glow: rgba(142, 36, 172, 0.1);
+
+  --text-primary: #1A2B3C;
+  /* Midnight Blue for authority */
+  --text-secondary: #546E7A;
+
+  --border: #B0BEC5;
+  --border-thin: 0.5px solid #B0BEC5;
+  /* Silver Slate - Sharp thin lines */
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(176, 190, 197, 0.3);
   --bg-card-hover: #F8FAFC;
-  --gradient-blue: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-  --gradient-green: linear-gradient(135deg, #10B981 0%, #059669 100%);
 }
 
 .navy-theme {
-  /* Ensure navy-theme maps to our improved Slate Dark */
-  --bg-dark: #1E293B;
-  --bg-sidebar: #0F172A;
-  --bg-card: #334155;
-  --bg-panel: #334155;
-  --bg-surface: #475569;
-  --bg-input: #1E293B;
-  --accent: #60A5FA;
-  --accent-glow: rgba(96, 165, 250, 0.15);
-  --text-primary: #F1F5F9;
-  --text-secondary: #94A3B8;
-  --border: #334155;
-  --glass-bg: rgba(30, 41, 59, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --bg-card-hover: #475569;
+  /* Navy Theme - Brand Midnight Blue */
+  --bg-dark: #1A2B3C;
+  --bg-sidebar: #152230;
+  --bg-card: #1E2E3E;
+  --bg-panel: #1E2E3E;
+  --bg-surface: #253648;
+  --bg-input: #152230;
+  --accent: #8E24AC;
+  --accent-glow: rgba(142, 36, 172, 0.2);
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0BEC5;
+  --border: #2A3B4C;
+  --border-thin: 0.5px solid #B0BEC5;
+  --glass-bg: rgba(21, 34, 48, 0.8);
+  --glass-border: rgba(176, 190, 197, 0.1);
+  --bg-card-hover: #213243;
 }
 
 * {
@@ -72,7 +80,7 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: 'Roboto', 'Inter', sans-serif;
   background-color: var(--bg-dark);
   color: var(--text-primary);
   overflow: hidden;
@@ -83,16 +91,20 @@ body {
 h1,
 h2,
 h3,
+h4,
+h5,
+h6,
 .brand-text {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
 }
 
 .hub-container {
   display: flex;
   height: 100vh;
   width: 100vw;
-  background: radial-gradient(circle at top right, rgba(63, 185, 80, 0.05), transparent 40%),
-    radial-gradient(circle at bottom left, rgba(33, 136, 255, 0.05), transparent 40%);
+  background: radial-gradient(circle at top right, rgba(142, 36, 172, 0.05), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(26, 43, 60, 0.05), transparent 40%);
 }
 
 /* Sidebar Styling */
@@ -107,8 +119,9 @@ h3,
 }
 
 .sidebar-header {
-  height: 320px;
-  padding: 0 24px;
+  height: auto;
+  min-height: 80px;
+  padding: 24px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -191,7 +204,7 @@ h3,
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--gradient-purple);
+  background: var(--gradient-brand);
 }
 
 /* Dashboard Grid */
@@ -227,8 +240,8 @@ h3,
 
 .app-card:hover {
   transform: translateY(-8px);
-  border-color: var(--glass-border);
-  background: rgba(30, 35, 43, 0.8);
+  border-color: var(--accent);
+  background: var(--bg-card-hover);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
@@ -314,51 +327,6 @@ h3,
 .b2b-nav-group .nav-label,
 .b2b-nav-group .nav-item span,
 .b2b-nav-group .nav-item svg {
-  color: #ffffff !important;
-  /* White in dark mode */
-  stroke: #ffffff !important;
-  /* For lucide icons */
-}
-
-.light-theme .brand-text,
-.light-theme .logo-olympic h1,
-.light-theme .logo-text h1,
-.light-theme .logo-icon,
-.light-theme .b2b-nav-group .nav-label,
-.light-theme .b2b-nav-group .nav-item span,
-.light-theme .b2b-nav-group .nav-item svg,
-.tokyo-light-theme .brand-text,
-.tokyo-light-theme .logo-olympic h1,
-.tokyo-light-theme .logo-text h1,
-.tokyo-light-theme .logo-icon,
-.tokyo-light-theme .b2b-nav-group .nav-label,
-.tokyo-light-theme .b2b-nav-group .nav-item span,
-.tokyo-light-theme .b2b-nav-group .nav-item svg {
-  color: #800020 !important;
-  /* Bordo color in light mode */
-  stroke: #800020 !important;
-  /* For lucide icons */
-}
-
-/* Force override even in Prism/Sarena mode for branding */
-.prism-mode .brand-text,
-.prism-mode .logo-olympic h1,
-.prism-mode .logo-text h1,
-.prism-mode .logo-icon,
-.prism-mode .b2b-nav-group .nav-label,
-.prism-mode .b2b-nav-group .nav-item span,
-.prism-mode .b2b-nav-group .nav-item svg {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
-}
-
-.light-theme.prism-mode .brand-text,
-.light-theme.prism-mode .logo-olympic h1,
-.light-theme.prism-mode .logo-text h1,
-.light-theme.prism-mode .logo-icon,
-.light-theme.prism-mode .b2b-nav-group .nav-label,
-.light-theme.prism-mode .b2b-nav-group .nav-item span,
-.light-theme.prism-mode .b2b-nav-group .nav-item svg {
-  color: #800020 !important;
-  stroke: #800020 !important;
+  color: var(--text-primary) !important;
+  stroke: var(--text-primary) !important;
 }

@@ -26,6 +26,7 @@ import Step4_TransferSelection from '../components/packages/Steps/Step4_Transfer
 import Step5_ExtrasSelection from '../components/packages/Steps/Step5_ExtrasSelection';
 import Step6_ReviewConfirm from '../components/packages/Steps/Step6_ReviewConfirm';
 import { dynamicPackageService } from '../services/dynamicPackageService';
+import { useThemeStore } from '../stores';
 
 const WIZARD_STEPS: WizardStep[] = [
     { id: 1, name: 'basic-info', title: 'Destinacije', description: 'Plan i putnici', isComplete: false, isActive: true },
@@ -142,6 +143,8 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
         }
     };
 
+    const { theme } = useThemeStore();
+
     return (
         <div className="package-search-page">
             {/* 1. PREMIUM HEADER REMOVED */}
@@ -184,19 +187,71 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
             {/* 4. FLOATING FOOTER NAV */}
             <div id="floating-wizard-nav" className="wizard-navigation ss-floating-nav">
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
-                    <button className="nav-btn secondary ss-glow-muted" style={{ minWidth: '180px', height: '56px', fontSize: '12px', fontWeight: 900 }} onClick={goBack} disabled={currentStep === 1}>
+                    <button
+                        className="nav-btn secondary ss-glow-muted"
+                        style={{
+                            minWidth: '180px',
+                            height: '56px',
+                            fontSize: '12px',
+                            fontWeight: 900,
+                            background: 'var(--bg-input)',
+                            border: 'var(--border-thin)',
+                            color: 'var(--text-secondary)'
+                        }}
+                        onClick={goBack}
+                        disabled={currentStep === 1}
+                    >
                         <ChevronLeft size={20} /> NAZAD
                     </button>
                 </div>
 
-                <div className="total-display-middle" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(14, 75, 94, 0.4)', borderRadius: '12px', padding: '0 20px', margin: '0 10px', height: '56px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <div style={{ fontSize: '9px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', lineHeight: 1, marginBottom: '2px' }}>Trenutni Total</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'white', letterSpacing: '-1px', lineHeight: 1 }}>{totalPrice.toFixed(2)}€</div>
+                <div className="total-display-middle" style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'var(--accent-glow)',
+                    borderRadius: '12px',
+                    padding: '0 20px',
+                    margin: '0 10px',
+                    height: '56px',
+                    border: 'var(--border-thin)'
+                }}>
+                    <div style={{
+                        fontSize: '9px',
+                        fontWeight: 900,
+                        color: 'var(--text-secondary)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                        lineHeight: 1,
+                        marginBottom: '2px'
+                    }}>Trenutni Total</div>
+                    <div style={{
+                        fontSize: '1.5rem',
+                        fontWeight: 900,
+                        color: 'var(--text-primary)',
+                        letterSpacing: '-1px',
+                        lineHeight: 1
+                    }}>{totalPrice.toFixed(2)}€</div>
                 </div>
 
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
                     {currentStep < 6 ? (
-                        <button className="nav-btn primary" style={{ minWidth: '240px', height: '56px', fontSize: '13px', fontWeight: 900, background: '#0E4B5E', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} onClick={goNext}>
+                        <button
+                            className="nav-btn primary"
+                            style={{
+                                minWidth: '240px',
+                                height: '56px',
+                                fontSize: '13px',
+                                fontWeight: 900,
+                                background: 'var(--accent)',
+                                border: 'none',
+                                color: 'white',
+                                boxShadow: '0 10px 25px var(--accent-glow)'
+                            }}
+                            onClick={goNext}
+                        >
                             SLEDEĆI KORAK <ChevronRight size={20} />
                         </button>
                     ) : (
@@ -210,9 +265,9 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
                                 fontStyle: 'italic',
                                 textTransform: 'uppercase',
                                 letterSpacing: '2px',
-                                background: '#0E4B5E',
-                                boxShadow: '0 10px 30px -5px rgba(14, 75, 94, 0.5)',
-                                border: '1px solid rgba(255,255,255,0.2)',
+                                background: 'var(--accent)',
+                                boxShadow: '0 10px 30px var(--accent-glow)',
+                                border: 'none',
                                 color: 'white'
                             }}
                             onClick={() => navigate('/packages/created')}

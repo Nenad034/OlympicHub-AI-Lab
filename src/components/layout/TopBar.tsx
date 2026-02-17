@@ -48,65 +48,15 @@ const TopBar: React.FC = () => {
     };
 
     const getThemeLabel = () => {
-        return theme === 'navy' ? 'Tamna' : 'Svetla';
+        if (theme === 'navy') return 'Tamna';
+        if (theme === 'light') return 'Svetla';
+        return 'Svetla';
     };
 
     return (
         <div className="top-bar">
-            {/* Dashboard Application Search */}
-            <div style={{ flex: '1', maxWidth: '400px', position: 'relative', marginRight: '24px' }}>
-                <Search
-                    size={16}
-                    color="var(--accent)"
-                    style={{
-                        position: 'absolute',
-                        left: '14px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        opacity: 0.7
-                    }}
-                />
-                <input
-                    type="text"
-                    placeholder="Brza pretraga aplikacija..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{
-                        width: '100%',
-                        padding: '10px 16px 10px 42px',
-                        borderRadius: '10px',
-                        background: 'rgba(255, 255, 255, 0.03)',
-                        border: '1px solid var(--border)',
-                        color: 'var(--text-primary)',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                        outline: 'none',
-                        transition: 'all 0.3s ease',
-                        boxShadow: 'none'
-                    }}
-                />
-                {searchQuery && (
-                    <button
-                        onClick={() => setSearchQuery('')}
-                        style={{
-                            position: 'absolute',
-                            right: '12px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            cursor: 'pointer',
-                            opacity: 0.5,
-                            border: 'none',
-                            background: 'rgba(255,255,255,0.1)',
-                            color: 'var(--text-primary)',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            fontSize: '10px'
-                        }}
-                    >
-                        ESC
-                    </button>
-                )}
-            </div>
+            {/* Removed Search Bar as per user request to move to Dashboard */}
+            <div style={{ flex: '1' }}></div>
             {/* Controls */}
             <div className="top-bar-controls">
                 <button

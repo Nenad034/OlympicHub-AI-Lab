@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ClickToTravelLogo } from '../components/icons/ClickToTravelLogo';
-import './SmartSearchFerrariFix.css';
 import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../stores';
@@ -24,15 +23,16 @@ import { formatDate } from '../utils/dateUtils';
 import PackageSearch from './PackageSearch';
 import FlightSearch from './FlightSearch';
 import { useConfig } from '../context/ConfigContext';
+import { BudgetTypeToggle } from '../components/BudgetTypeToggle';
 import { getProxiedImageUrl } from '../utils/imageProxy';
 import './SmartSearch.css';
 import './SmartSearchFix2.css';
-import './SmartSearchStylesFix.css';
-import './SmartSearchLightMode.css';
 import './SmartSearchRedesign.css';
-import './SmartSearchGridFix.css';
+import './SmartSearchFerrariFix.css';
 import './ModalFixDefinitive.css';
-import './SmartSearchZoom.css';
+import './SmartSearchStylesFix.css';
+import './SmartSearchGridFix.css';
+import './SmartSearchLightMode.css';
 
 /**
  * Constants for filtering
@@ -325,6 +325,10 @@ const SmartSearch: React.FC = () => {
             }
         }
 
+        if (data.budgetType && data.budgetType !== budgetType) {
+            setBudgetType(data.budgetType);
+        }
+
         return {
             destinations: mappedDestinations,
             checkIn: mappedCheckIn,
@@ -351,6 +355,9 @@ const SmartSearch: React.FC = () => {
                 airportCode: ''
             }],
             travelers: roomAllocations[0],
+            budgetFrom: budgetFrom ? Number(budgetFrom) : undefined,
+            budgetTo: budgetTo ? Number(budgetTo) : undefined,
+            budgetType: budgetType,
             nationality: nationality,
             currency: 'EUR',
             startDate: checkIn,
@@ -394,6 +401,9 @@ const SmartSearch: React.FC = () => {
     const [prefetchedResults, setPrefetchedResults] = useState<SmartSearchResult[]>([]);
     const [prefetchKey, setPrefetchKey] = useState<string>('');
     const [isPrefetching, setIsPrefetching] = useState(false);
+    const prefetchKeyRef = useRef<string>('');
+    const backgroundTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const backgroundAbortControllerRef = useRef<AbortController | null>(null);
     const tabId = useRef(Math.random().toString(36).substring(2, 11));
 
     const inputRef = useRef<HTMLInputElement>(null);
@@ -596,6 +606,85 @@ const SmartSearch: React.FC = () => {
         return () => clearTimeout(timer);
     }, [destinationInput, selectedDestinations]); // recentSearches REMOVED from dependency array
 
+    const handleBackgroundSearch = useCallback(async (params: {
+        destinations: Destination[],
+        checkIn: string,
+        checkOut: string,
+        allocations: RoomAllocation[],
+        tab: string,
+        meal: string,
+        nat: string
+    }) => {
+        const { destinations, checkIn, checkOut, allocations, tab, meal, nat } = params;
+
+        // SKIP broad background searches for performance (only search for cities/hotels)
+        const hasBroadSearch = destinations.some(d => d.type === 'country');
+        if (destinations.length === 0 || !checkIn || !checkOut || allocations.filter(r => r.adults > 0).length === 0 || hasBroadSearch) {
+            setPrefetchedResults([]);
+            setPrefetchKey('');
+            prefetchKeyRef.current = '';
+            return;
+        }
+
+        const currentKey = `${destinations.map(d => d.id).sort().join(',')}|${checkIn}|${checkOut}|${JSON.stringify(allocations)}|${tab}|${meal}|${nat}`;
+        if (prefetchKeyRef.current === currentKey) {
+            return;
+        }
+
+        // debounce to avoid spamming multiple expensive searches
+        if (backgroundTimeoutRef.current) clearTimeout(backgroundTimeoutRef.current);
+
+        backgroundTimeoutRef.current = setTimeout(async () => {
+            // Cancel previous active fetch
+            if (backgroundAbortControllerRef.current) {
+                backgroundAbortControllerRef.current.abort();
+            }
+            backgroundAbortControllerRef.current = new AbortController();
+
+            const requestKey = currentKey;
+            prefetchKeyRef.current = currentKey;
+            setPrefetchKey(''); // Ensure handleSearch doesn't use old results while we fetch
+
+            console.log(`[SmartSearch] Starting background pre-fetch...`);
+            setIsPrefetching(true);
+
+            try {
+                // Background search should be fast -> so we skip CRM enrichment in background
+                const results = await performSmartSearch({
+                    searchType: activeTab,
+                    destinations: destinations.map(d => ({
+                        id: String(d.id).replace('solvex-c-', ''),
+                        name: d.name,
+                        type: d.type
+                    })),
+                    checkIn: checkIn,
+                    checkOut: checkOut,
+                    rooms: allocations.filter(r => r.adults > 0),
+                    mealPlan: meal || mealPlan,
+                    currency: 'EUR',
+                    nationality: nat || nationality || 'RS',
+                });
+
+                // Check for abortion or outdated key
+                if (prefetchKeyRef.current === requestKey) {
+                    setPrefetchedResults(results); // Skip getMonthlyReservationCount in background for speed
+                    setPrefetchKey(requestKey);
+                    console.log(`[SmartSearch] Background pre-fetch finished.`);
+                }
+            } catch (error) {
+                if (error instanceof Error && error.name === 'AbortError') {
+                    console.log('[SmartSearch] Background search aborted.');
+                } else {
+                    console.error('Background search prefetch failed:', error);
+                    setPrefetchedResults([]);
+                    prefetchKeyRef.current = '';
+                }
+            } finally {
+                setIsPrefetching(false);
+            }
+        }, 400); // Shorter debounce
+    }, [activeTab, mealPlan, nationality]);
+
     // Trigger background search for Classic and Futuristic modes when state changes
     useEffect(() => {
         if (selectedDestinations.length > 0 && checkIn && checkOut && searchMode !== 'immersive') {
@@ -609,64 +698,22 @@ const SmartSearch: React.FC = () => {
                 nat: nationality
             });
         }
-    }, [selectedDestinations, checkIn, checkOut, roomAllocations, searchMode, activeTab, mealPlan, nationality, budgetFrom, budgetTo]);
+    }, [selectedDestinations, checkIn, checkOut, roomAllocations, searchMode, activeTab, mealPlan, nationality, handleBackgroundSearch]);
 
-    const handleBackgroundSearch = async (params: {
-        destinations: Destination[],
-        checkIn: string,
-        checkOut: string,
-        allocations: RoomAllocation[],
-        tab: string,
-        meal: string,
-        nat: string
-    }) => {
-        const { destinations, checkIn, checkOut, allocations, tab, meal, nat } = params;
-
-        if (destinations.length === 0 || !checkIn || !checkOut || allocations.filter(r => r.adults > 0).length === 0) {
-            setPrefetchedResults([]);
-            setPrefetchKey('');
-            return;
-        }
-
-        const currentKey = `${destinations.map(d => d.id).sort().join(',')}|${checkIn}|${checkOut}|${JSON.stringify(allocations)}|${tab}|${meal}|${nat}|${budgetFrom}|${budgetTo}`;
-        if (prefetchKey === currentKey || isPrefetching) {
-            return;
-        }
-
-        console.log(`[SmartSearch] Starting background pre-fetch for ${tab}...`);
-        setIsPrefetching(true);
-        setPrefetchKey(currentKey);
-
-        try {
-            const results = await performSmartSearch({
-                searchType: activeTab,
-                destinations: destinations.map(d => ({
-                    id: String(d.id).replace('solvex-c-', ''),
-                    name: d.name,
-                    type: d.type
-                })),
-                checkIn: checkIn,
-                checkOut: checkOut,
-                rooms: allocations.filter(r => r.adults > 0),
-                mealPlan,
-                currency: 'EUR',
-                nationality: nationality || 'RS',
+    const handleImmersiveUpdate = useCallback((data: ImmersiveSearchData) => {
+        // Trigger background search when enough data is present
+        if (data.destinations.length > 0 && data.checkIn && data.checkOut) {
+            handleBackgroundSearch({
+                destinations: data.destinations as any,
+                checkIn: data.checkIn,
+                checkOut: data.checkOut,
+                allocations: data.roomAllocations,
+                tab: activeTab,
+                meal: (data.services && data.services.length > 0) ? data.services[0] : mealPlan,
+                nat: data.nationality || nationality
             });
-
-            const resultsWithSales = await Promise.all(results.map(async (h) => {
-                const count = await getMonthlyReservationCount(h.name);
-                return { ...h, salesCount: count };
-            }));
-
-            setPrefetchedResults(resultsWithSales);
-        } catch (error) {
-            console.error('Background search prefetch failed:', error);
-            setPrefetchedResults([]);
-            setPrefetchKey(''); // Clear key on error to allow re-attempt
-        } finally {
-            setIsPrefetching(false);
         }
-    };
+    }, [handleBackgroundSearch, activeTab, mealPlan, nationality]);
 
     const generateFlexDates = (baseDate: string, range: number) => {
         if (!baseDate) return [];
@@ -770,106 +817,8 @@ const SmartSearch: React.FC = () => {
             }
 
             if (resultsWithSales.length === 0 && !overrideParams) {
-                // START SMART SUGGESTIONS LOGIC
-                setIsSearchingSuggestions(true);
-                setAvailabilityTimeline({});
-                // Variables redeclared below
-
-
-                // We try specific offsets to build a small timeline
-                // Fallback Logic: Try current nights, then nights-1, then nights-2 if nothing found
-                const offsets = [1, -1, 2, -2, 3]; // Reduced offsets to avoid rate limits
-                const timeline: Record<string, { available: boolean, price?: number, isCheapest?: boolean, nights?: number }> = {};
-                timeline[activeCheckIn] = { available: false }; // Init original date as unavailable
-
-                let minPriceFound = Infinity;
-                let firstAvailableDate: { in: string, out: string, nights: number } | null = null;
-                let bestDateResults: SmartSearchResult[] = [];
-
-                const durationDiffs = [0, -1, -2]; // Priorities: 7 nights, 6 nights, 5 nights
-
-                for (const dDiff of durationDiffs) {
-                    const testNights = nights + dDiff;
-                    if (testNights < 1) continue;
-
-                    let foundForThisDuration = false;
-
-                    for (const offset of offsets) {
-                        const dIn = new Date(activeCheckIn);
-                        dIn.setDate(dIn.getDate() + offset);
-                        const dOut = new Date(dIn);
-                        dOut.setDate(dOut.getDate() + testNights);
-
-                        const sCheckIn = dIn.toISOString().split('T')[0];
-                        const sCheckOut = dOut.toISOString().split('T')[0];
-
-                        // Don't overwrite existing higher-priority results
-                        if (timeline[sCheckIn]?.available) continue;
-
-                        const flexTestResults = await performSmartSearch({
-                            searchType: activeTab,
-                            destinations: activeDestinations.map(d => ({
-                                id: String(d.id).replace('solvex-c-', ''),
-                                name: d.name,
-                                type: d.type
-                            })),
-                            checkIn: sCheckIn,
-                            checkOut: sCheckOut,
-                            rooms: activeAllocations,
-                            mealPlan,
-                            currency: 'EUR',
-                            nationality: nationality || 'RS',
-                        });
-
-                        if (flexTestResults.length > 0) {
-                            const currentMinPrice = Math.min(...flexTestResults.map(r => getFinalDisplayPrice(r)));
-                            timeline[sCheckIn] = { available: true, price: currentMinPrice, nights: testNights };
-                            foundForThisDuration = true;
-
-                            if (currentMinPrice < minPriceFound) {
-                                minPriceFound = currentMinPrice;
-                                firstAvailableDate = { in: sCheckIn, out: sCheckOut, nights: testNights };
-
-                                const topCandidates = flexTestResults.slice(0, 5);
-                                bestDateResults = await Promise.all(topCandidates.map(async (r) => {
-                                    const count = await getMonthlyReservationCount(r.name);
-                                    return { ...r, salesCount: count };
-                                }));
-                            }
-                        } else {
-                            if (!timeline[sCheckIn]) {
-                                timeline[sCheckIn] = { available: false };
-                            }
-                        }
-                    }
-
-                    // If we found availability for this duration priority, stop looking for shorter durations
-                    if (foundForThisDuration) {
-                        break;
-                    }
-                }
-
-                // Mark the absolute cheapest date in the timeline
-                if (firstAvailableDate) {
-                    timeline[firstAvailableDate.in].isCheapest = true;
-                }
-
-                setAvailabilityTimeline(timeline);
-
-                if (firstAvailableDate) {
-                    setSmartSuggestions({
-                        type: 'flexible_dates',
-                        data: bestDateResults.sort((a, b) => {
-                            const priceDiff = getFinalDisplayPrice(a) - getFinalDisplayPrice(b);
-                            if (Math.abs(priceDiff) < 5) return (b.salesCount || 0) - (a.salesCount || 0);
-                            return priceDiff;
-                        }),
-                        message: `Olimpijski asistent je pronašao dostupnost za ${firstAvailableDate.nights} noći! Najpovoljnija opcija je za termin ${formatDate(firstAvailableDate.in)}.`
-                    });
-                } else {
-                    setSearchError('Nažalost, nema slobodnih mesta ni u proširenom periodu (+/- 5 dana). Pokušajte sa drugim hotelom ili destinacijom.');
-                }
-                setIsSearchingSuggestions(false);
+                // SOLVEX AI ASSISTANT DISABLED - PURE API MODE
+                setSearchError('Nažalost, nema slobodnih mesta za izabrane parametre. Pokušajte sa drugim datumima ili destinacijom.');
             }
         } catch (error) {
             console.error('[SmartSearch] Search error:', error);
@@ -1034,7 +983,7 @@ const SmartSearch: React.FC = () => {
     };
 
     const renderStars = (count: number) => {
-        const goldOld = '#CFB53B'; // Old gold color
+        const goldOld = 'var(--accent)'; // Old gold color
         return (
             <div className="star-rating-filter">
                 {[1, 2, 3, 4, 5].map(i => (
@@ -1051,12 +1000,12 @@ const SmartSearch: React.FC = () => {
     };
 
     const renderStarsMini = (count: number) => {
-        const goldOld = '#fbbf24';
+        const brandPurple = '#8E24AC';
         if (count === 0) return <span style={{ fontSize: '10px' }}>Bez kategorije</span>;
         return (
             <div className="star-row-mini">
                 {[...Array(count)].map((_, i) => (
-                    <Star key={i} size={10} fill={goldOld} color={goldOld} />
+                    <Star key={i} size={10} fill={brandPurple} color={brandPurple} />
                 ))}
             </div>
         );
@@ -1175,7 +1124,7 @@ const SmartSearch: React.FC = () => {
                 </div>
             ) : (
                 <>
-                    <div className="search-layout-container">
+                    <div className="search-layout-container" style={{ width: '100%', maxWidth: '1550px', margin: '0 auto' }}>
                         <main className={`search-main-content ${searchPerformed ? 'results-active' : ''}`}>
 
                             {/* MODE SELECTOR WITH TOGGLE */}
@@ -1186,8 +1135,8 @@ const SmartSearch: React.FC = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '8px',
-                                        background: 'rgba(255, 255, 255, 0.03)',
-                                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                                        background: 'var(--glass-bg)',
+                                        border: 'var(--border-thin)',
                                         color: 'var(--text-secondary)',
                                         padding: '6px 14px',
                                         borderRadius: '20px',
@@ -1207,12 +1156,12 @@ const SmartSearch: React.FC = () => {
                                 {showModes && (
                                     <div className="mode-toggle-group animate-fade-in-up" style={{
                                         display: 'flex',
-                                        background: 'rgba(0, 0, 0, 0.2)',
+                                        background: 'var(--bg-card)',
                                         padding: '5px',
                                         borderRadius: '30px',
-                                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                                        border: 'var(--border-thin)',
                                         backdropFilter: 'blur(20px)',
-                                        boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+                                        boxShadow: 'var(--shadow-lg)'
                                     }}>
                                         <button
                                             className={`mode-switch-btn ${searchMode === 'classic' ? 'active' : ''}`}
@@ -1229,7 +1178,7 @@ const SmartSearch: React.FC = () => {
                                                 cursor: 'pointer',
                                                 transition: 'all 0.3s',
                                                 background: searchMode === 'classic' ? 'var(--accent)' : 'transparent',
-                                                color: searchMode === 'classic' ? '#fff' : 'rgba(255,255,255,0.5)'
+                                                color: searchMode === 'classic' ? '#fff' : 'var(--text-secondary)'
                                             }}
                                         >
                                             <LayoutTemplate size={14} /> Klasična
@@ -1269,7 +1218,7 @@ const SmartSearch: React.FC = () => {
                                                 cursor: 'pointer',
                                                 transition: 'all 0.3s',
                                                 background: searchMode === 'immersive' ? 'var(--accent)' : 'transparent',
-                                                color: searchMode === 'immersive' ? '#fff' : 'rgba(255,255,255,0.5)'
+                                                color: searchMode === 'immersive' ? '#fff' : 'var(--text-secondary)'
                                             }}
                                         >
                                             <Zap size={14} /> Immersive
@@ -1281,20 +1230,7 @@ const SmartSearch: React.FC = () => {
                             {/* IMMERSIVE SEARCH UI */}
                             {searchMode === 'immersive' && !searchPerformed && (
                                 <ImmersiveSearch
-                                    onPartialUpdate={(data: ImmersiveSearchData) => {
-                                        // Trigger background search when enough data is present
-                                        if (data.destinations.length > 0 && data.checkIn && data.checkOut) {
-                                            handleBackgroundSearch({
-                                                destinations: data.destinations as any,
-                                                checkIn: data.checkIn,
-                                                checkOut: data.checkOut,
-                                                allocations: data.roomAllocations,
-                                                tab: activeTab,
-                                                meal: mealPlan,
-                                                nat: nationality
-                                            });
-                                        }
-                                    }}
+                                    onPartialUpdate={handleImmersiveUpdate}
                                     onSearch={(data: ImmersiveSearchData) => {
                                         // Map immersive data to standard format and trigger search
                                         const cin = new Date(data.checkIn);
@@ -1371,7 +1307,7 @@ const SmartSearch: React.FC = () => {
                                     />
                                     {isSearching && (
                                         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
-                                            <Loader2 className="spin-slow" size={40} color="#00f2fe" />
+                                            <Loader2 className="spin-slow" size={40} color="#8E24AC" />
                                         </div>
                                     )}
                                 </div>
@@ -1380,7 +1316,7 @@ const SmartSearch: React.FC = () => {
                             {/* IMMERSIVE SEARCH LOADER */}
                             {searchMode === 'immersive' && isSearching && !searchPerformed && (
                                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
-                                    <Loader2 className="spin-slow" size={40} color="#00f2fe" />
+                                    <Loader2 className="spin-slow" size={40} color="#8E24AC" />
                                 </div>
                             )}
 
@@ -1560,38 +1496,10 @@ const SmartSearch: React.FC = () => {
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                         <DollarSign size={14} /> BUDŽET
                                                     </div>
-                                                    <div className="budget-type-toggle" style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', padding: '2px' }}>
-                                                        <button
-                                                            onClick={() => setBudgetType('person')}
-                                                            style={{
-                                                                padding: '2px 8px',
-                                                                fontSize: '0.65rem',
-                                                                borderRadius: '4px',
-                                                                border: 'none',
-                                                                cursor: 'pointer',
-                                                                background: budgetType === 'person' ? 'var(--accent)' : 'transparent',
-                                                                color: '#fff',
-                                                                transition: 'all 0.2s'
-                                                            }}
-                                                        >
-                                                            PO OSOBI
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setBudgetType('total')}
-                                                            style={{
-                                                                padding: '2px 8px',
-                                                                fontSize: '0.65rem',
-                                                                borderRadius: '4px',
-                                                                border: 'none',
-                                                                cursor: 'pointer',
-                                                                background: budgetType === 'total' ? 'var(--accent)' : 'transparent',
-                                                                color: '#fff',
-                                                                transition: 'all 0.2s'
-                                                            }}
-                                                        >
-                                                            UKUPNO
-                                                        </button>
-                                                    </div>
+                                                    <BudgetTypeToggle
+                                                        type={budgetType}
+                                                        onChange={setBudgetType}
+                                                    />
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
                                                     <input
@@ -1739,12 +1647,15 @@ const SmartSearch: React.FC = () => {
 
                                     {/* SEARCH BUTTONS ROW */}
                                     <div className="action-row-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', marginTop: '10px' }}>
-                                        <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2' }}>
-                                            <span>{isSearching ? 'Pretražujem...' : (
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '160px' }}>
-                                                    <ClickToTravelLogo height={216} showText={false} />
+                                        <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                                            <div style={{ opacity: isSearching ? 0.2 : 1, transition: 'all 0.3s ease' }}>
+                                                <ClickToTravelLogo height={65} iconOnly={true} iconScale={4.4} forceOutline={true} />
+                                            </div>
+                                            {isSearching && (
+                                                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <Loader2 className="spin" size={32} color="#fff" />
                                                 </div>
-                                            )}</span>
+                                            )}
                                         </button>
 
                                         <button className="btn-new-search-tag" onClick={() => { setSearchPerformed(false); setSearchResults([]); setSearchError(null); }}>
@@ -1929,13 +1840,13 @@ const SmartSearch: React.FC = () => {
                                 searchPerformed && (
                                     <div className="content-workflow animate-fade-in" style={{ marginTop: '3rem' }}>
                                         {/* Force Single Row Toolbar */}
-                                        <div className="filters-toolbar-v4 premium" style={{ display: 'flex', flexWrap: 'nowrap', gap: '16px', alignItems: 'center' }}>
-                                            <div className="name-filter-wrapper" style={{ flex: 1, minWidth: '0' }}>
-                                                <Search size={14} className="filter-icon" />
+                                        <div className="filters-toolbar-v4 premium" style={{ display: 'flex', flexWrap: 'nowrap', gap: '16px', alignItems: 'center', background: 'var(--glass-bg)', border: 'var(--border-thin)', borderRadius: '20px', padding: '1.25rem 2rem' }}>
+                                            <div className="name-filter-wrapper" style={{ flex: 1.5, minWidth: '0' }}>
+                                                <Search size={14} className="filter-icon" style={{ color: 'var(--text-secondary)' }} />
                                                 <input
                                                     type="text"
                                                     className="smart-input premium"
-                                                    style={{ width: '100%', paddingLeft: '40px', height: '48px' }}
+                                                    style={{ width: '100%', paddingLeft: '40px', height: '48px', background: 'var(--bg-input)', border: 'var(--border-thin)', color: 'var(--text-primary)', borderRadius: '12px' }}
                                                     placeholder="Traži po hotelu ili destinaciji..."
                                                     value={hotelNameFilter}
                                                     onChange={(e) => setHotelNameFilter(e.target.value)}
@@ -1947,16 +1858,16 @@ const SmartSearch: React.FC = () => {
                                             <div style={{ flex: 1, minWidth: '0' }}>
                                                 <MultiSelectDropdown options={MEAL_PLAN_OPTIONS} selected={selectedMealPlans} onChange={setSelectedMealPlans} placeholder="Usluga" />
                                             </div>
-                                            <div className="view-mode-switcher" style={{ flexShrink: 0 }}>
+                                            <div className="view-mode-switcher" style={{ flexShrink: 0, background: 'var(--bg-input)', border: 'var(--border-thin)', borderRadius: '12px', padding: '4px' }}>
                                                 <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid"><LayoutGrid size={18} /></button>
                                                 <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List"><ListIcon size={18} /></button>
                                                 <button className={`view-btn ${viewMode === 'notepad' ? 'active' : ''}`} onClick={() => setViewMode('notepad')} title="Notepad"><AlignLeft size={18} /></button>
                                             </div>
                                         </div>
 
-                                        <div className="results-summary-bar-v4 premium">
+                                        <div className="results-summary-bar-v4 premium" style={{ background: 'var(--glass-bg)', border: 'var(--border-thin)', borderRadius: '12px', padding: '0.35rem 1.25rem', marginBottom: '0.75rem' }}>
                                             <div className="summary-info" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                                <span>REZULTATA: <strong>{filteredResults.length}</strong></span>
+                                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' }}>REZULTATA: <strong style={{ color: 'var(--accent)', fontSize: '1.2rem', marginLeft: '6px' }}>{filteredResults.length}</strong></span>
                                                 <button
                                                     className="new-search-pill"
                                                     onClick={() => {
@@ -1966,22 +1877,24 @@ const SmartSearch: React.FC = () => {
                                                         setSearchError(null);
                                                         setSmartSuggestions(null);
                                                     }}
+                                                    style={{ background: 'var(--accent-glow)', border: '1px solid var(--accent)', color: 'var(--accent)' }}
                                                 >
                                                     <Sparkles size={14} /> POKRENI NOVU PRETRAGU
                                                 </button>
                                             </div>
-                                            <div className="sort-actions">
-                                                <button className={`view-btn ${sortBy === 'smart' ? 'active' : ''}`} onClick={() => setSortBy('smart')}>Smart</button>
+                                            <div className="sort-actions" style={{ background: 'var(--bg-input)', border: 'var(--border-thin)', borderRadius: '12px', padding: '4px' }}>
+                                                <button className={`view-btn ${sortBy === 'smart' ? 'active' : ''}`} onClick={() => setSortBy('smart')} style={{ background: sortBy === 'smart' ? 'var(--accent)' : 'transparent', color: sortBy === 'smart' ? 'white' : 'var(--text-secondary)' }}>Smart</button>
                                                 <button
                                                     className={`view-btn ${sortBy.startsWith('price') ? 'active' : ''}`}
                                                     onClick={() => setSortBy(sortBy === 'price_low' ? 'price_high' : 'price_low')}
+                                                    style={{ background: sortBy.startsWith('price') ? 'var(--accent)' : 'transparent', color: sortBy.startsWith('price') ? 'white' : 'var(--text-secondary)' }}
                                                 >
                                                     Cena {sortBy === 'price_low' ? '↑' : sortBy === 'price_high' ? '↓' : '↕'}
                                                 </button>
                                             </div>
                                         </div>
 
-                                        <div className={`results-container ${viewMode}-view`}>
+                                        <div className={`results-container ${viewMode}-view`} style={{ width: '100%' }}>
                                             {viewMode === 'notepad' ? (
                                                 <div className="notepad-view-v2 animate-fade-in" style={{ padding: '0', width: '100%' }}>
                                                     {filteredResults.map((hotel, hIdx) => (
@@ -1996,17 +1909,17 @@ const SmartSearch: React.FC = () => {
                                                             {/* Header */}
                                                             <div style={{
                                                                 padding: '1.5rem 2rem',
-                                                                background: 'rgba(255,255,255,0.02)',
+                                                                background: 'var(--glass-bg)',
                                                                 display: 'flex',
                                                                 justifyContent: 'space-between',
                                                                 alignItems: 'center',
-                                                                borderBottom: '1px solid rgba(255,255,255,0.05)'
+                                                                borderBottom: 'var(--border-thin)'
                                                             }}>
                                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                                                                     <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                                         {hotel.name}
-                                                                        <span style={{ display: 'flex', color: '#fbbf24' }}>
-                                                                            {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
+                                                                        <span style={{ display: 'flex', color: 'var(--accent)' }}>
+                                                                            {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={16} fill="#8E24AC" color="#8E24AC" />)}
                                                                         </span>
                                                                     </h3>
                                                                     <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center' }}>
@@ -2014,7 +1927,7 @@ const SmartSearch: React.FC = () => {
                                                                         {hotel.location}
                                                                     </span>
                                                                 </div>
-                                                                <div style={{ color: '#fbbf24', fontSize: '1.1rem', fontWeight: 800, whiteSpace: 'nowrap', fontStyle: 'italic' }}>
+                                                                <div style={{ color: 'var(--accent)', fontSize: '1.1rem', fontWeight: 800, whiteSpace: 'nowrap', fontStyle: 'italic' }}>
                                                                     UKUPNA CENA OD: {formatPrice(getFinalDisplayPrice(hotel))} EUR
                                                                 </div>
                                                             </div>
@@ -2164,14 +2077,14 @@ const SmartSearch: React.FC = () => {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`}>
+                                                <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`} style={{ width: '100%' }}>
                                                     {filteredResults.map(hotel => (
                                                         <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase().replace(/\s+/g, '')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
                                                             <div className="hotel-card-image" onClick={() => navigate('/hotel-view/' + hotel.id)}>
                                                                 <img src={getProxiedImageUrl(hotel.images?.[0]) || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
                                                                 <div className="meal-plan-badge">{getMealPlanDisplayName(hotel.mealPlan)}</div>
                                                                 <div className="hotel-stars-badge">
-                                                                    {Array(Math.floor(Number(hotel.stars || 0))).fill(0).map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
+                                                                    {Array(Math.floor(Number(hotel.stars || 0))).fill(0).map((_, i) => <Star key={i} size={10} fill="#8E24AC" color="#8E24AC" />)}
                                                                 </div>
                                                             </div>
                                                             <div className="hotel-card-content">
@@ -2239,7 +2152,7 @@ const SmartSearch: React.FC = () => {
                                             bottom: 0,
                                             width: '100vw',
                                             height: '100vh',
-                                            background: 'rgba(2, 6, 23, 0.95)',
+                                            background: 'rgba(26, 43, 60, 0.95)',
                                             backdropFilter: 'blur(20px) saturate(180%)',
                                             WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                                             display: 'flex',
@@ -2258,18 +2171,22 @@ const SmartSearch: React.FC = () => {
                                                 margin: 'auto',
                                                 maxHeight: '85vh',
                                                 maxWidth: '1400px',
-                                                width: '95%'
+                                                width: '95%',
+                                                background: 'var(--bg-card)',
+                                                border: 'var(--border-thin)',
+                                                borderRadius: '24px',
+                                                overflow: 'hidden'
                                             }}
                                         >
-                                            <div className="hotel-rooms-modal-header" style={{ padding: '12px 25px', background: '#1e293b' }}>
+                                            <div className="hotel-rooms-modal-header" style={{ padding: '12px 25px', background: 'var(--glass-bg)', borderBottom: 'var(--border-thin)' }}>
                                                 <div className="modal-title-zone">
                                                     <div className="modal-meta" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
                                                         <span style={{ color: 'white', marginRight: '15px' }}>{expandedHotel.name.toUpperCase()}</span>
-                                                        <div style={{ marginRight: '15px', display: 'flex', gap: '2px', color: '#fbbf24' }}>
+                                                        <div style={{ marginRight: '15px', display: 'flex', gap: '2px', color: 'var(--accent)' }}>
                                                             {Array(expandedHotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
                                                         </div>
                                                         <MapPin size={14} /> {expandedHotel.location}
-                                                        <span style={{ marginLeft: '20px', color: '#fbbf24', fontWeight: 800 }}>
+                                                        <span style={{ marginLeft: '20px', color: 'var(--accent)', fontWeight: 800 }}>
                                                             Ukupna cena od: {formatPrice(getFinalDisplayPrice(expandedHotel))} {expandedHotel.currency}
                                                         </span>
                                                     </div>

@@ -15,7 +15,7 @@ import {
     DollarSign,
     RefreshCcw
 } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { GeometricBrain } from '../icons/GeometricBrain';
 import { ClickToTravelLogo } from '../icons/ClickToTravelLogo';
 import { useThemeStore, useAppStore, useAuthStore } from '../../stores';
@@ -35,9 +35,9 @@ const Sidebar: React.FC = () => {
         <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
             <div className="sidebar-header">
                 {/* Logo wrapper now follows header flex/padding constraints */}
-                <div className="sidebar-logo-container">
+                <Link to="/" className="sidebar-logo-container" style={{ display: 'block', textDecoration: 'none' }}>
                     <ClickToTravelLogo height={isSidebarCollapsed ? 128 : 288} showText={!isSidebarCollapsed} />
-                </div>
+                </Link>
             </div>
 
             <button className="collapse-toggle" onClick={toggleSidebar}>

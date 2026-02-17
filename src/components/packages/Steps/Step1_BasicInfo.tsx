@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ClickToTravelLogo } from '../../icons/ClickToTravelLogo';
+import { BudgetTypeToggle } from '../../BudgetTypeToggle';
 import { createPortal } from 'react-dom';
 import {
     MapPin, Calendar, Users, Star,
@@ -107,6 +108,7 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
 
     const [budgetFrom, setBudgetFrom] = useState(basicInfo?.budgetFrom?.toString() || '');
     const [budgetTo, setBudgetTo] = useState(basicInfo?.budgetTo?.toString() || '');
+    const [budgetType, setBudgetType] = useState<'person' | 'total'>('person');
     const [nationality, setNationality] = useState(basicInfo?.nationality || 'RS');
     const [showNationalityPicker, setShowNationalityPicker] = useState<number | null>(null);
 
@@ -125,13 +127,14 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
             budget: budgetTo ? Number(budgetTo) : basicInfo?.budget,
             budgetFrom: budgetFrom ? Number(budgetFrom) : undefined,
             budgetTo: budgetTo ? Number(budgetTo) : undefined,
+            budgetType: budgetType,
             nationality: nationality,
             currency: basicInfo?.currency || 'EUR',
             startDate: destinations[0]?.checkIn || '',
             endDate: destinations[destinations.length - 1]?.checkOut || '',
             totalDays: destinations.reduce((sum, d) => sum + (d.nights || 0), 0)
         });
-    }, [destinations, roomAllocations, budgetFrom, budgetTo, nationality]);
+    }, [destinations, roomAllocations, budgetFrom, budgetTo, budgetType, nationality]);
 
     const addDestination = () => {
         if (destinations.length >= 3) return;
@@ -255,8 +258,8 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
                         {/* Nights */}
                         <div className="param-item">
                             <div className="field-label"><Star size={14} /> Noći</div>
-                            <div className="input-box" style={{ justifyContent: 'center', background: 'rgba(16, 185, 129, 0.1)', borderColor: '#10B981' }}>
-                                <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#10B981' }}>{dest.nights || 0}</span>
+                            <div className="input-box nights-box-ss">
+                                <span className="nights-count-val">{dest.nights || 0}</span>
                             </div>
                         </div>
 
@@ -347,7 +350,7 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
                                             setRoomAllocations(newAlloc);
                                         }}
                                     >−</button>
-                                    <span className="flight-counter-val" style={{ color: 'white' }}>{roomAllocations[activeRoomTab].adults}</span>
+                                    <span className="flight-counter-val">{roomAllocations[activeRoomTab].adults}</span>
                                     <button
                                         onClick={() => {
                                             const newAlloc = [...roomAllocations];
@@ -372,7 +375,7 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
                                             }
                                         }}
                                     >−</button>
-                                    <span className="flight-counter-val" style={{ color: 'white' }}>{roomAllocations[activeRoomTab].children}</span>
+                                    <span className="flight-counter-val">{roomAllocations[activeRoomTab].children}</span>
                                     <button
                                         onClick={() => {
                                             if (roomAllocations[activeRoomTab].children < 4) {
@@ -411,21 +414,12 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
                             {/* Flexibility */}
                             <div className="flight-counter-group-v2" style={{ marginLeft: 'auto' }}>
                                 <span className="counter-label" style={{ marginRight: '10px' }}>FLEXIBILNOST</span>
-                                <div className="flex-toggle-group" style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '10px' }}>
+                                <div className="flex-toggle-group">
                                     {[0, 1, 3, 5].map(day => (
                                         <button
                                             key={day}
                                             onClick={() => updateDestination(idx, 'flexibleDays', day)}
-                                            style={{
-                                                padding: '8px 12px',
-                                                borderRadius: '8px',
-                                                fontSize: '11px',
-                                                fontWeight: 700,
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                background: (dest.flexibleDays || 0) === day ? '#0E4B5E' : 'transparent',
-                                                color: (dest.flexibleDays || 0) === day ? 'white' : 'var(--text-secondary)'
-                                            }}
+                                            className={`flex-day-btn ${(dest.flexibleDays || 0) === day ? 'active' : ''}`}
                                         >
                                             {day === 0 ? 'Tačno' : `±${day}`}
                                         </button>
@@ -461,7 +455,12 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
 
                         {/* Budget */}
                         <div style={{ flex: 1.5 }}>
-                            <div className="field-label"><DollarSign size={14} /> Budžet (opciono)</div>
+                            <div className="field-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <DollarSign size={14} /> Budžet (opciono)
+                                </div>
+                                <BudgetTypeToggle type={budgetType} onChange={setBudgetType} />
+                            </div>
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 <input
                                     type="number"
@@ -497,8 +496,8 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
             )}
 
             {/* Search Button */}
-            <button onClick={onNext} style={{ width: '100%', padding: '1.25rem', background: 'var(--ss-gradient)', border: 'none', borderRadius: '12px', color: 'white', fontSize: '1.2rem', fontWeight: 'bold', fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ClickToTravelLogo height={36} showText={false} />
+            <button onClick={onNext} style={{ width: '100%', height: '80px', background: 'var(--ss-gradient)', border: 'none', borderRadius: '12px', color: 'white', fontSize: '1.2rem', fontWeight: 'bold', fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ClickToTravelLogo height={60} iconOnly={true} iconScale={2.2} />
             </button>
 
             {activeCalendar !== null && createPortal(

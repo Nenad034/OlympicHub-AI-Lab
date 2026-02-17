@@ -133,14 +133,14 @@
 
 /* Selected States */
 .calendar-day.selected {
-    background: #4f46e5 !important;
+    background: #8E24AC !important;
     color: white !important;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+    box-shadow: 0 4px 12px rgba(142, 36, 172, 0.4);
 }
 
 .calendar-day.in-range {
-    background: rgba(79, 70, 229, 0.15) !important;
-    color: #818cf8 !important;
+    background: rgba(142, 36, 172, 0.15) !important;
+    color: #ce93d8 !important;
     border-radius: 0;
 }
 

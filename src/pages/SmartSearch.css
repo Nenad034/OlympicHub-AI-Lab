@@ -49,16 +49,16 @@
 /* Specific Active Colors/Glows */
 .mode-switch-btn:nth-child(2).active {
     /* Futuristic */
-    color: #00f2fe;
-    background: rgba(0, 242, 254, 0.1);
-    border-color: rgba(0, 242, 254, 0.3);
+    color: #8E24AC;
+    background: rgba(142, 36, 172, 0.1);
+    border-color: rgba(142, 36, 172, 0.3);
 }
 
 .mode-switch-btn:nth-child(3).active {
     /* Immersive */
-    color: #fbbf24;
-    background: rgba(251, 191, 36, 0.1);
-    border-color: rgba(251, 191, 36, 0.3);
+    color: var(--accent);
+    background: rgba(142, 36, 172, 0.1);
+    border-color: rgba(142, 36, 172, 0.3);
 }
 
 /* Responsive adjust */
