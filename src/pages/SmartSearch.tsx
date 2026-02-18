@@ -8,10 +8,12 @@ import {
     MapPin, Calendar, CalendarDays, Users, UtensilsCrossed, Star,
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
     LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
-    CheckCircle2, CheckCircle, XCircle, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
-    Plus, Globe, AlignLeft, Mountain, DollarSign
+    CheckCircle2, CheckCircle, XCircle, RefreshCw, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
+    Plus, Globe, AlignLeft, Mountain, DollarSign, Coffee, Building2, Filter
 } from 'lucide-react';
+import { useThemeStore } from '../stores';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
+import { searchPrefetchService } from '../services/searchPrefetchService';
 import { sentinelEvents } from '../utils/sentinelEvents';
 import { getMonthlyReservationCount } from '../services/reservationService';
 import solvexDictionaryService from '../services/solvex/solvexDictionaryService';
@@ -33,6 +35,7 @@ import './ModalFixDefinitive.css';
 import './SmartSearchStylesFix.css';
 import './SmartSearchGridFix.css';
 import './SmartSearchLightMode.css';
+import './GlobalHubSearch.css';
 
 /**
  * Constants for filtering
@@ -133,6 +136,49 @@ const getMealPlanDisplayName = (code: string | undefined): string => {
     return mealPlanNames[normalized] || mealPlanNames[code.toUpperCase()] || code;
 };
 
+const renderAvailabilityStatus = (status: string | undefined) => {
+    if (!status) return null;
+    const s = status.toLowerCase();
+
+    let Icon = RefreshCw;
+    let label = 'NA UPIT';
+    let className = 'status-on-request';
+
+    if (s === 'available' || s === 'slobodno' || s === 'instant') {
+        Icon = Zap;
+        label = 'ODMAH DOSTUPNO';
+        className = 'status-available';
+    } else if (s === 'unavailable' || s === 'rasprodato' || s === 'stop_sale') {
+        Icon = XCircle;
+        label = 'RASPRODATO';
+        className = 'status-sold-out';
+    }
+
+    return (
+        <div className={`availability-status-v6 ${className}`}>
+            <Icon size={10} />
+            <span>{label}</span>
+        </div>
+    );
+};
+
+const renderMealPlanBadge = (mp: string, isLedger: boolean = false) => {
+    const name = getMealPlanDisplayName(mp);
+    const code = normalizeMealPlan(mp);
+    let Icon = UtensilsCrossed;
+    if (code === 'BB') Icon = Coffee;
+    if (code === 'HB') Icon = UtensilsCrossed;
+    if (code === 'AI' || code === 'UAI') Icon = Sparkles;
+    if (code === 'RO') Icon = Building2;
+
+    return (
+        <div className={isLedger ? "meal-plan-ledger-display" : "meal-plan-badge-v2"}>
+            <Icon size={isLedger ? 14 : 12} />
+            <span>{name}</span>
+        </div>
+    );
+};
+
 /**
  * Strips redundant destination info from room names
  */
@@ -169,6 +215,9 @@ import type { BasicInfoData, DestinationInput } from '../types/packageSearch.typ
 const SmartSearch: React.FC = () => {
     const { userLevel, impersonatedSubagent } = useAuthStore();
     const isSubagent = userLevel < 6 || !!impersonatedSubagent;
+    const { theme } = useThemeStore();
+    const isActuallyDark = theme === 'navy';
+    const isLightMode = !isActuallyDark;
     const navigate = useNavigate();
 
     const [searchParams, setSearchParams] = useSearchParams();
@@ -401,9 +450,6 @@ const SmartSearch: React.FC = () => {
     const [prefetchedResults, setPrefetchedResults] = useState<SmartSearchResult[]>([]);
     const [prefetchKey, setPrefetchKey] = useState<string>('');
     const [isPrefetching, setIsPrefetching] = useState(false);
-    const prefetchKeyRef = useRef<string>('');
-    const backgroundTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const backgroundAbortControllerRef = useRef<AbortController | null>(null);
     const tabId = useRef(Math.random().toString(36).substring(2, 11));
 
     const inputRef = useRef<HTMLInputElement>(null);
@@ -606,114 +652,51 @@ const SmartSearch: React.FC = () => {
         return () => clearTimeout(timer);
     }, [destinationInput, selectedDestinations]); // recentSearches REMOVED from dependency array
 
-    const handleBackgroundSearch = useCallback(async (params: {
-        destinations: Destination[],
-        checkIn: string,
-        checkOut: string,
-        allocations: RoomAllocation[],
-        tab: string,
-        meal: string,
-        nat: string
-    }) => {
-        const { destinations, checkIn, checkOut, allocations, tab, meal, nat } = params;
+    // Subscribe to prefetch service ONCE on mount
+    useEffect(() => {
+        const unsubscribe = searchPrefetchService.subscribe('smart-search', {
+            onComplete: (results, key) => {
+                setPrefetchedResults(results);
+                setPrefetchKey(key);
+            },
+            onStart: () => setIsPrefetching(true),
+            onEnd: () => setIsPrefetching(false),
+        });
+        return () => {
+            unsubscribe();
+            searchPrefetchService.cancel();
+        };
+    }, []);
 
-        // SKIP broad background searches for performance (only search for cities/hotels)
-        const hasBroadSearch = destinations.some(d => d.type === 'country');
-        if (destinations.length === 0 || !checkIn || !checkOut || allocations.filter(r => r.adults > 0).length === 0 || hasBroadSearch) {
-            setPrefetchedResults([]);
-            setPrefetchKey('');
-            prefetchKeyRef.current = '';
-            return;
-        }
-
-        const currentKey = `${destinations.map(d => d.id).sort().join(',')}|${checkIn}|${checkOut}|${JSON.stringify(allocations)}|${tab}|${meal}|${nat}`;
-        if (prefetchKeyRef.current === currentKey) {
-            return;
-        }
-
-        // debounce to avoid spamming multiple expensive searches
-        if (backgroundTimeoutRef.current) clearTimeout(backgroundTimeoutRef.current);
-
-        backgroundTimeoutRef.current = setTimeout(async () => {
-            // Cancel previous active fetch
-            if (backgroundAbortControllerRef.current) {
-                backgroundAbortControllerRef.current.abort();
-            }
-            backgroundAbortControllerRef.current = new AbortController();
-
-            const requestKey = currentKey;
-            prefetchKeyRef.current = currentKey;
-            setPrefetchKey(''); // Ensure handleSearch doesn't use old results while we fetch
-
-            console.log(`[SmartSearch] Starting background pre-fetch...`);
-            setIsPrefetching(true);
-
-            try {
-                // Background search should be fast -> so we skip CRM enrichment in background
-                const results = await performSmartSearch({
-                    searchType: activeTab,
-                    destinations: destinations.map(d => ({
-                        id: String(d.id).replace('solvex-c-', ''),
-                        name: d.name,
-                        type: d.type
-                    })),
-                    checkIn: checkIn,
-                    checkOut: checkOut,
-                    rooms: allocations.filter(r => r.adults > 0),
-                    mealPlan: meal || mealPlan,
-                    currency: 'EUR',
-                    nationality: nat || nationality || 'RS',
-                });
-
-                // Check for abortion or outdated key
-                if (prefetchKeyRef.current === requestKey) {
-                    setPrefetchedResults(results); // Skip getMonthlyReservationCount in background for speed
-                    setPrefetchKey(requestKey);
-                    console.log(`[SmartSearch] Background pre-fetch finished.`);
-                }
-            } catch (error) {
-                if (error instanceof Error && error.name === 'AbortError') {
-                    console.log('[SmartSearch] Background search aborted.');
-                } else {
-                    console.error('Background search prefetch failed:', error);
-                    setPrefetchedResults([]);
-                    prefetchKeyRef.current = '';
-                }
-            } finally {
-                setIsPrefetching(false);
-            }
-        }, 400); // Shorter debounce
-    }, [activeTab, mealPlan, nationality]);
-
-    // Trigger background search for Classic and Futuristic modes when state changes
+    // Schedule pre-fetch when search params change (Classic/Narrative modes)
     useEffect(() => {
         if (selectedDestinations.length > 0 && checkIn && checkOut && searchMode !== 'immersive') {
-            handleBackgroundSearch({
+            searchPrefetchService.schedule({
                 destinations: selectedDestinations,
                 checkIn,
                 checkOut,
                 allocations: roomAllocations,
-                tab: activeTab,
-                meal: mealPlan,
-                nat: nationality
+                mealPlan,
+                nationality,
+                searchType: activeTab
             });
         }
-    }, [selectedDestinations, checkIn, checkOut, roomAllocations, searchMode, activeTab, mealPlan, nationality, handleBackgroundSearch]);
+    }, [selectedDestinations, checkIn, checkOut, roomAllocations, searchMode, activeTab, mealPlan, nationality]);
 
     const handleImmersiveUpdate = useCallback((data: ImmersiveSearchData) => {
-        // Trigger background search when enough data is present
+        // Schedule pre-fetch when immersive wizard has enough data
         if (data.destinations.length > 0 && data.checkIn && data.checkOut) {
-            handleBackgroundSearch({
+            searchPrefetchService.schedule({
                 destinations: data.destinations as any,
                 checkIn: data.checkIn,
                 checkOut: data.checkOut,
                 allocations: data.roomAllocations,
-                tab: activeTab,
-                meal: (data.services && data.services.length > 0) ? data.services[0] : mealPlan,
-                nat: data.nationality || nationality
+                mealPlan: (data.services && data.services.length > 0) ? data.services[0] : mealPlan,
+                nationality: data.nationality || nationality,
+                searchType: activeTab
             });
         }
-    }, [handleBackgroundSearch, activeTab, mealPlan, nationality]);
+    }, [activeTab, mealPlan, nationality]);
 
     const generateFlexDates = (baseDate: string, range: number) => {
         if (!baseDate) return [];
@@ -763,10 +746,18 @@ const SmartSearch: React.FC = () => {
             return;
         }
 
-        // CHECK PREFETCH CACHE
-        const currentKey = `${activeDestinations.map(d => d.id).sort().join(',')}|${activeCheckIn}|${activeCheckOut}|${JSON.stringify(activeAllocations)}|${activeTab}|${mealPlan}|${nationality}|${budgetFrom}|${budgetTo}`;
+        // CHECK PREFETCH CACHE - use singleton service key
+        const currentKey = searchPrefetchService.buildKey({
+            destinations: activeDestinations,
+            checkIn: activeCheckIn,
+            checkOut: activeCheckOut,
+            allocations: activeAllocations,
+            mealPlan,
+            nationality,
+            searchType: activeTab
+        });
         if (prefetchedResults.length > 0 && prefetchKey === currentKey) {
-            console.log('[SmartSearch] Using prefetched results! Instant display.');
+            console.log('[SmartSearch] ✅ Using prefetched results! Instant display.');
             setSearchResults(prefetchedResults);
             setSearchPerformed(true);
             setIsSearching(false);
@@ -802,7 +793,7 @@ const SmartSearch: React.FC = () => {
                 nationality: nationality || 'RS',
             });
 
-            // ENHANCE WITH CRM SALES DATA
+            // ENHANCE WITH CRM SALES DATA (only if cache miss - otherwise already enriched)
             const resultsWithSales = await Promise.all(results.map(async (h) => {
                 const count = await getMonthlyReservationCount(h.name);
                 return { ...h, salesCount: count };
@@ -829,7 +820,7 @@ const SmartSearch: React.FC = () => {
     };
 
 
-    const getPriceWithMargin = (price: number) => Math.round(price * 1.15);
+    const getPriceWithMargin = (price: number) => Number((price * 1.15).toFixed(2));
 
     const getFinalDisplayPrice = (hotel: SmartSearchResult) => {
         let total = 0;
@@ -1013,58 +1004,8 @@ const SmartSearch: React.FC = () => {
 
     return (
         <div className="smart-search-container-v2">
-            {/* Booking Modal (Top Level) */}
-            {
-                isBookingModalOpen && expandedHotel && selectedRoomForBooking && (
-                    <BookingModal
-                        isOpen={isBookingModalOpen}
-                        onClose={() => {
-                            setIsBookingModalOpen(false);
-                            if (viewMode === 'notepad') setExpandedHotel(null);
-                        }}
-                        provider={expandedHotel.provider.toLowerCase() as any}
-                        bookingData={{
-                            hotelName: expandedHotel.name,
-                            location: expandedHotel.location,
-                            checkIn,
-                            checkOut,
-                            nights,
-                            roomType: selectedRoomForBooking.name,
-                            mealPlan: getMealPlanDisplayName(expandedHotel.mealPlan),
-                            adults: roomAllocations.reduce((sum, r) => sum + r.adults, 0),
-                            children: roomAllocations.reduce((sum, r) => sum + r.children, 0),
-                            totalPrice: Math.round((isSubagent ? getPriceWithMargin(selectedRoomForBooking.price) : Number(selectedRoomForBooking.price)) * (viewMode === 'notepad' ? 0.8 : 1)),
-                            currency: 'EUR',
-                            stars: expandedHotel.stars,
-                            providerData: expandedHotel.originalData,
-                            serviceName: expandedHotel.name,
-                            serviceType: 'hotel'
-                        }}
-                        onSuccess={(code, cis, id, prov) => {
-                            setIsBookingModalOpen(false);
-                            setBookingSuccessData({ id: id || '', code: code || '', provider: prov || '' });
-                        }}
-                        onError={err => {
-                            setBookingAlertError(err);
-                            // Auto-clear error after 8s
-                            setTimeout(() => setBookingAlertError(null), 8000);
-                        }}
-                    />
-                )
-            }
-            {/* Booking Success Modal - Blocks UI via Portal */}
-            <BookingSuccessModal
-                isOpen={!!bookingSuccessData}
-                onClose={() => setBookingSuccessData(null)}
-                onOpenDossier={() => {
-                    setBookingSuccessData(null);
-                    window.open('/reservation-architect?loadFrom=pending_booking', '_blank');
-                }}
-                bookingCode={bookingSuccessData?.code || ''}
-                internalId={bookingSuccessData?.id || ''}
-                provider={bookingSuccessData?.provider || 'Solvex'}
-                hotelName={expandedHotel?.name || 'Hotel'}
-            />
+            {/* Booking Modal & Success Modal are now handled in the portal at the bottom for reliable stacking */}
+            {/* Moved to portal */}
 
             {/* Booking Error Alert */}
             {bookingAlertError && (
@@ -1896,195 +1837,129 @@ const SmartSearch: React.FC = () => {
 
                                         <div className={`results-container ${viewMode}-view`} style={{ width: '100%' }}>
                                             {viewMode === 'notepad' ? (
-                                                <div className="notepad-view-v2 animate-fade-in" style={{ padding: '0', width: '100%' }}>
+                                                <div className="notepad-view-v6 animate-fade-in" style={{ padding: '0', width: '100%' }}>
                                                     {filteredResults.map((hotel, hIdx) => (
-                                                        <div key={hotel.id} className="hotel-notepad-card" style={{
-                                                            background: 'var(--bg-card)',
-                                                            border: '1px solid var(--border)',
-                                                            borderRadius: '20px',
-                                                            marginBottom: '2rem',
-                                                            overflow: 'hidden',
-                                                            boxShadow: 'var(--shadow-lg, 0 10px 30px rgba(0,0,0,0.3))'
-                                                        }}>
-                                                            {/* Header */}
-                                                            <div style={{
-                                                                padding: '1.5rem 2rem',
-                                                                background: 'var(--glass-bg)',
-                                                                display: 'flex',
-                                                                justifyContent: 'space-between',
-                                                                alignItems: 'center',
-                                                                borderBottom: 'var(--border-thin)'
-                                                            }}>
-                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                                                                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                                        {hotel.name}
-                                                                        <span style={{ display: 'flex', color: 'var(--accent)' }}>
-                                                                            {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={16} fill="#8E24AC" color="#8E24AC" />)}
-                                                                        </span>
-                                                                    </h3>
-                                                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center' }}>
-                                                                        <MapPin size={14} style={{ marginRight: '6px' }} />
-                                                                        {hotel.location}
-                                                                    </span>
+                                                        <div key={`${hotel.provider}-${hotel.id}-${hIdx}`} className="hotel-notepad-card-premium">
+                                                            {/* Header matching screenshot top row */}
+                                                            <div className="notepad-header-v6">
+                                                                <div className="notepad-title-stacked">
+                                                                    <div className="notepad-main-title">
+                                                                        <h3 onClick={() => navigate('/hotel-view/' + hotel.id)} style={{ cursor: 'pointer' }}>{hotel.name}</h3>
+                                                                        <div className="hotel-stars-badge-v6">
+                                                                            {Array(Math.max(0, Math.min(5, Math.floor(Number(hotel.stars || 0)) || 0))).fill(0).map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="hotel-location-tag-v6">
+                                                                        <MapPin size={14} /> <span>{hotel.location}</span>
+                                                                        <span className="dot-separator">•</span>
+                                                                        <span>{hotel.mealPlan || 'Sve usluge'}</span>
+                                                                    </div>
                                                                 </div>
-                                                                <div style={{ color: 'var(--accent)', fontSize: '1.1rem', fontWeight: 800, whiteSpace: 'nowrap', fontStyle: 'italic' }}>
-                                                                    UKUPNA CENA OD: {formatPrice(getFinalDisplayPrice(hotel))} EUR
+                                                                <div className="notepad-header-price">
+                                                                    <span className="label">UKUPNA CENA OD</span>
+                                                                    <span className="val">{formatPrice(getFinalDisplayPrice(hotel))} EUR</span>
                                                                 </div>
                                                             </div>
 
-                                                            {/* Body */}
-                                                            <div style={{ padding: '2rem' }}>
-                                                                {roomAllocations.map((alloc, roomIdx) => {
-                                                                    if (alloc.adults === 0) return null;
+                                                            {/* Configuration/Date headers */}
+                                                            {roomAllocations.map((alloc, roomIdx) => {
+                                                                if (alloc.adults === 0) return null;
 
-                                                                    const allRooms = (hotel.allocationResults && hotel.allocationResults[roomIdx] ? [...hotel.allocationResults[roomIdx]].sort((a, b) => (a.price || 0) - (b.price || 0)) : (hotel.rooms || [hotel]));
-                                                                    const activeMealFilter = notepadMealFilters[hotel.id] || 'all';
-                                                                    const filteredRooms = allRooms.filter(r => activeMealFilter === 'all' || (r.mealPlan || hotel.mealPlan) === activeMealFilter);
-                                                                    const uniqueMealPlans = Array.from(new Set(allRooms.map(r => r.mealPlan || hotel.mealPlan))).filter(Boolean);
+                                                                const allRooms = (hotel.allocationResults && hotel.allocationResults[roomIdx] ? [...hotel.allocationResults[roomIdx]].sort((a, b) => (a.price || 0) - (b.price || 0)) : (hotel.rooms || [hotel]));
+                                                                const activeMealFilter = notepadMealFilters[hotel.id] || 'all';
+                                                                const filteredRooms = allRooms.filter(r => activeMealFilter === 'all' || (r.mealPlan || hotel.mealPlan) === activeMealFilter);
 
-                                                                    return (
-                                                                        <div key={roomIdx} style={{ marginBottom: roomIdx < roomAllocations.filter(r => r.adults > 0).length - 1 ? '40px' : '0' }}>
-                                                                            <div style={{
-                                                                                display: 'grid',
-                                                                                gridTemplateColumns: '2.5fr 1.2fr 1fr 1.2fr 1fr',
-                                                                                gap: '15px',
-                                                                                alignItems: 'end',
-                                                                                marginBottom: '1.5rem',
-                                                                                padding: '0 25px'
-                                                                            }}>
-                                                                                <div style={{
-                                                                                    display: 'flex',
-                                                                                    alignItems: 'center',
-                                                                                    gap: '12px',
-                                                                                    fontSize: '0.85rem',
-                                                                                    fontWeight: 700,
-                                                                                    color: 'var(--text-secondary)',
-                                                                                    background: 'rgba(255, 255, 255, 0.03)',
-                                                                                    padding: '8px 16px',
-                                                                                    borderRadius: '12px',
-                                                                                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                                                                                    width: 'fit-content'
-                                                                                }}>
-                                                                                    <CalendarDays size={16} className="text-indigo-400" />
-                                                                                    <span>
-                                                                                        {checkIn ? new Date(checkIn).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'} - {checkOut ? new Date(checkOut).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}
-                                                                                    </span>
-                                                                                    <span style={{ opacity: 0.5 }}>|</span>
-                                                                                    <span style={{ color: 'var(--text-primary)' }}>{nights} noćenja</span>
+                                                                return (
+                                                                    <div key={`alloc-${roomIdx}`} className="notepad-allocation-segment">
+                                                                        <div className="notepad-sub-header-v6">
+                                                                            <div className="notepad-date-info">
+                                                                                <CalendarDays size={18} />
+                                                                                <span>{checkIn ? new Date(checkIn).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</span>
+                                                                                <ArrowRight size={14} style={{ opacity: 0.5 }} />
+                                                                                <span>{checkOut ? new Date(checkOut).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</span>
+                                                                                <span className="nights-badge">{nights} noćenja</span>
+                                                                            </div>
+
+                                                                            <div className="notepad-config-actions">
+                                                                                {allRooms.length > 5 && (
+                                                                                    <div className="notepad-mini-filter">
+                                                                                        <Filter size={14} />
+                                                                                        <select
+                                                                                            value={activeMealFilter}
+                                                                                            onChange={(e) => setNotepadMealFilters(prev => ({ ...prev, [hotel.id]: e.target.value }))}
+                                                                                        >
+                                                                                            <option value="all">Sve usluge</option>
+                                                                                            {Array.from(new Set(allRooms.map(r => r.mealPlan || hotel.mealPlan))).filter(Boolean).map(mp => (
+                                                                                                <option key={mp as string} value={mp as string}>{getMealPlanDisplayName(mp as string)}</option>
+                                                                                            ))}
+                                                                                        </select>
+                                                                                    </div>
+                                                                                )}
+                                                                                <div className="notepad-config-pill">
+                                                                                    {formatRoomConfigLabel(alloc, roomIdx)}
                                                                                 </div>
+                                                                            </div>
+                                                                        </div>
 
-                                                                                {/* REDESIGNED MEAL FILTER - Now aligned with 'Usluga' column */}
-                                                                                {allRooms.length > 10 ? (
-                                                                                    <div className="notepad-filter-section">
-                                                                                        <div className="notepad-filter-title">
-                                                                                            <Star size={12} fill="currentColor" />
-                                                                                            ODABERI USLUGU
+                                                                        <div className="notepad-ledger-header">
+                                                                            <div style={{ paddingLeft: '20px' }}>TIP SMEŠTAJA</div>
+                                                                            <div style={{ textAlign: 'center' }}>USLUGA</div>
+                                                                            <div style={{ textAlign: 'center' }}>KAPACITET</div>
+                                                                            <div style={{ textAlign: 'right', paddingRight: '20px' }}>CENA & AKCIJA</div>
+                                                                        </div>
+
+                                                                        <div className="notepad-room-list">
+                                                                            {filteredRooms.length > 0 ? (
+                                                                                filteredRooms.map((room, rIdx) => (
+                                                                                    <div key={`room-${room.id}-${rIdx}`} className="notepad-ledger-row">
+                                                                                        <div className="ledger-room-name">
+                                                                                            {cleanRoomName(room.name || 'Standardna Soba')}
                                                                                         </div>
-                                                                                        <div className="notepad-filter-select-container">
-                                                                                            <select
-                                                                                                className="notepad-filter-select-v2"
-                                                                                                value={activeMealFilter}
-                                                                                                onChange={(e) => setNotepadMealFilters(prev => ({ ...prev, [hotel.id]: e.target.value }))}
+                                                                                        <div className="ledger-meal">
+                                                                                            {renderMealPlanBadge(room.mealPlan || hotel.mealPlan, true)}
+                                                                                        </div>
+                                                                                        <div className="ledger-capacity">
+                                                                                            <Users size={16} />
+                                                                                            <span>{room.capacity || `${alloc.adults}+${alloc.children}`}</span>
+                                                                                        </div>
+                                                                                        <div className="ledger-action-zone">
+                                                                                            <div className="ledger-status-price">
+                                                                                                {renderAvailabilityStatus(room.availability || hotel.availability)}
+                                                                                                <div className="ledger-price">
+                                                                                                    {formatPrice(isSubagent ? getPriceWithMargin(room.price) : Number(room.price))} <span className="curr">EUR</span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <button
+                                                                                                className="btn-ledger-reserve"
+                                                                                                onClick={() => handleReserveClick(room, roomIdx, hotel)}
                                                                                             >
-                                                                                                <option value="all">Sve usluge</option>
-                                                                                                {uniqueMealPlans.map(mp => (
-                                                                                                    <option key={mp} value={mp}>{getMealPlanDisplayName(mp)}</option>
-                                                                                                ))}
-                                                                                            </select>
-                                                                                            <ChevronDown size={16} className="notepad-filter-chevron-v2" />
-                                                                                        </div>
-                                                                                    </div>
-                                                                                ) : <div />}
-
-                                                                                <div style={{
-                                                                                    gridColumn: '3 / span 3',
-                                                                                    display: 'flex',
-                                                                                    justifyContent: 'flex-end'
-                                                                                }}>
-                                                                                    <div style={{
-                                                                                        background: 'linear-gradient(90deg, #6366f1, #818cf8)',
-                                                                                        padding: '8px 24px',
-                                                                                        borderRadius: '20px',
-                                                                                        color: 'white',
-                                                                                        fontSize: '0.75rem',
-                                                                                        fontWeight: 800,
-                                                                                        fontStyle: 'italic',
-                                                                                        textTransform: 'uppercase',
-                                                                                        letterSpacing: '1px',
-                                                                                        boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)',
-                                                                                        width: 'fit-content'
-                                                                                    }}>
-                                                                                        {formatRoomConfigLabel(alloc, roomIdx)}
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-
-                                                                            <div className="room-header-v4" style={{
-                                                                                display: 'grid',
-                                                                                gridTemplateColumns: '2.5fr 1.2fr 1fr 1.2fr 1fr',
-                                                                                padding: '15px 25px',
-                                                                                background: 'rgba(255,255,255,0.04)',
-                                                                                borderBottom: '1px solid rgba(255,255,255,0.1)',
-                                                                                color: 'var(--text-secondary)',
-                                                                                fontSize: '0.7rem',
-                                                                                fontWeight: 800,
-                                                                                textTransform: 'uppercase',
-                                                                                letterSpacing: '1px'
-                                                                            }}>
-                                                                                <div>TIP SMEŠTAJA</div>
-                                                                                <div>USLUGA</div>
-                                                                                <div>KAPACITET</div>
-                                                                                <div>CENA (UKUPNO)</div>
-                                                                                <div>AKCIJA</div>
-                                                                            </div>
-
-                                                                            {filteredRooms.slice(0, 50).map((room: any, rIdx: number) => {
-                                                                                const displayPrice = isSubagent ? getPriceWithMargin(room.price || hotel.price) : Number(room.price || hotel.price);
-                                                                                return (
-                                                                                    <div key={rIdx} className="room-row-v4">
-                                                                                        <div className="r-name">
-                                                                                            <span className="room-type-tag">
-                                                                                                {cleanRoomName(room.name || hotel.name || 'Standardna Soba')}
-                                                                                            </span>
-                                                                                        </div>
-                                                                                        <div className="r-meal">
-                                                                                            <span className="meal-tag-v4">
-                                                                                                {getMealPlanDisplayName(room.mealPlan || hotel.mealPlan)}
-                                                                                            </span>
-                                                                                        </div>
-                                                                                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                                            <Users size={14} />
-                                                                                            {alloc.adults}+{alloc.children}
-                                                                                        </div>
-                                                                                        <div className="r-price">
-                                                                                            <span className="p-val">
-                                                                                                {formatPrice(displayPrice)} EUR
-                                                                                            </span>
-                                                                                        </div>
-                                                                                        <div>
-                                                                                            <button className="btn-book-v4" onClick={() => handleReserveClick(room, roomIdx, hotel)}>
-                                                                                                REZERVIŠI
+                                                                                                REZERVIŠI <ArrowRight size={14} />
                                                                                             </button>
                                                                                         </div>
                                                                                     </div>
-                                                                                );
-                                                                            })}
+                                                                                ))
+                                                                            ) : (
+                                                                                <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)', opacity: 0.5 }}>
+                                                                                    Nema dostupnih soba za izabranu uslugu.
+                                                                                </div>
+                                                                            )}
                                                                         </div>
-                                                                    );
-                                                                })}
-                                                            </div>
+                                                                    </div>
+                                                                );
+                                                            })}
                                                         </div>
                                                     ))}
                                                 </div>
                                             ) : (
                                                 <div className={`results-mosaic ${viewMode === 'list' ? 'list-layout' : 'grid-layout'}`} style={{ width: '100%' }}>
-                                                    {filteredResults.map(hotel => (
-                                                        <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase().replace(/\s+/g, '')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
+                                                    {filteredResults.map((hotel, hIdx) => (
+                                                        <div key={`${hotel.provider}-${hotel.id}-${hIdx}`} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase().replace(/\s+/g, '')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
                                                             <div className="hotel-card-image" onClick={() => navigate('/hotel-view/' + hotel.id)}>
                                                                 <img src={getProxiedImageUrl(hotel.images?.[0]) || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
-                                                                <div className="meal-plan-badge">{getMealPlanDisplayName(hotel.mealPlan)}</div>
+                                                                {renderMealPlanBadge(hotel.mealPlan || '')}
+                                                                {renderAvailabilityStatus(hotel.availability)}
                                                                 <div className="hotel-stars-badge">
-                                                                    {Array(Math.floor(Number(hotel.stars || 0))).fill(0).map((_, i) => <Star key={i} size={10} fill="#8E24AC" color="#8E24AC" />)}
+                                                                    {Array(Math.max(0, Math.min(5, Math.floor(Number(hotel.stars || 0)) || 0))).fill(0).map((_, i) => <Star key={i} size={12} fill="#ce93d8" color="#ce93d8" />)}
                                                                 </div>
                                                             </div>
                                                             <div className="hotel-card-content">
@@ -2093,7 +1968,7 @@ const SmartSearch: React.FC = () => {
                                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => navigate('/hotel-view/' + hotel.id)}>
                                                                             <h3 style={{ margin: 0 }}>{hotel.name}</h3>
                                                                             {(hotel.salesCount || 0) > 5 && (
-                                                                                <span className="best-seller-mini-badge" title={`Preko ${hotel.salesCount} rezervacija u poslednjih 30 dana`}>
+                                                                                <span className="best-seller-premium-badge" title={`Preko ${hotel.salesCount} rezervacija u poslednjih 30 dana`}>
                                                                                     <TrendingUp size={10} /> BEST SELLER
                                                                                 </span>
                                                                             )}
@@ -2175,94 +2050,98 @@ const SmartSearch: React.FC = () => {
                                                 background: 'var(--bg-card)',
                                                 border: 'var(--border-thin)',
                                                 borderRadius: '24px',
-                                                overflow: 'hidden'
+                                                overflow: 'hidden',
+                                                display: 'flex',
+                                                flexDirection: 'column'
                                             }}
                                         >
-                                            <div className="hotel-rooms-modal-header" style={{ padding: '12px 25px', background: 'var(--glass-bg)', borderBottom: 'var(--border-thin)' }}>
-                                                <div className="modal-title-zone">
-                                                    <div className="modal-meta" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                                                        <span style={{ color: 'white', marginRight: '15px' }}>{expandedHotel.name.toUpperCase()}</span>
-                                                        <div style={{ marginRight: '15px', display: 'flex', gap: '2px', color: 'var(--accent)' }}>
-                                                            {Array(expandedHotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
+                                            <div className="hotel-rooms-modal-header notepad-header-v6" style={{ padding: '30px 40px', background: 'var(--bg-card)', borderBottom: '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
+                                                <div className="modal-title-zone" style={{ flex: 1 }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                                                        <h2 className="modal-hotel-title-premium-v6" style={{
+                                                            margin: 0,
+                                                            fontSize: '1.8rem',
+                                                            fontWeight: 900,
+                                                            letterSpacing: '-0.5px',
+                                                            color: isActuallyDark ? '#FFFFFF' : '#0e4b5e',
+                                                            WebkitTextFillColor: isActuallyDark ? '#FFFFFF' : '#0e4b5e',
+                                                            background: 'none',
+                                                            WebkitBackgroundClip: 'initial',
+                                                            backgroundClip: 'initial',
+                                                            opacity: 1
+                                                        }}>
+                                                            {expandedHotel.name.toUpperCase()}
+                                                        </h2>
+                                                        <div className="hotel-stars-badge-inline-v6" style={{ display: 'flex', gap: '3px', color: '#ce93d8' }}>
+                                                            {Array(Math.max(0, Math.min(5, Math.floor(Number(expandedHotel.stars || 0)) || 0))).fill(0).map((_, i) => <Star key={i} size={18} fill="currentColor" />)}
                                                         </div>
-                                                        <MapPin size={14} /> {expandedHotel.location}
-                                                        <span style={{ marginLeft: '20px', color: 'var(--accent)', fontWeight: 800 }}>
-                                                            Ukupna cena od: {formatPrice(getFinalDisplayPrice(expandedHotel))} {expandedHotel.currency}
-                                                        </span>
+                                                    </div>
+                                                    <div className="modal-meta-row-v6" style={{ display: 'flex', alignItems: 'center', gap: '15px', opacity: 0.7, fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={16} /> {expandedHotel.location}</div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CalendarDays size={16} /> {formatDate(checkIn)} - {formatDate(checkOut)} ({nights} noćenja)</div>
                                                     </div>
                                                 </div>
-                                                <button className="close-modal-btn" onClick={() => setExpandedHotel(null)}><X size={18} /></button>
+                                                <div className="modal-header-price-zone" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                                                    <div className="notepad-header-price">
+                                                        <span className="price-val" style={{ fontSize: '2.2rem', fontWeight: 900, color: '#ce93d8', lineHeight: 1 }}>{formatPrice(getFinalDisplayPrice(expandedHotel))} €</span>
+                                                        <span className="price-label" style={{ display: 'block', fontSize: '0.75rem', opacity: 0.5, fontWeight: 800, letterSpacing: '1px', marginTop: '4px' }}>UKUPNA CENA ARANŽMANA</span>
+                                                    </div>
+                                                    {renderAvailabilityStatus(expandedHotel.availability)}
+                                                </div>
+                                                <button className="close-modal-btn" onClick={() => setExpandedHotel(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.05)', border: 'none', color: 'white', padding: '10px', borderRadius: '50%', cursor: 'pointer' }}><X size={20} /></button>
                                             </div>
-                                            <div className="modal-body-v4">
+                                            <div className="modal-body-v6" style={{ padding: '0', overflowY: 'auto', flex: 1 }}>
                                                 {roomAllocations.map((alloc, rIdx) => {
                                                     if (alloc.adults === 0) return null;
+                                                    const roomsForThisConfig = (expandedHotel.allocationResults && expandedHotel.allocationResults[rIdx]) || [];
                                                     return (
-                                                        <div key={rIdx} className="room-allocation-section" style={{ marginTop: rIdx > 0 ? '30px' : '0' }}>
-                                                            <div className="section-divider-premium">
-                                                                <span>{formatRoomConfigLabel(alloc, rIdx)}</span>
-                                                            </div>
-                                                            <div className="rooms-comparison-table">
-                                                                <div className="room-header-v4">
-                                                                    <div className="h-room">TIP SMEŠTAJA</div>
-                                                                    <div className="h-servis">USLUGA</div>
-                                                                    <div className="h-cap">KAPACITET</div>
-                                                                    <div className="h-price">CENA (UKUPNO)</div>
-                                                                    <div className="h-action">AKCIJA</div>
+                                                        <div key={rIdx} className="room-allocation-section-v6">
+                                                            <div className="notepad-sub-header-v6" style={{ padding: '1.5rem 2.5rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                                                                <div className="notepad-config-pill">
+                                                                    {formatRoomConfigLabel(alloc, rIdx)}
                                                                 </div>
+                                                            </div>
 
-                                                                {(expandedHotel.allocationResults && expandedHotel.allocationResults[rIdx]) ? (
-                                                                    expandedHotel.allocationResults[rIdx].map((room: any, idx: number) => (
-                                                                        <div key={room.id || idx} className="room-row-v4">
-                                                                            <div className="r-name">
-                                                                                <span className="room-type-tag">{cleanRoomName(room.name || 'Standardna Soba')}</span>
+                                                            <div className="notepad-ledger-header">
+                                                                <div style={{ paddingLeft: '20px' }}>TIP SMEŠTAJA</div>
+                                                                <div style={{ textAlign: 'center' }}>USLUGA</div>
+                                                                <div style={{ textAlign: 'center' }}>KAPACITET</div>
+                                                                <div style={{ textAlign: 'right', paddingRight: '20px' }}>CENA & AKCIJA</div>
+                                                            </div>
+
+                                                            <div className="notepad-room-list">
+                                                                {roomsForThisConfig.length > 0 ? (
+                                                                    roomsForThisConfig.map((room: any, idx: number) => (
+                                                                        <div key={`room-modal-${room.id}-${idx}`} className="notepad-ledger-row">
+                                                                            <div className="ledger-room-name">
+                                                                                {cleanRoomName(room.name || 'Standardna Soba')}
                                                                             </div>
-                                                                            <div className="r-servis">
-                                                                                <span className="meal-tag-v4">{getMealPlanDisplayName(room.mealPlan || expandedHotel.mealPlan)}</span>
+                                                                            <div className="ledger-meal">
+                                                                                {renderMealPlanBadge(room.mealPlan || expandedHotel.mealPlan, true)}
                                                                             </div>
-                                                                            <div className="r-cap"><Users size={14} /> {room.capacity || `${alloc.adults}+${alloc.children}`}</div>
-                                                                            <div className="r-price">
-                                                                                <span className="notepad-price" style={{ fontSize: '1rem', fontWeight: 800, fontStyle: 'italic' }}>
-                                                                                    {isSubagent ? getPriceWithMargin(room.price) : Math.round(Number(room.price))} {expandedHotel.currency}
-                                                                                </span>
+                                                                            <div className="ledger-capacity">
+                                                                                <Users size={16} />
+                                                                                <span>{room.capacity || `${alloc.adults}+${alloc.children}`}</span>
                                                                             </div>
-                                                                            <div className="r-action">
-                                                                                <button className="btn-book-v4" onClick={() => handleReserveClick(room, rIdx)}>Rezerviši</button>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))
-                                                                ) : expandedHotel.rooms && expandedHotel.rooms.length > 0 ? (
-                                                                    expandedHotel.rooms.map((room, idx) => (
-                                                                        <div key={room.id || idx} className="room-row-v4">
-                                                                            <div className="r-name">
-                                                                                <span className="room-type-tag">{cleanRoomName(room.name || 'Standardna Soba')}</span>
-                                                                            </div>
-                                                                            <div className="r-servis">
-                                                                                <span className="meal-tag-v4">{getMealPlanDisplayName(room.mealPlan || expandedHotel.mealPlan)}</span>
-                                                                            </div>
-                                                                            <div className="r-cap"><Users size={14} /> {room.capacity || `${alloc.adults}+${alloc.children}`}</div>
-                                                                            <div className="r-price">
-                                                                                <span className="notepad-price" style={{ fontSize: '1rem', fontWeight: 800, fontStyle: 'italic' }}>
-                                                                                    {isSubagent ? getPriceWithMargin(room.price) : Math.round(Number(room.price))} {expandedHotel.currency}
-                                                                                </span>
-                                                                            </div>
-                                                                            <div className="r-action">
-                                                                                <button className="btn-book-v4" onClick={() => handleReserveClick(room, rIdx)}>Rezerviši</button>
+                                                                            <div className="ledger-action-zone">
+                                                                                <div className="ledger-status-price">
+                                                                                    {renderAvailabilityStatus(room.availability || expandedHotel.availability)}
+                                                                                    <div className="ledger-price">
+                                                                                        {formatPrice(isSubagent ? getPriceWithMargin(room.price) : Number(room.price))} <span className="curr">EUR</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <button
+                                                                                    className="btn-ledger-reserve"
+                                                                                    onClick={() => handleReserveClick(room, rIdx, expandedHotel)}
+                                                                                >
+                                                                                    REZERVIŠI <ArrowRight size={14} />
+                                                                                </button>
                                                                             </div>
                                                                         </div>
                                                                     ))
                                                                 ) : (
-                                                                    <div className="room-row-v4">
-                                                                        <div className="r-name"><span className="room-type-tag">Standardna Soba</span></div>
-                                                                        <div className="r-servis"><span className="meal-tag-v4">{getMealPlanDisplayName(expandedHotel.mealPlan)}</span></div>
-                                                                        <div className="r-cap"><Users size={14} /> {alloc.adults}+{alloc.children}</div>
-                                                                        <div className="r-price">
-                                                                            <span className="notepad-price" style={{ fontSize: '1rem', fontWeight: 800, fontStyle: 'italic' }}>
-                                                                                {isSubagent ? getPriceWithMargin(expandedHotel.price) : Math.round(Number(expandedHotel.price))} {expandedHotel.currency}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="r-action">
-                                                                            <button className="btn-book-v4" onClick={() => handleReserveClick({ id: 'default', name: 'Standardna Soba', price: expandedHotel.price }, rIdx)}>Rezerviši</button>
-                                                                        </div>
+                                                                    <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)', opacity: 0.5 }}>
+                                                                        Nema slobodnih soba za ovu konfiguraciju.
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -2271,6 +2150,63 @@ const SmartSearch: React.FC = () => {
                                                 })}
                                             </div>
                                         </div>
+                                    </div>,
+                                    document.getElementById('portal-root') || document.body
+                                )
+                            }
+
+                            {/* Booking Management Portal (Z-Index fix) */}
+                            {
+                                createPortal(
+                                    <div className="booking-portal-host" style={{ position: 'relative', zIndex: 99999999 }}>
+                                        {isBookingModalOpen && expandedHotel && selectedRoomForBooking && (
+                                            <BookingModal
+                                                isOpen={isBookingModalOpen}
+                                                onClose={() => {
+                                                    setIsBookingModalOpen(false);
+                                                    if (viewMode === 'notepad') setExpandedHotel(null);
+                                                }}
+                                                provider={expandedHotel.provider.toLowerCase() as any}
+                                                bookingData={{
+                                                    hotelName: expandedHotel.name,
+                                                    location: expandedHotel.location,
+                                                    checkIn,
+                                                    checkOut,
+                                                    nights,
+                                                    roomType: selectedRoomForBooking.name,
+                                                    mealPlan: getMealPlanDisplayName(expandedHotel.mealPlan),
+                                                    adults: roomAllocations.reduce((sum, r) => sum + r.adults, 0),
+                                                    children: roomAllocations.reduce((sum, r) => sum + r.children, 0),
+                                                    totalPrice: (isSubagent ? getPriceWithMargin(selectedRoomForBooking.price) : Number(selectedRoomForBooking.price)) * (viewMode === 'notepad' ? 0.8 : 1),
+                                                    currency: 'EUR',
+                                                    stars: expandedHotel.stars,
+                                                    providerData: expandedHotel.originalData,
+                                                    serviceName: expandedHotel.name,
+                                                    serviceType: 'hotel'
+                                                }}
+                                                onSuccess={(code, cis, id, prov) => {
+                                                    setIsBookingModalOpen(false);
+                                                    setBookingSuccessData({ id: id || '', code: code || '', provider: prov || '' });
+                                                }}
+                                                onError={err => {
+                                                    setBookingAlertError(err);
+                                                    setTimeout(() => setBookingAlertError(null), 8000);
+                                                }}
+                                            />
+                                        )}
+
+                                        <BookingSuccessModal
+                                            isOpen={!!bookingSuccessData}
+                                            onClose={() => setBookingSuccessData(null)}
+                                            onOpenDossier={() => {
+                                                setBookingSuccessData(null);
+                                                window.open('/reservation-architect?loadFrom=pending_booking', '_blank');
+                                            }}
+                                            bookingCode={bookingSuccessData?.code || ''}
+                                            internalId={bookingSuccessData?.id || ''}
+                                            provider={bookingSuccessData?.provider || 'Solvex'}
+                                            hotelName={expandedHotel?.name || 'Hotel'}
+                                        />
                                     </div>,
                                     document.getElementById('portal-root') || document.body
                                 )

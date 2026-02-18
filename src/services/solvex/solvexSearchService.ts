@@ -13,7 +13,10 @@ import { SOLVEX_SOAP_METHODS, SOLVEX_RESPONSE_PATHS } from './solvexConstants';
  * Search for hotel availability
  * This is the primary search method for Solvex
  */
-export async function searchHotels(params: Omit<SolvexHotelSearchParams, 'guid'>): Promise<SolvexApiResponse<SolvexHotelSearchResult[]>> {
+export async function searchHotels(
+    params: Omit<SolvexHotelSearchParams, 'guid'>,
+    signal?: AbortSignal
+): Promise<SolvexApiResponse<SolvexHotelSearchResult[]>> {
     try {
         // Check rate limit BEFORE making request
         const limitCheck = rateLimiter.checkLimit('solvex');
@@ -36,7 +39,7 @@ export async function searchHotels(params: Omit<SolvexHotelSearchParams, 'guid'>
         });
 
         // Using SearchHotelServices method name from constants
-        const result = await makeSoapRequest<any>(SOLVEX_SOAP_METHODS.SEARCH_HOTELS, soapParams);
+        const result = await makeSoapRequest<any>(SOLVEX_SOAP_METHODS.SEARCH_HOTELS, soapParams, signal);
 
         // console.log('[Solvex Search] Raw SOAP result:', result);
 

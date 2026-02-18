@@ -398,20 +398,35 @@
 
 /* Base Card Styles */
 .hotel-result-card-premium {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+    background: rgba(30, 46, 62, 0.6);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 20px;
     overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     position: relative;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.light-theme .hotel-result-card-premium {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .hotel-result-card-premium:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-    border-color: #8E24AC;
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    border-color: rgba(142, 36, 172, 0.5);
+    background: rgba(30, 46, 62, 0.75);
+}
+
+.light-theme .hotel-result-card-premium:hover {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 15px 35px rgba(142, 36, 172, 0.15);
 }
 
 /* Horizontal (List) Modification */
@@ -449,17 +464,36 @@
 .hotel-card-image {
     position: relative;
     overflow: hidden;
+    cursor: pointer;
+}
+
+.hotel-card-image::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70%;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 40%, transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.3s ease;
+}
+
+.hotel-result-card-premium:hover .hotel-card-image::after {
+    height: 80%;
+    background: linear-gradient(to top, rgba(142, 36, 172, 0.4) 0%, rgba(0, 0, 0, 0.6) 30%, transparent 100%);
 }
 
 .hotel-card-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s;
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hotel-result-card-premium:hover .hotel-card-image img {
-    transform: scale(1.08);
+    transform: scale(1.12) rotate(1deg);
 }
 
 .source-badge {
@@ -497,14 +531,73 @@
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
+/* Badges & Tags */
+.meal-plan-badge-v2 {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    z-index: 2;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.hotel-result-card-premium:hover .meal-plan-badge-v2 {
+    background: var(--accent);
+    transform: translateX(4px);
+    box-shadow: 0 4px 15px rgba(142, 36, 172, 0.4);
+}
+
+.instant-confirmation-badge {
+    position: absolute;
+    top: 45px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(16, 185, 129, 0.9);
+    border-radius: 8px;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    z-index: 2;
+    text-transform: uppercase;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.best-seller-premium-badge {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    animation: pulse 2s infinite;
+}
+
 .hotel-stars-badge {
     position: absolute;
     bottom: 12px;
     left: 12px;
     display: flex;
-    gap: 2px;
-    color: #fbca28;
+    gap: 3px;
+    color: #facc15;
     z-index: 2;
+    filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5));
 }
 
 /* Content components */
@@ -519,10 +612,16 @@
     flex-direction: column;
 }
 
+.hotel-title-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 .hotel-title-row h3 {
     font-size: 18px;
     color: var(--text-primary);
-    margin: 0 0 4px 0;
+    margin: 0;
     line-height: 1.3;
 }
 
@@ -540,29 +639,16 @@
     gap: 6px;
     color: #94a3b8;
     font-size: 11px;
-    margin-top: 6px;
-    background: var(--bg-input);
-    padding: 3px 8px;
-    border-radius: 6px;
+    margin-top: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 10px;
+    border-radius: 8px;
     width: fit-content;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .hotel-date-badge svg {
     color: #6366f1;
-}
-
-.hotel-description-short {
-    margin-top: 12px;
-    color: var(--text-secondary);
-    font-size: 13px;
-    line-height: 1.5;
-    opacity: 0.8;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
 }
 
 /* Price & Action Section */
@@ -570,9 +656,9 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 12px;
-    min-width: 150px;
+    min-width: 170px;
 }
 
 .list-layout .price-action-section {
@@ -587,36 +673,23 @@
     align-items: center;
     justify-content: space-between;
     padding-top: 12px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .lowest-price-tag {
     text-align: right;
 }
 
-.from-label {
-    display: block;
-    font-size: 10px;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    font-weight: 700;
-    margin-bottom: 2px;
-}
-
 .price-val {
-    color: #fbca28;
-    font-size: 22px;
+    color: #facc15;
+    font-size: 24px;
     font-weight: 900;
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: -0.5px;
 }
 
-.installment-label {
-    font-size: 11px;
-    color: #10b981;
-    background: var(--accent-glow);
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-top: 4px;
-    font-weight: 500;
+.light-theme .price-val {
+    color: #8E24AC;
 }
 
 .view-more-btn {
@@ -1860,53 +1933,78 @@
     color: rgba(255, 255, 255, 0.5);
 }
 
-.rooms-comparison-table {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.table-header {
+.room-header-v4 {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 120px;
-    padding: 12px 20px;
-    background: rgba(255, 255, 255, 0.03);
-    font-size: 12px;
+    grid-template-columns: 2.5fr 1.2fr 1fr 1.2fr 1fr;
+    padding: 14px 25px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.4);
-    letter-spacing: 1px;
+    color: var(--text-secondary);
+    letter-spacing: 1.5px;
+    border-radius: 12px 12px 0 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .room-row-v4 {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 120px;
-    padding: 20px;
+    grid-template-columns: 2.5fr 1.2fr 1fr 1.2fr 1fr;
+    padding: 20px 25px;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    transition: background 0.2s;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: all 0.3s ease;
+    background: transparent;
 }
 
 .room-row-v4:hover {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.03);
+    transform: scale(1.005);
+    z-index: 2;
 }
 
-.r-name strong {
-    display: block;
-    font-size: 16px;
-    margin-bottom: 4px;
+.room-type-tag {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
-.r-name p {
-    margin: 0;
+.meal-tag-v4 {
+    background: rgba(142, 36, 172, 0.1);
+    border: 1px solid rgba(142, 36, 172, 0.2);
+    padding: 4px 10px;
+    border-radius: 8px;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.4);
+    font-weight: 700;
+    color: #ce93d8;
 }
 
-.r-cap,
-.r-price {
-    font-weight: 600;
+.r-price .p-val {
+    font-size: 18px;
+    font-weight: 900;
+    color: #facc15;
+    font-style: italic;
+}
+
+.btn-book-v4 {
+    width: 100%;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-book-v4:hover {
+    background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(30, 136, 229, 0.4);
 }
 
 .select-room-btn {
@@ -2836,6 +2934,502 @@
 svg.lucide-star,
 .hotel-stars-badge svg,
 .star-row-mini svg {
-    fill: #8E24AC !important;
-    color: #8E24AC !important;
+    fill: #ce93d8 !important;
+    color: #ce93d8 !important;
+}
+
+/* ==========================================================================
+   Premium Notepad/List View (Smart Search V5)
+   ========================================================================== */
+
+.hotel-notepad-card-premium {
+    background: rgba(30, 46, 62, 0.4);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    margin-bottom: 2.5rem;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    color: white;
+}
+
+.light-theme .hotel-notepad-card-premium {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.05);
+    color: #1a2b3c;
+}
+
+.notepad-header-v5 {
+    padding: 1.5rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.notepad-hotel-info-v5 {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.notepad-hotel-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.notepad-hotel-title-row h3 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+}
+
+.notepad-total-price-badge {
+    color: #ce93d8;
+    font-weight: 800;
+    font-style: italic;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+}
+
+/* NOTEPAD V6 - THE ELEGANT LEDGER */
+.notepad-header-v6 {
+    padding: 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), transparent);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.notepad-title-stacked {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.notepad-main-title {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.notepad-main-title h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    color: white;
+}
+
+.light-theme .notepad-main-title h3 {
+    color: #0e4b5e;
+}
+
+.hotel-stars-badge-v6 {
+    display: flex;
+    gap: 4px;
+    color: #ce93d8;
+}
+
+.hotel-location-tag-v6 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.hotel-location-tag-v6 .dot-separator {
+    opacity: 0.3;
+}
+
+.notepad-header-price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.notepad-header-price .label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.notepad-header-price .val {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #ce93d8;
+}
+
+.light-theme .hotel-stars-badge-v6 {
+    color: #8E24AC;
+}
+
+.light-theme .notepad-header-price .val {
+    color: #8E24AC;
+}
+
+.notepad-sub-header-v6 {
+    padding: 1.2rem 2.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+}
+
+.light-theme .notepad-sub-header-v6 {
+    background: rgba(14, 75, 94, 0.04);
+    border-bottom: 2px solid rgba(14, 75, 94, 0.1);
+}
+
+.light-theme .notepad-date-info {
+    color: #0e4b5e;
+}
+
+.notepad-date-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: white;
+}
+
+.notepad-date-info svg {
+    color: #ce93d8;
+}
+
+.nights-badge {
+    padding: 4px 12px;
+    background: rgba(206, 147, 216, 0.1);
+    border: 1px solid rgba(206, 147, 216, 0.2);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: #ce93d8;
+    margin-left: 10px;
+}
+
+.notepad-config-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.notepad-mini-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 4px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.notepad-mini-filter select {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    outline: none;
+    cursor: pointer;
+}
+
+.notepad-config-pill {
+    background: linear-gradient(135deg, #0e4b5e 0%, #1a2b3c 100%);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* LEDGER TABLE STYLES */
+.notepad-ledger-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    padding: 1.5rem 2.5rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.5;
+}
+
+.light-theme .notepad-ledger-header {
+    background: #f8fafc;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* AVAILABILITY STATUS STYLING */
+.availability-status-v6 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: fit-content;
+}
+
+.status-available {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-on-request {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-sold-out {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.ledger-status-price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.notepad-ledger-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    align-items: center;
+    padding: 1.2rem 2.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.light-theme .notepad-ledger-row {
+    border-bottom: 1px solid rgba(0, 75, 94, 0.08);
+    /* Darker petrolej line for contrast */
+}
+
+.notepad-ledger-row:last-child {
+    border-bottom: none;
+}
+
+.light-theme .notepad-ledger-row:hover {
+    background: rgba(14, 75, 94, 0.02);
+}
+
+.notepad-ledger-row:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.ledger-room-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: white;
+}
+
+.light-theme .ledger-room-name {
+    color: #1a2b3c;
+}
+
+.ledger-meal {
+    display: flex;
+    justify-content: center;
+}
+
+.ledger-capacity {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.ledger-action-zone {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 30px;
+}
+
+.ledger-price {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #ce93d8;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.ledger-price .curr {
+    font-size: 0.75rem;
+    opacity: 0.5;
+}
+
+.btn-ledger-reserve {
+    background: linear-gradient(135deg, #0e4b5e 0%, #156a85 100%);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(14, 75, 94, 0.3);
+}
+
+.btn-ledger-reserve:hover {
+    transform: translateX(4px);
+    background: linear-gradient(135deg, #156a85 0%, #1a8fb3 100%);
+    box-shadow: 0 8px 25px rgba(14, 75, 94, 0.5);
+}
+
+.btn-ledger-reserve:active {
+    transform: scale(0.95);
+}
+
+.hotel-notepad-card-premium {
+    background: rgba(14, 25, 35, 0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    margin-bottom: 40px;
+}
+
+.light-theme .hotel-notepad-card-premium {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(14, 75, 94, 0.1);
+    box-shadow: 0 20px 50px rgba(14, 75, 94, 0.1);
+}
+
+/* MODAL UNIFICATION - LEDGER STYLE */
+:root {
+    --modal-title-color: #ffffff;
+}
+
+.light-theme,
+.prime-theme,
+body.light-theme,
+body.prime-theme {
+    --modal-title-color: #0e4b5e;
+}
+
+.modal-hotel-title-premium-v6 {
+    color: var(--modal-title-color) !important;
+    -webkit-text-fill-color: var(--modal-title-color) !important;
+    background: none !important;
+    -webkit-background-clip: initial !important;
+    background-clip: initial !important;
+    opacity: 1 !important;
+}
+
+.light-theme .modal-hotel-title-premium-v6,
+.prime-theme .modal-hotel-title-premium-v6 {
+    color: #0e4b5e !important;
+    -webkit-text-fill-color: #0e4b5e !important;
+    opacity: 1 !important;
+}
+
+.hotel-stars-badge-inline-v6 {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.light-theme .hotel-rooms-modal-header {
+    background: #ffffff !important;
+    border-bottom: 2px solid rgba(14, 75, 94, 0.1) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.light-theme .modal-body-v6 {
+    background: #f8fafc;
+}
+
+/* Custom Scrollbar for Modal Body */
+.modal-body-v6::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-body-v6::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.light-theme .modal-body-v6::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.modal-body-v6::-webkit-scrollbar-thumb {
+    background: rgba(206, 147, 216, 0.2);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+.modal-body-v6::-webkit-scrollbar-thumb:hover {
+    background: rgba(206, 147, 216, 0.4);
+}
+
+.light-theme .room-allocation-section-v6 {
+    border-bottom: 2px solid rgba(14, 75, 94, 0.05);
+}
+
+.light-theme .close-modal-btn {
+    background: rgba(14, 75, 94, 0.08) !important;
+    color: #0e4b5e !important;
+}
+
+.meal-plan-ledger-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.light-theme .meal-plan-ledger-display {
+    color: #1a2b3c;
+}
+
+.meal-plan-ledger-display svg {
+    color: #ce93d8;
+    opacity: 0.8;
+}
+
+/* Fix for Grid availability badge overlap */
+.grid-layout .availability-status-v6 {
+    position: absolute;
+    top: 45px;
+    left: 12px;
+    z-index: 10;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }

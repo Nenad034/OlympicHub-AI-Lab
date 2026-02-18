@@ -28,6 +28,7 @@ export interface SmartSearchParams {
     currency?: string;
     nationality?: string;
     enabledProviders?: Record<string, boolean>;
+    abortSignal?: AbortSignal;
 }
 
 export interface SmartSearchResult {
@@ -46,6 +47,7 @@ export interface SmartSearchResult {
     allocationResults?: Record<number, any[]>; // Maps room index to its specific available rooms
     originalData: any;
     salesCount?: number;
+    availability?: string;
 }
 
 export const PROVIDER_MAPPING = {
@@ -142,7 +144,8 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                             childrenAges: config.ages,
                             providerId: String(dest.id).startsWith('solvex-') ? String(dest.id).split('-').pop() : dest.id,
                             providerType: dest.type === 'destination' ? 'city' : 'hotel',
-                            targetProvider: String(dest.id).startsWith('solvex-') || dest.provider === 'Solvex' ? 'Solvex' : undefined
+                            targetProvider: String(dest.id).startsWith('solvex-') || dest.provider === 'Solvex' ? 'Solvex' : undefined,
+                            abortSignal: params.abortSignal
                         });
                         results.push(...solvexResults);
                     } catch (e) {
@@ -162,7 +165,8 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                             adults: config.adults,
                             children: config.children,
                             childrenAges: config.ages,
-                            providerId: String(dest.id).startsWith('filos-') ? String(dest.id).split('-').pop() : undefined
+                            providerId: String(dest.id).startsWith('filos-') ? String(dest.id).split('-').pop() : undefined,
+                            abortSignal: params.abortSignal
                         });
                         console.log('[SmartSearchService] Filos returned:', filosResults.length, 'results');
                         results.push(...filosResults);
@@ -227,8 +231,15 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                             if (!existing.allocationResults![roomIdx]) {
                                 existing.allocationResults![roomIdx] = h.rooms || [];
                             } else {
-                                // Append additional room/meal plan options for this room index
-                                existing.allocationResults![roomIdx].push(...(h.rooms || []));
+                                // De-duplicate rooms by ID
+                                const currentRooms = existing.allocationResults![roomIdx];
+                                const newRooms = h.rooms || [];
+
+                                newRooms.forEach((nr: any) => {
+                                    if (!currentRooms.some((cr: any) => cr.id === nr.id)) {
+                                        currentRooms.push(nr);
+                                    }
+                                });
                             }
                         });
 

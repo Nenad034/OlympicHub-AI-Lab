@@ -68,6 +68,9 @@ export interface HotelSearchParams {
 
     /** If providerId is specified, which provider does it belong to? */
     targetProvider?: string;
+
+    /** Abort signal to cancel in-flight request */
+    abortSignal?: AbortSignal;
 }
 
 /**

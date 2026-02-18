@@ -227,7 +227,8 @@ export function parseSoapResponse<T>(xmlResponse: string): T {
  */
 export async function makeSoapRequest<T>(
     method: string,
-    params: Record<string, any>
+    params: Record<string, any>,
+    signal?: AbortSignal
 ): Promise<T> {
     const soapEnvelope = buildSoapEnvelope(method, params);
 
@@ -239,7 +240,10 @@ export async function makeSoapRequest<T>(
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort('Timeout'), 30000); // 30 seconds timeout per request
+    const timeoutId = setTimeout(() => controller.abort('Timeout'), 60000); // 60 seconds timeout per request
+
+    // Combine internal timeout with external signal if provided
+    const combinedSignal = signal ? (AbortSignal as any).any([controller.signal, signal]) : controller.signal;
 
     try {
         const response = await fetch(SOLVEX_API_URL, {
@@ -249,7 +253,7 @@ export async function makeSoapRequest<T>(
                 'SOAPAction': `"${method.startsWith('http') ? method : `http://www.megatec.ru/${method}`}"`
             },
             body: soapEnvelope,
-            signal: controller.signal
+            signal: combinedSignal
         });
 
         clearTimeout(timeoutId);
@@ -285,7 +289,7 @@ export async function makeSoapRequest<T>(
             throw error;
         }
         if (error instanceof Error && (error.name === 'AbortError' || error.message.toLowerCase().includes('aborted'))) {
-            throw new Error('Solvex sistem nije odgovorio na vreme (Timeout). Molimo pokušajte ponovo ili suzite kriterijume pretrage.');
+            throw new Error('Solvex sistem trenutno sporije odgovara (Timeout). Preporučujemo da suzite filtere (npr. izaberete konkretan hotel ili kraći period) i pokušate ponovo.');
         }
 
         // If it's already a clean error, rethrow it

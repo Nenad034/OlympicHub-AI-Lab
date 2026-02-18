@@ -50,7 +50,7 @@ export const filosApiService = {
     /**
      * General availability search
      */
-    async getAvailability(params: Omit<FilosAvailabilityRequest, 'username' | 'password'>) {
+    async getAvailability(params: Omit<FilosAvailabilityRequest, 'username' | 'password'>, signal?: AbortSignal) {
         try {
             // Try api-v2 first, but be prepared for "static mode" error
             const response = await fetch(`${BASE_URL}/availability`, {
@@ -59,7 +59,8 @@ export const filosApiService = {
                 body: JSON.stringify({
                     ...FILOS_CREDENTIALS,
                     ...params
-                })
+                }),
+                signal
             });
             if (!response.ok) {
                 const text = await response.text();
@@ -75,7 +76,7 @@ export const filosApiService = {
             // If the API says it's in static mode, it might mean we should use the static domain for testing
             if (data.message && data.message.includes('static mode')) {
                 console.warn('API is in static mode, switching to static endpoint...');
-                return this.getStaticAvailability(params);
+                return this.getStaticAvailability(params, signal);
             }
 
             return {
@@ -98,7 +99,7 @@ export const filosApiService = {
     /**
      * Try availability on the static endpoint (often used for testing)
      */
-    async getStaticAvailability(params: Omit<FilosAvailabilityRequest, 'username' | 'password'>) {
+    async getStaticAvailability(params: Omit<FilosAvailabilityRequest, 'username' | 'password'>, signal?: AbortSignal) {
         try {
             const response = await fetch(`${STATIC_URL}/availability`, {
                 method: 'POST',
@@ -106,7 +107,8 @@ export const filosApiService = {
                 body: JSON.stringify({
                     ...FILOS_CREDENTIALS,
                     ...params
-                })
+                }),
+                signal
             });
 
             const data = await response.json();

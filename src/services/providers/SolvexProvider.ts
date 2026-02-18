@@ -50,7 +50,7 @@ export class SolvexProvider implements HotelProvider {
             const solvexParams = this.bridgeSearchParams(params);
 
             // STEP 2: Execute Search through the Service Layer
-            const result = await searchHotels(solvexParams);
+            const result = await searchHotels(solvexParams, params.abortSignal);
 
             if (!result.success || !result.data || result.data.length === 0) {
                 if (result.success) {
@@ -87,8 +87,8 @@ export class SolvexProvider implements HotelProvider {
                     const existing = groupedMap.get(key)!;
                     // Add this room to the existing grouped hotel result
                     existing.rooms.push({
-                        id: `${item.room.roomType.id}-${item.room.roomCategory.id}`,
-                        name: `${item.room.roomType.name}${item.room.roomCategory.name ? ` (${item.room.roomCategory.name})` : ''} - ${item.room.roomAccommodation.name}`,
+                        id: `${item.room.roomType.id}-${item.room.roomCategory.id}-${item.room.roomAccommodation.id}-${item.tariff.id}`,
+                        name: `${item.room.roomType.name}${item.room.roomCategory.name ? ` (${item.room.roomCategory.name})` : ''} - ${item.room.roomAccommodation.name}${item.tariff.name ? ` (${item.tariff.name})` : ''}`,
                         description: `Dest: ${item.hotel.city.name}`,
                         price: item.totalCost,
                         availability: this.bridgeAvailability(item.quotaType),
@@ -113,10 +113,13 @@ export class SolvexProvider implements HotelProvider {
             if (errStr.includes('Failed to fetch') || errStr.includes('Konekcija sa Solvex sistemom nije uspela')) {
                 console.warn('[SolvexBridge] Solvex system unreachable. Ignoring.');
             } else {
+                const isTimeout = errStr.toLowerCase().includes('timeout');
                 sentinelEvents.emit({
-                    title: 'Solvex Bridge Kritična Greška',
-                    message: `Kritičan prekid u Solvex mostu: ${error instanceof Error ? error.message : 'Nepoznata greška'}.`,
-                    type: 'critical',
+                    title: isTimeout ? 'Solvex: Isteklo vreme pretrage' : 'Solvex Bridge Kritična Greška',
+                    message: isTimeout
+                        ? error instanceof Error ? error.message : 'Solvex sistem nije odgovorio na vreme.'
+                        : `Kritičan prekid u Solvex mostu: ${error instanceof Error ? error.message : 'Nepoznata greška'}.`,
+                    type: isTimeout ? 'warning' : 'critical',
                     provider: 'Solvex'
                 });
             }
@@ -253,8 +256,8 @@ export class SolvexProvider implements HotelProvider {
             checkOut,
             nights,
             rooms: [{
-                id: `${solvexResult.room.roomType.id}`,
-                name: cleanText(`${solvexResult.room.roomType.name}${solvexResult.room.roomCategory.name ? ` (${solvexResult.room.roomCategory.name})` : ''} - ${solvexResult.room.roomAccommodation.name}`),
+                id: `${solvexResult.room.roomType.id}-${solvexResult.room.roomCategory.id}-${solvexResult.room.roomAccommodation.id}-${solvexResult.tariff.id}`,
+                name: cleanText(`${solvexResult.room.roomType.name}${solvexResult.room.roomCategory.name ? ` (${solvexResult.room.roomCategory.name})` : ''} - ${solvexResult.room.roomAccommodation.name}${solvexResult.tariff.name ? ` (${solvexResult.tariff.name})` : ''}`),
                 description: (solvexResult as any).hotel.description || '',
                 price: solvexResult.totalCost,
                 availability: this.bridgeAvailability(solvexResult.quotaType),

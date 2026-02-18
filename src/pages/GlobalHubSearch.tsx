@@ -10,9 +10,10 @@ import {
     Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
     LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide, LayoutTemplate,
     CheckCircle2, CheckCircle, XCircle, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
-    Plus, Globe, AlignLeft, Database, Power, Building2, Ship, Anchor, Ticket, Mountain, Settings, DollarSign
+    Plus, Globe, AlignLeft, Database, Power, Building2, Ship, Anchor, Ticket, Mountain, Settings, DollarSign, Coffee
 } from 'lucide-react';
 import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
+import { searchPrefetchService } from '../services/searchPrefetchService';
 import { sentinelEvents } from '../utils/sentinelEvents';
 import { getMonthlyReservationCount } from '../services/reservationService';
 import solvexDictionaryService from '../services/solvex/solvexDictionaryService';
@@ -137,6 +138,23 @@ const getMealPlanDisplayName = (code: string | undefined): string => {
     };
 
     return mealPlanNames[normalized] || mealPlanNames[code.toUpperCase()] || code;
+};
+
+const renderMealPlanBadge = (mp: string) => {
+    const name = getMealPlanDisplayName(mp);
+    const code = normalizeMealPlan(mp);
+    let Icon = UtensilsCrossed;
+    if (code === 'BB') Icon = Coffee;
+    if (code === 'HB') Icon = UtensilsCrossed;
+    if (code === 'AI' || code === 'UAI') Icon = Sparkles;
+    if (code === 'RO') Icon = Building2;
+
+    return (
+        <div className="meal-plan-badge-v2">
+            <Icon size={12} />
+            <span>{name}</span>
+        </div>
+    );
 };
 
 /**
@@ -397,99 +415,35 @@ const GlobalHubSearch: React.FC = () => {
     const [prefetchKey, setPrefetchKey] = useState<string>('');
     const [isPrefetching, setIsPrefetching] = useState(false);
     const tabId = useRef(Math.random().toString(36).substring(2, 11));
-    const prefetchKeyRef = useRef<string>('');
-    const backgroundTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const backgroundAbortControllerRef = useRef<AbortController | null>(null);
 
-    const handleBackgroundSearch = useCallback(async (data: {
-        destinations: any[],
-        checkIn: string,
-        checkOut: string,
-        allocations: any[],
-        meal: string,
-        nat: string,
-        searchType: string
-    }) => {
-        const { destinations, checkIn, checkOut, allocations, meal, nat, searchType } = data;
-        const activeAllocations = allocations.filter(r => r.adults > 0);
-
-        // SKIP broad background searches for countries (too many results)
-        const hasBroadSearch = destinations.some(d => d.type === 'country');
-        if (destinations.length === 0 || !checkIn || !checkOut || activeAllocations.length === 0 || hasBroadSearch) {
-            setPrefetchedResults([]);
-            setPrefetchKey('');
-            prefetchKeyRef.current = '';
-            return;
-        }
-
-        const currentKey = `${destinations.map(d => d.id).sort().join(',')}|${checkIn}|${checkOut}|${JSON.stringify(allocations)}|${meal}|${nat}|${searchType}`;
-        if (prefetchKeyRef.current === currentKey || isSearching) return;
-
-        if (backgroundTimeoutRef.current) clearTimeout(backgroundTimeoutRef.current);
-
-        backgroundTimeoutRef.current = setTimeout(async () => {
-            // Cancel previous active fetch
-            if (backgroundAbortControllerRef.current) {
-                backgroundAbortControllerRef.current.abort();
-            }
-            backgroundAbortControllerRef.current = new AbortController();
-
-            console.log('[GlobalHub] Starting background pre-fetch...');
-            const requestKey = currentKey;
-            prefetchKeyRef.current = currentKey;
-            setPrefetchKey(''); // Sync marker
-            setIsPrefetching(true);
-
-            try {
-                const results = await performSmartSearch({
-                    searchType: searchType as any,
-                    destinations: destinations.map(d => ({
-                        id: String(d.id).replace('solvex-c-', ''),
-                        name: d.name,
-                        type: d.type
-                    })),
-                    checkIn,
-                    checkOut,
-                    rooms: activeAllocations,
-                    mealPlan: meal || 'all',
-                    currency: 'EUR',
-                    nationality: nat || 'RS',
-                });
-
-                // Check for abortion or outdated key
-                if (prefetchKeyRef.current === requestKey) {
-                    setPrefetchedResults(results);
-                    setPrefetchKey(requestKey);
-                    console.log('[GlobalHub] Background pre-fetch finished.');
-                }
-            } catch (error) {
-                if (error instanceof Error && error.name === 'AbortError') {
-                    console.log('[GlobalHub] Background search aborted.');
-                } else {
-                    console.error('Background search prefetch failed:', error);
-                    setPrefetchedResults([]);
-                    prefetchKeyRef.current = '';
-                }
-            } finally {
-                setIsPrefetching(false);
-            }
-        }, 400);
-    }, [isSearching]);
+    // Subscribe to prefetch service ONCE on mount
+    useEffect(() => {
+        const unsubscribe = searchPrefetchService.subscribe('global-hub', {
+            onComplete: (results: SmartSearchResult[], key: string) => {
+                setPrefetchedResults(results);
+                setPrefetchKey(key);
+            },
+            onStart: () => setIsPrefetching(true),
+            onEnd: () => setIsPrefetching(false),
+        });
+        return () => {
+            unsubscribe();
+        };
+    }, []);
 
     const handleImmersiveUpdate = useCallback((data: ImmersiveSearchData) => {
-        // Trigger background search when enough data is present
         if (data.destinations.length > 0 && data.checkIn && data.checkOut) {
-            handleBackgroundSearch({
+            searchPrefetchService.schedule({
                 destinations: data.destinations as any,
                 checkIn: data.checkIn,
                 checkOut: data.checkOut,
                 allocations: data.roomAllocations,
                 searchType: activeTab,
-                meal: (data.services && data.services.length > 0) ? data.services[0] : mealPlan,
-                nat: data.nationality || nationality
+                mealPlan: (data.services && data.services.length > 0) ? data.services[0] : mealPlan,
+                nationality: data.nationality || nationality
             });
         }
-    }, [handleBackgroundSearch, activeTab, mealPlan, nationality]);
+    }, [activeTab, mealPlan, nationality]);
 
     const inputRef = useRef<HTMLInputElement>(null);
     const autocompleteRef = useRef<HTMLDivElement>(null);
@@ -792,11 +746,14 @@ const GlobalHubSearch: React.FC = () => {
     };
 
     // --- PART 2 ---
-    const handleSearch = async (overrideParams?: { checkIn?: string, checkOut?: string }) => {
+    const handleSearch = async (overrideParams?: { checkIn?: string, checkOut?: string, destinations?: typeof selectedDestinations, allocations?: typeof roomAllocations }) => {
         const activeCheckIn = overrideParams?.checkIn || checkIn;
         const activeCheckOut = overrideParams?.checkOut || checkOut;
+        // Use override destinations/allocations if provided (avoids React async state timing bug)
+        const activeDestinations = overrideParams?.destinations || selectedDestinations;
+        const activeAllocations = (overrideParams?.allocations || roomAllocations).filter(r => r.adults > 0);
 
-        if (selectedDestinations.length === 0) {
+        if (activeDestinations.length === 0) {
             setSearchError('Molimo odaberite najmanje jednu destinaciju');
             return;
         }
@@ -806,21 +763,24 @@ const GlobalHubSearch: React.FC = () => {
             return;
         }
 
-        // CHECK PREFETCH CACHE
-        const activeAllocations = roomAllocations.filter(r => r.adults > 0);
-        // Include meal and nat in key to match background search key 
-        const currentKey = `${selectedDestinations.map(d => d.id).sort().join(',')}|${activeCheckIn}|${activeCheckOut}|${JSON.stringify(roomAllocations)}|${mealPlan}|${nationality}|${activeTab}`;
+        // CHECK PREFETCH CACHE - use singleton service key
+        const currentKey = searchPrefetchService.buildKey({
+            destinations: activeDestinations,
+            checkIn: activeCheckIn,
+            checkOut: activeCheckOut,
+            allocations: activeAllocations,
+            mealPlan,
+            nationality,
+            searchType: activeTab
+        });
 
         if (prefetchedResults.length > 0 && prefetchKey === currentKey) {
-            console.log('[GlobalHub] Using prefetched results! Instant display.');
+            console.log('[GlobalHub] ✅ Using prefetched results! Instant display.');
             setSearchResults(prefetchedResults);
             setSearchPerformed(true);
             setIsSearching(false);
             return;
         }
-
-        // Prevent background search from triggering for these same params while we search or after
-        prefetchKeyRef.current = currentKey;
 
         setIsSearching(true);
         setSearchError(null);
@@ -838,7 +798,7 @@ const GlobalHubSearch: React.FC = () => {
 
             const results = await performSmartSearch({
                 searchType: activeTab as any,
-                destinations: selectedDestinations,
+                destinations: activeDestinations,
                 checkIn: activeCheckIn,
                 checkOut: activeCheckOut,
                 rooms: activeAllocations,
@@ -848,7 +808,7 @@ const GlobalHubSearch: React.FC = () => {
                 enabledProviders: enabledProviders
             });
 
-            // ENHANCE WITH CRM SALES DATA
+            // ENHANCE WITH CRM SALES DATA (only if cache miss - otherwise already enriched)
             const resultsWithSales = await Promise.all(results.map(async (h) => {
                 const count = await getMonthlyReservationCount(h.name);
                 return { ...h, salesCount: count };
@@ -874,17 +834,18 @@ const GlobalHubSearch: React.FC = () => {
     // Background Search Trigger
     useEffect(() => {
         if (selectedDestinations.length > 0 && checkIn && checkOut && roomAllocations.length > 0) {
-            handleBackgroundSearch({
+            searchPrefetchService.schedule({
                 destinations: selectedDestinations,
                 checkIn,
                 checkOut,
                 allocations: roomAllocations,
-                meal: mealPlan,
-                nat: nationality,
-                searchType: activeTab
+                mealPlan,
+                nationality,
+                searchType: activeTab,
+                enabledProviders
             });
         }
-    }, [selectedDestinations, checkIn, checkOut, roomAllocations, mealPlan, nationality, activeTab, handleBackgroundSearch]);
+    }, [selectedDestinations, checkIn, checkOut, roomAllocations, mealPlan, nationality, activeTab, enabledProviders]);
 
     const getPriceWithMargin = (price: number) => Math.round(price * 1.15);
     const formatPrice = (val: number) => val.toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1381,7 +1342,9 @@ const GlobalHubSearch: React.FC = () => {
                                     const updates = handleNarrativeUpdate(mappedData);
                                     handleSearch({
                                         checkIn: updates.checkIn,
-                                        checkOut: updates.checkOut
+                                        checkOut: updates.checkOut,
+                                        destinations: updates.destinations,
+                                        allocations: updates.allocations
                                     });
                                 }}
                             />
@@ -1397,7 +1360,9 @@ const GlobalHubSearch: React.FC = () => {
                                         const updates = handleNarrativeUpdate(data);
                                         handleSearch({
                                             checkIn: updates.checkIn,
-                                            checkOut: updates.checkOut
+                                            checkOut: updates.checkOut,
+                                            destinations: updates.destinations,
+                                            allocations: updates.allocations
                                         });
                                     }}
                                 />
@@ -1958,9 +1923,7 @@ const GlobalHubSearch: React.FC = () => {
                                                                             </div>
                                                                             {/* Service */}
                                                                             <div className="r-meal">
-                                                                                <span className="meal-tag-v4">
-                                                                                    {getMealPlanDisplayName(room.mealPlan || hotel.mealPlan)}
-                                                                                </span>
+                                                                                {renderMealPlanBadge(room.mealPlan || hotel.mealPlan)}
                                                                             </div>
                                                                             {/* Capacity */}
                                                                             <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1995,19 +1958,24 @@ const GlobalHubSearch: React.FC = () => {
                                             <div key={hotel.id} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase().replace(/\s+/g, '')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
                                                 <div className="hotel-card-image" onClick={() => navigate('/hotel-view/' + hotel.id)}>
                                                     <img src={hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
-                                                    <div className="meal-plan-badge">{getMealPlanDisplayName(hotel.mealPlan)}</div>
+                                                    {renderMealPlanBadge(hotel.mealPlan || '')}
+                                                    {hotel.availability === 'available' && (
+                                                        <div className="instant-confirmation-badge">
+                                                            <Zap size={10} fill="currentColor" /> ODMAH DOSTUPNO
+                                                        </div>
+                                                    )}
                                                     <div className="hotel-stars-badge">
-                                                        {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={10} fill="#8E24AC" color="#8E24AC" />)}
+                                                        {Array(hotel.stars || 0).fill(0).map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
                                                     </div>
                                                 </div>
                                                 <div className="hotel-card-content">
                                                     <div className="hotel-info-text">
                                                         <div className="hotel-title-row">
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => navigate('/hotel-view/' + hotel.id)}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', flexWrap: 'wrap' }} onClick={() => navigate('/hotel-view/' + hotel.id)}>
                                                                 <h3 style={{ margin: 0 }}>{hotel.name}</h3>
                                                                 {(hotel.salesCount || 0) > 5 && (
-                                                                    <span className="best-seller-mini-badge" title={`Preko ${hotel.salesCount} rezervacija u poslednjih 30 dana`}>
-                                                                        <TrendingUp size={10} /> BEST SELLER
+                                                                    <span className="best-seller-premium-badge" title={`Preko ${hotel.salesCount} rezervacija u poslednjih 30 dana`}>
+                                                                        <TrendingUp size={12} /> BEST SELLER
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -2127,7 +2095,7 @@ const GlobalHubSearch: React.FC = () => {
 
                                                                 </div>
                                                                 <div className="r-servis">
-                                                                    <span className="meal-tag-v4">{getMealPlanDisplayName(room.mealPlan || expandedHotel.mealPlan)}</span>
+                                                                    {renderMealPlanBadge(room.mealPlan || expandedHotel.mealPlan || '')}
                                                                 </div>
                                                                 <div className="r-cap"><Users size={14} /> {room.capacity || `${alloc.adults}+${alloc.children}`}</div>
                                                                 <div className="r-price">
@@ -2143,7 +2111,7 @@ const GlobalHubSearch: React.FC = () => {
                                                     ) : (
                                                         <div className="room-row-v4">
                                                             <div className="r-name"><span className="room-type-tag">Standardna Soba</span></div>
-                                                            <div className="r-servis"><span className="meal-tag-v4">{getMealPlanDisplayName(expandedHotel.mealPlan)}</span></div>
+                                                            <div className="r-servis">{renderMealPlanBadge(expandedHotel.mealPlan || '')}</div>
                                                             <div className="r-cap"><Users size={14} /> {alloc.adults}+{alloc.children}</div>
                                                             <div className="r-price">
                                                                 <span className="notepad-price" style={{ fontSize: '1rem', fontWeight: 800, fontStyle: 'italic' }}>

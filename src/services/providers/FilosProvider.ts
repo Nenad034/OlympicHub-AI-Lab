@@ -82,7 +82,7 @@ export class FilosProvider implements HotelProvider {
 
                         if (matchingHotels.length > 0) {
                             hotelCodesToSearch = matchingHotels.map((h: any) => h.id || h.hotel_id).filter(Boolean).slice(0, 50);
-                            console.log('[FilosProvider] Found', hotelCodesToSearch.length, 'hotels matching destination');
+                            console.log('[FilosProvider] Found', matchingHotels.length, 'hotels matching destination');
                         } else {
                             console.log('[FilosProvider] No hotels found for destination:', params.destination);
                             return [];
@@ -124,7 +124,7 @@ export class FilosProvider implements HotelProvider {
 
             console.log('[FilosProvider] Calling Filos API with params:', filosParams);
 
-            const result = await filosApiService.getAvailability(filosParams);
+            const result = await filosApiService.getAvailability(filosParams, params.abortSignal);
 
             console.log('[FilosProvider] Filos API response:', { success: result.success, error: result.error, dataType: typeof result.data });
 
