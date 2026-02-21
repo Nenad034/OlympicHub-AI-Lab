@@ -163,15 +163,19 @@ const renderAvailabilityStatus = (status: string | undefined) => {
 
 export const getRoomCancelStatus = (room: any) => {
     if (room.tariff?.id === 1993) return 'non-refundable';
-    if (room.cancellationPolicyRequestParams) {
-        // As long as there are params, it's either free inside the deadline or penalty outside. 
-        // A smarter approach uses the CancellationDate relative to today.
-        const cancelDate = room.cancellationPolicyRequestParams.CancellationDate;
+
+    // Solvex often populates cancellationPolicyRequestParams with keys needed to fetch actual policy.
+    // We only treat it as a potential penalty if it has actual deadline data.
+    const params = room.cancellationPolicyRequestParams;
+    if (params && (params.CancellationDate || params.DaysBeforeCheckIn)) {
+        const cancelDate = params.CancellationDate;
         if (cancelDate && new Date(cancelDate) > new Date()) return 'free';
-        if (room.cancellationPolicyRequestParams.DaysBeforeCheckIn) return 'free'; // Assume it has some free policy timeframe
+        if (params.DaysBeforeCheckIn) return 'free';
         return 'penalty';
     }
-    return 'unknown';
+
+    // Default to free for standard tariffs without explicit penalty information
+    return 'free';
 };
 
 const renderCancellationBadge = (room: any, onBadgeClick: (r: any) => void) => {
@@ -1097,30 +1101,29 @@ const SmartSearch: React.FC = () => {
         }
 
         if (selectedCancelPolicy !== 'all') {
-            let hasMatchingRoom = false;
+            let matchesFilter = false;
 
             if (hotel.allocationResults && Object.keys(hotel.allocationResults).length > 0) {
-                Object.values(hotel.allocationResults).forEach((rooms: any) => {
-                    if (rooms.some((r: any) => {
+                // For multi-room, ALL requested allocations must have at least one room that matches the filter
+                matchesFilter = Object.values(hotel.allocationResults).every((rooms: any) => {
+                    return rooms.some((r: any) => {
                         const status = getRoomCancelStatus(r);
                         if (selectedCancelPolicy === 'non-refundable') return status === 'non-refundable';
                         if (selectedCancelPolicy === 'free') return status === 'free';
                         return true;
-                    })) {
-                        hasMatchingRoom = true;
-                    }
+                    });
                 });
             } else if (hotel.rooms && hotel.rooms.length > 0) {
-                hasMatchingRoom = hotel.rooms.some(r => {
+                matchesFilter = hotel.rooms.some(r => {
                     const status = getRoomCancelStatus(r);
                     if (selectedCancelPolicy === 'non-refundable') return status === 'non-refundable';
                     if (selectedCancelPolicy === 'free') return status === 'free';
                     return true;
                 });
             } else {
-                hasMatchingRoom = true;
+                matchesFilter = true;
             }
-            if (!hasMatchingRoom) return false;
+            if (!matchesFilter) return false;
         }
 
         const totalPrice = getFinalDisplayPrice(hotel);
