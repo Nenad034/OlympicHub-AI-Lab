@@ -634,6 +634,7 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
                                     { code: 'RO', label: 'Najam' },
                                     { code: 'BB', label: 'Noćenje sa doručkom' },
                                     { code: 'HB', label: 'Polupansion' },
+                                    { code: 'FB', label: 'Pun Pansion' },
                                     { code: 'AI', label: 'All Inclusive' },
                                     { code: 'UAI', label: 'Ultra AI' }
                                 ].map(srv => (
@@ -718,8 +719,8 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
                         <button className="immersive-back-btn icon-only" onClick={() => setStep('experiences')}>
                             <ArrowLeftCircle size={36} />
                         </button>
-                        <button className="immersive-next-btn luxury-btn" onClick={handleFinalSearch} style={{ minWidth: '200px', height: '60px' }}>
-                            <ClickToTravelLogo height={58} iconOnly={true} iconScale={2.2} />
+                        <button className="immersive-next-btn luxury-btn" onClick={handleFinalSearch} style={{ minWidth: '200px', height: '60px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            <ClickToTravelLogo height={58} iconOnly={true} iconScale={2.2} forceOutline={true} />
                         </button>
                     </div>
                 </div>

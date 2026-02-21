@@ -708,7 +708,8 @@ npm install --save-dev @playwright/test
 âœ… Security: 100%
 âœ… Monitoring: 100%
 âœ… Documentation: 100%
-ðŸŸ¡ UI Components: 60%
+âœ… Search History: 100%
+ðŸŸ¡ UI Components: 65%
 ðŸ”´ Booking Flow: 0%
 ðŸ”´ Payment: 0%
 ðŸ”´ Testing: 0%
@@ -903,3 +904,27 @@ pm run dev
 
 **Vreme (Procena):** 5-10 minuta  
 **Prioritet:**  HIGH
+
+---
+
+## 📈 **BACKLOG / NEW REQUIREMENTS**
+
+### **1. Bulk Popusti (Masovne akreditacije)**
+- [ ] **Implementirati sistem za bulk popuste:**
+  - [ ] Omogućiti primenu na nivou **države**.
+  - [ ] Omogućiti primenu na nivou **destinacije**.
+  - [ ] Omogućiti primenu po **tipu putovanja**:
+    - Smeštaj
+    - Avio
+    - Paket
+    - Putovanje
+    - Transfer
+    - Čarteri
+    - Bus Ture
+    - Krstarenja
+  - [ ] Podržati popust u **iznosu** (fiksno).
+  - [ ] Podržati popust u **procentu** (%).
+  - [ ] Omogućiti kombinaciju oba (iznos + procenat).
+
+**Prioritet:** HIGH
+**Dodato:** 2026-02-18 (Korisnički zahtev)

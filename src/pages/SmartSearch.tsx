@@ -6,15 +6,14 @@ import { useAuthStore } from '../stores';
 import {
     Sparkles, Hotel, Plane, Package, Bus, Compass, LayoutTemplate,
     MapPin, Calendar, CalendarDays, Users, UtensilsCrossed, Star,
-    Search, Bot, TrendingUp, Zap, Shield, X, Loader2, MoveRight, MoveLeft, Users2, ChevronDown,
-    LayoutGrid, List as ListIcon, Map as MapIcon, ArrowDownWideNarrow, ArrowUpNarrowWide,
-    CheckCircle2, CheckCircle, XCircle, RefreshCw, Clock, ArrowRight, ShieldCheck, Info, Calendar as CalendarIcon,
-    Plus, Globe, AlignLeft, Mountain, DollarSign, Coffee, Building2, Filter
+    Search, TrendingUp, Zap, X, Loader2, ChevronDown,
+    LayoutGrid, List as ListIcon, ArrowDownWideNarrow,
+    CheckCircle2, CheckCircle, XCircle, RefreshCw, Clock, ArrowRight, Info, Calendar as CalendarIcon,
+    Plus, Globe, AlignLeft, Mountain, DollarSign, Coffee, Building2, Filter, Trash2
 } from 'lucide-react';
 import { useThemeStore } from '../stores';
-import { performSmartSearch, type SmartSearchResult, PROVIDER_MAPPING } from '../services/smartSearchService';
+import { performSmartSearch, type SmartSearchResult } from '../services/smartSearchService';
 import { searchPrefetchService } from '../services/searchPrefetchService';
-import { sentinelEvents } from '../utils/sentinelEvents';
 import { getMonthlyReservationCount } from '../services/reservationService';
 import solvexDictionaryService from '../services/solvex/solvexDictionaryService';
 import { ModernCalendar } from '../components/ModernCalendar';
@@ -24,7 +23,6 @@ import { BookingSuccessModal } from '../components/booking/BookingSuccessModal';
 import { formatDate } from '../utils/dateUtils';
 import PackageSearch from './PackageSearch';
 import FlightSearch from './FlightSearch';
-import { useConfig } from '../context/ConfigContext';
 import { BudgetTypeToggle } from '../components/BudgetTypeToggle';
 import { getProxiedImageUrl } from '../utils/imageProxy';
 import './SmartSearch.css';
@@ -36,6 +34,7 @@ import './SmartSearchStylesFix.css';
 import './SmartSearchGridFix.css';
 import './SmartSearchLightMode.css';
 import './GlobalHubSearch.css';
+import './SmartSearchHistory.css';
 
 /**
  * Constants for filtering
@@ -207,6 +206,29 @@ interface RoomAllocation {
     childrenAges: number[];
 }
 
+interface SearchHistoryItem {
+    id: string;
+    timestamp: number;
+    query: {
+        destinations: Destination[];
+        checkIn: string;
+        checkOut: string;
+        roomAllocations: RoomAllocation[];
+        mealPlan: string;
+        nationality: string;
+        budgetType: 'total' | 'person';
+        tab: 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'ski';
+        searchMode: 'classic' | 'narrative' | 'immersive';
+        budgetFrom?: string;
+        budgetTo?: string;
+        flexibleDays?: number;
+    };
+    resultsSummary?: {
+        count: number;
+        minPrice?: number;
+    };
+}
+
 import { NarrativeSearch } from '../components/packages/Steps/NarrativeSearch';
 import { ImmersiveSearch, type ImmersiveSearchData } from '../components/packages/Steps/ImmersiveSearch';
 import type { BasicInfoData, DestinationInput } from '../types/packageSearch.types';
@@ -248,6 +270,8 @@ const SmartSearch: React.FC = () => {
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     // Recent searches state kept but not used for display anymore
     const [recentSearches, setRecentSearches] = useState<Destination[]>([]);
+    const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
+    const [showHistorySidebar, setShowHistorySidebar] = useState(false);
 
     const [checkIn, setCheckIn] = useState(() => {
         const d = new Date();
@@ -505,6 +529,15 @@ const SmartSearch: React.FC = () => {
                 setRecentSearches(JSON.parse(stored));
             } catch (e) {
                 console.warn('Failed to parse recent searches:', e);
+            }
+        }
+
+        const storedHistory = localStorage.getItem('smartSearchHistoryItems');
+        if (storedHistory) {
+            try {
+                setSearchHistory(JSON.parse(storedHistory));
+            } catch (e) {
+                console.warn('Failed to parse search history:', e);
             }
         }
 
@@ -802,6 +835,42 @@ const SmartSearch: React.FC = () => {
             setSearchResults(resultsWithSales);
             setSearchPerformed(true);
 
+            // SAVE TO HISTORY
+            const historyItem: SearchHistoryItem = {
+                id: Math.random().toString(36).substring(2, 9),
+                timestamp: Date.now(),
+                query: {
+                    destinations: activeDestinations,
+                    checkIn: activeCheckIn,
+                    checkOut: activeCheckOut,
+                    roomAllocations: activeAllocations,
+                    mealPlan,
+                    nationality,
+                    budgetType,
+                    tab: activeTab,
+                    searchMode,
+                    budgetFrom,
+                    budgetTo,
+                    flexibleDays
+                },
+                resultsSummary: {
+                    count: resultsWithSales.length,
+                    minPrice: resultsWithSales.length > 0 ? Math.min(...resultsWithSales.map(getFinalDisplayPrice)) : undefined
+                }
+            };
+
+            setSearchHistory(prev => {
+                const filtered = prev.filter(h =>
+                    JSON.stringify(h.query.destinations) !== JSON.stringify(historyItem.query.destinations) ||
+                    h.query.checkIn !== historyItem.query.checkIn ||
+                    h.query.checkOut !== historyItem.query.checkOut ||
+                    JSON.stringify(h.query.roomAllocations) !== JSON.stringify(historyItem.query.roomAllocations)
+                );
+                const updated = [historyItem, ...filtered].slice(0, 10);
+                localStorage.setItem('smartSearchHistoryItems', JSON.stringify(updated));
+                return updated;
+            });
+
             // Access potential errors from performers (using the hack we added in service)
             if (resultsWithSales.length === 0 && (results as any)._lastError) {
                 setSearchError((results as any)._lastError);
@@ -819,6 +888,84 @@ const SmartSearch: React.FC = () => {
         }
     };
 
+
+    const handleLoadHistoryItem = (item: SearchHistoryItem) => {
+        const { query } = item;
+        setSelectedDestinations(query.destinations);
+        setCheckIn(query.checkIn);
+        setCheckOut(query.checkOut);
+        setRoomAllocations(query.roomAllocations);
+        setMealPlan(query.mealPlan);
+        setNationality(query.nationality);
+        setBudgetType(query.budgetType);
+        setActiveTab(query.tab);
+        setSearchMode(query.searchMode);
+        setBudgetFrom(query.budgetFrom || '');
+        setBudgetTo(query.budgetTo || '');
+        setFlexibleDays(query.flexibleDays || 0);
+
+        setShowHistorySidebar(false);
+
+        // Optional: Trigger search immediately
+        handleSearch({
+            checkIn: query.checkIn,
+            checkOut: query.checkOut,
+            destinations: query.destinations,
+            allocations: query.roomAllocations
+        });
+    };
+
+    const handleRefreshHistoryItem = async (item: SearchHistoryItem) => {
+        const { query } = item;
+        try {
+            const results = await performSmartSearch({
+                searchType: query.tab,
+                destinations: query.destinations.map(d => ({
+                    id: String(d.id).replace('solvex-c-', ''),
+                    name: d.name,
+                    type: d.type
+                })),
+                checkIn: query.checkIn,
+                checkOut: query.checkOut,
+                rooms: query.roomAllocations.filter(r => r.adults > 0),
+                mealPlan: query.mealPlan,
+                currency: 'EUR',
+                nationality: query.nationality || 'RS',
+            });
+
+            const resultsWithSales = await Promise.all(results.map(async (h) => {
+                const count = await getMonthlyReservationCount(h.name);
+                return { ...h, salesCount: count };
+            }));
+
+            setSearchHistory(prev => {
+                const updated = prev.map(h => {
+                    if (h.id === item.id) {
+                        return {
+                            ...h,
+                            resultsSummary: {
+                                count: resultsWithSales.length,
+                                minPrice: resultsWithSales.length > 0 ? Math.min(...resultsWithSales.map(getFinalDisplayPrice)) : undefined
+                            }
+                        };
+                    }
+                    return h;
+                });
+                localStorage.setItem('smartSearchHistoryItems', JSON.stringify(updated));
+                return updated;
+            });
+        } catch (error) {
+            console.error('[SmartSearch] Refresh history error:', error);
+        }
+    };
+
+    const removeFromHistory = (id: string) => {
+        setSearchHistory(prev => {
+            const updated = prev.filter(h => h.id !== id);
+            localStorage.setItem('smartSearchHistoryItems', JSON.stringify(updated));
+            return updated;
+        });
+    };
 
     const getPriceWithMargin = (price: number) => Number((price * 1.15).toFixed(2));
 
@@ -2215,7 +2362,108 @@ const SmartSearch: React.FC = () => {
                     </div>
                 </>
             )}
-        </div >
+
+            {/* SEARCH HISTORY SIDEBAR */}
+            {showHistorySidebar && createPortal(
+                <div className="history-sidebar-overlay" onClick={() => setShowHistorySidebar(false)}>
+                    <div className="history-sidebar" onClick={e => e.stopPropagation()}>
+                        <div className="history-header">
+                            <h2><Clock size={20} /> ISTORIJA PRETRAGE</h2>
+                            <button className="close-history-btn" onClick={() => setShowHistorySidebar(false)}><X size={20} /></button>
+                        </div>
+
+                        <div className="history-list">
+                            {searchHistory.length === 0 ? (
+                                <div className="empty-history">
+                                    <Clock size={48} />
+                                    <p>Vaša istorija pretrage je prazna.<br />Pokrenite pretragu da biste je sačuvali ovde.</p>
+                                </div>
+                            ) : (
+                                searchHistory.map(item => (
+                                    <div key={item.id} className="history-item-card" onClick={() => handleLoadHistoryItem(item)}>
+                                        <div className="history-item-header">
+                                            <div className="history-destinations">
+                                                {item.query.destinations.map(d => (
+                                                    <div key={d.id} className="history-dest-chip">
+                                                        {d.type === 'hotel' ? <Hotel size={10} /> : <MapPin size={10} />}
+                                                        {d.name}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <span className="history-time">{new Date(item.timestamp).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
+
+                                        <div className="history-details">
+                                            <div className="history-detail-item">
+                                                <Calendar size={12} />
+                                                {formatDate(item.query.checkIn).split('.')[0]}.{formatDate(item.query.checkIn).split('.')[1]} - {formatDate(item.query.checkOut).split('.')[0]}.{formatDate(item.query.checkOut).split('.')[1]}
+                                            </div>
+                                            <div className="history-detail-item">
+                                                <Users size={12} />
+                                                {item.query.roomAllocations.reduce((sum, r) => sum + r.adults + r.children, 0)} putnika
+                                            </div>
+                                            <div className="history-detail-item">
+                                                <UtensilsCrossed size={12} />
+                                                {getMealPlanDisplayName(item.query.mealPlan)}
+                                            </div>
+                                            <div className="history-detail-item">
+                                                <Zap size={12} />
+                                                {item.query.searchMode.toUpperCase()}
+                                            </div>
+                                        </div>
+
+                                        <div className="history-summary">
+                                            {item.resultsSummary && (
+                                                <>
+                                                    <div className="history-results-count">
+                                                        <Search size={12} /> {item.resultsSummary.count} rezultata
+                                                    </div>
+                                                    {item.resultsSummary.minPrice && (
+                                                        <div className="history-min-price">
+                                                            od {formatPrice(item.resultsSummary.minPrice)} €
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+
+                                        <div className="history-item-actions">
+                                            <button
+                                                className="action-btn-mini"
+                                                title="Osveži rezultate"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRefreshHistoryItem(item);
+                                                }}
+                                            >
+                                                <RefreshCw size={14} />
+                                            </button>
+                                            <button
+                                                className="action-btn-mini delete"
+                                                title="Ukloni iz istorije"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    removeFromHistory(item.id);
+                                                }}
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>,
+                document.getElementById('portal-root') || document.body
+            )}
+
+            {/* FLOATING HISTORY TOGGLE */}
+            <button className="history-toggle-float" onClick={() => setShowHistorySidebar(true)}>
+                <Clock size={28} />
+                {searchHistory.length > 0 && <span className="badge">{searchHistory.length}</span>}
+            </button>
+        </div>
     );
 };
 

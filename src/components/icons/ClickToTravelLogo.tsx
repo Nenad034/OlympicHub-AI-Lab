@@ -87,7 +87,7 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({
                 overflow: 'visible',
                 position: 'relative',
                 gap: '0px',
-                animation: 'floatLogo 6s ease-in-out infinite'
+                animation: iconOnly ? 'none' : 'floatLogo 6s ease-in-out infinite'
             }}
         >
             <style>{`
@@ -107,14 +107,14 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({
                         transition: 'all 0.3s ease',
                         transform: iconScale ? `scale(${iconScale})` : (iconOnly ? 'scale(1.4)' : 'scale(1.1)'),
                         filter: (forceOutline || !isLight) ? `
-                            drop-shadow(2px 0 0 #fff)
-                            drop-shadow(-2px 0 0 #fff)
-                            drop-shadow(0 2px 0 #fff)
-                            drop-shadow(0 -1px 0 #fff)
-                            drop-shadow(1.5px 1.5px 0 #fff)
-                            drop-shadow(-1.5px -1.5px 0 #fff)
-                            drop-shadow(1.5px -1.5px 0 #fff)
-                            drop-shadow(-1.5px 1.5px 0 #fff)
+                            drop-shadow(0.64px 0 0 #fff)
+                            drop-shadow(-0.64px 0 0 #fff)
+                            drop-shadow(0 0.64px 0 #fff)
+                            drop-shadow(0 -0.32px 0 #fff)
+                            drop-shadow(0.48px 0.48px 0 #fff)
+                            drop-shadow(-0.48px -0.48px 0 #fff)
+                            drop-shadow(0.48px -0.48px 0 #fff)
+                            drop-shadow(-0.48px 0.48px 0 #fff)
                         ` : 'none',
                         imageRendering: 'auto'
                     }}
