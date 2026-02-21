@@ -154,6 +154,12 @@ export interface RoomOption {
 
     /** Meal plan (optional, for grouped results) */
     mealPlan?: string;
+
+    /** Tariff information */
+    tariff?: any;
+
+    /** Cancellation policy parameters */
+    cancellationPolicyRequestParams?: any;
 }
 
 /**

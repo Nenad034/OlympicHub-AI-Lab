@@ -270,6 +270,7 @@ export async function searchHotels(
                     id: parseInt(String(s.TariffId || '0')),
                     name: String(s.TariffName || '')
                 },
+                cancellationPolicyRequestParams: s.CancellationPolicyRequestParams || null,
                 duration: Math.ceil((new Date(params.dateTo).getTime() - new Date(params.dateFrom).getTime()) / (1000 * 60 * 60 * 24)),
                 startDate: params.dateFrom
             };

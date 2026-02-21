@@ -8,7 +8,7 @@ import {
     MapPin, Calendar, CalendarDays, Users, UtensilsCrossed, Star,
     Search, TrendingUp, Zap, X, Loader2, ChevronDown,
     LayoutGrid, List as ListIcon, ArrowDownWideNarrow,
-    CheckCircle2, CheckCircle, XCircle, RefreshCw, Clock, ArrowRight, Info, Calendar as CalendarIcon,
+    CheckCircle2, CheckCircle, XCircle, RefreshCw, Clock, ArrowRight, Info, Calendar as CalendarIcon, ShieldCheck, AlertTriangle,
     Plus, Globe, AlignLeft, Mountain, DollarSign, Coffee, Building2, Filter, Trash2
 } from 'lucide-react';
 import { useThemeStore } from '../stores';
@@ -159,6 +159,58 @@ const renderAvailabilityStatus = (status: string | undefined) => {
             <span>{label}</span>
         </div>
     );
+};
+
+export const getRoomCancelStatus = (room: any) => {
+    if (room.tariff?.id === 1993) return 'non-refundable';
+    if (room.cancellationPolicyRequestParams) {
+        // As long as there are params, it's either free inside the deadline or penalty outside. 
+        // A smarter approach uses the CancellationDate relative to today.
+        const cancelDate = room.cancellationPolicyRequestParams.CancellationDate;
+        if (cancelDate && new Date(cancelDate) > new Date()) return 'free';
+        if (room.cancellationPolicyRequestParams.DaysBeforeCheckIn) return 'free'; // Assume it has some free policy timeframe
+        return 'penalty';
+    }
+    return 'unknown';
+};
+
+const renderCancellationBadge = (room: any, onBadgeClick: (r: any) => void) => {
+    // 1. Non-refundable tariff check
+    if (room.tariff?.id === 1993) {
+        return (
+            <div className="cancellation-badge cancellation-non-refundable" onClick={(e) => { e.stopPropagation(); onBadgeClick(room); }}>
+                <AlertTriangle size={12} className="cancellation-icon" />
+                <span>Nepovratno (Timeline)</span>
+            </div>
+        );
+    }
+
+    // 2. Parsed parameters exist
+    const params = room.cancellationPolicyRequestParams;
+    if (params) {
+        return (
+            <div className="cancellation-badge cancellation-params" onClick={(e) => { e.stopPropagation(); onBadgeClick(room); }}>
+                <ShieldCheck size={12} className="cancellation-icon" />
+                <span>Uslovi otkazivanja (Timeline)</span>
+            </div>
+        );
+    }
+
+    // 3. Fallback info
+    return (
+        <div className="cancellation-badge cancellation-info" onClick={(e) => { e.stopPropagation(); onBadgeClick(room); }}>
+            <Info size={12} className="cancellation-icon" />
+            <span>Uslovi (Timeline)</span>
+        </div>
+    );
+};
+
+const isStatusOnRequest = (status: string | undefined) => {
+    if (!status) return true;
+    const s = status.toLowerCase();
+    if (s === 'available' || s === 'slobodno' || s === 'instant') return false;
+    if (s === 'unavailable' || s === 'rasprodato' || s === 'stop_sale') return false;
+    return true; /* anything else is on request */
 };
 
 const renderMealPlanBadge = (mp: string, isLedger: boolean = false) => {
@@ -406,7 +458,9 @@ const SmartSearch: React.FC = () => {
             destinations: mappedDestinations,
             checkIn: mappedCheckIn,
             checkOut: mappedCheckOut,
-            allocations: mappedAllocations
+            allocations: mappedAllocations,
+            mealPlan: data.destinations[0]?.service?.[0] || mealPlan,
+            nationality: data.nationality || nationality
         };
     };
 
@@ -461,16 +515,19 @@ const SmartSearch: React.FC = () => {
     const [hotelNameFilter, setHotelNameFilter] = useState('');
     const [selectedStars, setSelectedStars] = useState<string[]>(['all']);
     const [selectedMealPlans, setSelectedMealPlans] = useState<string[]>(['all']);
+    const [selectedCancelPolicy, setSelectedCancelPolicy] = useState<string>('all');
     const [budgetFrom, setBudgetFrom] = useState<string>('');
     const [budgetTo, setBudgetTo] = useState<string>('');
 
     // Booking states
     const [expandedHotel, setExpandedHotel] = useState<SmartSearchResult | null>(null);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+    const [selectedTimelineRoom, setSelectedTimelineRoom] = useState<any>(null);
     const [notepadMealFilters, setNotepadMealFilters] = useState<Record<string, string>>({});
     const [selectedRoomForBooking, setSelectedRoomForBooking] = useState<any>(null);
     const [bookingSuccessData, setBookingSuccessData] = useState<{ id: string, code: string, provider: string } | null>(null);
     const [bookingAlertError, setBookingAlertError] = useState<string | null>(null);
+    const [roomFilters, setRoomFilters] = useState<Record<string | number, string>>({});
     const [prefetchedResults, setPrefetchedResults] = useState<SmartSearchResult[]>([]);
     const [prefetchKey, setPrefetchKey] = useState<string>('');
     const [isPrefetching, setIsPrefetching] = useState(false);
@@ -762,12 +819,22 @@ const SmartSearch: React.FC = () => {
         checkIn?: string,
         checkOut?: string,
         destinations?: Destination[],
-        allocations?: RoomAllocation[]
+        allocations?: RoomAllocation[],
+        mealPlan?: string,
+        nationality?: string,
+        budgetFrom?: string,
+        budgetTo?: string,
+        budgetType?: 'total' | 'person'
     }) => {
         const activeCheckIn = overrideParams?.checkIn || checkIn;
         const activeCheckOut = overrideParams?.checkOut || checkOut;
         const activeDestinations = overrideParams?.destinations || selectedDestinations;
         const activeAllocations = (overrideParams?.allocations || roomAllocations).filter(r => r.adults > 0);
+        const activeMealPlan = overrideParams?.mealPlan !== undefined ? overrideParams.mealPlan : mealPlan;
+        const activeNationality = overrideParams?.nationality || nationality;
+        const activeBudgetType = overrideParams?.budgetType || budgetType;
+        const activeBudgetFrom = overrideParams?.budgetFrom !== undefined ? overrideParams.budgetFrom : budgetFrom;
+        const activeBudgetTo = overrideParams?.budgetTo !== undefined ? overrideParams.budgetTo : budgetTo;
 
         if (activeDestinations.length === 0) {
             setSearchError('Molimo odaberite najmanje jednu destinaciju');
@@ -785,107 +852,114 @@ const SmartSearch: React.FC = () => {
             checkIn: activeCheckIn,
             checkOut: activeCheckOut,
             allocations: activeAllocations,
-            mealPlan,
-            nationality,
+            mealPlan: activeMealPlan,
+            nationality: activeNationality,
             searchType: activeTab
         });
+
+        let resultsToDisplay: SmartSearchResult[] = [];
+
         if (prefetchedResults.length > 0 && prefetchKey === currentKey) {
             console.log('[SmartSearch] ✅ Using prefetched results! Instant display.');
-            setSearchResults(prefetchedResults);
+            resultsToDisplay = prefetchedResults;
+            setSearchResults(resultsToDisplay);
             setSearchPerformed(true);
             setIsSearching(false);
-            return;
-        }
+            // Don't return yet! We want to save to history.
+        } else {
+            setIsSearching(true);
+            setSearchError(null);
+            setSearchResults([]);
+            setSearchPerformed(false);
+            setSmartSuggestions(null);
+            setSelectedArrivalDate(activeCheckIn);
 
-        setIsSearching(true);
-        setSearchError(null);
-        setSearchResults([]);
-        setSearchPerformed(false);
-        setSmartSuggestions(null);
-        setSelectedArrivalDate(activeCheckIn);
+            try {
+                if (activeAllocations.length === 0) {
+                    setSearchError('Molimo definišite bar jednu sobu sa odraslim putnicima.');
+                    setIsSearching(false);
+                    return;
+                }
 
-        try {
-            if (activeAllocations.length === 0) {
-                setSearchError('Molimo definišite bar jednu sobu sa odraslim putnicima.');
-                setIsSearching(false);
-                return;
-            }
-
-            const results = await performSmartSearch({
-                searchType: activeTab,
-                destinations: activeDestinations.map(d => ({
-                    id: String(d.id).replace('solvex-c-', ''),
-                    name: d.name,
-                    type: d.type
-                })),
-                checkIn: activeCheckIn,
-                checkOut: activeCheckOut,
-                rooms: activeAllocations,
-                mealPlan,
-                currency: 'EUR',
-                nationality: nationality || 'RS',
-            });
-
-            // ENHANCE WITH CRM SALES DATA (only if cache miss - otherwise already enriched)
-            const resultsWithSales = await Promise.all(results.map(async (h) => {
-                const count = await getMonthlyReservationCount(h.name);
-                return { ...h, salesCount: count };
-            }));
-
-            setSearchResults(resultsWithSales);
-            setSearchPerformed(true);
-
-            // SAVE TO HISTORY
-            const historyItem: SearchHistoryItem = {
-                id: Math.random().toString(36).substring(2, 9),
-                timestamp: Date.now(),
-                query: {
-                    destinations: activeDestinations,
+                const results = await performSmartSearch({
+                    searchType: activeTab,
+                    destinations: activeDestinations.map(d => ({
+                        id: String(d.id).replace('solvex-c-', ''),
+                        name: d.name,
+                        type: d.type
+                    })),
                     checkIn: activeCheckIn,
                     checkOut: activeCheckOut,
-                    roomAllocations: activeAllocations,
-                    mealPlan,
-                    nationality,
-                    budgetType,
-                    tab: activeTab,
-                    searchMode,
-                    budgetFrom,
-                    budgetTo,
-                    flexibleDays
-                },
-                resultsSummary: {
-                    count: resultsWithSales.length,
-                    minPrice: resultsWithSales.length > 0 ? Math.min(...resultsWithSales.map(getFinalDisplayPrice)) : undefined
+                    rooms: activeAllocations,
+                    mealPlan: activeMealPlan,
+                    currency: 'EUR',
+                    nationality: activeNationality || 'RS',
+                });
+
+                // ENHANCE WITH CRM SALES DATA (only if cache miss - otherwise already enriched)
+                const resultsWithSales = await Promise.all(results.map(async (h) => {
+                    const count = await getMonthlyReservationCount(h.name);
+                    return { ...h, salesCount: count };
+                }));
+
+                resultsToDisplay = resultsWithSales;
+                setSearchResults(resultsToDisplay);
+                setSearchPerformed(true);
+
+                // Access potential errors from performers (using the hack we added in service)
+                if (resultsToDisplay.length === 0 && (results as any)._lastError) {
+                    setSearchError((results as any)._lastError);
                 }
-            };
 
-            setSearchHistory(prev => {
-                const filtered = prev.filter(h =>
-                    JSON.stringify(h.query.destinations) !== JSON.stringify(historyItem.query.destinations) ||
-                    h.query.checkIn !== historyItem.query.checkIn ||
-                    h.query.checkOut !== historyItem.query.checkOut ||
-                    JSON.stringify(h.query.roomAllocations) !== JSON.stringify(historyItem.query.roomAllocations)
-                );
-                const updated = [historyItem, ...filtered].slice(0, 10);
-                localStorage.setItem('smartSearchHistoryItems', JSON.stringify(updated));
-                return updated;
-            });
-
-            // Access potential errors from performers (using the hack we added in service)
-            if (resultsWithSales.length === 0 && (results as any)._lastError) {
-                setSearchError((results as any)._lastError);
+                if (resultsToDisplay.length === 0 && !overrideParams) {
+                    // SOLVEX AI ASSISTANT DISABLED - PURE API MODE
+                    setSearchError('Nažalost, nema slobodnih mesta za izabrane parametre. Pokušajte sa drugim datumima ili destinacijom.');
+                }
+            } catch (error) {
+                console.error('[SmartSearch] Search error:', error);
+                setSearchError(error instanceof Error ? error.message : 'Greška pri pretrazi');
+                setIsSearching(false);
+                return; // Can't save history if it completely failed
+            } finally {
+                setIsSearching(false);
             }
-
-            if (resultsWithSales.length === 0 && !overrideParams) {
-                // SOLVEX AI ASSISTANT DISABLED - PURE API MODE
-                setSearchError('Nažalost, nema slobodnih mesta za izabrane parametre. Pokušajte sa drugim datumima ili destinacijom.');
-            }
-        } catch (error) {
-            console.error('[SmartSearch] Search error:', error);
-            setSearchError(error instanceof Error ? error.message : 'Greška pri pretrazi');
-        } finally {
-            setIsSearching(false);
         }
+
+        // SAVE TO HISTORY (Reached for both cache hits and fresh searches)
+        const historyItem: SearchHistoryItem = {
+            id: Math.random().toString(36).substring(2, 9),
+            timestamp: Date.now(),
+            query: {
+                destinations: activeDestinations,
+                checkIn: activeCheckIn,
+                checkOut: activeCheckOut,
+                roomAllocations: activeAllocations,
+                mealPlan: activeMealPlan,
+                nationality: activeNationality,
+                budgetType: activeBudgetType,
+                tab: activeTab,
+                searchMode,
+                budgetFrom: activeBudgetFrom,
+                budgetTo: activeBudgetTo,
+                flexibleDays
+            },
+            resultsSummary: {
+                count: resultsToDisplay.length,
+                minPrice: resultsToDisplay.length > 0 ? Math.min(...resultsToDisplay.map(getFinalDisplayPrice)) : undefined
+            }
+        };
+
+        setSearchHistory(prev => {
+            const filtered = prev.filter(h =>
+                JSON.stringify(h.query.destinations) !== JSON.stringify(historyItem.query.destinations) ||
+                h.query.checkIn !== historyItem.query.checkIn ||
+                h.query.checkOut !== historyItem.query.checkOut ||
+                JSON.stringify(h.query.roomAllocations) !== JSON.stringify(historyItem.query.roomAllocations)
+            );
+            const updated = [historyItem, ...filtered].slice(0, 10);
+            localStorage.setItem('smartSearchHistoryItems', JSON.stringify(updated));
+            return updated;
+        });
     };
 
 
@@ -911,7 +985,12 @@ const SmartSearch: React.FC = () => {
             checkIn: query.checkIn,
             checkOut: query.checkOut,
             destinations: query.destinations,
-            allocations: query.roomAllocations
+            allocations: query.roomAllocations,
+            mealPlan: query.mealPlan,
+            nationality: query.nationality,
+            budgetFrom: query.budgetFrom,
+            budgetTo: query.budgetTo,
+            budgetType: query.budgetType
         });
     };
 
@@ -1009,10 +1088,39 @@ const SmartSearch: React.FC = () => {
         }
 
         if (selectedMealPlans.length > 0 && !selectedMealPlans.includes('all')) {
-            const normalized = normalizeMealPlan(hotel.mealPlan || '');
-            if (!selectedMealPlans.includes(normalized)) {
+            const hotelPlans = hotel.mealPlans?.length ? hotel.mealPlans : [hotel.mealPlan || ''];
+            const normalizedHotelPlans = hotelPlans.map(mp => normalizeMealPlan(mp));
+            const hasMatch = normalizedHotelPlans.some(n => selectedMealPlans.includes(n));
+            if (!hasMatch) {
                 return false;
             }
+        }
+
+        if (selectedCancelPolicy !== 'all') {
+            let hasMatchingRoom = false;
+
+            if (hotel.allocationResults && Object.keys(hotel.allocationResults).length > 0) {
+                Object.values(hotel.allocationResults).forEach((rooms: any) => {
+                    if (rooms.some((r: any) => {
+                        const status = getRoomCancelStatus(r);
+                        if (selectedCancelPolicy === 'non-refundable') return status === 'non-refundable';
+                        if (selectedCancelPolicy === 'free') return status === 'free';
+                        return true;
+                    })) {
+                        hasMatchingRoom = true;
+                    }
+                });
+            } else if (hotel.rooms && hotel.rooms.length > 0) {
+                hasMatchingRoom = hotel.rooms.some(r => {
+                    const status = getRoomCancelStatus(r);
+                    if (selectedCancelPolicy === 'non-refundable') return status === 'non-refundable';
+                    if (selectedCancelPolicy === 'free') return status === 'free';
+                    return true;
+                });
+            } else {
+                hasMatchingRoom = true;
+            }
+            if (!hasMatchingRoom) return false;
         }
 
         const totalPrice = getFinalDisplayPrice(hotel);
@@ -1371,7 +1479,12 @@ const SmartSearch: React.FC = () => {
                                             destinations: updates.destinations,
                                             checkIn: updates.checkIn,
                                             checkOut: updates.checkOut,
-                                            allocations: updates.allocations
+                                            allocations: updates.allocations,
+                                            mealPlan: (data.services && data.services.length > 0) ? data.services[0] : mealPlan,
+                                            nationality: data.nationality || nationality,
+                                            budgetFrom: data.budget?.from?.toString(),
+                                            budgetTo: data.budget?.to?.toString(),
+                                            budgetType: data.budget?.type
                                         });
                                     }}
                                 />
@@ -1389,7 +1502,9 @@ const SmartSearch: React.FC = () => {
                                                 destinations: updates.destinations,
                                                 checkIn: updates.checkIn,
                                                 checkOut: updates.checkOut,
-                                                allocations: updates.allocations
+                                                allocations: updates.allocations,
+                                                mealPlan: updates.mealPlan,
+                                                nationality: updates.nationality
                                             });
                                         }}
                                     />
@@ -1946,6 +2061,18 @@ const SmartSearch: React.FC = () => {
                                             <div style={{ flex: 1, minWidth: '0' }}>
                                                 <MultiSelectDropdown options={MEAL_PLAN_OPTIONS} selected={selectedMealPlans} onChange={setSelectedMealPlans} placeholder="Usluga" />
                                             </div>
+                                            <div style={{ flex: 1, minWidth: '0' }}>
+                                                <select
+                                                    value={selectedCancelPolicy}
+                                                    onChange={e => setSelectedCancelPolicy(e.target.value)}
+                                                    className="smart-input premium"
+                                                    style={{ width: '100%', height: '48px', background: 'var(--bg-input)', border: 'var(--border-thin)', color: 'var(--text-primary)', borderRadius: '12px', padding: '0 12px', cursor: 'pointer', appearance: 'none' }}
+                                                >
+                                                    <option value="all">Svi uslovi otkazivanja</option>
+                                                    <option value="free">Besplatno otkazivanje</option>
+                                                    <option value="non-refundable">Nepovratno (100% penal)</option>
+                                                </select>
+                                            </div>
                                             <div className="view-mode-switcher" style={{ flexShrink: 0, background: 'var(--bg-input)', border: 'var(--border-thin)', borderRadius: '12px', padding: '4px' }}>
                                                 <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid"><LayoutGrid size={18} /></button>
                                                 <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List"><ListIcon size={18} /></button>
@@ -2013,8 +2140,20 @@ const SmartSearch: React.FC = () => {
                                                                 if (alloc.adults === 0) return null;
 
                                                                 const allRooms = (hotel.allocationResults && hotel.allocationResults[roomIdx] ? [...hotel.allocationResults[roomIdx]].sort((a, b) => (a.price || 0) - (b.price || 0)) : (hotel.rooms || [hotel]));
-                                                                const activeMealFilter = notepadMealFilters[hotel.id] || 'all';
-                                                                const filteredRooms = allRooms.filter(r => activeMealFilter === 'all' || (r.mealPlan || hotel.mealPlan) === activeMealFilter);
+
+                                                                const currentTextFilter = (roomFilters[`${hotel.id}-${roomIdx}`] || '').toLowerCase().trim();
+                                                                const filteredRooms = allRooms.filter(r => {
+                                                                    if (selectedCancelPolicy !== 'all') {
+                                                                        const status = getRoomCancelStatus(r);
+                                                                        if (selectedCancelPolicy === 'non-refundable' && status !== 'non-refundable') return false;
+                                                                        if (selectedCancelPolicy === 'free' && status !== 'free') return false;
+                                                                    }
+
+                                                                    if (!currentTextFilter) return true;
+                                                                    const searchableText = `${r.name} ${r.mealPlan || hotel.mealPlan}`.toLowerCase();
+                                                                    const terms = currentTextFilter.split(/\s+/);
+                                                                    return terms.every(t => searchableText.includes(t));
+                                                                });
 
                                                                 return (
                                                                     <div key={`alloc-${roomIdx}`} className="notepad-allocation-segment">
@@ -2027,21 +2166,27 @@ const SmartSearch: React.FC = () => {
                                                                                 <span className="nights-badge">{nights} noćenja</span>
                                                                             </div>
 
-                                                                            <div className="notepad-config-actions">
-                                                                                {allRooms.length > 5 && (
-                                                                                    <div className="notepad-mini-filter">
-                                                                                        <Filter size={14} />
-                                                                                        <select
-                                                                                            value={activeMealFilter}
-                                                                                            onChange={(e) => setNotepadMealFilters(prev => ({ ...prev, [hotel.id]: e.target.value }))}
-                                                                                        >
-                                                                                            <option value="all">Sve usluge</option>
-                                                                                            {Array.from(new Set(allRooms.map(r => r.mealPlan || hotel.mealPlan))).filter(Boolean).map(mp => (
-                                                                                                <option key={mp as string} value={mp as string}>{getMealPlanDisplayName(mp as string)}</option>
-                                                                                            ))}
-                                                                                        </select>
-                                                                                    </div>
-                                                                                )}
+                                                                            <div className="notepad-config-actions" style={{ display: 'flex', gap: '15px', alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
+                                                                                <div style={{ maxWidth: '380px', flex: '0 1 380px' }}>
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        placeholder="🔍 Filtriraj tip sobe ili uslugu (npr. DBL All Inclusive)"
+                                                                                        value={roomFilters[`${hotel.id}-${roomIdx}`] || ''}
+                                                                                        onChange={(e) => setRoomFilters(prev => ({ ...prev, [`${hotel.id}-${roomIdx}`]: e.target.value }))}
+                                                                                        style={{
+                                                                                            width: '100%',
+                                                                                            background: 'rgba(255,255,255,0.05)',
+                                                                                            border: '1px solid rgba(255,255,255,0.1)',
+                                                                                            color: 'var(--text-primary)',
+                                                                                            padding: '8px 16px',
+                                                                                            borderRadius: '20px',
+                                                                                            fontSize: '0.8rem',
+                                                                                            outline: 'none',
+                                                                                            transition: 'all 0.3s'
+                                                                                        }}
+                                                                                        className="room-search-input"
+                                                                                    />
+                                                                                </div>
                                                                                 <div className="notepad-config-pill">
                                                                                     {formatRoomConfigLabel(alloc, roomIdx)}
                                                                                 </div>
@@ -2051,6 +2196,7 @@ const SmartSearch: React.FC = () => {
                                                                         <div className="notepad-ledger-header">
                                                                             <div style={{ paddingLeft: '20px' }}>TIP SMEŠTAJA</div>
                                                                             <div style={{ textAlign: 'center' }}>USLUGA</div>
+                                                                            <div style={{ textAlign: 'center' }}>STATUS</div>
                                                                             <div style={{ textAlign: 'center' }}>KAPACITET</div>
                                                                             <div style={{ textAlign: 'right', paddingRight: '20px' }}>CENA & AKCIJA</div>
                                                                         </div>
@@ -2065,22 +2211,23 @@ const SmartSearch: React.FC = () => {
                                                                                         <div className="ledger-meal">
                                                                                             {renderMealPlanBadge(room.mealPlan || hotel.mealPlan, true)}
                                                                                         </div>
+                                                                                        <div className="ledger-status" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>
+                                                                                            {renderAvailabilityStatus(room.availability || hotel.availability)}
+                                                                                            {renderCancellationBadge(room, setSelectedTimelineRoom)}
+                                                                                        </div>
                                                                                         <div className="ledger-capacity">
                                                                                             <Users size={16} />
                                                                                             <span>{room.capacity || `${alloc.adults}+${alloc.children}`}</span>
                                                                                         </div>
                                                                                         <div className="ledger-action-zone">
-                                                                                            <div className="ledger-status-price">
-                                                                                                {renderAvailabilityStatus(room.availability || hotel.availability)}
-                                                                                                <div className="ledger-price">
-                                                                                                    {formatPrice(isSubagent ? getPriceWithMargin(room.price) : Number(room.price))} <span className="curr">EUR</span>
-                                                                                                </div>
+                                                                                            <div className="ledger-price">
+                                                                                                {formatPrice(isSubagent ? getPriceWithMargin(room.price) : Number(room.price))} <span className="curr">EUR</span>
                                                                                             </div>
                                                                                             <button
-                                                                                                className="btn-ledger-reserve"
+                                                                                                className={`btn-ledger-reserve ${isStatusOnRequest(room.availability || hotel.availability) ? 'request-mode' : ''}`}
                                                                                                 onClick={() => handleReserveClick(room, roomIdx, hotel)}
                                                                                             >
-                                                                                                REZERVIŠI <ArrowRight size={14} />
+                                                                                                {isStatusOnRequest(room.availability || hotel.availability) ? 'POŠALJI UPIT' : 'REZERVIŠI'} <ArrowRight size={14} />
                                                                                             </button>
                                                                                         </div>
                                                                                     </div>
@@ -2103,8 +2250,16 @@ const SmartSearch: React.FC = () => {
                                                         <div key={`${hotel.provider}-${hotel.id}-${hIdx}`} className={`hotel-result-card-premium unified ${hotel.provider.toLowerCase().replace(/\s+/g, '')} ${viewMode === 'list' ? 'horizontal' : ''}`}>
                                                             <div className="hotel-card-image" onClick={() => navigate('/hotel-view/' + hotel.id)}>
                                                                 <img src={getProxiedImageUrl(hotel.images?.[0]) || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"} alt="" />
-                                                                {renderMealPlanBadge(hotel.mealPlan || '')}
-                                                                {renderAvailabilityStatus(hotel.availability)}
+                                                                <div className="hotel-meal-plans-container" style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', flexDirection: 'column', gap: '6px', zIndex: 10 }}>
+                                                                    {Array.from(new Set(hotel.mealPlans?.length ? hotel.mealPlans.map(m => normalizeMealPlan(m)) : [normalizeMealPlan(hotel.mealPlan || '')])).map((normCode, mIdx) => {
+                                                                        const originalName = (hotel.mealPlans?.length ? hotel.mealPlans : [hotel.mealPlan || '']).find(m => normalizeMealPlan(m) === normCode) || normCode;
+                                                                        const badge = renderMealPlanBadge(originalName);
+                                                                        return React.cloneElement(badge as React.ReactElement<any>, {
+                                                                            key: mIdx,
+                                                                            style: { position: 'relative', top: 'auto', left: 'auto', margin: 0 }
+                                                                        });
+                                                                    })}
+                                                                </div>
                                                                 <div className="hotel-stars-badge">
                                                                     {Array(Math.max(0, Math.min(5, Math.floor(Number(hotel.stars || 0)) || 0))).fill(0).map((_, i) => <Star key={i} size={12} fill="#ce93d8" color="#ce93d8" />)}
                                                                 </div>
@@ -2121,7 +2276,8 @@ const SmartSearch: React.FC = () => {
                                                                             )}
                                                                         </div>
                                                                         <div className="hotel-location-tag"><MapPin size={14} /> <span>{hotel.location}</span></div>
-                                                                        <div className="hotel-date-badge"><CalendarDays size={14} /> <span>{formatDate(checkIn)} - {formatDate(checkOut)} ({nights} noćenja)</span></div>
+                                                                        <div className="hotel-date-badge" style={{ marginBottom: '8px' }}><CalendarDays size={14} /> <span>{formatDate(checkIn)} - {formatDate(checkOut)} ({nights} noćenja)</span></div>
+                                                                        {renderAvailabilityStatus(hotel.availability)}
                                                                     </div>
                                                                 </div>
                                                                 <div className="price-action-section">
@@ -2235,23 +2391,54 @@ const SmartSearch: React.FC = () => {
                                                     </div>
                                                     {renderAvailabilityStatus(expandedHotel.availability)}
                                                 </div>
-                                                <button className="close-modal-btn" onClick={() => setExpandedHotel(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.05)', border: 'none', color: 'white', padding: '10px', borderRadius: '50%', cursor: 'pointer' }}><X size={20} /></button>
+                                                <button className="close-modal-btn" onClick={() => setExpandedHotel(null)} style={{ position: 'absolute', top: '20px', left: '20px', background: 'rgba(255,255,255,0.05)', border: 'none', color: 'white', padding: '10px', borderRadius: '50%', cursor: 'pointer', zIndex: 10 }}><X size={20} /></button>
                                             </div>
                                             <div className="modal-body-v6" style={{ padding: '0', overflowY: 'auto', flex: 1 }}>
                                                 {roomAllocations.map((alloc, rIdx) => {
                                                     if (alloc.adults === 0) return null;
-                                                    const roomsForThisConfig = (expandedHotel.allocationResults && expandedHotel.allocationResults[rIdx]) || [];
+                                                    const rawRoomsForThisConfig = (expandedHotel.allocationResults && expandedHotel.allocationResults[rIdx]) || [];
+                                                    const currentFilter = (roomFilters[rIdx] || '').toLowerCase().trim();
+                                                    const roomsForThisConfig = currentFilter
+                                                        ? rawRoomsForThisConfig.filter((room: any) => {
+                                                            const searchableText = `${room.name} ${room.mealPlan || expandedHotel.mealPlan}`.toLowerCase();
+                                                            const terms = currentFilter.split(/\s+/);
+                                                            return terms.every(t => searchableText.includes(t));
+                                                        })
+                                                        : rawRoomsForThisConfig;
+
                                                     return (
                                                         <div key={rIdx} className="room-allocation-section-v6">
-                                                            <div className="notepad-sub-header-v6" style={{ padding: '1.5rem 2.5rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                                                                <div className="notepad-config-pill">
+                                                            <div className="notepad-sub-header-v6" style={{ padding: '1.5rem 2.5rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.03)', display: 'flex', gap: '20px', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                                                <div className="notepad-config-pill" style={{ flex: '0 0 auto' }}>
                                                                     {formatRoomConfigLabel(alloc, rIdx)}
                                                                 </div>
+                                                                <div style={{ flex: '1', maxWidth: '380px' }}>
+                                                                    <input
+                                                                        type="text"
+                                                                        placeholder="🔍 Filtriraj tip sobe ili uslugu (npr. DBL All Inclusive)"
+                                                                        value={roomFilters[rIdx] || ''}
+                                                                        onChange={(e) => setRoomFilters(prev => ({ ...prev, [rIdx]: e.target.value }))}
+                                                                        style={{
+                                                                            width: '100%',
+                                                                            background: 'rgba(255,255,255,0.05)',
+                                                                            border: '1px solid rgba(255,255,255,0.1)',
+                                                                            color: 'var(--text-primary)',
+                                                                            padding: '8px 16px',
+                                                                            borderRadius: '20px',
+                                                                            fontSize: '0.8rem',
+                                                                            outline: 'none',
+                                                                            transition: 'all 0.3s'
+                                                                        }}
+                                                                        className="room-search-input"
+                                                                    />
+                                                                </div>
                                                             </div>
+
 
                                                             <div className="notepad-ledger-header">
                                                                 <div style={{ paddingLeft: '20px' }}>TIP SMEŠTAJA</div>
                                                                 <div style={{ textAlign: 'center' }}>USLUGA</div>
+                                                                <div style={{ textAlign: 'center' }}>STATUS</div>
                                                                 <div style={{ textAlign: 'center' }}>KAPACITET</div>
                                                                 <div style={{ textAlign: 'right', paddingRight: '20px' }}>CENA & AKCIJA</div>
                                                             </div>
@@ -2266,22 +2453,23 @@ const SmartSearch: React.FC = () => {
                                                                             <div className="ledger-meal">
                                                                                 {renderMealPlanBadge(room.mealPlan || expandedHotel.mealPlan, true)}
                                                                             </div>
+                                                                            <div className="ledger-status" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>
+                                                                                {renderAvailabilityStatus(room.availability || expandedHotel.availability)}
+                                                                                {renderCancellationBadge(room, setSelectedTimelineRoom)}
+                                                                            </div>
                                                                             <div className="ledger-capacity">
                                                                                 <Users size={16} />
                                                                                 <span>{room.capacity || `${alloc.adults}+${alloc.children}`}</span>
                                                                             </div>
                                                                             <div className="ledger-action-zone">
-                                                                                <div className="ledger-status-price">
-                                                                                    {renderAvailabilityStatus(room.availability || expandedHotel.availability)}
-                                                                                    <div className="ledger-price">
-                                                                                        {formatPrice(isSubagent ? getPriceWithMargin(room.price) : Number(room.price))} <span className="curr">EUR</span>
-                                                                                    </div>
+                                                                                <div className="ledger-price">
+                                                                                    {formatPrice(isSubagent ? getPriceWithMargin(room.price) : Number(room.price))} <span className="curr">EUR</span>
                                                                                 </div>
                                                                                 <button
-                                                                                    className="btn-ledger-reserve"
+                                                                                    className={`btn-ledger-reserve ${isStatusOnRequest(room.availability || expandedHotel.availability) ? 'request-mode' : ''}`}
                                                                                     onClick={() => handleReserveClick(room, rIdx, expandedHotel)}
                                                                                 >
-                                                                                    REZERVIŠI <ArrowRight size={14} />
+                                                                                    {isStatusOnRequest(room.availability || expandedHotel.availability) ? 'POŠALJI UPIT' : 'REZERVIŠI'} <ArrowRight size={14} />
                                                                                 </button>
                                                                             </div>
                                                                         </div>
@@ -2358,6 +2546,105 @@ const SmartSearch: React.FC = () => {
                                     document.getElementById('portal-root') || document.body
                                 )
                             }
+
+                            {/* CANCELLATION TIMELINE MODAL */}
+                            {selectedTimelineRoom && (
+                                <div className="booking-modal-overlay animate-fade-in" onClick={() => setSelectedTimelineRoom(null)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100000 }}>
+                                    <div className="booking-modal-content premium-glass animate-fade-in-up" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', width: '90%', padding: '30px', borderRadius: '24px' }}>
+                                        <div className="modal-header" style={{ marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.4rem', margin: 0 }}>
+                                                <ShieldCheck size={24} color="var(--accent)" /> Timeline Otkazivanja
+                                            </h2>
+                                            <button className="close-modal-btn" onClick={() => setSelectedTimelineRoom(null)}><X size={24} /></button>
+                                        </div>
+                                        <div className="timeline-body">
+                                            {(() => {
+                                                const room = selectedTimelineRoom;
+                                                const status = getRoomCancelStatus(room);
+                                                if (status === 'non-refundable') {
+                                                    return (
+                                                        <div style={{ textAlign: 'center', padding: '20px' }}>
+                                                            <AlertTriangle size={48} color="#ef4444" style={{ marginBottom: '15px' }} />
+                                                            <h3 style={{ color: '#ef4444', marginBottom: '10px' }}>Non-refundable (Nepovratno)</h3>
+                                                            <p style={{ color: 'var(--text-secondary)' }}>
+                                                                Ova soba podleže <strong>100% penalima</strong> odmah nakon potvrde.
+                                                                Otkazivanje nije moguće bez potpunog gubitka uplaćenih sredstava.
+                                                            </p>
+                                                        </div>
+                                                    );
+                                                }
+
+                                                const params = room.cancellationPolicyRequestParams;
+                                                if (params) {
+                                                    const cancelDate = params.CancellationDate ? new Date(params.CancellationDate) : null;
+                                                    const today = new Date();
+                                                    const daysBefore = params.DaysBeforeCheckIn || 0;
+
+                                                    return (
+                                                        <div className="cancellation-timeline-graphic" style={{ marginTop: '20px', padding: '20px', background: 'var(--glass-bg)', borderRadius: '16px', border: 'var(--border-thin)' }}>
+                                                            <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', textAlign: 'center' }}>Grafikon prikazuje odnose penala u vremenu za izabranu sobu.</p>
+
+                                                            <div style={{ display: 'flex', alignItems: 'center', position: 'relative', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', margin: '40px 10px' }}>
+                                                                {/* Start (Today) */}
+                                                                <div style={{ position: 'absolute', left: '0%', top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#4cd964', border: '3px solid var(--bg-card)', zIndex: 2 }}></div>
+                                                                    <span style={{ position: 'absolute', top: '-25px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Danas</span>
+                                                                </div>
+
+                                                                {/* Free cancellation zone */}
+                                                                <div style={{ position: 'absolute', left: '0%', top: '0', bottom: '0', width: cancelDate && cancelDate > today ? '60%' : '20%', background: cancelDate && cancelDate > today ? 'linear-gradient(90deg, #4cd964, #f59e0b)' : '#ef4444', borderRadius: '4px 0 0 4px' }}></div>
+
+                                                                {/* Deadline point */}
+                                                                <div style={{ position: 'absolute', left: cancelDate && cancelDate > today ? '60%' : '20%', top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                                    <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#f59e0b', border: '3px solid var(--bg-card)', zIndex: 2 }}></div>
+                                                                    <span style={{ position: 'absolute', top: '-25px', fontSize: '0.75rem', fontWeight: 600, color: '#f59e0b', whiteSpace: 'nowrap' }}>Istek besplatnog ({daysBefore} dana  pred put)</span>
+                                                                    {cancelDate && <span style={{ position: 'absolute', bottom: '-25px', fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{new Date(cancelDate).toLocaleDateString('sr-RS')}</span>}
+                                                                </div>
+
+                                                                {/* Penalty zone */}
+                                                                <div style={{ position: 'absolute', left: cancelDate && cancelDate > today ? '60%' : '20%', top: '0', bottom: '0', width: cancelDate && cancelDate > today ? '40%' : '80%', background: 'linear-gradient(90deg, #f59e0b, #ef4444)', borderRadius: '0 4px 4px 0' }}></div>
+
+                                                                {/* Check In */}
+                                                                <div style={{ position: 'absolute', right: '0%', top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#ef4444', border: '3px solid var(--bg-card)', zIndex: 2 }}></div>
+                                                                    <span style={{ position: 'absolute', top: '-25px', fontSize: '0.75rem', fontWeight: 600, color: '#ef4444', whiteSpace: 'nowrap' }}>Check-In</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '12px', marginTop: '40px' }}>
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.9rem' }}>
+                                                                    <span style={{ color: 'var(--text-secondary)' }}>Status:</span>
+                                                                    <strong style={{ color: cancelDate && cancelDate > today ? '#4cd964' : '#f59e0b' }}>{cancelDate && cancelDate > today ? 'Besplatno otkazivanje moguće' : 'Penali se obračunavaju'}</strong>
+                                                                </div>
+                                                                {params.DlPrice && params.DlPrice > 0 && (
+                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                                                                        <span style={{ color: 'var(--text-secondary)' }}>Trenutni obračunati penali:</span>
+                                                                        <strong style={{ color: '#ef4444' }}>{params.DlPrice} EUR</strong>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return (
+                                                    <div style={{ textAlign: 'center', padding: '20px' }}>
+                                                        <Info size={48} color="#3b82f6" style={{ marginBottom: '15px' }} />
+                                                        <h3 style={{ color: '#fff', marginBottom: '10px' }}>Standardni Uslovi</h3>
+                                                        <p style={{ color: 'var(--text-secondary)' }}>
+                                                            Detaljni uslovi otkazivanja (uključujući rokove do kada je otkaz besplatan i iznos penala) biće Vam transparentno prikazani prilikom slanja upita.
+                                                        </p>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                        <div className="modal-footer" style={{ marginTop: '30px', display: 'flex', justifyContent: 'center' }}>
+                                            <button className="search-launch-btn-v4 unified" onClick={() => setSelectedTimelineRoom(null)} style={{ padding: '12px 40px', borderRadius: '25px', fontSize: '1rem' }}>Zatvori</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                         </main>
                     </div>
                 </>
@@ -2457,12 +2744,18 @@ const SmartSearch: React.FC = () => {
                 </div>,
                 document.getElementById('portal-root') || document.body
             )}
-
-            {/* FLOATING HISTORY TOGGLE */}
-            <button className="history-toggle-float" onClick={() => setShowHistorySidebar(true)}>
-                <Clock size={28} />
-                {searchHistory.length > 0 && <span className="badge">{searchHistory.length}</span>}
-            </button>
+            {/* FLOATING HISTORY TOGGLE - Rendered in Portal for maximum reliability */}
+            {createPortal(
+                <button
+                    className="history-toggle-float"
+                    onClick={() => setShowHistorySidebar(true)}
+                    style={{ zIndex: 999999 }}
+                >
+                    <Clock size={28} />
+                    {searchHistory.length > 0 && <span className="badge">{searchHistory.length}</span>}
+                </button>,
+                document.getElementById('portal-root') || document.body
+            )}
         </div>
     );
 };

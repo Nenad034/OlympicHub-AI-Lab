@@ -71,7 +71,7 @@ class SearchPrefetchService {
     }
 
     /** Schedule a pre-fetch. Debounced - safe to call on every state change. */
-    schedule(params: PrefetchParams, debounceMs = 200): void {
+    schedule(params: PrefetchParams, debounceMs = 1200): void {
         // Skip country-level searches (too broad)
         const hasBroadSearch = params.destinations.some(d => d.type === 'country');
         const activeAllocations = params.allocations.filter(r => r.adults > 0);

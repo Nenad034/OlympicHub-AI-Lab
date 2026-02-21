@@ -25,13 +25,23 @@
 }
 
 @keyframes slideInRight {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .history-header {
@@ -208,46 +218,63 @@
     background: #ef4444;
 }
 
-/* History Floating Button */
+/* History Side Tab Toggle */
 .history-toggle-float {
     position: fixed;
-    right: 30px;
-    bottom: 30px;
-    width: 60px;
-    height: 60px;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 100px;
     background: var(--accent);
     color: white;
-    border-radius: 50%;
+    border-radius: 12px 0 0 12px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 10px 25px var(--accent-glow);
+    gap: 8px;
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.4);
     cursor: pointer;
-    z-index: 9999;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: none;
+    z-index: 999999;
+    transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-right: none;
+    animation: side-tab-slide-in 0.6s ease-out;
+}
+
+@keyframes side-tab-slide-in {
+    from {
+        transform: translate(100%, -50%);
+    }
+
+    to {
+        transform: translate(0, -50%);
+    }
 }
 
 .history-toggle-float:hover {
-    transform: scale(1.1) translateY(-5px);
-    box-shadow: 0 15px 30px var(--accent-glow);
+    width: 56px;
+    background: #9c27b0;
+    /* Slightly lighter purple */
 }
 
 .history-toggle-float .badge {
     position: absolute;
-    top: 0;
-    right: 0;
+    top: -10px;
+    left: -10px;
     background: #ef4444;
     color: white;
     font-size: 0.7rem;
     font-weight: 900;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 2px solid var(--bg-card);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .empty-history {

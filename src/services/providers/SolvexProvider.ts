@@ -87,13 +87,15 @@ export class SolvexProvider implements HotelProvider {
                     const existing = groupedMap.get(key)!;
                     // Add this room to the existing grouped hotel result
                     existing.rooms.push({
-                        id: `${item.room.roomType.id}-${item.room.roomCategory.id}-${item.room.roomAccommodation.id}-${item.tariff.id}`,
+                        id: `${item.room.roomType.id}-${item.room.roomCategory.id}-${item.room.roomAccommodation.id}-${item.tariff.id}-${item.pansion.id}`,
                         name: `${item.room.roomType.name}${item.room.roomCategory.name ? ` (${item.room.roomCategory.name})` : ''} - ${item.room.roomAccommodation.name}${item.tariff.name ? ` (${item.tariff.name})` : ''}`,
                         description: `Dest: ${item.hotel.city.name}`,
                         price: item.totalCost,
                         availability: this.bridgeAvailability(item.quotaType),
                         capacity: item.room.roomType.places,
-                        mealPlan: this.bridgeMealPlan(item.pansion.name)
+                        mealPlan: this.bridgeMealPlan(item.pansion.name),
+                        tariff: item.tariff,
+                        cancellationPolicyRequestParams: item.cancellationPolicyRequestParams
                     });
 
                     // Keep the lowest price as the main price for the card
@@ -256,13 +258,15 @@ export class SolvexProvider implements HotelProvider {
             checkOut,
             nights,
             rooms: [{
-                id: `${solvexResult.room.roomType.id}-${solvexResult.room.roomCategory.id}-${solvexResult.room.roomAccommodation.id}-${solvexResult.tariff.id}`,
+                id: `${solvexResult.room.roomType.id}-${solvexResult.room.roomCategory.id}-${solvexResult.room.roomAccommodation.id}-${solvexResult.tariff.id}-${solvexResult.pansion.id}`,
                 name: cleanText(`${solvexResult.room.roomType.name}${solvexResult.room.roomCategory.name ? ` (${solvexResult.room.roomCategory.name})` : ''} - ${solvexResult.room.roomAccommodation.name}${solvexResult.tariff.name ? ` (${solvexResult.tariff.name})` : ''}`),
-                description: (solvexResult as any).hotel.description || '',
+                description: `Dest: ${solvexResult.hotel.city.name}`,
                 price: solvexResult.totalCost,
                 availability: this.bridgeAvailability(solvexResult.quotaType),
                 capacity: solvexResult.room.roomType.places,
-                mealPlan: this.bridgeMealPlan(solvexResult.pansion.name)
+                mealPlan: this.bridgeMealPlan(solvexResult.pansion.name),
+                tariff: solvexResult.tariff,
+                cancellationPolicyRequestParams: solvexResult.cancellationPolicyRequestParams
             }],
             originalData: solvexResult
         };

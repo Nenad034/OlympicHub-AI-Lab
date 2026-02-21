@@ -41,6 +41,7 @@ export interface SmartSearchResult {
     currency: string;
     stars?: number;
     mealPlan?: string;
+    mealPlans?: string[];
     images?: string[];
     description?: string;
     rooms?: any[];
@@ -219,6 +220,7 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                                 currency: h.currency,
                                 stars: h.stars,
                                 mealPlan: h.mealPlan,
+                                mealPlans: h.mealPlan ? [h.mealPlan] : [],
                                 images: h.image ? [h.image] : [],
                                 rooms: [], // Legacy, will be empty in multi-room
                                 allocationResults: {},
@@ -243,15 +245,41 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                             }
                         });
 
-                        // Re-calculate the total starting price for the whole hotel (sum of minimums for each room index)
+                        // Extract all unique meal plans available for this combined hotel result
+                        const uniqueMealPlans = new Set<string>();
+                        Object.values(existing.allocationResults!).forEach((rooms: any) => {
+                            if (rooms && rooms.length > 0) {
+                                rooms.forEach((r: any) => {
+                                    if (r.mealPlan) uniqueMealPlans.add(r.mealPlan);
+                                });
+                            }
+                        });
+                        existing.mealPlans = Array.from(uniqueMealPlans);
+
+                        // 1. Calculate the total starting price (sum of minimums for each room index)
+                        // 2. Aggregate availability (if any room is 'on_request', the whole booking is 'on_request')
                         let minTotal = 0;
+                        let worstStatus: 'available' | 'on_request' | 'unavailable' = 'available';
+
                         Object.values(existing.allocationResults!).forEach((rooms: any) => {
                             if (rooms && rooms.length > 0) {
                                 const minForThisRoom = Math.min(...rooms.map((r: any) => r.price));
                                 minTotal += Number(minForThisRoom);
+
+                                // Check statuses in this room allocation
+                                const hasAvailable = rooms.some((r: any) => r.availability === 'available');
+                                const hasOnRequest = rooms.some((r: any) => r.availability === 'on_request');
+                                const hasUnavailable = rooms.every((r: any) => r.availability === 'unavailable');
+
+                                if (hasUnavailable && worstStatus !== 'unavailable') {
+                                    worstStatus = 'unavailable';
+                                } else if (hasOnRequest && worstStatus === 'available') {
+                                    worstStatus = 'on_request';
+                                }
                             }
                         });
                         existing.price = minTotal;
+                        existing.availability = worstStatus;
                     }
                 });
             });

@@ -75,6 +75,7 @@ export interface SolvexHotelSearchResult {
         id: number;
         name: string;
     };
+    cancellationPolicyRequestParams?: any; // To hold the params for getting detailed cancellation info
     duration: number;
     startDate: string;
 }
