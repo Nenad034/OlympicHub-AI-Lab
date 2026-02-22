@@ -1,0 +1,207 @@
+/* FORCED GRID LAYOUT FIX - 4 COLUMNS AS REQUESTED */
+.results-mosaic.grid-layout {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 25px !important;
+    width: 100% !important;
+    padding-bottom: 40px;
+}
+
+.results-mosaic.list-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+}
+
+/* Stil za zvezdice iznad naziva u list modu */
+.hotel-stars-list-mode {
+    color: #facc15 !important;
+    /* Zlatna boja zvezdica */
+    margin-bottom: 2px !important;
+}
+
+/* Card Sizing Fixes */
+.hotel-result-card-premium.unified {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column;
+    background: #1A2B3C;
+    /* Midnight Blue */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    min-height: 500px;
+}
+
+/* Force image container to be relative to contain badges */
+.hotel-result-card-premium.unified .hotel-card-image {
+    width: 100% !important;
+    height: 200px !important;
+    position: relative !important;
+}
+
+.hotel-result-card-premium.unified .hotel-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hotel-result-card-premium.unified .hotel-card-content {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+    /* Grow to fill height */
+}
+
+/* Horizontal overrides - ULTRA Compact List View (132px height) */
+.hotel-result-card-premium.unified.horizontal {
+    flex-direction: row !important;
+    height: 200px !important;
+    min-height: 200px !important;
+    max-height: 200px !important;
+    align-items: stretch;
+    width: 100% !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+.hotel-result-card-premium.unified.horizontal .hotel-card-image {
+    width: 300px !important;
+    height: 200px !important;
+    flex-shrink: 0;
+}
+
+.hotel-result-card-premium.unified.horizontal .hotel-card-image img {
+    height: 200px !important;
+    width: 100% !important;
+    object-fit: cover !important;
+    border-radius: 12px 0 0 12px !important;
+}
+
+.hotel-result-card-premium.unified.horizontal .hotel-card-content {
+    flex-direction: row !important;
+    padding: 0 0 0 20px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex: 1;
+    gap: 15px !important;
+}
+
+.hotel-result-card-premium.unified.horizontal .hotel-info-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+
+.hotel-result-card-premium.unified.horizontal .hotel-title-row h3 {
+    font-size: 1.15rem !important;
+    line-height: 1.2;
+    margin-bottom: 0 !important;
+}
+
+.hotel-result-card-premium.unified.horizontal .hotel-location-tag {
+    margin-bottom: 0 !important;
+    font-size: 0.75rem !important;
+    color: var(--text-secondary);
+}
+
+.hotel-result-card-premium.unified.horizontal .hotel-date-badge {
+    margin-bottom: 0 !important;
+    padding: 2px 8px !important;
+    font-size: 0.7rem !important;
+    background: rgba(142, 36, 172, 0.05);
+    display: inline-flex;
+    width: fit-content;
+}
+
+.hotel-result-card-premium.unified.horizontal .price-action-section {
+    display: flex;
+    flex-direction: column !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 20px;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    /* Dark default border */
+    background: rgba(255, 255, 255, 0.02);
+    /* Dark default bg */
+    height: 200px;
+    width: 200px;
+    flex-shrink: 0;
+}
+
+.light-theme .hotel-result-card-premium.unified.horizontal .price-action-section {
+    background: #f8fafc;
+    /* Light gray background for price block */
+    border-left-color: rgba(0, 0, 0, 0.05);
+}
+
+.hotel-result-card-premium.unified.horizontal .lowest-price-tag {
+    text-align: center;
+    min-width: unset;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.hotel-result-card-premium.unified.horizontal .price-val {
+    font-size: 1.4rem !important;
+    line-height: 1;
+    color: var(--text-primary) !important;
+    font-weight: 900 !important;
+}
+
+.hotel-result-card-premium.unified.horizontal .view-more-btn {
+    width: 100% !important;
+    height: 38px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 0.75rem !important;
+    border-radius: 8px !important;
+}
+
+.hotel-result-card-premium.unified:not(.horizontal) .price-action-section {
+    margin-top: auto !important;
+    padding: 20px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+    background: rgba(255, 255, 255, 0.01) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+.hotel-result-card-premium.unified:not(.horizontal) .lowest-price-tag {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    text-align: left !important;
+}
+
+.hotel-result-card-premium.unified:not(.horizontal) .price-val {
+    font-size: 1.8rem !important;
+    line-height: 1 !important;
+    font-weight: 900 !important;
+}
+
+.hotel-result-card-premium.unified:not(.horizontal) .view-more-btn {
+    width: 100% !important;
+    height: 44px !important;
+    margin-top: 5px !important;
+    border: 2px solid var(--text-primary) !important;
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    font-size: 0.85rem !important;
+}

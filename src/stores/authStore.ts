@@ -1,0 +1,124 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+interface UserPermissions {
+    canImport: boolean;
+    canExport: boolean;
+    allowedModules?: string[];
+    deniedModules?: string[];
+}
+
+interface AuthState {
+    userLevel: number;
+    userName: string;
+    userEmail?: string;
+    permissions: UserPermissions;
+    impersonatedSubagent?: {
+        id: string;
+        companyName: string;
+        email: string;
+    };
+    aiKeys?: {
+        gemini?: string;
+        openai?: string;
+        claude?: string;
+    };
+    login: (name: string, pass: string) => boolean;
+    logout: () => void;
+    setUserLevel: (level: number) => void;
+    setUserName: (name: string) => void;
+    setAIKeys: (keys: AuthState['aiKeys']) => void;
+    setImpersonatedSubagent: (subagent?: { id: string; companyName: string; email: string }) => void;
+    getPermissions: () => UserPermissions;
+}
+
+const defaultPermissions: Record<number, UserPermissions> = {
+    0: { canImport: false, canExport: false }, // Guest / Logged out
+    1: { canImport: false, canExport: false },
+    2: { canImport: false, canExport: true },
+    3: { canImport: true, canExport: true }, // Subagent
+    4: { canImport: false, canExport: true, allowedModules: ['destination_rep'] }, // Destination Rep
+    5: { canImport: true, canExport: true },
+    6: { canImport: true, canExport: true }, // Master Admin
+};
+
+export const useAuthStore = create<AuthState>()(
+    persist(
+        (set, get) => ({
+            userLevel: 0,
+            userName: '',
+            permissions: defaultPermissions[0],
+            impersonatedSubagent: undefined,
+
+            login: (name: string, pass: string) => {
+                if (name.toLowerCase() === 'nenad' && pass === 'nenad') {
+                    set({
+                        userLevel: 6,
+                        userName: 'Nenad',
+                        userEmail: 'nenad@olympic.rs',
+                        permissions: defaultPermissions[6]
+                    });
+                    return true;
+                }
+                // Test Subagent Account
+                if (name.toLowerCase() === 'subagent' && pass === 'test') {
+                    set({
+                        userLevel: 3,
+                        userName: 'Test Subagent',
+                        userEmail: 'subagent@partner.com',
+                        permissions: defaultPermissions[3]
+                    });
+                    return true;
+                }
+                // Test Representative Account
+                if (name.toLowerCase() === 'rep' && pass === 'test') {
+                    set({
+                        userLevel: 4,
+                        userName: 'Miloš Predstavnik',
+                        userEmail: 'milos.rep@olympic.rs',
+                        permissions: defaultPermissions[4]
+                    });
+                    return true;
+                }
+                return false;
+            },
+
+            logout: () => {
+                set({
+                    userLevel: 0,
+                    userName: '',
+                    userEmail: undefined,
+                    permissions: defaultPermissions[0],
+                    impersonatedSubagent: undefined
+                });
+            },
+
+            setUserLevel: (level: number) => {
+                set({
+                    userLevel: level,
+                    permissions: defaultPermissions[level] || defaultPermissions[0]
+                });
+            },
+
+            setUserName: (name: string) => {
+                set({ userName: name });
+            },
+
+            setAIKeys: (keys) => {
+                set({ aiKeys: keys });
+            },
+
+            setImpersonatedSubagent: (subagent) => {
+                set({ impersonatedSubagent: subagent });
+            },
+
+            getPermissions: () => {
+                const level = get().userLevel;
+                return defaultPermissions[level] || defaultPermissions[0];
+            },
+        }),
+        {
+            name: 'olympic-auth-storage',
+        }
+    )
+);

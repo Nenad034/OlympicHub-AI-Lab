@@ -1,0 +1,125 @@
+.date-range-input-container {
+    width: 100%;
+}
+
+.date-inputs {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+}
+
+.input-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    /* Prevents overflow */
+}
+
+.input-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    opacity: 0.8;
+    letter-spacing: 1px;
+}
+
+.input-with-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.date-picker-text-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 40px 0 16px;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 15px;
+    font-family: 'Outfit', sans-serif;
+    outline: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.date-picker-text-input:hover {
+    border-color: var(--accent);
+    background: var(--bg-card-hover);
+}
+
+.date-picker-text-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+.calendar-trigger-btn {
+    position: absolute;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+
+.calendar-trigger-btn:hover {
+    background: var(--bg-card-hover);
+    color: var(--accent);
+}
+
+.hidden-date-picker {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.input-divider {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 24px;
+    flex-shrink: 0;
+}
+
+/* Placeholder color */
+.date-picker-text-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.4;
+}
+
+/* Light theme specific adjustments */
+.light-theme .date-picker-text-input {
+    background: #ffffff;
+    border-color: #e2e8f0;
+}
+
+/* Better responsive stack */
+@media (max-width: 580px) {
+    .date-inputs {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .input-divider {
+        display: none;
+    }
+
+    .input-group {
+        margin-bottom: 4px;
+    }
+}

@@ -1,0 +1,268 @@
+/**
+ * Solvex API Bridge (Adapter Pattern)
+ * 
+ * This module acts as a "Bridge" between our generic application architecture 
+ * and the specific Solvex (Master-Interlook) API.
+ * 
+ * ARCHITECTURAL RULE:
+ * 1. This is the ONLY file allowed to know about Solvex data structures.
+ * 2. It translates generic requests into Solvex SOAP calls.
+ * 3. It translates Solvex SOAP responses back into our generic Domain Model.
+ * 4. This isolation ensures we can remove or swap Solvex without changing any UI or Business Logic.
+ */
+
+import type {
+    HotelProvider,
+    HotelSearchParams,
+    HotelSearchResult,
+    RoomOption
+} from '../../services/providers/HotelProviderInterface';
+
+import { searchHotels } from './api/solvexSearchService';
+import { connect } from './api/solvexAuthService';
+import type { SolvexHotelSearchResult } from './types/solvex.types';
+
+/**
+ * Solvex Hotel Provider Bridge implementation
+ */
+export class SolvexProvider implements HotelProvider {
+    readonly name: string = 'Solvex';
+    readonly isActive = true;
+
+    /**
+     * Authenticate and initialize the bridge
+     */
+    async authenticate(): Promise<void> {
+        const result = await connect();
+        if (!result.success) {
+            throw new Error(`Solvex Bridge: Authentication failed: ${result.error}`);
+        }
+    }
+
+    /**
+     * The Bridge Search Method:
+     * Dispatches a search to Solvex and maps the proprietary results to our internal format.
+     */
+    async search(params: HotelSearchParams): Promise<HotelSearchResult[]> {
+        try {
+            // STEP 1: Translate Generic -> Solvex Proprietary
+            const solvexParams = this.bridgeSearchParams(params);
+
+            // STEP 2: Execute Search through the Service Layer
+            const result = await searchHotels(solvexParams, params.abortSignal);
+
+            if (!result.success || !result.data || result.data.length === 0) {
+                return [];
+            }
+
+            // STEP 3: Group results by (Hotel + MealPlan) to match our Domain Model
+            const groupedMap = new Map<string, HotelSearchResult>();
+
+            result.data.forEach(item => {
+                const hotelId = String(item.hotel.id);
+                const pansionCode = (item.pansion?.code || 'RO').trim().toUpperCase();
+                const key = `${hotelId}-${pansionCode}`;
+
+                if (!groupedMap.has(key)) {
+                    groupedMap.set(key, this.bridgeResultToDomain(item, params));
+                } else {
+                    const existing = groupedMap.get(key)!;
+                    // Add this room to the existing grouped hotel result
+                    existing.rooms.push({
+                        id: `${item.room.roomType.id}-${item.room.roomCategory.id}-${item.room.roomAccommodation.id}-${item.tariff.id}-${item.pansion.id}`,
+                        name: `${item.room.roomType.name}${item.room.roomCategory.name ? ` (${item.room.roomCategory.name})` : ''} - ${item.room.roomAccommodation.name}${item.tariff.name ? ` (${item.tariff.name})` : ''}`,
+                        description: `Dest: ${item.hotel.city.name}`,
+                        price: item.totalCost,
+                        availability: this.bridgeAvailability(item.quotaType),
+                        capacity: item.room.roomType.places,
+                        mealPlan: this.bridgeMealPlan(item.pansion.name || item.pansion.code),
+                        tariff: item.tariff,
+                        cancellationPolicyRequestParams: item.cancellationPolicyRequestParams
+                    });
+
+                    // Keep the lowest price as the main price for the card
+                    if (item.totalCost < existing.price) {
+                        existing.price = item.totalCost;
+                    }
+                }
+            });
+
+            return Array.from(groupedMap.values());
+
+        } catch (error) {
+            console.error('[SolvexBridge] Search failure:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Check if the specific bridge configuration is available
+     */
+    isConfigured(): boolean {
+        const login = import.meta.env.VITE_SOLVEX_LOGIN;
+        const password = import.meta.env.VITE_SOLVEX_PASSWORD;
+        return !!(login && password);
+    }
+
+    /**
+     * Internal Param Translation (Bridge Logic)
+     */
+    private bridgeSearchParams(params: HotelSearchParams): any {
+        let cityIds: number[] = [];
+        let hotelId: number | undefined = undefined;
+        const destLower = params.destination.toLowerCase();
+
+        const isBulgaria = destLower.includes('bugarska') || destLower.includes('bulgaria');
+        const isGreece = destLower.includes('grčka') || destLower.includes('greece');
+
+        if (isBulgaria && params.providerType !== 'city' && params.providerType !== 'hotel') {
+            cityIds = [33, 68, 1, 9, 6, 10, 31, 26, 7, 34, 42, 43, 22, 28, 5, 12, 17, 38];
+        } else if (isGreece && params.providerType !== 'city' && params.providerType !== 'hotel') {
+            cityIds = [121, 122];
+        } else {
+            const mappedId = this.mapDestinationToCityId(params.destination);
+            if (mappedId) cityIds.push(mappedId);
+        }
+
+        if (params.targetProvider === 'Solvex' && params.providerId) {
+            const pid = Number(params.providerId);
+            if (params.providerType === 'city') {
+                cityIds = [pid];
+            } else if (params.providerType === 'hotel') {
+                hotelId = pid;
+            }
+        }
+
+        return {
+            dateFrom: params.checkIn,
+            dateTo: params.checkOut,
+            adults: params.adults,
+            children: params.children || 0,
+            childrenAges: params.childrenAges || [],
+            rooms: params.rooms || 1,
+            destination: params.destination,
+            cityId: cityIds.length === 1 ? cityIds[0] : (cityIds.length > 1 ? cityIds : undefined),
+            hotelId: hotelId
+        };
+    }
+
+    /**
+     * Destination Mapping Dictionary
+     */
+    private mapDestinationToCityId(destination: string): number | undefined {
+        const d = destination.toLowerCase();
+        if (d.includes('bansko')) return 9;
+        if (d.includes('borovec') || d.includes('borovets')) return 6;
+        if (d.includes('pamporovo')) return 10;
+        if (d.includes('sofia') || d.includes('sofija')) return 41;
+        if (d.includes('varna')) return 42;
+        if (d.includes('burgas')) return 43;
+        if (d.includes('zlatni pjasci') || d.includes('golden sands')) return 33;
+        if (d.includes('sunčev breg') || d.includes('sunny beach')) return 68;
+        if (d.includes('nesebar') || d.includes('nessebar')) return 1;
+        return undefined;
+    }
+
+    /**
+     * Result Translation (Bridge Logic)
+     */
+    private bridgeResultToDomain(
+        solvexResult: SolvexHotelSearchResult,
+        params: HotelSearchParams
+    ): HotelSearchResult {
+        const checkIn = params.checkIn;
+        const checkOut = params.checkOut;
+        const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+
+        const cleanText = (text: string) => {
+            return text
+                .replace(/\(Dest:.*?\)/gi, '')
+                .replace(/\(Golden Sands\)/gi, '')
+                .replace(/\(Sunny Beach\)/gi, '')
+                .replace(/\(Nessebar\)/gi, '')
+                .replace(/\(Albena\)/gi, '')
+                .replace(/\(Bansko\)/gi, '')
+                .replace(/\(Borovets\)/gi, '')
+                .replace(/\(Pamporovo\)/gi, '')
+                .replace(/\(Obzor\)/gi, '')
+                .replace(/\(St.Vlas\)/gi, '')
+                .replace(/\(Elena\)/gi, '')
+                .replace(/\(Varna\)/gi, '')
+                .replace(/\(Burgas\)/gi, '')
+                .replace(/\(Sofia\)/gi, '')
+                .replace(/\(Sozopol\)/gi, '')
+                .replace(/\(Primorsko\)/gi, '')
+                .replace(/\(Aheloy\)/gi, '')
+                .replace(/\(Golden S\)/gi, '')
+                .replace(/\(S.Beach\)/gi, '')
+                .replace(/NOT DEFINED/gi, '')
+                .replace(/_/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        };
+
+        const cleanName = cleanText(solvexResult.hotel.name);
+        const mealPlanName = this.bridgeMealPlan(solvexResult.pansion.name || solvexResult.pansion.code);
+
+        return {
+            id: `solvex-${solvexResult.hotel.id}-${solvexResult.pansion.id}-${solvexResult.room.roomType.id}`,
+            providerName: 'Solvex',
+            hotelName: cleanName,
+            location: `${solvexResult.hotel.city.name}, ${solvexResult.hotel.country.name}`,
+            stars: solvexResult.hotel.starRating,
+            price: solvexResult.totalCost,
+            currency: 'EUR',
+            mealPlan: mealPlanName,
+            mealPlans: [mealPlanName],
+            image: (solvexResult as any).hotel.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800",
+            images: (solvexResult as any).hotel.images || [],
+            description: (solvexResult as any).hotel.description || '',
+            availability: this.bridgeAvailability(solvexResult.quotaType),
+            checkIn,
+            checkOut,
+            nights,
+            rooms: [{
+                id: `${solvexResult.room.roomType.id}-${solvexResult.room.roomCategory.id}-${solvexResult.room.roomAccommodation.id}-${solvexResult.tariff.id}-${solvexResult.pansion.id}`,
+                name: cleanText(`${solvexResult.room.roomType.name}${solvexResult.room.roomCategory.name ? ` (${solvexResult.room.roomCategory.name})` : ''} - ${solvexResult.room.roomAccommodation.name}${solvexResult.tariff.name ? ` (${solvexResult.tariff.name})` : ''}`),
+                description: `Dest: ${solvexResult.hotel.city.name}`,
+                price: solvexResult.totalCost,
+                availability: this.bridgeAvailability(solvexResult.quotaType),
+                capacity: solvexResult.room.roomType.places,
+                mealPlan: mealPlanName,
+                tariff: solvexResult.tariff,
+                cancellationPolicyRequestParams: solvexResult.cancellationPolicyRequestParams
+            }],
+            originalData: solvexResult
+        };
+    }
+
+    /**
+     * Pansion code -> readable name
+     */
+    private bridgeMealPlan(solvexPansion: string): string {
+        const p = (solvexPansion || '').toUpperCase();
+        if (p === 'AI' || p === 'UAI') return 'All Inclusive';
+        if (p === 'FB') return 'Full Board';
+        if (p === 'HB') return 'Half Board';
+        if (p === 'BB') return 'Bed & Breakfast';
+        if (p === 'RO' || p === 'OB') return 'Room Only';
+        return solvexPansion || 'Room Only';
+    }
+
+    private bridgeAvailability(quotaType: number): 'available' | 'on_request' | 'unavailable' {
+        switch (quotaType) {
+            case 0: return 'on_request';
+            case 1: return 'available';
+            case 2: return 'unavailable';
+            default: return 'on_request';
+        }
+    }
+
+    async getCancellationPolicy(room: RoomOption, abortSignal?: AbortSignal): Promise<any> {
+        const { getCancellationPolicy: getPolicy } = await import('./api/solvexSearchService');
+        const result = await getPolicy(room, abortSignal);
+        return result.success ? result.data : null;
+    }
+}
+
+export default SolvexProvider;

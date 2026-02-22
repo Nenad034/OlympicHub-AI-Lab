@@ -1,0 +1,140 @@
+import React from 'react';
+import {
+    LayoutDashboard,
+    Package,
+    Truck,
+    Users,
+    Settings as SettingsIcon,
+    Search,
+    Mail,
+    Compass,
+    Brain,
+    ClipboardList,
+    Sparkles,
+    X,
+    DollarSign
+} from 'lucide-react';
+import { NavLink, Link } from 'react-router-dom';
+import { ClickToTravelLogo } from '../icons/ClickToTravelLogo';
+import { useThemeStore, useAppStore, useAuthStore } from '../../stores';
+import { translations } from '../../translations';
+import './HorizontalNav.css';
+
+const HorizontalNav: React.FC = () => {
+    const { lang } = useThemeStore();
+    const { searchQuery, setSearchQuery } = useAppStore();
+    const { userLevel, impersonatedSubagent } = useAuthStore();
+    const t = translations[lang];
+
+    const navItemClass = (isActive: boolean) =>
+        `h-nav-item ${isActive ? 'active' : ''}`;
+
+    const isStaff = userLevel >= 6 && !impersonatedSubagent;
+    const isB2BView = userLevel < 6 || !!impersonatedSubagent;
+
+    return (
+        <div className="horizontal-nav">
+            <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+                <div style={{
+                    marginRight: '32px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    paddingTop: '4px' // Subtle adjustment for 72px logo + slogan in 96px header
+                }}>
+                    <ClickToTravelLogo height={288} />
+                </div>
+            </Link>
+
+            <div className="nav-horizontal-items">
+                {/* B2B Sections Label for Subagents */}
+                {isB2BView && !isStaff && (
+                    <div className="h-nav-label">NAVIGACIJA:</div>
+                )}
+
+                {/* Staff-only items */}
+                {isStaff && (
+                    <>
+                        <NavLink to="/" className={({ isActive }) => navItemClass(isActive)} end>
+                            <LayoutDashboard size={18} /> {t.dashboard}
+                        </NavLink>
+                        {/* <NavLink to="/master-search" className={({ isActive }) => navItemClass(isActive)}>
+                            <Search size={18} /> Master Pretraga
+                        </NavLink> */}
+                        <NavLink to="/production" className={({ isActive }) => navItemClass(isActive)}>
+                            <Package size={18} /> {t.production}
+                        </NavLink>
+                        <NavLink to="/mail" className={({ isActive }) => navItemClass(isActive)}>
+                            <Mail size={18} /> ClickToTravel Mail
+                        </NavLink>
+                        {/* <NavLink to="/total-trip" className={({ isActive }) => navItemClass(isActive)}>
+                            <Compass size={18} /> Total Trip
+                        </NavLink> */}
+                        <NavLink to="/suppliers" className={({ isActive }) => navItemClass(isActive)}>
+                            <Truck size={18} /> Dobavljači
+                        </NavLink>
+                        <NavLink to="/customers" className={({ isActive }) => navItemClass(isActive)}>
+                            <Users size={18} /> Kupci
+                        </NavLink>
+                        <NavLink to="/reservations" className={({ isActive }) => navItemClass(isActive)}>
+                            <ClipboardList size={18} /> {t.reservations}
+                        </NavLink>
+                        <NavLink to="/supplier-finance" className={({ isActive }) => navItemClass(isActive)}>
+                            <DollarSign size={18} /> Plaćanja
+                        </NavLink>
+                        <NavLink to="/subagent-admin" className={({ isActive }) => navItemClass(isActive)}>
+                            <Users size={18} /> Subagent Admin
+                        </NavLink>
+                        <NavLink to="/price-list-architect" className={({ isActive }) => navItemClass(isActive)}>
+                            <DollarSign size={18} /> Pricing Architect
+                        </NavLink>
+                        <NavLink to="/settings" className={({ isActive }) => navItemClass(isActive)}>
+                            <SettingsIcon size={18} /> {t.settings}
+                        </NavLink>
+                    </>
+                )}
+
+                {/* B2B Partners Section - Only for Subagents or Impersonation */}
+                {isB2BView && (
+                    <>
+                        <div className="h-nav-group-b2b" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <NavLink
+                                to="/smart-search"
+                                className={({ isActive }) => navItemClass(isActive)}
+                            >
+                                <Sparkles size={18} /> Smart Search ✨
+                            </NavLink>
+                            <NavLink
+                                to="/reservations"
+                                className={({ isActive }) => navItemClass(isActive)}
+                            >
+                                <ClipboardList size={18} /> Moje Rezervacije
+                            </NavLink>
+                        </div>
+                    </>
+                )}
+            </div>
+
+            {/* B2B Status & Search Area */}
+            <div className="h-nav-right-zone" style={{ display: 'flex', alignItems: 'center', gap: '20px', marginLeft: 'auto' }}>
+                {impersonatedSubagent && (
+                    <div className="impersonation-indicator-premium">
+                        <div className="status-dot-pulse" />
+                        <Users size={14} />
+                        <span className="company-name">{impersonatedSubagent.companyName}</span>
+                        <button
+                            className="exit-b2b-btn"
+                            onClick={() => useAuthStore.getState().setImpersonatedSubagent(undefined)}
+                            title="Prekini impersonaciju"
+                        >
+                            <X size={14} /> <span>IZLAZ</span>
+                        </button>
+                    </div>
+                )}
+
+            </div>
+        </div>
+    );
+};
+
+export default HorizontalNav;

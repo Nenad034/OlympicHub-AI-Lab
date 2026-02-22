@@ -1,0 +1,73 @@
+/* Mode Switch Container */
+.mode-toggle-group {
+    display: flex;
+    background: #0f172a;
+    /* Solid dark background */
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 4px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    pointer-events: auto;
+    /* Ensure clicks happen */
+}
+
+/* Base Button Style */
+.mode-switch-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    position: relative;
+    overflow: visible;
+}
+
+/* Hover State */
+.mode-switch-btn:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Active State (Selected) */
+.mode-switch-btn.active {
+    background: #1e293b;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Specific Active Colors/Glows */
+.mode-switch-btn:nth-child(2).active {
+    /* Futuristic */
+    color: #8E24AC;
+    background: rgba(142, 36, 172, 0.1);
+    border-color: rgba(142, 36, 172, 0.3);
+}
+
+.mode-switch-btn:nth-child(3).active {
+    /* Immersive */
+    color: var(--accent);
+    background: rgba(142, 36, 172, 0.1);
+    border-color: rgba(142, 36, 172, 0.3);
+}
+
+/* Responsive adjust */
+@media (max-width: 768px) {
+    .mode-switch-btn span {
+        display: none;
+    }
+
+    .mode-switch-btn {
+        padding: 8px;
+    }
+}

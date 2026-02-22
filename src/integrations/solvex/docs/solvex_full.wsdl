@@ -1,0 +1,4050 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://www.megatec.ru/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" targetNamespace="http://www.megatec.ru/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://www.megatec.ru/">
+      <s:element name="Connect">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="login" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="password" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ConnectResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="ConnectResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CheckConnect">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CheckConnectResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="CheckConnectResult" type="s:boolean" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetQuotaStop">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="date" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="hotelKey" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetQuotaStopResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetQuotaStopResult" type="tns:ArrayOfQuoteHotel" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfQuoteHotel">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="QuoteHotel" nillable="true" type="tns:QuoteHotel" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="QuoteHotel">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:AllotmentHotel">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="RelizPeriod" type="s:int" />
+            </s:sequence>
+            <s:attribute name="QuoteType" type="tns:QuoteObjectType" use="required" />
+            <s:attribute name="IsStopSale" type="s:boolean" use="required" />
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="AllotmentHotel">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Allotment">
+            <s:attribute name="HotelName" type="s:string" />
+            <s:attribute name="RoomCategoryName" type="s:string" />
+            <s:attribute name="RoomTypeName" type="s:string" />
+            <s:attribute name="HotelKey" type="s:int" use="required" />
+            <s:attribute name="RoomTypeKey" type="s:int" use="required" />
+            <s:attribute name="RoomCategoryKey" type="s:int" use="required" />
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="Allotment">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:StopSale">
+            <s:attribute name="Total" type="s:int" use="required" />
+            <s:attribute name="Sold" type="s:int" use="required" />
+            <s:attribute name="Free" type="s:int" use="required" />
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="StopSale">
+        <s:attribute name="Code" type="s:int" use="required" />
+        <s:attribute name="StartDate" type="s:dateTime" use="required" />
+        <s:attribute name="EndDate" type="s:dateTime" use="required" />
+        <s:attribute name="Date" type="s:dateTime" use="required" />
+        <s:attribute name="CreateDate" type="s:dateTime" use="required" />
+        <s:attribute name="ID" type="s:int" use="required" />
+        <s:attribute name="Name" type="s:string" />
+        <s:attribute name="IsRemove" type="s:boolean" use="required" />
+      </s:complexType>
+      <s:simpleType name="QuoteObjectType">
+        <s:restriction base="s:string">
+          <s:enumeration value="NotSet" />
+          <s:enumeration value="Allotment" />
+          <s:enumeration value="Commitment" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="GetChangeQuotaAndStop">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="hotelKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="date" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="UseRoomDescription" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="LoadQuota" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="LoadStop" type="s:boolean" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetChangeQuotaAndStopResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetChangeQuotaAndStopResult" type="tns:ArrayOfQuotaStopInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfQuotaStopInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="QuotaStopInfo" nillable="true" type="tns:QuotaStopInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="QuotaStopInfo">
+        <s:attribute name="ID" type="s:int" use="required" />
+        <s:attribute name="SvKey" type="s:int" use="required" />
+        <s:attribute name="CodeName" type="s:string" />
+        <s:attribute name="Code" type="s:int" use="required" />
+        <s:attribute name="SubCode1Name" type="s:string" />
+        <s:attribute name="SubCode1" type="s:int" use="required" />
+        <s:attribute name="SubCode2" type="s:int" use="required" />
+        <s:attribute name="SubCode3Name" type="s:string" />
+        <s:attribute name="SubCode3" type="s:int" use="required" />
+        <s:attribute name="RoomDescriptionID" type="s:int" use="required" />
+        <s:attribute name="RoomDescriptionName" type="s:string" />
+        <s:attribute name="Place" type="s:int" use="required" />
+        <s:attribute name="IsStop" type="s:boolean" use="required" />
+        <s:attribute name="Date" type="s:dateTime" use="required" />
+        <s:attribute name="UpdateDate" type="s:dateTime" use="required" />
+        <s:attribute name="Release" type="s:int" use="required" />
+      </s:complexType>
+      <s:element name="GetHotelQuotaStopInfo">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="date" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="LoadStopDeleted" type="s:boolean" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetHotelQuotaStopInfoResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetHotelQuotaStopInfoResult" type="tns:ArrayOfHotelQuotaStopInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfHotelQuotaStopInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="HotelQuotaStopInfo" nillable="true" type="tns:HotelQuotaStopInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="HotelQuotaStopInfo">
+        <s:attribute name="HotelKey" type="s:int" use="required" />
+        <s:attribute name="UpdateDateQuota" type="s:dateTime" use="required" />
+        <s:attribute name="UpdateDateStop" type="s:dateTime" use="required" />
+        <s:attribute name="UpdateDateStopDeleted" type="s:dateTime" />
+      </s:complexType>
+      <s:element name="GetStopSaleDeletedInfo">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="hotelKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="date" type="s:dateTime" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetStopSaleDeletedInfoResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetStopSaleInfoResponse" nillable="true" type="tns:StopSaleInfoResponse" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="StopSaleInfoResponse">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="GetStopSaleInfoResult" type="tns:StopSaleInfoItem" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="StopSaleInfoItem">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="HotelId" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="RoomCategoryId" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="RoomCategoryName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="RoomTypeId" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="RoomTypeName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="MarketId" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="ProviderId" nillable="true" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Period" type="tns:ArrayOfPeriodItem" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfPeriodItem">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Item" nillable="true" type="tns:PeriodItem" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="PeriodItem">
+        <s:attribute name="DateFrom" type="s:dateTime" use="required" />
+        <s:attribute name="DateTo" type="s:dateTime" use="required" />
+      </s:complexType>
+      <s:element name="CheckQuota">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="dateFrom" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="dateTo" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="hotelId" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="roomTypeId" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="roomCategoryId" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CheckQuotaResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="CheckQuotaResult" type="tns:ServiceResultOfQuotaSimpleInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ServiceResultOfQuotaSimpleInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="tns:ArrayOfQuotaSimpleInfo" />
+        </s:sequence>
+        <s:attribute name="Message" type="s:string" />
+        <s:attribute name="Error" type="s:string" />
+        <s:attribute name="Count" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfQuotaSimpleInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="QuotaSimpleInfo" nillable="true" type="tns:QuotaSimpleInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="QuotaSimpleInfo">
+        <s:attribute name="RoomTypeId" type="s:int" use="required" />
+        <s:attribute name="RoomCategoryId" type="s:int" use="required" />
+        <s:attribute name="Quota" type="s:int" use="required" />
+        <s:attribute name="RoomVariantName" type="s:string" />
+        <s:attribute name="Date" type="s:dateTime" use="required" />
+      </s:complexType>
+      <s:element name="GetQuotaInfo">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="dateFrom" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="dateTo" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="hotelId" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="roomTypeId" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="roomCategoryId" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetQuotaInfoResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetQuotaInfoResult" type="tns:ServiceResultOfQuotaSimpleInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetSpoList">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="request" type="tns:SPORequest" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="SPORequest">
+        <s:attribute name="SvKey" type="s:int" use="required" />
+        <s:attribute name="PublicationDateBegin" type="s:dateTime" use="required" />
+        <s:attribute name="PublicationDateEnd" type="s:dateTime" use="required" />
+      </s:complexType>
+      <s:element name="GetSpoListResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetSpoListResult" type="tns:ServiceResultOfSPOInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ServiceResultOfSPOInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="tns:ArrayOfSPOInfo" />
+        </s:sequence>
+        <s:attribute name="Message" type="s:string" />
+        <s:attribute name="Error" type="s:string" />
+        <s:attribute name="Count" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfSPOInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="SPOInfo" nillable="true" type="tns:SPOInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="SPOInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="COLinkServices" type="tns:ArrayOfCOLinkService" />
+          <s:element minOccurs="0" maxOccurs="1" name="XYRules" type="tns:ArrayOfXYRule" />
+          <s:element minOccurs="0" maxOccurs="1" name="XYPansionRules" type="tns:ArrayOfXYPansionRule" />
+          <s:element minOccurs="0" maxOccurs="1" name="COServices" type="tns:ArrayOfCOService" />
+        </s:sequence>
+        <s:attribute name="Id" type="s:int" use="required" />
+        <s:attribute name="Name" type="s:string" />
+        <s:attribute name="PeriodBeforeCheckIn" type="s:int" use="required" />
+        <s:attribute name="SaleDateBegin" type="s:dateTime" use="required" />
+        <s:attribute name="SaleDateEnd" type="s:dateTime" use="required" />
+        <s:attribute name="Comment" type="s:string" />
+        <s:attribute name="CreateDate" type="s:dateTime" use="required" />
+        <s:attribute name="UpdateDate" type="s:dateTime" use="required" />
+        <s:attribute name="SpoType" type="s:int" use="required" />
+        <s:attribute name="SvKey" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfCOLinkService">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="COLinkService" nillable="true" type="tns:COLinkService" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="COLinkService">
+        <s:attribute name="SvKey" type="s:int" use="required" />
+        <s:attribute name="Code" type="s:int" use="required" />
+        <s:attribute name="Comment" type="s:string" />
+        <s:attribute name="DurationMin" type="s:int" use="required" />
+        <s:attribute name="DurationMax" type="s:int" use="required" />
+        <s:attribute name="IsDisable" type="s:boolean" use="required" />
+        <s:attribute name="DisableDate" type="s:dateTime" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfXYRule">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="XYRule" nillable="true" type="tns:XYRule" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="XYRule">
+        <s:attribute name="ExcludeBy" type="s:short" use="required" />
+        <s:attribute name="Sign" type="s:string" />
+        <s:attribute name="XFrom" type="s:short" use="required" />
+        <s:attribute name="XTo" type="s:short" use="required" />
+        <s:attribute name="Y" type="s:short" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfXYPansionRule">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="XYPansionRule" nillable="true" type="tns:XYPansionRule" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="XYPansionRule">
+        <s:attribute name="PansionKey" type="s:int" use="required" />
+        <s:attribute name="PansionName" type="s:string" />
+        <s:attribute name="PansionFromKey" type="s:int" use="required" />
+        <s:attribute name="PansionFromName" type="s:string" />
+      </s:complexType>
+      <s:complexType name="ArrayOfCOService">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="COService" nillable="true" type="tns:COService" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="COService">
+        <s:attribute name="Code" type="s:int" use="required" />
+        <s:attribute name="CostCount" type="s:int" use="required" />
+        <s:attribute name="CostLastUpdate" type="s:dateTime" use="required" />
+      </s:complexType>
+      <s:element name="GetCosts">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="request" type="tns:CostRequest" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CostRequest">
+        <s:attribute name="SpoId" type="s:int" use="required" />
+        <s:attribute name="TariffId" type="s:int" use="required" />
+        <s:attribute name="SvKey" type="s:int" use="required" />
+        <s:attribute name="Code" type="s:int" use="required" />
+        <s:attribute name="PriceType" type="s:int" use="required" />
+        <s:attribute name="DownloadOnlyActualCosts" type="s:boolean" use="required" />
+        <s:attribute name="DownloadUpdateCostsFromDate" type="s:boolean" use="required" />
+        <s:attribute name="CostsUpdateDateBegin" type="s:dateTime" use="required" />
+      </s:complexType>
+      <s:element name="GetCostsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetCostsResult" type="tns:ServiceResultOfCostInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ServiceResultOfCostInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="tns:ArrayOfCostInfo" />
+        </s:sequence>
+        <s:attribute name="Message" type="s:string" />
+        <s:attribute name="Error" type="s:string" />
+        <s:attribute name="Count" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfCostInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CostInfo" nillable="true" type="tns:CostInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CostInfo">
+        <s:attribute name="Id" type="s:int" use="required" />
+        <s:attribute name="SvKey" type="s:int" use="required" />
+        <s:attribute name="SpoId" type="s:int" use="required" />
+        <s:attribute name="Code" type="s:int" use="required" />
+        <s:attribute name="AgeFrom" type="s:short" use="required" />
+        <s:attribute name="AgeTo" type="s:short" use="required" />
+        <s:attribute name="CreateDate" type="s:dateTime" use="required" />
+        <s:attribute name="CheckInDateBegin" type="s:dateTime" use="required" />
+        <s:attribute name="CheckInDateEnd" type="s:dateTime" use="required" />
+        <s:attribute name="CheckOutDateBegin" type="s:dateTime" use="required" />
+        <s:attribute name="CheckOutDateEnd" type="s:dateTime" use="required" />
+        <s:attribute name="DateBegin" type="s:dateTime" use="required" />
+        <s:attribute name="DateEnd" type="s:dateTime" use="required" />
+        <s:attribute name="UpdateDate" type="s:dateTime" use="required" />
+        <s:attribute name="Price" type="s:decimal" use="required" />
+        <s:attribute name="Rate" type="s:string" />
+        <s:attribute name="SubCode1" type="s:int" use="required" />
+        <s:attribute name="SubCode2" type="s:int" use="required" />
+        <s:attribute name="SubCode3" type="s:int" use="required" />
+        <s:attribute name="SubCode4" type="s:int" use="required" />
+        <s:attribute name="TariffId" type="s:int" use="required" />
+        <s:attribute name="Type" type="s:short" use="required" />
+        <s:attribute name="Week" type="s:string" />
+        <s:attribute name="CountryId" type="s:int" use="required" />
+        <s:attribute name="CityFromId" type="s:int" use="required" />
+        <s:attribute name="CityToId" type="s:int" use="required" />
+        <s:attribute name="TouroperatorId" type="s:int" use="required" />
+      </s:complexType>
+      <s:element name="GetExtraServiceWithPrices">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="request" type="tns:CostExtraServiceRequest" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CostExtraServiceRequest">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="HotelKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="TypeKey" nillable="true" type="tns:LinkType" />
+          <s:element minOccurs="1" maxOccurs="1" name="DateFrom" nillable="true" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="DateTo" nillable="true" type="s:dateTime" />
+        </s:sequence>
+      </s:complexType>
+      <s:simpleType name="LinkType">
+        <s:restriction base="s:string">
+          <s:enumeration value="All" />
+          <s:enumeration value="Manual" />
+          <s:enumeration value="HardLink" />
+          <s:enumeration value="WithCosts" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="GetExtraServiceWithPricesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetExtraServiceWithPricesResult" type="tns:ServiceResultOfCostInfoWithAdHotDescription" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ServiceResultOfCostInfoWithAdHotDescription">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="tns:ArrayOfCostInfoWithAdHotDescription" />
+        </s:sequence>
+        <s:attribute name="Message" type="s:string" />
+        <s:attribute name="Error" type="s:string" />
+        <s:attribute name="Count" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfCostInfoWithAdHotDescription">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CostInfoWithAdHotDescription" nillable="true" type="tns:CostInfoWithAdHotDescription" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CostInfoWithAdHotDescription">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CostInfo">
+            <s:attribute name="AdHotName" type="s:string" />
+            <s:attribute name="LinkType" type="s:string" />
+            <s:attribute name="DurationType" type="s:short" use="required" />
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="SpoPriceMarkDownloaded">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="spoKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="variantOfCost" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="svKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="code" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SpoPriceMarkDownloadedResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SpoPriceMarkDownloadedResult" type="s:boolean" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetHotels">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="countryKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="regionKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="cityKey" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetHotelsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetHotelsResult" type="tns:ArrayOfHotel" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfHotel">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Hotel" nillable="true" type="tns:Hotel" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="Hotel">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="HotelCategory" type="tns:HotelCategory" />
+              <s:element minOccurs="0" maxOccurs="1" name="City" type="tns:City" />
+              <s:element minOccurs="1" maxOccurs="1" name="RegionID" nillable="true" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="PriceType" type="tns:PriceType" />
+              <s:element minOccurs="1" maxOccurs="1" name="CountCosts" nillable="true" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="CityID" nillable="true" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="HotelCategoryID" nillable="true" type="s:int" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="Reference" abstract="true">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Entity">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="Description" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="NameLat" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Code" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CodeLat" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Unicode" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="Entity" abstract="true">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="AdditionalParams" type="tns:ArrayOfParameterPair" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="ID" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfParameterPair">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="ParameterPair" nillable="true" type="tns:ParameterPair" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ParameterPair">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Value" />
+        </s:sequence>
+        <s:attribute name="Key" type="s:string" />
+      </s:complexType>
+      <s:complexType name="Country">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="IsIncoming" type="s:boolean" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="City">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="Country" type="tns:Country" />
+              <s:element minOccurs="1" maxOccurs="1" name="CountryID" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="RegionID" type="s:int" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="HotelCategory">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference" />
+        </s:complexContent>
+      </s:complexType>
+      <s:simpleType name="PriceType">
+        <s:list>
+          <s:simpleType>
+            <s:restriction base="s:string">
+              <s:enumeration value="None" />
+              <s:enumeration value="PerRoom" />
+              <s:enumeration value="PerPerson" />
+              <s:enumeration value="All" />
+            </s:restriction>
+          </s:simpleType>
+        </s:list>
+      </s:simpleType>
+      <s:complexType name="CancellationPolicyData">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="PolicyKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="DateFrom" nillable="true" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="DateTo" nillable="true" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="PenaltyValue" type="s:double" />
+          <s:element minOccurs="1" maxOccurs="1" name="IsPercent" type="s:boolean" />
+          <s:element minOccurs="1" maxOccurs="1" name="TariffId" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="TariffName" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="PenaltyCost">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CancellationPolicyData">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="TotalPenalty" type="s:double" />
+              <s:element minOccurs="0" maxOccurs="1" name="Description" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="ArrayOfPenaltyCost">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="PenaltyCost" nillable="true" type="tns:PenaltyCost" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetTransfers">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="request" type="tns:TransferRequest" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="TransferRequest">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="CountryKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="CityKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="RegionKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="TypeKey" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ServiceResultOfTransferDirectionInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="tns:ArrayOfTransferDirectionInfo" />
+        </s:sequence>
+        <s:attribute name="Message" type="s:string" />
+        <s:attribute name="Error" type="s:string" />
+        <s:attribute name="Count" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfTransferDirectionInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="TransferDirectionInfo" nillable="true" type="tns:TransferDirectionInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="TransferDirectionInfo">
+        <s:attribute name="Id" type="s:int" use="required" />
+        <s:attribute name="Name" type="s:string" />
+        <s:attribute name="TransferTypeId" type="s:int" use="required" />
+        <s:attribute name="TransferTypeName" type="s:string" />
+        <s:attribute name="CityFromId" type="s:int" use="required" />
+        <s:attribute name="CityFromName" type="s:string" />
+        <s:attribute name="CityToId" type="s:int" use="required" />
+        <s:attribute name="CityToName" type="s:string" />
+        <s:attribute name="PointFromId" type="s:int" use="required" />
+        <s:attribute name="PointFromName" type="s:string" />
+        <s:attribute name="PointToId" type="s:int" use="required" />
+        <s:attribute name="PointToName" type="s:string" />
+      </s:complexType>
+      <s:element name="GetTransfersResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetTransfersResult" type="tns:ServiceResultOfTransferDirectionInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetExcursions">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="countryKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="regionKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="cityKey" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfExcursion">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Excursion" nillable="true" type="tns:Excursion" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="Excursion">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="CityID" nillable="true" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="RegionID" nillable="true" type="s:int" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="GetExcursionsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetExcursionsResult" type="tns:ArrayOfExcursion" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetServiceList">
+        <s:complexType />
+      </s:element>
+      <s:complexType name="ArrayOfServiceList">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="ServiceList" nillable="true" type="tns:ServiceList" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ServiceList">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="ServiceClaseID" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="CountryID" type="s:int" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="GetServiceListResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetServiceListResult" type="tns:ArrayOfServiceList" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CalculateSingleCost">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="svKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="countryKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="code" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="subcode1" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="subcode2" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="subcode3" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="subcode4" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="tourOperatorGroupKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="tourOperatorKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="mrKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="filialKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="tafiffKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="pax" type="s:int" />
+            <s:element minOccurs="0" maxOccurs="1" name="ages" type="tns:ArrayOfInt" />
+            <s:element minOccurs="1" maxOccurs="1" name="checkInDate" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="checkOutDate" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="cityKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="cityKeyTo" type="s:int" />
+            <s:element minOccurs="0" maxOccurs="1" name="rate" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="pricePerRoom" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="onlyPublished" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="serviceProviderKey" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfInt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="int" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CostCalculateResult">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="Brutto" type="s:decimal" />
+          <s:element minOccurs="1" maxOccurs="1" name="ProviderKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="IsCalcBrutto" type="s:boolean" />
+          <s:element minOccurs="0" maxOccurs="1" name="CancellationPolicies" type="tns:ArrayOfCancellationPolicyData" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfCancellationPolicyData">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CancellationPolicyData" nillable="true" type="tns:CancellationPolicyData" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="CalculateSingleCostResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="CalculateSingleCostResult" type="tns:CostCalculateResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetExtraServices">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="request" type="tns:ExtraServiceRequest" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ExtraServiceRequest">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ServiceClassKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="CountryKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="CityKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="HotelKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="TypeKey" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ServiceResultOfExtraServiceInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="tns:ArrayOfExtraServiceInfo" />
+        </s:sequence>
+        <s:attribute name="Message" type="s:string" />
+        <s:attribute name="Error" type="s:string" />
+        <s:attribute name="Count" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfExtraServiceInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="ExtraServiceInfo" nillable="true" type="tns:ExtraServiceInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ExtraServiceInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="CountryList" type="tns:ArrayOfInt" />
+          <s:element minOccurs="0" maxOccurs="1" name="CityList" type="tns:ArrayOfInt" />
+          <s:element minOccurs="0" maxOccurs="1" name="HotelList" type="tns:ArrayOfInt" />
+          <s:element minOccurs="0" maxOccurs="1" name="RoomTypeList" type="tns:ArrayOfInt" />
+          <s:element minOccurs="0" maxOccurs="1" name="RoomCategoryList" type="tns:ArrayOfInt" />
+          <s:element minOccurs="0" maxOccurs="1" name="AccommodationList" type="tns:ArrayOfInt" />
+          <s:element minOccurs="0" maxOccurs="1" name="HotelLinkTypeList" type="tns:ArrayOfHotelLinkTypeEx" />
+        </s:sequence>
+        <s:attribute name="Id" type="s:int" use="required" />
+        <s:attribute name="Name" type="s:string" />
+        <s:attribute name="Description" type="s:string" />
+        <s:attribute name="ServiceClassId" type="s:int" use="required" />
+        <s:attribute name="IsWeb" type="s:boolean" use="required" />
+        <s:attribute name="DurationType" type="s:short" use="required" />
+        <s:attribute name="UpdateDate" type="s:dateTime" use="required" />
+        <s:attribute name="IsPartnerLikeHotel" type="s:boolean" use="required" />
+        <s:attribute name="LinkType" type="s:unsignedByte" use="required" />
+        <s:attribute name="IsAddHot" type="s:boolean" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfHotelLinkTypeEx">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="HotelLinkTypeEx" nillable="true" type="tns:HotelLinkTypeEx" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="HotelLinkTypeEx">
+        <s:attribute name="HotelId" type="s:int" use="required" />
+        <s:attribute name="ExtraServiceLinkType" type="s:int" use="required" />
+      </s:complexType>
+      <s:element name="GetExtraServicesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetExtraServicesResult" type="tns:ServiceResultOfExtraServiceInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetClientInfo">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ServiceResultOfClientInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="tns:ArrayOfClientInfo" />
+        </s:sequence>
+        <s:attribute name="Message" type="s:string" />
+        <s:attribute name="Error" type="s:string" />
+        <s:attribute name="Count" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfClientInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="ClientInfo" nillable="true" type="tns:ClientInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ClientInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="MarketName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Address" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetClientInfoResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetClientInfoResult" type="tns:ServiceResultOfClientInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SearchHotelServices">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="request" type="tns:SearchHotelServiceRequest" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="SearchHotelServiceRequest">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="PageSize" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="RowIndexFrom" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="DateFrom" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="DateTo" type="s:dateTime" />
+          <s:element minOccurs="0" maxOccurs="1" name="RegionKeys" type="tns:ArrayOfInt" />
+          <s:element minOccurs="0" maxOccurs="1" name="CityKeys" type="tns:ArrayOfInt" />
+          <s:element minOccurs="0" maxOccurs="1" name="HotelKeys" type="tns:ArrayOfInt" />
+          <s:element minOccurs="0" maxOccurs="1" name="RoomDescriptionsKeys" type="tns:ArrayOfInt" />
+          <s:element minOccurs="0" maxOccurs="1" name="PansionKeys" type="tns:ArrayOfInt" />
+          <s:element minOccurs="0" maxOccurs="1" name="Ages" type="tns:ArrayOfInt" />
+          <s:element minOccurs="1" maxOccurs="1" name="Pax" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Tariffs" type="tns:ArrayOfInt" />
+          <s:element minOccurs="0" maxOccurs="1" name="CacheGuid" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="ResultView" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="Mode" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="QuotaTypes" type="tns:ArrayOfInt" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ServiceResultOfDataRequestResult">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="tns:ArrayOfDataRequestResult" />
+        </s:sequence>
+        <s:attribute name="Message" type="s:string" />
+        <s:attribute name="Error" type="s:string" />
+        <s:attribute name="Count" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfDataRequestResult">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="DataRequestResult" nillable="true" type="tns:DataRequestResult" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="DataRequestResult">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="ResultTable">
+            <s:complexType>
+              <s:sequence>
+                <s:any minOccurs="0" maxOccurs="unbounded" namespace="http://www.w3.org/2001/XMLSchema" processContents="lax" />
+                <s:any minOccurs="1" namespace="urn:schemas-microsoft-com:xml-diffgram-v1" processContents="lax" />
+              </s:sequence>
+            </s:complexType>
+          </s:element>
+          <s:element minOccurs="0" maxOccurs="1" name="CalcItemsResults" type="tns:ArrayOfCalcItemsResult" />
+          <s:element minOccurs="0" maxOccurs="1" name="ColunmNames" type="tns:ArrayOfString" />
+          <s:element minOccurs="0" maxOccurs="1" name="ColumnNamesForDisplay" type="tns:ArrayOfString" />
+          <s:element minOccurs="0" maxOccurs="1" name="ColumnHeaderForDisplay" type="tns:ArrayOfString" />
+          <s:element minOccurs="1" maxOccurs="1" name="TotalCount" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="PageSize" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="PageIndex" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="IsLastPage" type="s:boolean" />
+          <s:element minOccurs="0" maxOccurs="1" name="AdditionalData" type="tns:ArrayOfArrayOfAnyType" />
+          <s:element minOccurs="0" maxOccurs="1" name="ResponseGuid" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfCalcItemsResult">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CalcItemsResult" nillable="true" type="tns:CalcItemsResult" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CalcItemsResult">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="HotelName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="HotelKey" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="RtCode" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="RtKey" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="RcName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="RcKey" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="RdName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="RdKey" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="AcName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="AcKey" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="PnCode" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="PnKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="Cost" type="s:decimal" />
+          <s:element minOccurs="1" maxOccurs="1" name="AddHotsCost" type="s:decimal" />
+          <s:element minOccurs="1" maxOccurs="1" name="AddHotsWithCost" type="s:decimal" />
+          <s:element minOccurs="1" maxOccurs="1" name="TotalCost" type="s:decimal" />
+          <s:element minOccurs="0" maxOccurs="1" name="DetailBrutto" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="QuoteType" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="CountryKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="CityKey" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="CityName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="HotelWebSite" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="TariffId" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="TariffName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="TariffDescription" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="AddHots" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="AddHotWithCostsIDs" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="ContractPrKey" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="HotelImage" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Rate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="CancellationPolicyRequestParams" type="tns:CancellationPolicyRequestParams" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CancellationPolicyRequestParams">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="CheckInDate" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="ServiceKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="HotelKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="RoomTypeKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="RoomCategoryKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="PansionKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="AccommodationKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="CheckOutDate" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="CreateDate" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="DaysBeforeCheckIn" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="PartnerKey" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="CustomerKey" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="CostOfferKey" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="CostOfferTypeKey" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="SeasonKey" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="MarketKey" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="TariffKey" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="GroupKey" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="CancellationDate" nillable="true" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="ActiveOnly" type="s:boolean" />
+          <s:element minOccurs="0" maxOccurs="1" name="BruttoByDays" type="tns:ArrayOfDouble" />
+          <s:element minOccurs="1" maxOccurs="1" name="DlPrice" nillable="true" type="s:double" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfDouble">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="double" type="s:double" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfString">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="string" nillable="true" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfArrayOfAnyType">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="ArrayOfAnyType" nillable="true" type="tns:ArrayOfAnyType" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfAnyType">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="anyType" nillable="true" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="SearchHotelServicesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="SearchHotelServicesResult" type="tns:ServiceResultOfDataRequestResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SearchHotelServicesMinHotel">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="request" type="tns:SearchHotelServiceRequest" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SearchHotelServicesMinHotelResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="SearchHotelServicesMinHotelResult" type="tns:ServiceResultOfDataRequestResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SearchActualCostCalculationVariant">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="request" type="tns:SearchActualCostCalculationVariantRequest" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="SearchActualCostCalculationVariantRequest">
+        <s:attribute name="HotelId" type="s:int" use="required" />
+        <s:attribute name="DateFrom" type="s:dateTime" use="required" />
+        <s:attribute name="DateTo" type="s:dateTime" use="required" />
+        <s:attribute name="ValidateQuota" type="s:boolean" use="required" />
+        <s:attribute name="CheckAdHot" type="s:boolean" use="required" />
+        <s:attribute name="Rate" type="s:string" />
+        <s:attribute name="QuotaTypes" use="required">
+          <s:simpleType>
+            <s:list itemType="s:int" />
+          </s:simpleType>
+        </s:attribute>
+      </s:complexType>
+      <s:complexType name="ServiceResultOfCostCalculationVariant">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="tns:ArrayOfCostCalculationVariant" />
+        </s:sequence>
+        <s:attribute name="Message" type="s:string" />
+        <s:attribute name="Error" type="s:string" />
+        <s:attribute name="Count" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfCostCalculationVariant">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CostCalculationVariant" nillable="true" type="tns:CostCalculationVariant" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CostCalculationVariant">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="RoomAccommodationId" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="RoomTypeId" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="RoomCategoryId" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="PansionId" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="RoomAccommodationName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="RoomTypeName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="RoomCategoryName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PansionName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="CountAdult" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="CountChildren" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="Quota" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="SearchActualCostCalculationVariantResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="SearchActualCostCalculationVariantResult" type="tns:ServiceResultOfCostCalculationVariant" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetReservationsFrom">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="dateFrom" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="dateTo" nillable="true" type="s:dateTime" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ServiceResultOfReservationKeyCode">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="tns:ArrayOfReservationKeyCode" />
+        </s:sequence>
+        <s:attribute name="Message" type="s:string" />
+        <s:attribute name="Error" type="s:string" />
+        <s:attribute name="Count" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfReservationKeyCode">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="ReservationKeyCode" nillable="true" type="tns:ReservationKeyCode" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ReservationKeyCode">
+        <s:attribute name="Key" type="s:int" use="required" />
+        <s:attribute name="Code" type="s:string" />
+      </s:complexType>
+      <s:element name="GetReservationsFromResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetReservationsFromResult" type="tns:ServiceResultOfReservationKeyCode" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetReservation">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="dgKey" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="Reservation">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Rate" type="tns:Rate" />
+          <s:element minOccurs="0" maxOccurs="1" name="TouristServices" type="tns:ArrayOfTouristService" />
+          <s:element minOccurs="0" maxOccurs="1" name="Services" type="tns:ArrayOfService" />
+          <s:element minOccurs="0" maxOccurs="1" name="FlightIn" type="tns:Flight" />
+          <s:element minOccurs="0" maxOccurs="1" name="FlightOut" type="tns:Flight" />
+          <s:element minOccurs="1" maxOccurs="1" name="ID" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="Brutto" nillable="true" type="s:double" />
+          <s:element minOccurs="1" maxOccurs="1" name="CountryID" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="CityID" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="PartnerID" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="Status" type="tns:Status" />
+          <s:element minOccurs="1" maxOccurs="1" name="StartDate" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="EndDate" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="Duration" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="CreationDate" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="CreatorID" nillable="true" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Tourists" type="tns:ArrayOfTourist" />
+          <s:element minOccurs="1" maxOccurs="1" name="OwnerID" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="TourOperatorID" nillable="true" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="TourOperatorCode" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="ExternalID" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="AdditionalParams" type="tns:ArrayOfParameterPair" />
+        </s:sequence>
+        <s:attribute name="HasInvoices" type="s:boolean" use="required" />
+      </s:complexType>
+      <s:complexType name="Rate">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="IsMain" type="s:boolean" />
+              <s:element minOccurs="1" maxOccurs="1" name="IsNational" type="s:boolean" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="ArrayOfTouristService">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="TouristService" nillable="true" type="tns:TouristService" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="TouristService">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ID" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="TouristRoomNumber" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="ServiceID" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="TouristID" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfService">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Service" nillable="true" type="tns:Service" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="Service">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ExternalID" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="Price" nillable="true" type="s:double" />
+          <s:element minOccurs="1" maxOccurs="1" name="NMen" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="ServiceClass" type="tns:ServiceClass" />
+          <s:element minOccurs="0" maxOccurs="1" name="Partner" type="tns:Partner" />
+          <s:element minOccurs="1" maxOccurs="1" name="PartnerID" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="Quota" type="tns:QuotaResultStatus" />
+          <s:element minOccurs="1" maxOccurs="1" name="PacketKey" nillable="true" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="AdditionalParams" type="tns:ArrayOfParameterPair" />
+          <s:element minOccurs="0" maxOccurs="1" name="DetailBrutto" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Notes" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="StartDate" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="StartDay" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="Duration" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="RateBrutto" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="Brutto" nillable="true" type="s:double" />
+          <s:element minOccurs="1" maxOccurs="1" name="ServiceClassID" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="TouristCount" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="ID" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Status" type="tns:StatusService" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ServiceClass">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference" />
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="Partner">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="PartnersGroupID" nillable="true" type="s:int" />
+              <s:element minOccurs="0" maxOccurs="1" name="FullName" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Fax" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Address" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Zip" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Email" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Phones" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:simpleType name="QuotaResultStatus">
+        <s:restriction base="s:string">
+          <s:enumeration value="AFew" />
+          <s:enumeration value="All" />
+          <s:enumeration value="No" />
+          <s:enumeration value="NoFlight" />
+          <s:enumeration value="None" />
+          <s:enumeration value="NotChecked" />
+          <s:enumeration value="OnlyAgent" />
+          <s:enumeration value="Request" />
+          <s:enumeration value="Yes" />
+        </s:restriction>
+      </s:simpleType>
+      <s:complexType name="StatusService">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference" />
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="VisaService">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Service">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="Visa" type="tns:Visa" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="Visa">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference" />
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="InsuranceService">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Service">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="Description1" type="tns:AdditionalDescription" />
+              <s:element minOccurs="0" maxOccurs="1" name="Insurance" type="tns:Insurance" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="AdditionalDescription">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference" />
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="Insurance">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference" />
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="ExtraService">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Service">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="CityKey" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="IsPackage" type="s:boolean" />
+              <s:element minOccurs="1" maxOccurs="1" name="Code" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="HasDuration" type="s:boolean" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="ExcursionService">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Service">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="CityKey" type="s:int" />
+              <s:element minOccurs="0" maxOccurs="1" name="Excursion" type="tns:Excursion" />
+              <s:element minOccurs="0" maxOccurs="1" name="Transport" type="tns:Transport" />
+              <s:element minOccurs="1" maxOccurs="1" name="ExcursionID" nillable="true" type="s:int" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="Transport">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference" />
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="FlightService">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Service">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="Tariff" type="tns:Tariff" />
+              <s:element minOccurs="0" maxOccurs="1" name="Flight" type="tns:Flight" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="Tariff">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="SVKey" type="s:int" />
+              <s:element minOccurs="0" maxOccurs="1" name="Comment" type="s:string" />
+              <s:element minOccurs="1" maxOccurs="1" name="CreateDate" type="s:dateTime" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="Flight">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="CityFrom" type="tns:City" />
+          <s:element minOccurs="0" maxOccurs="1" name="CityTo" type="tns:City" />
+          <s:element minOccurs="0" maxOccurs="1" name="AirportFrom" type="tns:Airport" />
+          <s:element minOccurs="0" maxOccurs="1" name="AirportTo" type="tns:Airport" />
+          <s:element minOccurs="0" maxOccurs="1" name="AirLine" type="tns:AirLine" />
+          <s:element minOccurs="1" maxOccurs="1" name="TimeFrom" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="TimeTo" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="DateFrom" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="DateTo" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="IsArrival" type="s:boolean" />
+          <s:element minOccurs="1" maxOccurs="1" name="Available" type="tns:AvailabilityType" />
+          <s:element minOccurs="1" maxOccurs="1" name="ID" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Number" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="ArrivalFlightNumber" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="DepartureFlightNumber" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="Airport">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="City" type="tns:City" />
+              <s:element minOccurs="1" maxOccurs="1" name="RegionID" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="CityID" type="s:int" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="AirLine">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference" />
+        </s:complexContent>
+      </s:complexType>
+      <s:simpleType name="AvailabilityType">
+        <s:restriction base="s:string">
+          <s:enumeration value="Unknown" />
+          <s:enumeration value="Request" />
+          <s:enumeration value="Yes" />
+          <s:enumeration value="No" />
+        </s:restriction>
+      </s:simpleType>
+      <s:complexType name="TransferService">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Service">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="Transfer" type="tns:Transfer" />
+              <s:element minOccurs="0" maxOccurs="1" name="Transport" type="tns:Transport" />
+              <s:element minOccurs="1" maxOccurs="1" name="PointToId" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="CityKey" type="s:int" />
+              <s:element minOccurs="0" maxOccurs="1" name="PointToName" type="s:string" />
+              <s:element minOccurs="1" maxOccurs="1" name="PointFromId" type="s:int" />
+              <s:element minOccurs="0" maxOccurs="1" name="PointFromName" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Flight" type="tns:Flight" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="Transfer">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="PlaceFrom" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="PlaceTo" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CityID" nillable="true" type="s:int" />
+              <s:element minOccurs="0" maxOccurs="1" name="RegionID" nillable="true" type="s:int" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="HotelService">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Service">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="Hotel" type="tns:Hotel" />
+              <s:element minOccurs="0" maxOccurs="1" name="Room" type="tns:Room" />
+              <s:element minOccurs="1" maxOccurs="1" name="RoomID" nillable="true" type="s:int" />
+              <s:element minOccurs="0" maxOccurs="1" name="Pansion" type="tns:Pansion" />
+              <s:element minOccurs="1" maxOccurs="1" name="PansionID" nillable="true" type="s:int" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="Room">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="RoomType" type="tns:RoomType" />
+          <s:element minOccurs="1" maxOccurs="1" name="RoomTypeID" nillable="true" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="RoomCategory" type="tns:RoomCategory" />
+          <s:element minOccurs="1" maxOccurs="1" name="RoomCategoryID" nillable="true" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="RoomAccomodation" type="tns:RoomAccomodation" />
+          <s:element minOccurs="1" maxOccurs="1" name="RoomAccomodationID" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="ID" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="RoomType">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="Places" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="ExPlaces" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="PrintOrder" type="s:int" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="RoomCategory">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="MainPlaces" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="ExtraPlaces" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="IsMain" type="s:boolean" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="RoomAccomodation">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="PerRoom" type="s:boolean" />
+              <s:element minOccurs="1" maxOccurs="1" name="AdultMainPalces" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="ChildMainPalces" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="AdultExtraPalces" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="ChildExtraPalces" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="MainPlaces" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="ExtraPlaces" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="IsMain" type="s:boolean" />
+              <s:element minOccurs="1" maxOccurs="1" name="AgeFrom" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="AgeTo" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="Age2From" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="Age2To" type="s:int" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="Pansion">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference" />
+        </s:complexContent>
+      </s:complexType>
+      <s:simpleType name="Status">
+        <s:restriction base="s:string">
+          <s:enumeration value="Confirmed" />
+          <s:enumeration value="NotConfirmed" />
+          <s:enumeration value="WaitingConfirmation" />
+          <s:enumeration value="Canceled" />
+          <s:enumeration value="WaitingCancelation" />
+        </s:restriction>
+      </s:simpleType>
+      <s:complexType name="ArrayOfTourist">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Tourist" nillable="true" type="tns:Tourist" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="Tourist">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="FirstName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="LastName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="ForeignPassport" type="tns:Passport" />
+          <s:element minOccurs="1" maxOccurs="1" name="ExternalID" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="AdditionalParams" type="tns:ArrayOfParameterPair" />
+        </s:sequence>
+        <s:attribute name="Sex" type="tns:Sex" use="required" />
+        <s:attribute name="BirthDate" type="s:dateTime" use="required" />
+        <s:attribute name="FirstNameLat" type="s:string" />
+        <s:attribute name="SurNameLat" type="s:string" />
+        <s:attribute name="AgeType" type="tns:AgeType" use="required" />
+        <s:attribute name="IsMain" type="s:boolean" use="required" />
+        <s:attribute name="ID" type="s:int" use="required" />
+        <s:attribute name="Phone" type="s:string" />
+        <s:attribute name="Email" type="s:string" />
+      </s:complexType>
+      <s:complexType name="Passport">
+        <s:attribute name="Serie" type="s:string" />
+        <s:attribute name="Number" type="s:string" />
+        <s:attribute name="EndDate" type="s:dateTime" use="required" />
+      </s:complexType>
+      <s:simpleType name="Sex">
+        <s:restriction base="s:string">
+          <s:enumeration value="Male" />
+          <s:enumeration value="Female" />
+          <s:enumeration value="Child" />
+          <s:enumeration value="Infant" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="AgeType">
+        <s:restriction base="s:string">
+          <s:enumeration value="Adult" />
+          <s:enumeration value="Child" />
+          <s:enumeration value="Infant" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="GetReservationResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetReservationResult" type="tns:Reservation" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CreateReservation">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="reserv" type="tns:Reservation" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CreateReservationResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="CreateReservationResult" type="tns:Reservation" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CancelReservation">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="dgKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="annulReasonID" type="s:int" />
+            <s:element minOccurs="0" maxOccurs="1" name="note" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CancelReservationResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="CancelReservationResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CancelReservationExtended">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="dgKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="annulReasonID" type="s:int" />
+            <s:element minOccurs="0" maxOccurs="1" name="note" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CanceledServiceResult">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="Number" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="ResultMessage" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PenaltyCost" type="tns:PenaltyCost" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfCanceledServiceResult">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CanceledServiceResult" nillable="true" type="tns:CanceledServiceResult" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="CancelReservationExtendedResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="CancelReservationExtendedResult" type="tns:ArrayOfCanceledServiceResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CreateReservationMessage">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="dgKey" type="s:int" />
+            <s:element minOccurs="0" maxOccurs="1" name="message" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="senderName" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CreateReservationMessageResponse">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetReservationMessages">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="dgKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="messageDirection" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ServiceResultOfDogovorMessageItem">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="tns:ArrayOfDogovorMessageItem" />
+        </s:sequence>
+        <s:attribute name="Message" type="s:string" />
+        <s:attribute name="Error" type="s:string" />
+        <s:attribute name="Count" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfDogovorMessageItem">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="DogovorMessageItem" nillable="true" type="tns:DogovorMessageItem" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="DogovorMessageItem">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="Id" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="IsOutgouing" type="s:boolean" />
+          <s:element minOccurs="1" maxOccurs="1" name="DogovorId" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="DateCreate" type="s:dateTime" />
+          <s:element minOccurs="0" maxOccurs="1" name="SenderName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="IsRead" type="s:boolean" />
+          <s:element minOccurs="1" maxOccurs="1" name="TourOperKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="Processed" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Text" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetReservationMessagesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetReservationMessagesResult" type="tns:ServiceResultOfDogovorMessageItem" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetInvoicesForDogovor">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="dgKey" nillable="true" type="s:int" />
+            <s:element minOccurs="0" maxOccurs="1" name="dgCode" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="FileResponseShort">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="FileKey" nillable="true" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="InvoiceKey" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="InvoiceName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="FileName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="UpdateDate" nillable="true" type="s:dateTime" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfFileResponseShort">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="FileResponseShort" nillable="true" type="tns:FileResponseShort" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetInvoicesForDogovorResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetInvoicesForDogovorResult" type="tns:ArrayOfFileResponseShort" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetInvoiceFileByKey">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="fileKey" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="FileResponse">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="Key" nillable="true" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="Size" nillable="true" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="s:base64Binary" />
+          <s:element minOccurs="1" maxOccurs="1" name="Compressed" nillable="true" type="s:boolean" />
+          <s:element minOccurs="0" maxOccurs="1" name="Mime" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Type" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="OriginalType" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetInvoiceFileByKeyResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetInvoiceFileByKeyResult" type="tns:FileResponse" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetCountries">
+        <s:complexType />
+      </s:element>
+      <s:complexType name="ArrayOfCountry">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Country" nillable="true" type="tns:Country" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetCountriesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetCountriesResult" type="tns:ArrayOfCountry" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetRegions">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="countryKey" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfRegion">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Region" nillable="true" type="tns:Region" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="Region">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:Reference">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="Country" type="tns:Country" />
+              <s:element minOccurs="1" maxOccurs="1" name="CountryID" type="s:int" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="GetRegionsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetRegionsResult" type="tns:ArrayOfRegion" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetCities">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="countryKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="regionKey" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfCity">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="City" nillable="true" type="tns:City" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetCitiesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetCitiesResult" type="tns:ArrayOfCity" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetRoomCategories">
+        <s:complexType />
+      </s:element>
+      <s:complexType name="ArrayOfRoomCategory">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="RoomCategory" nillable="true" type="tns:RoomCategory" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetRoomCategoriesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetRoomCategoriesResult" type="tns:ArrayOfRoomCategory" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetRoomType">
+        <s:complexType />
+      </s:element>
+      <s:complexType name="ArrayOfRoomType">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="RoomType" nillable="true" type="tns:RoomType" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetRoomTypeResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetRoomTypeResult" type="tns:ArrayOfRoomType" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetRoomAccommodations">
+        <s:complexType />
+      </s:element>
+      <s:complexType name="ArrayOfRoomAccomodation">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="RoomAccomodation" nillable="true" type="tns:RoomAccomodation" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetRoomAccommodationsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetRoomAccommodationsResult" type="tns:ArrayOfRoomAccomodation" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetAccommodations">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ServiceResultOfAccomodationInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="tns:ArrayOfAccomodationInfo" />
+        </s:sequence>
+        <s:attribute name="Message" type="s:string" />
+        <s:attribute name="Error" type="s:string" />
+        <s:attribute name="Count" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfAccomodationInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="AccomodationInfo" nillable="true" type="tns:AccomodationInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="AccomodationInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="ChildrenAgesList" type="tns:ArrayOfAccomadationAge" />
+        </s:sequence>
+        <s:attribute name="Id" type="s:int" use="required" />
+        <s:attribute name="Code" type="s:string" />
+        <s:attribute name="Name" type="s:string" />
+        <s:attribute name="IsPerRoom" type="s:boolean" use="required" />
+        <s:attribute name="NameUnicode" type="s:string" />
+        <s:attribute name="CountAdultMain" type="s:int" use="required" />
+        <s:attribute name="CountChildMain" type="s:int" use="required" />
+        <s:attribute name="CountAdultExtra" type="s:int" use="required" />
+        <s:attribute name="CountChildExtra" type="s:int" use="required" />
+        <s:attribute name="ChildrenAges" type="s:string" />
+        <s:attribute name="IsWeb" type="s:boolean" use="required" />
+        <s:attribute name="IsPackage" type="s:boolean" use="required" />
+        <s:attribute name="UpdateDate" type="s:dateTime" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfAccomadationAge">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="AccomadationAge" nillable="true" type="tns:AccomadationAge" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="AccomadationAge">
+        <s:attribute name="Id" type="s:int" use="required" />
+        <s:attribute name="AgeFrom" type="s:int" use="required" />
+        <s:attribute name="AgeTo" type="s:int" use="required" />
+        <s:attribute name="CountMen" type="s:int" use="required" />
+        <s:attribute name="IsMain" type="s:boolean" use="required" />
+        <s:attribute name="UpdateDate" type="s:dateTime" use="required" />
+      </s:complexType>
+      <s:element name="GetAccommodationsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetAccommodationsResult" type="tns:ServiceResultOfAccomodationInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetPansions">
+        <s:complexType />
+      </s:element>
+      <s:complexType name="ArrayOfPansion">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Pansion" nillable="true" type="tns:Pansion" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetPansionsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetPansionsResult" type="tns:ArrayOfPansion" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetRatings">
+        <s:complexType />
+      </s:element>
+      <s:complexType name="ArrayOfHotelCategory">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="HotelCategory" nillable="true" type="tns:HotelCategory" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetRatingsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetRatingsResult" type="tns:ArrayOfHotelCategory" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetFlights">
+        <s:complexType />
+      </s:element>
+      <s:complexType name="ArrayOfFlight">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Flight" nillable="true" type="tns:Flight" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetFlightsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetFlightsResult" type="tns:ArrayOfFlight" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetAirport">
+        <s:complexType />
+      </s:element>
+      <s:complexType name="ArrayOfAirport">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Airport" nillable="true" type="tns:Airport" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetAirportResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetAirportResult" type="tns:ArrayOfAirport" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetProviders">
+        <s:complexType />
+      </s:element>
+      <s:complexType name="ArrayOfPartner">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Partner" nillable="true" type="tns:Partner" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetProvidersResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetProvidersResult" type="tns:ArrayOfPartner" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetTransports">
+        <s:complexType />
+      </s:element>
+      <s:complexType name="ArrayOfTransport">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Transport" nillable="true" type="tns:Transport" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetTransportsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetTransportsResult" type="tns:ArrayOfTransport" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetTransferTypes">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetTransferTypesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetTransferTypesResult" type="tns:ArrayOfTransport" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetServicePackage">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetServicePackageResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetServicePackageResult" type="tns:ArrayOfServiceList" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetTariffs">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="svKey" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfTariff">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Tariff" nillable="true" type="tns:Tariff" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetTariffsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetTariffsResult" type="tns:ArrayOfTariff" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetRates">
+        <s:complexType />
+      </s:element>
+      <s:complexType name="ArrayOfRate">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Rate" nillable="true" type="tns:Rate" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetRatesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetRatesResult" type="tns:ArrayOfRate" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetDLStatuses">
+        <s:complexType />
+      </s:element>
+      <s:complexType name="ArrayOfStatusService">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="StatusService" nillable="true" type="tns:StatusService" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetDLStatusesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetDLStatusesResult" type="tns:ArrayOfStatusService" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetRoomDescriptions">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="roomTypeId" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="roomCategoryId" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfAdditionalDescription">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="AdditionalDescription" nillable="true" type="tns:AdditionalDescription" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetRoomDescriptionsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetRoomDescriptionsResult" type="tns:ArrayOfAdditionalDescription" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CreatePaymentForDogovor">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="dgKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="payment" type="s:double" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CreatePaymentForDogovorResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="CreatePaymentForDogovorResult" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="orderId" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CreatePayment">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="userToken" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="date" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="sum" type="s:double" />
+            <s:element minOccurs="0" maxOccurs="1" name="currencyIsoCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="reservationCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="paymentId" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CreatePaymentResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="CreatePaymentResult" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetPaymentInformation">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="userToken" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="reservationCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="externalPaymentId" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="PaymentInformationResult">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="IsPaymentExists" type="s:boolean" />
+          <s:element minOccurs="0" maxOccurs="1" name="PaymentsShortInformation" type="tns:PaymentsShortInformation" />
+          <s:element minOccurs="1" maxOccurs="1" name="ErrorCode" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="PaymentsShortInformation">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="InternalPaymentId" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="DogovorCode" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="PaymentSum" type="s:decimal" />
+          <s:element minOccurs="1" maxOccurs="1" name="PaymentNationalSum" type="s:decimal" />
+          <s:element minOccurs="0" maxOccurs="1" name="PaymentRateISOCode" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="CreateDate" type="s:dateTime" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetPaymentInformationResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetPaymentInformationResult" type="tns:PaymentInformationResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CheckReservation">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="userToken" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="dgCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="currencyIsoCode" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="AmountSum">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="Amount" type="s:decimal" />
+          <s:element minOccurs="0" maxOccurs="1" name="RateCode" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="NationalCurrencyPrice" type="s:decimal" />
+          <s:element minOccurs="0" maxOccurs="1" name="NationalRateCode" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="CustomCurrencyPrice" type="s:decimal" />
+          <s:element minOccurs="0" maxOccurs="1" name="CustomRateCode" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="ErrorCode" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="FilialKey" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="BeginTourDate" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="EndTourDate" type="s:dateTime" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="CheckReservationResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="CheckReservationResult" type="tns:AmountSum" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetCancellationPolicyInfoWithPenalty">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="dateFrom" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="dateTo" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="HotelKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="PansionKey" nillable="true" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="AccommodationKey" nillable="true" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="RoomTypeKey" nillable="true" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="RoomCategoryKey" nillable="true" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="Pax" type="s:int" />
+            <s:element minOccurs="0" maxOccurs="1" name="Ages" type="tns:ArrayOfInt" />
+            <s:element minOccurs="1" maxOccurs="1" name="CancellationDate" nillable="true" type="s:dateTime" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ServiceResultOfCancellationPolicyInfoWithPenalty">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Data" type="tns:ArrayOfCancellationPolicyInfoWithPenalty" />
+        </s:sequence>
+        <s:attribute name="Message" type="s:string" />
+        <s:attribute name="Error" type="s:string" />
+        <s:attribute name="Count" type="s:int" use="required" />
+      </s:complexType>
+      <s:complexType name="ArrayOfCancellationPolicyInfoWithPenalty">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CancellationPolicyInfoWithPenalty" nillable="true" type="tns:CancellationPolicyInfoWithPenalty" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CancellationPolicyInfoWithPenalty">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CancellationPolicyInfoBase">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="PolicyData" type="tns:ArrayOfCancellationPolicyWithPenaltyValue" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="CancellationPolicyInfoBase">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="HotelKey" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="HotelName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="AccomodatioKey" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="AccomodatioName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="RoomTypeKey" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="RoomTypeName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="RoomCategoryKey" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="RoomCategoryName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="PansionKey" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="PansionName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PolicyDescripion" type="tns:ArrayOfString" />
+          <s:element minOccurs="1" maxOccurs="1" name="CancellationDate" type="s:dateTime" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfCancellationPolicyWithPenaltyValue">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CancellationPolicyWithPenaltyValue" nillable="true" type="tns:CancellationPolicyWithPenaltyValue" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CancellationPolicyWithPenaltyValue">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CancellationPolicyData">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="PenaltyTotal" type="s:double" />
+              <s:element minOccurs="0" maxOccurs="1" name="Currency" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="GetCancellationPolicyInfoWithPenaltyResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetCancellationPolicyInfoWithPenaltyResult" type="tns:ServiceResultOfCancellationPolicyInfoWithPenalty" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetReservationPenalties">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="reservationKey" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="cancellationDate" nillable="true" type="s:dateTime" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ReservationPenaltyInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Penalty" type="tns:ArrayOfServicePenalty" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfServicePenalty">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="ServicePenalty" nillable="true" type="tns:ServicePenalty" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ServicePenalty">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ServiceClassID" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="ID" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PenaltyData" type="tns:ArrayOfPenaltyDataInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfPenaltyDataInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="PenaltyDataInfo" nillable="true" type="tns:PenaltyDataInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="PenaltyDataInfo">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="TotalPenalty" type="s:double" />
+          <s:element minOccurs="0" maxOccurs="1" name="RateCode" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PolicyDescription" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="CancellationPolicyData" type="tns:CancellationPolicyData" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="HotelPenalty">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:ServicePenalty">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="Hotel" type="tns:HotelDescription" />
+              <s:element minOccurs="0" maxOccurs="1" name="RoomType" type="tns:RoomTypeDescription" />
+              <s:element minOccurs="0" maxOccurs="1" name="RoomCategory" type="tns:RoomCategoryDescription" />
+              <s:element minOccurs="0" maxOccurs="1" name="Accommodation" type="tns:AccommodationDescription" />
+              <s:element minOccurs="0" maxOccurs="1" name="Pansion" type="tns:PansionDescription" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="HotelDescription">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ID" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="RoomTypeDescription">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ID" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="RoomCategoryDescription">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ID" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="AccommodationDescription">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ID" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="PansionDescription">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ID" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetReservationPenaltiesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetReservationPenaltiesResult" type="tns:ReservationPenaltyInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetArrivalsByDate">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="arrivalDate" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="countryKey" nillable="true" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="regionKey" nillable="true" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="cityKey" nillable="true" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="hotelKey" nillable="true" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetArrivalsByDateResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetArrivalsByDateResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetDeparturesByDate">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="guid" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="departureDate" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="countryKey" nillable="true" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="regionKey" nillable="true" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="cityKey" nillable="true" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="hotelKey" nillable="true" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetDeparturesByDateResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetDeparturesByDateResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="ConnectSoapIn">
+    <wsdl:part name="parameters" element="tns:Connect" />
+  </wsdl:message>
+  <wsdl:message name="ConnectSoapOut">
+    <wsdl:part name="parameters" element="tns:ConnectResponse" />
+  </wsdl:message>
+  <wsdl:message name="CheckConnectSoapIn">
+    <wsdl:part name="parameters" element="tns:CheckConnect" />
+  </wsdl:message>
+  <wsdl:message name="CheckConnectSoapOut">
+    <wsdl:part name="parameters" element="tns:CheckConnectResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetQuotaStopSoapIn">
+    <wsdl:part name="parameters" element="tns:GetQuotaStop" />
+  </wsdl:message>
+  <wsdl:message name="GetQuotaStopSoapOut">
+    <wsdl:part name="parameters" element="tns:GetQuotaStopResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetChangeQuotaAndStopSoapIn">
+    <wsdl:part name="parameters" element="tns:GetChangeQuotaAndStop" />
+  </wsdl:message>
+  <wsdl:message name="GetChangeQuotaAndStopSoapOut">
+    <wsdl:part name="parameters" element="tns:GetChangeQuotaAndStopResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetHotelQuotaStopInfoSoapIn">
+    <wsdl:part name="parameters" element="tns:GetHotelQuotaStopInfo" />
+  </wsdl:message>
+  <wsdl:message name="GetHotelQuotaStopInfoSoapOut">
+    <wsdl:part name="parameters" element="tns:GetHotelQuotaStopInfoResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetStopSaleDeletedInfoSoapIn">
+    <wsdl:part name="parameters" element="tns:GetStopSaleDeletedInfo" />
+  </wsdl:message>
+  <wsdl:message name="GetStopSaleDeletedInfoSoapOut">
+    <wsdl:part name="parameters" element="tns:GetStopSaleDeletedInfoResponse" />
+  </wsdl:message>
+  <wsdl:message name="CheckQuotaSoapIn">
+    <wsdl:part name="parameters" element="tns:CheckQuota" />
+  </wsdl:message>
+  <wsdl:message name="CheckQuotaSoapOut">
+    <wsdl:part name="parameters" element="tns:CheckQuotaResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetQuotaInfoSoapIn">
+    <wsdl:part name="parameters" element="tns:GetQuotaInfo" />
+  </wsdl:message>
+  <wsdl:message name="GetQuotaInfoSoapOut">
+    <wsdl:part name="parameters" element="tns:GetQuotaInfoResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetSpoListSoapIn">
+    <wsdl:part name="parameters" element="tns:GetSpoList" />
+  </wsdl:message>
+  <wsdl:message name="GetSpoListSoapOut">
+    <wsdl:part name="parameters" element="tns:GetSpoListResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetCostsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetCosts" />
+  </wsdl:message>
+  <wsdl:message name="GetCostsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetCostsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetExtraServiceWithPricesSoapIn">
+    <wsdl:part name="parameters" element="tns:GetExtraServiceWithPrices" />
+  </wsdl:message>
+  <wsdl:message name="GetExtraServiceWithPricesSoapOut">
+    <wsdl:part name="parameters" element="tns:GetExtraServiceWithPricesResponse" />
+  </wsdl:message>
+  <wsdl:message name="SpoPriceMarkDownloadedSoapIn">
+    <wsdl:part name="parameters" element="tns:SpoPriceMarkDownloaded" />
+  </wsdl:message>
+  <wsdl:message name="SpoPriceMarkDownloadedSoapOut">
+    <wsdl:part name="parameters" element="tns:SpoPriceMarkDownloadedResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetHotelsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetHotels" />
+  </wsdl:message>
+  <wsdl:message name="GetHotelsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetHotelsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetTransfersSoapIn">
+    <wsdl:part name="parameters" element="tns:GetTransfers" />
+  </wsdl:message>
+  <wsdl:message name="GetTransfersSoapOut">
+    <wsdl:part name="parameters" element="tns:GetTransfersResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetExcursionsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetExcursions" />
+  </wsdl:message>
+  <wsdl:message name="GetExcursionsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetExcursionsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetServiceListSoapIn">
+    <wsdl:part name="parameters" element="tns:GetServiceList" />
+  </wsdl:message>
+  <wsdl:message name="GetServiceListSoapOut">
+    <wsdl:part name="parameters" element="tns:GetServiceListResponse" />
+  </wsdl:message>
+  <wsdl:message name="CalculateSingleCostSoapIn">
+    <wsdl:part name="parameters" element="tns:CalculateSingleCost" />
+  </wsdl:message>
+  <wsdl:message name="CalculateSingleCostSoapOut">
+    <wsdl:part name="parameters" element="tns:CalculateSingleCostResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetExtraServicesSoapIn">
+    <wsdl:part name="parameters" element="tns:GetExtraServices" />
+  </wsdl:message>
+  <wsdl:message name="GetExtraServicesSoapOut">
+    <wsdl:part name="parameters" element="tns:GetExtraServicesResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetClientInfoSoapIn">
+    <wsdl:part name="parameters" element="tns:GetClientInfo" />
+  </wsdl:message>
+  <wsdl:message name="GetClientInfoSoapOut">
+    <wsdl:part name="parameters" element="tns:GetClientInfoResponse" />
+  </wsdl:message>
+  <wsdl:message name="SearchHotelServicesSoapIn">
+    <wsdl:part name="parameters" element="tns:SearchHotelServices" />
+  </wsdl:message>
+  <wsdl:message name="SearchHotelServicesSoapOut">
+    <wsdl:part name="parameters" element="tns:SearchHotelServicesResponse" />
+  </wsdl:message>
+  <wsdl:message name="SearchHotelServicesMinHotelSoapIn">
+    <wsdl:part name="parameters" element="tns:SearchHotelServicesMinHotel" />
+  </wsdl:message>
+  <wsdl:message name="SearchHotelServicesMinHotelSoapOut">
+    <wsdl:part name="parameters" element="tns:SearchHotelServicesMinHotelResponse" />
+  </wsdl:message>
+  <wsdl:message name="SearchActualCostCalculationVariantSoapIn">
+    <wsdl:part name="parameters" element="tns:SearchActualCostCalculationVariant" />
+  </wsdl:message>
+  <wsdl:message name="SearchActualCostCalculationVariantSoapOut">
+    <wsdl:part name="parameters" element="tns:SearchActualCostCalculationVariantResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetReservationsFromSoapIn">
+    <wsdl:part name="parameters" element="tns:GetReservationsFrom" />
+  </wsdl:message>
+  <wsdl:message name="GetReservationsFromSoapOut">
+    <wsdl:part name="parameters" element="tns:GetReservationsFromResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetReservationSoapIn">
+    <wsdl:part name="parameters" element="tns:GetReservation" />
+  </wsdl:message>
+  <wsdl:message name="GetReservationSoapOut">
+    <wsdl:part name="parameters" element="tns:GetReservationResponse" />
+  </wsdl:message>
+  <wsdl:message name="CreateReservationSoapIn">
+    <wsdl:part name="parameters" element="tns:CreateReservation" />
+  </wsdl:message>
+  <wsdl:message name="CreateReservationSoapOut">
+    <wsdl:part name="parameters" element="tns:CreateReservationResponse" />
+  </wsdl:message>
+  <wsdl:message name="CancelReservationSoapIn">
+    <wsdl:part name="parameters" element="tns:CancelReservation" />
+  </wsdl:message>
+  <wsdl:message name="CancelReservationSoapOut">
+    <wsdl:part name="parameters" element="tns:CancelReservationResponse" />
+  </wsdl:message>
+  <wsdl:message name="CancelReservationExtendedSoapIn">
+    <wsdl:part name="parameters" element="tns:CancelReservationExtended" />
+  </wsdl:message>
+  <wsdl:message name="CancelReservationExtendedSoapOut">
+    <wsdl:part name="parameters" element="tns:CancelReservationExtendedResponse" />
+  </wsdl:message>
+  <wsdl:message name="CreateReservationMessageSoapIn">
+    <wsdl:part name="parameters" element="tns:CreateReservationMessage" />
+  </wsdl:message>
+  <wsdl:message name="CreateReservationMessageSoapOut">
+    <wsdl:part name="parameters" element="tns:CreateReservationMessageResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetReservationMessagesSoapIn">
+    <wsdl:part name="parameters" element="tns:GetReservationMessages" />
+  </wsdl:message>
+  <wsdl:message name="GetReservationMessagesSoapOut">
+    <wsdl:part name="parameters" element="tns:GetReservationMessagesResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetInvoicesForDogovorSoapIn">
+    <wsdl:part name="parameters" element="tns:GetInvoicesForDogovor" />
+  </wsdl:message>
+  <wsdl:message name="GetInvoicesForDogovorSoapOut">
+    <wsdl:part name="parameters" element="tns:GetInvoicesForDogovorResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetInvoiceFileByKeySoapIn">
+    <wsdl:part name="parameters" element="tns:GetInvoiceFileByKey" />
+  </wsdl:message>
+  <wsdl:message name="GetInvoiceFileByKeySoapOut">
+    <wsdl:part name="parameters" element="tns:GetInvoiceFileByKeyResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetCountriesSoapIn">
+    <wsdl:part name="parameters" element="tns:GetCountries" />
+  </wsdl:message>
+  <wsdl:message name="GetCountriesSoapOut">
+    <wsdl:part name="parameters" element="tns:GetCountriesResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetRegionsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetRegions" />
+  </wsdl:message>
+  <wsdl:message name="GetRegionsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetRegionsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetCitiesSoapIn">
+    <wsdl:part name="parameters" element="tns:GetCities" />
+  </wsdl:message>
+  <wsdl:message name="GetCitiesSoapOut">
+    <wsdl:part name="parameters" element="tns:GetCitiesResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetRoomCategoriesSoapIn">
+    <wsdl:part name="parameters" element="tns:GetRoomCategories" />
+  </wsdl:message>
+  <wsdl:message name="GetRoomCategoriesSoapOut">
+    <wsdl:part name="parameters" element="tns:GetRoomCategoriesResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetRoomTypeSoapIn">
+    <wsdl:part name="parameters" element="tns:GetRoomType" />
+  </wsdl:message>
+  <wsdl:message name="GetRoomTypeSoapOut">
+    <wsdl:part name="parameters" element="tns:GetRoomTypeResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetRoomAccommodationsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetRoomAccommodations" />
+  </wsdl:message>
+  <wsdl:message name="GetRoomAccommodationsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetRoomAccommodationsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetAccommodationsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetAccommodations" />
+  </wsdl:message>
+  <wsdl:message name="GetAccommodationsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetAccommodationsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetPansionsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetPansions" />
+  </wsdl:message>
+  <wsdl:message name="GetPansionsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetPansionsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetRatingsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetRatings" />
+  </wsdl:message>
+  <wsdl:message name="GetRatingsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetRatingsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetFlightsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetFlights" />
+  </wsdl:message>
+  <wsdl:message name="GetFlightsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetFlightsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetAirportSoapIn">
+    <wsdl:part name="parameters" element="tns:GetAirport" />
+  </wsdl:message>
+  <wsdl:message name="GetAirportSoapOut">
+    <wsdl:part name="parameters" element="tns:GetAirportResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetProvidersSoapIn">
+    <wsdl:part name="parameters" element="tns:GetProviders" />
+  </wsdl:message>
+  <wsdl:message name="GetProvidersSoapOut">
+    <wsdl:part name="parameters" element="tns:GetProvidersResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetTransportsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetTransports" />
+  </wsdl:message>
+  <wsdl:message name="GetTransportsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetTransportsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetTransferTypesSoapIn">
+    <wsdl:part name="parameters" element="tns:GetTransferTypes" />
+  </wsdl:message>
+  <wsdl:message name="GetTransferTypesSoapOut">
+    <wsdl:part name="parameters" element="tns:GetTransferTypesResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetServicePackageSoapIn">
+    <wsdl:part name="parameters" element="tns:GetServicePackage" />
+  </wsdl:message>
+  <wsdl:message name="GetServicePackageSoapOut">
+    <wsdl:part name="parameters" element="tns:GetServicePackageResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetTariffsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetTariffs" />
+  </wsdl:message>
+  <wsdl:message name="GetTariffsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetTariffsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetRatesSoapIn">
+    <wsdl:part name="parameters" element="tns:GetRates" />
+  </wsdl:message>
+  <wsdl:message name="GetRatesSoapOut">
+    <wsdl:part name="parameters" element="tns:GetRatesResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetDLStatusesSoapIn">
+    <wsdl:part name="parameters" element="tns:GetDLStatuses" />
+  </wsdl:message>
+  <wsdl:message name="GetDLStatusesSoapOut">
+    <wsdl:part name="parameters" element="tns:GetDLStatusesResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetRoomDescriptionsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetRoomDescriptions" />
+  </wsdl:message>
+  <wsdl:message name="GetRoomDescriptionsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetRoomDescriptionsResponse" />
+  </wsdl:message>
+  <wsdl:message name="CreatePaymentForDogovorSoapIn">
+    <wsdl:part name="parameters" element="tns:CreatePaymentForDogovor" />
+  </wsdl:message>
+  <wsdl:message name="CreatePaymentForDogovorSoapOut">
+    <wsdl:part name="parameters" element="tns:CreatePaymentForDogovorResponse" />
+  </wsdl:message>
+  <wsdl:message name="CreatePaymentSoapIn">
+    <wsdl:part name="parameters" element="tns:CreatePayment" />
+  </wsdl:message>
+  <wsdl:message name="CreatePaymentSoapOut">
+    <wsdl:part name="parameters" element="tns:CreatePaymentResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetPaymentInformationSoapIn">
+    <wsdl:part name="parameters" element="tns:GetPaymentInformation" />
+  </wsdl:message>
+  <wsdl:message name="GetPaymentInformationSoapOut">
+    <wsdl:part name="parameters" element="tns:GetPaymentInformationResponse" />
+  </wsdl:message>
+  <wsdl:message name="CheckReservationSoapIn">
+    <wsdl:part name="parameters" element="tns:CheckReservation" />
+  </wsdl:message>
+  <wsdl:message name="CheckReservationSoapOut">
+    <wsdl:part name="parameters" element="tns:CheckReservationResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetCancellationPolicyInfoWithPenaltySoapIn">
+    <wsdl:part name="parameters" element="tns:GetCancellationPolicyInfoWithPenalty" />
+  </wsdl:message>
+  <wsdl:message name="GetCancellationPolicyInfoWithPenaltySoapOut">
+    <wsdl:part name="parameters" element="tns:GetCancellationPolicyInfoWithPenaltyResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetReservationPenaltiesSoapIn">
+    <wsdl:part name="parameters" element="tns:GetReservationPenalties" />
+  </wsdl:message>
+  <wsdl:message name="GetReservationPenaltiesSoapOut">
+    <wsdl:part name="parameters" element="tns:GetReservationPenaltiesResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetArrivalsByDateSoapIn">
+    <wsdl:part name="parameters" element="tns:GetArrivalsByDate" />
+  </wsdl:message>
+  <wsdl:message name="GetArrivalsByDateSoapOut">
+    <wsdl:part name="parameters" element="tns:GetArrivalsByDateResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetDeparturesByDateSoapIn">
+    <wsdl:part name="parameters" element="tns:GetDeparturesByDate" />
+  </wsdl:message>
+  <wsdl:message name="GetDeparturesByDateSoapOut">
+    <wsdl:part name="parameters" element="tns:GetDeparturesByDateResponse" />
+  </wsdl:message>
+  <wsdl:portType name="IntegrationServiceSoap">
+    <wsdl:operation name="Connect">
+      <wsdl:input message="tns:ConnectSoapIn" />
+      <wsdl:output message="tns:ConnectSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="CheckConnect">
+      <wsdl:input message="tns:CheckConnectSoapIn" />
+      <wsdl:output message="tns:CheckConnectSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetQuotaStop">
+      <wsdl:input message="tns:GetQuotaStopSoapIn" />
+      <wsdl:output message="tns:GetQuotaStopSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetChangeQuotaAndStop">
+      <wsdl:input message="tns:GetChangeQuotaAndStopSoapIn" />
+      <wsdl:output message="tns:GetChangeQuotaAndStopSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetHotelQuotaStopInfo">
+      <wsdl:input message="tns:GetHotelQuotaStopInfoSoapIn" />
+      <wsdl:output message="tns:GetHotelQuotaStopInfoSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetStopSaleDeletedInfo">
+      <wsdl:input message="tns:GetStopSaleDeletedInfoSoapIn" />
+      <wsdl:output message="tns:GetStopSaleDeletedInfoSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="CheckQuota">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Check quota: 1 - quota ok, 2 - stop salse, 0 - on request.</wsdl:documentation>
+      <wsdl:input message="tns:CheckQuotaSoapIn" />
+      <wsdl:output message="tns:CheckQuotaSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetQuotaInfo">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Check quota: 1 - quota ok, 2 - stop salse, 0 - on request.</wsdl:documentation>
+      <wsdl:input message="tns:GetQuotaInfoSoapIn" />
+      <wsdl:output message="tns:GetQuotaInfoSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetSpoList">
+      <wsdl:input message="tns:GetSpoListSoapIn" />
+      <wsdl:output message="tns:GetSpoListSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCosts">
+      <wsdl:input message="tns:GetCostsSoapIn" />
+      <wsdl:output message="tns:GetCostsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetExtraServiceWithPrices">
+      <wsdl:input message="tns:GetExtraServiceWithPricesSoapIn" />
+      <wsdl:output message="tns:GetExtraServiceWithPricesSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="SpoPriceMarkDownloaded">
+      <wsdl:input message="tns:SpoPriceMarkDownloadedSoapIn" />
+      <wsdl:output message="tns:SpoPriceMarkDownloadedSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetHotels">
+      <wsdl:input message="tns:GetHotelsSoapIn" />
+      <wsdl:output message="tns:GetHotelsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTransfers">
+      <wsdl:input message="tns:GetTransfersSoapIn" />
+      <wsdl:output message="tns:GetTransfersSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetExcursions">
+      <wsdl:input message="tns:GetExcursionsSoapIn" />
+      <wsdl:output message="tns:GetExcursionsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetServiceList">
+      <wsdl:input message="tns:GetServiceListSoapIn" />
+      <wsdl:output message="tns:GetServiceListSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="CalculateSingleCost">
+      <wsdl:input message="tns:CalculateSingleCostSoapIn" />
+      <wsdl:output message="tns:CalculateSingleCostSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetExtraServices">
+      <wsdl:input message="tns:GetExtraServicesSoapIn" />
+      <wsdl:output message="tns:GetExtraServicesSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetClientInfo">
+      <wsdl:input message="tns:GetClientInfoSoapIn" />
+      <wsdl:output message="tns:GetClientInfoSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="SearchHotelServices">
+      <wsdl:input message="tns:SearchHotelServicesSoapIn" />
+      <wsdl:output message="tns:SearchHotelServicesSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="SearchHotelServicesMinHotel">
+      <wsdl:input message="tns:SearchHotelServicesMinHotelSoapIn" />
+      <wsdl:output message="tns:SearchHotelServicesMinHotelSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="SearchActualCostCalculationVariant">
+      <wsdl:input message="tns:SearchActualCostCalculationVariantSoapIn" />
+      <wsdl:output message="tns:SearchActualCostCalculationVariantSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetReservationsFrom">
+      <wsdl:input message="tns:GetReservationsFromSoapIn" />
+      <wsdl:output message="tns:GetReservationsFromSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetReservation">
+      <wsdl:input message="tns:GetReservationSoapIn" />
+      <wsdl:output message="tns:GetReservationSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="CreateReservation">
+      <wsdl:input message="tns:CreateReservationSoapIn" />
+      <wsdl:output message="tns:CreateReservationSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelReservation">
+      <wsdl:input message="tns:CancelReservationSoapIn" />
+      <wsdl:output message="tns:CancelReservationSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelReservationExtended">
+      <wsdl:input message="tns:CancelReservationExtendedSoapIn" />
+      <wsdl:output message="tns:CancelReservationExtendedSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="CreateReservationMessage">
+      <wsdl:input message="tns:CreateReservationMessageSoapIn" />
+      <wsdl:output message="tns:CreateReservationMessageSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetReservationMessages">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Get a list of messages by reservation. Direction: Internal = 0, Customer = 1, Provider = 2, All = -1</wsdl:documentation>
+      <wsdl:input message="tns:GetReservationMessagesSoapIn" />
+      <wsdl:output message="tns:GetReservationMessagesSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetInvoicesForDogovor">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Get invoices available for export by dogovor</wsdl:documentation>
+      <wsdl:input message="tns:GetInvoicesForDogovorSoapIn" />
+      <wsdl:output message="tns:GetInvoicesForDogovorSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetInvoiceFileByKey">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Get invoice file by key</wsdl:documentation>
+      <wsdl:input message="tns:GetInvoiceFileByKeySoapIn" />
+      <wsdl:output message="tns:GetInvoiceFileByKeySoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCountries">
+      <wsdl:input message="tns:GetCountriesSoapIn" />
+      <wsdl:output message="tns:GetCountriesSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetRegions">
+      <wsdl:input message="tns:GetRegionsSoapIn" />
+      <wsdl:output message="tns:GetRegionsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCities">
+      <wsdl:input message="tns:GetCitiesSoapIn" />
+      <wsdl:output message="tns:GetCitiesSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetRoomCategories">
+      <wsdl:input message="tns:GetRoomCategoriesSoapIn" />
+      <wsdl:output message="tns:GetRoomCategoriesSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetRoomType">
+      <wsdl:input message="tns:GetRoomTypeSoapIn" />
+      <wsdl:output message="tns:GetRoomTypeSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetRoomAccommodations">
+      <wsdl:input message="tns:GetRoomAccommodationsSoapIn" />
+      <wsdl:output message="tns:GetRoomAccommodationsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetAccommodations">
+      <wsdl:input message="tns:GetAccommodationsSoapIn" />
+      <wsdl:output message="tns:GetAccommodationsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetPansions">
+      <wsdl:input message="tns:GetPansionsSoapIn" />
+      <wsdl:output message="tns:GetPansionsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetRatings">
+      <wsdl:input message="tns:GetRatingsSoapIn" />
+      <wsdl:output message="tns:GetRatingsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetFlights">
+      <wsdl:input message="tns:GetFlightsSoapIn" />
+      <wsdl:output message="tns:GetFlightsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetAirport">
+      <wsdl:input message="tns:GetAirportSoapIn" />
+      <wsdl:output message="tns:GetAirportSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetProviders">
+      <wsdl:input message="tns:GetProvidersSoapIn" />
+      <wsdl:output message="tns:GetProvidersSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTransports">
+      <wsdl:input message="tns:GetTransportsSoapIn" />
+      <wsdl:output message="tns:GetTransportsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferTypes">
+      <wsdl:input message="tns:GetTransferTypesSoapIn" />
+      <wsdl:output message="tns:GetTransferTypesSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetServicePackage">
+      <wsdl:input message="tns:GetServicePackageSoapIn" />
+      <wsdl:output message="tns:GetServicePackageSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetTariffs">
+      <wsdl:input message="tns:GetTariffsSoapIn" />
+      <wsdl:output message="tns:GetTariffsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetRates">
+      <wsdl:input message="tns:GetRatesSoapIn" />
+      <wsdl:output message="tns:GetRatesSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetDLStatuses">
+      <wsdl:input message="tns:GetDLStatusesSoapIn" />
+      <wsdl:output message="tns:GetDLStatusesSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetRoomDescriptions">
+      <wsdl:input message="tns:GetRoomDescriptionsSoapIn" />
+      <wsdl:output message="tns:GetRoomDescriptionsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="CreatePaymentForDogovor">
+      <wsdl:input message="tns:CreatePaymentForDogovorSoapIn" />
+      <wsdl:output message="tns:CreatePaymentForDogovorSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="CreatePayment">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Create payment by reservation</wsdl:documentation>
+      <wsdl:input message="tns:CreatePaymentSoapIn" />
+      <wsdl:output message="tns:CreatePaymentSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetPaymentInformation">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Get payment information by reservation</wsdl:documentation>
+      <wsdl:input message="tns:GetPaymentInformationSoapIn" />
+      <wsdl:output message="tns:GetPaymentInformationSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="CheckReservation">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Accepts the token received when calling GetUserToken(string user Login, string userPassword), and the voucher number (string). Return: If the reservation is found, the class with 4 properties is returned (the amount to be paid in the currency of the tour, the iso code of the currency of the tour, the amount to be paid in the national currency, the iso code of the national currency)</wsdl:documentation>
+      <wsdl:input message="tns:CheckReservationSoapIn" />
+      <wsdl:output message="tns:CheckReservationSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCancellationPolicyInfoWithPenalty">
+      <wsdl:input message="tns:GetCancellationPolicyInfoWithPenaltySoapIn" />
+      <wsdl:output message="tns:GetCancellationPolicyInfoWithPenaltySoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetReservationPenalties">
+      <wsdl:input message="tns:GetReservationPenaltiesSoapIn" />
+      <wsdl:output message="tns:GetReservationPenaltiesSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetArrivalsByDate">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Get tourist by arrivals</wsdl:documentation>
+      <wsdl:input message="tns:GetArrivalsByDateSoapIn" />
+      <wsdl:output message="tns:GetArrivalsByDateSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetDeparturesByDate">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Get tourist by departures</wsdl:documentation>
+      <wsdl:input message="tns:GetDeparturesByDateSoapIn" />
+      <wsdl:output message="tns:GetDeparturesByDateSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="IntegrationServiceSoap" type="tns:IntegrationServiceSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="Connect">
+      <soap:operation soapAction="http://www.megatec.ru/Connect" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CheckConnect">
+      <soap:operation soapAction="http://www.megatec.ru/CheckConnect" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetQuotaStop">
+      <soap:operation soapAction="http://www.megatec.ru/GetQuotaStop" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetChangeQuotaAndStop">
+      <soap:operation soapAction="http://www.megatec.ru/GetChangeQuotaAndStop" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetHotelQuotaStopInfo">
+      <soap:operation soapAction="http://www.megatec.ru/GetHotelQuotaStopInfo" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetStopSaleDeletedInfo">
+      <soap:operation soapAction="http://www.megatec.ru/GetStopSaleDeletedInfo" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CheckQuota">
+      <soap:operation soapAction="http://www.megatec.ru/CheckQuota" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetQuotaInfo">
+      <soap:operation soapAction="http://www.megatec.ru/GetQuotaInfo" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetSpoList">
+      <soap:operation soapAction="http://www.megatec.ru/GetSpoList" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCosts">
+      <soap:operation soapAction="http://www.megatec.ru/GetCosts" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetExtraServiceWithPrices">
+      <soap:operation soapAction="http://www.megatec.ru/GetExtraServiceWithPrices" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SpoPriceMarkDownloaded">
+      <soap:operation soapAction="http://www.megatec.ru/SpoPriceMarkDownloaded" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetHotels">
+      <soap:operation soapAction="http://www.megatec.ru/GetHotels" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransfers">
+      <soap:operation soapAction="http://www.megatec.ru/GetTransfers" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetExcursions">
+      <soap:operation soapAction="http://www.megatec.ru/GetExcursions" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetServiceList">
+      <soap:operation soapAction="http://www.megatec.ru/GetServiceList" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CalculateSingleCost">
+      <soap:operation soapAction="http://www.megatec.ru/CalculateSingleCost" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetExtraServices">
+      <soap:operation soapAction="http://www.megatec.ru/GetExtraServices" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetClientInfo">
+      <soap:operation soapAction="http://www.megatec.ru/GetClientInfo" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SearchHotelServices">
+      <soap:operation soapAction="http://www.megatec.ru/SearchHotelServices" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SearchHotelServicesMinHotel">
+      <soap:operation soapAction="http://www.megatec.ru/SearchHotelServicesMinHotel" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SearchActualCostCalculationVariant">
+      <soap:operation soapAction="http://www.megatec.ru/SearchActualCostCalculationVariant" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetReservationsFrom">
+      <soap:operation soapAction="http://www.megatec.ru/GetReservationsFrom" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetReservation">
+      <soap:operation soapAction="http://www.megatec.ru/GetReservation" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CreateReservation">
+      <soap:operation soapAction="http://www.megatec.ru/CreateReservation" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CancelReservation">
+      <soap:operation soapAction="http://www.megatec.ru/CancelReservation" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CancelReservationExtended">
+      <soap:operation soapAction="http://www.megatec.ru/CancelReservationExtended" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CreateReservationMessage">
+      <soap:operation soapAction="http://www.megatec.ru/CreateReservationMessage" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetReservationMessages">
+      <soap:operation soapAction="http://www.megatec.ru/GetReservationMessages" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetInvoicesForDogovor">
+      <soap:operation soapAction="http://www.megatec.ru/GetInvoicesForDogovor" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetInvoiceFileByKey">
+      <soap:operation soapAction="http://www.megatec.ru/GetInvoiceFileByKey" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCountries">
+      <soap:operation soapAction="http://www.megatec.ru/GetCountries" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRegions">
+      <soap:operation soapAction="http://www.megatec.ru/GetRegions" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCities">
+      <soap:operation soapAction="http://www.megatec.ru/GetCities" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRoomCategories">
+      <soap:operation soapAction="http://www.megatec.ru/GetRoomCategories" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRoomType">
+      <soap:operation soapAction="http://www.megatec.ru/GetRoomType" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRoomAccommodations">
+      <soap:operation soapAction="http://www.megatec.ru/GetRoomAccommodations" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetAccommodations">
+      <soap:operation soapAction="http://www.megatec.ru/GetAccommodations" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetPansions">
+      <soap:operation soapAction="http://www.megatec.ru/GetPansions" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRatings">
+      <soap:operation soapAction="http://www.megatec.ru/GetRatings" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetFlights">
+      <soap:operation soapAction="http://www.megatec.ru/GetFlights" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetAirport">
+      <soap:operation soapAction="http://www.megatec.ru/GetAirport" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetProviders">
+      <soap:operation soapAction="http://www.megatec.ru/GetProviders" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransports">
+      <soap:operation soapAction="http://www.megatec.ru/GetTransports" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferTypes">
+      <soap:operation soapAction="http://www.megatec.ru/GetTransferTypes" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetServicePackage">
+      <soap:operation soapAction="http://www.megatec.ru/GetServicePackage" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetTariffs">
+      <soap:operation soapAction="http://www.megatec.ru/GetTariffs" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRates">
+      <soap:operation soapAction="http://www.megatec.ru/GetRates" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetDLStatuses">
+      <soap:operation soapAction="http://www.megatec.ru/GetDLStatuses" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRoomDescriptions">
+      <soap:operation soapAction="http://www.megatec.ru/GetRoomDescriptions" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CreatePaymentForDogovor">
+      <soap:operation soapAction="http://www.megatec.ru/CreatePaymentForDogovor" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CreatePayment">
+      <soap:operation soapAction="http://www.megatec.ru/CreatePayment" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetPaymentInformation">
+      <soap:operation soapAction="http://www.megatec.ru/GetPaymentInformation" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CheckReservation">
+      <soap:operation soapAction="http://www.megatec.ru/CheckReservation" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCancellationPolicyInfoWithPenalty">
+      <soap:operation soapAction="http://www.megatec.ru/GetCancellationPolicyInfoWithPenalty" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetReservationPenalties">
+      <soap:operation soapAction="http://www.megatec.ru/GetReservationPenalties" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetArrivalsByDate">
+      <soap:operation soapAction="http://www.megatec.ru/GetArrivalsByDate" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetDeparturesByDate">
+      <soap:operation soapAction="http://www.megatec.ru/GetDeparturesByDate" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="IntegrationServiceSoap12" type="tns:IntegrationServiceSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="Connect">
+      <soap12:operation soapAction="http://www.megatec.ru/Connect" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CheckConnect">
+      <soap12:operation soapAction="http://www.megatec.ru/CheckConnect" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetQuotaStop">
+      <soap12:operation soapAction="http://www.megatec.ru/GetQuotaStop" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetChangeQuotaAndStop">
+      <soap12:operation soapAction="http://www.megatec.ru/GetChangeQuotaAndStop" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetHotelQuotaStopInfo">
+      <soap12:operation soapAction="http://www.megatec.ru/GetHotelQuotaStopInfo" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetStopSaleDeletedInfo">
+      <soap12:operation soapAction="http://www.megatec.ru/GetStopSaleDeletedInfo" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CheckQuota">
+      <soap12:operation soapAction="http://www.megatec.ru/CheckQuota" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetQuotaInfo">
+      <soap12:operation soapAction="http://www.megatec.ru/GetQuotaInfo" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetSpoList">
+      <soap12:operation soapAction="http://www.megatec.ru/GetSpoList" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCosts">
+      <soap12:operation soapAction="http://www.megatec.ru/GetCosts" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetExtraServiceWithPrices">
+      <soap12:operation soapAction="http://www.megatec.ru/GetExtraServiceWithPrices" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SpoPriceMarkDownloaded">
+      <soap12:operation soapAction="http://www.megatec.ru/SpoPriceMarkDownloaded" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetHotels">
+      <soap12:operation soapAction="http://www.megatec.ru/GetHotels" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransfers">
+      <soap12:operation soapAction="http://www.megatec.ru/GetTransfers" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetExcursions">
+      <soap12:operation soapAction="http://www.megatec.ru/GetExcursions" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetServiceList">
+      <soap12:operation soapAction="http://www.megatec.ru/GetServiceList" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CalculateSingleCost">
+      <soap12:operation soapAction="http://www.megatec.ru/CalculateSingleCost" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetExtraServices">
+      <soap12:operation soapAction="http://www.megatec.ru/GetExtraServices" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetClientInfo">
+      <soap12:operation soapAction="http://www.megatec.ru/GetClientInfo" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SearchHotelServices">
+      <soap12:operation soapAction="http://www.megatec.ru/SearchHotelServices" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SearchHotelServicesMinHotel">
+      <soap12:operation soapAction="http://www.megatec.ru/SearchHotelServicesMinHotel" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SearchActualCostCalculationVariant">
+      <soap12:operation soapAction="http://www.megatec.ru/SearchActualCostCalculationVariant" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetReservationsFrom">
+      <soap12:operation soapAction="http://www.megatec.ru/GetReservationsFrom" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetReservation">
+      <soap12:operation soapAction="http://www.megatec.ru/GetReservation" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CreateReservation">
+      <soap12:operation soapAction="http://www.megatec.ru/CreateReservation" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CancelReservation">
+      <soap12:operation soapAction="http://www.megatec.ru/CancelReservation" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CancelReservationExtended">
+      <soap12:operation soapAction="http://www.megatec.ru/CancelReservationExtended" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CreateReservationMessage">
+      <soap12:operation soapAction="http://www.megatec.ru/CreateReservationMessage" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetReservationMessages">
+      <soap12:operation soapAction="http://www.megatec.ru/GetReservationMessages" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetInvoicesForDogovor">
+      <soap12:operation soapAction="http://www.megatec.ru/GetInvoicesForDogovor" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetInvoiceFileByKey">
+      <soap12:operation soapAction="http://www.megatec.ru/GetInvoiceFileByKey" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCountries">
+      <soap12:operation soapAction="http://www.megatec.ru/GetCountries" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRegions">
+      <soap12:operation soapAction="http://www.megatec.ru/GetRegions" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCities">
+      <soap12:operation soapAction="http://www.megatec.ru/GetCities" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRoomCategories">
+      <soap12:operation soapAction="http://www.megatec.ru/GetRoomCategories" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRoomType">
+      <soap12:operation soapAction="http://www.megatec.ru/GetRoomType" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRoomAccommodations">
+      <soap12:operation soapAction="http://www.megatec.ru/GetRoomAccommodations" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetAccommodations">
+      <soap12:operation soapAction="http://www.megatec.ru/GetAccommodations" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetPansions">
+      <soap12:operation soapAction="http://www.megatec.ru/GetPansions" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRatings">
+      <soap12:operation soapAction="http://www.megatec.ru/GetRatings" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetFlights">
+      <soap12:operation soapAction="http://www.megatec.ru/GetFlights" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetAirport">
+      <soap12:operation soapAction="http://www.megatec.ru/GetAirport" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetProviders">
+      <soap12:operation soapAction="http://www.megatec.ru/GetProviders" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransports">
+      <soap12:operation soapAction="http://www.megatec.ru/GetTransports" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetTransferTypes">
+      <soap12:operation soapAction="http://www.megatec.ru/GetTransferTypes" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetServicePackage">
+      <soap12:operation soapAction="http://www.megatec.ru/GetServicePackage" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetTariffs">
+      <soap12:operation soapAction="http://www.megatec.ru/GetTariffs" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRates">
+      <soap12:operation soapAction="http://www.megatec.ru/GetRates" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetDLStatuses">
+      <soap12:operation soapAction="http://www.megatec.ru/GetDLStatuses" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRoomDescriptions">
+      <soap12:operation soapAction="http://www.megatec.ru/GetRoomDescriptions" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CreatePaymentForDogovor">
+      <soap12:operation soapAction="http://www.megatec.ru/CreatePaymentForDogovor" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CreatePayment">
+      <soap12:operation soapAction="http://www.megatec.ru/CreatePayment" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetPaymentInformation">
+      <soap12:operation soapAction="http://www.megatec.ru/GetPaymentInformation" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CheckReservation">
+      <soap12:operation soapAction="http://www.megatec.ru/CheckReservation" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCancellationPolicyInfoWithPenalty">
+      <soap12:operation soapAction="http://www.megatec.ru/GetCancellationPolicyInfoWithPenalty" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetReservationPenalties">
+      <soap12:operation soapAction="http://www.megatec.ru/GetReservationPenalties" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetArrivalsByDate">
+      <soap12:operation soapAction="http://www.megatec.ru/GetArrivalsByDate" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetDeparturesByDate">
+      <soap12:operation soapAction="http://www.megatec.ru/GetDeparturesByDate" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="IntegrationService">
+    <wsdl:port name="IntegrationServiceSoap" binding="tns:IntegrationServiceSoap">
+      <soap:address location="https://iservice.solvex.bg/IntegrationService.asmx" />
+    </wsdl:port>
+    <wsdl:port name="IntegrationServiceSoap12" binding="tns:IntegrationServiceSoap12">
+      <soap12:address location="https://iservice.solvex.bg/IntegrationService.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

@@ -1,0 +1,5 @@
+﻿<nsHubRequest xmlns="">
+  <Errors>
+    <Error Type="1" ShortText="No OTA message received..." />
+  </Errors>
+</nsHubRequest>

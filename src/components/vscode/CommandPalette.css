@@ -1,0 +1,140 @@
+/* Command Palette Styles */
+
+.command-palette-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    padding-top: 15vh;
+    z-index: 10000;
+    animation: fadeIn 0.1s ease;
+}
+
+.command-palette {
+    width: 600px;
+    max-width: 90vw;
+    max-height: 400px;
+    background: var(--vscode-sidebar-bg, #252526);
+    border: 1px solid var(--vscode-border, #3c3c3c);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideDown 0.15s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.command-palette-input-container {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 12px;
+    border-bottom: 1px solid var(--vscode-border, #3c3c3c);
+    color: var(--vscode-foreground-muted, #808080);
+}
+
+.command-palette-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--vscode-foreground, #cccccc);
+    font-size: 14px;
+    outline: none;
+}
+
+.command-palette-input::placeholder {
+    color: var(--vscode-foreground-muted, #808080);
+}
+
+.command-palette-results {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+}
+
+.command-palette-empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--vscode-foreground-muted, #808080);
+    font-size: 13px;
+}
+
+.command-palette-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background 0.1s ease;
+}
+
+.command-palette-item:hover,
+.command-palette-item.selected {
+    background: var(--vscode-list-active, #094771);
+}
+
+.command-icon {
+    display: flex;
+    color: var(--vscode-accent, #007acc);
+}
+
+.command-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.command-label {
+    font-size: 13px;
+    color: var(--vscode-foreground, #cccccc);
+}
+
+.command-description {
+    font-size: 11px;
+    color: var(--vscode-foreground-muted, #808080);
+}
+
+.command-category {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--vscode-foreground-muted, #808080);
+    background: var(--vscode-input-bg, #3c3c3c);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.command-palette-footer {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 8px 16px;
+    border-top: 1px solid var(--vscode-border, #3c3c3c);
+    font-size: 11px;
+    color: var(--vscode-foreground-muted, #808080);
+}
+
+.command-palette-footer kbd {
+    background: var(--vscode-input-bg, #3c3c3c);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 10px;
+    margin-right: 4px;
+}

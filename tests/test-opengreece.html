@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Greece API Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .result.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .credentials {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .credentials h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .credentials code {
+            background: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🇬🇷 Open Greece API - Connection Test</h1>
+        <p class="subtitle">Testing nsHUB XML API connectivity</p>
+
+        <div class="credentials">
+            <h3>📋 API Information</h3>
+            <p><strong>Pull Endpoint:</strong> <code>https://online.open-greece.com/nsCallWebServices/handlerequest.aspx</code></p>
+            <p><strong>Push Endpoint:</strong> <code>https://online.open-greece.com/nsCallWebService_Push/handlerequest.aspx</code></p>
+            <p><strong>Username:</strong> <code>olympictravel</code></p>
+            <p><strong>Authentication:</strong> Basic Auth</p>
+        </div>
+
+        <!-- Test 1: Basic Connectivity -->
+        <div class="test-section">
+            <h2>Test 1: Basic Connectivity (CORS Check)</h2>
+            <p>Testing if we can reach the API endpoint from browser</p>
+            <button onclick="testBasicConnectivity()" id="btn1">Run Test 1</button>
+            <div id="result1"></div>
+        </div>
+
+        <!-- Test 2: XML Request Test -->
+        <div class="test-section">
+            <h2>Test 2: XML Request Test (Pull API)</h2>
+            <p>Sending a basic XML request to Pull endpoint</p>
+            <button onclick="testXmlRequest()" id="btn2">Run Test 2</button>
+            <div id="result2"></div>
+        </div>
+
+        <!-- Test 3: Push Process Test -->
+        <div class="test-section">
+            <h2>Test 3: Push Process Test (Delta)</h2>
+            <p>Testing StartPushProcess with IsFullPush=false</p>
+            <button onclick="testPushProcess(false)" id="btn3">Run Test 3 (Delta)</button>
+            <button onclick="testPushProcess(true)" id="btn3b" style="margin-left: 10px; background: #dc3545;">Run Full Push (⚠️ Use Carefully)</button>
+            <div id="result3"></div>
+        </div>
+    </div>
+
+    <script>
+        const PULL_ENDPOINT = 'https://online.open-greece.com/nsCallWebServices/handlerequest.aspx';
+        const PUSH_ENDPOINT = 'https://online.open-greece.com/nsCallWebService_Push/handlerequest.aspx';
+        const USERNAME = 'olympictravel';
+        const PASSWORD = 'olympic2025!';
+
+        function showLoading(resultId, button) {
+            const resultDiv = document.getElementById(resultId);
+            resultDiv.innerHTML = '<div class="result info">Testing...<span class="loading"></span></div>';
+            if (button) button.disabled = true;
+        }
+
+        function showResult(resultId, message, type, button) {
+            const resultDiv = document.getElementById(resultId);
+            resultDiv.innerHTML = `<div class="result ${type}">${message}</div>`;
+            if (button) button.disabled = false;
+        }
+
+        // Test 1: Basic Connectivity
+        async function testBasicConnectivity() {
+            const btn = document.getElementById('btn1');
+            showLoading('result1', btn);
+
+            try {
+                const response = await fetch(PULL_ENDPOINT, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(USERNAME + ':' + PASSWORD)
+                    }
+                });
+
+                const message = `✅ Connection successful!
+Status: ${response.status} ${response.statusText}
+Headers: ${JSON.stringify(Object.fromEntries(response.headers), null, 2)}
+
+Note: If you see CORS errors in console, that's normal for browser-based testing.
+The API might not support CORS, which means we need to test from backend/Postman.`;
+
+                showResult('result1', message, 'success', btn);
+            } catch (error) {
+                const message = `⚠️ CORS Error (Expected for XML APIs)
+
+Error: ${error.message}
+
+This is NORMAL! XML/SOAP APIs usually don't support browser CORS.
+We need to test from:
+1. Backend (Node.js/Supabase Edge Function)
+2. Postman/cURL
+3. Server-side proxy
+
+Next step: Create a backend test or use Postman.`;
+
+                showResult('result1', message, 'info', btn);
+            }
+        }
+
+        // Test 2: XML Request
+        async function testXmlRequest() {
+            const btn = document.getElementById('btn2');
+            showLoading('result2', btn);
+
+            // Basic XML request structure (we'll need to adjust based on actual schema)
+            const xmlRequest = `<?xml version="1.0" encoding="UTF-8"?>
+<Request>
+    <Authentication>
+        <Username>${USERNAME}</Username>
+        <Password>${PASSWORD}</Password>
+    </Authentication>
+    <Method>GetHotels</Method>
+</Request>`;
+
+            try {
+                const response = await fetch(PULL_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/xml',
+                        'Authorization': 'Basic ' + btoa(USERNAME + ':' + PASSWORD)
+                    },
+                    body: xmlRequest
+                });
+
+                const responseText = await response.text();
+
+                const message = `✅ Request sent!
+Status: ${response.status} ${response.statusText}
+
+Response:
+${responseText}
+
+Note: This is a test request. The actual XML schema might be different.
+We need the official documentation to build correct requests.`;
+
+                showResult('result2', message, response.ok ? 'success' : 'error', btn);
+            } catch (error) {
+                const message = `❌ Error: ${error.message}
+
+This is likely a CORS issue. The API needs to be tested from backend.
+
+Recommendation:
+1. Create a Supabase Edge Function as proxy
+2. Or use Postman/cURL for testing
+3. Or create a Node.js test script`;
+
+                showResult('result2', message, 'error', btn);
+            }
+        }
+
+        // Test 3: Push Process
+        async function testPushProcess(isFullPush) {
+            const btn = isFullPush ? document.getElementById('btn3b') : document.getElementById('btn3');
+            showLoading('result3', btn);
+
+            const xmlRequest = `<?xml version="1.0" encoding="UTF-8"?>
+<StartPushProcessRQ IsFullPush="${isFullPush}">
+    <Authentication>
+        <Username>${USERNAME}</Username>
+        <Password>${PASSWORD}</Password>
+    </Authentication>
+</StartPushProcessRQ>`;
+
+            try {
+                const response = await fetch(PUSH_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/xml',
+                        'Authorization': 'Basic ' + btoa(USERNAME + ':' + PASSWORD)
+                    },
+                    body: xmlRequest
+                });
+
+                const responseText = await response.text();
+
+                const message = `${isFullPush ? '⚠️ FULL PUSH' : '✅ DELTA PUSH'} Request sent!
+Status: ${response.status} ${response.statusText}
+
+Request:
+${xmlRequest}
+
+Response:
+${responseText}
+
+${isFullPush ? '⚠️ WARNING: Full push downloads ALL contracts. Use only once!' : 'ℹ️ Delta push only gets changes since last sync.'}`;
+
+                showResult('result3', message, response.ok ? 'success' : 'error', btn);
+            } catch (error) {
+                const message = `❌ Error: ${error.message}
+
+CORS issue detected. Need backend testing.
+
+Next steps:
+1. Test with Postman (no CORS restrictions)
+2. Create Supabase Edge Function proxy
+3. Or use cURL from command line`;
+
+                showResult('result3', message, 'error', btn);
+            }
+        }
+    </script>
+</body>
+</html>

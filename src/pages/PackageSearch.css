@@ -1,0 +1,175 @@
+/* 
+   OLYMPIC HUB - PACKAGE BUILDER 
+   BRAND IDENTITY 2026 EDITION
+*/
+
+.package-search-page {
+    min-height: 100vh;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: 'Roboto', sans-serif;
+    padding-bottom: 140px;
+}
+
+/* === WIZARD PROGRESS === */
+.wizard-progress {
+    max-width: none;
+    margin: 0 auto 2.5rem;
+    padding: 0 2rem;
+}
+
+.progress-steps-ss {
+    display: flex;
+    gap: 1.5rem;
+    position: relative;
+}
+
+.p-step-ss {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: all 0.3s ease;
+}
+
+.p-step-ss.active,
+.p-step-ss.complete {
+    opacity: 1;
+}
+
+.s-num-ss {
+    width: 24px;
+    height: 24px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.p-step-ss.active .s-num-ss {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.s-info-ss {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.s-title-ss {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+}
+
+.p-step-ss.active .s-title-ss {
+    color: var(--text-primary);
+}
+
+/* === TABS === */
+.search-tabs {
+    display: flex;
+    background: var(--bg-input);
+    padding: 6px;
+    border-radius: 14px;
+    border: var(--border-thin);
+    margin-bottom: 2rem;
+}
+
+.tab-btn {
+    flex: 1;
+    height: 48px;
+    border-radius: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.tab-btn.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 15px var(--accent-glow);
+}
+
+/* === CARD RESULTS === */
+.hotel-result-card-premium {
+    background: var(--bg-card);
+    border: var(--border-thin);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.hotel-result-card-premium:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent);
+}
+
+.total-price-display {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+/* Sticky Footer Navigation */
+.ss-floating-nav {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 1400px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: var(--border-thin);
+    padding: 1.5rem 2.5rem;
+    border-radius: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.nav-btn-ss {
+    height: 52px;
+    padding: 0 2rem;
+    border-radius: 12px;
+    border: none;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-btn-ss.primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 8px 16px var(--accent-glow);
+}
+
+.nav-btn-ss.secondary {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: var(--border-thin);
+}

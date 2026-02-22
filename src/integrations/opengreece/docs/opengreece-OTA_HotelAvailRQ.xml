@@ -1,0 +1,5 @@
+﻿<OTA_HotelAvailRS p1:schemaLocation="http://www.opentravel.org/OTA/2003/05 OTA_HotelAvailRS.xsd" EchoToken="3" TransactionIdentifier="8b40fa7d-59f2-4d53-a93a-df7f8887800c" Version="1.003" xmlns="http://www.opentravel.org/OTA/2003/05" xmlns:p1="http://www.w3.org/2001/XMLSchema-instance">
+  <Errors>
+    <Error Type="10" ShortText="Please Insert Element 'HotelSearchCriteria'" />
+  </Errors>
+</OTA_HotelAvailRS>

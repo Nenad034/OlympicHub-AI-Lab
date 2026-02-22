@@ -1,0 +1,364 @@
+﻿Arhitektura i Tehnička Specifikacija Podataka za Globalne Rezervacione Sisteme: Sveobuhvatni Vodič za Implementaciju
+Uvod: Ontologija Modernog Putovanja
+Kreiranje robusnog, skalabilnog i komercijalno održivog rezervacionog sistema zahteva znatno više od jednostavne baze podataka koja sadrži nazive hotela i cene soba. U današnjem digitalnom ekosistemu, sistem mora biti sposoban da modeluje ogromnu složenost globalnog smeštaja – od butik hotela u Parizu do vile na Baliju ili deljenog apartmana u Njujorku. Podatkovna struktura mora da prihvati hiljade promenljivih, pravila validacije i međuzavisnosti, dok istovremeno održava potpunu interoperabilnost sa velikim igračima kao što su Booking.com, Expedia Group, Google Hotel Center i Airbnb.
+Ovaj izveštaj predstavlja iscrpnu analizu "najmerodavnije" dokumentacije dostupne na internetu, sintetizujući tehničke standarde OpenTravel Alliance (OTA) – koji predstavlja temelj XML komunikacije u turizmu – sa praktičnim API specifikacijama industrijskih giganata. Cilj ovog dokumenta je da posluži kao "Zlatni Standard" specifikacije koju AI agent ili inženjerski tim mogu direktno koristiti za konstruisanje šeme baze podataka i aplikativne logike.
+Izveštaj je strukturiran tako da vodi AI agenta kroz svaki aspekt kreiranja entiteta smeštaja, od osnovnih podataka do kompleksne logike cenovnih planova, uz precizne definicije polja, tipova podataka i poslovnih pravila koja su neophodna za funkcionisanje sistema.
+________________
+1. Entitet Objekta (Property Object): Definisanje Korena Sistema
+U terminologiji OpenTravel standarda, korenski entitet se često naziva HotelDescriptiveContent 1, dok ga noviji JSON API-ji poput Expedia Rapid API-ja nazivaju Property.3 Bez obzira na nomenklaturu, ovaj objekat je kontejner za sve fizičke, komercijalne i polne podatke. Sistem ne sme tretirati objekat kao statičan zapis, već kao dinamičan entitet podložan verzionisanju i distribuciji kroz više kanala.
+1.1. Upravljanje Identitetom i Mapiranje
+Prvi i najvažniji korak u kreiranju smeštaja je uspostavljanje rigoroznog sistema identifikacije. Bez ovoga, sinhronizacija sa spoljnim svetom je nemoguća.
+1.1.1. Interni i Eksterni Identifikatori
+Za potrebe AI agenta, baza podataka mora podržavati sledeće ključeve:
+* Interni Sistemski ID (Primary Key): UUID ili Auto-increment Integer koji je jedinstven u vašem sistemu.
+* Legal Entity ID: Kako specifikuje Booking.com 4, ovo povezuje fizički objekat sa pravnim licem (kompanijom) koja njime upravlja. Ovo je kritično za fakturisanje, obračun poreza i pravnu odgovornost.
+* PMS ID (Property Management System ID): Ako se vaš sistem povezuje sa lokalnim softverom hotela, ovaj ID je neophodan za dvosmernu komunikaciju.
+1.1.2. Mapiranje sa Kanalima Distribucije (Channel Mapping)
+Sistem mora imati tabelu mapiranja (mapping_table) jer jedan hotel ima različite ID-eve na različitim platformama.
+* Expedia ID: property_id (npr. numerički string).3
+* Booking.com ID: hotel_id (npr. integer).4
+* Google Hotel Center ID: ID iz Hotel List Feed XML-a.5
+* GDS Kodovi: Za sisteme poput Sabre ili Amadeus, potrebno je čuvati dvoslovni Chain Code i Property ID.
+1.2. Tipologija i Kategorizacija Smeštaja
+Definisanje šta objekat jeste diktira koja su polja obavezna. Booking.com i Expedia striktno razlikuju tipove smeštaja.4
+Tabela: Preporučena Klasifikacija Tipova Smeštaja za Bazu Podataka
+Tip Smeštaja (Enum)
+	Opis i Implikacije za Polja
+	Obavezna Specifična Polja
+	Hotel
+	Standardni objekat sa recepcijom 24/7.
+	StarRating, CheckInTime
+	Apartment
+	Samostalna jedinica, često bez recepcije.
+	KeyCollectionMethod, KitchenAmenities
+	Villa
+	Luksuzna samostalna kuća.
+	PoolDetails, Garden, PrivacyLevel
+	Resort
+	Kompleks sa više zgrada i sadržaja.
+	ResortFee, AreaMap
+	Hostel
+	Objekat sa deljenim spavaonicama.
+	BedInDorm, SharedBathroom
+	GuestHouse
+	Manji objekat, često porodični.
+	HostPresence, BreakfastDetails
+	Instrukcija za AI Agenta: Kreirati polje property_type_id koje referencira šifarnik tipova. Ako je tip "Apartment" ili "Villa", logika validacije mora zahtevati unos pravila o preuzimanju ključeva (KeyCollection), što je manje kritično za hotele sa recepcijom.7
+1.3. Brendiranje i Lančana Pripadnost
+Mnogi hoteli su deo većih lanaca. Google Hotel Center i OpenTravel standardi zahtevaju strukturirane podatke o ovome radi preciznog prikaza.8
+* Chain Code: Šifra lanca (npr. "MC" za Marriott).
+* Brand Code: Šifra brenda unutar lanca (npr. "CY" za Courtyard).
+* Affiliation: Pripadnost marketinškim konzorcijumima (npr. "LHW" - Leading Hotels of the World).
+________________
+2. Geoprostorni Model i Lokacija
+U dokumentaciji Booking.com-a i Expedie 3, lokacija se tretira sa ekstremnom preciznošću. "Približna" adresa nije dovoljna za moderne sisteme zasnovane na mapama i navigaciji "poslednje milje".
+2.1. Struktura Fizičke Adrese
+Šema mora koristiti komponentni model adrese, standardizovan od strane OTA i Google-a 5:
+* AddressLine1 (Obavezno): Naziv ulice i kućni broj. Validacija: Ne sme sadržati poštanski fah (PO Box).
+* AddressLine2 (Opciono): Sprat, broj stana, naziv zgrade.
+* City (Obavezno): Grad ili mesto.
+* PostalCode (Obavezno): Poštanski broj. Validacija: Mora se validirati putem Regex-a specifičnog za zemlju (npr. 5 cifara za Srbiju, alfanumerički za UK).
+* CountryCode (Obavezno): ISO 3166-1 alpha-2 kod (npr. RS, ME, US). Napomena: Korišćenje punih naziva zemalja je greška; uvek koristiti kodove.
+* State/Province (Uslovno): ISO 3166-2 kod. Neophodno za zemlje poput SAD, Kanade ili Australije radi pravilnog obračuna poreza.10
+2.2. Geografske Koordinate i Preciznost
+Samo adresa nije dovoljna; GPS koordinate su imperativ.
+* Latitude / Longitude: Decimalni stepeni (npr. 44.7866, 20.4489).
+   * Tehnički zahtev: Baza mora čuvati najmanje 6 decimala radi preciznosti od ~10cm.
+* Coordinate Source: Polje koje ukazuje na poreklo koordinate (GPS_DEVICE, MAP_PIN, ADDRESS_GEOCODING). Ovo omogućava sistemu da dodeli "score" pouzdanosti lokacije.
+* Google Place ID: Čuvanje ovog ID-a omogućava direktnu integraciju sa Google Maps API-jem za povlačenje recenzija i slika okoline.11
+2.3. Interesne Tačke (POI - Points of Interest)
+Napredni sistemi, kako sugeriše Expedia dokumentacija o geografiji 12, ne čuvaju objekat u vakuumu.
+* Relaciona Tabela: property_poi koja povezuje objekat sa obližnjim tačkama.
+   * poi_name: Npr. "Aerodrom Nikola Tesla".
+   * distance_meters: Numerička vrednost.
+   * poi_type: Enum (Airport, TrainStation, CityCenter, Beach, SkiLift).
+________________
+3. Sadržaj i Lokalizacija (Višejezičnost)
+Moderni rezervacioni sistemi su globalni. Podatkovni model mora podržavati višejezičnost (i18n) na nivou arhitekture, a ne kao nadogradnju. Svi tekstualni opisi moraju biti izdvojeni u zasebne tabele za prevode.
+3.1. Tekstualni Opisi
+Prema specifikacijama Booking.com Content API-ja 12, potrebni su različiti tipovi opisa za različite namene:
+* Ime Objekta:
+   * Official Name: Pravni naziv (npr. "Hotel Moskva doo").
+   * Display Name: Marketinški naziv (npr. "Hotel Moskva - City Center").
+* Vrste Opisa (Description Types):
+   * Short Description (do 300 karaktera): Za mobilne aplikacije i brzi pregled.
+   * Long Description (2000+ karaktera): Za detaljne stranice i SEO.
+   * Location Description: Specifičan tekst o kraju/komšiluku.
+   * Polisa Opis: "Sitna slova" o pravilima kuće.
+Instrukcija za AI Agenta: Ne kreirati kolone description_en, description_sr. Umesto toga, kreirati tabelu property_descriptions sa kolonama: property_id, language_code (ISO 639-1), description_type_id, text_content.
+3.2. Slike i Multimedija
+Vizuelni sadržaj je ključan za konverziju. Expedia i Booking.com 13 imaju striktne zahteve za metapodatke slika.
+* URL: Putanja do slike visoke rezolucije (min 1280px širine).
+* Kategorija/Tag: Slike moraju biti tagovane radi AI sortiranja (npr. Exterior, Lobby, Room, Bathroom, Pool, Restaurant). Nekažnjavanje slika dovodi do lošijeg rangiranja na OTA kanalima.
+* Povezanost sa Sobom: Polje room_type_id (nullable). Ako je popunjeno, slika se prikazuje samo uz taj tip sobe. Ovo sprečava situaciju da gost rezerviše "Standard sobu" gledajući slike "Predsedničkog apartmana".
+________________
+4. Arhitektura Smeštajnih Jedinica: Sobe i Inventar
+Ovo je tehnički najzahtevniji deo sistema. Potrebno je razlikovati Tip Sobe (klasu) od Inventara (fizičke raspoloživosti). Arhitektura mora podržavati i hotele (mnogo istih soba) i privatni smeštaj (unikatne jedinice).
+4.1. Definicija Tipa Sobe (Room Type)
+Definisan u OTA standardima 15, Tip Sobe deluje kao šablon.
+* Room Type Code: Interni jedinstveni kod (npr. DBL_DLX_01).
+* Naziv: "Deluxe Dvokrevetna Soba sa Pogledom na More".
+* Kategorija Sobe: Enum vrednosti iz OTA šifarnika:
+   * Room: Standardna hotelska soba.
+   * Suite: Soba sa odvojenim delom za sedenje.
+   * Apartment: Jedinica sa kuhinjom.
+   * Dormitory: Spavaonica (za hostele).
+   * Villa: Zasebna kuća.
+4.2. Logika Popunjenosti (Occupancy Logic)
+Booking.com i Airbnb imaju vrlo specifična pravila validacije za popunjenost.6 Polja moraju biti precizna:
+* StandardOccupancy: Broj gostiju uključen u osnovnu cenu.
+* MaxAdults: Apsolutni maksimum odraslih osoba.
+* MaxChildren: Apsolutni maksimum dece.
+* MaxOccupancy: Ukupan maksimalni kapacitet (često manji od zbira MaxAdults + MaxChildren).
+* MinOccupancy: Minimum osoba za rezervaciju (bitno za velike vile).
+4.3. Konfiguracija Kreveta (Bedding Configuration)
+Ovo je najčešći izvor grešaka u integracijama. Soba može imati više konfiguracija (npr. soba može biti nameštena kao "Bračni krevet" ILI "Dva odvojena kreveta").
+Zahtev za AI Agenta: Potrebna je zasebna tabela room_bedding_configurations.
+* Bed Type ID: Enum prema OTA standardu 18:
+   * King (>180cm širine)
+   * Queen (150-180cm)
+   * Double (130-150cm)
+   * Twin (90-130cm)
+   * SofaBed
+   * BunkBed (Krevet na sprat)
+* Count: Broj kreveta tog tipa.
+* IsExtraBed: Boolean. Da li je ovo pomoćni ležaj? (Bitno za cenovnu politiku).
+4.4. Fizički Atributi Sobe
+* Veličina: Numerička vrednost i merna jedinica (SquareMeters ili SquareFeet).
+* Spratnost: FloorNumber (koji sprat) i TotalFloors (ukupan broj spratova u jedinici - za duplekse).
+* Pristupačnost: Da li je dostupno liftom ili samo stepenicama? 20
+* Pogled: Enum 11: SeaView, GardenView, CityView, PoolView.
+* Kupatilo: Broj kupatila (BathroomCount) i tip (Private ili Shared).
+________________
+5. Taksonomija Sadržaja i Pogodnosti (Amenities)
+Da bi dokumentacija bila "merodavna", sistem mora implementirati standardizovani sistem kodiranja pogodnosti. OpenTravel Alliance (OTA) liste kodova (posebno HAC - Hotel Amenity Code i RMA - Room Amenity Type) su industrijski autoritet.21
+5.1. Model Podataka za Pogodnosti
+Ne koristiti "flat" kolone poput has_wifi ili has_pool. Ovo nije skalabilno. Koristiti relacioni model:
+* Tabela master_amenities: Sadrži ID, OTA Kod, Naziv (preveden).
+* Tabela property_amenities: Povezuje objekat sa pogodnostima.
+* Tabela room_amenities: Povezuje tip sobe sa pogodnostima.
+Za svaku vezu, potrebno je čuvati dodatne atribute 23:
+* IsFree: Boolean (Da li je besplatno ili se doplaćuje?).
+* OnSite: Boolean (Da li je u objektu ili u blizini?).
+* ReservationRequired: Boolean (Npr. za parking ili spa).
+5.2. Kategorizacija Pogodnosti (Master Dictionary)
+Sledeće kategorije su obavezne prema analizi Booking.com i Expedia API-ja:
+5.2.1. Internet i Povezivanje
+* WiFi: Razlikovati WiFi_CommonAreas, WiFi_Rooms, HighSpeed_Surcharge.
+5.2.2. Parking i Prevoz
+* ParkingType: Private, Public, Street.
+* ParkingLocation: OnSite, OffSite.
+* EV_Charging: Stanica za punjenje električnih vozila (sve traženije).
+5.2.3. Wellness i Rekreacija
+* Pool: Detalji su kritični - Indoor, Outdoor, Heated, Saltwater, Infinity, Seasonal (zahteva datume otvaranja/zatvaranja).
+* Spa: Sauna, SteamRoom, Massage.
+5.2.4. Sadržaji u Sobi (RMA Kodovi)
+* Climate: AirConditioning, CentralHeating, Fan.
+* Media: SmartTV, StreamingService (Netflix), Satellite.
+* Bathroom: Bathtub, Shower, Bidet, Hairdryer, FreeToiletries.
+* Kitchen (Ključno za apartmane): Refrigerator, Microwave, Dishwasher, Stove, Oven, CoffeeMachine.
+________________
+6. Komercijalna Logika: Cenovni Planovi i Politike
+Fizička soba ("Room") i uslovi pod kojima se prodaje ("Rate Plan") moraju biti razdvojeni. Ovo omogućava da se ista soba prodaje po različitim cenama (npr. "Bez povraćaja novca" vs "Fleksibilno sa doručkom").
+6.1. Definicija Cenovnog Plana (Rate Plan)
+Na osnovu Booking.com logike 24, Rate Plan sadrži:
+* RatePlanID: Interni ID.
+* Naziv: "Standard Rate", "Non-Refundable".
+* Meal Plan (Plan Obroka): Kodirana vrednost 26:
+   * RO: Room Only (Samo noćenje).
+   * BB: Bed & Breakfast (Noćenje sa doručkom).
+   * HB: Half Board (Polupansion).
+   * FB: Full Board (Pun pansion).
+   * AI: All Inclusive.
+6.2. Politike Otkazivanja (Cancellation Policies)
+Ovo je složena booleova logika koju AI mora da pretvori u kod.21
+* Tip Politike: NonRefundable, FreeCancellation, PartiallyRefundable.
+* Pravila (Rules): Strukturirani JSON ili vezana tabela.
+   * OffsetUnit: Day ili Hour.
+   * OffsetValue: Broj (npr. 5 dana pre dolaska).
+   * PenaltyType: Percent ili FixedAmount.
+   * PenaltyValue: Iznos penala (npr. 100% ili 50 EUR).
+6.3. Restrikcije Rezervacije
+Da bi sistem bio komercijalno upotrebljiv, mora podržavati ograničenja 28:
+* MinLOS (Minimum Length of Stay): "Minimum 2 noći".
+* MaxLOS: "Maksimum 30 noći".
+* CutOff Days: "Mora se rezervisati bar 2 dana unapred".
+* Closed to Arrival/Departure: Zabrana dolaska/odlaska na određene datume (npr. Nova Godina).
+6.4. Porezi i Takse
+Cena nikada nije samo jedan broj. Sistem mora podržavati "Stacking" poreza 29:
+* VAT/PDV: Procenat (%).
+* City Tax (Boravišna taksa): Često fiksni iznos po osobi, po noći.
+* Cleaning Fee: Fiksni iznos po boravku (uobičajeno za Airbnb/Stanove).
+________________
+7. Specifičnosti Privatnog Smeštaja (Vacation Rentals)
+Sa porastom Airbnb-a, standardni hotelski atributi nisu dovoljni. Ako korisnik želi da kreira sistem za apartmane ili vile, sledeća polja su obavezna 4:
+7.1. Kućni Red (House Rules)
+* Check-in/Check-out Prozor:
+   * CheckInStart: "15:00"
+   * CheckInEnd: "22:00" (Bitno ako nema recepcije).
+* Restrikcije:
+   * SmokingAllowed: Boolean.
+   * PartiesAllowed: Boolean.
+   * PetsAllowed: Boolean (uz atribute: DogsOnly, MaxWeight, PetFee).
+   * AgeRestriction: "Minimum 25 godina za check-in".
+7.2. Preuzimanje Ključeva (Key Collection)
+Kritično polje za Booking.com 7:
+* Metod: Keybox (sef sa šifrom), MeetGreeter (domaćin čeka), DigitalLock (pametna brava), Reception.
+* Instrukcije: Tekstualno polje za kodove sefova ili lokaciju skrivanja ključa (šalje se tek nakon potvrde rezervacije).
+7.3. Podaci o Domaćinu (Host Profile)
+Airbnb API 31 naglašava važnost profila domaćina za poverenje:
+* HostName: Ime.
+* ResponseTime: Prosečno vreme odgovora.
+* LanguagesSpoken: Niz jezika koje domaćin govori (ISO kodovi).
+________________
+8. Tehnička Implementacija za AI Agenta
+Ovaj odeljak sadrži direktne instrukcije i primere koda (SQL/JSON) koje AI agent treba da iskoristi pri generisanju sistema.
+8.1. Preporučena SQL Šema (Core Tables)
+Agent treba da generiše DDL (Data Definition Language) za sledeću strukturu:
+
+
+SQL
+
+
+
+
+-- 1. Glavna tabela objekta
+CREATE TABLE properties (
+   property_id UUID PRIMARY KEY,
+   legal_entity_id VARCHAR(50),
+   property_type_code VARCHAR(20) NOT NULL, -- FK ka sifrarniku tipova
+   star_rating DECIMAL(2,1),
+   latitude DECIMAL(10,8) CHECK (latitude BETWEEN -90 AND 90),
+   longitude DECIMAL(11,8) CHECK (longitude BETWEEN -180 AND 180),
+   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Lokalizovani sadržaj
+CREATE TABLE property_content (
+   id SERIAL PRIMARY KEY,
+   property_id UUID REFERENCES properties(property_id),
+   language_code CHAR(2) NOT NULL, -- ISO 639-1
+   name VARCHAR(255),
+   description_short TEXT,
+   description_long TEXT,
+   policy_text TEXT
+);
+
+-- 3. Tipovi Soba
+CREATE TABLE room_types (
+   room_type_id UUID PRIMARY KEY,
+   property_id UUID REFERENCES properties(property_id),
+   code VARCHAR(50), -- Interni kod
+   name_internal VARCHAR(100),
+   category VARCHAR(20), -- 'Room', 'Apartment', 'Villa'
+   max_adults INT NOT NULL,
+   max_children INT NOT NULL,
+   max_occupancy INT NOT NULL,
+   size_sqm DECIMAL(6,2)
+);
+
+-- 4. Konfiguracija Kreveta (Kritična tabela)
+CREATE TABLE room_bedding (
+   id SERIAL PRIMARY KEY,
+   room_type_id UUID REFERENCES room_types(room_type_id),
+   bed_type_code VARCHAR(10), -- 'KING', 'TWIN', 'SOFA'
+   quantity INT NOT NULL,
+   is_extra_bed BOOLEAN DEFAULT FALSE
+);
+
+-- 5. Cenovni Planovi
+CREATE TABLE rate_plans (
+   rate_plan_id UUID PRIMARY KEY,
+   room_type_id UUID REFERENCES room_types(room_type_id),
+   name VARCHAR(100),
+   meal_plan_code VARCHAR(10), -- 'RO', 'BB', 'HB'
+   cancellation_policy_id INT, -- FK ka tabeli politika
+   payment_mode VARCHAR(20) -- 'PREPAY', 'HOTEL_COLLECT'
+);
+
+8.2. Struktura JSON Zahteva (Payload)
+Kada AI agent piše kod za API endpoint POST /create-property, JSON struktura treba da prati hijerarhiju OpenTravel/Expedia modela:
+
+
+JSON
+
+
+
+
+{
+ "property_profile": {
+   "name": { "en": "Grand Villa", "sr": "Grand Vila" },
+   "type": "Villa",
+   "location": {
+     "address": { "line1": "Glavna 12", "city": "Beograd", "zip": "11000", "country": "RS" },
+     "geo": { "lat": 44.8125, "lon": 20.4612 }
+   },
+   "contacts":
+ },
+ "inventory_setup":,
+     "amenities":
+   }
+ ],
+ "policies": {
+   "check_in": { "start": "14:00", "end": "20:00" },
+   "cancellation": { "type": "FreeCancel", "deadline_days": 7 }
+ }
+}
+
+8.3. Validaciona Pravila koja AI Treba da Implementira
+Samo definisanje polja nije dovoljno; AI kod mora sadržati logiku:
+1. Geocode Consistency: Provera da li koordinate "padaju" u navedenu državu (reverse geocoding provera).
+2. Occupancy Hierarchy: MaxOccupancy mora biti veće ili jednako MaxAdults.
+3. Amenity Conflicts: Soba ne može imati istovremeno NoSmoking i SmokingAllowed atribute.
+4. Price Check: Smeštaj ne može biti "Aktivan" (Online) ako nema definisan bar jedan RatePlan sa cenama za narednih 30 dana.
+________________
+9. Zaključak i Sinteza
+Kreiranje "merodavnog" modela podataka za smeštaj zahteva striktno poštovanje OpenTravel Alliance standarda uz integraciju komercijalnih specifičnosti Booking.com-a i Expedia-e.
+Za potrebe AI agenta, ključni zaključci su:
+1. Relaciona baza je obavezna: Zbog složenosti "mnogo-prema-mnogo" (npr. sobe-pogodnosti, sobe-cene), NoSQL pristup može biti rizičan za integritet transakcijskih podataka.
+2. Razdvajanje entiteta: Fizički proizvod (Soba) mora biti odvojen od komercijalnog proizvoda (Cenovni plan).
+3. Ekstenzivni šifarnici: Sistem mora da se oslanja na predefinisane šifarnike (Amenity Codes, Bed Types, Room Types) umesto na slobodan tekst, kako bi se omogućilo filtriranje i API povezivanje.
+Prateći ovu specifikaciju, vaš sistem će biti spreman za dvosmernu sinhronizaciju sa bilo kojim globalnim kanalom distribucije, zadovoljavajući tehničke standarde industrije u 2025. godini.
+Reference i Izvori
+* 4 Booking.com Connectivity API - Property Management
+* 3 Expedia Rapid API - Property Content
+* 1 OpenTravel Alliance - OTA_HotelDescriptiveContent Schema
+* 5 Google Hotel Center - Hotel List Feed XML
+* 21 OpenTravel Code List (HAC, RMA, BED)
+* 22 Booking.com Amenity Codes & Room Facilities
+* 19 Expedia Bed Type Enumerations
+________________
+Kraj izveštaja.
+Цитирани радови
+1. Open Travel (OTA) XML Schema Documentation, приступљено: децембар 27, 2025 https://schemas.liquid-technologies.com/OpenTravel/2008B/
+2. XsdCoverage/Ota/XsdShemas/OTA_HotelDescriptiveContentNotifRQ.xsd at master - GitHub, приступљено: децембар 27, 2025 https://github.com/ExM/XsdCoverage/blob/master/Ota/XsdShemas/OTA_HotelDescriptiveContentNotifRQ.xsd
+3. Expedia Rapid API | Documentation | Postman API Network, приступљено: децембар 27, 2025 https://www.postman.com/lunar-trinity-803892/expedia/documentation/rm9po2q/expedia-rapid-api
+4. Create a property - Booking.com | APIs - Booking.com's, приступљено: децембар 27, 2025 https://developers.booking.com/connectivity/docs/tsk-create-property
+5. Hotel List XML Reference | Hotel Prices - Google for Developers, приступљено: децембар 27, 2025 https://developers.google.com/hotels/hotel-prices/xml-reference/hotel-list-feed
+6. Airbnb API Documentation, приступљено: децембар 27, 2025 https://www.searchapi.io/docs/airbnb-api
+7. Manage photos - Booking.com | APIs, приступљено: децембар 27, 2025 https://developers.booking.com/connectivity/docs/checkin-methods-api/manage-photos
+8. Details - Booking.com | APIs, приступљено: децембар 27, 2025 https://developers.booking.com/demand/docs/open-api/demand-api/accommodations/accommodations/details
+9. Set Up a Hotel List in XML | Hotel Prices - Google for Developers, приступљено: децембар 27, 2025 https://developers.google.com/hotels/hotel-prices/dev-guide/hlf
+10. Airbnb API & Short-Term Rental Data API | AirROI (2.0.3), приступљено: децембар 27, 2025 https://www.airroi.com/api/documentation/
+11. Lodging - Business Profile APIs - Google for Developers, приступљено: децембар 27, 2025 https://developers.google.com/my-business/reference/lodging/rest/v1/Lodging
+12. Content API overview - Booking.com | APIs, приступљено: децембар 27, 2025 https://developers.booking.com/connectivity/docs/content
+13. About the Booking.com Connectivity APIs, приступљено: децембар 27, 2025 https://developers.booking.com/connectivity/docs
+14. Rapid Activities API Explorer - Expedia Group Developer Hub, приступљено: децембар 27, 2025 https://developers.expediagroup.com/rapid/api/explorer-activities
+15. OTA Model Viewer | TypeRoom - Pilotfish Technology, приступљено: децембар 27, 2025 https://modelviewers.pilotfishtechnology.com/modelviewers/OTA/model/Format.OTA_HotelDescriptiveContentNotifRQ.HotelDescriptiveContents.HotelDescriptiveContent.FacilityInfo.GuestRooms.GuestRoom.TypeRoom.html
+16. RoomType - Booking.com | APIs, приступљено: децембар 27, 2025 https://developers.booking.com/connectivity/docs/api-reference/roomtype
+17. Managing room types - Booking.com | APIs, приступљено: децембар 27, 2025 https://developers.booking.com/connectivity/docs/room-type-and-rate-plan-management/managing-room-types
+18. Open Travel (OTA) XML Schema Documentation - Liquid Technologies, приступљено: децембар 27, 2025 https://schemas.liquid-technologies.com/OpenTravel/2018A-2.0/StandardEntry/bedtypecode.html
+19. Room Name Attribute - Expedia Group Developer Hub, приступљено: децембар 27, 2025 https://developers.expediagroup.com/supply/lodging/docs/property_mgmt_apis/product/reference/enumerations
+20. OpenTravel Publishes Updated Codelists (2020-03-17), приступљено: децембар 27, 2025 https://opentravel.org/news/opentravel-publishes-updated-codelists-2020-03-17/
+21. Download Code List - OpenTravel Alliance, приступљено: децембар 27, 2025 https://opentravel.org/download-code-list/
+22. (HAC) Hotel Amenity Codes (OTA 2014B) - Booking.com | APIs, приступљено: децембар 27, 2025 https://developers.booking.com/connectivity/docs/codes-hac
+23. Content reference lists - Expedia Group Developer Hub, приступљено: децембар 27, 2025 https://developers.expediagroup.com/rapid/lodging/content/content-reference-lists
+24. Managing rate plans - Booking.com | APIs, приступљено: децембар 27, 2025 https://developers.booking.com/connectivity/docs/room-type-and-rate-plan-management/managing-rate-plans
+25. RatePlan - Booking.com | APIs, приступљено: децембар 27, 2025 https://developers.booking.com/connectivity/docs/api-reference/rateplan
+26. OpenTravel Codes List - SiteMinder APIs, приступљено: децембар 27, 2025 https://developer.siteminder.com/siteminder-apis/additional-resources/reference-tables/opentravel-codes-list
+27. Partner-Initiated Cancellation Policy - Expedia Group, приступљено: децембар 27, 2025 https://partner.expediagroup.com/en-us/partner-support/partner-initiated-cancellation-policy
+28. Managing roomrates - Booking.com | APIs, приступљено: децембар 27, 2025 https://developers.booking.com/connectivity/docs/room-type-and-rate-plan-management/managing-roomrates
+29. Room Bundles | Hotel Prices - Google for Developers, приступљено: децембар 27, 2025 https://developers.google.com/hotels/hotel-prices/dev-guide/room-bundles
+30. Airbnb API Developer Documentation, приступљено: децембар 27, 2025 https://developer.airbnb.com/
+31. Airbnb Listing API - Apify, приступљено: децембар 27, 2025 https://apify.com/rigelbytes/airbnb-listing/api
+32. airbnb-listings API - v2 - Postman, приступљено: децембар 27, 2025 https://documenter.getpostman.com/view/33042302/2sA35G53Hy

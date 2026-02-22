@@ -1,0 +1,134 @@
+/* Google Address Autocomplete Styles */
+.google-address-autocomplete,
+.simple-address-input {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.google-address-autocomplete label,
+.simple-address-input label {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+}
+
+.address-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.address-icon {
+    position: absolute;
+    left: 14px;
+    color: var(--accent);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.address-input-wrapper input {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 10px 14px 10px 38px;
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 13px;
+    box-sizing: border-box;
+    transition: all 0.2s;
+}
+
+.address-input-wrapper input:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.address-input-wrapper input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.address-error {
+    margin-top: 4px;
+}
+
+.address-error small {
+    font-size: 11px;
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+/* Google Autocomplete Dropdown Styling */
+.pac-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    margin-top: 4px;
+    font-family: inherit;
+    z-index: 10000;
+}
+
+.pac-item {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pac-item:first-child {
+    border-top: none;
+}
+
+.pac-item:hover {
+    background: var(--bg-sidebar);
+}
+
+.pac-item-selected {
+    background: var(--accent);
+    color: white;
+}
+
+.pac-icon {
+    display: none;
+}
+
+.pac-item-query {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.pac-matched {
+    font-weight: 900;
+    color: var(--accent);
+}
+
+.pac-item-selected .pac-item-query,
+.pac-item-selected .pac-matched {
+    color: white;
+}
+
+/* Light Theme */
+.light-theme .pac-container {
+    background: #ffffff;
+    border-color: #e2e8f0;
+}
+
+.light-theme .pac-item {
+    border-color: #e2e8f0;
+    color: #1e293b;
+}
+
+.light-theme .pac-item:hover {
+    background: #f8fafc;
+}
+
+.light-theme .pac-item-query {
+    color: #1e293b;
+}

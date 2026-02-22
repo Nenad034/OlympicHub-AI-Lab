@@ -1,0 +1,296 @@
+/* Main Container Polish */
+.search-card-frame {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    padding: 32px;
+}
+
+/* Destination Card - Architectural Clean */
+.destination-row-ss {
+    background: rgba(30, 41, 59, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.destination-row-ss:hover {
+    background: rgba(30, 41, 59, 0.5);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.destination-header-ss {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 12px;
+}
+
+.destination-grid-ss {
+    display: grid;
+    grid-template-columns: 1fr 1fr 0.4fr 0.8fr 0.8fr;
+    gap: 16px;
+    align-items: flex-end;
+}
+
+/* Labels - More minimal */
+.field-label-ss {
+    font-size: 10px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Input Boxes - Polished */
+.ss-input-box {
+    background: rgba(15, 23, 42, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px !important;
+    height: 52px !important;
+    padding: 0 16px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #f1f5f9 !important;
+    transition: all 0.2s ease !important;
+}
+
+.ss-input-box:hover {
+    border-color: rgba(99, 102, 241, 0.3) !important;
+    background: rgba(15, 23, 42, 0.9) !important;
+}
+
+/* Compact Counters */
+.row-counter-ss {
+    display: flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    height: 52px;
+    padding: 4px;
+}
+
+.row-counter-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: none;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.row-counter-btn:hover {
+    background: #4f46e5;
+    color: white;
+}
+
+.row-counter-val {
+    flex: 1;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: #f8fafc;
+}
+
+/* Child Ages Row */
+.child-ages-row-ss {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.child-age-item-ss {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.age-select-ss {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #cbd5e1;
+    outline: none;
+    cursor: pointer;
+}
+
+.age-select-ss:focus {
+    border-color: #4f46e5;
+}
+
+/* Add Destination Button */
+.add-destination-btn-ss {
+    width: auto;
+    min-width: 180px;
+    margin: 10px auto;
+    padding: 12px 24px;
+    background: rgba(79, 70, 229, 0.1);
+    border: 1px dashed rgba(99, 102, 241, 0.3);
+    border-radius: 12px;
+    color: #a5b4fc;
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-destination-btn-ss:hover {
+    background: rgba(79, 70, 229, 0.2);
+    border-color: #6366f1;
+    color: white;
+    transform: scale(1.02);
+}
+
+/* Summary Card - Professional Receipt */
+.summary-card-ss {
+    background: rgba(30, 41, 59, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    padding: 24px;
+    position: relative;
+}
+
+.summary-card-ss::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20%;
+    height: 60%;
+    width: 3px;
+    background: #10b981;
+    border-radius: 0 4px 4px 0;
+}
+
+.itinerary-item-ss {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: rgba(15, 23, 42, 0.3);
+    border-radius: 12px;
+    margin-bottom: 8px;
+}
+
+.itinerary-left-ss {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.itinerary-node-ss {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #4f46e5;
+    color: white;
+    font-size: 12px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.itinerary-info-ss h4 {
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.itinerary-info-ss p {
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.itinerary-right-ss {
+    text-align: right;
+}
+
+.itinerary-nights-ss {
+    color: #818cf8;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* Primary Search Button */
+.search-btn-ss-primary {
+    width: 100%;
+    height: 60px;
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    border: none;
+    border-radius: 16px;
+    color: white;
+    font-size: 15px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+    transition: all 0.3s ease;
+}
+
+.search-btn-ss-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px -5px rgba(79, 70, 229, 0.5);
+    filter: brightness(1.1);
+}
+
+/* Dropdown Menu */
+.dropdown-menu-ss {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    z-index: 100;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.dropdown-item-ss {
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.dropdown-item-ss:hover {
+    background: rgba(79, 70, 229, 0.1);
+    color: white;
+    padding-left: 24px;
+}

@@ -1,0 +1,388 @@
+/* Yield Management Dashboard Styles */
+
+.yield-dashboard {
+    padding: 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* Header */
+.yield-header {
+    margin-bottom: 32px;
+}
+
+.yield-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.yield-title-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.yield-refresh-btn:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.yield-refresh-btn:disabled {
+    opacity: 0.6;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+/* Stats Grid */
+.yield-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.yield-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s ease;
+}
+
+.yield-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.yield-stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.yield-stat-content {
+    flex: 1;
+}
+
+.yield-stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.yield-stat-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Tabs */
+.yield-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 32px;
+}
+
+.yield-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.yield-tab:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.yield-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.yield-tab-badge {
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Tab Content */
+.yield-tab-content {
+    min-height: 400px;
+}
+
+/* Overview */
+.yield-overview h2,
+.yield-proposals h2,
+.yield-scraping h2,
+.yield-settings h2 {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 16px;
+}
+
+.yield-info-card {
+    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+}
+
+/* Proposals */
+.yield-proposals-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.yield-proposal-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.2s ease;
+}
+
+.yield-proposal-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.yield-proposal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.yield-proposal-badge {
+    background: rgba(249, 115, 22, 0.1);
+    color: #f97316;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.yield-proposal-pricing {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+}
+
+.yield-pricing-item {
+    flex: 1;
+    text-align: center;
+}
+
+.yield-pricing-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.yield-pricing-value {
+    display: block;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.yield-pricing-item.highlight {
+    background: rgba(59, 130, 246, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.yield-pricing-arrow {
+    color: var(--text-secondary);
+    font-size: 20px;
+    font-weight: 300;
+}
+
+.yield-proposal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.yield-action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.yield-action-btn.approve {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.yield-action-btn.approve:hover {
+    background: #22c55e;
+    color: white;
+}
+
+.yield-action-btn.reject {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.yield-action-btn.reject:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.yield-action-btn.view {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.yield-action-btn.view:hover {
+    background: #3b82f6;
+    color: white;
+}
+
+/* Empty State */
+.yield-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+}
+
+.yield-empty-state p {
+    margin-top: 16px;
+    font-size: 16px;
+}
+
+/* Scraping Sessions */
+.yield-scraping-sessions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.yield-session-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.yield-status-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.yield-status-badge.running {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.yield-status-badge.completed {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.yield-status-badge.failed {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.yield-status-badge.partial {
+    background: rgba(249, 115, 22, 0.1);
+    color: #f97316;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .yield-dashboard {
+        padding: 16px;
+    }
+
+    .yield-header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .yield-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .yield-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .yield-proposal-pricing {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .yield-pricing-arrow {
+        transform: rotate(90deg);
+    }
+
+    .yield-proposal-actions {
+        flex-direction: column;
+    }
+}
