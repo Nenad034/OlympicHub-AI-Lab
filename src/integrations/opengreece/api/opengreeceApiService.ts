@@ -1,7 +1,7 @@
 // Open Greece API Service
 // Main service for interacting with Open Greece OTA XML API
 
-import { OPENGREECE_CONFIG, getBasicAuthHeader } from '../config/opengreeceConfig';
+import { OPENGREECE_CONFIG, getBasicAuthHeader } from './opengreeceConfig';
 import {
     buildStartPushProcessRQ,
     buildHotelSearchRQ,
@@ -11,7 +11,7 @@ import {
     buildCancelRQ,
     type HotelAvailParams,
     type HotelBookingParams,
-} from '../integrations/opengreece/api/opengreeceXmlBuilder';
+} from './opengreeceXmlBuilder';
 import {
     parseStartPushProcessRS,
     parseHotelSearchRS,
@@ -20,7 +20,7 @@ import {
     parseHotelAvailRS,
     parseHotelResRS,
     parseCancelRS,
-} from '../integrations/opengreece/api/opengreeceXmlParser';
+} from './opengreeceXmlParser';
 import type {
     OpenGreeceResponse,
     StartPushProcessResponse,

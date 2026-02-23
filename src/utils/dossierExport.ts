@@ -95,10 +95,22 @@ export const generateDossierPDF = (dossier: any, lang: Language = 'Srpski') => {
         headStyles: { fillColor: [102, 126, 234] }
     });
 
-    // Footer
+    // Payment / Financial Info
     const totalBrutto = tripItems.reduce((sum: number, item: any) => sum + (item.bruttoPrice || 0), 0);
     doc.setFontSize(14);
-    doc.text(`${t.totalPrice}: ${totalBrutto.toFixed(2)} ${finance.currency}`, 14, (doc as any).lastAutoTable?.finalY + 20);
+    doc.text(`${t.totalPrice}: ${totalBrutto.toFixed(2)} ${finance.currency}`, 14, (doc as any).lastAutoTable?.finalY + 15);
+
+    // Add Agency Footer
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const footerLines = [
+        "Olympic Travel d.o.o.",
+        "Adresa: Prvomajska 1, 11000 Beograd, Srbija | PIB: 123456789 | Maticni broj: 98765432",
+        "Telefon: +381 11 123 4567 | Email: office@olympic.rs | Web: www.olympic.rs",
+        "Broj licence: OTP 123/2026 Kategorija A"
+    ];
+    doc.text(footerLines, doc.internal.pageSize.getWidth() / 2, pageHeight - 20, { align: 'center' });
 
     doc.save(`Rezervacija-${resCode || cisCode}-${lang}.pdf`);
 };
@@ -125,12 +137,20 @@ export const generateDossierHTML = (dossier: any, lang: Language = 'Srpski') => 
                 th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
                 th { background-color: #f8fafc; color: #667eea; font-weight: 600; }
                 .total-box { background: #667eea; color: white; padding: 20px; border-radius: 8px; text-align: right; margin-top: 40px; }
+                .footer { margin-top: 50px; padding-top: 20px; border-top: 2px solid #ccc; text-align: center; font-size: 0.85em; color: #555; }
+                .logo { max-height: 60px; object-fit: contain; }
+                .header-flex { display: flex; align-items: center; gap: 20px; }
             </style>
         </head>
         <body>
             <header>
-                <h1>ClickToTravel Hub</h1>
-                <p class="meta">${t.resCode}: ${resCode || cisCode} | ${t.createdAt}: ${new Date().toLocaleDateString()}</p>
+                <div class="header-flex">
+                    <img src="/logo.png" alt="Olympic Travel Logo" class="logo" onerror="this.style.display='none'" />
+                    <div>
+                        <h1>Olympic Travel</h1>
+                        <p class="meta">${t.resCode}: ${resCode || cisCode} | ${t.createdAt}: ${new Date().toLocaleDateString()}</p>
+                    </div>
+                </div>
             </header>
 
             <section>
@@ -196,6 +216,13 @@ export const generateDossierHTML = (dossier: any, lang: Language = 'Srpski') => 
             <div class="total-box">
                 <p>${t.totalPrice}</p>
                 <h3>${totalBrutto.toFixed(2)} ${finance.currency}</h3>
+            </div>
+
+            <div class="footer">
+                <strong>Olympic Travel d.o.o.</strong><br/>
+                Adresa: Prvomajska 1, 11000 Beograd, Srbija | PIB: 123456789 | Matični broj: 98765432<br/>
+                Telefon: +381 11 123 4567 | Email: office@olympic.rs | Web: www.olympic.rs<br/>
+                Broj licence: OTP 123/2026 Kategorija A
             </div>
         </body>
         </html>

@@ -240,7 +240,7 @@ export class BusinessHealthMonitor {
 
         // Loguj u tctApiLogger
         try {
-            const { tctApiLogger } = await import('./tctApiLogger');
+            const { tctApiLogger } = await import('../integrations/tct/api/tctApiLogger');
             tctApiLogger.logEvent({
                 type: 'BUSINESS_ALERT',
                 alert,

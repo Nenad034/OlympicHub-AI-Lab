@@ -2569,3 +2569,452 @@
     background: rgba(255, 255, 255, 0.15);
     margin: 4px 0;
 }
+
+/* ===== ŠTAMPANJE / PRINTING ===== */
+@media screen {
+    .printable-contract {
+        display: none !important;
+    }
+}
+
+@media print {
+
+    body,
+    html {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: #000 !important;
+    }
+
+    /* Hide everything by default inside body */
+    body>* {
+        display: none !important;
+    }
+
+    /* Target the root app div if applicable */
+    #root {
+        display: block !important;
+    }
+
+    /* Specifically hide the main elements that shouldn't be printed */
+    .res-header-v2,
+    .res-sidebar-nav,
+    .res-main-content:not(.printable),
+    .footer-actions,
+    .res-footer-v2,
+    .btn-notepad-toggle,
+    .action-icon-btn,
+    .button,
+    button {
+        display: none !important;
+    }
+
+    /* Reset layouts */
+    .res-master-container,
+    .res-architect-modal,
+    .res-body-layout {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: none !important;
+        box-shadow: none !important;
+        border: none !important;
+        position: relative !important;
+    }
+
+    .printable-contract {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100vw !important;
+        margin: 0 !important;
+        padding: 2cm !important;
+        background: #fff !important;
+        color: #000 !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+    }
+
+    .print-header {
+        text-align: center;
+        border-bottom: 2px solid #000;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+    }
+
+    .print-header h1 {
+        font-size: 24pt;
+        font-weight: 900;
+        color: #000;
+        margin: 0;
+        letter-spacing: 1px;
+    }
+
+    .print-header p {
+        font-size: 12pt;
+        color: #555;
+        margin: 5px 0 0 0;
+    }
+
+    .print-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .print-grid section,
+    .print-passengers,
+    .print-legal-section {
+        margin-bottom: 20px;
+    }
+
+    h4 {
+        font-size: 14pt;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+        color: #000;
+        font-weight: bold;
+    }
+
+    .print-item {
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+        border-bottom: 1px dotted #e2e8f0;
+    }
+
+    .print-item:last-child {
+        border-bottom: none;
+    }
+
+    .print-item strong {
+        font-size: 12pt;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    th,
+    td {
+        border: 1px solid #ccc;
+        padding: 8px 12px;
+        text-align: left;
+        color: #000;
+    }
+
+    th {
+        background-color: #f8fafc !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color: #000;
+        font-weight: bold;
+    }
+
+    .print-signatures {
+        margin-top: 50px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .print-signatures .sig {
+        width: 40%;
+        text-align: center;
+    }
+
+    .print-signatures .line {
+        border-bottom: 1px solid #000;
+        height: 40px;
+        margin-top: 10px;
+    }
+
+    /* Print settings */
+    @page {
+        size: A4;
+        margin: 0;
+    }
+}
+
+/* ===== PAYMENT MODAL GRID SELECTION ===== */
+.payment-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.selection-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.selection-card:hover {
+    border-color: var(--accent-cyan);
+    background: rgba(0, 229, 255, 0.05);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+}
+
+.selection-card.active {
+    border-color: var(--accent-cyan);
+    background: rgba(0, 229, 255, 0.1);
+    box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.2), 0 15px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.selection-card .icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.selection-card.active .icon-box {
+    background: var(--accent-cyan);
+    color: #000;
+}
+
+.selection-card .label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.selection-card.active .label {
+    color: var(--accent-cyan);
+}
+
+.selection-card .check-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--accent-cyan);
+    color: #000;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    scale: 0;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.selection-card.active .check-badge {
+    scale: 1;
+}
+
+.modal-section-title {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.1), transparent);
+}
+
+/* === PAYMENT MODAL PREMIUM STYLES === */
+.payment-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 11, 14, 0.85);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+    padding: 20px;
+}
+
+.payment-modal-container {
+    background: #0a191e;
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    border-radius: 32px;
+    border: 1px solid rgba(0, 229, 255, 0.15);
+    box-shadow: 0 25px 80px -20px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 229, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: fadeInRes 0.3s ease-out;
+}
+
+.payment-modal-header {
+    padding: 24px 32px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.payment-modal-body {
+    padding: 32px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.payment-modal-footer {
+    padding: 24px 32px;
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.payment-amount-input {
+    width: 100%;
+    font-size: 32px;
+    font-weight: 900;
+    padding: 16px 20px;
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 2px solid rgba(0, 229, 255, 0.1) !important;
+    border-radius: 20px;
+    text-align: left;
+    color: var(--accent-cyan) !important;
+}
+
+.payment-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.external-payer-box {
+    padding: 24px;
+    background: rgba(249, 115, 22, 0.05);
+    border-radius: 20px;
+    border: 1px solid rgba(249, 115, 22, 0.2);
+    margin-bottom: 32px;
+}
+
+/* --- Light Theme Overrides for Payment Modal --- */
+.light-theme .payment-modal-overlay {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.light-theme .payment-modal-container {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .payment-modal-header {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.light-theme .payment-modal-header h3 {
+    color: #0f172a;
+}
+
+.light-theme .payment-modal-footer {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+}
+
+.light-theme .selection-card {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.light-theme .selection-card .label {
+    color: #475569;
+}
+
+.light-theme .selection-card .icon-box {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.light-theme .selection-card:hover {
+    background: #ffffff;
+    border-color: var(--accent);
+}
+
+.light-theme .selection-card.active {
+    background: rgba(var(--accent-rgb), 0.05);
+    border-color: var(--accent);
+}
+
+.light-theme .selection-card.active .label {
+    color: var(--accent);
+}
+
+.light-theme .selection-card.active .icon-box {
+    background: var(--accent);
+    color: #ffffff;
+}
+
+.light-theme .payment-amount-input {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+.light-theme .modal-section-title::after {
+    background: linear-gradient(to right, #e2e8f0, transparent);
+}
+
+.light-theme .external-payer-box {
+    background: #fffaf0;
+    border-color: #fed7aa;
+}
+
+.light-theme .hover-close:hover {
+    background: #fee2e2 !important;
+    color: #ef4444 !important;
+}
+
+.payment-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 12px;
+}
+.light-theme .payment-modal-container input {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+.light-theme .payment-modal-container label {
+    color: #64748b !important;
+}
+
+.light-theme .payment-modal-header h3 i, 
+.light-theme .payment-modal-header h3 div {
+    background: rgba(14, 75, 94, 0.1) !important;
+    color: #0e4b5e !important;
+}

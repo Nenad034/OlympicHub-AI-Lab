@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import { APITestTemplate, type APITestSection } from '../components/APITestTemplate';
-import { filosApiService, FILOS_CREDENTIALS } from '../services/filos/api/filosApiService';
+import { filosApiService, FILOS_CREDENTIALS } from '../integrations/filos/api/filosApiService';
 
 export const FilosTest: React.FC = () => {
     const [loading, setLoading] = useState(false);

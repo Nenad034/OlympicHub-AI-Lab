@@ -9,7 +9,7 @@ import {
     Package as PackageIcon, UserPlus, Fingerprint, Banknote,
     ArrowRightLeft, Briefcase, MoveRight, MoveLeft, Calendar, Mail,
     Compass, Ship, Sparkles, Search, ExternalLink, Clock, History,
-    Euro, DollarSign, CirclePercent, Copy, Share2, Code, ChevronDown, Zap, Phone, Star, MessageCircle, Send, ShieldAlert
+    Euro, DollarSign, CirclePercent, Copy, Share2, Code, ChevronDown, Zap, Phone, Star, MessageCircle, Send, ShieldAlert, Coins
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import { ModernCalendar } from '../components/ModernCalendar';
@@ -28,11 +28,14 @@ import { getTranslation } from '../utils/translations';
 import type { Language } from '../utils/translations';
 import { generateDossierPDF, generateDossierHTML } from '../utils/dossierExport';
 import supplierService from '../services/SupplierService';
+import { FinancialCoreService } from '../services/financialCoreService';
+import { useToast } from '../components/ui/Toast';
+import { ActionConfirmModal } from '../components/ui/ActionConfirmModal';
 
 // --- Types ---
 type TripType = 'Smestaj' | 'Avio karte' | 'Dinamicki paket' | 'Putovanja' | 'Transfer' | 'Čarter' | 'Bus' | 'Krstarenje';
 type CustomerType = 'B2C-Individual' | 'B2C-Legal' | 'B2B-Subagent';
-type ResStatus = 'Active' | 'Reservation' | 'Canceled' | 'Offer' | 'Request' | 'Processing';
+type ResStatus = 'Active' | 'Reservation' | 'Canceled' | 'Offer' | 'Request' | 'Processing' | 'Zatvoreno';
 
 interface Passenger {
     id: string;
@@ -148,6 +151,7 @@ interface ActivityLog {
 }
 
 interface Dossier {
+    id: string;
     cisCode: string;
     resCode: string | null;
     status: ResStatus;
@@ -204,6 +208,20 @@ interface Dossier {
     language: Language;
 }
 
+interface DossierCancellationModalProps {
+    item: TripItem;
+    onClose: () => void;
+}
+
+interface PaymentEntryModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    draft: PaymentRecord | null;
+    setDraft: (p: PaymentRecord) => void;
+    onSave: (p: PaymentRecord, shouldConfirm?: boolean) => void;
+    dossier: Dossier;
+}
+
 // --- Component ---
 const ReservationArchitect: React.FC = () => {
     const navigate = useNavigate();
@@ -212,6 +230,21 @@ const ReservationArchitect: React.FC = () => {
 
     const [advisorType, setAdvisorType] = useState('accomodation');
     const [expandedPassengers, setExpandedPassengers] = useState<string[]>([]);
+
+    const { success: toastSuccess, error: toastError, info: toastInfo, warning: toastWarning } = useToast();
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        type: 'danger' | 'warning' | 'info' | 'success';
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'warning',
+        onConfirm: () => { }
+    });
 
     // B2B Segment States
     const { userLevel } = useAuthStore();
@@ -224,7 +257,8 @@ const ReservationArchitect: React.FC = () => {
 
 
     // Central State
-    const [dossier, setDossier] = useState({
+    const [dossier, setDossier] = useState<Dossier>({
+        id: 'NEW-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
         cisCode: 'CIS-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
         resCode: null as string | null, // Broj Rezervacije (e.g. 0000001/2026)
         status: 'Request' as ResStatus,
@@ -343,6 +377,8 @@ const ReservationArchitect: React.FC = () => {
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
     const [policyToShow, setPolicyToShow] = useState<{ item: TripItem; idx: number } | null>(null);
     const [activeCalendar, setActiveCalendar] = useState<{ id: string; type?: string } | null>(null);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [paymentDraft, setPaymentDraft] = useState<PaymentRecord | null>(null);
 
     // Document Settings (Per-card language control)
     const [docSettings, setDocSettings] = useState<{ [key: string]: Language }>({
@@ -969,47 +1005,147 @@ const ReservationArchitect: React.FC = () => {
     };
 
     const addPayment = () => {
-        setDossier(prev => {
-            const newPayment: PaymentRecord = {
-                id: Math.random().toString(),
-                date: '', // Empty date until saved
-                amount: 0,
-                currency: prev.finance.currency as any,
-                status: 'active' as const,
-                method: 'Cash',
-                receiptNo: 'PR-' + (prev.finance.payments.length + 1),
-                fiscalReceiptNo: '',
-                registrationMark: '',
-                checks: [],
-                exchangeRate: NBS_RATES[prev.finance.currency as keyof typeof NBS_RATES] || 1,
-                amountInRsd: 0
-            };
-            return {
-                ...prev,
-                finance: { ...prev.finance, payments: [...prev.finance.payments, newPayment] }
-            };
-        });
-        addLog('Dodavanje Uplate', 'Novi prazan red za uplatu je dodat.', 'info');
+        const newPayment: PaymentRecord = {
+            id: 'NEW-' + Math.random().toString(36).substr(2, 9),
+            date: new Date().toISOString().slice(0, 16),
+            amount: 0,
+            currency: dossier.finance.currency as any,
+            status: 'active' as const,
+            method: 'Cash',
+            receiptNo: 'PR-' + (dossier.finance.payments.length + 1),
+            fiscalReceiptNo: '',
+            registrationMark: '',
+            checks: [],
+            exchangeRate: NBS_RATES[dossier.finance.currency as keyof typeof NBS_RATES] || 1,
+            amountInRsd: 0
+        };
+        setPaymentDraft(newPayment);
+        setIsPaymentModalOpen(true);
+        addLog('Dodavanje Uplate', 'Otvoren prozor za novu uplatu.', 'info');
     };
 
-    const commitPayment = (paymentId: string) => {
-        const now = new Date();
-        const localDateTime = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+    const commitPayment = async (paymentId: string) => {
+        const payment = dossier.finance.payments.find(p => p.id === paymentId);
+        if (!payment) return;
 
-        setDossier(prev => {
-            const nextPayments = prev.finance.payments.map(p => {
-                if (p.id === paymentId) {
-                    const updated = { ...p, date: localDateTime };
-                    // Immediate log for traceability
-                    addLog('Potvrda Uplate', `Uplata od ${updated.amount} ${updated.currency} je potvrđena i proknjižena. Način: ${updated.method}.`, 'success');
-                    return updated;
+        if (!dossier.id || String(dossier.id).startsWith("NEW")) {
+            toastWarning("Upozorenje", "Prvo morate sačuvati aranžman da biste dobili jedinstveni ID pre knjiženja uplate!");
+            return;
+        }
+
+        const isPravno = dossier.customerType === 'B2B-Agency' || dossier.customerType === 'B2B-Corporate';
+        const tipLica = isPravno ? (payment.isExternalPayer ? 'FIZICKO' : 'PRAVNO') : 'FIZICKO';
+        const pibJmbg = isPravno ? dossier.booker.companyPib || '' : '';
+        const klijentNaziv = payment.isExternalPayer && payment.payerDetails ? payment.payerDetails.fullName : `${dossier.booker.firstName} ${dossier.booker.lastName}`;
+        const klijentId = payment.isExternalPayer ? 'external' : dossier.booker.id;
+        const iznosRsd = payment.amountInRsd || (payment.amount * payment.exchangeRate);
+
+        setConfirmModal({
+            isOpen: true,
+            title: 'Potvrda Uplate',
+            message: `Da li ste sigurni da želite da proknjižite uplatu u iznosu od ${iznosRsd.toFixed(2)} RSD? ${tipLica === 'FIZICKO' ? 'Ova akcija će izvršiti fiskalizaciju (ESIR).' : 'Ova akcija automatski šalje avansni račun na SEF.'}`,
+            type: 'info',
+            onConfirm: async () => {
+                try {
+                    // "Fiskalni Safety Switch": Ne upisuje se u bazu ako ESIR padne
+                    const uplataDb = await FinancialCoreService.evidentirajUplatu(
+                        dossier.id,
+                        klijentId,
+                        tipLica,
+                        pibJmbg,
+                        iznosRsd,
+                        payment.method,
+                        klijentNaziv
+                    );
+
+                    const now = new Date();
+                    const localDateTime = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+
+                    setDossier(prev => {
+                        const nextPayments = prev.finance.payments.map(p => {
+                            if (p.id === paymentId) {
+                                const updated = { ...p, date: localDateTime, fiscalReceiptNo: uplataDb.pfr_broj || p.fiscalReceiptNo };
+                                return updated;
+                            }
+                            return p;
+                        });
+                        return { ...prev, finance: { ...prev.finance, payments: nextPayments } };
+                    });
+
+                    addLog('Potvrda Uplate', `Uplata od ${payment.amount} ${payment.currency} je proknjižena. Način: ${payment.method}. PFR: ${uplataDb.pfr_broj || 'N/A'}`, 'success');
+                    toastSuccess('Uplata Uspešna', `Uplata uspesno proknjižena! ${uplataDb.pfr_broj ? 'PFR Broj: ' + uplataDb.pfr_broj : ''} ${uplataDb.sef_id ? 'SEF ID: ' + uplataDb.sef_id : ''}`);
+                } catch (error: any) {
+                    console.error("Uplata Error:", error);
+                    toastError("Greška pri uplati", error.message);
+                    addLog('Greška Uplate', `Neuspela fiskalizacija/knjiženje: ${error.message}`, 'danger');
                 }
-                return p;
-            });
-            return {
-                ...prev,
-                finance: { ...prev.finance, payments: nextPayments }
-            };
+            }
+        });
+    };
+
+    const evidentirajUlazniRacun = async (itemId: string, itemNetPrice: number, dobavljac: string, supplierRef: string) => {
+        if (!dossier.id || String(dossier.id).startsWith("NEW")) {
+            toastWarning("Upozorenje", "Morate prvo sačuvati aranžman kako biste imali validan ID.");
+            return;
+        }
+        if (itemNetPrice <= 0) {
+            toastWarning("Nevažeći Iznos", "Suma ulaznog računa mora biti veća od nule.");
+            return;
+        }
+
+        setConfirmModal({
+            isOpen: true,
+            title: 'Izdavanje Ulaznog Računa',
+            message: `Da li ste sigurni da želite evidentirati ulazni račun za dobavljača "${dobavljac || 'Nepoznat'}" na iznos od ${itemNetPrice} ${dossier.finance.currency}? (Ovo je uslov za Član 35).`,
+            type: 'info',
+            onConfirm: async () => {
+                try {
+                    await FinancialCoreService.dodajUlazniRacun(
+                        dossier.id,
+                        dobavljac || 'Nepoznat Dobavljač',
+                        supplierRef || `INV-${itemId.substring(0, 6)}`,
+                        itemNetPrice,
+                        dossier.finance.currency,
+                        NBS_RATES[dossier.finance.currency as keyof typeof NBS_RATES] || 1,
+                        'DIREKTAN'
+                    );
+
+                    addLog('Ulazni Račun Dodat', `Evidentiran trošak: ${dobavljac} - ${itemNetPrice} ${dossier.finance.currency}`, 'info');
+                    toastSuccess("Snimljeno", "Ulazni račun uspešno evidentiran za The Lockdown!");
+                } catch (err: any) {
+                    console.error("Ulazni racun error:", err);
+                    toastError("Greška pri evidentiranju računa", err.message);
+                }
+            }
+        });
+    };
+
+    const tryZatvoriDosije = async () => {
+        if (!dossier.id || String(dossier.id).startsWith("NEW")) {
+            toastWarning("Zatvaranje Nemoguće", "Morate prvo sačuvati rezervaciju kako bi se dobio ID.");
+            return;
+        }
+
+        const rsdRate = NBS_RATES[dossier.finance.currency as keyof typeof NBS_RATES] || 1;
+        const totalRsd = totalBrutto * rsdRate;
+
+        setConfirmModal({
+            isOpen: true,
+            title: 'THE LOCKDOWN',
+            message: 'Da li ste sigurni da želite da ZATVORITE DOSIJE i obračunate PDV? Sistem proverava sva plaćanja i račune. Nakon uspešnog kompletiranja, promene neće biti moguće.',
+            type: 'warning',
+            onConfirm: async () => {
+                try {
+                    const poreskaEvidencija = await FinancialCoreService.obracunajPDV(dossier.id, totalRsd);
+
+                    setDossier(prev => ({ ...prev, status: 'Zatvoreno' }));
+                    addLog('Dosije Zatvoren', `Izvršen obračun po Članu 35. PDV obaveza: ${poreskaEvidencija.pdv_iznos.toFixed(2)} RSD. Dosije je sada zaključan (LOCKDOWN).`, 'success');
+                    toastSuccess('Dosije Zaključan', `Obračunat PDV: ${poreskaEvidencija.pdv_iznos.toFixed(2)} RSD. Status promenjen u Zatvoreno.`);
+                } catch (error: any) {
+                    toastError("Lockdown Odbijen", error.message);
+                    addLog('Greška Zatvaranja', error.message, 'danger');
+                }
+            }
         });
     };
 
@@ -1459,7 +1595,7 @@ const ReservationArchitect: React.FC = () => {
                         </div>
                         <div className="horizontal-status-tags" style={{ marginLeft: dossier.resCode ? '16px' : '0' }}>
 
-                            {['Request', 'Processing', 'Offer', 'Reservation', 'Active', 'Canceled'].map((s) => (
+                            {['Request', 'Processing', 'Offer', 'Reservation', 'Active', 'Canceled', 'Zatvoreno'].map((s) => (
                                 <button
                                     key={s}
                                     className={`status-item ${dossier.status === s ? 'active' : ''}`}
@@ -1469,11 +1605,18 @@ const ReservationArchitect: React.FC = () => {
                                                 s === 'Reservation' ? '#3b82f6' :
                                                     s === 'Processing' ? '#f59e0b' :
                                                         s === 'Request' ? '#6366f1' :
-                                                            s === 'Offer' ? '#94a3b8' : '#ef4444',
+                                                            s === 'Zatvoreno' ? '#8b5cf6' :
+                                                                s === 'Offer' ? '#94a3b8' : '#ef4444',
                                     } as React.CSSProperties}
                                     onClick={() => {
-                                        setDossier({ ...dossier, status: s as ResStatus });
-                                        addLog('Status Promenjen', `Status rezervacije promenjen u "${s}".`, 'info');
+                                        if (s === 'Zatvoreno') {
+                                            if (dossier.status !== 'Zatvoreno') {
+                                                tryZatvoriDosije();
+                                            }
+                                        } else {
+                                            setDossier({ ...dossier, status: s as ResStatus });
+                                            addLog('Status Promenjen', `Status rezervacije promenjen u "${s}".`, 'info');
+                                        }
                                     }}
                                 >
                                     {s}
@@ -2352,7 +2495,7 @@ const ReservationArchitect: React.FC = () => {
                                                         </div>
                                                     </div>
                                                 )}
-                                                <div className="input-field">
+                                                < div className="input-field">
                                                     <label>{getBookerLabel()}</label>
                                                     <input
                                                         value={dossier.booker.fullName}
@@ -3293,8 +3436,28 @@ const ReservationArchitect: React.FC = () => {
                                                     </div>
                                                 </div>
 
-
-
+                                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-12px', marginBottom: '24px' }}>
+                                                    <button
+                                                        onClick={() => evidentirajUlazniRacun(item.id, item.netPrice, item.supplier, item.supplierRef || '')}
+                                                        disabled={!canViewFinancials}
+                                                        style={{
+                                                            background: 'rgba(59, 130, 246, 0.1)',
+                                                            color: '#3b82f6',
+                                                            border: '1px solid rgba(59, 130, 246, 0.2)',
+                                                            padding: '6px 12px',
+                                                            borderRadius: '6px',
+                                                            fontSize: '11px',
+                                                            fontWeight: 800,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px',
+                                                            cursor: canViewFinancials ? 'pointer' : 'not-allowed',
+                                                            opacity: canViewFinancials ? 1 : 0.5
+                                                        }}
+                                                    >
+                                                        <Receipt size={14} /> Evidentiraj Ulazni Račun (Član 35)
+                                                    </button>
+                                                </div>
 
                                                 {/* Passengers list inside TripItem - One per line */}
                                                 {item.passengers && item.passengers.length > 0 && (
@@ -3412,8 +3575,7 @@ const ReservationArchitect: React.FC = () => {
                                     )}
                                 </div>
                             </section>
-                        )
-                        }
+                        )}
 
                         {/* SECTION 3: FINANCE (Payments & Receipts) */}
                         {
@@ -3551,113 +3713,63 @@ const ReservationArchitect: React.FC = () => {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {dossier.finance.payments.map((p, pidx) => (
+                                                        {dossier.finance.payments.map((p) => (
                                                             <React.Fragment key={p.id}>
-                                                                <tr className={`${!p.date ? 'unsaved-payment' : ''} ${p.status === 'deleted' ? 'deleted-payment-row' : ''}`}>
+                                                                <tr
+                                                                    className={`${!p.date ? 'unsaved-payment' : ''} ${p.status === 'deleted' ? 'deleted-payment-row' : ''}`}
+                                                                    style={{ cursor: p.status !== 'deleted' && !p.fiscalReceiptNo ? 'pointer' : 'default' }}
+                                                                    onClick={() => {
+                                                                        if (p.status !== 'deleted' && !p.fiscalReceiptNo) {
+                                                                            setPaymentDraft({ ...p });
+                                                                            setIsPaymentModalOpen(true);
+                                                                        }
+                                                                    }}
+                                                                >
                                                                     <td>
                                                                         {p.status === 'deleted' ? (
                                                                             <span className="deleted-tag">OBRISANO</span>
                                                                         ) : p.date ? (
-                                                                            <input type="datetime-local" value={p.date} onChange={e => {
-                                                                                const next = [...dossier.finance.payments];
-                                                                                next[pidx].date = e.target.value;
-                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                            }} />
+                                                                            <div style={{ fontSize: '13px', fontWeight: 600 }}>
+                                                                                {p.date.replace('T', ' ')}
+                                                                            </div>
                                                                         ) : (
                                                                             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>Čeka potvrdu...</span>
                                                                         )}
                                                                     </td>
-                                                                    <td className={p.status === 'deleted' ? 'strikethrough' : ''}><input
-                                                                        className="payment-amount-input"
-                                                                        type="number"
-                                                                        disabled={p.status === 'deleted'}
-                                                                        value={p.amount === 0 && p.status !== 'deleted' ? '' : p.amount}
-                                                                        placeholder="0"
-                                                                        onChange={e => {
-                                                                            const val = e.target.value;
-                                                                            const newPayments = [...dossier.finance.payments];
-                                                                            newPayments[pidx].amount = val === '' ? ('' as any) : parseFloat(val);
-                                                                            // Auto calculate RSD if dossier is in EUR/USD
-                                                                            const numVal = parseFloat(val) || 0;
-                                                                            if (p.currency !== 'RSD') {
-                                                                                newPayments[pidx].amountInRsd = numVal * (p.exchangeRate || 1);
-                                                                            } else {
-                                                                                newPayments[pidx].amountInRsd = numVal;
-                                                                            }
-                                                                            setDossier({ ...dossier, finance: { ...dossier.finance, payments: newPayments } });
-                                                                        }} /></td>
+                                                                    <td className={p.status === 'deleted' ? 'strikethrough' : ''}>
+                                                                        <div style={{ fontSize: '15px', fontWeight: 900, color: p.status === 'deleted' ? 'inherit' : 'var(--accent-cyan)' }}>
+                                                                            {p.amount.toLocaleString('sr-RS', { minimumFractionDigits: 2 })}
+                                                                        </div>
+                                                                    </td>
                                                                     <td>
-                                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                            <select value={p.currency} onChange={e => {
-                                                                                const curr = e.target.value as any;
-                                                                                const rate = NBS_RATES[curr as keyof typeof NBS_RATES] || 1;
-                                                                                const newPayments = [...dossier.finance.payments];
-                                                                                newPayments[pidx].currency = curr;
-                                                                                newPayments[pidx].exchangeRate = rate;
-                                                                                newPayments[pidx].amountInRsd = p.amount * rate;
-                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: newPayments } });
-                                                                            }}>
-                                                                                <option value="RSD">RSD</option>
-                                                                                <option value="EUR">EUR</option>
-                                                                                <option value="USD">USD</option>
-                                                                            </select>
+                                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                            <span style={{ fontWeight: 800 }}>{p.currency}</span>
                                                                             {p.currency !== 'RSD' && (
-                                                                                <span style={{ fontSize: '10px', color: 'var(--accent)' }}>
-                                                                                    Kurs: {p.exchangeRate} | {p.amountInRsd?.toFixed(2)} RSD
+                                                                                <span style={{ fontSize: '10px', opacity: 0.6 }}>
+                                                                                    {p.amountInRsd?.toFixed(2)} RSD
                                                                                 </span>
                                                                             )}
                                                                         </div>
                                                                     </td>
                                                                     <td>
-                                                                        <select value={p.method} onChange={e => {
-                                                                            const newPayments = [...dossier.finance.payments];
-                                                                            newPayments[pidx].method = e.target.value as any;
-                                                                            setDossier({ ...dossier, finance: { ...dossier.finance, payments: newPayments } });
-                                                                        }}>
-                                                                            <option value="Cash">Gotovina</option>
-                                                                            <option value="Card">Kartica</option>
-                                                                            <option value="Transfer">Preko računa</option>
-                                                                            <option value="Check">Čekovi</option>
-                                                                        </select>
+                                                                        <span className="res-badge" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', fontSize: '11px' }}>
+                                                                            {p.method === 'Cash' ? 'Gotovina' : p.method === 'Card' ? 'Kartica' : p.method === 'Transfer' ? 'Prenos' : 'Ček'}
+                                                                        </span>
                                                                     </td>
                                                                     <td>
-                                                                        <div className="payer-selection" style={{ minWidth: '150px' }}>
-                                                                            <select
-                                                                                value={p.isExternalPayer ? 'external' : (p.travelerPayerId || '')}
-                                                                                onChange={e => {
-                                                                                    const val = e.target.value;
-                                                                                    const next = [...dossier.finance.payments];
-                                                                                    if (val === 'external') {
-                                                                                        next[pidx].isExternalPayer = true;
-                                                                                        next[pidx].travelerPayerId = undefined;
-                                                                                        if (!next[pidx].payerDetails) {
-                                                                                            next[pidx].payerDetails = { fullName: '', phone: '', email: '', address: '', city: '', country: '' };
-                                                                                        }
-                                                                                    } else {
-                                                                                        next[pidx].isExternalPayer = false;
-                                                                                        next[pidx].travelerPayerId = val;
-                                                                                        const pax = dossier.passengers.find(px => px.id === val);
-                                                                                        next[pidx].payerName = pax ? `${pax.firstName} ${pax.lastName}` : '';
-                                                                                    }
-                                                                                    setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                }}
-                                                                            >
-                                                                                <option value="">Ko plaća?</option>
-                                                                                {dossier.passengers.map(px => (
-                                                                                    <option key={px.id} value={px.id}>{px.firstName} {px.lastName} (Putnik)</option>
-                                                                                ))}
-                                                                                <option value="external">+ Drugo lice (koje ne putuje)</option>
-                                                                            </select>
+                                                                        <div style={{ fontSize: '12px' }}>
+                                                                            <div style={{ fontWeight: 700 }}>{p.payerName || (p.isExternalPayer ? p.payerDetails?.fullName : 'Nije navedeno')}</div>
+                                                                            {p.isExternalPayer && <div style={{ fontSize: '9px', color: '#f97316', fontWeight: 800 }}>TREĆE LICE</div>}
                                                                         </div>
                                                                     </td>
-                                                                    <td><input value={p.fiscalReceiptNo || ''} placeholder="Broj fiskalnog" onChange={e => {
-                                                                        const newPayments = [...dossier.finance.payments];
-                                                                        newPayments[pidx].fiscalReceiptNo = e.target.value;
-                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: newPayments } });
-                                                                    }} /></td>
-                                                                    <td className="actions-cell">
+                                                                    <td>
+                                                                        <div style={{ fontSize: '12px', fontFamily: 'monospace', opacity: p.fiscalReceiptNo ? 1 : 0.4 }}>
+                                                                            {p.fiscalReceiptNo || 'Nije fiskalizovano'}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="actions-cell" onClick={e => e.stopPropagation()}>
                                                                         <div className="actions-wrapper">
-                                                                            {!p.date ? (
+                                                                            {!p.date && p.status !== 'deleted' ? (
                                                                                 <button
                                                                                     className="btn-save-mini"
                                                                                     title="Potvrdi i sačuvaj uplatu"
@@ -3665,187 +3777,15 @@ const ReservationArchitect: React.FC = () => {
                                                                                 >
                                                                                     <Save size={14} /> Potvrdi
                                                                                 </button>
-                                                                            ) : (
+                                                                            ) : p.status !== 'deleted' ? (
                                                                                 <button className="btn-receipt" title="Štampaj" onClick={() => generateDocument('Priznanica')}><Receipt size={14} /></button>
+                                                                            ) : null}
+                                                                            {p.status !== 'deleted' && (
+                                                                                <button className="del-btn-v4" onClick={() => removePayment(p.id)}><Trash2 size={14} /></button>
                                                                             )}
-                                                                            <button className="del-btn-v4" onClick={() => removePayment(p.id)}><Trash2 size={14} /></button>
                                                                         </div>
                                                                     </td>
                                                                 </tr>
-
-                                                                {/* Row for External Payer Details */}
-                                                                {p.isExternalPayer && (
-                                                                    <tr className="payment-details-row">
-                                                                        <td colSpan={7}>
-                                                                            <div className="payment-specific-fields" style={{ borderLeft: '4px solid #f97316' }}>
-                                                                                <div style={{ gridColumn: '1/-1', fontSize: '11px', fontWeight: 800, color: '#f97316', marginBottom: '-8px' }}>
-                                                                                    PODACI O PLATIOCU (Lice koje ne putuje)
-                                                                                </div>
-                                                                                <div className="extra-field-group">
-                                                                                    <label>Ime i Prezime</label>
-                                                                                    <input value={p.payerDetails?.fullName || ''} onChange={e => {
-                                                                                        const next = [...dossier.finance.payments];
-                                                                                        next[pidx].payerDetails!.fullName = e.target.value;
-                                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                    }} />
-                                                                                </div>
-                                                                                <div className="extra-field-group">
-                                                                                    <label>Telefon</label>
-                                                                                    <input value={p.payerDetails?.phone || ''} onChange={e => {
-                                                                                        const next = [...dossier.finance.payments];
-                                                                                        next[pidx].payerDetails!.phone = e.target.value;
-                                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                    }} />
-                                                                                </div>
-                                                                                <div className="extra-field-group">
-                                                                                    <label>Email</label>
-                                                                                    <input value={p.payerDetails?.email || ''} onChange={e => {
-                                                                                        const next = [...dossier.finance.payments];
-                                                                                        next[pidx].payerDetails!.email = e.target.value;
-                                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                    }} />
-                                                                                </div>
-                                                                                <div className="extra-field-group">
-                                                                                    <label>Adresa</label>
-                                                                                    <input value={p.payerDetails?.address || ''} onChange={e => {
-                                                                                        const next = [...dossier.finance.payments];
-                                                                                        next[pidx].payerDetails!.address = e.target.value;
-                                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                    }} />
-                                                                                </div>
-                                                                                <div className="extra-field-group">
-                                                                                    <label>Grad / Mesto</label>
-                                                                                    <input value={p.payerDetails?.city || ''} onChange={e => {
-                                                                                        const next = [...dossier.finance.payments];
-                                                                                        next[pidx].payerDetails!.city = e.target.value;
-                                                                                        setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                    }} />
-                                                                                </div>
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                )}
-
-                                                                {/* Row for conditional fields */}
-                                                                {p.method !== 'Cash' && (
-                                                                    <tr className="payment-details-row">
-                                                                        <td colSpan={7}>
-                                                                            <div className="payment-specific-fields">
-                                                                                {p.method === 'Card' && (
-                                                                                    <>
-                                                                                        <div className="extra-field-group">
-                                                                                            <label>Vrsta kartice</label>
-                                                                                            <select value={p.cardType || ''} onChange={e => {
-                                                                                                const next = [...dossier.finance.payments];
-                                                                                                next[pidx].cardType = e.target.value as any;
-                                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                            }}>
-                                                                                                <option value="">Odaberi...</option>
-                                                                                                <option value="Master">Master</option>
-                                                                                                <option value="Visa">Visa</option>
-                                                                                                <option value="Dina">Dina</option>
-                                                                                                <option value="American">American</option>
-                                                                                            </select>
-                                                                                        </div>
-                                                                                        <div className="extra-field-group">
-                                                                                            <label>Banka</label>
-                                                                                            <input value={p.bankName || ''} placeholder="Naziv banke..." onChange={e => {
-                                                                                                const next = [...dossier.finance.payments];
-                                                                                                next[pidx].bankName = e.target.value;
-                                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                            }} />
-                                                                                        </div>
-                                                                                        <div className="extra-field-group">
-                                                                                            <label>Broj rata</label>
-                                                                                            <input type="number" min="1" value={p.installmentsCount || ''} placeholder="Npr. 6" onChange={e => {
-                                                                                                const val = e.target.value;
-                                                                                                const next = [...dossier.finance.payments];
-                                                                                                next[pidx].installmentsCount = val === '' ? ('' as any) : parseInt(val);
-                                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                            }} />
-                                                                                        </div>
-                                                                                    </>
-                                                                                )}
-
-
-                                                                                {p.method === 'Transfer' && (
-                                                                                    <>
-                                                                                        <div className="extra-field-group">
-                                                                                            <label>Odabir banke</label>
-                                                                                            <input value={p.bankName || ''} placeholder="Naziv banke..." onChange={e => {
-                                                                                                const next = [...dossier.finance.payments];
-                                                                                                next[pidx].bankName = e.target.value;
-                                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                            }} />
-                                                                                        </div>
-                                                                                        <div className="extra-field-group">
-                                                                                            <label>Ime i prezime uplatioca</label>
-                                                                                            <input value={p.payerName || ''} placeholder="Ko uplaćuje?" onChange={e => {
-                                                                                                const next = [...dossier.finance.payments];
-                                                                                                next[pidx].payerName = e.target.value;
-                                                                                                setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                            }} />
-                                                                                        </div>
-                                                                                    </>
-                                                                                )}
-
-                                                                                {p.method === 'Check' && (
-                                                                                    <div className="checks-container">
-                                                                                        <div className="checks-header">
-                                                                                            <h5><CreditCard size={14} /> Specifikacija Čekova</h5>
-                                                                                            <button className="add-btn" onClick={() => addCheckToPayment(p.id)} style={{ padding: '4px 10px', fontSize: '10px' }}>
-                                                                                                <Plus size={10} /> Dodaj Ček
-                                                                                            </button>
-                                                                                        </div>
-                                                                                        <table className="checks-sub-table">
-                                                                                            <thead>
-                                                                                                <tr>
-                                                                                                    <th>Broj čeka</th>
-                                                                                                    <th>Banka</th>
-                                                                                                    <th>Iznos</th>
-                                                                                                    <th>Datum realizacije</th>
-                                                                                                    <th></th>
-                                                                                                </tr>
-                                                                                            </thead>
-                                                                                            <tbody>
-                                                                                                {(p.checks || []).map((check, cidx) => (
-                                                                                                    <tr key={check.id}>
-                                                                                                        <td><input value={check.checkNumber} onChange={e => {
-                                                                                                            const next = [...dossier.finance.payments];
-                                                                                                            next[pidx].checks![cidx].checkNumber = e.target.value;
-                                                                                                            setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                                        }} /></td>
-                                                                                                        <td><input value={check.bank} onChange={e => {
-                                                                                                            const next = [...dossier.finance.payments];
-                                                                                                            next[pidx].checks![cidx].bank = e.target.value;
-                                                                                                            setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                                        }} /></td>
-                                                                                                        <td><input type="number" value={check.amount || ''} onChange={e => {
-                                                                                                            const val = e.target.value;
-                                                                                                            const next = [...dossier.finance.payments];
-                                                                                                            next[pidx].checks![cidx].amount = val === '' ? ('' as any) : parseFloat(val);
-                                                                                                            setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                                        }} /></td>
-                                                                                                        <td><input type="date" value={check.realizationDate} onChange={e => {
-                                                                                                            const next = [...dossier.finance.payments];
-                                                                                                            next[pidx].checks![cidx].realizationDate = e.target.value;
-                                                                                                            setDossier({ ...dossier, finance: { ...dossier.finance, payments: next } });
-                                                                                                        }} /></td>
-                                                                                                        <td><button className="del-btn-v4" onClick={() => removeCheckFromPayment(p.id, check.id)}><X size={10} /></button></td>
-                                                                                                    </tr>
-                                                                                                ))}
-                                                                                            </tbody>
-                                                                                        </table>
-                                                                                        <div className="checks-total-bar">
-                                                                                            <span>Ukupno čekovima:</span>
-                                                                                            <span>{(p.checks || []).reduce((sum, c) => sum + c.amount, 0).toFixed(2)} {p.currency}</span>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                )}
                                                             </React.Fragment>
                                                         ))}
                                                         {dossier.finance.payments.length === 0 && (
@@ -4069,7 +4009,7 @@ const ReservationArchitect: React.FC = () => {
                                                 </div>
                                             )}
 
-                                            <div className="insurance-card v4">
+                                            < div className="insurance-card v4">
                                                 <div className="card-top">
                                                     <ShieldCheck size={32} color="#eab308" />
                                                     <div>
@@ -4099,8 +4039,7 @@ const ReservationArchitect: React.FC = () => {
                                         </>
                                     )}
                                 </section>
-                            )
-                        }
+                            )}
                         {/* SECTION: B2B COMMUNICATION CENTER */}
                         {
                             activeSection === 'communication' && isSubagent && (
@@ -4216,8 +4155,7 @@ const ReservationArchitect: React.FC = () => {
                                         </>
                                     )}
                                 </section>
-                            )
-                        }
+                            )}
 
                         {/* SECTION: DOCUMENTS */}
                         {
@@ -4372,8 +4310,7 @@ const ReservationArchitect: React.FC = () => {
                                         </div>
                                     </div>
                                 </section>
-                            )
-                        }
+                            )}
                         {/* SECTION 7: HISTORY (ACTIVITY LOGS) */}
                         {
                             activeSection === 'history' && (
@@ -4499,8 +4436,7 @@ const ReservationArchitect: React.FC = () => {
                                         </div>
                                     )}
                                 </section>
-                            )
-                        }
+                            )}
                         {/* SECTION: DESTINATION REPRESENTATIVE */}
                         {
                             activeSection === 'rep' && (
@@ -4658,8 +4594,7 @@ const ReservationArchitect: React.FC = () => {
                                         </div>
                                     </div>
                                 </section>
-                            )
-                        }
+                            )}
                     </main >
                 </div >
 
@@ -4678,8 +4613,7 @@ const ReservationArchitect: React.FC = () => {
                             }}
                             onClose={() => setActiveCalendar(null)}
                         />
-                    )
-                }
+                    )}
 
                 {/* --- EMAIL MODAL --- */}
                 {
@@ -4697,8 +4631,7 @@ const ReservationArchitect: React.FC = () => {
                             ]}
                             isBulk={false}
                         />
-                    )
-                }
+                    )}
 
                 {/* --- DOSSIER CANCELLATION MODAL --- */}
                 {
@@ -4707,8 +4640,7 @@ const ReservationArchitect: React.FC = () => {
                             item={policyToShow.item}
                             onClose={() => setPolicyToShow(null)}
                         />
-                    )
-                }
+                    )}
 
                 {/* --- FOOTER V3 --- */}
                 <footer className="res-footer-v2">
@@ -4748,8 +4680,9 @@ const ReservationArchitect: React.FC = () => {
 
                 {/* --- PRINTABLE CONTRACT SECTION (Hidden in UI, visible in Print) --- */}
                 <div className="printable-contract">
-                    <div className="print-header">
-                        <h1>Olympic Travel - Ugovor o Putovanju</h1>
+                    <div className="print-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                        <img src="/logo.png" alt="Olympic Travel Logo" style={{ maxHeight: '60px', objectFit: 'contain' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        <h1 style={{ marginTop: '10px' }}>Olympic Travel - Ugovor o Putovanju</h1>
                         <p>Dossier: {dossier.resCode || dossier.cisCode}</p>
                     </div>
 
@@ -4797,6 +4730,55 @@ const ReservationArchitect: React.FC = () => {
                         </table>
                     </section>
 
+                    {/* FINANSIJSKI IZVEŠTAJ ZA ŠTAMPU */}
+                    {canViewFinancials && (
+                        <section className="print-financial-section" style={{ marginTop: '20px', pageBreakInside: 'avoid' }}>
+                            <h4>Finansijski Izveštaj</h4>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '15px' }}>
+                                <div style={{ background: '#f8fafc', padding: '10px 15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '4px' }}>Ukupno za naplatu</span>
+                                    <strong style={{ fontSize: '16px', color: '#0f172a' }}>{totalBrutto.toFixed(2)} {dossier.finance.currency}</strong>
+                                </div>
+                                <div style={{ background: '#f0fdf4', padding: '10px 15px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#166534', display: 'block', marginBottom: '4px' }}>Ukupno uplaćeno</span>
+                                    <strong style={{ fontSize: '16px', color: '#15803d' }}>{totalPaid.toFixed(2)} {dossier.finance.currency}</strong>
+                                </div>
+                                <div style={{ background: '#fef2f2', padding: '10px 15px', borderRadius: '8px', border: '1px solid #fecaca' }}>
+                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#991b1b', display: 'block', marginBottom: '4px' }}>Preostalo (Dug)</span>
+                                    <strong style={{ fontSize: '16px', color: '#dc2626' }}>{balance.toFixed(2)} {dossier.finance.currency}</strong>
+                                </div>
+                            </div>
+
+                            {dossier.finance.payments && dossier.finance.payments.length > 0 && (
+                                <table style={{ marginTop: '15px' }}>
+                                    <thead>
+                                        <tr>
+                                            <th>Datum uplate</th>
+                                            <th>Metod</th>
+                                            <th>Iznos</th>
+                                            <th>Fiskalni / SEF / Reference dokumenta</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {dossier.finance.payments.map((p, idx) => (
+                                            p.status !== 'deleted' && (
+                                                <tr key={idx}>
+                                                    <td>{p.date ? p.date.replace('T', ' ') : 'Nepotvrđeno'}</td>
+                                                    <td>{p.method}</td>
+                                                    <td><strong>{p.amount.toFixed(2)} {p.currency}</strong></td>
+                                                    <td style={{ fontFamily: 'monospace', fontSize: '11px', color: '#475569' }}>
+                                                        {p.fiscalReceiptNo || '---'}
+                                                    </td>
+                                                </tr>
+                                            )
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </section>
+                    )}
+
                     <div className="print-legal-section">
                         <h4>Prava, Garancije i Obaveze</h4>
                         {dossier.insurance.confirmationText ? (
@@ -4821,16 +4803,50 @@ const ReservationArchitect: React.FC = () => {
                             <div className="line"></div>
                         </div>
                     </div>
+
+                    <div className="print-footer" style={{ marginTop: '50px', paddingTop: '20px', borderTop: '2px solid #000', textAlign: 'center', fontSize: '10pt', color: '#555', pageBreakInside: 'avoid' }}>
+                        <strong style={{ fontSize: '12pt', color: '#000' }}>Olympic Travel d.o.o.</strong><br />
+                        Adresa: Prvomajska 1, 11000 Beograd, Srbija | PIB: 123456789 | Matični broj: 98765432<br />
+                        Telefon: +381 11 123 4567 | Email: office@olympic.rs | Web: www.olympic.rs<br />
+                        Broj licence: OTP 123/2026 Kategorija A
+                    </div>
                 </div>
+
+
+                {
+                    isPaymentModalOpen && (
+                        <PaymentEntryModal
+                            isOpen={isPaymentModalOpen}
+                            onClose={() => setIsPaymentModalOpen(false)}
+                            draft={paymentDraft}
+                            setDraft={setPaymentDraft}
+                            onSave={(draft) => {
+                                if (!draft) return;
+                                setDossier(prev => ({
+                                    ...prev,
+                                    finance: {
+                                        ...prev.finance,
+                                        payments: [...prev.finance.payments.filter(p => p.id !== draft.id), draft]
+                                    }
+                                }));
+                                setIsPaymentModalOpen(false);
+                                setPaymentDraft(null);
+                                addLog('Uplata sačuvana', `Uplata od ${draft.amount} ${draft.currency} je dodata u evidenciju.`, 'success');
+                            }}
+                            dossier={dossier}
+                        />
+                    )}
+
+                <ActionConfirmModal
+                    {...confirmModal}
+                    onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                />
             </div>
-        </div >
+        </div>
     );
 };
 
-interface DossierCancellationModalProps {
-    item: TripItem;
-    onClose: () => void;
-}
+
 
 const DossierCancellationModal: React.FC<DossierCancellationModalProps> = ({ item, onClose }) => {
     const policy = Array.isArray(item.cancellationPolicy) ? item.cancellationPolicy : null;
@@ -4928,6 +4944,268 @@ const DossierCancellationModal: React.FC<DossierCancellationModalProps> = ({ ite
         </div>,
         document.body
     );
+};
+
+
+
+
+
+
+const PaymentEntryModal: React.FC<PaymentEntryModalProps> = ({
+    isOpen, onClose, draft, setDraft, onSave, dossier
+}) => {
+    if (!isOpen || !draft) return null;
+
+    const currencies = [
+        { id: 'RSD', label: 'RSD', icon: <Coins size={24} /> },
+        { id: 'EUR', label: 'EUR', icon: <Euro size={24} /> },
+    ];
+
+    const methods = [
+        { id: 'Cash', label: 'Gotovina', icon: <Banknote size={24} /> },
+        { id: 'Card', label: 'Kartica', icon: <CreditCard size={24} /> },
+        { id: 'Transfer', label: 'Prenos', icon: <ArrowRightLeft size={24} /> },
+        { id: 'Check', label: 'Čekovi', icon: <FileText size={24} /> },
+    ];
+
+    const payers = [
+        { id: 'booker', label: 'Ugovarač', sub: dossier.booker.fullName, icon: <User size={24} /> },
+        ...dossier.passengers.map((p: any) => ({
+            id: p.id, label: 'Putnik', sub: `${p.firstName} ${p.lastName}`, icon: <Users size={24} />
+        })),
+        { id: 'external', label: 'Treće lice', sub: 'Spoljni uplatilac', icon: <UserPlus size={24} /> },
+    ];
+
+    const handleBackdropClick = (e: React.MouseEvent) => {
+        if (e.target === e.currentTarget) onClose();
+    };
+
+    return createPortal(
+        <div className="payment-modal-overlay" onClick={handleBackdropClick}>
+            <div className="payment-modal-container">
+                {/* Header */}
+                <div className="payment-modal-header">
+                    <div>
+                        <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ padding: '8px', background: 'rgba(0, 229, 255, 0.1)', borderRadius: '12px', color: 'var(--accent-cyan)' }}>
+                                <Banknote size={20} />
+                            </div>
+                            Nova Uplata
+                        </h3>
+                        <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                            Kreiranje novog finansijskog zapisa i fiskalizacija
+                        </p>
+                    </div>
+                    <button onClick={onClose} className="hover-close" style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s'
+                    }}>
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="payment-modal-body custom-scrollbar">
+
+                    {/* Amount & Currency Section */}
+                    <div style={{ marginBottom: '32px' }}>
+                        <div className="modal-section-title">Iznos i Valuta</div>
+                        <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="number"
+                                        value={draft.amount || ''}
+                                        onChange={e => setDraft({ ...draft, amount: parseFloat(e.target.value) || 0 })}
+                                        placeholder="0.00"
+                                        className="payment-amount-input"
+                                    />
+                                    <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>
+                                        {draft.currency}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                {currencies.map(c => (
+                                    <div
+                                        key={c.id}
+                                        className={`selection-card ${draft.currency === c.id ? 'active' : ''}`}
+                                        style={{ width: '80px', padding: '12px' }}
+                                        onClick={() => setDraft({ ...draft, currency: c.id as any, exchangeRate: NBS_RATES[c.id as keyof typeof NBS_RATES] || 1 })}
+                                    >
+                                        <div className="icon-box">{c.icon}</div>
+                                        <div className="label" style={{ fontSize: '11px' }}>{c.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Payment Method Section */}
+                    <div style={{ marginBottom: '32px' }}>
+                        <div className="modal-section-title">Način Plaćanja</div>
+                        <div className="payment-selection-grid">
+                            {methods.map(m => (
+                                <div
+                                    key={m.id}
+                                    className={`selection-card ${draft.method === m.id ? 'active' : ''}`}
+                                    onClick={() => setDraft({ ...draft, method: m.id as any })}
+                                >
+                                    <div className="check-badge"><div style={{ width: '10px', height: '10px', background: 'currentColor', borderRadius: '50%' }} /></div>
+                                    <div className="icon-box">{m.icon}</div>
+                                    <div className="label">{m.label}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Payer Selection */}
+                    <div style={{ marginBottom: '32px' }}>
+                        <div className="modal-section-title">Ko Plaća?</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            {payers.map(p => (
+                                <div
+                                    key={p.id}
+                                    className={`selection-card ${(p.id === 'booker' && !draft.isExternalPayer && draft.payerName === p.sub) ||
+                                        (p.id === 'external' && draft.isExternalPayer) ||
+                                        (p.id !== 'booker' && p.id !== 'external' && draft.payerName === p.sub) ? 'active' : ''
+                                        }`}
+                                    style={{ flexDirection: 'row', justifyContent: 'flex-start', padding: '12px 16px', gap: '16px' }}
+                                    onClick={() => {
+                                        if (p.id === 'external') {
+                                            setDraft({
+                                                ...draft,
+                                                isExternalPayer: true,
+                                                payerName: '',
+                                                payerDetails: draft.payerDetails || { fullName: '', phone: '', email: '', address: '', city: '' }
+                                            });
+                                        } else {
+                                            setDraft({
+                                                ...draft,
+                                                isExternalPayer: false,
+                                                payerName: p.sub,
+                                                payerDetails: undefined
+                                            });
+                                        }
+                                    }}
+                                >
+                                    <div className="icon-box" style={{ width: '36px', height: '36px' }}>{p.icon}</div>
+                                    <div style={{ textAlign: 'left' }}>
+                                        <div className="label" style={{ fontSize: '11px', opacity: 0.6, fontWeight: 500 }}>{p.label}</div>
+                                        <div className="label" style={{ fontSize: '13px' }}>{p.sub}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* External Payer Details (Conditional) */}
+                    {draft.isExternalPayer && (
+                        <div className="external-payer-box" style={{ animation: 'fadeInRes 0.3s ease-out' }}>
+                            <div className="modal-section-title" style={{ color: '#f97316' }}>Podaci o spoljnom platiocu</div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                <div>
+                                    <label style={{ fontSize: '10px', color: '#f97316', fontWeight: 800 }}>IME I PREZIME</label>
+                                    <input
+                                        style={{ width: '100%', marginTop: '4px', border: '1px solid rgba(249, 115, 22, 0.2)' }}
+                                        value={draft.payerDetails?.fullName || ''}
+                                        onChange={e => setDraft({ ...draft, payerDetails: { ...draft.payerDetails!, fullName: e.target.value } })}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '10px', color: '#f97316', fontWeight: 800 }}>TELEFON</label>
+                                    <input
+                                        style={{ width: '100%', marginTop: '4px', border: '1px solid rgba(249, 115, 22, 0.2)' }}
+                                        value={draft.payerDetails?.phone || ''}
+                                        onChange={e => setDraft({ ...draft, payerDetails: { ...draft.payerDetails!, phone: e.target.value } })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Additional Options */}
+                    <div>
+                        <div className="modal-section-title">Dodatno</div>
+                        <div style={{ display: 'flex', gap: '16px' }}>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 800 }}>DATUM I VREME UPLATE</label>
+                                <input
+                                    type="datetime-local"
+                                    style={{ width: '100%', marginTop: '4px' }}
+                                    value={draft.date || ''}
+                                    onChange={e => setDraft({ ...draft, date: e.target.value })}
+                                />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 800 }}>BROJ PRIZNANICE</label>
+                                <input
+                                    style={{ width: '100%', marginTop: '4px' }}
+                                    value={draft.receiptNo || ''}
+                                    onChange={e => setDraft({ ...draft, receiptNo: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                {/* Footer Actions */}
+                <div className="payment-modal-footer">
+                    <button
+                        onClick={onClose}
+                        style={{
+                            background: 'transparent',
+                            border: '1px solid var(--border)',
+                            color: 'var(--text-secondary)',
+                            padding: '12px 24px',
+                            borderRadius: '16px',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Otkaži
+                    </button>
+                    <button
+                        onClick={() => onSave(draft, false)}
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '14px 28px', borderRadius: '18px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+                    >
+                        <Save size={18} /> USLADISTI
+                    </button>
+
+                    <button
+                        onClick={() => onSave(draft, true)}
+                        style={{
+                            background: 'linear-gradient(135deg, var(--accent-cyan) 0%, #0097a7 100%)',
+                            border: 'none',
+                            color: '#000',
+                            padding: '14px 36px',
+                            borderRadius: '18px',
+                            fontWeight: 900,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            boxShadow: '0 10px 30px -5px rgba(0, 229, 255, 0.4)'
+                        }}
+                    >
+                        <ShieldCheck size={20} /> POTVRDI I FISKALIZUJ
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+
 };
 
 export default ReservationArchitect;

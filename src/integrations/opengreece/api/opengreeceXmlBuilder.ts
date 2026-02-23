@@ -1,7 +1,7 @@
 // Open Greece XML Builder
 // Helper functions to build OTA XML requests
 
-import { OPENGREECE_CONFIG, getOTATimestamp, generateEchoToken } from '../config/opengreeceConfig';
+import { OPENGREECE_CONFIG, getOTATimestamp, generateEchoToken } from './opengreeceConfig';
 import type { OTARequestOptions, POSAuthentication } from '../types/opengreece.types';
 
 // ============================================================================

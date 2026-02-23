@@ -2,9 +2,9 @@
  * Kyte Flight Provider Adapter
  */
 
-import type { FlightProvider, FlightSearchParams, FlightOffer } from '../../services/providers/FlightProviderInterface' ;
+import type { FlightProvider, FlightSearchParams, FlightOffer } from '../../services/providers/FlightProviderInterface';
 import type { FlightBookingRequest, FlightBookingResponse } from '../../types/flight.types';
-import { getKyteApi } from '../flight/providers/kyte/kyteApiService';
+import { getKyteApi } from '../../services/flight/providers/kyte/kyteApiService';
 
 export class KyteProvider implements FlightProvider {
     readonly name = 'Kyte';

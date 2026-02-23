@@ -4,7 +4,7 @@ import {
     Filter, Download, Loader2, MapPin, Star, Zap
 } from 'lucide-react';
 import './AdminHotelImport.css';
-import { filosApiService } from '../services/filos/api/filosApiService';
+import { filosApiService } from '../integrations/filos/api/filosApiService';
 import solvexDictionaryService from '../integrations/solvex/api/solvexDictionaryService';
 import { AiIntelligenceService } from '../services/ai/AiIntelligenceService';
 import { saveToCloud, loadFromCloud } from '../utils/storageUtils';

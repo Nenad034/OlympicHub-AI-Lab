@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import { APITestTemplate, type APITestSection } from '../components/APITestTemplate';
 import { OpenGreeceAPI } from '../integrations/opengreece/api/opengreeceApiService';
-import { OPENGREECE_CONFIG } from '../config/opengreeceConfig';
+import { OPENGREECE_CONFIG } from '../integrations/opengreece/api/opengreeceConfig';
 import { getMockPushResponse } from '../integrations/opengreece/api/opengreeceMockData';
 
 export const OpenGreeceTest: React.FC = () => {
