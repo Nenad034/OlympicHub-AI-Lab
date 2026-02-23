@@ -22,7 +22,7 @@ export type TabId = 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'ski'
 export type SearchMode = 'classic' | 'narrative' | 'immersive';
 export type ViewMode = 'grid' | 'list' | 'notepad';
 export type SortBy = 'smart' | 'price_low' | 'price_high';
-export type BudgetType = 'total' | 'person';
+export type BudgetType = 'total' | 'person' | 'room';
 
 export interface SearchHistoryItem {
     id: string;

@@ -392,15 +392,17 @@ const Dashboard: React.FC = () => {
                         <div style={{
                             display: 'flex',
                             justifyContent: 'center',
-                            marginBottom: '20px'
+                            marginBottom: '30px',
+                            width: '100%'
                         }}>
                             <div className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`} style={{
-                                display: 'grid',
-                                gridTemplateColumns: viewMode === 'list' ? '1fr' : 'repeat(3, 1fr)',
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                justifyContent: 'center',
                                 maxWidth: '1400px',
                                 margin: '0 auto',
                                 width: '100%',
-                                gap: '24px'
+                                gap: '32px'
                             }}>
                                 {row1Apps.map((app: AppConfig, idx: number) => (
                                     <motion.div
@@ -411,9 +413,15 @@ const Dashboard: React.FC = () => {
                                         className={`module-card featured ${viewMode === 'list' ? 'list-item' : ''}`}
                                         onClick={() => handleAppClick(app)}
                                         style={{
-                                            border: viewMode === 'list' ? '1px solid var(--border)' : '1px solid var(--accent)',
-                                            boxShadow: viewMode === 'list' ? 'none' : '0 10px 30px rgba(59, 130, 246, 0.1)',
-                                            padding: viewMode === 'list' ? '20px' : '24px'
+                                            border: viewMode === 'list' ? '1px solid var(--border)' : '1.5px solid var(--accent)',
+                                            boxShadow: viewMode === 'list' ? 'none' : '0 15px 45px rgba(59, 130, 246, 0.25)',
+                                            padding: viewMode === 'list' ? '20px' : '40px 32px',
+                                            minWidth: viewMode === 'list' ? '100%' : '440px',
+                                            flex: viewMode === 'list' ? '1' : '0 1 auto',
+                                            minHeight: viewMode === 'list' ? 'auto' : '160px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center'
                                         }}
                                     >
                                         {/* Original content remains the same */}

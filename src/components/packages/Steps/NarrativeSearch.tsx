@@ -76,7 +76,7 @@ export const NarrativeSearch: React.FC<NarrativeSearchProps> = ({ basicInfo, onU
     const [nationality, setNationality] = useState(basicInfo?.nationality || 'RS');
     const [budgetFrom, setBudgetFrom] = useState<string>(basicInfo?.budgetFrom?.toString() || '');
     const [budgetTo, setBudgetTo] = useState<string>(basicInfo?.budgetTo?.toString() || '');
-    const [budgetType, setBudgetType] = useState<'person' | 'total'>('person');
+    const [budgetType, setBudgetType] = useState<'person' | 'total' | 'room'>('person');
 
     const [activeCountryTag, setActiveCountryTag] = useState<string | null>(null);
 

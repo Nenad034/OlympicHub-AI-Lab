@@ -34,7 +34,7 @@ export interface BasicInfoData {
     budget?: number;
     budgetFrom?: number;
     budgetTo?: number;
-    budgetType?: 'person' | 'total';
+    budgetType?: 'person' | 'total' | 'room';
     nationality?: string;
     currency: string;
     startDate: string;

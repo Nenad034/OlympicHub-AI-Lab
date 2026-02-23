@@ -263,7 +263,7 @@ interface SearchHistoryItem {
         roomAllocations: RoomAllocation[];
         mealPlan: string;
         nationality: string;
-        budgetType: 'total' | 'person';
+        budgetType: 'total' | 'person' | 'room';
         tab: 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'ski';
         searchMode: 'classic' | 'narrative' | 'immersive';
         budgetFrom?: string;
@@ -402,7 +402,7 @@ const SmartSearch: React.FC = () => {
 
     const [mealPlan, setMealPlan] = useState('');
     const [nationality, setNationality] = useState('RS');
-    const [budgetType, setBudgetType] = useState<'total' | 'person'>('person');
+    const [budgetType, setBudgetType] = useState<'total' | 'person' | 'room'>('person');
     const [showModes, setShowModes] = useState(true);
 
     // API Providers State
@@ -903,7 +903,7 @@ const SmartSearch: React.FC = () => {
         nationality?: string,
         budgetFrom?: string,
         budgetTo?: string,
-        budgetType?: 'total' | 'person',
+        budgetType?: 'total' | 'person' | 'room',
         searchType?: string,
         searchMode?: 'classic' | 'narrative' | 'immersive'
     }) => {

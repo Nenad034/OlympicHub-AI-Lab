@@ -21,7 +21,7 @@ export interface ImmersiveSearchData {
     categories?: string[];
     services?: string[];
     nationality?: string;
-    budget?: { from?: number; to?: number; type?: 'person' | 'total' };
+    budget?: { from?: number; to?: number; type?: 'person' | 'total' | 'room' };
 }
 
 interface ImmersiveSearchProps {
@@ -141,7 +141,7 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
     const [nationality, setNationality] = useState('RS'); // Mandatory
     const [budgetFrom, setBudgetFrom] = useState('');     // Optional
     const [budgetTo, setBudgetTo] = useState('');         // Optional
-    const [budgetType, setBudgetType] = useState<'person' | 'total'>('person');
+    const [budgetType, setBudgetType] = useState<'person' | 'total' | 'room'>('person');
 
     const [activeCalendar, setActiveCalendar] = useState<'in' | 'out' | null>(null);
 

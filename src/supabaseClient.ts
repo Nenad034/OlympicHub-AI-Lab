@@ -55,6 +55,7 @@ const createMockBuilder = (table: string, method: string) => {
         order: () => builder,
         limit: () => builder,
         in: () => builder,
+        not: () => builder,
         upsert: () => builder,
         insert: () => builder,
         update: () => builder,
@@ -80,6 +81,7 @@ if (isConfigured) {
         auth: {
             getSession: () => Promise.resolve({ data: { session: null }, error: null }),
             getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+            refreshSession: () => Promise.resolve({ data: { session: null, user: null }, error: null }),
             signOut: () => Promise.resolve({ error: null }),
             onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } })
         },
