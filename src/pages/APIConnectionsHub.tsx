@@ -109,6 +109,17 @@ const APIConnectionsHub: React.FC = () => {
             color: '#0277bd',
             testPath: '/filos-test',
             features: ['B2B XML/JSON API', 'Greek Hotels', 'Transfers', 'Activities', 'Static Data Sync']
+        },
+        {
+            id: 'mtsglobe',
+            name: 'MTS Globe / Axisdata',
+            provider: 'MTS Globe Group',
+            description: 'Leading DMC in Europe, Mediterranean and UAE - Global hotel supply via OTA XML',
+            iconName: 'globe',
+            status: 'testing',
+            color: '#00bcd4',
+            testPath: '/mtsglobe-test',
+            features: ['OTA Standard', 'Global Inventory', 'Dynamic Availability', 'Room Mapping']
         }
     ], []);
 

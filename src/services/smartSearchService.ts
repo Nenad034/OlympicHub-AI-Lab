@@ -5,6 +5,7 @@
 
 import { SolvexProvider } from '../integrations/solvex/SolvexProvider';
 import { FilosProvider } from '../integrations/filos/FilosProvider';
+import { MtsGlobeProvider } from '../integrations/mtsglobe/MtsGlobeProvider';
 
 export interface RoomAllocation {
     adults: number;
@@ -52,7 +53,7 @@ export interface SmartSearchResult {
 }
 
 export const PROVIDER_MAPPING = {
-    hotel: { providers: ['solvex', 'filos'], primary: 'solvex' },
+    hotel: { providers: ['solvex', 'filos', 'mtsglobe'], primary: 'solvex' },
     flight: { providers: [], primary: '' },
     package: { providers: [], primary: '' },
     transfer: { providers: [], primary: '' },
@@ -100,6 +101,7 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
 
     const solvexProvider = new SolvexProvider();
     const filosProvider = new FilosProvider();
+    const mtsGlobeProvider = new MtsGlobeProvider();
     const finalResultsMap = new Map<string, SmartSearchResult>();
 
     try {
@@ -178,6 +180,28 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                     }
                 }
 
+                // MTS GLOBE SEARCH
+                const isMtsGlobeEnabled = params.enabledProviders?.mtsglobe;
+                if (isMtsGlobeEnabled || (noProvidersSpecified && PROVIDER_MAPPING.hotel.providers.includes('mtsglobe'))) {
+                    try {
+                        console.log(`[SmartSearchService] Calling MtsGlobeProvider for ${dest.name}...`);
+                        const mtsResults = await mtsGlobeProvider.search({
+                            destination: dest.name,
+                            checkIn: new Date(params.checkIn),
+                            checkOut: new Date(params.checkOut),
+                            adults: config.adults,
+                            children: config.children,
+                            childrenAges: config.ages,
+                            providerId: String(dest.id).startsWith('mtsglobe-') ? String(dest.id).split('-').pop() : undefined,
+                            abortSignal: params.abortSignal
+                        });
+                        console.log('[SmartSearchService] MTS Globe returned:', mtsResults.length, 'results');
+                        results.push(...mtsResults);
+                    } catch (e) {
+                        console.error('MTS Globe search failed', e);
+                    }
+                }
+
                 console.log('[SmartSearchService] Total results for this config:', results.length);
                 return { config, results };
             });
@@ -212,8 +236,12 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                     const hotelKey = h.hotelName.toLowerCase();
                     if (hotelsInAllConfigs.has(hotelKey)) {
                         if (!finalResultsMap.has(hotelKey)) {
+                            let providerName = 'Solvex';
+                            if (String(h.id).startsWith('filos-')) providerName = 'Filos';
+                            else if (String(h.id).startsWith('mtsglobe-')) providerName = 'MtsGlobe';
+
                             finalResultsMap.set(hotelKey, {
-                                provider: String(h.id).startsWith('filos-') ? 'Filos' : 'Solvex',
+                                provider: providerName,
                                 type: 'hotel',
                                 id: h.id,
                                 name: h.hotelName,

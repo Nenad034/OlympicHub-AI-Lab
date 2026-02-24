@@ -413,7 +413,8 @@ const SmartSearch: React.FC = () => {
         solvex: true,
         solvexai: true,
         ors: true,
-        filos: true
+        filos: true,
+        mtsglobe: true
     });
     const [showProviderPanel, setShowProviderPanel] = useState(() => {
         const saved = localStorage.getItem('showProviderPanel');
@@ -1465,7 +1466,8 @@ const SmartSearch: React.FC = () => {
                                         solvex: newState,
                                         solvexai: newState,
                                         ors: newState,
-                                        filos: newState
+                                        filos: newState,
+                                        mtsglobe: newState
                                     });
                                 }}
                                 style={{
@@ -1492,7 +1494,8 @@ const SmartSearch: React.FC = () => {
                                     { id: 'solvex', name: 'Solvex', icon: Database },
                                     { id: 'solvexai', name: 'Solvex AI', icon: Sparkles },
                                     { id: 'ors', name: 'ORS', icon: Zap },
-                                    { id: 'filos', name: 'Filos', icon: Ship }
+                                    { id: 'filos', name: 'Filos', icon: Ship },
+                                    { id: 'mtsglobe', name: 'MTS Globe', icon: Globe }
                                 ].map((prov) => {
                                     const active = (enabledProviders as any)[prov.id];
                                     return (

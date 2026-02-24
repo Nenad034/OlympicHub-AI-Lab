@@ -8,9 +8,11 @@ interface ModernCalendarProps {
     endDate: string | null;
     onChange: (start: string, end: string) => void;
     onClose: () => void;
+    singleMode?: boolean;
+    allowPast?: boolean;
 }
 
-export const ModernCalendar: React.FC<ModernCalendarProps> = ({ startDate, endDate, onChange, onClose }) => {
+export const ModernCalendar: React.FC<ModernCalendarProps> = ({ startDate, endDate, onChange, onClose, singleMode, allowPast }) => {
     const [viewDate, setViewDate] = useState(startDate ? new Date(startDate) : new Date());
     const [selStart, setSelStart] = useState<Date | null>(startDate ? new Date(startDate) : null);
     const [selEnd, setSelEnd] = useState<Date | null>(endDate ? new Date(endDate) : null);
@@ -37,9 +39,14 @@ export const ModernCalendar: React.FC<ModernCalendarProps> = ({ startDate, endDa
         const clicked = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        if (!allowPast && clicked < today) return;
 
-        // Filos and other providers often require future dates
-        if (clicked <= today) return;
+        if (singleMode) {
+            const iso = toLocalIso(clicked);
+            onChange(iso, iso);
+            setTimeout(onClose, 200);
+            return;
+        }
 
         if (!selStart || (selStart && selEnd)) {
             setSelStart(clicked);

@@ -43,6 +43,7 @@ import { SolvexAiProvider } from '../../integrations/solvex/SolvexAiProvider';
 import { OpenGreeceProvider } from '../../integrations/opengreece/OpenGreeceProvider';
 import { TCTProvider } from '../../integrations/tct/TCTProvider';
 import { FilosProvider } from '../../integrations/filos/FilosProvider';
+import { MtsGlobeProvider } from '../../integrations/mtsglobe/MtsGlobeProvider';
 import { searchHistory } from '../../utils/searchHistory';
 
 /**
@@ -125,6 +126,19 @@ export class HotelProviderManager {
             }
         } catch (error) {
             console.error('❌ Failed to register Filos provider:', error);
+        }
+
+        // Register MTS Globe provider
+        try {
+            const mtsGlobeProvider = new MtsGlobeProvider();
+            if (mtsGlobeProvider.isConfigured()) {
+                this.registerProvider(mtsGlobeProvider);
+                console.log('✅ MTS Globe provider registered');
+            } else {
+                console.warn('⚠️ MTS Globe provider not configured');
+            }
+        } catch (error) {
+            console.error('❌ Failed to register MTS Globe provider:', error);
         }
     }
 

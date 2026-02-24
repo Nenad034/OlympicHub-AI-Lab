@@ -2859,7 +2859,8 @@
 .payment-modal-container {
     background: #0a191e;
     width: 100%;
-    max-width: 700px;
+    max-width: 1050px;
+    /* Expanded by 50% from 700px */
     max-height: 90vh;
     border-radius: 32px;
     border: 1px solid rgba(0, 229, 255, 0.15);
@@ -3003,6 +3004,7 @@
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 12px;
 }
+
 .light-theme .payment-modal-container input {
     background: #f8fafc !important;
     border-color: #cbd5e1 !important;
@@ -3013,8 +3015,143 @@
     color: #64748b !important;
 }
 
-.light-theme .payment-modal-header h3 i, 
+.light-theme .payment-modal-header h3 i,
 .light-theme .payment-modal-header h3 div {
     background: rgba(14, 75, 94, 0.1) !important;
     color: #0e4b5e !important;
+}
+
+/* === PREMIUM TAGS FOR CARD TYPE === */
+.card-type-tags {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.card-tag {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-tag:hover {
+    background: rgba(0, 229, 255, 0.05);
+    border-color: var(--accent-cyan);
+    transform: translateY(-2px);
+}
+
+.card-tag.active {
+    background: rgba(0, 229, 255, 0.1);
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
+}
+
+.card-tag span {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.card-tag.active span {
+    color: var(--accent-cyan);
+}
+
+/* === CHECK SPECIFICATION PREMIUM === */
+.check-spec-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.check-tools {
+    display: flex;
+    gap: 10px;
+}
+
+.tool-btn {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.tool-btn.print {
+    background: rgba(56, 189, 248, 0.1);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.2);
+}
+
+.tool-btn.excel {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.tool-btn:hover {
+    transform: scale(1.02);
+    filter: brightness(1.2);
+}
+
+.check-row-premium {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1.5fr 1.5fr 50px;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    align-items: end;
+    transition: all 0.2s;
+}
+
+.check-row-premium:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* Light Theme Adjustments */
+.light-theme .card-tag {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.light-theme .card-tag span {
+    color: #64748b;
+}
+
+.light-theme .card-tag.active {
+    background: #f0fdff;
+    border-color: #0891b2;
+}
+
+.light-theme .card-tag.active span {
+    color: #0891b2;
+}
+
+.light-theme .check-spec-container {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.light-theme .check-row-premium {
+    background: #ffffff;
+    border-color: #e2e8f0;
 }

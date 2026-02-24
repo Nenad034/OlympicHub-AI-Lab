@@ -32,6 +32,13 @@ import { FinancialCoreService } from '../services/financialCoreService';
 import { useToast } from '../components/ui/Toast';
 import { ActionConfirmModal } from '../components/ui/ActionConfirmModal';
 
+// --- Global Constants ---
+const NBS_RATES = {
+    'EUR': 117.00,
+    'USD': 108.00,
+    'RSD': 1.00
+} as const;
+
 // --- Types ---
 type TripType = 'Smestaj' | 'Avio karte' | 'Dinamicki paket' | 'Putovanja' | 'Transfer' | 'Čarter' | 'Bus' | 'Krstarenje';
 type CustomerType = 'B2C-Individual' | 'B2C-Legal' | 'B2B-Subagent';
@@ -110,8 +117,8 @@ interface PaymentRecord {
     receiptNo: string;
     fiscalReceiptNo?: string;
     registrationMark?: string;
-    // Card specific
     cardType?: 'Master' | 'Visa' | 'Dina' | 'American';
+    cardNumber?: string;
     installmentsCount?: number;
     // Transfer specific
     bankName?: string;
@@ -715,7 +722,22 @@ const ReservationArchitect: React.FC = () => {
         const net = dossier.tripItems.reduce((sum, item) => sum + (item.netPrice || 0), 0);
         const profit = brutto - net;
         const profitPerc = net > 0 ? (profit / net) * 100 : 0;
-        const paid = (dossier.finance?.payments || []).reduce((sum, p) => p.status === 'deleted' ? sum : sum + (p.amount || 0), 0);
+        const paid = (dossier.finance?.payments || []).reduce((sum, p) => {
+            if (p.status === 'deleted') return sum;
+
+            // If payment currency is same as dossier currency, add as is
+            if (p.currency === dossier.finance.currency) return sum + (p.amount || 0);
+
+            // Bridge through RSD
+            // amountInRsd = amount * exchangeRateOfPaymentItem
+            const amountInRsd = p.amountInRsd || ((p.amount || 0) * (p.exchangeRate || 1));
+
+            // Dossier currency rate (e.g. 117.00 for EUR)
+            const dossierCurrencyRate = NBS_RATES[dossier.finance.currency as keyof typeof NBS_RATES] || 1;
+
+            // convertedToDossier = amountInRsd / dossierCurrencyRate
+            return sum + (amountInRsd / dossierCurrencyRate);
+        }, 0);
         const bal = brutto - paid;
 
         return {
@@ -745,12 +767,7 @@ const ReservationArchitect: React.FC = () => {
         }
     }, [isInitialized, dossier.documentTracker]);
 
-    // --- EXCHANGE RATE SIMULATION --- (To be replaced by API)
-    const NBS_RATES = {
-        'EUR': 117.00,
-        'USD': 108.00,
-        'RSD': 1.00
-    };
+
 
     // --- ACTIVITY LOG HELPER ---
     const addLog = React.useCallback((action: string, details: string, type: ActivityLog['type'] = 'info') => {
@@ -1004,7 +1021,15 @@ const ReservationArchitect: React.FC = () => {
         alert('Svi putnici su uspešno kopirani na svaku stavku rezervacije!');
     };
 
-    const addPayment = () => {
+    const handleAddPayment = () => {
+        // Logic for unique sequential receipt number
+        const existingGlobalPaymentsCount = parseInt(localStorage.getItem('global_payments_counter') || '0', 10);
+        const nextGlobalNum = existingGlobalPaymentsCount + 1;
+        localStorage.setItem('global_payments_counter', nextGlobalNum.toString());
+
+        const resCode = dossier.resCode || dossier.clientReference || 'TCT';
+        const formattedReceiptNo = `[${resCode}] PR-${nextGlobalNum}`;
+
         const newPayment: PaymentRecord = {
             id: 'NEW-' + Math.random().toString(36).substr(2, 9),
             date: new Date().toISOString().slice(0, 16),
@@ -1012,7 +1037,7 @@ const ReservationArchitect: React.FC = () => {
             currency: dossier.finance.currency as any,
             status: 'active' as const,
             method: 'Cash',
-            receiptNo: 'PR-' + (dossier.finance.payments.length + 1),
+            receiptNo: formattedReceiptNo,
             fiscalReceiptNo: '',
             registrationMark: '',
             checks: [],
@@ -1021,7 +1046,7 @@ const ReservationArchitect: React.FC = () => {
         };
         setPaymentDraft(newPayment);
         setIsPaymentModalOpen(true);
-        addLog('Dodavanje Uplate', 'Otvoren prozor za novu uplatu.', 'info');
+        addLog('Dodavanje Uplate', `Otvoren prozor za novu uplatu. Broj priznanice: ${formattedReceiptNo}`, 'info');
     };
 
     const commitPayment = async (paymentId: string) => {
@@ -3689,7 +3714,7 @@ const ReservationArchitect: React.FC = () => {
                                             <div className="payments-log">
                                                 <div className="log-header">
                                                     <h4>Evidencija svih uplata</h4>
-                                                    <button className="add-btn green" onClick={addPayment}><Plus size={14} /> Nova Uplata</button>
+                                                    <button className="add-btn green" onClick={handleAddPayment}><Plus size={14} /> Nova Uplata</button>
                                                 </div>
                                                 <table className="payments-table">
                                                     <colgroup>
@@ -3744,9 +3769,13 @@ const ReservationArchitect: React.FC = () => {
                                                                     <td>
                                                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                                             <span style={{ fontWeight: 800 }}>{p.currency}</span>
-                                                                            {p.currency !== 'RSD' && (
+                                                                            {p.currency === 'RSD' ? (
                                                                                 <span style={{ fontSize: '10px', opacity: 0.6 }}>
-                                                                                    {p.amountInRsd?.toFixed(2)} RSD
+                                                                                    {(p.amount / (NBS_RATES[dossier.finance.currency as keyof typeof NBS_RATES] || 117)).toFixed(2)} {dossier.finance.currency}
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span style={{ fontSize: '10px', opacity: 0.6 }}>
+                                                                                    {p.amountInRsd?.toLocaleString('sr-RS', { minimumFractionDigits: 2 })} RSD
                                                                                 </span>
                                                                             )}
                                                                         </div>
@@ -4820,18 +4849,25 @@ const ReservationArchitect: React.FC = () => {
                             onClose={() => setIsPaymentModalOpen(false)}
                             draft={paymentDraft}
                             setDraft={setPaymentDraft}
-                            onSave={(draft) => {
-                                if (!draft) return;
+                            onSave={(updatedDraft, isFiscal) => {
+                                if (!updatedDraft) return;
                                 setDossier(prev => ({
                                     ...prev,
                                     finance: {
                                         ...prev.finance,
-                                        payments: [...prev.finance.payments.filter(p => p.id !== draft.id), draft]
+                                        payments: [...prev.finance.payments.filter(p => p.id !== updatedDraft.id), updatedDraft]
                                     }
                                 }));
                                 setIsPaymentModalOpen(false);
                                 setPaymentDraft(null);
-                                addLog('Uplata sačuvana', `Uplata od ${draft.amount} ${draft.currency} je dodata u evidenciju.`, 'success');
+
+                                if (isFiscal) {
+                                    addLog('Fiskalizacija', `Uplata ${updatedDraft.receiptNo} je uspešno fiskalizovana.`, 'success');
+                                    toastSuccess("Uspeh", "Uplata je sačuvana i fiskalizovana!");
+                                } else {
+                                    addLog('Uplata sačuvana', `Uplata ${updatedDraft.receiptNo} je sačuvana u evidenciju.`, 'success');
+                                    toastSuccess("Uspeh", "Uplata je uspešno sačuvana.");
+                                }
                             }}
                             dossier={dossier}
                         />
@@ -4954,6 +4990,9 @@ const DossierCancellationModal: React.FC<DossierCancellationModalProps> = ({ ite
 const PaymentEntryModal: React.FC<PaymentEntryModalProps> = ({
     isOpen, onClose, draft, setDraft, onSave, dossier
 }) => {
+    const [showCalendar, setShowCalendar] = useState(false);
+    const [showCheckDateIdx, setShowCheckDateIdx] = useState<number | null>(null);
+
     if (!isOpen || !draft) return null;
 
     const currencies = [
@@ -4968,6 +5007,13 @@ const PaymentEntryModal: React.FC<PaymentEntryModalProps> = ({
         { id: 'Check', label: 'Čekovi', icon: <FileText size={24} /> },
     ];
 
+    const cardBrands = [
+        { id: 'Visa', label: 'Visa', icon: <CreditCard size={20} /> },
+        { id: 'Master', label: 'MasterCard', icon: <CreditCard size={20} /> },
+        { id: 'Dina', label: 'DinaCard', icon: <CreditCard size={20} /> },
+        { id: 'American', label: 'Amex', icon: <CreditCard size={20} /> },
+    ];
+
     const payers = [
         { id: 'booker', label: 'Ugovarač', sub: dossier.booker.fullName, icon: <User size={24} /> },
         ...dossier.passengers.map((p: any) => ({
@@ -4978,6 +5024,111 @@ const PaymentEntryModal: React.FC<PaymentEntryModalProps> = ({
 
     const handleBackdropClick = (e: React.MouseEvent) => {
         if (e.target === e.currentTarget) onClose();
+    };
+
+    const addCheck = () => {
+        const newCheck: CheckData = {
+            id: 'chk-' + Math.random().toString(36).substr(2, 9),
+            checkNumber: '',
+            bank: '',
+            amount: 0,
+            realizationDate: new Date().toISOString().split('T')[0]
+        };
+        setDraft({ ...draft, checks: [...(draft.checks || []), newCheck] });
+    };
+
+    const removeCheck = (idx: number) => {
+        const newChecks = (draft.checks || []).filter((_, i) => i !== idx);
+        setDraft({ ...draft, checks: newChecks });
+    };
+
+    const updateCheck = (idx: number, updates: Partial<CheckData>) => {
+        const newChecks = (draft.checks || []).map((c, i) => i === idx ? { ...c, ...updates } : c);
+        setDraft({ ...draft, checks: newChecks });
+    };
+
+    const handlePrintChecks = () => {
+        if (!draft.checks || draft.checks.length === 0) return;
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) return;
+
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Specifikacija čekova - ${draft.receiptNo}</title>
+                    <style>
+                        body { font-family: sans-serif; padding: 40px; }
+                        h2 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+                        th { background: #f8fafc; font-weight: bold; }
+                        .total { margin-top: 20px; text-align: right; font-size: 18px; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <h2>Specifikacija čekova</h2>
+                    <p>Rezervacija: ${dossier.resCode || dossier.clientReference}</p>
+                    <p>Priznanica: ${draft.receiptNo}</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Br. čeka</th>
+                                <th>Banka</th>
+                                <th>Iznos</th>
+                                <th>Datum realizacije</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${draft.checks.map(c => `
+                                <tr>
+                                    <td>${c.checkNumber}</td>
+                                    <td>${c.bank}</td>
+                                    <td>${c.amount.toFixed(2)} ${draft.currency}</td>
+                                    <td>${formatDate(c.realizationDate)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div class="total">Ukupno: ${draft.checks.reduce((s, c) => s + c.amount, 0).toFixed(2)} ${draft.currency}</div>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    };
+
+    const handleExportChecksExcel = async () => {
+        if (!draft.checks || draft.checks.length === 0) return;
+
+        // @ts-ignore
+        const ExcelJS = await import('exceljs');
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Cekovi');
+
+        worksheet.columns = [
+            { header: 'Broj čeka', key: 'num', width: 20 },
+            { header: 'Banka', key: 'bank', width: 20 },
+            { header: 'Iznos', key: 'amount', width: 15 },
+            { header: 'Datum realizacije', key: 'date', width: 20 }
+        ];
+
+        draft.checks.forEach(c => {
+            worksheet.addRow({
+                num: c.checkNumber,
+                bank: c.bank,
+                amount: c.amount,
+                date: c.realizationDate
+            });
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `Specifikacija_Cekova_${draft.receiptNo.replace(/[\W_]+/g, "_")}.xlsx`;
+        anchor.click();
+        window.URL.revokeObjectURL(url);
     };
 
     return createPortal(
@@ -5025,12 +5176,38 @@ const PaymentEntryModal: React.FC<PaymentEntryModalProps> = ({
                                     <input
                                         type="number"
                                         value={draft.amount || ''}
-                                        onChange={e => setDraft({ ...draft, amount: parseFloat(e.target.value) || 0 })}
+                                        onChange={e => {
+                                            const val = parseFloat(e.target.value) || 0;
+                                            const rate = draft.exchangeRate || 1;
+                                            setDraft({
+                                                ...draft,
+                                                amount: val,
+                                                amountInRsd: draft.currency === 'RSD' ? val : val * rate
+                                            });
+                                        }}
                                         placeholder="0.00"
                                         className="payment-amount-input"
                                     />
-                                    <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>
+                                    <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', opacity: 1, fontWeight: 900, color: 'var(--accent-cyan)', background: 'rgba(0,0,0,0.4)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(0,229,255,0.2)' }}>
                                         {draft.currency}
+                                    </div>
+                                </div>
+
+                                {/* Conversion Info */}
+                                <div style={{ marginTop: '12px', padding: '12px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <RefreshCw size={14} className="spin-slow" style={{ color: 'var(--accent-cyan)' }} />
+                                    <div style={{ fontSize: '12px' }}>
+                                        {draft.currency === 'RSD' ? (
+                                            <>
+                                                Ekvivalent: <strong style={{ color: 'var(--accent-cyan)' }}>{(draft.amount / (NBS_RATES[dossier.finance.currency as keyof typeof NBS_RATES] || 117)).toFixed(2)} {dossier.finance.currency}</strong>
+                                                <span style={{ marginLeft: '10px', opacity: 0.5 }}>(Kurs: {NBS_RATES[dossier.finance.currency as keyof typeof NBS_RATES]})</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                Ekvivalent u RSD: <strong style={{ color: 'var(--accent-cyan)' }}>{(draft.amount * (draft.exchangeRate || 1)).toLocaleString('sr-RS', { minimumFractionDigits: 2 })} RSD</strong>
+                                                <span style={{ marginLeft: '10px', opacity: 0.5 }}>(Kurs: {draft.exchangeRate})</span>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -5040,7 +5217,15 @@ const PaymentEntryModal: React.FC<PaymentEntryModalProps> = ({
                                         key={c.id}
                                         className={`selection-card ${draft.currency === c.id ? 'active' : ''}`}
                                         style={{ width: '80px', padding: '12px' }}
-                                        onClick={() => setDraft({ ...draft, currency: c.id as any, exchangeRate: NBS_RATES[c.id as keyof typeof NBS_RATES] || 1 })}
+                                        onClick={() => {
+                                            const newRate = NBS_RATES[c.id as keyof typeof NBS_RATES] || 1;
+                                            setDraft({
+                                                ...draft,
+                                                currency: c.id as any,
+                                                exchangeRate: newRate,
+                                                amountInRsd: c.id === 'RSD' ? draft.amount : draft.amount * newRate
+                                            });
+                                        }}
                                     >
                                         <div className="icon-box">{c.icon}</div>
                                         <div className="label" style={{ fontSize: '11px' }}>{c.label}</div>
@@ -5053,7 +5238,7 @@ const PaymentEntryModal: React.FC<PaymentEntryModalProps> = ({
                     {/* Payment Method Section */}
                     <div style={{ marginBottom: '32px' }}>
                         <div className="modal-section-title">Način Plaćanja</div>
-                        <div className="payment-selection-grid">
+                        <div className="payment-selection-grid" style={{ marginBottom: '16px' }}>
                             {methods.map(m => (
                                 <div
                                     key={m.id}
@@ -5066,12 +5251,146 @@ const PaymentEntryModal: React.FC<PaymentEntryModalProps> = ({
                                 </div>
                             ))}
                         </div>
+
+                        {/* SUB-MODULE: KARTICA (PREMIUM REDESIGN) */}
+                        {draft.method === 'Card' && (
+                            <div style={{
+                                padding: '24px',
+                                background: 'rgba(255,255,255,0.02)',
+                                borderRadius: '24px',
+                                border: '1px solid rgba(255,255,255,0.05)',
+                                animation: 'fadeInRes 0.3s ease-out'
+                            }}>
+                                <div className="modal-section-title" style={{ fontSize: '10px', color: 'var(--accent-cyan)', marginBottom: '16px' }}>KONFIGURACIJA KARTICE</div>
+                                <div className="card-type-tags" style={{ marginBottom: '24px' }}>
+                                    {cardBrands.map(brand => (
+                                        <div
+                                            key={brand.id}
+                                            className={`card-tag ${draft.cardType === brand.id ? 'active' : ''}`}
+                                            onClick={() => setDraft({ ...draft, cardType: brand.id as any })}
+                                        >
+                                            {brand.icon}
+                                            <span>{brand.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '20px' }}>
+                                    <div className="input-group-v4">
+                                        <label>Banka Izdavalac</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <ShieldCheck size={16} style={{ position: 'absolute', left: '14px', top: '14px', opacity: 0.5 }} />
+                                            <input
+                                                style={{ paddingLeft: '44px' }}
+                                                placeholder="npr. Banca Intesa"
+                                                value={draft.bankName || ''}
+                                                onChange={e => setDraft({ ...draft, bankName: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="input-group-v4">
+                                        <label>Broj kartice / Autorizacija</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <Hash size={16} style={{ position: 'absolute', left: '14px', top: '14px', opacity: 0.5 }} />
+                                            <input
+                                                style={{ paddingLeft: '44px' }}
+                                                placeholder="Poslednja 4 cifre ili autorizacioni kod"
+                                                value={draft.cardNumber || ''}
+                                                onChange={e => setDraft({ ...draft, cardNumber: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* SUB-MODULE: ČEKOVI (PREMIUM REDESIGN) */}
+                        {draft.method === 'Check' && (
+                            <div className="check-spec-container" style={{ animation: 'fadeInRes 0.3s ease-out' }}>
+                                <div className="check-spec-header">
+                                    <div className="modal-section-title" style={{ color: 'var(--accent-cyan)', margin: 0 }}>SPECIFIKACIJA ČEKOVA</div>
+                                    <div className="check-tools">
+                                        <button className="tool-btn print" onClick={handlePrintChecks}>
+                                            <Printer size={14} /> Štampe
+                                        </button>
+                                        <button className="tool-btn excel" onClick={handleExportChecksExcel}>
+                                            <FileText size={14} /> Excel
+                                        </button>
+                                        <button
+                                            onClick={addCheck}
+                                            style={{ background: 'var(--accent-cyan)', border: 'none', color: '#000', padding: '8px 16px', borderRadius: '10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                        >
+                                            <Plus size={14} /> DODAJ ČEK
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {(!draft.checks || draft.checks.length === 0) ? (
+                                    <div style={{ textAlign: 'center', padding: '40px', opacity: 0.4, border: '2px dashed rgba(255,255,255,0.05)', borderRadius: '20px' }}>
+                                        <FileText size={32} style={{ marginBottom: '12px' }} />
+                                        <p style={{ margin: 0, fontSize: '13px' }}>Nema unetih čekova</p>
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        {draft.checks.map((check, idx) => (
+                                            <div key={check.id} className="check-row-premium">
+                                                <div className="input-field" style={{ gap: '4px' }}>
+                                                    <label style={{ fontSize: '9px' }}>BROJ ČEKA</label>
+                                                    <input
+                                                        style={{ borderRadius: '10px' }}
+                                                        placeholder="0000000"
+                                                        value={check.checkNumber}
+                                                        onChange={e => updateCheck(idx, { checkNumber: e.target.value })}
+                                                    />
+                                                </div>
+                                                <div className="input-field" style={{ gap: '4px' }}>
+                                                    <label style={{ fontSize: '9px' }}>IZNOS</label>
+                                                    <input
+                                                        type="number"
+                                                        style={{ borderRadius: '10px' }}
+                                                        placeholder="0.00"
+                                                        value={check.amount || ''}
+                                                        onChange={e => updateCheck(idx, { amount: parseFloat(e.target.value) || 0 })}
+                                                    />
+                                                </div>
+                                                <div className="input-field" style={{ gap: '4px' }}>
+                                                    <label style={{ fontSize: '9px' }}>REALIZACIJA</label>
+                                                    <div
+                                                        onClick={() => setShowCheckDateIdx(idx)}
+                                                        className="custom-date-display"
+                                                        style={{ borderRadius: '10px', padding: '10px' }}
+                                                    >
+                                                        <Calendar size={14} />
+                                                        <span>{check.realizationDate ? formatDate(check.realizationDate) : 'Odaberi...'}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="input-field" style={{ gap: '4px' }}>
+                                                    <label style={{ fontSize: '9px' }}>BANKA</label>
+                                                    <input
+                                                        style={{ borderRadius: '10px' }}
+                                                        placeholder="Naziv banke"
+                                                        value={check.bank}
+                                                        onChange={e => updateCheck(idx, { bank: e.target.value })}
+                                                    />
+                                                </div>
+                                                <button
+                                                    onClick={() => removeCheck(idx)}
+                                                    style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', width: '40px', height: '40px', borderRadius: '12px', cursor: 'pointer', marginBottom: '2px' }}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Payer Selection */}
                     <div style={{ marginBottom: '32px' }}>
                         <div className="modal-section-title">Ko Plaća?</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
                             {payers.map(p => (
                                 <div
                                     key={p.id}
@@ -5079,7 +5398,7 @@ const PaymentEntryModal: React.FC<PaymentEntryModalProps> = ({
                                         (p.id === 'external' && draft.isExternalPayer) ||
                                         (p.id !== 'booker' && p.id !== 'external' && draft.payerName === p.sub) ? 'active' : ''
                                         }`}
-                                    style={{ flexDirection: 'row', justifyContent: 'flex-start', padding: '12px 16px', gap: '16px' }}
+                                    style={{ padding: '16px 12px' }}
                                     onClick={() => {
                                         if (p.id === 'external') {
                                             setDraft({
@@ -5099,32 +5418,32 @@ const PaymentEntryModal: React.FC<PaymentEntryModalProps> = ({
                                     }}
                                 >
                                     <div className="icon-box" style={{ width: '36px', height: '36px' }}>{p.icon}</div>
-                                    <div style={{ textAlign: 'left' }}>
-                                        <div className="label" style={{ fontSize: '11px', opacity: 0.6, fontWeight: 500 }}>{p.label}</div>
-                                        <div className="label" style={{ fontSize: '13px' }}>{p.sub}</div>
+                                    <div style={{ textAlign: 'center' }}>
+                                        <div className="label" style={{ fontSize: '10px', opacity: 0.6 }}>{p.label}</div>
+                                        <div className="label" style={{ fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100px' }}>{p.sub}</div>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* External Payer Details (Conditional) */}
+                    {/* External Payer Details */}
                     {draft.isExternalPayer && (
                         <div className="external-payer-box" style={{ animation: 'fadeInRes 0.3s ease-out' }}>
-                            <div className="modal-section-title" style={{ color: '#f97316' }}>Podaci o spoljnom platiocu</div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                <div>
-                                    <label style={{ fontSize: '10px', color: '#f97316', fontWeight: 800 }}>IME I PREZIME</label>
+                            <div className="modal-section-title" style={{ color: '#f97316' }}>PODACI O SPOLJNOM PLATIOCU</div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div className="input-group-v4">
+                                    <label style={{ color: '#f97316' }}>Ime i Prezime</label>
                                     <input
-                                        style={{ width: '100%', marginTop: '4px', border: '1px solid rgba(249, 115, 22, 0.2)' }}
+                                        style={{ border: '1px solid rgba(249, 115, 22, 0.2)' }}
                                         value={draft.payerDetails?.fullName || ''}
                                         onChange={e => setDraft({ ...draft, payerDetails: { ...draft.payerDetails!, fullName: e.target.value } })}
                                     />
                                 </div>
-                                <div>
-                                    <label style={{ fontSize: '10px', color: '#f97316', fontWeight: 800 }}>TELEFON</label>
+                                <div className="input-group-v4">
+                                    <label style={{ color: '#f97316' }}>Kontakt Telefon</label>
                                     <input
-                                        style={{ width: '100%', marginTop: '4px', border: '1px solid rgba(249, 115, 22, 0.2)' }}
+                                        style={{ border: '1px solid rgba(249, 115, 22, 0.2)' }}
                                         value={draft.payerDetails?.phone || ''}
                                         onChange={e => setDraft({ ...draft, payerDetails: { ...draft.payerDetails!, phone: e.target.value } })}
                                     />
@@ -5135,24 +5454,31 @@ const PaymentEntryModal: React.FC<PaymentEntryModalProps> = ({
 
                     {/* Additional Options */}
                     <div>
-                        <div className="modal-section-title">Dodatno</div>
-                        <div style={{ display: 'flex', gap: '16px' }}>
-                            <div style={{ flex: 1 }}>
-                                <label style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 800 }}>DATUM I VREME UPLATE</label>
-                                <input
-                                    type="datetime-local"
-                                    style={{ width: '100%', marginTop: '4px' }}
-                                    value={draft.date || ''}
-                                    onChange={e => setDraft({ ...draft, date: e.target.value })}
-                                />
+                        <div className="modal-section-title">DODATNE INFORMACIJE</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '24px' }}>
+                            <div className="input-group-premium">
+                                <label>Datum i vreme uplate</label>
+                                <div
+                                    className="custom-date-display"
+                                    onClick={() => setShowCalendar(true)}
+                                    style={{ padding: '14px 20px', borderRadius: '16px' }}
+                                >
+                                    <Calendar size={18} style={{ color: 'var(--accent-cyan)' }} />
+                                    <span style={{ fontSize: '14px', fontWeight: 700 }}>
+                                        {draft.date ? new Date(draft.date).toLocaleString('sr-RS') : 'Izaberi datum'}
+                                    </span>
+                                </div>
                             </div>
-                            <div style={{ flex: 1 }}>
-                                <label style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 800 }}>BROJ PRIZNANICE</label>
-                                <input
-                                    style={{ width: '100%', marginTop: '4px' }}
-                                    value={draft.receiptNo || ''}
-                                    onChange={e => setDraft({ ...draft, receiptNo: e.target.value })}
-                                />
+                            <div className="input-group-v4">
+                                <label>Broj Priznanice</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Receipt size={18} style={{ position: 'absolute', left: '16px', top: '15px', color: 'var(--accent-cyan)' }} />
+                                    <input
+                                        style={{ paddingLeft: '48px', height: '50px', borderRadius: '16px', fontSize: '16px', fontWeight: 800, color: 'var(--accent-cyan)' }}
+                                        value={draft.receiptNo || ''}
+                                        readOnly // Receipt numbers follow strict logic
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -5167,19 +5493,20 @@ const PaymentEntryModal: React.FC<PaymentEntryModalProps> = ({
                             background: 'transparent',
                             border: '1px solid var(--border)',
                             color: 'var(--text-secondary)',
-                            padding: '12px 24px',
+                            padding: '12px 28px',
                             borderRadius: '16px',
                             fontWeight: 700,
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            fontSize: '13px'
                         }}
                     >
-                        Otkaži
+                        Odustani
                     </button>
                     <button
                         onClick={() => onSave(draft, false)}
-                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '14px 28px', borderRadius: '18px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'var(--text-primary)', padding: '14px 32px', borderRadius: '18px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px' }}
                     >
-                        <Save size={18} /> USLADISTI
+                        <Save size={18} /> SAČUVAJ
                     </button>
 
                     <button
@@ -5187,20 +5514,51 @@ const PaymentEntryModal: React.FC<PaymentEntryModalProps> = ({
                         style={{
                             background: 'linear-gradient(135deg, var(--accent-cyan) 0%, #0097a7 100%)',
                             border: 'none',
-                            color: '#000',
-                            padding: '14px 36px',
+                            color: '#000000', // Black text for high contrast on cyan background
+                            padding: '14px 40px',
                             borderRadius: '18px',
                             fontWeight: 900,
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '10px',
+                            fontSize: '14px',
                             boxShadow: '0 10px 30px -5px rgba(0, 229, 255, 0.4)'
                         }}
                     >
                         <ShieldCheck size={20} /> POTVRDI I FISKALIZUJ
                     </button>
                 </div>
+
+                {/* Internal Modals */}
+                {showCalendar && (
+                    <ModernCalendar
+                        startDate={draft.date?.split(' ')[0] || draft.date?.split('T')[0] || null}
+                        endDate={null}
+                        singleMode={true}
+                        allowPast={true}
+                        onChange={(date) => {
+                            const originalTime = draft.date?.includes('T') ? draft.date.split('T')[1] : (draft.date?.includes(' ') ? draft.date.split(' ')[1] : '09:00');
+                            setDraft({ ...draft, date: `${date}T${originalTime}` });
+                            setShowCalendar(false);
+                        }}
+                        onClose={() => setShowCalendar(false)}
+                    />
+                )}
+
+                {showCheckDateIdx !== null && (
+                    <ModernCalendar
+                        startDate={(draft.checks || [])[showCheckDateIdx]?.realizationDate || null}
+                        endDate={null}
+                        singleMode={true}
+                        allowPast={true}
+                        onChange={(date) => {
+                            updateCheck(showCheckDateIdx, { realizationDate: date });
+                            setShowCheckDateIdx(null);
+                        }}
+                        onClose={() => setShowCheckDateIdx(null)}
+                    />
+                )}
             </div>
         </div>,
         document.body
