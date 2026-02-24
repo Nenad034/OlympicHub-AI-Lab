@@ -1,4 +1,4 @@
-import roomMapping from './room_mapping.json';
+import roomMapping from '../room_mapping.json';
 
 /**
  * MTS Globe Room Decoder

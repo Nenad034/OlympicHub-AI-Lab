@@ -106,7 +106,7 @@ const ReservationsDashboard: React.FC = () => {
     const { userLevel, impersonatedSubagent } = useAuthStore();
     const isSubagent = userLevel < 6 || !!impersonatedSubagent;
     const [viewMode, setViewMode] = useQueryState<ViewMode>('view', 'list');
-    const [showStats, setShowStats] = useState(true);
+    const [showStats, setShowStats] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchTerms, setSearchTerms] = useState<string[]>([]); // Multi-term search chips
     const [calendarViewMode, setCalendarViewMode] = useState<'checkIn' | 'checkOut'>('checkIn'); // Calendar grouping
@@ -919,11 +919,18 @@ ${data.map(r => `  <reservation>
         }
 
         // Date filters - Stay Date
-        if (activeFilters.stayFrom && res.checkIn < activeFilters.stayFrom) {
-            return false;
-        }
-        if (activeFilters.stayTo && res.checkOut > activeFilters.stayTo) {
-            return false;
+        if (activeFilters.stayFrom && activeFilters.stayTo && activeFilters.stayFrom === activeFilters.stayTo) {
+            // Exact date match: either check-in or check-out must match
+            if (res.checkIn !== activeFilters.stayFrom && res.checkOut !== activeFilters.stayTo) {
+                return false;
+            }
+        } else {
+            if (activeFilters.stayFrom && res.checkIn < activeFilters.stayFrom) {
+                return false;
+            }
+            if (activeFilters.stayTo && res.checkOut > activeFilters.stayTo) {
+                return false;
+            }
         }
 
         // Status filter
@@ -2253,8 +2260,13 @@ ${data.map(r => `  <reservation>
                                                             key={date}
                                                             className="calendar-day-card"
                                                             onClick={() => {
-                                                                // Show modal or expand with list of reservations
-                                                                console.log('Show reservations for', date, dayReservations);
+                                                                setActiveFilters(prev => ({
+                                                                    ...prev,
+                                                                    stayFrom: date,
+                                                                    stayTo: date
+                                                                }));
+                                                                setViewMode('list');
+                                                                setShowStats(false);
                                                             }}
                                                             style={{
                                                                 background: 'var(--bg-card)',

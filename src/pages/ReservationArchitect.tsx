@@ -71,6 +71,7 @@ interface TripItem {
     accomType?: string; // Tip smeštaja (e.g. Hotel, Apartman)
     stars?: number; // Hotel category
     notes?: string; // Napomene za stavku
+    supplierNotes?: string; // Napomena za dobavljača (stavka)
     checkIn: string;
     checkOut: string;
     netPrice: number;
@@ -199,6 +200,7 @@ interface Dossier {
         internal: string;
         financial: string;
         specialRequests: string;
+        supplier: string;
     };
     repChecked?: boolean;
     repCheckedAt?: string;
@@ -356,7 +358,8 @@ const ReservationArchitect: React.FC = () => {
             voucher: '',
             internal: '',
             financial: '',
-            specialRequests: ''
+            specialRequests: '',
+            supplier: ''
         },
         repChecked: false,
         repCheckedAt: '',
@@ -1299,10 +1302,11 @@ const ReservationArchitect: React.FC = () => {
             text += `> Lokacija: ${item.city}, ${item.country}\n`;
             text += `> Detalji: ${item.details} ${item.mealPlan ? `(${item.mealPlan})` : ''}\n`;
             if (item.notes) text += `> Napomena: ${item.notes}\n`;
+            if (item.supplierNotes) text += `> Napomena za dobavljača: ${item.supplierNotes}\n`;
         });
 
         // Add Notes Section
-        const hasNotes = dossier.notes.general || dossier.notes.internal || dossier.notes.financial || dossier.notes.specialRequests || dossier.notes.contract || dossier.notes.voucher;
+        const hasNotes = dossier.notes.general || dossier.notes.internal || dossier.notes.financial || dossier.notes.specialRequests || dossier.notes.contract || dossier.notes.voucher || dossier.notes.supplier || dossier.tripItems.some(item => item.supplierNotes);
         if (hasNotes) {
             text += `\nNAPOMENE:\n`;
             if (dossier.notes.general) text += `- Opšte: ${dossier.notes.general}\n`;
@@ -1311,6 +1315,10 @@ const ReservationArchitect: React.FC = () => {
             if (dossier.notes.specialRequests) text += `- Specijalni zahtevi: ${dossier.notes.specialRequests}\n`;
             if (dossier.notes.contract) text += `- Za ugovor: ${dossier.notes.contract}\n`;
             if (dossier.notes.voucher) text += `- Za vaučer: ${dossier.notes.voucher}\n`;
+            if (dossier.notes.supplier) text += `- Dobavljač: ${dossier.notes.supplier}\n`;
+            dossier.tripItems.forEach(item => {
+                if (item.supplierNotes) text += `- Dobavljač (${item.subject}): ${item.supplierNotes}\n`;
+            });
         }
 
         // Add Generated Documents Section
@@ -1318,6 +1326,7 @@ const ReservationArchitect: React.FC = () => {
             { id: 'contract', label: 'Ugovor o Putovanju' },
             { id: 'voucher', label: 'Vaučer / Smeštaj' },
             { id: 'proforma', label: 'Račun / Profaktura' },
+            { id: 'finalFiscal', label: 'Konačni fiskalni račun' },
             { id: 'itinerary', label: 'Plan Puta / Itinerer' }
         ];
         const generatedDocs = docs.filter(d => (dossier.documentTracker as any)?.[d.id]?.generated);
@@ -1404,7 +1413,20 @@ const ReservationArchitect: React.FC = () => {
         text += `OPŠTE NAPOMENE:\n${dossier.notes.general || 'Nema napomena.'}\n\n`;
         text += `NAPOMENE ZA UGOVOR:\n${dossier.notes.contract || 'Nema napomena.'}\n\n`;
         text += `NAPOMENE ZA VAUČER:\n${dossier.notes.voucher || 'Nema napomena.'}\n\n`;
-        text += `INTERNE NAPOMENE:\n${dossier.notes.internal || 'Nema napomena.'}\n`;
+        text += `NAPOMENE DOBAVLJAČA (GLOBALNO):\n${dossier.notes.supplier || 'Nema napomena.'}\n\n`;
+        text += `INTERNE NAPOMENE:\n${dossier.notes.internal || 'Nema napomena.'}\n\n`;
+
+        // Add Item-specific notes
+        const itemNotes = dossier.tripItems.filter(item => item.notes || item.supplierNotes);
+        if (itemNotes.length > 0) {
+            text += `--- NAPOMENE PO STAVKAMA ---\n`;
+            itemNotes.forEach(item => {
+                text += `\nSTAVKA: ${item.subject}\n`;
+                if (item.notes) text += `- Opšta napomena: ${item.notes}\n`;
+                if (item.supplierNotes) text += `- Za dobavljača: ${item.supplierNotes}\n`;
+            });
+        }
+
         return text;
     };
 
@@ -1892,6 +1914,7 @@ const ReservationArchitect: React.FC = () => {
                                                 { id: 'contract', label: 'Ugovor o Putovanju' },
                                                 { id: 'voucher', label: 'Vaučer / Smeštaj' },
                                                 { id: 'proforma', label: 'Račun / Profaktura' },
+                                                { id: 'finalFiscal', label: 'Konačni fiskalni račun' },
                                                 { id: 'itinerary', label: 'Plan Puta / Itinerer' }
                                             ];
                                             const generatedDocs = docs.filter(d => (dossier.documentTracker as any)?.[d.id]?.generated);
@@ -2149,6 +2172,14 @@ const ReservationArchitect: React.FC = () => {
                                                                 </div>
                                                             )}
                                                         </div>
+                                                        {item.supplierNotes && (
+                                                            <div style={{ marginTop: '12px', padding: '10px 14px', background: 'rgba(251, 191, 36, 0.05)', borderLeft: '3px solid #fbbf24', borderRadius: '8px' }}>
+                                                                <div style={{ fontWeight: 700, marginBottom: '2px', color: '#fbbf24', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                    <Briefcase size={12} /> Napomena za Dobavljača
+                                                                </div>
+                                                                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.4' }}>{item.supplierNotes}</p>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -2184,18 +2215,19 @@ const ReservationArchitect: React.FC = () => {
                                         </div>
 
                                         {/* 4. DOKUMENTA I NAPOMENE - TWO COLUMNS */}
-                                        <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '20px', alignItems: 'flex-start' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '20px', alignItems: 'stretch' }}>
                                             {/* Document Tracking */}
-                                            <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                                            <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                                                 <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                     <FileText size={18} color="var(--accent)" />
                                                     <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Slanje Dokumenata</h4>
                                                 </div>
-                                                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
                                                     {[
                                                         { id: 'contract', label: 'Ugovor o Putovanju' },
                                                         { id: 'voucher', label: 'Vaučer / Smeštaj' },
                                                         { id: 'proforma', label: 'Račun / Profaktura' },
+                                                        { id: 'finalFiscal', label: 'Konačni fiskalni račun' },
                                                         { id: 'itinerary', label: 'Plan Puta / Itinerer' }
                                                     ].map(doc => {
                                                         const isSentEmail = (dossier as any).documentTracker?.[doc.id]?.sentEmail;
@@ -2277,12 +2309,12 @@ const ReservationArchitect: React.FC = () => {
                                             </div>
 
                                             {/* Unified Notes Card */}
-                                            <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                                            <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                                                 <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                     <AlertTriangle size={18} color="var(--accent)" />
                                                     <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Sve Napomene i Specijalni Zahtevi</h4>
                                                 </div>
-                                                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
                                                     {/* General Notes */}
                                                     {dossier.notes.general && (
                                                         <div style={{ padding: '12px 14px', background: 'rgba(59, 130, 246, 0.05)', borderLeft: '3px solid var(--accent)', borderRadius: '8px' }}>
@@ -2331,6 +2363,30 @@ const ReservationArchitect: React.FC = () => {
                                                         </div>
                                                     )}
 
+                                                    {/* Supplier Notes - Always Visible and Editable */}
+                                                    <div style={{ padding: '12px 14px', background: 'rgba(251, 191, 36, 0.05)', borderLeft: '3px solid #fbbf24', borderRadius: '8px' }}>
+                                                        <div style={{ fontWeight: 700, marginBottom: '8px', color: '#fbbf24', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <Briefcase size={12} /> Napomena za Dobavljača
+                                                        </div>
+                                                        <textarea
+                                                            value={dossier.notes.supplier}
+                                                            onChange={(e) => setDossier({ ...dossier, notes: { ...dossier.notes, supplier: e.target.value } })}
+                                                            style={{
+                                                                width: '100%',
+                                                                minHeight: '45px',
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                padding: 0,
+                                                                color: 'var(--text-primary)',
+                                                                resize: 'vertical',
+                                                                fontSize: '12px',
+                                                                lineHeight: '1.5',
+                                                                outline: 'none'
+                                                            }}
+                                                            placeholder="Unesite napomenu za dobavljača..."
+                                                        />
+                                                    </div>
+
                                                     {/* Trip Item Notes */}
                                                     {dossier.tripItems.filter(item => item.notes).map((item) => (
                                                         <div key={item.id} style={{ padding: '12px 14px', background: 'rgba(239, 68, 68, 0.05)', borderLeft: '3px solid #ef4444', borderRadius: '8px' }}>
@@ -2339,8 +2395,16 @@ const ReservationArchitect: React.FC = () => {
                                                         </div>
                                                     ))}
 
+                                                    {/* Trip Item Supplier Notes */}
+                                                    {dossier.tripItems.filter(item => item.supplierNotes).map((item) => (
+                                                        <div key={item.id} style={{ padding: '12px 14px', background: 'rgba(251, 191, 36, 0.05)', borderLeft: '3px solid #fbbf24', borderRadius: '8px' }}>
+                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: '#fbbf24', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>💼 {item.subject} (Dobavljač)</div>
+                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{item.supplierNotes}</p>
+                                                        </div>
+                                                    ))}
+
                                                     {/* No Notes Message */}
-                                                    {!dossier.notes.general && !dossier.notes.internal && !dossier.notes.financial && !dossier.notes.specialRequests && !dossier.notes.contract && !dossier.notes.voucher && !dossier.tripItems.some(item => item.notes) && (
+                                                    {!dossier.notes.general && !dossier.notes.internal && !dossier.notes.financial && !dossier.notes.specialRequests && !dossier.notes.contract && !dossier.notes.voucher && !dossier.notes.supplier && !dossier.tripItems.some(item => item.notes || item.supplierNotes) && (
                                                         <div style={{ padding: '10px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '12px', fontStyle: 'italic' }}>
                                                             Nema dodatnih napomena.
                                                         </div>
@@ -3389,6 +3453,35 @@ const ReservationArchitect: React.FC = () => {
                                                                 />
                                                             </div>
                                                         </div>
+
+                                                        {/* Row 5: Supplier Specific Notes */}
+                                                        <div className="item-row-v4" style={{ marginBottom: '24px' }}>
+                                                            <div className="input-group-v4">
+                                                                <label style={{ color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                    <Briefcase size={14} /> Napomena za Dobavljača (Stavka)
+                                                                </label>
+                                                                <textarea
+                                                                    value={item.supplierNotes || ''}
+                                                                    placeholder="Interne instrukcije za dobavljača za ovu konkretnu stavku..."
+                                                                    onChange={e => {
+                                                                        const next = [...dossier.tripItems];
+                                                                        next[idx].supplierNotes = e.target.value;
+                                                                        setDossier({ ...dossier, tripItems: next });
+                                                                    }}
+                                                                    style={{
+                                                                        width: '100%',
+                                                                        minHeight: '80px',
+                                                                        background: 'var(--bg-panel)',
+                                                                        border: '1px solid var(--border)',
+                                                                        borderRadius: '8px',
+                                                                        padding: '12px',
+                                                                        color: 'var(--text-primary)',
+                                                                        resize: 'vertical',
+                                                                        fontSize: '13px'
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     </>)}
 
                                                 <div className="item-finance-v4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', alignItems: 'stretch', marginBottom: '24px', background: 'rgba(0,0,0,0.1)', padding: '16px', borderRadius: '12px' }}>
@@ -3969,6 +4062,30 @@ const ReservationArchitect: React.FC = () => {
                                                         placeholder="Interni dogovori, upozorenja..."
                                                     />
                                                 </div>
+
+                                                {/* Supplier Notes - Always Visible and Editable */}
+                                                <div style={{ padding: '12px 14px', background: 'rgba(251, 191, 36, 0.05)', borderLeft: '3px solid #fbbf24', borderRadius: '8px' }}>
+                                                    <div style={{ fontWeight: 700, marginBottom: '8px', color: '#fbbf24', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        <Briefcase size={12} /> Napomena za Dobavljača
+                                                    </div>
+                                                    <textarea
+                                                        value={dossier.notes.supplier}
+                                                        onChange={(e) => setDossier({ ...dossier, notes: { ...dossier.notes, supplier: e.target.value } })}
+                                                        style={{
+                                                            width: '100%',
+                                                            minHeight: '45px',
+                                                            background: 'transparent',
+                                                            border: 'none',
+                                                            padding: 0,
+                                                            color: 'var(--text-primary)',
+                                                            resize: 'vertical',
+                                                            fontSize: '12px',
+                                                            lineHeight: '1.5',
+                                                            outline: 'none'
+                                                        }}
+                                                        placeholder="Unesite napomenu za dobavljača..."
+                                                    />
+                                                </div>
                                             </div>
                                         </>
                                     )}
@@ -4038,7 +4155,7 @@ const ReservationArchitect: React.FC = () => {
                                                 </div>
                                             )}
 
-                                            < div className="insurance-card v4">
+                                            <div className="insurance-card v4">
                                                 <div className="card-top">
                                                     <ShieldCheck size={32} color="#eab308" />
                                                     <div>
@@ -4283,6 +4400,7 @@ const ReservationArchitect: React.FC = () => {
                                             {[
                                                 { id: 'proforma', title: 'Profaktura (Predračun)', icon: <FileText size={22} />, desc: 'Instrukcije za uplatu preko računa.' },
                                                 { id: 'advance', title: 'Avansni Račun', icon: <Receipt size={22} />, desc: 'Potvrda o delimičnoj uplati (akontaciji).' },
+                                                { id: 'finalFiscal', title: 'Konačni Fiskalni Račun', icon: <FileText size={22} />, desc: 'Fiskalizovan dokument o potpunoj uplati.' },
                                                 { id: 'final', title: 'Konačni Račun', icon: <CheckCircle2 size={22} />, desc: 'Zatvaranje rezervacije i fiskalizacija.' },
                                                 { id: 'payment', title: 'Potvrda o Uplati ili Refund', icon: <Banknote size={22} />, desc: 'Službena potvrda primljenih sredstava.' }
                                             ].map(doc => (
