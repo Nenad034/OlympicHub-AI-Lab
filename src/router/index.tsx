@@ -77,6 +77,7 @@ const MtsGlobeTest = React.lazy(() => import('../pages/MtsGlobeTest'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
+const B2BPromoManager = React.lazy(() => import('../pages/B2BPromoManager'));
 
 
 // Stores
@@ -465,6 +466,14 @@ export const router = createBrowserRouter([
                     {
                         path: 'b2b-settings',
                         element: <B2BSettings />,
+                    },
+                    {
+                        path: 'b2b-promo-manager',
+                        element: (
+                            <ProtectedRoute minLevel={6}>
+                                <B2BPromoManager />
+                            </ProtectedRoute>
+                        ),
                     },
                     {
                         path: 'katana',

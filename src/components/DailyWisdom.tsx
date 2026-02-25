@@ -95,104 +95,121 @@ const DailyWisdom: React.FC = () => {
     }, []);
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="wisdom-card"
-            style={{
-                marginTop: '24px',
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                borderRadius: '32px',
-                padding: '40px',
-                position: 'relative',
-                overflow: 'hidden',
-                boxShadow: '0 15px 45px rgba(0,0,0,0.15)'
-            }}
-        >
-            {/* Background Decorations */}
-            <div style={{ position: 'absolute', top: '-10%', right: '-5%', opacity: 0.03 }}>
-                <Quote size={200} />
-            </div>
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '40px', marginBottom: '40px' }}>
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ y: -5 }}
+                className="wisdom-card"
+                style={{
+                    width: '100%',
+                    maxWidth: '900px',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '24px',
+                    padding: '30px 40px',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '20px'
+                }}
+            >
+                {/* Background quote mark */}
+                <div style={{ position: 'absolute', top: '10px', right: '20px', opacity: 0.05, color: 'var(--accent)' }}>
+                    <Quote size={120} />
+                </div>
 
-            <div style={{ position: 'relative', zIndex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '30px' }}>
-                    <div style={{
-                        background: 'var(--gradient-blue)',
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 8px 16px rgba(0, 92, 197, 0.3)'
-                    }}>
-                        <Sparkles size={20} color="#fff" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                            background: 'var(--accent-glow)',
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <Sparkles size={16} color="var(--accent)" />
+                        </div>
+                        <span style={{
+                            fontSize: '12px',
+                            fontWeight: '800',
+                            letterSpacing: '2px',
+                            textTransform: 'uppercase',
+                            color: 'var(--accent)',
+                            opacity: 0.8
+                        }}>
+                            Misao Dana
+                        </span>
                     </div>
-                    <div>
-                        <h3 style={{ fontSize: '18px', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase' }}>Misao Dana</h3>
-                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Unutrašnja snaga za Mastera</p>
+                    <div style={{
+                        fontSize: '10px',
+                        color: 'var(--text-secondary)',
+                        fontWeight: 700,
+                        opacity: 0.6
+                    }}>
+                        {new Date().toLocaleDateString('sr-RS', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </div>
                 </div>
 
-                <div style={{ marginBottom: '40px' }}>
+                <div style={{ position: 'relative' }}>
                     <p style={{
-                        fontSize: '24px',
+                        fontSize: '20px',
                         fontWeight: '500',
-                        lineHeight: '1.5',
+                        lineHeight: '1.6',
                         fontStyle: 'italic',
                         color: 'var(--text-primary)',
-                        fontFamily: "'Outfit', sans-serif"
+                        textAlign: 'center',
+                        fontFamily: "'Outfit', sans-serif",
+                        margin: '10px 0'
                     }}>
                         "{todayWisdom.text}"
                     </p>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <div style={{
-                            width: '50px',
-                            height: '50px',
-                            borderRadius: '16px',
-                            background: 'var(--bg-sidebar)',
-                            border: '1px solid var(--border)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            {todayWisdom.author.includes('Musashi') ? <Sword size={28} color="var(--accent)" /> : <GeometricBrain size={28} color="var(--accent)" />}
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--accent)' }}>{todayWisdom.author}</div>
-                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500 }}>{todayWisdom.role}</div>
-                        </div>
-                    </div>
-
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '12px',
+                    borderTop: '1px solid rgba(255,255,255,0.05)',
+                    paddingTop: '20px'
+                }}>
                     <div style={{
-                        fontSize: '11px',
-                        color: 'var(--text-secondary)',
-                        background: 'var(--glass-bg)',
-                        padding: '6px 14px',
-                        borderRadius: '10px',
-                        border: '1px solid var(--border)',
-                        fontWeight: 600
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '12px',
+                        background: 'rgba(255,255,255,0.03)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid rgba(255,255,255,0.05)'
                     }}>
-                        {new Date().toLocaleDateString('sr-RS', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {todayWisdom.author.includes('Musashi') ? <Sword size={18} color="var(--accent)" /> : <GeometricBrain size={18} color="var(--accent)" />}
+                    </div>
+                    <div style={{ textAlign: 'left' }}>
+                        <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>{todayWisdom.author}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>{todayWisdom.role}</div>
                     </div>
                 </div>
-            </div>
 
-            {/* Accent light effect */}
-            <div style={{
-                position: 'absolute',
-                bottom: 0,
-                left: '10%',
-                width: '40%',
-                height: '1px',
-                background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
-                opacity: 0.5
-            }}></div>
-        </motion.div>
+                {/* Accent line */}
+                <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '60%',
+                    height: '2px',
+                    background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
+                    opacity: 0.3
+                }}></div>
+            </motion.div>
+        </div>
     );
 };
 

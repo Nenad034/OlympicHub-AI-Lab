@@ -96,6 +96,7 @@ const HorizontalNav: React.FC = () => {
         {
             to: '/settings', icon: SettingsIcon, label: t.settings,
             subItems: [
+                { to: '/b2b-promo-manager', label: 'B2B Promo Manager', icon: Sparkles },
                 { to: '/settings', label: 'Globalne Postavke', icon: SettingsIcon },
                 { to: '/activity-log', label: 'Dnevnik Aktivnosti', icon: ClipboardList },
                 { to: '/katana', label: 'Katana Engine', icon: Sparkles },
