@@ -20,11 +20,15 @@ import {
     TrendingDown,
     TrendingUp,
     RefreshCw,
-    BarChart3
+    BarChart3,
+    Plus,
+    Building2
 } from 'lucide-react';
 import './SupplierFinance.css';
 import { supabase } from '../supabaseClient';
 import { supplierFinanceService } from '../services/supplierFinanceService';
+import supplierService from '../services/SupplierService';
+import type { UnifiedSupplier } from '../services/SupplierService';
 import { vccService } from '../services/vccService';
 import type { VCCDetails } from '../services/vccService';
 import { fxService } from '../services/fxService';
@@ -44,6 +48,7 @@ const SupplierFinance: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'obligations' | 'archive' | 'analytics' | 'vcc-settings'>('obligations');
     const [vccSettings, setVccSettings] = useState<SupplierVCCSettings[]>([]);
+    const [allSuppliers, setAllSuppliers] = useState<UnifiedSupplier[]>([]);
 
     // Filters
     const [searchQuery, setSearchQuery] = useState('');
@@ -72,6 +77,19 @@ const SupplierFinance: React.FC = () => {
     const [editingVcc, setEditingVcc] = useState<SupplierVCCSettings | null>(null);
     const [isSavingVcc, setIsSavingVcc] = useState(false);
 
+    // Manual Obligation State
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newOb, setNewOb] = useState<Partial<SupplierObligation>>({
+        cis_code: '',
+        supplier_id: '',
+        net_amount: 0,
+        gross_amount: 0,
+        currency: 'EUR',
+        status: 'unpaid',
+        payment_method_preferred: 'bank',
+        is_final_net: false
+    });
+
     useEffect(() => {
         loadData();
     }, []);
@@ -79,11 +97,12 @@ const SupplierFinance: React.FC = () => {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [obRes, statsRes, ratesData, vccSettingsResult] = await Promise.all([
+            const [obRes, statsRes, ratesData, vccSettingsResult, supplierData] = await Promise.all([
                 supplierFinanceService.getObligations(),
                 supplierFinanceService.getDashboardStats(),
                 fxService.getCurrentRates(),
-                supplierFinanceService.getAllVCCSettings()
+                supplierFinanceService.getAllVCCSettings(),
+                supplierService.getAllSuppliers()
             ]);
 
             if (obRes.success && obRes.data) {
@@ -93,6 +112,11 @@ const SupplierFinance: React.FC = () => {
             if (vccSettingsResult) {
                 setVccSettings(vccSettingsResult);
             }
+
+            if (Array.isArray(supplierData)) {
+                setAllSuppliers(supplierData);
+            }
+
 
             // Fetch transactions for archive if we are on that tab (or just always for simplicity)
             const { data: txData } = await supabase.from('supplier_transactions').select('*, supplier_obligations(cis_code, supplier_id)').order('executed_at', { ascending: false });
@@ -111,14 +135,18 @@ const SupplierFinance: React.FC = () => {
      * SEED DATA for Demo Purpose
      */
     const seedMockData = async () => {
+        const suppliers = await supplierService.getAllSuppliers();
+        const solvex = suppliers.find(s => s.name.toLowerCase().includes('solvex'))?.name || 'Solvex Hotels';
+        const amadeus = suppliers.find(s => s.name.toLowerCase().includes('amadeus'))?.name || 'Amadeus Air';
+
         const mockObs: Partial<SupplierObligation>[] = [
             {
-                cis_code: 'CIS-9999999-URGENT',
-                supplier_id: 'Amadeus Air (KRITIČNO)',
+                cis_code: 'CIS-' + Math.random().toString(36).substr(2, 7).toUpperCase(),
+                supplier_id: amadeus,
                 net_amount: 5200.00,
                 gross_amount: 6000.00,
                 currency: 'EUR',
-                payment_deadline: new Date(Date.now() - 172800000).toISOString(),
+                payment_deadline: new Date(Date.now() + 2 * 86400000).toISOString(),
                 status: 'unpaid',
                 payment_method_preferred: 'bank',
                 is_final_net: false,
@@ -126,17 +154,15 @@ const SupplierFinance: React.FC = () => {
                 stay_to: '2024-03-22',
                 country_id: 'Bulgaria',
                 destination_id: 'Sofia',
-                subagent_id: 'TravelPoint Doo',
-                office_id: 'Beograd - Glavna',
-                notes: 'Dostaviti dokaz o uplati ODMAH'
+                notes: 'Urgente plaćanje za avio karte'
             },
             {
-                cis_code: 'CIS-20240315-001',
-                supplier_id: 'Solvex Hotels',
+                cis_code: 'CIS-' + Math.random().toString(36).substr(2, 7).toUpperCase(),
+                supplier_id: solvex,
                 net_amount: 1250.50,
                 gross_amount: 1500.00,
                 currency: 'EUR',
-                payment_deadline: new Date(Date.now() + 86400000).toISOString(),
+                payment_deadline: new Date(Date.now() + 5 * 86400000).toISOString(),
                 status: 'unpaid',
                 payment_method_preferred: 'vcc',
                 is_final_net: true,
@@ -144,55 +170,20 @@ const SupplierFinance: React.FC = () => {
                 stay_to: '2024-06-22',
                 country_id: 'Bulgaria',
                 destination_id: 'Sunny Beach',
-                subagent_id: 'Direct Sales',
-                office_id: 'Novi Sad',
-                notes: 'Rezervacija za Hotel RIU Helios'
-            },
-            {
-                cis_code: 'CIS-PR-001',
-                supplier_id: 'DMC Greece',
-                net_amount: 3200.00,
-                gross_amount: 4000.00,
-                currency: 'EUR',
-                payment_deadline: new Date(Date.now() + 5 * 86400000).toISOString(),
-                status: 'partially_paid',
-                paid_amount: 1000.00,
-                payment_method_preferred: 'bank',
-                is_final_net: false,
-                stay_from: '2024-07-01',
-                stay_to: '2024-07-10',
-                country_id: 'Greece',
-                destination_id: 'Halkidiki',
-                subagent_id: 'Adria Travel',
-                office_id: 'Beograd - Glavna',
-                notes: 'Grupno putovanje - već plaćena akontacija'
+                notes: 'Rezervacija iz dosijea'
             }
-        ];
-
-        const mockVcc: Partial<SupplierVCCSettings>[] = [
-            { supplier_id: 'solvex', auto_generate: true, vcc_type: 'Mastercard', activation_delay: -2, max_limit_buffer_percent: 0.5, currency_code: 'EUR' },
-            { supplier_id: 'opengreece', auto_generate: false, vcc_type: 'Visa', activation_delay: 0, max_limit_buffer_percent: 0, currency_code: 'EUR' },
-            { supplier_id: 'tct', auto_generate: true, vcc_type: 'Visa', activation_delay: -1, max_limit_buffer_percent: 1.0, currency_code: 'EUR' }
         ];
 
         setIsLoading(true);
         try {
-            // Seed Obligations
             for (const ob of mockObs) {
-                const res = await supplierFinanceService.saveObligation(ob);
-                if (!res.success) throw new Error(res.error);
+                await supplierFinanceService.saveObligation(ob);
             }
-
-            // Seed VCC Settings
-            for (const vcc of mockVcc) {
-                await supplierFinanceService.saveVCCSettings(vcc);
-            }
-
-            alert('Test podaci (Dugovanja + VCC Postavke) su uspešno generisani!');
+            alert('Test podaci su uspešno generisani!');
             await loadData();
         } catch (error: any) {
             console.error('Seed process failed:', error);
-            alert(`Greška: ${error.message}. Proverite konzolu ili da li ste kreirali tabele u Supabase.`);
+            alert(`Greška: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -256,6 +247,40 @@ const SupplierFinance: React.FC = () => {
             alert('Greška pri čuvanju postavki.');
         } finally {
             setIsSavingVcc(false);
+        }
+    };
+
+    const handleSaveNewObligation = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newOb.supplier_id || !newOb.net_amount) {
+            alert('Molimo unesite dobavljača i iznos.');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const res = await supplierFinanceService.saveObligation({
+                ...newOb,
+                cis_code: newOb.cis_code || `MANUAL-${Math.floor(Math.random() * 100000)}`
+            });
+            if (res.success) {
+                setShowAddModal(false);
+                setNewOb({
+                    cis_code: '',
+                    supplier_id: '',
+                    net_amount: 0,
+                    gross_amount: 0,
+                    currency: 'EUR',
+                    status: 'unpaid',
+                    payment_method_preferred: 'bank',
+                    is_final_net: false
+                });
+                await loadData();
+            }
+        } catch (error) {
+            console.error('Failed to save manual obligation', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -359,8 +384,11 @@ const SupplierFinance: React.FC = () => {
                         <button className={activeTab === 'analytics' ? 'active' : ''} onClick={() => setActiveTab('analytics')}>Yield / Analitika</button>
                         <button className={activeTab === 'vcc-settings' ? 'active' : ''} onClick={() => setActiveTab('vcc-settings')}>VCC Postavke</button>
                     </div>
-                    <button className="action-btn" onClick={seedMockData} style={{ color: '#3b82f6' }}>
-                        <RefreshCw size={16} /> Generiši Test Podatke
+                    <button className="action-btn-success" onClick={() => setShowAddModal(true)}>
+                        <Plus size={16} /> Nova Obaveza
+                    </button>
+                    <button className="action-btn-info" onClick={seedMockData}>
+                        <RefreshCw size={16} /> Test Podaci
                     </button>
                 </div>
             </header>
@@ -845,7 +873,172 @@ const SupplierFinance: React.FC = () => {
                 </motion.div>
             )}
 
-            {/* VCC EDIT MODAL */}
+            {/* MANUAL ADD MODAL */}
+            <AnimatePresence>
+                {showAddModal && (
+                    <div className="finance-modal-overlay">
+                        <motion.div
+                            className="finance-modal larger"
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                        >
+                            <button className="close-btn" onClick={() => setShowAddModal(false)} style={{ position: 'absolute', right: '20px', top: '20px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                                <X size={24} />
+                            </button>
+
+                            <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <Plus size={24} color="#10b981" /> Nova Obaveza (Manuelni unos)
+                            </h2>
+                            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '14px' }}>
+                                Koristite ovo za unos troškova van standardnih rezervacija ili dodatnih troškova.
+                            </p>
+
+                            <form onSubmit={handleSaveNewObligation}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                                    <div className="form-group-v6">
+                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '8px', opacity: 0.7 }}>Interna Oznaka / CIS</label>
+                                        <input
+                                            type="text"
+                                            className="finance-search-input"
+                                            style={{ width: '100%' }}
+                                            placeholder="npr. CIS-AD-001 ili ostavite prazno"
+                                            value={newOb.cis_code}
+                                            onChange={e => setNewOb({ ...newOb, cis_code: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="form-group-v6">
+                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '8px', opacity: 0.7 }}>Dobavljač (iz baze)</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <Building2 size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                                            <select
+                                                className="finance-search-input"
+                                                style={{ width: '100%', paddingLeft: '40px' }}
+                                                required
+                                                value={newOb.supplier_id}
+                                                onChange={e => {
+                                                    const selected = allSuppliers.find(s => s.name === e.target.value);
+                                                    setNewOb({ ...newOb, supplier_id: e.target.value, country_id: selected?.country });
+                                                }}
+                                            >
+                                                <option value="">Izaberi dobavljača...</option>
+                                                {allSuppliers.map(s => (
+                                                    <option key={s.id} value={s.name}>{s.name} ({s.country})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                                    <div className="form-group-v6">
+                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '8px', opacity: 0.7 }}>Neto Iznos (Trošak)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            className="finance-search-input"
+                                            style={{ width: '100%' }}
+                                            required
+                                            value={newOb.net_amount}
+                                            onChange={e => setNewOb({ ...newOb, net_amount: parseFloat(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div className="form-group-v6">
+                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '8px', opacity: 0.7 }}>Bruto Iznos (Prodajni)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            className="finance-search-input"
+                                            style={{ width: '100%' }}
+                                            value={newOb.gross_amount}
+                                            onChange={e => setNewOb({ ...newOb, gross_amount: parseFloat(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div className="form-group-v6">
+                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '8px', opacity: 0.7 }}>Valuta</label>
+                                        <select
+                                            className="finance-search-input"
+                                            style={{ width: '100%' }}
+                                            value={newOb.currency}
+                                            onChange={e => setNewOb({ ...newOb, currency: e.target.value })}
+                                        >
+                                            <option value="EUR">EUR</option>
+                                            <option value="RSD">RSD</option>
+                                            <option value="USD">USD</option>
+                                            <option value="BGN">BGN</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                                    <div className="form-group-v6">
+                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '8px', opacity: 0.7 }}>Rok Plaćanja (Kalendar)</label>
+                                        <div
+                                            className="finance-search-input"
+                                            style={{ width: '100%', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+                                            onClick={() => setShowStayCal(true)}
+                                        >
+                                            <Calendar size={16} />
+                                            {newOb.payment_deadline ? new Date(newOb.payment_deadline).toLocaleDateString() : 'Izaberi datum...'}
+                                        </div>
+                                        {showStayCal && (
+                                            <ModernCalendar
+                                                startDate={newOb.payment_deadline || null}
+                                                endDate={newOb.payment_deadline || null}
+                                                singleMode={true}
+                                                allowPast={true}
+                                                onChange={(start) => setNewOb({ ...newOb, payment_deadline: start })}
+                                                onClose={() => setShowStayCal(false)}
+                                            />
+                                        )}
+                                    </div>
+                                    <div className="form-group-v6">
+                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '8px', opacity: 0.7 }}>Metod Plaćanja</label>
+                                        <select
+                                            className="finance-search-input"
+                                            style={{ width: '100%' }}
+                                            value={newOb.payment_method_preferred}
+                                            onChange={e => setNewOb({ ...newOb, payment_method_preferred: e.target.value as any })}
+                                        >
+                                            <option value="bank">Bankarski prenos</option>
+                                            <option value="vcc">Virtualna kartica (VCC)</option>
+                                            <option value="cash">Gotovina</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="form-group-v6" style={{ marginBottom: '24px' }}>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '8px', opacity: 0.7 }}>Napomena</label>
+                                    <textarea
+                                        className="finance-search-input"
+                                        style={{ width: '100%', minHeight: '100px', paddingTop: '10px', fontSize: '14px' }}
+                                        placeholder="Dodatni detalji o ovom trošku..."
+                                        value={newOb.notes}
+                                        onChange={e => setNewOb({ ...newOb, notes: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="form-actions-v6" style={{ marginTop: '40px', display: 'flex', gap: '16px' }}>
+                                    <button
+                                        type="button"
+                                        className="action-btn"
+                                        style={{ flex: 1, height: '48px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}
+                                        onClick={() => setShowAddModal(false)}
+                                    >Odustani</button>
+                                    <button
+                                        type="submit"
+                                        className="pay-btn"
+                                        style={{ flex: 1, height: '48px', background: '#10b981', fontSize: '15px' }}
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? 'Čuvam...' : 'Snimi Obavezu'}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
             <AnimatePresence>
                 {editingVcc && (
                     <div className="finance-modal-overlay">

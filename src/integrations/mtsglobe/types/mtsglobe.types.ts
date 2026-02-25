@@ -61,3 +61,47 @@ export interface MtsGlobeApiResponse<T> {
     data?: T;
     error?: string;
 }
+
+/**
+ * Booking Request Types
+ */
+export interface MtsGlobeBookingRequest {
+    hotelCode: string;
+    checkIn: string;
+    checkOut: string;
+    roomTypeCode: string;
+    ratePlanCode: string;
+    passengers: {
+        firstName: string;
+        lastName: string;
+        type: 'Adult' | 'Child';
+        age?: number;
+    }[];
+}
+
+/**
+ * Booking Response Types
+ */
+export interface MtsGlobeBookingResult {
+    reservationId: string;
+    status: 'Confirmed' | 'Pending' | 'Rejected';
+    totalPrice: {
+        amount: number;
+        currency: string;
+    };
+    confirmationNumber?: string;
+}
+
+/**
+ * Cancellation Types
+ */
+export interface MtsGlobeCancellationRequest {
+    reservationId: string;
+    reason?: string;
+}
+
+export interface MtsGlobeCancellationResult {
+    success: boolean;
+    cancellationNumber: string;
+    status: 'Cancelled';
+}

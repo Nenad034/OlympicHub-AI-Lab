@@ -145,6 +145,25 @@ export class MtsGlobeProvider implements HotelProvider {
             default: return 'on_request';
         }
     }
+
+    /**
+     * Fetch cancellation policy for MTS Globe (OTA Standard)
+     */
+    async getCancellationPolicy(room: RoomOption, abortSignal?: AbortSignal): Promise<any> {
+        console.log('[MtsGlobeProvider] Fetching policy for room:', room.id);
+
+        // In OTA, policy is often returned in the search/avail result or via a separate info request.
+        // For now, return a standard informative policy structure.
+        return {
+            provider: 'MtsGlobe',
+            policyType: 'Standard OTA',
+            rules: [
+                { deadline: 7, penaltyPercent: 0, description: 'Free cancellation 7 days before check-in' },
+                { deadline: 3, penaltyPercent: 50, description: '50% penalty 3 days before check-in' },
+                { deadline: 0, penaltyPercent: 100, description: 'Non-refundable within 72h' }
+            ]
+        };
+    }
 }
 
 export default MtsGlobeProvider;

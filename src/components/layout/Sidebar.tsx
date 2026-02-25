@@ -13,9 +13,13 @@ import {
     ClipboardList,
     Search,
     DollarSign,
-    RefreshCcw
+    Plus,
+    BarChart3,
+    X,
+    Building2,
+    RefreshCw
 } from 'lucide-react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import { GeometricBrain } from '../icons/GeometricBrain';
 import { ClickToTravelLogo } from '../icons/ClickToTravelLogo';
 import { useThemeStore, useAppStore, useAuthStore } from '../../stores';
@@ -25,11 +29,72 @@ const Sidebar: React.FC = () => {
     const { lang, isSidebarCollapsed, toggleSidebar } = useThemeStore();
     const { setChatOpen } = useAppStore();
     const { userLevel, impersonatedSubagent, setImpersonatedSubagent } = useAuthStore();
+    const location = useLocation();
+    const [expandedItem, setExpandedItem] = React.useState<string | null>(null);
+
     const isB2BView = userLevel < 6 || !!impersonatedSubagent;
     const t = translations[lang];
 
     const navItemClass = (isActive: boolean) =>
         `nav-item ${isActive ? 'active' : ''}`;
+
+    const NavGroupItem = ({ to, icon: Icon, label, subItems, title }: {
+        to: string,
+        icon: any,
+        label: React.ReactNode,
+        subItems?: { to: string, label: string, icon?: any }[],
+        title?: string
+    }) => {
+        const isExpanded = expandedItem === to;
+        const isActive = location.pathname.startsWith(to) && to !== '/';
+
+        return (
+            <div className={`nav-item-wrapper ${isExpanded ? 'expanded' : ''}`}>
+                <div
+                    className={`nav-item ${isActive ? 'active' : ''}`}
+                    onClick={() => {
+                        if (subItems && !isSidebarCollapsed) {
+                            setExpandedItem(isExpanded ? null : to);
+                        }
+                    }}
+                    title={title}
+                >
+                    <NavLink
+                        to={subItems ? '#' : to}
+                        style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'inherit', width: '100%' }}
+                        onClick={(e) => { if (subItems) e.preventDefault(); }}
+                    >
+                        <Icon size={20} /> {label}
+                    </NavLink>
+                    {subItems && !isSidebarCollapsed && (
+                        <ChevronRight
+                            size={14}
+                            style={{
+                                marginLeft: 'auto',
+                                transform: isExpanded ? 'rotate(90deg)' : 'none',
+                                transition: '0.2s'
+                            }}
+                        />
+                    )}
+                </div>
+
+                {subItems && (
+                    <div className="submenu-list">
+                        {subItems.map((sub, idx) => (
+                            <NavLink
+                                key={idx}
+                                to={sub.to}
+                                className={({ isActive }) => `submenu-item ${isActive ? 'active' : ''}`}
+                            >
+                                {sub.icon && <sub.icon size={16} />}
+                                {!isSidebarCollapsed && sub.label}
+                            </NavLink>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     return (
         <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
@@ -55,21 +120,7 @@ const Sidebar: React.FC = () => {
                 {userLevel >= 6 && !impersonatedSubagent && (
                     <div className="nav-group">
                         <h3 className="nav-label">{!isSidebarCollapsed && 'Main'}</h3>
-                        <NavLink
-                            to="/"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title={t.dashboard}
-                            end
-                        >
-                            <LayoutDashboard size={20} /> {!isSidebarCollapsed && t.dashboard}
-                        </NavLink>
-                        {/* <NavLink
-                            to="/master-search"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="Master Pretraga"
-                        >
-                            <Search size={20} /> {!isSidebarCollapsed && 'Master Pretraga'}
-                        </NavLink> */}
+                        <NavGroupItem to="/" icon={LayoutDashboard} label={!isSidebarCollapsed && t.dashboard} title={t.dashboard} />
                     </div>
                 )}
 
@@ -78,69 +129,81 @@ const Sidebar: React.FC = () => {
                 {userLevel >= 6 && !impersonatedSubagent && (
                     <div className="nav-group">
                         <h3 className="nav-label">{!isSidebarCollapsed && t.sectors}</h3>
-                        <NavLink
+
+                        <NavGroupItem
                             to="/production"
-                            className={({ isActive }) => navItemClass(isActive)}
+                            icon={Package}
+                            label={!isSidebarCollapsed && t.production}
                             title={t.production}
-                        >
-                            <Package size={20} /> {!isSidebarCollapsed && t.production}
-                        </NavLink>
-                        <NavLink
-                            to="/mail"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="ClickToTravel Mail"
-                        >
-                            <Mail size={20} /> {!isSidebarCollapsed && 'ClickToTravel Mail'}
-                        </NavLink>
-                        <NavLink
+                            subItems={[
+                                { to: '/hotels', label: 'Lista Hotela', icon: Compass },
+                                { to: '/package-search', label: 'Paket Aranžmani', icon: Sparkles },
+                                { to: '/flight-search', label: 'Avio Karte', icon: Compass }
+                            ]}
+                        />
+
+                        <NavGroupItem to="/mail" icon={Mail} label={!isSidebarCollapsed && 'ClickToTravel Mail'} title="ClickToTravel Mail" />
+
+                        <NavGroupItem
                             to="/suppliers"
-                            className={({ isActive }) => navItemClass(isActive)}
+                            icon={Truck}
+                            label={!isSidebarCollapsed && 'Dobavljači'}
                             title="Dobavljači"
-                        >
-                            <Truck size={20} /> {!isSidebarCollapsed && 'Dobavljači'}
-                        </NavLink>
-                        <NavLink
+                            subItems={[
+                                { to: '/api-connections', label: 'API Connections', icon: SettingsIcon },
+                                { to: '/suppliers', label: 'Lista Dobavljača', icon: Users },
+                                { to: '/pricing-rules', label: 'Pricing Pravila', icon: DollarSign }
+                            ]}
+                        />
+
+                        <NavGroupItem
                             to="/customers"
-                            className={({ isActive }) => navItemClass(isActive)}
+                            icon={Users}
+                            label={!isSidebarCollapsed && 'Kupci'}
                             title="Kupci"
-                        >
-                            <Users size={20} /> {!isSidebarCollapsed && 'Kupci'}
-                        </NavLink>
-                        <NavLink
+                            subItems={[
+                                { to: '/customers', label: 'B2C Baza Kupaca', icon: Users },
+                                { to: '/subagent-admin', label: 'B2B Subagenti', icon: Users }
+                            ]}
+                        />
+
+                        <NavGroupItem
                             to="/reservations"
-                            className={({ isActive }) => navItemClass(isActive)}
+                            icon={ClipboardList}
+                            label={!isSidebarCollapsed && t.reservations}
                             title={t.reservations}
-                        >
-                            <ClipboardList size={20} /> {!isSidebarCollapsed && t.reservations}
-                        </NavLink>
-                        <NavLink
+                            subItems={[
+                                { to: '/reservations', label: 'Status Dashboard', icon: BarChart3 },
+                                { to: '/reservation-architect', label: 'Novi Dosije', icon: Plus },
+                                { to: '/deep-archive', label: 'Arhiva', icon: X }
+                            ]}
+                        />
+
+                        <NavGroupItem
                             to="/supplier-finance"
-                            className={({ isActive }) => navItemClass(isActive)}
+                            icon={DollarSign}
+                            label={!isSidebarCollapsed && 'Plaćanja'}
                             title="Plaćanja"
-                        >
-                            <DollarSign size={20} /> {!isSidebarCollapsed && 'Plaćanja'}
-                        </NavLink>
-                        <NavLink
-                            to="/subagent-admin"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="Subagent Admin"
-                        >
-                            <Users size={20} /> {!isSidebarCollapsed && 'Subagent Admin'}
-                        </NavLink>
-                        <NavLink
+                            subItems={[
+                                { to: '/supplier-finance', label: 'Isplate Dobavljačima', icon: DollarSign },
+                                { to: '/fx-service', label: 'Kursna Lista / NBS', icon: RefreshCw },
+                                { to: '/vcc-settings', label: 'VCC Postavke', icon: Compass }
+                            ]}
+                        />
+
+                        <NavGroupItem
                             to="/price-list-architect"
-                            className={({ isActive }) => navItemClass(isActive)}
+                            icon={DollarSign}
+                            label={!isSidebarCollapsed && 'Pricing Architect'}
                             title="Pricing Architect"
-                        >
-                            <DollarSign size={20} /> {!isSidebarCollapsed && 'Pricing Architect'}
-                        </NavLink>
-                        <NavLink
+                        />
+
+                        <NavGroupItem
                             to="/shifts-generator"
-                            className={({ isActive }) => navItemClass(isActive)}
+                            icon={RefreshCw}
+                            label={!isSidebarCollapsed && 'Generator Smena'}
                             title="Generator Smena"
-                        >
-                            <RefreshCcw size={20} /> {!isSidebarCollapsed && 'Generator Smena'}
-                        </NavLink>
+                        />
                     </div>
                 )}
 

@@ -232,6 +232,7 @@
     background: var(--bg-card);
     border-radius: 16px;
     overflow: hidden;
+    table-layout: fixed;
 }
 
 .subagents-table thead {
@@ -241,7 +242,7 @@
 .subagents-table th {
     padding: 16px;
     text-align: left;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
     color: var(--text-secondary);
@@ -249,11 +250,63 @@
     border-bottom: 1px solid var(--border);
 }
 
+/* Col widths & Aligments distribution */
+.subagents-table th:nth-child(1),
+.subagents-table td:nth-child(1) {
+    width: 22%;
+    text-align: left;
+}
+
+.subagents-table th:nth-child(2),
+.subagents-table td:nth-child(2) {
+    width: 18%;
+    text-align: left;
+}
+
+.subagents-table th:nth-child(3),
+.subagents-table td:nth-child(3) {
+    width: 10%;
+    text-align: center;
+}
+
+/* Status */
+.subagents-table th:nth-child(4),
+.subagents-table td:nth-child(4) {
+    width: 12%;
+    text-align: center;
+}
+
+/* API */
+.subagents-table th:nth-child(5),
+.subagents-table td:nth-child(5) {
+    width: 12%;
+    text-align: right;
+}
+
+/* Promet */
+.subagents-table th:nth-child(6),
+.subagents-table td:nth-child(6) {
+    width: 12%;
+    text-align: right;
+}
+
+/* Provizija */
+.subagents-table th:nth-child(7),
+.subagents-table td:nth-child(7) {
+    width: 14%;
+    text-align: center;
+}
+
+/* Akcije */
+
+/* Akcije */
+
 .subagents-table td {
-    padding: 16px;
+    padding: 14px 16px;
     border-bottom: 1px solid var(--border);
     color: var(--text-primary);
-    font-size: 14px;
+    font-size: 13px;
+    vertical-align: middle;
 }
 
 .subagents-table tbody tr {
@@ -316,6 +369,7 @@
 .api-count {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     color: var(--text-secondary);
     font-size: 13px;
@@ -336,25 +390,36 @@
 
 .action-buttons {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    justify-content: center;
 }
 
 .action-btn {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--bg-sidebar);
-    color: var(--text-secondary);
+    border: none;
+    background: var(--accent);
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    stroke-width: 2.5px;
 }
 
 .action-btn:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--accent-glow);
+    filter: brightness(1.1);
 }
 
 .action-btn.view:hover {
@@ -874,12 +939,17 @@
     padding: 16px 24px;
     background: transparent;
     border: none;
-    border-bottom: 2px solid transparent;
+    border-bottom: 3px solid transparent;
     color: var(--text-secondary);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
+}
+
+.tab-item svg {
+    color: inherit;
+    stroke: currentColor;
 }
 
 .tab-item:hover {
@@ -1613,6 +1683,7 @@
         padding: 16px;
     }
 }
+
 /* ===== OLYMPIC ANALYTICS STYLES ===== */
 .analytics-container {
     display: flex;
@@ -1639,7 +1710,8 @@
     min-height: 400px;
 }
 
-.analytics-card h3, .analytics-card h4 {
+.analytics-card h3,
+.analytics-card h4 {
     margin: 0;
     display: flex;
     align-items: center;
@@ -1678,9 +1750,20 @@
 }
 
 @keyframes pulse {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
 }
 
 .search-logs-list {
@@ -1729,8 +1812,15 @@
     width: fit-content;
 }
 
-.entity-type.blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-.entity-type.purple { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+.entity-type.blue {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.entity-type.purple {
+    background: rgba(168, 85, 247, 0.1);
+    color: #a855f7;
+}
 
 .log-search-details {
     display: flex;
@@ -1887,6 +1977,7 @@
     background: rgba(59, 130, 246, 0.1);
     color: #3b82f6;
 }
+
 .action-btn.external:hover {
     background: #3b82f6;
     color: white;
@@ -1914,7 +2005,7 @@
 
 .demand-alert-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .demand-alert-card.high {
@@ -2031,9 +2122,19 @@
     opacity: 1;
 }
 
-.v-tg.active { color: #0088cc; filter: drop-shadow(0 0 4px rgba(0, 136, 204, 0.4)); }
-.v-vb.active { color: #7360f2; filter: drop-shadow(0 0 4px rgba(115, 96, 242, 0.4)); }
-.v-sms.active { color: #10b981; }
+.v-tg.active {
+    color: #0088cc;
+    filter: drop-shadow(0 0 4px rgba(0, 136, 204, 0.4));
+}
+
+.v-vb.active {
+    color: #7360f2;
+    filter: drop-shadow(0 0 4px rgba(115, 96, 242, 0.4));
+}
+
+.v-sms.active {
+    color: #10b981;
+}
 
 .alert-actions-group {
     display: flex;
@@ -2105,8 +2206,13 @@
     opacity: 1;
 }
 
-.notif-channels-icons svg.color-tg { color: #0088cc; }
-.notif-channels-icons svg.color-vb { color: #7360f2; }
+.notif-channels-icons svg.color-tg {
+    color: #0088cc;
+}
+
+.notif-channels-icons svg.color-vb {
+    color: #7360f2;
+}
 
 .toggle-btn {
     padding: 3px 8px;
@@ -2257,4 +2363,3 @@
     color: #a855f7;
     background: rgba(168, 85, 247, 0.05);
 }
-

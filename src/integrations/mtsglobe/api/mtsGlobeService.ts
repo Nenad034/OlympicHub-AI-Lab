@@ -72,6 +72,37 @@ function buildHotelAvailRQ(params: MtsGlobeHotelSearchParams): string {
 }
 
 /**
+ * NEW: Book Hotel (OTA_HotelResRQ)
+ */
+export async function bookHotel(request: any): Promise<MtsGlobeApiResponse<any>> {
+    console.log('[MtsGlobeService] Booking requested:', request);
+    // Placeholder for real XML call
+    return {
+        success: true,
+        data: {
+            reservationId: `MTS-${Math.random().toString(36).substring(7).toUpperCase()}`,
+            status: 'Confirmed'
+        }
+    };
+}
+
+/**
+ * NEW: Cancel Booking (OTA_CancelRQ)
+ */
+export async function cancelBooking(reservationId: string): Promise<MtsGlobeApiResponse<any>> {
+    console.log('[MtsGlobeService] Cancellation requested for:', reservationId);
+    // Placeholder for real XML call
+    return {
+        success: true,
+        data: {
+            success: true,
+            cancellationNumber: `CAN-${Math.random().toString(36).substring(7).toUpperCase()}`,
+            status: 'Cancelled'
+        }
+    };
+}
+
+/**
  * Parse OTA Standard Hotel Availability Response
  */
 function parseHotelAvailRS(xml: string): MtsGlobeHotelResult[] {

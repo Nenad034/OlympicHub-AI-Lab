@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient';
 import type { BookingRequest, BookingResponse } from '../types/booking.types';
 import { contactService } from './contactService';
 import type { Contact } from './contactService';
+import { supplierFinanceService } from './supplierFinanceService';
 
 /**
  * Database reservation type
@@ -329,6 +330,33 @@ export async function saveDossierToDatabase(dossier: any): Promise<{ success: bo
             await ingestContactsFromDossier(dossier);
         } catch (ingestError) {
             console.warn('[Reservation Service] Contact ingestion failed (non-critical):', ingestError);
+        }
+
+        // Bridge: Auto-sync to Supplier Finance Obligations
+        try {
+            if (dbRes.status === 'confirmed' || dbRes.status === 'completed' || dbRes.status === 'pending') {
+                for (const item of dossier.tripItems) {
+                    await supplierFinanceService.saveObligation({
+                        cis_code: dossier.cisCode,
+                        supplier_id: item.supplier || 'Unknown',
+                        net_amount: item.netPrice || 0,
+                        gross_amount: item.bruttoPrice || 0,
+                        currency: dossier.finance.currency,
+                        payment_deadline: item.supplierPaymentDeadline || item.cancellationPolicyRequestParams?.CancellationDate || undefined,
+                        stay_from: item.checkIn,
+                        stay_to: item.checkOut,
+                        status: dbRes.status === 'confirmed' ? 'unpaid' : 'unpaid',
+                        is_final_net: false,
+                        payment_method_preferred: item.supplier?.toLowerCase().includes('solvex') ? 'vcc' : 'bank',
+                        property_name: item.subject,
+                        destination_id: item.city,
+                        country_id: item.country,
+                        notes: `Automatski generisano iz rezervacije ${dossier.cisCode}`
+                    });
+                }
+            }
+        } catch (financeError) {
+            console.warn('[Reservation Service] Finance auto-sync failed (non-critical):', financeError);
         }
 
         return { success: true, data };

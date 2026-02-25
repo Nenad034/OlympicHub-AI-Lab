@@ -20,6 +20,7 @@ import {
     FileText,
     Plug,
     Search,
+    RefreshCw,
     TrendingUp,
     RefreshCcw,
     DollarSign
@@ -113,6 +114,8 @@ const Dashboard: React.FC = () => {
         const saved = localStorage.getItem('dashboard-view-mode');
         return (saved as 'grid' | 'list') || 'grid';
     });
+
+    const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
         localStorage.setItem('dashboard-view-mode', viewMode);
@@ -441,242 +444,281 @@ const Dashboard: React.FC = () => {
 
                         <div style={{ width: '100%', height: '1px', background: 'var(--border)', margin: '20px 0', opacity: 0.3 }}></div>
 
-                        {/* Row 2: Payments & Finance */}
+                        {/* Toggle for Additional Content */}
                         <div style={{
                             display: 'flex',
                             justifyContent: 'center',
-                            marginBottom: '40px'
+                            marginBottom: '30px'
                         }}>
-                            <div className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`} style={{
-                                display: 'grid',
-                                gridTemplateColumns: viewMode === 'list' ? '1fr' : 'repeat(3, 1fr)',
-                                maxWidth: '1400px',
-                                margin: '0 auto',
-                                width: '100%',
-                                gap: '24px'
-                            }}>
-                                {row2Apps.map((app: AppConfig, idx: number) => (
-                                    <motion.div
-                                        key={app.id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: (idx + 3) * 0.1 }}
-                                        className={`module-card ${viewMode === 'list' ? 'list-item' : ''}`}
-                                        onClick={() => handleAppClick(app)}
-                                        style={{
-                                            background: 'rgba(255, 255, 255, 0.02)',
-                                            padding: viewMode === 'list' ? '20px' : '24px'
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                                            <div className="card-icon" style={{ background: app.color, width: '56px', height: '56px' }}>
-                                                {app.icon}
-                                            </div>
-                                            <div>
-                                                <h3 className="card-title" style={{ margin: 0, fontSize: '18px' }}>{app.name}</h3>
-                                                <p className="card-desc" style={{ margin: '4px 0 0', fontSize: '12px', opacity: 0.7 }}>{app.desc.substring(0, 60)}...</p>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
+                            <button
+                                onClick={() => setShowFilters(!showFilters)}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px',
+                                    padding: '12px 24px',
+                                    borderRadius: '100px',
+                                    border: '1.5px solid var(--accent)',
+                                    background: showFilters ? 'var(--accent-glow)' : 'var(--bg-card)',
+                                    color: 'var(--accent)',
+                                    fontSize: '14px',
+                                    fontWeight: '800',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: showFilters ? '0 0 20px var(--accent-glow)' : '0 4px 15px rgba(0,0,0,0.2)',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '1px'
+                                }}
+                            >
+                                {showFilters ? <RefreshCw size={18} /> : <TrendingUp size={18} />}
+                                {showFilters ? 'Sakrij ostale module' : 'Prikaži sve module i finansije'}
+                            </button>
                         </div>
 
-                        <div style={{ width: '100%', height: '1px', background: 'var(--border)', marginBottom: '40px', opacity: 0.5 }}></div>
+                        {showFilters && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.4 }}
+                            >
+                                {/* Row 2: Payments & Finance */}
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    marginBottom: '40px'
+                                }}>
+                                    <div className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`} style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: viewMode === 'list' ? '1fr' : 'repeat(3, 1fr)',
+                                        maxWidth: '1400px',
+                                        margin: '0 auto',
+                                        width: '100%',
+                                        gap: '24px'
+                                    }}>
+                                        {row2Apps.map((app: AppConfig, idx: number) => (
+                                            <motion.div
+                                                key={app.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.1 }}
+                                                className={`module-card ${viewMode === 'list' ? 'list-item' : ''}`}
+                                                onClick={() => handleAppClick(app)}
+                                                style={{
+                                                    background: 'rgba(255, 255, 255, 0.02)',
+                                                    padding: viewMode === 'list' ? '20px' : '24px'
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                                                    <div className="card-icon" style={{ background: app.color, width: '56px', height: '56px' }}>
+                                                        {app.icon}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="card-title" style={{ margin: 0, fontSize: '18px' }}>{app.name}</h3>
+                                                        <p className="card-desc" style={{ margin: '4px 0 0', fontSize: '12px', opacity: 0.7 }}>{app.desc.substring(0, 60)}...</p>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
 
-                        {/* Category Filters & View Toggle */}
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: '32px',
-                            gap: '20px',
-                            flexWrap: 'wrap'
-                        }}>
-                            <div style={{
-                                display: 'flex',
-                                gap: '12px',
-                                overflowX: 'auto',
-                                paddingBottom: '8px',
-                                scrollbarWidth: 'none',
-                                flex: 1
-                            }}>
-                                {CATEGORIES.map(cat => (
-                                    <button
-                                        key={cat.id}
-                                        onClick={() => setActiveCategory(cat.id)}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            padding: '10px 20px',
-                                            borderRadius: '100px',
-                                            border: '1px solid',
-                                            borderColor: activeCategory === cat.id ? 'var(--accent)' : 'var(--border)',
-                                            background: activeCategory === cat.id ? 'var(--accent-glow)' : 'var(--bg-card)',
-                                            color: activeCategory === cat.id ? 'var(--accent)' : 'var(--text-secondary)',
-                                            fontSize: '13px',
-                                            fontWeight: '700',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s',
-                                            whiteSpace: 'nowrap'
-                                        }}
-                                    >
-                                        {cat.icon}
-                                        {cat.label}
-                                    </button>
-                                ))}
-                            </div>
+                                <div style={{ width: '100%', height: '1px', background: 'var(--border)', marginBottom: '40px', opacity: 0.5 }}></div>
 
-                            <div style={{
-                                display: 'flex',
-                                gap: '4px',
-                                background: 'var(--bg-card)',
-                                padding: '4px',
-                                borderRadius: '12px',
-                                border: '1px solid var(--border)'
-                            }}>
-                                <button
-                                    onClick={() => setViewMode('grid')}
-                                    style={{
-                                        padding: '8px',
-                                        borderRadius: '8px',
-                                        border: 'none',
-                                        background: viewMode === 'grid' ? 'var(--accent-glow)' : 'transparent',
-                                        color: viewMode === 'grid' ? 'var(--accent)' : 'var(--text-secondary)',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        transition: 'all 0.2s'
-                                    }}
-                                    title="Grid View"
-                                >
-                                    <LayoutGrid size={18} />
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('list')}
-                                    style={{
-                                        padding: '8px',
-                                        borderRadius: '8px',
-                                        border: 'none',
-                                        background: viewMode === 'list' ? 'var(--accent-glow)' : 'transparent',
-                                        color: viewMode === 'list' ? 'var(--accent)' : 'var(--text-secondary)',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        transition: 'all 0.2s'
-                                    }}
-                                    title="List View"
-                                >
-                                    <List size={18} />
-                                </button>
-                            </div>
-                        </div>
-
-
-                        {/* Other Apps Section */}
-                        <Reorder.Group
-                            values={userApps}
-                            onReorder={setUserApps}
-                            className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`}
-                            style={{ listStyle: 'none', padding: 0 }}
-                        >
-                            {filteredOtherApps.map((app, idx) => (
-
-                                <Reorder.Item
-                                    key={app.id}
-                                    value={app}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: idx * 0.05 }}
-
-                                    className={`module-card draggable ${viewMode === 'list' ? 'list-item' : ''}`}
-                                    onClick={() => handleAppClick(app)}
-                                    style={{ cursor: 'grab', position: 'relative' }}
-                                    whileDrag={{
-                                        scale: 1.05,
-                                        boxShadow: "0 25px 50px rgba(0,0,0,0.4)",
-                                        zIndex: 50,
-                                    }}
-                                >
+                                {/* Category Filters & View Toggle */}
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    marginBottom: '32px',
+                                    gap: '20px',
+                                    flexWrap: 'wrap'
+                                }}>
                                     <div style={{
                                         display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: viewMode === 'list' ? 'center' : 'flex-start',
-                                        flexDirection: viewMode === 'list' ? 'row' : 'column',
-                                        gap: viewMode === 'list' ? '20px' : '0'
+                                        gap: '12px',
+                                        overflowX: 'auto',
+                                        paddingBottom: '8px',
+                                        scrollbarWidth: 'none',
+                                        flex: 1
                                     }}>
-                                        <div style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '16px',
-                                            flex: 1
-                                        }}>
-                                            <div className="card-icon" style={{
-                                                background: app.color,
-                                                width: viewMode === 'list' ? '40px' : '48px',
-                                                height: viewMode === 'list' ? '40px' : '48px',
-                                                minWidth: viewMode === 'list' ? '40px' : '48px'
-                                            }}>{app.icon}</div>
-                                            <div style={{ flex: 1 }}>
-                                                <h3 className="card-title" style={{ margin: 0 }}>{app.name}</h3>
-                                                {viewMode === 'list' && <p className="card-desc" style={{ marginTop: '4px', marginBottom: 0 }}>{app.desc}</p>}
-                                            </div>
-                                        </div>
-
-                                        {viewMode === 'list' && (
-                                            <div style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '24px'
-                                            }}>
-                                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                                    {app.badge && (
-                                                        <span className="badge" style={{ position: 'static', margin: 0 }}>
-                                                            {app.badge}
-                                                        </span>
-                                                    )}
-                                                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                        <ShieldAlert size={10} /> {getUserRights(app.minLevel)}
-                                                    </span>
-                                                </div>
-                                                <div className="card-footer" style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '600', color: 'var(--accent)' }}>
-                                                    <ChevronRight size={18} />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {viewMode === 'grid' && (
-                                            <>
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
-                                                    {app.badge && (
-                                                        <span className="badge">
-                                                            {app.badge}
-                                                        </span>
-                                                    )}
-                                                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', position: 'absolute', top: '24px', right: '24px' }}>
-                                                        <ShieldAlert size={10} /> {getUserRights(app.minLevel)}
-                                                    </span>
-                                                </div>
-                                                <p className="card-desc" style={{ marginBottom: '32px' }}>{app.desc}</p>
-                                                <div className="card-footer" style={{
-                                                    position: 'absolute',
-                                                    bottom: '20px',
-                                                    right: '24px',
+                                        {CATEGORIES.map(cat => (
+                                            <button
+                                                key={cat.id}
+                                                onClick={() => setActiveCategory(cat.id)}
+                                                style={{
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    gap: '4px',
-                                                    fontSize: '12px',
-                                                    fontWeight: '800',
-                                                    color: 'var(--accent)',
-                                                    textShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                                                }}>
-                                                    {t.openModule} <ChevronRight size={14} />
-                                                </div>
-                                            </>
-                                        )}
+                                                    gap: '8px',
+                                                    padding: '10px 20px',
+                                                    borderRadius: '100px',
+                                                    border: '1px solid',
+                                                    borderColor: activeCategory === cat.id ? 'var(--accent)' : 'var(--border)',
+                                                    background: activeCategory === cat.id ? 'var(--accent-glow)' : 'var(--bg-card)',
+                                                    color: activeCategory === cat.id ? 'var(--accent)' : 'var(--text-secondary)',
+                                                    fontSize: '13px',
+                                                    fontWeight: '700',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                            >
+                                                {cat.icon}
+                                                {cat.label}
+                                            </button>
+                                        ))}
                                     </div>
-                                </Reorder.Item>
-                            ))}
-                        </Reorder.Group>
+
+                                    <div style={{
+                                        display: 'flex',
+                                        gap: '4px',
+                                        background: 'var(--bg-card)',
+                                        padding: '4px',
+                                        borderRadius: '12px',
+                                        border: '1px solid var(--border)'
+                                    }}>
+                                        <button
+                                            onClick={() => setViewMode('grid')}
+                                            style={{
+                                                padding: '8px',
+                                                borderRadius: '8px',
+                                                border: 'none',
+                                                background: viewMode === 'grid' ? 'var(--accent-glow)' : 'transparent',
+                                                color: viewMode === 'grid' ? 'var(--accent)' : 'var(--text-secondary)',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            title="Grid View"
+                                        >
+                                            <LayoutGrid size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('list')}
+                                            style={{
+                                                padding: '8px',
+                                                borderRadius: '8px',
+                                                border: 'none',
+                                                background: viewMode === 'list' ? 'var(--accent-glow)' : 'transparent',
+                                                color: viewMode === 'list' ? 'var(--accent)' : 'var(--text-secondary)',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            title="List View"
+                                        >
+                                            <List size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+
+
+                                {/* Other Apps Section */}
+                                <Reorder.Group
+                                    values={userApps}
+                                    onReorder={setUserApps}
+                                    className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`}
+                                    style={{ listStyle: 'none', padding: 0 }}
+                                >
+                                    {filteredOtherApps.map((app, idx) => (
+
+                                        <Reorder.Item
+                                            key={app.id}
+                                            value={app}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: idx * 0.05 }}
+
+                                            className={`module-card draggable ${viewMode === 'list' ? 'list-item' : ''}`}
+                                            onClick={() => handleAppClick(app)}
+                                            style={{ cursor: 'grab', position: 'relative' }}
+                                            whileDrag={{
+                                                scale: 1.05,
+                                                boxShadow: "0 25px 50px rgba(0,0,0,0.4)",
+                                                zIndex: 50,
+                                            }}
+                                        >
+                                            <div style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: viewMode === 'list' ? 'center' : 'flex-start',
+                                                flexDirection: viewMode === 'list' ? 'row' : 'column',
+                                                gap: viewMode === 'list' ? '20px' : '0'
+                                            }}>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '16px',
+                                                    flex: 1
+                                                }}>
+                                                    <div className="card-icon" style={{
+                                                        background: app.color,
+                                                        width: viewMode === 'list' ? '40px' : '48px',
+                                                        height: viewMode === 'list' ? '40px' : '48px',
+                                                        minWidth: viewMode === 'list' ? '40px' : '48px'
+                                                    }}>{app.icon}</div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <h3 className="card-title" style={{ margin: 0 }}>{app.name}</h3>
+                                                        {viewMode === 'list' && <p className="card-desc" style={{ marginTop: '4px', marginBottom: 0 }}>{app.desc}</p>}
+                                                    </div>
+                                                </div>
+
+                                                {viewMode === 'list' && (
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '24px'
+                                                    }}>
+                                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                                            {app.badge && (
+                                                                <span className="badge" style={{ position: 'static', margin: 0 }}>
+                                                                    {app.badge}
+                                                                </span>
+                                                            )}
+                                                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                <ShieldAlert size={10} /> {getUserRights(app.minLevel)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="card-footer" style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '600', color: 'var(--accent)' }}>
+                                                            <ChevronRight size={18} />
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {viewMode === 'grid' && (
+                                                    <>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                                                            {app.badge && (
+                                                                <span className="badge">
+                                                                    {app.badge}
+                                                                </span>
+                                                            )}
+                                                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', position: 'absolute', top: '24px', right: '24px' }}>
+                                                                <ShieldAlert size={10} /> {getUserRights(app.minLevel)}
+                                                            </span>
+                                                        </div>
+                                                        <p className="card-desc" style={{ marginBottom: '32px' }}>{app.desc}</p>
+                                                        <div className="card-footer" style={{
+                                                            position: 'absolute',
+                                                            bottom: '20px',
+                                                            right: '24px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px',
+                                                            fontSize: '12px',
+                                                            fontWeight: '800',
+                                                            color: 'var(--accent)',
+                                                            textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                                                        }}>
+                                                            {t.openModule} <ChevronRight size={14} />
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </Reorder.Item>
+                                    ))}
+                                </Reorder.Group>
+                            </motion.div>
+                        )}
                     </>
                 )
             }

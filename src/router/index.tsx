@@ -73,6 +73,7 @@ const FilosTest = React.lazy(() => import('../pages/FilosTest'));
 const PriceListArchitect = React.lazy(() => import('../pages/PriceListArchitect'));
 const ShiftsGeneratorPage = React.lazy(() => import('../pages/ShiftsGeneratorPage'));
 const B2BSettings = React.lazy(() => import('../pages/B2BSettings'));
+const MtsGlobeTest = React.lazy(() => import('../pages/MtsGlobeTest'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
@@ -584,6 +585,10 @@ export const router = createBrowserRouter([
                     {
                         path: 'solvex-test',
                         element: <SolvexTest />,
+                    },
+                    {
+                        path: 'mtsglobe-test',
+                        element: <MtsGlobeTest />,
                     },
                     {
                         path: 'ors-test',
