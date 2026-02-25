@@ -6,6 +6,7 @@ import { Sidebar, TopBar, HorizontalNav } from '../components/layout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GeometricBrain } from '../components/icons/GeometricBrain';
 import GeneralAIChat from '../components/GeneralAIChat';
+import { LayoutDashboard, Search, FileText, User } from 'lucide-react';
 
 // Page Components - Lazy loaded for performance
 const Dashboard = React.lazy(() => import('../pages/Dashboard'));
@@ -78,6 +79,7 @@ const MtsGlobeTest = React.lazy(() => import('../pages/MtsGlobeTest'));
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
 const B2BPromoManager = React.lazy(() => import('../pages/B2BPromoManager'));
+const B2BFinance = React.lazy(() => import('../pages/B2BFinance'));
 
 
 // Stores
@@ -145,6 +147,9 @@ const ClassicLayout: React.FC = () => {
         </div>
     );
 };
+
+
+// Mobile components removed to src/components/layout/MobileLayoutComponents.tsx
 
 // Protected Route wrapper for level-based access
 interface ProtectedRouteProps {
@@ -392,6 +397,10 @@ export const router = createBrowserRouter([
                         element: <PriceListArchitect />,
                     },
                     // Dashboard
+                    {
+                        path: '/finance',
+                        element: <B2BFinance />,
+                    },
                     {
                         index: true,
                         element: <Dashboard />,

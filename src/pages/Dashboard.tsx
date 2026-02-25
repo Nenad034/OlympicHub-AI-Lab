@@ -23,7 +23,8 @@ import {
     RefreshCw,
     TrendingUp,
     RefreshCcw,
-    DollarSign
+    DollarSign,
+    User
 } from 'lucide-react';
 import { useThemeStore, useAppStore, useAuthStore } from '../stores';
 import { translations } from '../translations';
@@ -116,6 +117,13 @@ const Dashboard: React.FC = () => {
     });
 
     const [showFilters, setShowFilters] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         localStorage.setItem('dashboard-view-mode', viewMode);
@@ -228,7 +236,7 @@ const Dashboard: React.FC = () => {
             {/* Removed Welcome Header and Central Search */}
 
             {/* Dashboard Application Search - Moved outside conditional to keep it visible while typing */}
-            <div style={{
+            <div className="desktop-only-search" style={{
                 display: 'flex',
                 justifyContent: 'center',
                 marginBottom: '40px',
@@ -296,7 +304,7 @@ const Dashboard: React.FC = () => {
 
             {/* Apps Grid */}
             {
-                searchQuery ? (
+                (searchQuery && !(isMobile || document.body.classList.contains('mobile-view'))) ? (
                     <div className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`}>
                         {filteredApps.map((app, idx) => (
                             <motion.div
@@ -386,6 +394,35 @@ const Dashboard: React.FC = () => {
                                     )}
                                 </div>
                             </motion.div>
+                        ))}
+                    </div>
+                ) : (isMobile || document.body.classList.contains('mobile-view')) ? (
+                    <div className="mobile-tiles-grid" style={{ padding: '0 10px' }}>
+                        {[
+                            { id: 'search', name: 'Smart Search', icon: <Sparkles size={28} />, color: 'var(--gradient-blue)', path: '/smart-search' },
+                            { id: 'res', name: 'Rezervacije', icon: <FileText size={28} />, color: 'var(--gradient-green)', path: '/reservations' },
+                            { id: 'fin', name: 'Finansije', icon: <DollarSign size={28} />, color: 'var(--gradient-orange)', path: '/supplier-finance' },
+                            { id: 'prof', name: 'Moj Profil', icon: <User size={28} />, color: 'var(--gradient-purple)', path: '/settings' }
+                        ].map((app) => (
+                            <div
+                                key={app.id}
+                                className="mobile-tile fade-in"
+                                onClick={() => navigate(app.path)}
+                            >
+                                <div className="tile-icon" style={{
+                                    background: app.color,
+                                    width: '60px',
+                                    height: '60px',
+                                    borderRadius: '20px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 10px 20px rgba(0,0,0,0.2)'
+                                }}>
+                                    <div style={{ color: 'white' }}>{app.icon}</div>
+                                </div>
+                                <h3 className="tile-title" style={{ marginTop: '10px' }}>{app.name}</h3>
+                            </div>
                         ))}
                     </div>
                 ) : (

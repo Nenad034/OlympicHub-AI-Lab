@@ -84,7 +84,6 @@ const wisdoms: Wisdom[] = [
 
 const DailyWisdom: React.FC = () => {
     const todayWisdom = useMemo(() => {
-        // Calculate index based on date to rotate daily
         const now = new Date();
         const startOfYear = new Date(now.getFullYear(), 0, 0);
         const diff = (now as any) - (startOfYear as any);
@@ -94,121 +93,126 @@ const DailyWisdom: React.FC = () => {
         return wisdoms[dayOfYear % wisdoms.length];
     }, []);
 
-    return (
-        <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '40px', marginBottom: '40px' }}>
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ y: -5 }}
-                className="wisdom-card"
-                style={{
-                    width: '100%',
-                    maxWidth: '900px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '24px',
-                    padding: '30px 40px',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '20px'
-                }}
-            >
-                {/* Background quote mark */}
-                <div style={{ position: 'absolute', top: '10px', right: '20px', opacity: 0.05, color: 'var(--accent)' }}>
-                    <Quote size={120} />
-                </div>
+    const isMobileApp = document.body.classList.contains('mobile-view');
+    if (isMobileApp) return null;
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    return (
+        <div className="daily-wisdom-container">
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '40px', marginBottom: '40px' }}>
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    whileHover={{ y: -5 }}
+                    className="wisdom-card"
+                    style={{
+                        width: '100%',
+                        maxWidth: '900px',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        borderRadius: '24px',
+                        padding: '30px 40px',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '20px'
+                    }}
+                >
+                    {/* Background quote mark */}
+                    <div style={{ position: 'absolute', top: '10px', right: '20px', opacity: 0.05, color: 'var(--accent)' }}>
+                        <Quote size={120} />
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                                background: 'var(--accent-glow)',
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <Sparkles size={16} color="var(--accent)" />
+                            </div>
+                            <span style={{
+                                fontSize: '12px',
+                                fontWeight: '800',
+                                letterSpacing: '2px',
+                                textTransform: 'uppercase',
+                                color: 'var(--accent)',
+                                opacity: 0.8
+                            }}>
+                                Misao Dana
+                            </span>
+                        </div>
                         <div style={{
-                            background: 'var(--accent-glow)',
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '10px',
+                            fontSize: '10px',
+                            color: 'var(--text-secondary)',
+                            fontWeight: 700,
+                            opacity: 0.6
+                        }}>
+                            {new Date().toLocaleDateString('sr-RS', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </div>
+                    </div>
+
+                    <div style={{ position: 'relative' }}>
+                        <p style={{
+                            fontSize: '20px',
+                            fontWeight: '500',
+                            lineHeight: '1.6',
+                            fontStyle: 'italic',
+                            color: 'var(--text-primary)',
+                            textAlign: 'center',
+                            fontFamily: "'Outfit', sans-serif",
+                            margin: '10px 0'
+                        }}>
+                            "{todayWisdom.text}"
+                        </p>
+                    </div>
+
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: '12px',
+                        borderTop: '1px solid rgba(255,255,255,0.05)',
+                        paddingTop: '20px'
+                    }}>
+                        <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '12px',
+                            background: 'rgba(255,255,255,0.03)',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            border: '1px solid rgba(255,255,255,0.05)'
                         }}>
-                            <Sparkles size={16} color="var(--accent)" />
+                            {todayWisdom.author.includes('Musashi') ? <Sword size={18} color="var(--accent)" /> : <GeometricBrain size={18} color="var(--accent)" />}
                         </div>
-                        <span style={{
-                            fontSize: '12px',
-                            fontWeight: '800',
-                            letterSpacing: '2px',
-                            textTransform: 'uppercase',
-                            color: 'var(--accent)',
-                            opacity: 0.8
-                        }}>
-                            Misao Dana
-                        </span>
+                        <div style={{ textAlign: 'left' }}>
+                            <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>{todayWisdom.author}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>{todayWisdom.role}</div>
+                        </div>
                     </div>
+
+                    {/* Accent line */}
                     <div style={{
-                        fontSize: '10px',
-                        color: 'var(--text-secondary)',
-                        fontWeight: 700,
-                        opacity: 0.6
-                    }}>
-                        {new Date().toLocaleDateString('sr-RS', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </div>
-                </div>
-
-                <div style={{ position: 'relative' }}>
-                    <p style={{
-                        fontSize: '20px',
-                        fontWeight: '500',
-                        lineHeight: '1.6',
-                        fontStyle: 'italic',
-                        color: 'var(--text-primary)',
-                        textAlign: 'center',
-                        fontFamily: "'Outfit', sans-serif",
-                        margin: '10px 0'
-                    }}>
-                        "{todayWisdom.text}"
-                    </p>
-                </div>
-
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '12px',
-                    borderTop: '1px solid rgba(255,255,255,0.05)',
-                    paddingTop: '20px'
-                }}>
-                    <div style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '12px',
-                        background: 'rgba(255,255,255,0.03)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '1px solid rgba(255,255,255,0.05)'
-                    }}>
-                        {todayWisdom.author.includes('Musashi') ? <Sword size={18} color="var(--accent)" /> : <GeometricBrain size={18} color="var(--accent)" />}
-                    </div>
-                    <div style={{ textAlign: 'left' }}>
-                        <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>{todayWisdom.author}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>{todayWisdom.role}</div>
-                    </div>
-                </div>
-
-                {/* Accent line */}
-                <div style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '60%',
-                    height: '2px',
-                    background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
-                    opacity: 0.3
-                }}></div>
-            </motion.div>
+                        position: 'absolute',
+                        bottom: 0,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '60%',
+                        height: '2px',
+                        background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
+                        opacity: 0.3
+                    }}></div>
+                </motion.div>
+            </div>
         </div>
     );
 };

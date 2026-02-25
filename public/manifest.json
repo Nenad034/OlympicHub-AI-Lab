@@ -1,0 +1,17 @@
+{
+    "name": "ClickToTravel B2B",
+    "short_name": "C2T",
+    "description": "ClickToTravel B2B Portal for Subagents",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#0E4B5E",
+    "icons": [
+        {
+            "src": "/clicktotravel.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

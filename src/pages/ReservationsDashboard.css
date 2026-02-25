@@ -33,14 +33,16 @@
 .light-theme .stat-card,
 .light-theme .search-command-center,
 .light-theme .reservation-row,
-.light-theme .reservation-card {
+.light-theme .reservation-card,
+.light-theme .notepad-reservation-card {
     background: #E0ECEE !important;
     border: 1px solid rgba(14, 75, 94, 0.2) !important;
     box-shadow: 0 4px 10px rgba(14, 75, 94, 0.05) !important;
 }
 
 .light-theme .reservation-row:hover,
-.light-theme .reservation-card:hover {
+.light-theme .reservation-card:hover,
+.light-theme .notepad-reservation-card:hover {
     box-shadow: 0 8px 20px rgba(14, 75, 94, 0.1) !important;
     border-color: #0E4B5E !important;
     transform: translateY(-2px);
@@ -927,9 +929,6 @@
     flex-direction: column;
     gap: 8px;
     flex: 1;
-    background: var(--bg-secondary);
-    padding: 12px;
-    border-radius: 12px;
 }
 
 .finance-row {
@@ -1663,4 +1662,106 @@ body.light-theme .reservations-dashboard .search-input {
 
 body.light-theme .reservations-dashboard .search-input::placeholder {
     color: #94a3b8 !important;
+}
+
+/* --- RESPONSIVE DESIGN (LAPTOP, TABLET, MOBILE) --- */
+
+/* LAPTOPS (11" - 16") [1024px to 1440px] */
+@media (max-width: 1440px) {
+    .stats-row-7 {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+
+    .stats-row-3 {
+        gap: 15px !important;
+    }
+
+    .grid-view {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    }
+}
+
+@media (max-width: 1200px) {
+    .stats-row-7 {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+
+    .dashboard-header h1 {
+        font-size: 28px !important;
+    }
+
+    .search-command-center {
+        padding: 16px !important;
+    }
+}
+
+/* TABLETS & SMALL LAPTOPS (768px - 1024px) */
+@media (max-width: 1024px) {
+    .stats-row-7 {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .stats-row-3 {
+        grid-template-columns: 1fr !important;
+    }
+
+    .reservations-dashboard {
+        padding: 20px !important;
+    }
+}
+
+/* MOBILE (Below 768px) */
+@media (max-width: 768px) {
+    .reservations-dashboard {
+        padding: 12px !important;
+    }
+
+    .dashboard-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    .sync-status {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+
+    .stats-row-7 {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .results-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 15px !important;
+    }
+
+    .grid-view,
+    .notepad-view {
+        grid-template-columns: 1fr !important;
+    }
+
+    .advanced-toggle span {
+        display: none !important;
+    }
+
+    .view-switcher {
+        width: 100% !important;
+    }
+
+    .view-btn {
+        flex: 1 !important;
+        justify-content: center !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-row-7 {
+        grid-template-columns: 1fr !important;
+    }
+
+    .dashboard-header h1 {
+        font-size: 22px !important;
+    }
 }

@@ -337,9 +337,18 @@ const SmartSearch: React.FC = () => {
 
     // MODE SWITCH
     const [searchMode, setSearchMode] = useState<'classic' | 'narrative' | 'immersive'>(() => {
+        const isMobileApp = document.body.classList.contains('mobile-view');
+        if (isMobileApp) return 'immersive';
         const saved = localStorage.getItem('preferredSearchMode');
         return (saved as any) || 'classic';
     });
+
+    useEffect(() => {
+        const isMobileApp = document.body.classList.contains('mobile-view');
+        if (isMobileApp && searchMode !== 'immersive') {
+            setSearchMode('immersive');
+        }
+    }, [searchMode]);
 
     // MULTI-ROOM SELECTION STATE
     const [selectedRoomsMap, setSelectedRoomsMap] = useState<Record<number, any>>({});
@@ -1449,7 +1458,7 @@ const SmartSearch: React.FC = () => {
             )}
 
             {/* API Connection Section - REPLACES GLOBAL SEARCH HUB FUNCTIONALITY */}
-            {userLevel === 6 && (
+            {(userLevel === 6 && !document.body.classList.contains('mobile-view')) && (
                 <div className="provider-toggles-section" style={{ position: 'relative', margin: '20px auto 0 auto', maxWidth: '1550px', width: '100%', padding: '12px 20px', background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '70px' }}>
 
                     {/* LEFT: Power Button */}
@@ -1553,62 +1562,64 @@ const SmartSearch: React.FC = () => {
             )}
 
             {/* SEARCH MODE SWITCHER - ALWAYS VISIBLE ABOVE TABS */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', position: 'relative', zIndex: 1000, marginTop: '20px' }}>
-                <div className="mode-toggle-group" style={{
-                    display: 'flex',
-                    background: 'var(--bg-card)',
-                    padding: '8px',
-                    borderRadius: '16px',
-                    border: '1px solid var(--border)',
-                    backdropFilter: 'blur(20px)',
-                    boxShadow: 'var(--shadow-lg)',
-                    width: '100%',
-                    maxWidth: '1550px',
-                    gap: '12px',
-                    marginLeft: 'auto',
-                    marginRight: 'auto'
-                }}>
-                    <button
-                        className={`mode-switch-btn ${searchMode === 'classic' ? 'active' : ''}`}
-                        onClick={() => { setSearchMode('classic'); setSearchPerformed(false); }}
-                        style={{
-                            padding: '12px 24px', borderRadius: '10px', border: 'none', fontSize: '15px', fontWeight: 700,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.3s',
-                            background: searchMode === 'classic' ? 'var(--accent)' : 'rgba(15, 23, 42, 0.5)',
-                            color: searchMode === 'classic' ? '#fff' : '#94a3b8',
-                            flex: 1
-                        }}
-                    >
-                        <LayoutTemplate size={16} /> Klasična Pretraga
-                    </button>
-                    <button
-                        className={`mode-switch-btn ${searchMode === 'narrative' ? 'active' : ''}`}
-                        onClick={() => { setSearchMode('narrative'); setSearchPerformed(false); }}
-                        style={{
-                            padding: '12px 24px', borderRadius: '10px', border: 'none', fontSize: '15px', fontWeight: 700,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.3s',
-                            background: searchMode === 'narrative' ? '#8E24AC' : 'rgba(15, 23, 42, 0.5)',
-                            color: searchMode === 'narrative' ? '#fff' : '#94a3b8',
-                            flex: 1
-                        }}
-                    >
-                        <Sparkles size={16} /> Futuristička (AI)
-                    </button>
-                    <button
-                        className={`mode-switch-btn ${searchMode === 'immersive' ? 'active' : ''}`}
-                        onClick={() => { setSearchMode('immersive'); setSearchPerformed(false); }}
-                        style={{
-                            padding: '12px 24px', borderRadius: '10px', border: 'none', fontSize: '15px', fontWeight: 700,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.3s',
-                            background: searchMode === 'immersive' ? 'var(--accent)' : 'rgba(15, 23, 42, 0.5)',
-                            color: searchMode === 'immersive' ? '#fff' : '#94a3b8',
-                            flex: 1
-                        }}
-                    >
-                        <Zap size={16} /> Immersive (Smart)
-                    </button>
+            {!document.body.classList.contains('mobile-view') && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', position: 'relative', zIndex: 1000, marginTop: '20px' }}>
+                    <div className="mode-toggle-group" style={{
+                        display: 'flex',
+                        background: 'var(--bg-card)',
+                        padding: '8px',
+                        borderRadius: '16px',
+                        border: '1px solid var(--border)',
+                        backdropFilter: 'blur(20px)',
+                        boxShadow: 'var(--shadow-lg)',
+                        width: '100%',
+                        maxWidth: '1550px',
+                        gap: '12px',
+                        marginLeft: 'auto',
+                        marginRight: 'auto'
+                    }}>
+                        <button
+                            className={`mode-switch-btn ${searchMode === 'classic' ? 'active' : ''}`}
+                            onClick={() => { setSearchMode('classic'); setSearchPerformed(false); }}
+                            style={{
+                                padding: '12px 24px', borderRadius: '10px', border: 'none', fontSize: '15px', fontWeight: 700,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.3s',
+                                background: searchMode === 'classic' ? 'var(--accent)' : 'rgba(15, 23, 42, 0.5)',
+                                color: searchMode === 'classic' ? '#fff' : '#94a3b8',
+                                flex: 1
+                            }}
+                        >
+                            <LayoutTemplate size={16} /> Klasična Pretraga
+                        </button>
+                        <button
+                            className={`mode-switch-btn ${searchMode === 'narrative' ? 'active' : ''}`}
+                            onClick={() => { setSearchMode('narrative'); setSearchPerformed(false); }}
+                            style={{
+                                padding: '12px 24px', borderRadius: '10px', border: 'none', fontSize: '15px', fontWeight: 700,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.3s',
+                                background: searchMode === 'narrative' ? '#8E24AC' : 'rgba(15, 23, 42, 0.5)',
+                                color: searchMode === 'narrative' ? '#fff' : '#94a3b8',
+                                flex: 1
+                            }}
+                        >
+                            <Sparkles size={16} /> Futuristička (AI)
+                        </button>
+                        <button
+                            className={`mode-switch-btn ${searchMode === 'immersive' ? 'active' : ''}`}
+                            onClick={() => { setSearchMode('immersive'); setSearchPerformed(false); }}
+                            style={{
+                                padding: '12px 24px', borderRadius: '10px', border: 'none', fontSize: '15px', fontWeight: 700,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.3s',
+                                background: searchMode === 'immersive' ? 'var(--accent)' : 'rgba(15, 23, 42, 0.5)',
+                                color: searchMode === 'immersive' ? '#fff' : '#94a3b8',
+                                flex: 1
+                            }}
+                        >
+                            <Zap size={16} /> Immersive (Smart)
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* TAB NAVIGATION */}
             <div className="tabs-nav-container">

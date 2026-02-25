@@ -5,7 +5,7 @@ import {
     Search, Filter, Calendar, Users, DollarSign, Clock,
     ChevronDown, ChevronUp, MoreVertical, Plus,
     Download, LayoutGrid, List, CalendarDays,
-    Eye, Edit, Mail, Trash2, CheckCircle2, AlertCircle,
+    Eye, Edit, Mail, Trash2, CheckCircle2, AlertCircle, Copy,
     X as XIcon, RefreshCw, BarChart3, TrendingUp, TrendingDown,
     MapPin, Building2, Phone, Briefcase, Tag, XCircle, Package, Globe, Truck, Plane, Zap, Compass, Ship, Star, User, ArrowUpDown, ChevronLeft, ChevronRight, CheckCheck, Receipt, CloudLightning, Bell, Send, Table, Code, FileCode, Check, Shield, MessageCircle, FileText, FileCheck, ShieldCheck
 } from 'lucide-react';
@@ -20,7 +20,7 @@ import { useAuthStore } from '../stores';
 
 // Types
 type ResStatus = 'Active' | 'Reservation' | 'Canceled' | 'Offer' | 'Request' | 'Processing';
-type ViewMode = 'grid' | 'list' | 'calendar';
+type ViewMode = 'grid' | 'list' | 'calendar' | 'notepad';
 
 interface TripItem {
     id: string;
@@ -61,6 +61,10 @@ interface Reservation {
     finalInvoiceCreated?: boolean; // Kreiran konačni račun
     hotelCategory?: number; // Broj zvezdica
     leadPassenger?: string; // Nosilac putovanja (putnik)
+    adults?: number;
+    children?: number;
+    childrenAges?: number[];
+    mealPlan?: string;
     items?: TripItem[];
     supplierRef?: string;
     repChecked?: boolean;
@@ -107,6 +111,19 @@ const ReservationsDashboard: React.FC = () => {
     const isSubagent = userLevel < 6 || !!impersonatedSubagent;
     const [viewMode, setViewMode] = useQueryState<ViewMode>('view', 'list');
     const [showStats, setShowStats] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const mobile = window.innerWidth <= 768;
+            setIsMobile(mobile);
+            const isMobileApp = document.body.classList.contains('mobile-view');
+            if (mobile && isMobileApp) setViewMode('notepad');
+        };
+        handleResize(); // Initial check
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [setViewMode]);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchTerms, setSearchTerms] = useState<string[]>([]); // Multi-term search chips
     const [calendarViewMode, setCalendarViewMode] = useState<'checkIn' | 'checkOut'>('checkIn'); // Calendar grouping
@@ -143,15 +160,19 @@ const ReservationsDashboard: React.FC = () => {
             const current = prev.tripType;
             let newTypes: string[];
 
-            // If we are currently on 'all', then selecting a type starts a new selection list
-            if (current.includes('all')) {
-                newTypes = [type];
+            if (type === 'all') {
+                newTypes = ['all'];
             } else {
-                // Toggle logic
-                if (current.includes(type)) {
-                    newTypes = current.filter(t => t !== type);
+                // If we are currently on 'all', then selecting a type starts a new selection list
+                if (current.includes('all')) {
+                    newTypes = [type];
                 } else {
-                    newTypes = [...current, type];
+                    // Toggle logic
+                    if (current.includes(type)) {
+                        newTypes = current.filter(t => t !== type);
+                    } else {
+                        newTypes = [...current, type];
+                    }
                 }
             }
 
@@ -245,6 +266,10 @@ const ReservationsDashboard: React.FC = () => {
             finalInvoiceCreated: false,
             hotelCategory: 5,
             leadPassenger: 'Petar Petrović',
+            adults: 2,
+            children: 1,
+            childrenAges: [5],
+            mealPlan: 'Polupansion',
             items: [
                 {
                     id: 'i1',
@@ -294,7 +319,11 @@ const ReservationsDashboard: React.FC = () => {
             proformaInvoiceSent: false,
             finalInvoiceCreated: false,
             hotelCategory: 5,
-            leadPassenger: 'Jelena Janković'
+            leadPassenger: 'Jelena Janković',
+            adults: 2,
+            children: 2,
+            childrenAges: [4, 12],
+            mealPlan: 'Sve Uključeno',
         },
         {
             id: '3',
@@ -979,6 +1008,10 @@ ${data.map(r => `  <reservation>
     });
 
     const formatPrice = (val: number) => val.toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return 'N/A';
+        return new Date(dateStr).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
 
     /**
      * Financial Risk Tracker (Semafor)
@@ -1276,6 +1309,7 @@ ${data.map(r => `  <reservation>
             {/* Trip Type Filters */}
             <div className="trip-filters" style={{ display: 'flex', gap: '10px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
                 {[
+                    { id: 'all', label: 'Prikaži sve', icon: <LayoutGrid size={16} /> },
                     { id: 'Smeštaj', label: 'Smeštaj', icon: <Building2 size={16} /> },
                     { id: 'Avio karte', label: 'Avio', icon: <Plane size={16} /> },
                     { id: 'Dinamički paket', label: 'Paket', icon: <Package size={16} /> },
@@ -1619,6 +1653,13 @@ ${data.map(r => `  <reservation>
                             title="Kalendar"
                         >
                             <CalendarDays size={18} />
+                        </button>
+                        <button
+                            className={viewMode === 'notepad' ? 'active' : ''}
+                            onClick={() => setViewMode('notepad')}
+                            title="Notepad"
+                        >
+                            <FileText size={18} />
                         </button>
                     </div>
                 </div>
@@ -2056,6 +2097,13 @@ ${data.map(r => `  <reservation>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
                                                             {getTripTypeIcon(item.type)}
                                                             <span style={{ fontWeight: 800 }}>{item.subject}</span>
+                                                            {res.hotelCategory && res.hotelCategory > 0 && item.type === 'Smestaj' && (
+                                                                <div style={{ display: 'flex', gap: '1px', marginLeft: '4px' }}>
+                                                                    {[...Array(res.hotelCategory)].map((_, i) => (
+                                                                        <Star key={i} size={10} fill="#fbbf24" color="#fbbf24" />
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <span className="supplier-badge" style={{ fontSize: '9px', padding: '2px 6px' }}>{item.supplier}</span>
                                                     </div>
@@ -2068,7 +2116,7 @@ ${data.map(r => `  <reservation>
                                                 {res.hotelCategory && res.hotelCategory > 0 && (
                                                     <div style={{ display: 'flex', gap: '1px', marginLeft: '6px' }}>
                                                         {[...Array(res.hotelCategory)].map((_, i) => (
-                                                            <Star key={i} size={8} fill="#f59e0b" color="#f59e0b" />
+                                                            <Star key={i} size={10} fill="#fbbf24" color="#fbbf24" />
                                                         ))}
                                                     </div>
                                                 )}
@@ -2083,69 +2131,175 @@ ${data.map(r => `  <reservation>
                                         <span>{new Date(res.checkOut).toLocaleDateString('sr-RS')}</span>
                                     </div>
 
-                                    <div className="card-footer">
-                                        <div className="card-finance">
-                                            <div className="finance-row total">
-                                                <span className="price">{formatPrice(res.totalPrice)} {res.currency}</span>
-                                                <span className="pax">{res.paxCount} <Users size={12} /></span>
+                                    <div className="card-finance-section" style={{
+                                        marginTop: '12px',
+                                        paddingTop: '12px',
+                                        borderTop: '1px solid var(--border)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '8px'
+                                    }}>
+                                        {/* Main Price Row */}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>UKUPNO</span>
+                                                <span style={{ fontSize: '24px', fontWeight: 900, color: '#9333ea', lineHeight: '1' }}>{formatPrice(res.totalPrice)} <span style={{ fontSize: '14px' }}>{res.currency}</span></span>
                                             </div>
-                                            <div className="finance-row detail">
-                                                <span className="paid-label">Uplaćeno:</span>
-                                                <span className="paid-value">{formatPrice(res.paid)} {res.currency}</span>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', background: 'var(--bg-secondary)', padding: '4px 10px', borderRadius: '8px' }}>
+                                                    {res.paxCount} <Users size={14} />
+                                                </span>
                                             </div>
-                                            {res.totalPrice - res.paid > 0 && (
-                                                <div className="finance-row detail remaining">
-                                                    <span className="due-label">Preostalo:</span>
-                                                    <span className="due-value">{formatPrice(res.totalPrice - res.paid)} {res.currency}</span>
-                                                </div>
-                                            )}
+                                        </div>
 
-                                            {/* FINANCIAL SEMAFORE */}
-                                            {(() => {
-                                                const risk = getPaymentRisk(res.clientDeadline, res.totalPrice, res.paid);
-                                                if (risk.level === 'none') return null;
-                                                return (
-                                                    <div style={{
-                                                        marginTop: '8px',
+                                        {/* Payment Details Row */}
+                                        <div style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: '1fr 1fr',
+                                            gap: '12px',
+                                            padding: '10px',
+                                            background: 'var(--bg-secondary)',
+                                            borderRadius: '12px'
+                                        }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 800 }}>UPLAĆENO</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 700, color: '#10b981' }}>{formatPrice(res.paid)} {res.currency}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right' }}>
+                                                <span style={{ fontSize: '10px', color: '#ef4444', fontWeight: 800 }}>PREOSTALO</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 800, color: '#ef4444' }}>{formatPrice(res.totalPrice - res.paid)} {res.currency}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Risk / Deadline info */}
+                                        {(() => {
+                                            const risk = getPaymentRisk(res.clientDeadline, res.totalPrice, res.paid);
+                                            if (risk.level === 'none') return null;
+                                            return (
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '6px',
+                                                    background: `${risk.color}15`,
+                                                    padding: '6px',
+                                                    borderRadius: '8px',
+                                                    border: `1px solid ${risk.color}30`
+                                                }}>
+                                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: risk.color }} />
+                                                    <span style={{ fontSize: '11px', fontWeight: 800, color: risk.color }}>
+                                                        {risk.text}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+
+                                    <div className="card-actions-grid-new" style={{
+                                        marginTop: '16px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '12px',
+                                        alignItems: 'center'
+                                    }}>
+                                        {/* Purple Action Buttons Row */}
+                                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                            {[
+                                                {
+                                                    icon: <MessageCircle size={14} />,
+                                                    title: 'WhatsApp',
+                                                    onClick: () => {
+                                                        const msg = `Poštovani, podsećamo Vas...`;
+                                                        window.open(`https://wa.me/${res.phone.replace(/\+/g, '').replace(/ /g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+                                                    }
+                                                },
+                                                {
+                                                    icon: <Zap size={14} />,
+                                                    title: 'Viber',
+                                                    onClick: () => window.open(`viber://forward?text=Podsetnik`, '_blank')
+                                                },
+                                                {
+                                                    icon: <Eye size={14} />,
+                                                    title: 'Pregled',
+                                                    onClick: () => window.open(`/reservation-architect?id=${res.id}`, '_blank')
+                                                },
+                                                {
+                                                    icon: <Edit size={14} />,
+                                                    title: 'Izmeni',
+                                                    onClick: () => { }
+                                                },
+                                                {
+                                                    icon: <Mail size={14} />,
+                                                    title: 'Email',
+                                                    onClick: () => { setSelectedReservation(res); setEmailModalOpen(true); }
+                                                },
+                                                {
+                                                    icon: <Download size={14} />,
+                                                    title: 'Preuzmi',
+                                                    onClick: () => { }
+                                                }
+                                            ].map((btn, i) => (
+                                                <button
+                                                    key={i}
+                                                    title={btn.title}
+                                                    onClick={(e) => { e.stopPropagation(); btn.onClick(); }}
+                                                    style={{
+                                                        width: '32px',
+                                                        height: '32px',
+                                                        borderRadius: '8px',
+                                                        background: '#9333ea', // Purple from image
+                                                        color: 'white',
+                                                        border: 'none',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        gap: '6px',
-                                                        background: `${risk.color}15`,
-                                                        padding: '4px 8px',
-                                                        borderRadius: '6px',
-                                                        border: `1px solid ${risk.color}30`
-                                                    }}>
-                                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: risk.color }} />
-                                                        <span style={{ fontSize: '9px', fontWeight: 900, color: risk.color }}>
-                                                            {risk.text}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })()}
+                                                        cursor: 'pointer',
+                                                        boxShadow: '0 4px 10px rgba(147, 51, 234, 0.2)',
+                                                        transition: 'transform 0.2s'
+                                                    }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                                >
+                                                    {btn.icon}
+                                                </button>
+                                            ))}
                                         </div>
 
-                                        <div className="card-actions-wrapper">
-                                            <div className="workflow-status-group" style={{ marginBottom: '8px' }}>
-                                                <div title="Najavljeno" className={`workflow-dot mini ${res.hotelNotified ? 'completed' : 'pending'}`}>
-                                                    <Bell size={10} />
+                                        {/* Stylized Workflow Pill */}
+                                        <div style={{
+                                            display: 'flex',
+                                            gap: '12px',
+                                            padding: '8px 20px',
+                                            background: 'var(--bg-card)',
+                                            border: '1px solid var(--border)',
+                                            borderRadius: '24px',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                                        }}>
+                                            {[
+                                                { active: res.hotelNotified, icon: <Bell size={12} />, title: 'Najavljeno' },
+                                                { active: res.reservationConfirmed, icon: <CheckCheck size={12} />, title: 'Potvrđeno' },
+                                                { active: res.proformaInvoiceSent, icon: <FileCheck size={12} />, title: 'Profaktura' },
+                                                { active: res.finalInvoiceCreated, icon: <Receipt size={12} />, title: 'Račun' }
+                                            ].map((w, i) => (
+                                                <div
+                                                    key={i}
+                                                    title={w.title}
+                                                    style={{
+                                                        width: '28px',
+                                                        height: '28px',
+                                                        borderRadius: '8px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        background: w.active ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                                                        color: w.active ? '#10b981' : 'var(--text-secondary)',
+                                                        border: w.active ? '1px solid rgba(16, 185, 129, 0.2)' : '1px dashed var(--border)',
+                                                        opacity: w.active ? 1 : 0.4
+                                                    }}
+                                                >
+                                                    {w.icon}
                                                 </div>
-                                                <div title="Potvrđeno" className={`workflow-dot mini ${res.reservationConfirmed ? 'completed' : 'pending'}`}>
-                                                    <CheckCheck size={10} />
-                                                </div>
-                                                <div title="Račun" className={`workflow-dot mini ${res.finalInvoiceCreated ? 'completed' : 'pending'}`}>
-                                                    <Receipt size={10} />
-                                                </div>
-                                            </div>
-
-                                            <div className="action-buttons-group">
-                                                <button className="action-btn" title="Pregled" onClick={(e) => { e.stopPropagation(); window.open(`/reservation-architect?id=${res.id}`, '_blank'); }}>
-                                                    <Eye size={14} />
-                                                </button>
-                                                <button className="action-btn" title="Email" onClick={(e) => { e.stopPropagation(); setSelectedReservation(res); setEmailModalOpen(true); }}>
-                                                    <Mail size={14} />
-                                                </button>
-                                            </div>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
@@ -2384,8 +2538,120 @@ ${data.map(r => `  <reservation>
                             )}
                         </motion.div>
                     )}
+
+                    {viewMode === 'notepad' && (
+                        <motion.div
+                            key="notepad"
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            variants={viewVariants}
+                            className="notepad-view"
+                            style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                                gap: '20px',
+                                padding: '10px'
+                            }}
+                        >
+                            {filteredReservations.map(res => (
+                                <div
+                                    key={res.id}
+                                    style={{
+                                        background: 'var(--bg-card)',
+                                        borderRadius: '12px',
+                                        border: '1px solid var(--border)',
+                                        fontFamily: 'monospace',
+                                        position: 'relative',
+                                        overflow: 'hidden',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        minHeight: '280px',
+                                        boxShadow: 'var(--shadow-lg)',
+                                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                    }}
+                                    className="notepad-reservation-card"
+                                >
+                                    {/* Paper Line Effect */}
+                                    <div style={{ position: 'absolute', top: 0, left: '20px', bottom: 0, width: '1px', background: 'rgba(239, 68, 68, 0.2)', zIndex: 1 }}></div>
+
+                                    <div style={{ padding: '24px 24px 24px 34px', position: 'relative', zIndex: 2, flex: 1 }}>
+                                        <div style={{ fontSize: '14px', fontWeight: 900, color: 'var(--accent)', marginBottom: '16px', borderBottom: '1px dashed var(--border)', paddingBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                                            <span># {res.cisCode}</span>
+                                            <span style={{ fontSize: '10px', color: getStatusColor(res.status), background: `${getStatusColor(res.status)}15`, padding: '2px 8px', borderRadius: '4px' }}>{res.status}</span>
+                                        </div>
+
+                                        <div style={{ fontSize: '13px', lineHeight: '1.6', color: 'var(--text-primary)' }}>
+                                            <div style={{ marginBottom: '4px' }}><span style={{ color: 'var(--text-secondary)' }}>PUTNIK:</span> {res.customerName}</div>
+                                            <div style={{ marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <span style={{ color: 'var(--text-secondary)' }}>H/U: </span>
+                                                <span>{res.accommodationName}</span>
+                                                {res.hotelCategory && (
+                                                    <span style={{ display: 'flex', color: '#fbbf24', marginLeft: '4px' }}>
+                                                        {Array.from({ length: res.hotelCategory }).map((_, i) => <Star key={i} size={10} fill="#fbbf24" />)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div style={{ marginBottom: '4px' }}><span style={{ color: 'var(--text-secondary)' }}>USLU :</span> {res.mealPlan || 'Samo Smeštaj'}</div>
+                                            <div style={{ marginBottom: '4px' }}><span style={{ color: 'var(--text-secondary)' }}>DEST:</span> {res.destination}</div>
+                                            <div style={{ marginBottom: '4px' }}><span style={{ color: 'var(--text-secondary)' }}>PERI :</span> {formatDate(res.checkIn)} - {formatDate(res.checkOut)}</div>
+                                            <div style={{ marginBottom: '4px' }}>
+                                                <span style={{ color: 'var(--text-secondary)' }}>PAX  :</span> {res.adults || 0} ADL
+                                                {res.children && res.children > 0 ? `, ${res.children} CHD (${res.childrenAges?.join(', ')} god)` : ''}
+                                            </div>
+                                            <div style={{ marginBottom: '12px' }}><span style={{ color: 'var(--text-secondary)' }}>TIP  :</span> {res.tripType}</div>
+
+                                            <div style={{ marginTop: '12px', padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                                    <span style={{ color: 'var(--text-secondary)' }}>TOTAL :</span>
+                                                    <span style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{formatPrice(res.totalPrice)} {res.currency}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                                    <span style={{ color: 'var(--text-secondary)' }}>PLAĆ. :</span>
+                                                    <span style={{ color: '#10b981' }}>{formatPrice(res.paid)} {res.currency}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', marginTop: '4px', paddingTop: '4px' }}>
+                                                    <span style={{ color: 'var(--text-secondary)' }}>SALDO :</span>
+                                                    <span style={{ color: (res.totalPrice - res.paid) > 0 ? '#ef4444' : '#10b981', fontWeight: 'bold' }}>{formatPrice(res.totalPrice - res.paid)} {res.currency}</span>
+                                                </div>
+                                            </div>
+
+                                            {res.repInternalNote && (
+                                                <div style={{ marginTop: '16px', color: '#f59e0b', fontSize: '12px', fontStyle: 'italic' }}>
+                                                    <span style={{ fontWeight: 800 }}>INTERNA NAPOMENA:</span><br />
+                                                    {res.repInternalNote.length > 100 ? res.repInternalNote.substring(0, 100) + '...' : res.repInternalNote}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div style={{ padding: '12px 24px', background: 'rgba(0,0,0,0.3)', display: 'flex', gap: '8px', borderTop: '1px solid var(--border)' }}>
+                                        <button
+                                            onClick={() => window.open(`/reservation-architect?id=${res.id}`, '_blank')}
+                                            style={{ flex: 1, padding: '8px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'white', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                                        >
+                                            <Eye size={12} /> Detalji
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const paxDetail = `${res.adults || 0} ADL${res.children ? `, ${res.children} CHD (${res.childrenAges?.join(', ')} god)` : ''}`;
+                                                const text = `REZERVACIJA: ${res.cisCode}\nPUTNIK: ${res.customerName}\nHOTEL: ${res.accommodationName} ${res.hotelCategory ? '*'.repeat(res.hotelCategory) : ''}\nUSLUGA: ${res.mealPlan || 'N/A'}\nPAX: ${paxDetail}\nTERMIN: ${formatDate(res.checkIn)} - ${formatDate(res.checkOut)}\nUKUPNO: ${formatPrice(res.totalPrice)} ${res.currency}\nPLAĆENO: ${formatPrice(res.paid)} ${res.currency}\nSALDO: ${formatPrice(res.totalPrice - res.paid)} ${res.currency}\n${res.repInternalNote ? `\nNAPOMENA: ${res.repInternalNote}` : ''}`;
+                                                navigator.clipboard.writeText(text);
+                                                alert('Kopirano u clipboard!');
+                                            }}
+                                            style={{ padding: '8px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#10b981', cursor: 'pointer' }}
+                                            title="Kopiraj sumarno"
+                                        >
+                                            <Copy size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </motion.div>
+                    )}
                 </AnimatePresence>
             </div>
+
             {/* Email Modal */}
             {emailModalOpen && (
                 <ReservationEmailModal
@@ -2403,7 +2669,7 @@ ${data.map(r => `  <reservation>
                                 supplier: selectedReservation.supplier,
                                 email: selectedReservation.email
                             }]
-                            : mockReservations
+                            : reservations
                                 .filter(res => selectedReservations.includes(res.id))
                                 .map(res => ({
                                     cisCode: res.cisCode,
