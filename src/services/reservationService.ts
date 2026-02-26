@@ -52,6 +52,23 @@ export interface DatabaseReservation {
 }
 
 /**
+ * Generate a CIS code (format: CIS-YYYYMMDD-XXXX)
+ */
+export function generateCisCode(): string {
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `CIS-${dateStr}-${randomNum}`;
+}
+
+/**
+ * Generate a REF code (format: REF-XXXX)
+ */
+export function generateRefCode(): string {
+    return `REF-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+}
+
+/**
  * Update a reservation in the database
  */
 export async function updateReservation(
@@ -86,14 +103,9 @@ export async function saveBookingToDatabase(
     bookingResponse: BookingResponse
 ): Promise<{ success: boolean; error?: string; data?: DatabaseReservation }> {
     try {
-        // Generate CIS code (format: CIS-YYYYMMDD-XXXX)
-        const today = new Date();
-        const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
-        const randomNum = Math.floor(1000 + Math.random() * 9000);
-        const cisCode = `CIS-${dateStr}-${randomNum}`;
-
-        // Generate REF code (format: REF-XXXX)
-        const refCode = `REF-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+        // Generate codes if not provided
+        const cisCode = generateCisCode();
+        const refCode = generateRefCode();
 
         // Extract main guest info
         const mainGuest = bookingRequest.guests[0];
@@ -481,7 +493,7 @@ export async function getMonthlyReservationCount(accommodationName: string): Pro
         if (error) {
             console.error('[Reservation Service] Error fetching monthly count:', error);
             // Fallback for demo if DB is empty or fails
-            return Math.floor(Math.random() * 25) + 5;
+            return 0; // Return 0 instead of random for real data sentiment
         }
 
         return count || 0;
@@ -510,7 +522,7 @@ export async function getBulkMonthlyReservationCounts(accommodationNames: string
         if (error) {
             console.error('[Reservation Service] Error fetching bulk monthly count:', error);
             const fallbacks: Record<string, number> = {};
-            accommodationNames.forEach(n => fallbacks[n] = Math.floor(Math.random() * 25) + 5);
+            accommodationNames.forEach(n => fallbacks[n] = 0);
             return fallbacks;
         }
 
@@ -524,7 +536,7 @@ export async function getBulkMonthlyReservationCounts(accommodationNames: string
                 r.accommodation_name && r.accommodation_name.toLowerCase().includes(lowerName)
             ).length;
 
-            counts[name] = countForHotel > 0 ? countForHotel : (Math.floor(Math.random() * 25) + 5);
+            counts[name] = countForHotel;
         });
 
         return counts;

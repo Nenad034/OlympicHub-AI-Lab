@@ -1,6 +1,7 @@
 import React from 'react';
 import type { GenericGuest, GuestValidationErrors } from '../../types/booking.types';
 import { NATIONALITIES } from '../../constants/nationalities';
+import { toIcaoLatin } from '../../utils/textUtils';
 import './GuestForm.css';
 
 interface GuestFormProps {
@@ -54,6 +55,11 @@ export const GuestForm: React.FC<GuestFormProps> = ({
                         className={errors.firstName ? 'error' : ''}
                         placeholder="Unesite ime"
                     />
+                    {guestData.firstName && !errors.firstName && (
+                        <div className="icao-preview">
+                            Standard: {toIcaoLatin(guestData.firstName).toUpperCase()}
+                        </div>
+                    )}
                     {errors.firstName && (
                         <span className="error-message">{errors.firstName}</span>
                     )}
@@ -72,6 +78,11 @@ export const GuestForm: React.FC<GuestFormProps> = ({
                         className={errors.lastName ? 'error' : ''}
                         placeholder="Unesite prezime"
                     />
+                    {guestData.lastName && !errors.lastName && (
+                        <div className="icao-preview">
+                            Standard: {toIcaoLatin(guestData.lastName).toUpperCase()}
+                        </div>
+                    )}
                     {errors.lastName && (
                         <span className="error-message">{errors.lastName}</span>
                     )}

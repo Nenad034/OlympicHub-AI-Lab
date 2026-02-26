@@ -108,6 +108,33 @@
     font-size: 14px;
 }
 
+/* Icao Preview */
+.icao-preview {
+    font-size: 11px;
+    font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+    color: #64748b;
+    margin-top: 6px;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 2px solid var(--accent, #8e24ac);
+    border-radius: 0 4px 4px 0;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Select Dropdown */
 .form-field select {
     cursor: pointer;

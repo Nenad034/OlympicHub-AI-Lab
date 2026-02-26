@@ -237,12 +237,11 @@ export const HotelCard: React.FC<HotelCardProps> = ({
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                             <h3 style={{ margin: 0, fontSize: viewMode === 'grid' ? '1.25rem' : '1.15rem', fontWeight: 800 }}>{hotel.name?.replace(/\s*\d+\s*\*+\s*$/, '').trim()}</h3>
-                            {/* TODO(HotelCard): Vratiti BEST SELLER tag kada se ponovo uključi pametna pretraga. 
                             {(hotel.salesCount || 0) > 5 && (
                                 <span className="best-seller-premium-badge" style={{ padding: '2px 8px', borderRadius: '4px', background: '#facc15', color: '#000', fontSize: '0.65rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <TrendingUp size={10} /> BEST SELLER
                                 </span>
-                            )} */}
+                            )}
                         </div>
                     </div>
 

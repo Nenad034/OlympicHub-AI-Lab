@@ -615,7 +615,7 @@ const ReservationArchitect: React.FC = () => {
 
                 setDossier(prev => ({
                     ...prev,
-                    cisCode: 'CIS-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                    cisCode: loadData.cisCode || ('CIS-' + Math.random().toString(36).substr(2, 9).toUpperCase()),
                     clientReference: loadData.externalBookingCode || loadData.externalBookingId || ('REF-' + Math.floor(Math.random() * 10000)),
                     resCode: null, // OBAVEZNO null za novi dosije
                     tripItems: [

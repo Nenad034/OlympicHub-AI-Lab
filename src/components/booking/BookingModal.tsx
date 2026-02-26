@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { X, Calendar as CalendarIcon, Phone, Mail, User, ShieldCheck, CreditCard, Info, AlertTriangle, CheckCircle2, ChevronRight, BedDouble, Utensils, Plane, Users } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Phone, Mail, User, ShieldCheck, CreditCard, Info, AlertTriangle, CheckCircle2, ChevronRight, BedDouble, Utensils, Plane, Users, Lock, Shield } from 'lucide-react';
 import { toIcaoLatin } from '../../utils/textUtils';
 import { GuestForm } from './GuestForm';
 import { BookingSummary } from './BookingSummary';
 import type { BookingData, GenericGuest, BookingState } from '../../types/booking.types';
 import { validateAllGuests, hasValidationErrors } from '../../utils/bookingValidation';
+import { currencyManager } from '../../utils/currencyManager';
 import './BookingModal.css';
 import solvexBookingService from '../../integrations/solvex/api/solvexBookingService';
 import type { SolvexTourist, SolvexService } from '../../integrations/solvex/types/solvex.types';
-
+import { generateCisCode } from '../../services/reservationService';
+import { performSmartSearch } from '../../services/smartSearchService';
+import type { SmartSearchResult } from '../../services/smartSearchService';
 
 interface BookingModalProps {
     isOpen: boolean;
@@ -20,6 +23,16 @@ interface BookingModalProps {
     onSuccess: (bookingId: string, cisCode?: string, refCode?: string, provider?: string) => void;
     onError: (error: string) => void;
 }
+
+const isAvailabilityError = (error: string): boolean => {
+    const errorLower = error.toLowerCase();
+    const markers = [
+        'quota', 'availability', 'sold out', 'places',
+        'nema slobodnih', 'nedostatak kvote', 'nema dostupnosti',
+        'unavailable', 'rasprodato', 'stop sales'
+    ];
+    return markers.some(marker => errorLower.includes(marker));
+};
 
 export const BookingModal: React.FC<BookingModalProps> = ({
     isOpen,
@@ -51,14 +64,21 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         errorDetails: null
     });
 
-    const [currentStep, setCurrentStep] = useState<'details' | 'confirmation'>('details');
+    const [currentStep, setCurrentStep] = useState<'details' | 'confirmation' | 'fallback'>('details');
+    const [localBookingData, setLocalBookingData] = useState<BookingData>(bookingData);
+    const [fallbackRooms, setFallbackRooms] = useState<SmartSearchResult[]>([]);
+    const [isSearchingFallback, setIsSearchingFallback] = useState(false);
+
+    // Update local booking data if prop changes (initially)
+    useEffect(() => {
+        if (bookingData) {
+            setLocalBookingData(bookingData);
+        }
+    }, [bookingData]);
 
     // Initialize additional guests when modal opens
     useEffect(() => {
-        const title = bookingData?.serviceName || bookingData?.hotelName;
-        console.log('[BookingModal] Effect triggered. isOpen:', isOpen, 'Data:', title);
         if (isOpen && bookingData) {
-            console.log('[BookingModal] Initializing guests for:', title);
             const adl = parseInt(bookingData.adults.toString()) || 1;
             const chd = parseInt(bookingData.children.toString()) || 0;
             const totalGuests = adl + chd;
@@ -96,9 +116,63 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         });
     };
 
+    const handleFallbackSearch = async () => {
+        setIsSearchingFallback(true);
+        setCurrentStep('fallback');
+        try {
+            console.log('[BookingModal] Searching for alternatives in:', localBookingData.hotelName);
+            const results = await performSmartSearch({
+                searchType: 'hotel',
+                destinations: [{
+                    id: localBookingData.providerData?.hotel?.id || localBookingData.hotelName || '',
+                    name: localBookingData.hotelName || '',
+                    type: 'hotel',
+                    provider: 'Solvex'
+                }],
+                checkIn: localBookingData.checkIn,
+                checkOut: localBookingData.checkOut || '',
+                rooms: localBookingData.roomAllocations || [{ adults: localBookingData.adults, children: localBookingData.children, childrenAges: [] }],
+                enabledProviders: { solvex: true }
+            });
+
+            // Filter to ensure we only have our hotel (in case broad search was returned)
+            const hotelNameNormalized = (localBookingData.hotelName || '').toLowerCase();
+            const sameHotel = results.filter(r =>
+                r.name.toLowerCase().includes(hotelNameNormalized) ||
+                hotelNameNormalized.includes(r.name.toLowerCase())
+            );
+
+            console.log('[BookingModal] Found alternatives:', sameHotel.length);
+            setFallbackRooms(sameHotel);
+        } catch (err) {
+            console.error('Fallback search failed:', err);
+        } finally {
+            setIsSearchingFallback(false);
+            setState(prev => ({ ...prev, isSubmitting: false }));
+        }
+    };
+
+    const handleSelectReplacementRoom = (hotelResult: SmartSearchResult, room: any) => {
+        console.log('[BookingModal] Selecting replacement room:', room.name);
+        setLocalBookingData(prev => ({
+            ...prev,
+            roomType: room.name,
+            totalPrice: room.price,
+            mealPlan: room.mealPlan || prev.mealPlan,
+            providerData: {
+                ...prev.providerData,
+                room: room.originalData || room
+            }
+        }));
+        setCurrentStep('confirmation');
+        setFallbackRooms([]);
+    };
+
     const handleSubmit = async () => {
+        if (state.isSubmitting) return;
+
         if (currentStep === 'details') {
-            const errors = validateAllGuests(state.mainGuest, state.additionalGuests, bookingData.children);
+            const errors = validateAllGuests(state.mainGuest, state.additionalGuests, localBookingData.children);
             if (hasValidationErrors(errors)) {
                 setState(prev => ({ ...prev, validationErrors: errors }));
                 return;
@@ -110,13 +184,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             }
 
             setCurrentStep('confirmation');
-            // Scroll to top of modal content
             const content = document.querySelector('.booking-modal-content');
             if (content) content.scrollTop = 0;
             return;
         }
 
-        if (!state.cancellationConfirmed) {
+        if (currentStep === 'confirmation' && !state.cancellationConfirmed) {
             alert('Molimo potvrdite da ste upoznati sa otkaznim troškovima.');
             return;
         }
@@ -125,161 +198,110 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
         try {
             const guests = [state.mainGuest, ...state.additionalGuests];
+            const cisCode = generateCisCode();
 
-            // IF SOLVEX, handle direct booking
-            const isSolvex = provider.toLowerCase().includes('solvex');
-            console.log(`[BookingModal] Provider: ${provider}, isSolvex: ${isSolvex}`);
-
-            if (isSolvex) {
-                console.log('[BookingModal] Handling direct Solvex booking...');
-
-                const solvexResult = bookingData.providerData;
-                if (!solvexResult) throw new Error('Missing Solvex provider data');
-
-                // 1. Map guests to SolvexTourists
-                const solvexTourists: SolvexTourist[] = guests.map((g, i) => {
-                    let guestIsChild = false;
-
-                    if (bookingData.roomAllocations) {
-                        let currentIdx = 0;
-                        for (const room of bookingData.roomAllocations) {
-                            const adultsInRoom = room.adults;
-                            const childrenInRoom = room.children;
-                            if (i >= currentIdx + adultsInRoom && i < currentIdx + adultsInRoom + childrenInRoom) {
-                                guestIsChild = true;
-                                break;
-                            }
-                            currentIdx += adultsInRoom + childrenInRoom;
-                        }
-                    } else {
-                        guestIsChild = i >= bookingData.adults;
-                    }
-
-                    return {
-                        id: i + 1,
-                        firstNameLat: toIcaoLatin(g.firstName),
-                        surNameLat: toIcaoLatin(g.lastName),
-                        birthDate: `${g.dateOfBirth}T00:00:00`,
-                        sex: g.gender === 'F' ? 'Female' : 'Male',
-                        ageType: guestIsChild ? 'Child' : 'Adult',
-                        isMain: i === 0
-                    };
-                });
-
-                // 2. Map service
-                const solvexService: SolvexService = {
-                    id: 0,
-                    type: 'HotelService',
-                    externalId: 0,
-                    hotelId: solvexResult.hotel.id,
-                    nMen: bookingData.adults,
-                    startDate: `${bookingData.checkIn}T00:00:00`,
-                    duration: bookingData.nights || 0,
-                    room: {
-                        roomTypeId: solvexResult.room.roomType.id,
-                        roomCategoryId: solvexResult.room.roomCategory.id,
-                        roomAccommodationId: solvexResult.room.roomAccommodation.id
-                    },
-                    pansionId: solvexResult.pansion.id
-                };
-
-                // 3. Perform Final Booking (CreateReservation)
-                console.log('[BookingModal] Performing CreateReservation...');
-                const saveResult = await solvexBookingService.createReservation({
-                    services: [solvexService],
-                    tourists: solvexTourists,
-                    countryId: solvexResult.hotel.country.id,
-                    cityId: solvexResult.hotel.city.id
+            if (provider.toLowerCase().includes('solvex')) {
+                const saveResult = await solvexBookingService.directBook({
+                    hotel: localBookingData.providerData.hotel,
+                    room: localBookingData.providerData.room,
+                    checkIn: localBookingData.checkIn,
+                    checkOut: localBookingData.checkOut || '',
+                    guests: guests,
+                    idempotencyKey: cisCode
                 });
 
                 if (saveResult.success && saveResult.data) {
                     const payload = {
                         selectedResult: {
-                            name: bookingData.serviceName || bookingData.hotelName || 'Usluga',
-                            location: bookingData.location,
+                            name: localBookingData.serviceName || localBookingData.hotelName || 'Usluga',
+                            location: localBookingData.location,
                             source: provider.toUpperCase(),
-                            price: bookingData.totalPrice,
-                            stars: bookingData.stars,
-                            mealPlan: bookingData.mealPlan || '',
-                            originalData: bookingData.providerData
+                            price: localBookingData.totalPrice,
+                            stars: localBookingData.stars,
+                            mealPlan: localBookingData.mealPlan || '',
+                            originalData: localBookingData.providerData
                         },
                         selectedRoom: {
-                            name: bookingData.roomType,
-                            price: bookingData.totalPrice
+                            name: localBookingData.roomType,
+                            price: localBookingData.totalPrice
                         },
                         searchParams: {
-                            checkIn: bookingData.checkIn,
-                            checkOut: bookingData.checkOut || '',
-                            nights: bookingData.nights || 0,
-                            adults: bookingData.adults,
-                            children: bookingData.children
+                            checkIn: localBookingData.checkIn,
+                            checkOut: localBookingData.checkOut || '',
+                            nights: localBookingData.nights || 0,
+                            adults: localBookingData.adults,
+                            children: localBookingData.children
                         },
                         prefilledGuests: guests,
                         specialRequests: state.specialRequests,
                         confirmationText: 'Putnik je saglasan sa uslovima otkaza i promene aranžmana kao i sa Opštim Uslovima agencije.',
                         confirmationTimestamp: new Date().toLocaleString('sr-RS'),
+                        cisCode: cisCode,
                         externalBookingId: saveResult.data.externalId.toString(),
                         externalBookingCode: saveResult.data.name,
                         cancellationConfirmed: state.cancellationConfirmed,
                         cancellationTimestamp: state.cancellationTimestamp,
-                        operatorName: 'System User' // Ovo treba zameniti stvarni ulogovanim korisnikom
+                        operatorName: 'System User'
                     };
 
                     localStorage.setItem('pending_booking', JSON.stringify(payload));
-                    console.log('[BookingModal] Saved pending_booking for Dossier:', payload);
-
-                    await onSuccess(
-                        saveResult.data.name,
-                        '',
-                        saveResult.data.externalId.toString(),
-                        'Solvex'
-                    );
-                    // Close only after success callback runs
+                    await onSuccess(saveResult.data.name, '', saveResult.data.externalId.toString(), 'Solvex');
                     onClose();
                     return;
                 } else {
-                    throw new Error(saveResult.error || 'Neuspešan upis rezervacije u Solvex sistem. Proverite podatke putnika.');
+                    const errMsg = saveResult.error || 'Neuspešan upis rezervacije';
+                    if (isAvailabilityError(errMsg)) {
+                        await handleFallbackSearch();
+                        return;
+                    }
+                    throw new Error(errMsg);
                 }
+            } else {
+                // Generic handling for other providers
+                const payload = {
+                    selectedResult: {
+                        name: localBookingData.serviceName || localBookingData.hotelName || 'Usluga',
+                        location: localBookingData.location,
+                        source: provider.toUpperCase(),
+                        price: localBookingData.totalPrice,
+                        stars: localBookingData.stars,
+                        mealPlan: localBookingData.mealPlan || '',
+                        originalData: localBookingData.providerData
+                    },
+                    selectedRoom: {
+                        name: localBookingData.roomType,
+                        price: localBookingData.totalPrice
+                    },
+                    searchParams: {
+                        checkIn: localBookingData.checkIn,
+                        checkOut: localBookingData.checkOut || '',
+                        nights: localBookingData.nights || 0,
+                        adults: localBookingData.adults,
+                        children: localBookingData.children
+                    },
+                    prefilledGuests: guests,
+                    specialRequests: state.specialRequests,
+                    confirmationText: 'Putnik je saglasan sa uslovima otkaza i promene aranžmana kao i sa Opštim Uslovima agencije.',
+                    confirmationTimestamp: new Date().toLocaleString('sr-RS'),
+                    cisCode: cisCode,
+                    cancellationConfirmed: state.cancellationConfirmed,
+                    cancellationTimestamp: state.cancellationTimestamp,
+                    operatorName: 'System User'
+                };
+
+                localStorage.setItem('pending_booking', JSON.stringify(payload));
+                window.open('/reservation-architect?loadFrom=pending_booking', '_blank');
+                onClose();
             }
-
-            // Fallback: Default flow (save to localStorage and open Architect)
-            const payload = {
-                selectedResult: {
-                    name: bookingData.serviceName || bookingData.hotelName || 'Usluga',
-                    location: bookingData.location,
-                    source: provider.toUpperCase(),
-                    price: bookingData.totalPrice,
-                    stars: bookingData.stars,
-                    mealPlan: bookingData.mealPlan || '',
-                    originalData: bookingData.providerData
-                },
-                selectedRoom: {
-                    name: bookingData.roomType,
-                    price: bookingData.totalPrice
-                },
-                searchParams: {
-                    checkIn: bookingData.checkIn,
-                    checkOut: bookingData.checkOut || '',
-                    nights: bookingData.nights || 0,
-                    adults: bookingData.adults,
-                    children: bookingData.children
-                },
-                prefilledGuests: guests,
-                specialRequests: state.specialRequests,
-                confirmationText: 'Putnik je saglasan sa uslovima otkaza i promene aranžmana kao i sa Opštim Uslovima agencije.',
-                confirmationTimestamp: new Date().toLocaleString('sr-RS'),
-                cancellationConfirmed: state.cancellationConfirmed,
-                cancellationTimestamp: state.cancellationTimestamp,
-                operatorName: 'System User'
-            };
-
-            localStorage.setItem('pending_booking', JSON.stringify(payload));
-            window.open('/reservation-architect?loadFrom=pending_booking', '_blank');
-            onClose();
         } catch (error) {
             console.error('Booking error:', error);
             const errorMessage = error instanceof Error ? error.message : 'Nepoznata greška';
-            // Set error details for the custom error modal
+
+            if (isAvailabilityError(errorMessage)) {
+                await handleFallbackSearch();
+                return;
+            }
+
             setState(prev => ({ ...prev, errorDetails: errorMessage }));
             onError(errorMessage);
         } finally {
@@ -287,11 +309,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         }
     };
 
-    if (!isOpen) {
-        return null;
-    }
+    if (!isOpen) return null;
 
-    const totalExpectedGuests = bookingData.adults + bookingData.children;
+    const totalExpectedGuests = localBookingData.adults + localBookingData.children;
     const isStateReady = totalExpectedGuests <= 1 || state.additionalGuests.length === (totalExpectedGuests - 1);
 
     if (!isStateReady) {
@@ -306,8 +326,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         );
     }
 
-    const displayTitle = bookingData.serviceName || bookingData.hotelName || 'Rezervacija';
-    console.log('[BookingModal] RENDERING MODAL UI for:', displayTitle);
+    const displayTitle = localBookingData.serviceName || localBookingData.hotelName || 'Rezervacija';
 
     const modalContent = (
         <div className="booking-modal-overlay" onClick={onClose} style={{ zIndex: 20000000 }}>
@@ -316,196 +335,147 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     <div>
                         <h2>Podaci za Rezervaciju</h2>
                         <p className="hotel-name">{displayTitle}</p>
-                        <p className="hotel-location">{bookingData.location}</p>
+                        <p className="hotel-location">{localBookingData.location}</p>
                     </div>
-                    <button className="close-button" onClick={onClose}><X size={24} /></button>
+                    {!state.isSubmitting && (
+                        <button className="close-button" onClick={onClose}><X size={24} /></button>
+                    )}
+                </div>
+
+                {state.isSubmitting && (
+                    <div className="processing-overlay">
+                        <div className="processing-content">
+                            <div className="processing-spinner"></div>
+                            <h3 className="processing-title">Procesuiramo Vašu rezervaciju</h3>
+                            <p className="processing-subtitle">
+                                Komuniciramo sa sistemom dobavljača <strong>{provider.toUpperCase()}</strong>.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                <div className="booking-stepper">
+                    <div className={`step-item ${currentStep === 'details' ? 'active' : ''}`}>
+                        <div className="step-number">1</div>
+                        <div className="step-label">Putnici</div>
+                    </div>
+                    <div className="step-divider" />
+                    <div className={`step-item ${currentStep === 'confirmation' ? 'active' : ''}`}>
+                        <div className="step-number">2</div>
+                        <div className="step-label">Potvrda</div>
+                    </div>
+                    {currentStep === 'fallback' && (
+                        <>
+                            <div className="step-divider" />
+                            <div className="step-item active error">
+                                <div className="step-number">!</div>
+                                <div className="step-label">Alternative</div>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 <div className="booking-modal-content">
-                    {/* CUSTOM ERROR MODAL OVERLAY */}
                     {state.errorDetails && (
-                        <div className="error-overlay" style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            background: 'rgba(0,0,0,0.85)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 20000005,
-                            backdropFilter: 'blur(5px)'
-                        }}>
-                            <div className="error-card" style={{
-                                background: '#1e1e1e',
-                                width: '90%',
-                                maxWidth: '500px',
-                                padding: '24px',
-                                borderRadius: '16px',
-                                border: '1px solid #ef4444',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '16px',
-                                boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '16px' }}>
+                        <div className="error-overlay" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20000005, backdropFilter: 'blur(5px)' }}>
+                            <div className="error-card" style={{ background: '#1e1e1e', width: '90%', maxWidth: '500px', padding: '24px', borderRadius: '16px', border: '1px solid #ef4444', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                     <AlertTriangle size={32} color="#ef4444" />
-                                    <h3 style={{ margin: 0, color: '#ef4444', fontSize: '20px' }}>Greška pri rezervaciji</h3>
+                                    <h3 style={{ margin: 0, color: '#ef4444' }}>Greška pri rezervaciji</h3>
                                 </div>
-
-                                <p style={{ color: '#cbd5e1', fontSize: '14px', margin: 0 }}>
-                                    Dogodila se greška prilikom komunikacije sa sistemom. Molimo Vas iskopirajte detalje greške i prosledite tehničkoj podršci.
-                                </p>
-
-                                <textarea
-                                    readOnly
-                                    value={state.errorDetails || ''}
-                                    style={{
-                                        background: '#334155',
-                                        color: '#f8fafc',
-                                        border: '1px solid #475569',
-                                        borderRadius: '8px',
-                                        padding: '12px',
-                                        fontFamily: 'monospace',
-                                        fontSize: '12px',
-                                        minHeight: '150px',
-                                        resize: 'vertical',
-                                        width: '100%',
-                                        boxSizing: 'border-box'
-                                    }}
-                                />
-
-                                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
-                                    <button
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(state.errorDetails || '');
-                                            alert('Greška kopirana u privremenu memoriju!');
-                                        }}
-                                        style={{
-                                            background: '#3b82f6',
-                                            color: '#fff',
-                                            border: 'none',
-                                            padding: '10px 20px',
-                                            borderRadius: '8px',
-                                            cursor: 'pointer',
-                                            fontWeight: 600
-                                        }}
-                                    >
-                                        Kopiraj grešku
-                                    </button>
-                                    <button
-                                        onClick={() => setState(prev => ({ ...prev, errorDetails: null }))}
-                                        style={{
-                                            background: 'rgba(255,255,255,0.1)',
-                                            color: '#fff',
-                                            border: '1px solid rgba(255,255,255,0.2)',
-                                            padding: '10px 20px',
-                                            borderRadius: '8px',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Zatvori
-                                    </button>
+                                <textarea readOnly value={state.errorDetails || ''} style={{ background: '#334155', color: '#f8fafc', border: '1px solid #475569', borderRadius: '8px', padding: '12px', fontFamily: 'monospace', fontSize: '12px', minHeight: '150px', width: '100%' }} />
+                                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                                    <button onClick={() => setState(prev => ({ ...prev, errorDetails: null }))} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer' }}>Zatvori</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {currentStep === 'details' ? (
-                        <>
-                            <BookingSummary
-                                bookingData={bookingData}
-                                guests={[state.mainGuest, ...state.additionalGuests]}
-                                specialRequests={state.specialRequests}
-                            />
+                    {currentStep === 'fallback' ? (
+                        <div className="fallback-step animate-fade-in">
+                            <div className="fallback-header" style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(239, 68, 68, 0.2)', marginBottom: '24px', display: 'flex', gap: '20px', alignItems: 'center' }}>
+                                <div style={{ width: '64px', height: '64px', background: '#ef4444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                                    <AlertTriangle size={36} />
+                                </div>
+                                <div className="fallback-text">
+                                    <h3 style={{ margin: '0 0 6px 0', color: '#ef4444' }}>Ova soba je rasprodata!</h3>
+                                    <p style={{ margin: 0, color: '#cbd5e1', fontSize: '14px' }}>Pronašli smo sledeće alternative u istom hotelu:</p>
+                                </div>
+                            </div>
+
+                            {isSearchingFallback ? (
+                                <div style={{ padding: '40px', textAlign: 'center' }}>
+                                    <div className="processing-spinner" style={{ margin: '0 auto 15px' }}></div>
+                                    <p>Pretražujemo alternative...</p>
+                                </div>
+                            ) : fallbackRooms.length > 0 ? (
+                                <div className="fallback-list" style={{ display: 'grid', gap: '12px' }}>
+                                    {fallbackRooms.map((hotel) => (
+                                        Object.entries(hotel.allocationResults || {}).map(([roomIdx, rooms]) => (
+                                            (rooms as any[]).map((room, rIdx) => (
+                                                <div key={`${roomIdx}-${rIdx}`} className="fallback-room-card" onClick={() => handleSelectReplacementRoom(hotel, room)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <div>
+                                                        <div style={{ fontWeight: 800 }}>{room.name}</div>
+                                                        <div style={{ fontSize: '12px', color: '#94a3b8' }}>{room.mealPlan || hotel.mealPlan}</div>
+                                                    </div>
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <div style={{ fontWeight: 900, color: '#3b82f6' }}>{currencyManager.formatRsd(room.price)}</div>
+                                                        <div style={{ fontSize: '11px', color: room.price > localBookingData.totalPrice ? '#ef4444' : '#10b981' }}>
+                                                            {room.price > localBookingData.totalPrice ? '+' : '-'}{currencyManager.formatRsd(Math.abs(room.price - localBookingData.totalPrice))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ))
+                                    ))}
+                                </div>
+                            ) : (
+                                <div style={{ textAlign: 'center', padding: '20px' }}>
+                                    <p>Nema drugih slobodnih soba u ovom hotelu.</p>
+                                    <button className="btn-cancel" onClick={onClose}>Zatvori</button>
+                                </div>
+                            )}
+                        </div>
+                    ) : currentStep === 'details' ? (
+                        <div className="booking-details-step animate-fade-in">
+                            <BookingSummary bookingData={localBookingData} guests={[state.mainGuest, ...state.additionalGuests]} specialRequests={state.specialRequests} />
 
                             {(() => {
-                                if (bookingData.roomAllocations && bookingData.roomAllocations.length > 1) {
-                                    let globalIndex = 0;
-                                    return bookingData.roomAllocations.map((room, roomIdx) => {
-                                        const roomGuests = [];
-                                        const adultsCount = room.adults;
-                                        const childrenCount = room.children;
+                                let globalIndex = 0;
+                                const allocations = localBookingData.roomAllocations || [{ adults: localBookingData.adults, children: localBookingData.children }];
 
-                                        for (let i = 0; i < adultsCount + childrenCount; i++) {
-                                            const currentIndex = globalIndex;
-                                            const isMain = currentIndex === 0;
-                                            const isChild = i >= adultsCount;
-                                            const guestData = isMain ? state.mainGuest : state.additionalGuests[currentIndex - 1];
+                                return allocations.map((room, roomIdx) => {
+                                    const roomGuests = [];
+                                    const adultsCount = parseInt(room.adults.toString());
+                                    const childrenCount = parseInt(room.children.toString());
 
-                                            roomGuests.push(
-                                                <GuestForm
-                                                    key={currentIndex}
-                                                    guestNumber={currentIndex + 1}
-                                                    isMainGuest={isMain}
-                                                    isChild={isChild}
-                                                    guestData={guestData}
-                                                    onChange={isMain ? handleMainGuestChange : (data) => handleAdditionalGuestChange(currentIndex - 1, data)}
-                                                    errors={state.validationErrors[currentIndex]}
-                                                />
-                                            );
-                                            globalIndex++;
-                                        }
+                                    for (let i = 0; i < adultsCount + childrenCount; i++) {
+                                        const currentIndex = globalIndex;
+                                        const isMain = currentIndex === 0;
+                                        const isChild = i >= adultsCount;
+                                        const guestData = isMain ? state.mainGuest : state.additionalGuests[currentIndex - 1];
 
-                                        return (
-                                            <div key={roomIdx} className="room-data-group" style={{ marginBottom: '40px' }}>
-                                                <div className="room-separator-header" style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '12px',
-                                                    padding: '15px 20px',
-                                                    background: 'rgba(142, 36, 172, 0.15)',
-                                                    borderRadius: '12px',
-                                                    marginBottom: '20px',
-                                                    borderLeft: '5px solid #8E24AC'
-                                                }}>
-                                                    <BedDouble size={22} color="#8E24AC" />
-                                                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: 'white', letterSpacing: '0.5px' }}>
-                                                        Soba {roomIdx + 1} <span style={{ opacity: 0.6, fontWeight: 400, marginLeft: '10px', fontSize: '1rem' }}>({room.adults} odr. {room.children > 0 ? `+ ${room.children} dete` : ''})</span>
-                                                    </h3>
-                                                </div>
-                                                <div style={{ paddingLeft: '10px' }}>
-                                                    {roomGuests}
-                                                </div>
-                                            </div>
+                                        roomGuests.push(
+                                            <GuestForm key={currentIndex} guestNumber={currentIndex + 1} isMainGuest={isMain} isChild={isChild} guestData={guestData} onChange={isMain ? handleMainGuestChange : (data) => handleAdditionalGuestChange(currentIndex - 1, data)} errors={state.validationErrors[currentIndex]} />
                                         );
-                                    });
-                                } else {
+                                        globalIndex++;
+                                    }
+
                                     return (
-                                        <>
-                                            <GuestForm
-                                                guestNumber={1}
-                                                isMainGuest={true}
-                                                isChild={false}
-                                                guestData={state.mainGuest}
-                                                onChange={handleMainGuestChange}
-                                                errors={state.validationErrors[0]}
-                                            />
-                                            {state.additionalGuests.map((guest, index) => (
-                                                <GuestForm
-                                                    key={index}
-                                                    guestNumber={index + 2}
-                                                    isMainGuest={false}
-                                                    isChild={index + 2 > bookingData.adults}
-                                                    guestData={guest}
-                                                    onChange={(data) => handleAdditionalGuestChange(index, data)}
-                                                    errors={state.validationErrors[index + 1]}
-                                                />
-                                            ))}
-                                        </>
+                                        <div key={roomIdx} className="room-data-group" style={{ marginBottom: '30px' }}>
+                                            <div className="room-separator-header" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', background: 'rgba(142, 36, 172, 0.1)', borderRadius: '10px', marginBottom: '15px', borderLeft: '4px solid #8E24AC' }}>
+                                                <BedDouble size={18} color="#8E24AC" />
+                                                <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'white' }}>Soba {roomIdx + 1}</h3>
+                                            </div>
+                                            {roomGuests}
+                                        </div>
                                     );
-                                }
+                                });
                             })()}
 
                             <div className="special-requests-section">
                                 <label>📝 Napomene (opciono)</label>
-                                <textarea
-                                    value={state.specialRequests}
-                                    onChange={(e) => setState({ ...state, specialRequests: e.target.value })}
-                                    placeholder="Dodatni zahtevi..."
-                                    rows={3}
-                                />
+                                <textarea value={state.specialRequests} onChange={(e) => setState({ ...state, specialRequests: e.target.value })} placeholder="Dodatni zahtevi..." rows={3} />
                             </div>
 
                             <div className="terms-section">
@@ -514,91 +484,31 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                                     <span>Prihvatam uslove rezervacije i politiku privatnosti</span>
                                 </label>
                             </div>
-                        </>
+                        </div>
                     ) : (
                         <div className="confirmation-step animate-fade-in">
                             <div className="ferrari-confirmation-card">
-                                <div className="cf-header">
-                                    <ShieldCheck size={32} className="shield-icon" />
-                                    <h3>Finalna Potvrda Rezervacije</h3>
-                                </div>
+                                <h3>Finalna Potvrda Rezervacije</h3>
+                                <p>Saglasan sam sa uslovima otkaza i <strong>Opštim uslovima agencije Olympic Travel</strong>.</p>
 
-                                <p className="cf-main-text">
-                                    Potvrđujem da želim da izvršim rezervaciju i saglasan sam sa uslovima otkaza i promene putovanja
-                                    kao i <strong>Opštim uslovima agencije Olympic Travel</strong>.
-                                </p>
-
-                                <div className="cancellation-policy-box">
-                                    <h4>POLITIKA OTKAZA I PROMENE:</h4>
-                                    <table className="policy-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Period otkazivanja</th>
-                                                <th>Trošak (od ukupne cene)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>30 ili više dana pre puta</td>
-                                                <td>10%</td>
-                                            </tr>
-                                            <tr>
-                                                <td>29 - 21 dan pre puta</td>
-                                                <td>20%</td>
-                                            </tr>
-                                            <tr>
-                                                <td>20 - 15 dana pre puta</td>
-                                                <td>30%</td>
-                                            </tr>
-                                            <tr>
-                                                <td>14 - 8 dana pre puta</td>
-                                                <td>50%</td>
-                                            </tr>
-                                            <tr>
-                                                <td>7 - 0 dana pre puta</td>
-                                                <td>100%</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                <div className="cancellation-confirmation-box" style={{
-                                    background: 'rgba(239, 68, 68, 0.1)',
-                                    padding: '16px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #ef4444',
-                                    marginBottom: '20px',
-                                    marginTop: '20px'
-                                }}>
-                                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                                        <AlertTriangle size={24} color="#ef4444" style={{ flexShrink: 0 }} />
-                                        <div>
-                                            <h4 style={{ color: '#ef4444', margin: '0 0 8px 0', fontSize: '15px' }}>UPOZORENJE O OTKAZNIM TROŠKOVIMA</h4>
-                                            <p style={{ color: '#fca5a5', fontSize: '13px', margin: 0 }}>
-                                                Potvrdom ove rezervacije <strong>trenutno</strong> ulazite u period otkaznih penala.
-                                                Molimo Vas imajte na umu da u slučaju otkazivanja ili nepojavljivanja, dobavljač zadržava pravo naplate prema gore navedenoj tabeli.
-                                            </p>
-                                        </div>
+                                <div className="cancellation-confirmation-box" style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '16px', borderRadius: '8px', border: '1px solid #ef4444', marginTop: '20px' }}>
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <AlertTriangle size={24} color="#ef4444" />
+                                        <h4 style={{ color: '#ef4444', margin: 0 }}>UPOZORENJE O PENALIMA</h4>
                                     </div>
-
-                                    <label className="terms-checkbox" style={{ marginTop: '16px', borderTop: '1px solid rgba(239,68,68,0.3)', paddingTop: '16px' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={state.cancellationConfirmed}
-                                            onChange={(e) => setState({ ...state, cancellationConfirmed: e.target.checked, cancellationTimestamp: e.target.checked ? new Date().toISOString() : null })}
-                                        />
-                                        <span style={{ color: 'white', fontWeight: 600 }}>
-                                            Razumem i prihvatam rizik od otkaznih troškova.
-                                        </span>
+                                    <label className="terms-checkbox" style={{ marginTop: '16px' }}>
+                                        <input type="checkbox" checked={state.cancellationConfirmed} onChange={(e) => setState({ ...state, cancellationConfirmed: e.target.checked, cancellationTimestamp: e.target.checked ? new Date().toISOString() : null })} />
+                                        <span style={{ color: 'white' }}>Prihvatam rizik od otkaznih troškova.</span>
                                     </label>
                                 </div>
-
-                                <a href="https://www.olympictravel.rs/opsti-uslovi-putovanja" target="_blank" rel="noopener noreferrer" className="terms-link-v4">
-                                    Pročitajte kompletne Opšte Uslove Putovanja →
-                                </a>
                             </div>
                         </div>
                     )}
+
+                    <div className="trust-badges">
+                        <div className="trust-badge"><Shield size={14} /> <span>Safe Booking</span></div>
+                        <div className="trust-badge"><Lock size={14} /> <span>SSL Data</span></div>
+                    </div>
                 </div>
 
                 <div className="booking-modal-footer">
@@ -607,19 +517,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                             <button className="btn-cancel" onClick={onClose}>Otkaži</button>
                             <button className="btn-submit" onClick={handleSubmit}>Nastavi na Potvrdu</button>
                         </>
-                    ) : (
+                    ) : currentStep === 'confirmation' ? (
                         <>
                             <button className="btn-cancel" onClick={() => setCurrentStep('details')}>Vrati se na unos</button>
-                            <button className="btn-submit btn-confirm-final" onClick={handleSubmit} disabled={state.isSubmitting}>
-                                {state.isSubmitting ? 'Procesuiram...' : 'Potvrđujem Rezervaciju'}
-                            </button>
+                            <button className="btn-submit btn-confirm-final" onClick={handleSubmit} disabled={state.isSubmitting}>{state.isSubmitting ? 'Procesuiram...' : 'Potvrdi'}</button>
                         </>
+                    ) : (
+                        <button className="btn-cancel" onClick={() => setCurrentStep('details')}>Nazad na podatke</button>
                     )}
                 </div>
             </div>
         </div>
     );
 
-    // Render using Portal to bypass all parent z-index contexts
     return ReactDOM.createPortal(modalContent, document.body);
 };

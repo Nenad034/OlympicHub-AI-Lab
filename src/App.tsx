@@ -16,6 +16,7 @@ import { SolvexSyncWorker } from './components/SolvexSyncWorker';
 // Context
 import { useConfig } from './context/ConfigContext';
 import { startNetworkMonitoring } from './utils/networkHealth';
+import { currencyManager } from './utils/currencyManager';
 
 // Activity Tracker Test Data (Development only)
 if (import.meta.env.DEV) {
@@ -42,9 +43,12 @@ const App: React.FC = () => {
     // Start Sentinel Network Monitoring
     startNetworkMonitoring();
 
+    // Start Daily Currency Financial Protection
+    currencyManager.refreshRate();
+
     let themeClass;
     if (theme === 'light') themeClass = 'light-theme';
-    else if (theme === 'prime') themeClass = 'prime-theme';
+    else if (theme === 'prime' as string) themeClass = 'prime-theme';
     else themeClass = 'navy-theme';
 
     if (isPrism) {

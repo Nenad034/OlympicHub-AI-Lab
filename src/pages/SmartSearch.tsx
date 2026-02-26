@@ -34,9 +34,11 @@ import './ModalFixDefinitive.css';
 import './SmartSearchStylesFix.css';
 import './SmartSearchGridFix.css';
 import './SmartSearchLightMode.css';
+import { searchCacheService } from '../services/searchCacheService';
 import '../archive/pages/GlobalHubSearch.css';
 import './SmartSearchHistory.css';
 import { SearchHistorySidebar } from './SmartSearch/components/SearchHistorySidebar';
+import { currencyManager } from '../utils/currencyManager';
 import { FilterSidebar } from './SmartSearch/components/FilterSidebar';
 import { HotelCard } from './SmartSearch/components/HotelCard';
 import { HotelDetailsModal } from './SmartSearch/components/HotelDetailsModal';
@@ -587,8 +589,8 @@ const SmartSearch: React.FC = () => {
 
     // Filter & UI States
     const [viewMode, setViewMode] = useState<'grid' | 'list' | 'notepad'>('grid');
-    // TODO(SmartSearch): Vratiti default sort na 'smart' kada se ponovo omogući pametna pretraga
-    const [sortBy, setSortBy] = useState<'smart' | 'price_low' | 'price_high'>('price_low');
+    // Smart sortiranje vraceno kao primarna opcija
+    const [sortBy, setSortBy] = useState<'smart' | 'price_low' | 'price_high'>('smart');
     const [hotelNameFilter, setHotelNameFilter] = useState('');
     const [selectedStars, setSelectedStars] = useState<string[]>([]);
     const [selectedMealPlans, setSelectedMealPlans] = useState<string[]>([]);
@@ -605,6 +607,7 @@ const SmartSearch: React.FC = () => {
     const [prefetchedResults, setPrefetchedResults] = useState<SmartSearchResult[]>([]);
     const [prefetchKey, setPrefetchKey] = useState<string>('');
     const [isPrefetching, setIsPrefetching] = useState(false);
+    const [isCachedResults, setIsCachedResults] = useState(false);
     const [budgetFrom, setBudgetFrom] = useState<string>('');
     const [budgetTo, setBudgetTo] = useState<string>('');
     const [selectedCancelPolicy, setSelectedCancelPolicy] = useState<string>('all');
@@ -981,8 +984,29 @@ const SmartSearch: React.FC = () => {
             setIsSearching(false);
             // Don't return yet! We want to save to history.
         } else {
+            // LIGHTNING SEARCH - CHECK CACHE FIRST (TAČKA 3)
+            const cached = searchCacheService.getCachedResults({
+                searchType: activeSearchType as any,
+                destinations: activeDestinations,
+                checkIn: activeCheckIn,
+                checkOut: activeCheckOut,
+                rooms: activeAllocations,
+                mealPlan: activeMealPlan,
+                nationality: activeNationality
+            });
+
+            if (cached) {
+                console.log('[SmartSearch] ⚡ LIGHTNING CACHE HIT! Showing estimated results immediately.');
+                setSearchResults(cached);
+                setSearchPerformed(true);
+                setIsCachedResults(true);
+                // Do not set isSearching(false) yet, we want to continue with live fetch
+            }
+
             setIsSearching(true);
             setSearchError(null);
+            setSmartSuggestions(null);
+            setSelectedArrivalDate(activeCheckIn);
 
             // CHECK IF PREFETCH IS IN FLIGHT
             const inFlight = searchPrefetchService.getInFlight(currentKey);
@@ -992,10 +1016,6 @@ const SmartSearch: React.FC = () => {
                     const results = await inFlight;
                     console.log('[SmartSearch] ✅ Prefetch finished while waiting. Displaying.');
                     resultsToDisplay = results;
-                    setSearchResults(resultsToDisplay);
-                    setSearchPerformed(true);
-                    setIsSearching(false);
-                    // Continue to history save
                 } catch (err) {
                     console.error('[SmartSearch] In-flight prefetch failed:', err);
                     setSearchError(err instanceof Error ? err.message : 'Greška pri pretrazi');
@@ -1003,11 +1023,6 @@ const SmartSearch: React.FC = () => {
                     return;
                 }
             } else {
-                setSearchResults([]);
-                setSearchPerformed(false);
-                setSmartSuggestions(null);
-                setSelectedArrivalDate(activeCheckIn);
-
                 try {
                     if (activeAllocations.length === 0) {
                         setSearchError('Molimo definišite bar jednu sobu sa odraslim putnicima.');
@@ -1028,10 +1043,11 @@ const SmartSearch: React.FC = () => {
                         mealPlan: activeMealPlan,
                         currency: 'EUR',
                         nationality: activeNationality || 'RS',
-                        enabledProviders
+                        enabledProviders,
+                        abortSignal: undefined
                     });
 
-                    // ENHANCE WITH CRM SALES DATA (bulk processing to prevent DB overload)
+                    // ENHANCE WITH CRM SALES DATA
                     let counts: Record<string, number> = {};
                     try {
                         const hotelNames = results.map(h => h.name);
@@ -1040,32 +1056,41 @@ const SmartSearch: React.FC = () => {
                         console.error('[SmartSearch] Bulk CRM data error:', e);
                     }
 
-                    const resultsWithSales = results.map(h => ({
+                    resultsToDisplay = results.map(h => ({
                         ...h,
                         salesCount: counts[h.name] || 0
                     }));
 
-                    resultsToDisplay = resultsWithSales;
-                    setSearchResults(resultsToDisplay);
-                    setSearchPerformed(true);
-
-                    // Access potential errors from performers (using the hack we added in service)
+                    // Access potential errors from performers
                     if (resultsToDisplay.length === 0 && (results as any)._lastError) {
                         setSearchError((results as any)._lastError);
-                    }
-
-                    if (resultsToDisplay.length === 0 && !overrideParams) {
-                        // SOLVEX AI ASSISTANT DISABLED - PURE API MODE
-                        setSearchError('Nažalost, nema slobodnih mesta za izabrane parametre. Pokušajte sa drugim datumima ili destinacijom.');
                     }
                 } catch (error) {
                     console.error('[SmartSearch] Search error:', error);
                     setSearchError(error instanceof Error ? error.message : 'Greška pri pretrazi');
                     setIsSearching(false);
-                    return; // Can't save history if it completely failed
-                } finally {
-                    setIsSearching(false);
+                    return;
                 }
+            }
+
+            // FINAL PROCESSING (Update state and cache)
+            setSearchResults(resultsToDisplay);
+            setSearchPerformed(true);
+            setIsSearching(false);
+            setIsCachedResults(false);
+
+            if (resultsToDisplay.length > 0) {
+                searchCacheService.setCachedResults({
+                    searchType: activeSearchType as any,
+                    destinations: activeDestinations,
+                    checkIn: activeCheckIn,
+                    checkOut: activeCheckOut,
+                    rooms: activeAllocations,
+                    mealPlan: activeMealPlan,
+                    nationality: activeNationality
+                }, resultsToDisplay);
+            } else if (!overrideParams && !searchError) {
+                setSearchError('Nažalost, nema slobodnih mesta za izabrane parametre. Pokušajte sa drugim datumima ili destinacijom.');
             }
         }
 
@@ -1100,12 +1125,17 @@ const SmartSearch: React.FC = () => {
                 h.query.checkOut !== historyItem.query.checkOut ||
                 JSON.stringify(h.query.roomAllocations) !== JSON.stringify(historyItem.query.roomAllocations)
             );
-            const updated = [historyItem, ...filtered].slice(0, 10);
-            localStorage.setItem('smartSearchHistoryItems', JSON.stringify(updated));
-            return updated;
+            return [historyItem, ...filtered].slice(0, 20);
         });
-    };
 
+        const historyItems = JSON.parse(localStorage.getItem('smartSearchHistoryItems') || '[]');
+        const updatedHistory = [historyItem, ...historyItems.filter((h: any) =>
+            JSON.stringify(h.query.destinations) !== JSON.stringify(historyItem.query.destinations) ||
+            h.query.checkIn !== historyItem.query.checkIn ||
+            h.query.checkOut !== historyItem.query.checkOut
+        )].slice(0, 20);
+        localStorage.setItem('smartSearchHistoryItems', JSON.stringify(updatedHistory));
+    };
 
     const handleLoadHistoryItem = (item: SearchHistoryItem) => {
         const { query } = item;
@@ -1536,8 +1566,29 @@ const SmartSearch: React.FC = () => {
                         )}
                     </div>
 
-                    {/* RIGHT: Eye Button */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '50px' }}>
+                    {/* RIGHT: Financial Shield & Eye Button */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '15px' }}>
+                        {/* FINANCIAL SHIELD STATUS */}
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 15px',
+                            background: 'rgba(16, 185, 129, 0.05)', borderRadius: '14px',
+                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                        }}>
+                            <div style={{ position: 'relative' }}>
+                                <ShieldCheck size={18} color="#10b981" />
+                                <div style={{
+                                    position: 'absolute', top: -2, right: -2, width: '8px', height: '8px',
+                                    background: '#10b981', borderRadius: '50%', border: '2px solid var(--bg-card)'
+                                }} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.5px' }}>FINANCIAL SHIELD</span>
+                                <span style={{ fontSize: '13px', fontWeight: 900, color: '#10b981' }}>
+                                    1 EUR = {currencyManager.getAgencyRate().toFixed(2)} RSD
+                                </span>
+                            </div>
+                        </div>
+
                         <button
                             onClick={() => setShowProviderPanel(!showProviderPanel)}
                             style={{

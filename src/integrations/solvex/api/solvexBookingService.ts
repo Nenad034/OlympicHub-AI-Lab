@@ -1,6 +1,7 @@
 import { makeSoapRequest, formatSolvexDate } from './solvexSoapClient';
 import { connect } from './solvexAuthService';
 import { SOLVEX_SOAP_METHODS } from './solvexConstants';
+import { toIcaoLatin } from '../../../utils/textUtils';
 import type {
     SolvexApiResponse,
     SolvexTourist,
@@ -240,9 +241,60 @@ export async function getReservationsFrom(dateFrom: Date, dateTo: Date): Promise
     }
 }
 
+/**
+ * High-level bridge to book directly from a result
+ */
+export async function directBook(params: {
+    hotel: any;
+    room: any;
+    checkIn: string;
+    checkOut: string;
+    guests: any[];
+    idempotencyKey?: string;
+}): Promise<SolvexApiResponse<SolvexReservation>> {
+    const tourists: SolvexTourist[] = params.guests.map((g, idx) => ({
+        firstNameLat: toIcaoLatin(g.firstName),
+        surNameLat: toIcaoLatin(g.lastName),
+        birthDate: formatSolvexDate(g.dateOfBirth ? new Date(g.dateOfBirth) : new Date(1980, 0, 1)) + 'T00:00:00',
+        sex: g.gender === 'F' ? 'Female' : 'Male',
+        passportNumber: g.passportNumber || '',
+        isMain: g.isLeadPassenger || (idx === 0),
+        email: g.email || '',
+        phone: g.phone || '',
+        ageType: 'Adult',
+        id: -(idx + 1) // Negative IDs for new tourists
+    }));
+
+    const duration = Math.ceil((new Date(params.checkOut).getTime() - new Date(params.checkIn).getTime()) / (1000 * 3600 * 24));
+
+    const service: SolvexService = {
+        hotelId: params.hotel.id,
+        room: {
+            roomTypeId: params.room.roomType?.id || params.room.roomTypeId || 0,
+            roomCategoryId: params.room.roomCategory?.id || params.room.roomCategoryId || 0,
+            roomAccommodationId: params.room.roomAccommodation?.id || params.room.roomAccommodationId || 0
+        },
+        pansionId: params.room.pansion?.id || params.room.pansionId || params.hotel.pansion?.id || 0,
+        startDate: formatSolvexDate(new Date(params.checkIn)) + 'T00:00:00',
+        duration: duration,
+        nMen: params.guests.length,
+        id: -1, // Negative ID for new service
+        type: 'HotelService',
+        externalId: 0
+    };
+
+    return createReservation({
+        services: [service],
+        tourists,
+        countryId: params.hotel.country?.id || 1, // Default Bulgaria
+        cityId: params.hotel.city?.id || 0
+    });
+}
+
 export default {
     createReservation,
     checkQuota,
     getReservation,
-    getReservationsFrom
+    getReservationsFrom,
+    directBook
 };

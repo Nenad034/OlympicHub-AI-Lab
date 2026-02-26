@@ -75,6 +75,7 @@ const PriceListArchitect = React.lazy(() => import('../pages/PriceListArchitect'
 const ShiftsGeneratorPage = React.lazy(() => import('../pages/ShiftsGeneratorPage'));
 const B2BSettings = React.lazy(() => import('../pages/B2BSettings'));
 const MtsGlobeTest = React.lazy(() => import('../pages/MtsGlobeTest'));
+const FXService = React.lazy(() => import('../pages/FXService'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
@@ -727,6 +728,10 @@ export const router = createBrowserRouter([
                     {
                         path: 'supplier-finance',
                         element: <SupplierFinance />,
+                    },
+                    {
+                        path: 'fx-service',
+                        element: <FXService />,
                     },
                     {
                         path: 'tct-test',

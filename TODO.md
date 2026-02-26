@@ -1,8 +1,8 @@
 # TODO Lista za PrimeClickToTravel / Olympic Hub
 
 ## Smart Pretraga i Kartice Hotela
-- [ ] Vratiti `BEST SELLER` tag na hotel karticama (`SmartSearch/components/HotelCard.tsx`)
-- [ ] Ponovo omogućiti `smart` sortiranje kao podrazumevani metod u `SmartSearch.tsx` (trenutno je prebačeno na najnižu cenu `price_low`)
+- [x] Vratiti `BEST SELLER` tag na hotel karticama (`SmartSearch/components/HotelCard.tsx`)
+- [x] Ponovo omogućiti `smart` sortiranje kao podrazumevani metod u `SmartSearch.tsx` (trenutno je prebačeno na najnižu cenu `price_low`)
 
 ## Marketing i Komunikacija sa Klijentima
 - [ ] **Automated & Manual Campaign System**: Sistem za slanje promocija i obaveštenja klijentima.

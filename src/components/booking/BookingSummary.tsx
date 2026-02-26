@@ -1,6 +1,7 @@
 import React from 'react';
 import type { BookingData, GenericGuest } from '../../types/booking.types';
 import { formatDateForDisplay } from '../../utils/bookingValidation';
+import { currencyManager } from '../../utils/currencyManager';
 import './BookingSummary.css';
 
 interface BookingSummaryProps {
@@ -93,26 +94,38 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                     alignItems: 'flex-end',
                     padding: '15px 20px',
                     background: 'rgba(255,255,255,0.03)',
-                    marginTop: '10px'
+                    marginTop: '10px',
+                    border: '1px solid rgba(142, 36, 172, 0.2)',
+                    borderRadius: '12px'
                 }}>
-                    <span className="booking-summary-value price" style={{ fontSize: '28px', color: 'white' }}>
-                        {bookingData.totalPrice.toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {bookingData.currency}
-                    </span>
-                    <span className="booking-summary-label" style={{ fontSize: '10px', marginTop: '2px' }}>UKUPNA CENA ARANŽMANA</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <span className="booking-summary-value price" style={{ fontSize: '28px', color: 'white', fontWeight: 800 }}>
+                            {currencyManager.formatEur(bookingData.totalPrice)}
+                        </span>
+                        {bookingData.currency === 'EUR' && (
+                            <span style={{ color: '#94a3b8', fontSize: '14px', marginTop: '-4px', fontWeight: 600 }}>
+                                ≈ {currencyManager.formatRsd(currencyManager.convertToRsd(bookingData.totalPrice))}
+                            </span>
+                        )}
+                    </div>
+                    <span className="booking-summary-label" style={{ fontSize: '11px', marginTop: '8px', opacity: 0.6, letterSpacing: '1px' }}>UKUPNA CENA ARANŽMANA</span>
                     <div style={{
-                        marginTop: '8px',
-                        fontSize: '13px',
-                        color: 'var(--accent)',
+                        marginTop: '12px',
+                        fontSize: '12px',
+                        color: '#8e24ac',
                         fontWeight: 700,
                         display: 'flex',
                         gap: '10px',
                         alignItems: 'center',
                         textTransform: 'uppercase',
-                        letterSpacing: '1px'
+                        letterSpacing: '1px',
+                        background: 'rgba(142, 36, 172, 0.1)',
+                        padding: '4px 10px',
+                        borderRadius: '20px'
                     }}>
                         <span>{bookingData.allSelectedRooms?.length || 1} {(bookingData.allSelectedRooms?.length || 1) === 1 ? 'SOBA' : 'SOBE'}</span>
                         <span style={{ opacity: 0.3 }}>|</span>
-                        <span>{bookingData.adults + bookingData.children} {(bookingData.adults + bookingData.children) === 1 ? 'OSOBA' : 'OSOBA'}</span>
+                        <span>{bookingData.adults + bookingData.children} OSOBA</span>
                     </div>
                 </div>
             </div>
