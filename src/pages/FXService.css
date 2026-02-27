@@ -498,26 +498,280 @@
         grid-template-columns: 1fr;
     }
 }
+
 /* Date Picker and Range Styles */
-.fx-date-picker { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 8px 12px; color: #f8fafc; font-size: 13px; font-weight: 600; outline: none; transition: all 0.2s; cursor: pointer; }
-.fx-date-picker:focus { border-color: #8E24AC; background: rgba(30, 41, 59, 1); box-shadow: 0 0 0 3px rgba(142, 36, 172, 0.1); }
-.fx-date-picker::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; cursor: pointer; }
-.filter-apply-btn:hover:not(:disabled) { background: #7B1FA2 !important; transform: scale(1.05); }
-.history-table .table-row { grid-template-columns: 2fr 1.5fr 1fr; }
-@media (max-width: 600px) { .card-header { flex-direction: column; align-items: flex-start !important; } .fx-filters { width: 100%; margin-left: 0 !important; margin-top: 10px; } }
+.fx-date-picker {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #f8fafc;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.fx-date-picker:focus {
+    border-color: #8E24AC;
+    background: rgba(30, 41, 59, 1);
+    box-shadow: 0 0 0 3px rgba(142, 36, 172, 0.1);
+}
+
+.fx-date-picker::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.5;
+    cursor: pointer;
+}
+
+.filter-apply-btn:hover:not(:disabled) {
+    background: #7B1FA2 !important;
+    transform: scale(1.05);
+}
+
+.history-table .table-row {
+    grid-template-columns: 2fr 1.5fr 1fr;
+}
+
+@media (max-width: 600px) {
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .fx-filters {
+        width: 100%;
+        margin-left: 0 !important;
+        margin-top: 10px;
+    }
+}
 
 
 /* Switcher Tags and Type Badges */
-.tag-list { display: flex; gap: 8px; }
-.fx-tag { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 6px 14px; color: #94a3b8; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: flex; align-items: center; gap: 6px; }
-.fx-tag:hover { background: rgba(30, 41, 59, 0.8); color: #f8fafc; transform: translateY(-1px); }
-.fx-tag.active { background: #8E24AC; color: white; border-color: #8E24AC; box-shadow: 0 4px 12px rgba(142, 36, 172, 0.3); }
-.fx-tag.type-buy.active { background: #10b981; border-color: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
-.fx-tag.type-mid.active { background: #3b82f6; border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
-.fx-tag.type-sell.active { background: #ef4444; border-color: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
-.type-badge { font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px; }
-.type-badge.buy { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
-.type-badge.mid { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); }
-.type-badge.sell { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
-.table-row { grid-template-columns: 1.5fr 2fr 1fr 1.5fr !important; }
+.tag-list {
+    display: flex;
+    gap: 8px;
+}
 
+.fx-tag {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 6px 14px;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fx-tag:hover {
+    background: rgba(30, 41, 59, 0.8);
+    color: #f8fafc;
+    transform: translateY(-1px);
+}
+
+.fx-tag.active {
+    background: #8E24AC;
+    color: white;
+    border-color: #8E24AC;
+    box-shadow: 0 4px 12px rgba(142, 36, 172, 0.3);
+}
+
+.fx-tag.type-buy.active {
+    background: #10b981;
+    border-color: #10b981;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.fx-tag.type-mid.active {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.fx-tag.type-sell.active {
+    background: #ef4444;
+    border-color: #ef4444;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.type-badge {
+    font-size: 10px;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.type-badge.buy {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.type-badge.mid {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.type-badge.sell {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.table-row {
+    grid-template-columns: 1.5fr 2fr 1fr 1.5fr !important;
+}
+
+/* Currency Choice Tags */
+.currency-choice-tags {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.fx-mini-tag {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.fx-mini-tag.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+.fx-mini-tag:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced Converter Tool */
+.input-with-select {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.currency-choice-tags {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+    margin-right: 15px;
+}
+
+.convert-arrow {
+    display: flex;
+    justify-content: center;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    padding: 2px 0;
+}
+
+.currency-select-box,
+.result-with-select {
+    display: flex;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.currency-select-box:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.currency-select-box input {
+    border: none;
+    background: transparent;
+    flex: 1;
+    padding: 12px 18px;
+    font-size: 18px;
+    color: var(--text-primary);
+    font-weight: 700;
+    outline: none;
+    min-width: 0;
+}
+
+.inline-currency-select {
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    border-left: 1px solid var(--border);
+    color: var(--text-primary);
+    font-weight: 700;
+    padding: 0 15px;
+    outline: none;
+    cursor: pointer;
+    font-size: 14px;
+    min-width: 85px;
+}
+
+/* Ensure options have high contrast regardless of browser defaults */
+.inline-currency-select option {
+    background-color: var(--petrol-700);
+    color: var(--text-primary);
+}
+
+/* Automatic contrast for light themes or potential future light mode */
+@media (prefers-color-scheme: light) {
+    :root:not(.dark-mode) .inline-currency-select option {
+        background-color: #ffffff;
+        color: #000000;
+    }
+}
+
+.result-with-select {
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    display: flex;
+    align-items: stretch;
+    border-radius: 14px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.result-with-select .result-value {
+    flex: 1;
+    padding: 12px 18px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #3b82f6;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.result-with-select .inline-currency-select {
+    background: rgba(59, 130, 246, 0.05);
+    border-left: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.converter-tool .input-group label,
+.converter-tool .result-group label {
+    margin-bottom: 6px;
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}

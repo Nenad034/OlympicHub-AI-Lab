@@ -16,18 +16,18 @@ import {
     Filter,
     DollarSign,
     Euro,
-    Banknote
+    Banknote,
+    ArrowDown
 } from 'lucide-react';
 import { currencyManager } from '../utils/currencyManager';
 import './FXService.css';
 
 const FXService: React.FC = () => {
-    const [rate, setRate] = useState<number>(currencyManager.getMidRate());
-    const [agencyRate, setAgencyRate] = useState<number>(currencyManager.getAgencyRate());
+    const [rate, setRate] = useState<number>(currencyManager.getMidRate('EUR'));
+    const [agencyRate, setAgencyRate] = useState<number>(currencyManager.getAgencyRate('EUR'));
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [lastUpdate, setLastUpdate] = useState<string>(new Date().toLocaleString('sr-RS'));
     const [conversionAmount, setConversionAmount] = useState<string>('100');
-    const [isEurToRsd, setIsEurToRsd] = useState(true);
     const [showSuccess, setShowSuccess] = useState(false);
 
     // Filter states
@@ -45,11 +45,14 @@ const FXService: React.FC = () => {
     const [historyList, setHistoryList] = useState<any[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
+    const [fromCurrency, setFromCurrency] = useState<string>('EUR');
+    const [toCurrency, setToCurrency] = useState<string>('RSD');
+
     const handleRefresh = async () => {
         setIsRefreshing(true);
-        const newRate = await currencyManager.refreshRate();
-        setRate(newRate);
-        setAgencyRate(currencyManager.getAgencyRate());
+        await currencyManager.refreshRate();
+        setRate(currencyManager.getMidRate('EUR'));
+        setAgencyRate(currencyManager.getAgencyRate('EUR'));
         setLastUpdate(new Date().toLocaleString('sr-RS'));
 
         setIsRefreshing(false);
@@ -60,7 +63,6 @@ const FXService: React.FC = () => {
     const fetchHistory = async () => {
         setIsLoadingHistory(true);
         try {
-            console.log(`[FXService] Fetching history from ${startDate} to ${endDate} for ${selectedCurrency}`);
             const results = await currencyManager.fetchHistoricalRates(startDate, endDate, selectedCurrency);
             const formatted = Object.entries(results)
                 .sort((a, b) => b[0].localeCompare(a[0]))
@@ -84,9 +86,13 @@ const FXService: React.FC = () => {
         fetchHistory();
     }, [selectedCurrency, rateType, startDate, endDate]);
 
-    const convertedAmount = isEurToRsd
-        ? Number(conversionAmount) * agencyRate
-        : Number(conversionAmount) / agencyRate;
+    const handleSwap = () => {
+        const temp = fromCurrency;
+        setFromCurrency(toCurrency);
+        setToCurrency(temp);
+    };
+
+    const convertedAmountValue = currencyManager.convert(Number(conversionAmount), fromCurrency, toCurrency);
 
     return (
         <div className="fx-service-container">
@@ -173,42 +179,80 @@ const FXService: React.FC = () => {
                     <div className="card-header">
                         <RefreshCw size={20} />
                         <h3>Brza Konverzija</h3>
+                        <div className="currency-choice-tags">
+                            {['EUR', 'USD', 'GBP'].map(curr => (
+                                <button
+                                    key={curr}
+                                    className={`fx-mini-tag ${fromCurrency === curr ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setFromCurrency(curr);
+                                        setToCurrency('RSD');
+                                    }}
+                                >
+                                    {curr}
+                                </button>
+                            ))}
+                        </div>
                         <button
                             className="swap-direction-btn"
-                            onClick={() => setIsEurToRsd(!isEurToRsd)}
+                            onClick={handleSwap}
                             title="Promeni smer konverzije"
-                            style={{ marginLeft: 'auto' }}
+                            style={{ marginLeft: '10px' }}
                         >
                             <ArrowLeftRight size={16} />
                         </button>
                     </div>
 
                     <div className="converter-tool">
-                        <div className="input-group">
-                            <label>{isEurToRsd ? 'Iznos u EUR' : 'Iznos u RSD'}</label>
-                            <input
-                                type="number"
-                                value={conversionAmount}
-                                onChange={(e) => setConversionAmount(e.target.value)}
-                            />
-                        </div>
+                        <div className="input-with-select">
+                            <div className="input-group">
+                                <label>Iz valute</label>
+                                <div className="currency-select-box">
+                                    <input
+                                        type="number"
+                                        value={conversionAmount}
+                                        onChange={(e) => setConversionAmount(e.target.value)}
+                                    />
+                                    <select
+                                        value={fromCurrency}
+                                        onChange={(e) => setFromCurrency(e.target.value)}
+                                        className="inline-currency-select"
+                                    >
+                                        <option value="RSD">RSD</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="USD">USD</option>
+                                        <option value="GBP">GBP</option>
+                                    </select>
+                                </div>
+                            </div>
 
-                        <div className="convert-arrow">
-                            <ArrowRight size={24} />
-                        </div>
+                            <div className="convert-arrow">
+                                <ArrowDown size={18} style={{ opacity: 0.4 }} />
+                            </div>
 
-                        <div className="result-group">
-                            <label>{isEurToRsd ? 'Prodajni Iznos u RSD' : 'Ekvaivalent u EUR'}</label>
-                            <div className="result-value">
-                                {isEurToRsd
-                                    ? currencyManager.formatRsd(convertedAmount)
-                                    : currencyManager.formatEur(convertedAmount)
-                                }
+                            <div className="result-group">
+                                <label>U valutu</label>
+                                <div className="result-with-select">
+                                    <div className="result-value">
+                                        {currencyManager.formatCurrency(convertedAmountValue, toCurrency)}
+                                    </div>
+                                    <select
+                                        value={toCurrency}
+                                        onChange={(e) => setToCurrency(e.target.value)}
+                                        className="inline-currency-select"
+                                    >
+                                        <option value="RSD">RSD</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="USD">USD</option>
+                                        <option value="GBP">GBP</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
 
             <div className="fx-bottom-grid">
                 {/* History Table */}
