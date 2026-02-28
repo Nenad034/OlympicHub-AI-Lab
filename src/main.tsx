@@ -34,11 +34,11 @@ window.addEventListener('unhandledrejection', function (event) {
   `;
 });
 
-// Emergency cleanup for QuotaExceededError
+// Increase cleanup limit to 10MB (2000+ hotels easily exceed 1MB)
 try {
   const hotelCache = localStorage.getItem('olympic_hub_hotels');
-  if (hotelCache && hotelCache.length > 1000000) { // > 1MB
-    console.warn("🛡️ Emergency cleanup: Local hotel cache too large, clearing...");
+  if (hotelCache && hotelCache.length > 10000000) { // Increased to 10MB
+    console.warn("🛡️ Emergency cleanup: Local hotel cache exceeds 10MB, clearing to maintain performance...");
     localStorage.removeItem('olympic_hub_hotels');
   }
 } catch (e) {

@@ -268,6 +268,19 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all'); // Add status filter state
     const [selectedStars, setSelectedStars] = useState<number[]>([]); // New star filter state
     const [integrityFilter, setIntegrityFilter] = useState<string[]>([]); // New integrity filter state (img, desc, amen, map)
+    const [providerFilter, setProviderFilter] = useState<string>('all'); // Provider filter state
+
+    const getProviderName = (id: string | number) => {
+        const sId = String(id).toLowerCase();
+        if (sId.startsWith('solvex_')) return 'Solvex';
+        if (sId.startsWith('filos-')) return 'Filos';
+        if (sId.startsWith('opengreece-')) return 'Open Greece';
+        if (sId.startsWith('mts-')) return 'MTS Globe';
+        if (sId.startsWith('ors-')) return 'ORS';
+        if (sId.startsWith('amadeus-')) return 'Amadeus';
+        if (sId.startsWith('tct_')) return 'Ručni Unos';
+        return 'Interni';
+    };
 
     // Move functions to component scope
     const cleanupKidsCamp = async () => {
@@ -365,6 +378,12 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         if (statusFilter === 'active' && !h.originalPropertyData?.isActive) return false;
         if (statusFilter === 'inactive' && h.originalPropertyData?.isActive) return false;
 
+        // Provider Filter
+        if (providerFilter !== 'all') {
+            const provider = getProviderName(h.id);
+            if (provider.toLowerCase() !== providerFilter.toLowerCase()) return false;
+        }
+
         // Star Rating Filter (Multi-select)
         if (selectedStars.length > 0) {
             const hStars = h.originalPropertyData?.starRating !== undefined ? Number(h.originalPropertyData.starRating) : 0;
@@ -398,16 +417,17 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         ];
 
         const countryCode = h.originalPropertyData?.address?.countryCode || '';
-        const countryFull = translateCountry(h.originalPropertyData?.address?.country);
+        const countryName = h.originalPropertyData?.address?.country || '';
+        const countryTranslated = translateCountry(countryName);
+        const cityOriginal = (h.originalPropertyData?.address?.city || h.location.place || '').toLowerCase();
+        const cityTranslit = hasCyrillic(cityOriginal) ? transliterate(cityOriginal).toLowerCase() : cityOriginal;
+        const place = (h.location.place || '').toLowerCase();
+        const translitPlace = hasCyrillic(place) ? transliterate(place).toLowerCase() : place;
         const status = h.originalPropertyData?.isActive ? 'aktivan active' : 'neaktivan inactive';
-        const cityOriginal = h.originalPropertyData?.address?.city || '';
-        const cityTranslit = hasCyrillic(cityOriginal) ? transliterate(cityOriginal) : cityOriginal;
-        const place = h.location.place || '';
-        const translitPlace = hasCyrillic(place) ? transliterate(place) : place;
 
         // Bilingual mappings & synonyms
         let synonyms = '';
-        const combinedLoc = (cityTranslit + ' ' + translitPlace + ' ' + place).toLowerCase();
+        const combinedLoc = `${cityTranslit} ${translitPlace} ${place} ${h.name.toLowerCase()}`;
 
         if (combinedLoc.includes('golden sands') || combinedLoc.includes('zlatn')) synonyms += ' zlatni pjasci golden sands';
         if (combinedLoc.includes('sunny beach') || combinedLoc.includes('sunc')) synonyms += ' suncev breg sunny beach';
@@ -420,7 +440,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         if (combinedLoc.includes('sozopol')) synonyms += ' sozopol';
         if (combinedLoc.includes('razlog')) synonyms += ' razlog';
         if (combinedLoc.includes('corfu') || combinedLoc.includes('krf')) synonyms += ' corfu krf kerkyra kerkira';
-        if (combinedLoc.includes('thassos') || combinedLoc.includes('tasos')) synonyms += ' thassos thasos tasos';
+        if (combinedLoc.includes('thassos') || translitPlace.includes('tasos')) synonyms += ' thassos thasos tasos';
         if (combinedLoc.includes('athens') || combinedLoc.includes('atina')) synonyms += ' athens atina athina';
         if (combinedLoc.includes('zakynthos') || combinedLoc.includes('zakinto')) synonyms += ' zakynthos zakintos zante';
         if (combinedLoc.includes('rhodes') || combinedLoc.includes('rodos')) synonyms += ' rhodes rodos';
@@ -431,7 +451,20 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
         if (combinedLoc.includes('parga')) synonyms += ' parga';
         if (combinedLoc.includes('sivota')) synonyms += ' sivota';
 
-        const searchTarget = `${h.name} ${place} ${translitPlace} ${cityTranslit} ${cityOriginal} ${h.location.address} ${h.id} ${countryCode} ${countryFull} ${status} ${synonyms}`.toLowerCase();
+        // Country-based synonyms (ensures searching by country name works even if not in hotel name)
+        const countryLower = countryName.toLowerCase();
+        if (countryLower === 'kipar' || countryLower === 'cyprus') synonyms += ' kipar cyprus cy';
+        if (countryLower === 'bugarska' || countryLower === 'bulgaria') synonyms += ' bugarska bulgaria bg';
+        if (countryLower === 'grčka' || countryLower === 'grcka' || countryLower === 'greece') synonyms += ' grčka grcka greece gr';
+        if (countryLower === 'turska' || countryLower === 'turkey') synonyms += ' turska turkey tr';
+        if (countryLower === 'crna gora' || countryLower === 'montenegro') synonyms += ' crna gora montenegro me';
+        if (countryLower === 'egipat' || countryLower === 'egypt') synonyms += ' egipat egypt eg';
+        if (countryLower === 'italija' || countryLower === 'italy') synonyms += ' italija italy it';
+        if (countryLower === 'španija' || countryLower === 'spanija' || countryLower === 'spain') synonyms += ' španija spanija spain es';
+        if (countryLower === 'hrvatska' || countryLower === 'croatia') synonyms += ' hrvatska croatia hr';
+
+        // All possible searchable text bits concatenated
+        const searchTarget = `${h.name.toLowerCase()} ${place} ${translitPlace} ${cityTranslit} ${cityOriginal} ${h.location.address?.toLowerCase()} ${h.id} ${countryCode.toLowerCase()} ${countryName.toLowerCase()} ${countryTranslated.toLowerCase()} ${status} ${synonyms}`.toLowerCase();
 
         return terms.every(term => searchTarget.includes(term));
     });
@@ -1363,6 +1396,28 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                     </button>
                                 ))}
                             </div>
+
+                            {/* Provider Filter Group */}
+                            <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-secondary)', padding: '6px', borderRadius: '18px', border: '1px solid var(--border)' }}>
+                                {[
+                                    { id: 'all', label: 'SVI' },
+                                    { id: 'Solvex', label: 'SOLVEX' },
+                                    { id: 'Filos', label: 'FILOS' },
+                                    { id: 'Open Greece', label: 'GREECE' },
+                                    { id: 'MTS Globe', label: 'MTS' },
+                                    { id: 'ORS', label: 'ORS' },
+                                    { id: 'Ručni Unos', label: 'RUČNO' }
+                                ].map(p => (
+                                    <button
+                                        key={p.id}
+                                        onClick={() => setProviderFilter(p.id)}
+                                        className={`filter-btn-premium ${providerFilter === p.id ? 'active' : ''}`}
+                                        style={{ height: '44px', padding: '0 16px', borderRadius: '12px', fontSize: '11px', fontWeight: 900, letterSpacing: '0.5px' }}
+                                    >
+                                        {p.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         {/* Integrity Quick Toggles */}
@@ -1392,6 +1447,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                         setSelectedStars([]);
                                         setStatusFilter('all');
                                         setIntegrityFilter([]);
+                                        setProviderFilter('all');
                                         setSearchQuery('');
                                         setSearchPills([]);
                                     }}
@@ -1517,64 +1573,79 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                     border-radius: 10px;
                                 }
                             `}</style>
-                        <div className="search-bar-premium" style={{ minHeight: '52px' }}>
-                            <Search size={22} color="rgba(59, 130, 246, 0.6)" />
+                        <div className="search-bar-premium" style={{ minHeight: '60px', padding: '0 24px', gap: '8px', flexWrap: 'wrap' }}>
+                            <Search size={22} color="rgba(59, 130, 246, 0.6)" style={{ flexShrink: 0 }} />
 
-                            {searchPills.map((pill, idx) => (
-                                <div
-                                    key={idx}
-                                    style={{
-                                        background: 'rgba(59, 130, 246, 0.15)',
-                                        border: '1px solid rgba(59, 130, 246, 0.3)',
-                                        padding: '4px 10px',
-                                        borderRadius: '8px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '6px',
-                                        color: 'var(--accent)',
-                                        fontSize: '13px',
-                                        fontWeight: 600
-                                    }}
-                                >
-                                    {pill}
-                                    <button
-                                        onClick={() => setSearchPills(prev => prev.filter((_, i) => i !== idx))}
-                                        style={{ background: 'transparent', border: 'none', color: 'var(--accent)', padding: 0, cursor: 'pointer', display: 'flex', opacity: 0.7 }}
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', flex: 1, alignItems: 'center' }}>
+                                {searchPills.map((pill, idx) => (
+                                    <motion.div
+                                        initial={{ scale: 0.8, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        key={idx}
+                                        style={{
+                                            background: 'rgba(59, 130, 246, 0.15)',
+                                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                                            padding: '6px 14px',
+                                            borderRadius: '12px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            color: '#3b82f6',
+                                            fontSize: '13px',
+                                            fontWeight: 800,
+                                            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.1)'
+                                        }}
                                     >
-                                        <X size={14} />
-                                    </button>
-                                </div>
-                            ))}
+                                        <span style={{ opacity: 0.5 }}>#</span> {pill.toUpperCase()}
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setSearchPills(prev => prev.filter((_, i) => i !== idx)); }}
+                                            style={{ background: 'transparent', border: 'none', color: '#3b82f6', padding: '2px', cursor: 'pointer', display: 'flex', opacity: 0.5 }}
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </motion.div>
+                                ))}
 
-                            <input
-                                type="text"
-                                placeholder={searchPills.length > 0 ? "" : "Pretražite po nazivu hotela, mestu ili ID-u..."}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && searchQuery.trim()) {
-                                        setSearchPills(prev => [...prev, searchQuery.trim()]);
-                                        setSearchQuery('');
-                                    } else if (e.key === 'Backspace' && !searchQuery && searchPills.length > 0) {
-                                        setSearchPills(prev => prev.slice(0, -1));
-                                    }
-                                }}
-                                style={{ flex: 1, minWidth: '150px' }}
-                            />
+                                <input
+                                    type="text"
+                                    placeholder={searchPills.length === 0 ? "Pretražite po državi, mestu ili nazivu hotela..." : "Dodajte još kriterijuma..."}
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && searchQuery.trim()) {
+                                            if (!searchPills.includes(searchQuery.trim())) {
+                                                setSearchPills(prev => [...prev, searchQuery.trim()]);
+                                            }
+                                            setSearchQuery('');
+                                        } else if (e.key === 'Backspace' && !searchQuery && searchPills.length > 0) {
+                                            setSearchPills(prev => prev.slice(0, -1));
+                                        }
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        minWidth: '200px',
+                                        height: '40px',
+                                        fontSize: '16px',
+                                        fontWeight: 500,
+                                        color: '#fff'
+                                    }}
+                                />
+                            </div>
+
                             {(searchQuery || searchPills.length > 0) && (
                                 <button
                                     onClick={() => { setSearchQuery(''); setSearchPills([]); }}
-                                    style={{ background: 'var(--bg-secondary)', border: 'none', borderRadius: '50%', padding: '4px', cursor: 'pointer', display: 'flex', color: 'var(--text-secondary)' }}
+                                    style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '12px', padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '11px', fontWeight: 900 }}
                                 >
-                                    <X size={16} />
+                                    PONIŠTI <X size={14} />
                                 </button>
                             )}
-                            <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', fontWeight: 900, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '6px 12px', borderRadius: '8px', pointerEvents: 'none' }}>
-                                {filteredHotels.length} / {hotels.length} objekata
+                            <div style={{ fontSize: '11px', fontWeight: 900, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '6px 12px', borderRadius: '8px', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+                                {filteredHotels.length} REZULTATA
                             </div>
                         </div>
 
-                        {searchQuery.length > 1 && (
+                        {searchQuery.length > 0 && (
                             <div className="suggestions-panel">
                                 <div style={{ padding: '8px 16px 16px', fontSize: '11px', fontWeight: 900, color: 'rgba(255,255,255,0.3)', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
                                     Rezultati pretrage
@@ -1584,53 +1655,55 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                         const suggestions: { label: string, type: 'city' | 'hotel' | 'country', sub: string, icon: any }[] = [];
                                         const q = searchQuery.toLowerCase();
 
-                                        // 1. Check for Countries and their cities
+                                        // 1. Check for Countries — scan ALL hotels so suggestions appear
                                         const uniqueCountries = new Set<string>();
                                         hotels.forEach(h => {
-                                            const country = translateCountry(h.originalPropertyData?.address?.country);
-                                            if (country && country.toLowerCase().includes(q)) {
-                                                uniqueCountries.add(country);
+                                            const cOriginal = (h.originalPropertyData?.address?.country || '');
+                                            const cTranslated = translateCountry(cOriginal);
+                                            if (cTranslated && cTranslated !== '-' && (
+                                                cTranslated.toLowerCase().includes(q) ||
+                                                cOriginal.toLowerCase().includes(q)
+                                            )) {
+                                                uniqueCountries.add(cTranslated !== '-' ? cTranslated : cOriginal);
                                             }
                                         });
 
                                         uniqueCountries.forEach(country => {
-                                            // Find cities in this country
-                                            const cities = new Set<string>();
-                                            hotels.forEach(h => {
-                                                if (translateCountry(h.originalPropertyData?.address?.country) === country) {
-                                                    const city = h.location.place || (h.originalPropertyData as any)?.address?.city;
-                                                    if (city) cities.add(hasCyrillic(city) ? transliterate(city) : city);
-                                                }
-                                            });
-                                            cities.forEach(city => {
+                                            if (!searchPills.includes(country)) {
                                                 suggestions.push({
-                                                    label: city,
-                                                    type: 'city',
-                                                    sub: `Destinacija u državi: ${country}`,
-                                                    icon: <MapPin size={18} />
+                                                    label: country,
+                                                    type: 'country',
+                                                    sub: 'Država / Destinacija',
+                                                    icon: <Globe size={18} />
                                                 });
+                                            }
+                                        });
+
+                                        // 2. City Matches — scan ALL hotels
+                                        const uniqueCities = new Map<string, string>(); // CityName -> CountryName
+                                        hotels.forEach(h => {
+                                            const cityAddr = (h.originalPropertyData?.address as any)?.city || '';
+                                            const cities = [h.location.place, cityAddr].filter(Boolean);
+                                            cities.forEach(c => {
+                                                if (!c) return;
+                                                const translit = hasCyrillic(c) ? transliterate(c) : c;
+                                                if (translit.toLowerCase().includes(q) && !searchPills.includes(translit)) {
+                                                    uniqueCities.set(translit, translateCountry(h.originalPropertyData?.address?.country));
+                                                }
                                             });
                                         });
 
-                                        // 2. Direct City Matches (if not already added)
-                                        hotels.forEach(h => {
-                                            const p = h.location.place;
-                                            const dataCity = (h.originalPropertyData as any)?.address?.city;
-                                            [p, dataCity].filter(Boolean).forEach(c => {
-                                                const translit = hasCyrillic(c!) ? transliterate(c!) : c!;
-                                                if (translit.toLowerCase().includes(q) && !suggestions.find(s => s.label === translit)) {
-                                                    suggestions.push({
-                                                        label: translit,
-                                                        type: 'city',
-                                                        sub: translateCountry(h.originalPropertyData?.address?.country),
-                                                        icon: <Navigation size={18} />
-                                                    });
-                                                }
+                                        Array.from(uniqueCities.entries()).slice(0, 5).forEach(([city, country]) => {
+                                            suggestions.push({
+                                                label: city,
+                                                type: 'city',
+                                                sub: `Mesto u: ${country}`,
+                                                icon: <Navigation size={18} />
                                             });
                                         });
 
                                         // 3. Hotel Matches
-                                        hotels.filter(h => h.name.toLowerCase().includes(q)).slice(0, 5).forEach(h => {
+                                        filteredHotels.filter(h => h.name.toLowerCase().includes(q)).slice(0, 5).forEach(h => {
                                             suggestions.push({
                                                 label: h.name,
                                                 type: 'hotel',
@@ -1644,10 +1717,12 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                         <button
                                             key={idx}
                                             onClick={() => {
-                                                setSearchQuery(s.label);
                                                 if (s.type === 'hotel') {
-                                                    const h = hotels.find(hotel => hotel.name === s.label);
+                                                    const h = filteredHotels.find((hotel: Hotel) => hotel.name === s.label);
                                                     if (h) { setSelectedHotel(h); setViewMode('detail'); }
+                                                } else {
+                                                    setSearchPills(prev => [...prev, s.label]);
+                                                    setSearchQuery('');
                                                 }
                                             }}
                                             className="suggestion-item-premium"
@@ -1676,6 +1751,7 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                 <tr style={{ borderBottom: '2px solid var(--border)', background: 'var(--bg-secondary)' }}>
                                     <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Status</th>
                                     <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Objekat</th>
+                                    <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Izvor</th>
                                     <th style={{ padding: '24px', textAlign: 'center', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Kat.</th>
                                     <th style={{ padding: '24px', textAlign: 'left', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Lokacija</th>
                                     <th style={{ padding: '24px', textAlign: 'center', fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-subtle)' }}>Kvalitet Podataka</th>
@@ -1714,6 +1790,37 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                     <span style={{ fontWeight: 800, fontSize: '18px', color: 'var(--text-main)', letterSpacing: '-0.3px' }}>{h.name}</span>
                                                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500, opacity: 0.5, fontFamily: 'monospace' }}>ID: {h.id}</span>
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '20px 24px' }}>
+                                                <div style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    padding: '6px 14px',
+                                                    borderRadius: '12px',
+                                                    fontSize: '11px',
+                                                    fontWeight: 900,
+                                                    letterSpacing: '0.5px',
+                                                    background: getProviderName(h.id) === 'Solvex' ? 'rgba(59, 130, 246, 0.12)' :
+                                                        getProviderName(h.id) === 'Filos' ? 'rgba(16, 185, 129, 0.12)' :
+                                                            getProviderName(h.id) === 'Open Greece' ? 'rgba(139, 92, 246, 0.12)' :
+                                                                getProviderName(h.id) === 'MTS Globe' ? 'rgba(236, 72, 153, 0.12)' :
+                                                                    'rgba(148, 163, 184, 0.12)',
+                                                    color: getProviderName(h.id) === 'Solvex' ? '#3b82f6' :
+                                                        getProviderName(h.id) === 'Filos' ? '#10b981' :
+                                                            getProviderName(h.id) === 'Open Greece' ? '#8b5cf6' :
+                                                                getProviderName(h.id) === 'MTS Globe' ? '#ec4899' :
+                                                                    '#94a3b8',
+                                                    border: `1px solid ${getProviderName(h.id) === 'Solvex' ? 'rgba(59, 130, 246, 0.3)' :
+                                                        getProviderName(h.id) === 'Filos' ? 'rgba(16, 185, 129, 0.3)' :
+                                                            getProviderName(h.id) === 'Open Greece' ? 'rgba(139, 92, 246, 0.3)' :
+                                                                getProviderName(h.id) === 'MTS Globe' ? 'rgba(236, 72, 153, 0.3)' :
+                                                                    'rgba(148, 163, 184, 0.3)'
+                                                        }`
+                                                }}>
+                                                    <Zap size={14} fill="currentColor" />
+                                                    {getProviderName(h.id).toUpperCase()}
                                                 </div>
                                             </td>
                                             <td style={{ padding: '20px 24px', textAlign: 'center' }}>

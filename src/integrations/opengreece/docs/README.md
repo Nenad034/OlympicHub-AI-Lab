@@ -1,259 +1,242 @@
-# 🇬🇷 Open Greece API Integration - Quick Start
+# 🇬🇷 Open Greece API — Integracija Dokumentacija
 
-## ✅ Status: CONNECTED AND WORKING!
-
-The Open Greece API integration is **fully functional** and ready to use!
+> **Poslednje ažuriranje:** 2026-02-28 (by Antigravity AI)
 
 ---
 
-## 🚀 Quick Start
+## 📊 Status API Endpointa — REALNI TESTOVI
 
-### 1. Setup Environment Variables
+| Endpoint | Metoda | Status | Šta vraća |
+|----------|--------|--------|-----------|
+| Push (StartPushProcessRQ) | `IsFullPush=true` | ✅ **RADI** | Lista hotela: kod, ime, status, datum ugovora |
+| Push (StartPushProcessRQ) | `IsFullPush=false` | ✅ **RADI** | Delta izmene od poslednje sinhronizacije |
+| Pull (OTA_HotelSearchRQ) | `HotelRef *` | ❌ **NE RADI** | "No OTA message received..." |
+| Pull (OTA_HotelSearchRQ) | `CountryName Code=CY` | ❌ **NE RADI** | "No OTA message received..." |
+| Pull (OTA_HotelSearchRQ) | `CityName=Ayia Napa` | ❌ **NE RADI** | "No OTA message received..." |
+| Pull (OTA_HotelDescriptiveInfoRQ) | Bilo koji hotelCode | ❌ **NE RADI** | "No OTA message received..." |
+| Pull (OTA_HotelAvailRQ) | Standardni | ❌ **NE RADI** | "No OTA message received..." |
+| SOAP 1.1 wrapper | OTA_HotelSearchRQ | ❌ **NE RADI** | "No OTA message received..." |
+| SOAP 1.2 wrapper | OTA_HotelSearchRQ | ❌ **NE RADI** | "Not Valid XML Message..." |
 
-Copy `.env.example` to `.env`:
-```bash
-cp .env.example .env
+> **Zaključak:** Pull API nalog `olympictravel` nema aktiviran pristup ili zahteva specifičan session/token koji nije dokumentovan. Kontaktirati Open Greece podršku.
+
+---
+
+## ✅ Šta RADI — Push API
+
+### Endpoint
+```
+POST https://online.open-greece.com/nsCallWebService_Push/handlerequest.aspx
+Authorization: Basic base64(olympictravel:olympic2025!)
+Content-Type: text/xml
 ```
 
-The Open Greece credentials are already configured in `.env.example`.
-
-### 2. Test the Connection
-
-Run the test script:
-```bash
-npm run dev
+### Full Push (sve hotele odjednom)
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<StartPushProcessRQ xmlns="http://www.opentravel.org/OTA/2003/05" 
+                    IsFullPush="true"
+                    EchoToken="unique-token-here" 
+                    TimeStamp="2026-02-28T10:00:00" 
+                    Version="1.0">
+  <POS>
+    <Source>
+      <RequestorID Type="1" ID="olympictravel" MessagePassword="olympic2025!"/>
+    </Source>
+  </POS>
+</StartPushProcessRQ>
 ```
 
-Then open: `http://localhost:5173/opengreece-test`
-
-Or run the PowerShell test:
-```powershell
-.\test-opengreece-ota.ps1
+**Odgovor — uspešan primer:**
+```xml
+<StartPushProcessRS xmlns="http://www.opentravel.org/OTA/2003/05">
+  <Success />
+  <Hotels>
+    <Hotel HotelCode="385" HotelName="MEDITERRANEAN HOTEL RHODES" ContractEndDate="31-05-2027" Status="UPDATED" />
+    <Hotel HotelCode="16315" HotelName="AMARA CYPRUS" ContractEndDate="31-05-2027" Status="UPDATED" />
+    <!-- ... 591 hotela total -->
+  </Hotels>
+</StartPushProcessRS>
 ```
 
-### 3. Use in Your Code
+### Delta Push (samo izmene)
+Isti XML, samo `IsFullPush="false"`.
 
-```typescript
-import OpenGreeceAPI from './services/opengreeceApiService';
+> ⚠️ **Napomena:** Nakon prvog Full Push, svaki naredni Full Push vraća `"No delta changes found."` jer API interno prati koji su podaci već dostavljeni. Treba koristiti **novi EchoToken** za svaki poziv ILI sačekati da server resetuje stanje.
 
-// Get contract updates (delta sync)
-const result = await OpenGreeceAPI.startPushProcess(false);
+---
 
-if (result.success && result.data) {
-  console.log(`Received ${result.data.totalCount} hotels`);
-  console.log(`NEW: ${result.data.newCount}`);
-  console.log(`UPDATED: ${result.data.updatedCount}`);
-  console.log(`DELETED: ${result.data.deletedCount}`);
-  
-  // Process hotels
-  result.data.hotels.forEach(hotel => {
-    console.log(`${hotel.hotelCode}: ${hotel.hotelName} (${hotel.status})`);
-  });
-}
+## ❌ Šta NE RADI — Pull API (OTA_HotelDescriptiveInfoRQ)
+
+### Isprobane varijante (sve vraćaju grešku)
+```xml
+<!-- Varijanta 1: Standardni OTA -->
+<OTA_HotelDescriptiveInfoRQ xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0">
+  <POS><Source><RequestorID ID="olympictravel" MessagePassword="olympic2025!"/></Source></POS>
+  <HotelDescriptiveInfos>
+    <HotelDescriptiveInfo HotelCode="16315"/>
+  </HotelDescriptiveInfos>
+</OTA_HotelDescriptiveInfoRQ>
+```
+
+**Sve varijante vraćaju:**
+```xml
+<OTA_HotelDescriptiveInfoRS xmlns="">
+  <Errors>
+    <Error Type="1" ShortText="No OTA message received..." />
+  </Errors>
+</OTA_HotelDescriptiveInfoRS>
 ```
 
 ---
 
-## 📋 Available Methods
+## 📦 Podaci u Supabase — Šta je importovano
 
-### Push API
+Importovano je **591 hotela** iz Open Greece baze koristeći lokalni XML snapshot (`opengreece-StartPushProcessRQ-OTA.xml`).
 
-#### `startPushProcess(isFullPush: boolean)`
-Get contract updates from Open Greece.
+### Struktura podataka u `properties` tabeli
 
-**Parameters:**
-- `isFullPush: boolean` - `true` for full download (use once), `false` for delta sync (daily)
-
-**Returns:**
-```typescript
+```json
 {
-  success: boolean;
-  data: {
-    hotels: OpenGreeceHotel[];
-    totalCount: number;
-    newCount: number;
-    updatedCount: number;
-    deletedCount: number;
-  }
+  "id": "opengreece-16315",
+  "name": "AMARA CYPRUS",
+  "propertyType": "Hotel",
+  "isActive": true,
+  "address": {
+    "country": "Kipar",
+    "city": "Pafos"
+  },
+  "content": {
+    "description": "Open Greece Hotel (Status: UPDATED, Contract: 31-05-2027)"
+  },
+  "images": [],
+  "starRating": 0
 }
 ```
 
-**Example:**
-```typescript
-// Delta sync (recommended for daily use)
-const delta = await OpenGreeceAPI.startPushProcess(false);
+> ⚠️ **NAPOMENA:** Slike (`images`) su **prazne** i opisi (`content.description`) su samo tehnički podaci. Push API ne daje slike, opise ni kategorije. Potreban je aktivni Pull API pristup za kompletne podatke.
 
-// Full sync (use only once)
-const full = await OpenGreeceAPI.startPushProcess(true);
+---
+
+## 🇨🇾 Kipar — Pronađeni hoteli (2026-02-28)
+
+Od 591 hotela u Push listi, identifikovano je **20 hotela na Kipru** koji su importovani sa ispravnim tagom `country: "Kipar"`:
+
+### Pafos area (14 hotela)
+| HotelCode | Naziv |
+|-----------|-------|
+| 1828 | KING JASON PAPHOS (Adults Only 17+) Louis Hotels |
+| 1832 | LOUIS LEDRA BEACH Louis Hotels |
+| 2830 | POLIS 1907 Louis Hotels |
+| 2841 | SOFIANNA RESORT & SPA Louis Hotels |
+| 2880 | ANASSA HOTEL Cyprus Thanos Hotels |
+| 8657 | ELYSIUM CYPRUS |
+| 16319 | ALMYRA HOTEL Cyprus Thanos Hotels |
+| 16320 | ANNABELLE Cyprus Thanos Hotels |
+| 16393 | CALI RESORT and SPA (Adults only 16+) Louis Hotels |
+| 16394 | ROYAL APOLLONIA Louis Hotels |
+| 16430 | THE IVI MARE (Adults Only 16+) Louis Hotels |
+| 16431 | LOUIS PAPHOS BREEZE Louis Hotels |
+| 16785 | LOUIS PHAETHON BEACH Louis Hotels |
+| 16788 | COLUMBIA BEACH RESORT PISSOURI BAY |
+
+### Limassol (6 hotela)
+| HotelCode | Naziv |
+|-----------|-------|
+| 2628 | FOUR SEASONS HOTEL CYPRUS |
+| 16312 | AMATHUS BEACH HOTEL Limassol |
+| 16315 | AMARA CYPRUS |
+| 16317 | MEDITERRANEAN BEACH CYPRUS |
+| 16394 | ROYAL APOLLONIA Louis Hotels |
+| 17024 | CROWNE PLAZA LIMASSOL an IHG Hotel |
+
+> **Napomena:** Hoteli kao NISSIBLU BEACH RESORT, ROBINSON CYPRUS, ANASSA MARE VILLAS imaju Status="DELETED" i nisu importovani.
+
+> ⚠️ **Open Greece ima VEĆU bazu Kipar hotela** nego što nam je Push vratio. Posebno za destinacije Ayia Napa, Protaras, Larnaca — Pull API bi mogao prikazati te hotele ali trenutno ne radi.
+
+---
+
+## 🔑 Kredencijali
+
+### API (HTTP Basic Auth)
+```
+Pull URL:  https://online.open-greece.com/nsCallWebServices/handlerequest.aspx
+Push URL:  https://online.open-greece.com/nsCallWebService_Push/handlerequest.aspx
+Username:  olympictravel
+Password:  olympic2025!
 ```
 
-### Pull API
-
-#### `searchHotels(hotelCode?: string)`
-Search for hotels.
-
-**Example:**
-```typescript
-// Search all hotels
-const allHotels = await OpenGreeceAPI.searchHotels();
-
-// Search specific hotel
-const hotel = await OpenGreeceAPI.searchHotels('11');
+### FTP
+```
+Host:      ftp.open-greece.com
+Port:      21
+Username:  olympictravel
+Password:  0Fu7GD0znftX
 ```
 
-#### `getHotelDetails(hotelCode: string)`
-Get detailed hotel information.
+> FTP nije testiran. Potencijalno se tu mogu naći XML feedovi sa kompletnim podacima (slike, opisi).
 
-**Example:**
-```typescript
-const details = await OpenGreeceAPI.getHotelDetails('11');
+---
+
+## 📋 Sledeći koraci / TODO
+
+### Prioritet 1 — Kontaktirati Open Greece
+- **Cilj:** Aktivacija Pull API pristupa za nalog `olympictravel`
+- **Šta tražiti:** 
+  - Potvrdu da `OTA_HotelDescriptiveInfoRQ` radi za naš nalog
+  - Primer ispravnog XML zahteva koji je testiran i radi
+  - Dokumentaciju za korišćenje FTP pristupa
+- **Kontakt:** info@open-greece.com / https://www.netsemantics.gr
+
+### Prioritet 2 — FTP Istraživanje
+- Konektovati se na `ftp://ftp.open-greece.com` sa FTP kredencijalima
+- Proveriti da li postoje XML/JSON fajlovi sa kompletnim podacima hotela (sa slikama i opisima)
+- Ovo je alternativni kanal koji možda ima kompletne podatke
+
+### Prioritet 3 — Dopuna slika i opisa
+- Za 20 Cyprus hotela — ručni upload slika kroz "Uredi hotel" panel
+- Alternativno: Google Places API za automatsko preuzimanje slika po imenu hotela
+
+### Prioritet 4 — Redovna sinhronizacija
+- Delta push (`IsFullPush=false`) pokretati jednom dnevno
+- Pratiti nova/izmenjena/obrisana stanja
+
+---
+
+## 🔧 Skripte
+
+### Import iz lokalnog XML snapshot-a
+```bash
+node scripts/import_opengreece_from_file.cjs
 ```
+Importuje sve hotele iz: `src/integrations/opengreece/docs/opengreece-StartPushProcessRQ-OTA.xml`
 
-#### `checkAvailability(params: HotelAvailParams)`
-Check hotel availability and rates.
-
-**Example:**
-```typescript
-const availability = await OpenGreeceAPI.checkAvailability({
-  checkIn: '2026-02-04',
-  checkOut: '2026-02-11',
-  adults: 2,
-  children: 1,
-  hotelCode: '11', // Optional
-});
+### Import direktno sa API-ja (Full Push)
+```bash
+node scripts/import_opengreece_hotels.cjs
 ```
+> Napomena: Posle prvog Full Push, API vraća "No delta changes found". Koristiti novi EchoToken.
 
-#### `createBooking(params: HotelBookingParams)`
-Create a new booking.
+---
 
-**Example:**
-```typescript
-const booking = await OpenGreeceAPI.createBooking({
-  hotelCode: '11',
-  roomCode: 'DBL',
-  checkIn: '2026-02-04',
-  checkOut: '2026-02-11',
-  guestFirstName: 'John',
-  guestLastName: 'Doe',
-  guestEmail: 'john@example.com',
-  guestPhone: '+1234567890',
-  specialRequests: 'Late check-in',
-});
+## 📁 Struktura fajlova
+
 ```
-
-#### `cancelBooking(bookingId: string)`
-Cancel an existing booking.
-
-**Example:**
-```typescript
-const cancellation = await OpenGreeceAPI.cancelBooking('BOOKING123');
+src/integrations/opengreece/
+├── api/
+│   ├── opengreeceApiService.ts      # Glavni API servis
+│   ├── opengreeceConfig.ts          # Konfiguracija i env varijable
+│   ├── opengreeceXmlBuilder.ts      # XML request builder
+│   └── opengreeceXmlParser.ts       # XML response parser
+├── docs/
+│   ├── README.md                    # Ova dokumentacija
+│   ├── opengreece-StartPushProcessRQ-OTA.xml  # Snapshot 591 hotela (2026-02-28)
+│   ├── test-opengreece-ota.ps1      # PowerShell test skripte
+│   └── test-opengreece-curl.ps1     # cURL test skripte
+└── types/
+    └── opengreece.types.ts          # TypeScript tipovi
 ```
 
 ---
 
-## 📊 Test Results
-
-### ✅ Working Tests
-
-| Test | Status | Hotels | Notes |
-|------|--------|--------|-------|
-| Push Delta | ✅ SUCCESS | 508 | Daily sync working |
-| Push Full | ⚠️ Not tested | - | Use carefully (downloads all) |
-
-### ⚠️ Pending Tests
-
-These methods need official documentation from NetSemantics:
-
-| Method | Status | Note |
-|--------|--------|------|
-| `searchHotels` | ⚠️ Schema error | Need correct XML structure |
-| `getHotelDetails` | ⚠️ Schema error | Need correct XML structure |
-| `checkAvailability` | ⚠️ Schema error | Need correct XML structure |
-| `createBooking` | ⚠️ Not tested | Need official docs |
-| `cancelBooking` | ⚠️ Not tested | Need official docs |
-
----
-
-## 📁 File Structure
-
-```
-src/
-├── config/
-│   └── opengreeceConfig.ts          # API configuration
-├── services/
-│   └── opengreeceApiService.ts      # Main API service
-├── types/
-│   └── opengreece.types.ts          # TypeScript types
-└── utils/
-    ├── opengreeceXmlBuilder.ts      # XML request builder
-    └── opengreeceXmlParser.ts       # XML response parser
-
-docs/
-└── OPENGREECE_API_DOCUMENTATION.md  # Complete documentation
-
-test-opengreece-ota.ps1              # PowerShell test script
-```
-
----
-
-## 🔑 API Credentials
-
-**Pull API:**
-```
-https://online.open-greece.com/nsCallWebServices/handlerequest.aspx
-```
-
-**Push API:**
-```
-https://online.open-greece.com/nsCallWebService_Push/handlerequest.aspx
-```
-
-**Authentication:**
-```
-Username: olympictravel
-Password: olympic2025!
-```
-
-**FTP (for future use):**
-```
-Host: ftp.open-greece.com:21
-Username: olympictravel
-Password: 0Fu7GD0znftX
-```
-
----
-
-## 📚 Documentation
-
-- **Complete API Docs:** `docs/OPENGREECE_API_DOCUMENTATION.md`
-- **OTA Standard:** http://www.opentravel.org/OTA/2003/05
-- **NetSemantics:** https://www.netsemantics.gr
-
----
-
-## 🎯 Next Steps
-
-1. ✅ **API Connection** - DONE!
-2. ✅ **Push API** - DONE!
-3. ⏳ **Contact NetSemantics** for official documentation
-4. ⏳ **Implement remaining methods** (search, details, availability, booking)
-5. ⏳ **Supabase integration** for data storage
-6. ⏳ **UI components** for hotel management
-
----
-
-## 🆘 Support
-
-**NetSemantics Support:**
-- Website: https://www.netsemantics.gr
-- Request documentation via contact form
-
-**Internal:**
-- See `docs/OPENGREECE_API_DOCUMENTATION.md` for detailed information
-- Run `test-opengreece-ota.ps1` for testing
-
----
-
-**Status:** ✅ **READY FOR PRODUCTION!**
-
-The Push API is fully functional and can be used immediately for contract synchronization.
+*Dokumentacija ažurirana: 2026-02-28 na osnovu realnih testova API-ja tokom sesije sa Antigravity AI.*
