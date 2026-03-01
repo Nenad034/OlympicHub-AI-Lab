@@ -76,6 +76,13 @@ const ShiftsGeneratorPage = React.lazy(() => import('../pages/ShiftsGeneratorPag
 const B2BSettings = React.lazy(() => import('../pages/B2BSettings'));
 const MtsGlobeTest = React.lazy(() => import('../pages/MtsGlobeTest'));
 const FXService = React.lazy(() => import('../pages/FXService'));
+const TravelsoftTest = React.lazy(() => import('../pages/TravelsoftTest'));
+const TravelgateTest = React.lazy(() => import('../pages/TravelgateTest'));
+const GiataTest = React.lazy(() => import('../pages/GiataTest'));
+const WorldpayTest = React.lazy(() => import('../pages/WorldpayTest'));
+const HotelbedsTest = React.lazy(() => import('../pages/HotelbedsTest'));
+const ViatorTest = React.lazy(() => import('../pages/ViatorTest'));
+const ExpediaTest = React.lazy(() => import('../pages/ExpediaTest'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
@@ -744,6 +751,34 @@ export const router = createBrowserRouter([
                     {
                         path: 'kyte-test',
                         element: <KyteTest />,
+                    },
+                    {
+                        path: 'travelsoft-test',
+                        element: <TravelsoftTest />,
+                    },
+                    {
+                        path: 'travelgate-test',
+                        element: <TravelgateTest />,
+                    },
+                    {
+                        path: 'giata-test',
+                        element: <GiataTest />,
+                    },
+                    {
+                        path: 'worldpay-test',
+                        element: <WorldpayTest />,
+                    },
+                    {
+                        path: 'hotelbeds-test',
+                        element: <HotelbedsTest />,
+                    },
+                    {
+                        path: 'viator-test',
+                        element: <ViatorTest />,
+                    },
+                    {
+                        path: 'expedia-test',
+                        element: <ExpediaTest />,
                     },
                     /* {
                         path: 'master-search',
