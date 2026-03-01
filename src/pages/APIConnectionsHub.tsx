@@ -290,6 +290,20 @@ const APIConnectionsHub: React.FC = () => {
             features: ['JSON Air APIs v11', 'OAuth 2.0 Auth', 'AirSearch', 'Order Create', 'PNR Management', 'uAPI Support'],
             dataQualityScore: 95,
             avgLatency: 550
+        },
+        {
+            id: 'ski-data',
+            name: 'SKI Resorts Live Data',
+            provider: 'Mountain News / Weather Unlocked',
+            description: 'Live informacije za ski centre: visina snega (vrh/podnožje), stanje žičara i staza, vremenska prognoza po nadmorskim visinama.',
+            iconName: 'globe',
+            status: 'testing',
+            category: 'systems',
+            color: '#3b82f6',
+            testPath: '/ski-test',
+            features: ['Snow Reports', 'Trail & Lift Status', 'Elevation Weather', 'Powder Alerts', 'Live Webcams Sync'],
+            dataQualityScore: 92,
+            avgLatency: 300
         }
     ], []);
 
