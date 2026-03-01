@@ -83,6 +83,7 @@ const WorldpayTest = React.lazy(() => import('../pages/WorldpayTest'));
 const HotelbedsTest = React.lazy(() => import('../pages/HotelbedsTest'));
 const ViatorTest = React.lazy(() => import('../pages/ViatorTest'));
 const ExpediaTest = React.lazy(() => import('../pages/ExpediaTest'));
+const TravelportTest = React.lazy(() => import('../pages/TravelportTest'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
@@ -779,6 +780,10 @@ export const router = createBrowserRouter([
                     {
                         path: 'expedia-test',
                         element: <ExpediaTest />,
+                    },
+                    {
+                        path: 'travelport-test',
+                        element: <TravelportTest />,
                     },
                     /* {
                         path: 'master-search',

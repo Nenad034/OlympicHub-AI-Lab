@@ -276,6 +276,20 @@ const APIConnectionsHub: React.FC = () => {
             features: ['Shopping / Availability', 'Content API', 'Price Check', 'Booking (Itinerary)', 'Cancel / Modify', 'Geography API'],
             dataQualityScore: 98,
             avgLatency: 600
+        },
+        {
+            id: 'travelport',
+            name: 'Travelport+ (Galileo)',
+            provider: 'Travelport GDS',
+            description: 'Globalna travel platforma koja nudi integraciju letova, hotela i rent-a-car usluga. Moderni JSON v11 API sa OAuth 2.0 autentifikacijom za Air pretragu i PNR menadžment.',
+            iconName: 'plane',
+            status: 'testing',
+            category: 'flights',
+            color: '#00adef',
+            testPath: '/travelport-test',
+            features: ['JSON Air APIs v11', 'OAuth 2.0 Auth', 'AirSearch', 'Order Create', 'PNR Management', 'uAPI Support'],
+            dataQualityScore: 95,
+            avgLatency: 550
         }
     ], []);
 
