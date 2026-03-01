@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Plug, Database, Globe, Plane, CheckCircle, XCircle,
     AlertTriangle, Settings, Activity, ArrowRight, Shield,
-    LayoutGrid, List, Info, ExternalLink, CreditCard, Link, Ticket
+    LayoutGrid, List, Info, ExternalLink, CreditCard, Link, Ticket, Mountain
 } from 'lucide-react';
 import RateLimitMonitor from '../components/RateLimitMonitor';
 import AIWatchdogDashboard from '../components/watchdog/AIWatchdogDashboard';
@@ -18,9 +18,9 @@ interface APIConnection {
     name: string;
     provider: string;
     description: string;
-    iconName: 'database' | 'globe' | 'plane' | 'credit-card' | 'link' | 'ticket';
+    iconName: 'database' | 'globe' | 'plane' | 'credit-card' | 'link' | 'ticket' | 'mountain';
     status: 'active' | 'inactive' | 'error' | 'testing';
-    category: 'flights' | 'supplier' | 'systems' | 'payments' | 'mapping';
+    category: 'flights' | 'supplier' | 'systems' | 'payments' | 'mapping' | 'ski';
     color: string;
     testPath: string;
     features: string[];
@@ -296,9 +296,9 @@ const APIConnectionsHub: React.FC = () => {
             name: 'SKI Resorts Live Data',
             provider: 'Mountain News / Weather Unlocked',
             description: 'Live informacije za ski centre: visina snega (vrh/podnožje), stanje žičara i staza, vremenska prognoza po nadmorskim visinama.',
-            iconName: 'globe',
+            iconName: 'mountain',
             status: 'testing',
-            category: 'systems',
+            category: 'ski',
             color: '#3b82f6',
             testPath: '/ski-test',
             features: ['Snow Reports', 'Trail & Lift Status', 'Elevation Weather', 'Powder Alerts', 'Live Webcams Sync'],
@@ -308,7 +308,7 @@ const APIConnectionsHub: React.FC = () => {
     ], []);
 
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [filterCategory, setFilterCategory] = useState<'all' | 'flights' | 'supplier' | 'systems' | 'payments' | 'mapping'>('all');
+    const [filterCategory, setFilterCategory] = useState<'all' | 'flights' | 'supplier' | 'systems' | 'payments' | 'mapping' | 'ski'>('all');
 
     // Filtered connections based on category
     const filteredConnections = useMemo(() => {
@@ -324,6 +324,7 @@ const APIConnectionsHub: React.FC = () => {
             case 'credit-card': return <CreditCard size={size} />;
             case 'link': return <Link size={size} />;
             case 'ticket': return <Ticket size={size} />;
+            case 'mountain': return <Mountain size={size} />;
             default: return <Plug size={size} />;
         }
     };
@@ -439,6 +440,7 @@ const APIConnectionsHub: React.FC = () => {
                                 { id: 'systems', label: 'Sistemi', icon: <Settings size={14} /> },
                                 { id: 'payments', label: 'Plaćanja', icon: <CreditCard size={14} /> },
                                 { id: 'mapping', label: 'Mapping', icon: <Link size={14} /> },
+                                { id: 'ski', label: 'Ski', icon: <Mountain size={14} /> },
                             ].map(cat => (
                                 <button
                                     key={cat.id}
