@@ -9,6 +9,7 @@
 import type { FlightProvider, FlightSearchParams, FlightOffer } from './FlightProviderInterface';
 import { AmadeusProvider } from '../../integrations/amadeus/AmadeusProvider';
 import { KyteProvider } from '../../integrations/kyte/KyteProvider';
+import { TravelsoftProvider } from '../../integrations/travelsoft/TravelsoftProvider';
 import { sentinelEvents } from '../../utils/sentinelEvents';
 import { searchHistory } from '../../utils/searchHistory';
 
@@ -43,6 +44,19 @@ export class FlightProviderManager {
             }
         } catch (error) {
             console.error('❌ Failed to register Kyte provider:', error);
+        }
+
+        // Register Travelsoft NDC provider
+        try {
+            const travelsoftProvider = new TravelsoftProvider();
+            if (travelsoftProvider.isConfigured()) {
+                this.registerProvider(travelsoftProvider);
+                console.log('✅ Travelsoft NDC provider registered');
+            } else {
+                console.info('ℹ️ Travelsoft NDC not configured (missing env vars). Add VITE_TRAVELSOFT_* to .env');
+            }
+        } catch (error) {
+            console.error('❌ Failed to register Travelsoft NDC provider:', error);
         }
     }
 

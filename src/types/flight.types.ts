@@ -9,7 +9,7 @@
 // CORE TYPES
 // ============================================================================
 
-export type FlightProvider = 'amadeus' | 'kiwi' | 'duffel' | 'travelFusion' | 'mock' | 'Kyte';
+export type FlightProvider = 'amadeus' | 'kiwi' | 'duffel' | 'travelFusion' | 'mock' | 'Kyte' | 'travelsoft';
 export type CabinClass = 'economy' | 'premium_economy' | 'business' | 'first';
 export type PassengerType = 'adult' | 'child' | 'infant';
 export type BookingStatus = 'confirmed' | 'pending' | 'processing' | 'failed' | 'cancelled';

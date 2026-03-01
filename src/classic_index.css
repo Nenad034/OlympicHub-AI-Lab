@@ -135,8 +135,10 @@
 }
 
 .light-theme .nav-item svg,
-.light-theme .h-nav-item svg {
+.light-theme .h-nav-item svg,
+.light-theme .submenu-item svg {
   stroke: #1e3a8a !important;
+  color: #1e3a8a !important;
 }
 
 

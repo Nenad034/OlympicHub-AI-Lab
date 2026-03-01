@@ -44,7 +44,9 @@ import { OpenGreeceProvider } from '../../integrations/opengreece/OpenGreeceProv
 import { TCTProvider } from '../../integrations/tct/TCTProvider';
 import { FilosProvider } from '../../integrations/filos/FilosProvider';
 import { MtsGlobeProvider } from '../../integrations/mtsglobe/MtsGlobeProvider';
+import { TravelgateProvider } from '../../integrations/travelgate/TravelgateProvider';
 import { searchHistory } from '../../utils/searchHistory';
+
 
 /**
  * Hotel Provider Manager
@@ -139,6 +141,19 @@ export class HotelProviderManager {
             }
         } catch (error) {
             console.error('❌ Failed to register MTS Globe provider:', error);
+        }
+
+        // Register Travelgate provider (Hotel-X GraphQL API)
+        try {
+            const travelgateProvider = new TravelgateProvider();
+            if (travelgateProvider.isConfigured()) {
+                this.registerProvider(travelgateProvider);
+                console.log('✅ Travelgate Hotel-X provider registered');
+            } else {
+                console.warn('⚠️ Travelgate provider not configured (missing VITE_TRAVELGATE_API_KEY)');
+            }
+        } catch (error) {
+            console.error('❌ Failed to register Travelgate provider:', error);
         }
     }
 
