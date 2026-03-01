@@ -304,6 +304,20 @@ const APIConnectionsHub: React.FC = () => {
             features: ['Snow Reports', 'Trail & Lift Status', 'Elevation Weather', 'Powder Alerts', 'Live Webcams Sync'],
             dataQualityScore: 92,
             avgLatency: 300
+        },
+        {
+            id: 'traffics',
+            name: 'Traffics IBE Feeds API',
+            provider: 'Traffics GmbH',
+            description: 'Evolution IBE 3.0 — B2B hotel feeds platforma za turoperatere. Pretraga hotela, top liste po regionu, statički sadržaj i IBE Deep Link generisanje.',
+            iconName: 'globe' as const,
+            status: 'testing' as const,
+            category: 'supplier' as const,
+            color: '#0a6ebd',
+            testPath: '/traffics-test',
+            features: ['GET /hotels Search', 'GET /hotels/top', 'Hotel Static Content', 'IBE Deep Links', 'GIATA Integration', 'Multi-language'],
+            dataQualityScore: 88,
+            avgLatency: 700
         }
     ], []);
 

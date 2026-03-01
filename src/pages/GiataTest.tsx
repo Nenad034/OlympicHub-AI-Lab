@@ -93,10 +93,13 @@ const GiataTest: React.FC = () => {
                 <button
                     onClick={() => navigate('/api-connections')}
                     style={{
-                        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                        color: '#cbd5e1', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer',
+                        background: isLight ? '#ffffff' : 'rgba(255,255,255,0.05)',
+                        border: `1px solid ${isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)'}`,
+                        color: isLight ? '#475569' : '#cbd5e1',
+                        padding: '8px 12px', borderRadius: '8px', cursor: 'pointer',
                         display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600,
-                        marginRight: '12px'
+                        marginRight: '12px',
+                        boxShadow: isLight ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
                     }}
                 >
                     <ArrowLeft size={16} /> Nazad
@@ -133,18 +136,18 @@ const GiataTest: React.FC = () => {
 
                     {/* Config Panel */}
                     <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', padding: '24px' }}>
-                        <h2 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: 600, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h2 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: 600, color: isLight ? '#0e4b5e' : '#f1f5f9', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Key size={16} color={themeColor} /> Authentication (REST)
                         </h2>
 
                         <div style={{ marginBottom: '14px' }}>
-                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bearer Token (API Key)</label>
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: isLight ? '#475569' : '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bearer Token (API Key)</label>
                             <input
                                 type="password"
                                 placeholder="GIATA-xxxxx..."
                                 value={apiKey}
                                 onChange={(e) => setApiKey(e.target.value)}
-                                style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px 14px', color: '#f1f5f9', fontSize: '13px', outline: 'none', fontFamily: 'monospace' }}
+                                style={{ width: '100%', boxSizing: 'border-box', background: isLight ? '#ffffff' : 'rgba(0,0,0,0.2)', border: `1px solid ${isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)'}`, borderRadius: '8px', padding: '10px 14px', color: isLight ? '#0f172a' : '#f1f5f9', fontSize: '13px', outline: 'none', fontFamily: 'monospace' }}
                             />
                         </div>
                         <p style={{ margin: '0', fontSize: '12px', color: '#64748b' }}>Unesite ključ za pristup GIATA servisima iz vašeg console.giatamedia.com naloga.</p>
@@ -159,9 +162,10 @@ const GiataTest: React.FC = () => {
                                 onClick={() => setActiveTab('multicodes')}
                                 style={{
                                     flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
-                                    background: activeTab === 'multicodes' ? 'rgba(16,185,129,0.15)' : 'transparent',
-                                    color: activeTab === 'multicodes' ? '#10b981' : '#94a3b8',
-                                    fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s'
+                                    background: activeTab === 'multicodes' ? (isLight ? '#ffffff' : 'rgba(16,185,129,0.15)') : 'transparent',
+                                    color: activeTab === 'multicodes' ? '#10b981' : (isLight ? '#64748b' : '#94a3b8'),
+                                    fontWeight: 700, fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s',
+                                    boxShadow: activeTab === 'multicodes' && isLight ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
                                 }}
                             >
                                 <Search size={16} /> Multicodes Mapping
@@ -170,9 +174,10 @@ const GiataTest: React.FC = () => {
                                 onClick={() => setActiveTab('drive')}
                                 style={{
                                     flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
-                                    background: activeTab === 'drive' ? 'rgba(99,102,241,0.15)' : 'transparent',
-                                    color: activeTab === 'drive' ? '#818cf8' : '#94a3b8',
-                                    fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s'
+                                    background: activeTab === 'drive' ? (isLight ? '#ffffff' : 'rgba(99,102,241,0.15)') : 'transparent',
+                                    color: activeTab === 'drive' ? '#818cf8' : (isLight ? '#64748b' : '#94a3b8'),
+                                    fontWeight: 700, fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s',
+                                    boxShadow: activeTab === 'drive' && isLight ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
                                 }}
                             >
                                 <Download size={16} /> Drive Content Fetcher
@@ -182,20 +187,20 @@ const GiataTest: React.FC = () => {
                         {/* Multicodes Action Area */}
                         {activeTab === 'multicodes' && (
                             <div className="fade-in">
-                                <h3 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 600, color: '#f1f5f9' }}>Testiraj Uparivanje Koda</h3>
+                                <h3 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 600, color: isLight ? '#0e4b5e' : '#f1f5f9' }}>Testiraj Uparivanje Koda</h3>
 
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
                                     <div>
-                                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase' }}>Dobavljač</label>
+                                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: isLight ? '#475569' : '#94a3b8', marginBottom: '6px', textTransform: 'uppercase' }}>Dobavljač</label>
                                         <select
                                             value={providerMenu}
                                             onChange={(e) => setProviderMenu(e.target.value)}
-                                            style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px 12px', color: '#f1f5f9', fontSize: '13px', outline: 'none', appearance: 'none' }}
+                                            style={{ width: '100%', boxSizing: 'border-box', background: isLight ? '#ffffff' : 'rgba(0,0,0,0.2)', border: `1px solid ${isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)'}`, borderRadius: '8px', padding: '10px 12px', color: isLight ? '#0f172a' : '#f1f5f9', fontSize: '13px', outline: 'none', appearance: 'none' }}
                                         >
-                                            <option value="solvex" style={{ background: '#1e293b' }}>Solvex (Master-Interlook)</option>
-                                            <option value="mtsglobe" style={{ background: '#1e293b' }}>MTS Globe</option>
-                                            <option value="travelgate" style={{ background: '#1e293b' }}>Travelgate Network</option>
-                                            <option value="tct" style={{ background: '#1e293b' }}>TCT</option>
+                                            <option value="solvex" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>Solvex (Master-Interlook)</option>
+                                            <option value="mtsglobe" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>MTS Globe</option>
+                                            <option value="travelgate" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>Travelgate Network</option>
+                                            <option value="tct" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>TCT</option>
                                         </select>
                                     </div>
                                     <div>
@@ -205,7 +210,7 @@ const GiataTest: React.FC = () => {
                                             placeholder="Npr. 123 ili hotel123"
                                             value={providerCode}
                                             onChange={(e) => setProviderCode(e.target.value)}
-                                            style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px 12px', color: '#f1f5f9', fontSize: '13px', outline: 'none' }}
+                                            style={{ width: '100%', boxSizing: 'border-box', background: isLight ? '#ffffff' : 'rgba(0,0,0,0.2)', border: `1px solid ${isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)'}`, borderRadius: '8px', padding: '10px 12px', color: isLight ? '#0f172a' : '#f1f5f9', fontSize: '13px', outline: 'none' }}
                                         />
                                     </div>
                                 </div>
@@ -239,7 +244,7 @@ const GiataTest: React.FC = () => {
                                         placeholder="Unesite ID (npr. 101234)"
                                         value={giataIdToFetch}
                                         onChange={(e) => setGiataIdToFetch(e.target.value ? Number(e.target.value) : '')}
-                                        style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px 12px', color: '#f1f5f9', fontSize: '13px', outline: 'none' }}
+                                        style={{ width: '100%', boxSizing: 'border-box', background: isLight ? '#ffffff' : 'rgba(0,0,0,0.2)', border: `1px solid ${isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)'}`, borderRadius: '8px', padding: '10px 12px', color: isLight ? '#0f172a' : '#f1f5f9', fontSize: '13px', outline: 'none' }}
                                     />
                                 </div>
 
@@ -263,7 +268,7 @@ const GiataTest: React.FC = () => {
 
                     {/* Educational Hint */}
                     {/* Test Credentials Info */}
-                    <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px dotted rgba(255,255,255,0.1)', fontSize: '13px', color: '#cbd5e1', lineHeight: '1.6' }}>
+                    <div style={{ padding: '16px', borderRadius: '12px', background: isLight ? '#f8fafc' : 'rgba(255,255,255,0.02)', border: `1px dotted ${isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)'}`, fontSize: '13px', color: isLight ? '#475569' : '#cbd5e1', lineHeight: '1.6' }}>
                         <div style={{ display: 'flex', gap: '8px', color: themeColor, fontWeight: 'bold', marginBottom: '8px' }}>
                             <Database size={16} /> Mock DB Dostupnost
                         </div>
@@ -273,7 +278,7 @@ const GiataTest: React.FC = () => {
 
                 {/* Right Column: Results Panel */}
                 <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', padding: '24px', display: 'flex', flexDirection: 'column' }}>
-                    <h2 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: 600, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h2 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: 600, color: isLight ? '#0e4b5e' : '#f1f5f9', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Database size={16} color={themeColor} />
                         {activeTab === 'multicodes' ? 'Multicodes Mapping Rezultat' : 'Drive Content Rezultat'}
                     </h2>

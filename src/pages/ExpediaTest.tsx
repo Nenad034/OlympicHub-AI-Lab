@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import {
-    Building2, Globe, MapPin, Star, Calendar, Users, Search,
-    CheckCircle, XCircle, Clock, CreditCard, ArrowRight,
+    Building2, Globe, MapPin, Star, Users, Search,
+    CheckCircle2, XCircle, Clock, CreditCard, ArrowRight,
     RefreshCw, Info, AlertTriangle, ChevronDown, ChevronUp,
-    Zap, Shield, Wifi, Eye, TrendingUp, MapIcon, Tag
+    Zap, Shield, Wifi, Eye, TrendingUp, MapIcon, Tag, Calendar as CalendarIcon
 } from 'lucide-react';
+import { useThemeStore } from '../stores';
+import { ModernCalendar } from '../components/ModernCalendar';
 import expediaApiService from '../integrations/expedia/api/expediaApiService';
 import type {
     ExpediaCredentials,
@@ -63,6 +65,12 @@ const ExpediaTest: React.FC = () => {
 
     // ─── Error ────────────────────────────────────────────────────────
     const [error, setError] = useState<string | null>(null);
+
+    // ModernCalendar State
+    const [activeCalendar, setActiveCalendar] = useState<'shopping' | null>(null);
+
+    const { theme } = useThemeStore();
+    const isLight = theme === 'light';
 
     // ─── Handlers ─────────────────────────────────────────────────────
 
@@ -239,7 +247,7 @@ const ExpediaTest: React.FC = () => {
                 </div>
                 <div className="hb-header-right">
                     <div className={`hb-status-pill ${isConfigured ? 'configured' : 'unconfigured'}`}>
-                        {isConfigured ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                        {isConfigured ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
                         <span>{isConfigured ? `Konfigurisan (${expediaApiService.getEnvironment()})` : 'Nije konfigurisan'}</span>
                     </div>
                     <div className="hb-env-badge">
@@ -327,9 +335,13 @@ const ExpediaTest: React.FC = () => {
                                     value={credentials.environment}
                                     onChange={e => setCredentials(p => ({ ...p, environment: e.target.value as any }))}
                                     className="hb-select"
+                                    style={{
+                                        background: isLight ? '#fff' : 'rgba(0,0,0,0.2)',
+                                        color: isLight ? '#0f172a' : '#f1f5f9'
+                                    }}
                                 >
-                                    <option value="test">Test / Sandbox (test.ean.com)</option>
-                                    <option value="production">Produkcija (api.ean.com)</option>
+                                    <option value="test" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>Test / Sandbox (test.ean.com)</option>
+                                    <option value="production" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>Produkcija (api.ean.com)</option>
                                 </select>
                             </div>
                         </div>
@@ -345,7 +357,7 @@ const ExpediaTest: React.FC = () => {
 
                         {configStatus === 'success' && (
                             <div className="hb-success-box">
-                                <CheckCircle size={20} />
+                                <CheckCircle2 size={20} />
                                 <div>
                                     <strong>Uspešno konfigurisano!</strong>
                                     <p>Expedia Rapid servis je aktivan. Koristite tabove "Shopping", "Content", "Booking" i "Geography" za testiranje.</p>
@@ -393,44 +405,72 @@ const ExpediaTest: React.FC = () => {
                             <h3><Search size={18} /> Pretraga Dostupnosti</h3>
                             <div className="hb-search-grid">
                                 <div className="hb-form-group">
-                                    <label><Calendar size={14} /> Check-in</label>
-                                    <input type="date" className="hb-input" value={shopSearch.checkin}
-                                        onChange={e => setShopSearch(p => ({ ...p, checkin: e.target.value }))} />
-                                </div>
-                                <div className="hb-form-group">
-                                    <label><Calendar size={14} /> Check-out</label>
-                                    <input type="date" className="hb-input" value={shopSearch.checkout}
-                                        onChange={e => setShopSearch(p => ({ ...p, checkout: e.target.value }))} />
+                                    <label><CalendarIcon size={14} /> Check-in & Check-out</label>
+                                    <div
+                                        onClick={() => setActiveCalendar('shopping')}
+                                        className="hb-input"
+                                        style={{
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            background: isLight ? '#fff' : 'rgba(0,0,0,0.2)',
+                                            color: isLight ? '#0f172a' : '#f1f5f9'
+                                        }}
+                                    >
+                                        <CalendarIcon size={14} />
+                                        {shopSearch.checkin} — {shopSearch.checkout}
+                                    </div>
                                 </div>
                                 <div className="hb-form-group">
                                     <label><TrendingUp size={14} /> Valuta</label>
                                     <select className="hb-select" value={shopSearch.currency}
-                                        onChange={e => setShopSearch(p => ({ ...p, currency: e.target.value }))}>
-                                        <option value="EUR">EUR — Euro</option>
-                                        <option value="USD">USD — US Dollar</option>
-                                        <option value="GBP">GBP — British Pound</option>
-                                        <option value="RSD">RSD — Serbian Dinar</option>
+                                        onChange={e => setShopSearch(p => ({ ...p, currency: e.target.value }))}
+                                        style={{
+                                            background: isLight ? '#fff' : 'rgba(0,0,0,0.2)',
+                                            color: isLight ? '#0f172a' : '#f1f5f9'
+                                        }}
+                                    >
+                                        <option value="EUR" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>EUR — Euro</option>
+                                        <option value="USD" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>USD — US Dollar</option>
+                                        <option value="GBP" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>GBP — British Pound</option>
+                                        <option value="RSD" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>RSD — Serbian Dinar</option>
                                     </select>
                                 </div>
                                 <div className="hb-form-group">
                                     <label><Users size={14} /> Odrasli</label>
                                     <input type="number" min={1} max={9} className="hb-input" value={shopSearch.adults}
-                                        onChange={e => setShopSearch(p => ({ ...p, adults: e.target.value }))} />
+                                        onChange={e => setShopSearch(p => ({ ...p, adults: e.target.value }))}
+                                        style={{
+                                            background: isLight ? '#fff' : 'rgba(0,0,0,0.2)',
+                                            color: isLight ? '#0f172a' : '#f1f5f9'
+                                        }}
+                                    />
                                 </div>
                                 <div className="hb-form-group">
                                     <label><Globe size={14} /> Zemlja korisnika</label>
                                     <input className="hb-input" value={shopSearch.country_code}
                                         onChange={e => setShopSearch(p => ({ ...p, country_code: e.target.value }))}
-                                        placeholder="RS, DE, US..." />
+                                        placeholder="RS, DE, US..."
+                                        style={{
+                                            background: isLight ? '#fff' : 'rgba(0,0,0,0.2)',
+                                            color: isLight ? '#0f172a' : '#f1f5f9'
+                                        }}
+                                    />
                                 </div>
                                 <div className="hb-form-group">
                                     <label><Globe size={14} /> Jezik</label>
                                     <select className="hb-select" value={shopSearch.language}
-                                        onChange={e => setShopSearch(p => ({ ...p, language: e.target.value }))}>
-                                        <option value="en-US">en-US (English)</option>
-                                        <option value="sr-RS">sr-RS (Srpski)</option>
-                                        <option value="de-DE">de-DE (Deutsch)</option>
-                                        <option value="fr-FR">fr-FR (Français)</option>
+                                        onChange={e => setShopSearch(p => ({ ...p, language: e.target.value }))}
+                                        style={{
+                                            background: isLight ? '#fff' : 'rgba(0,0,0,0.2)',
+                                            color: isLight ? '#0f172a' : '#f1f5f9'
+                                        }}
+                                    >
+                                        <option value="en-US" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>en-US (English)</option>
+                                        <option value="sr-RS" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>sr-RS (Srpski)</option>
+                                        <option value="de-DE" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>de-DE (Deutsch)</option>
+                                        <option value="fr-FR" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>fr-FR (Français)</option>
                                     </select>
                                 </div>
                             </div>
@@ -534,7 +574,8 @@ const ExpediaTest: React.FC = () => {
                                                                         </span>
                                                                     )}
                                                                     <span className={`hb-pay-type ${rate.refundable ? 'at_web' : 'at_hotel'}`}>
-                                                                        {rate.refundable ? 'Refundable' : 'Non-refundable'}
+                                                                        {rate.refundable ? <CheckCircle2 size={13} color="#10b981" /> : <XCircle size={13} color="#ef4444" />}
+                                                                        <span>{rate.refundable ? 'Refundable' : 'Non-refundable'}</span>
                                                                     </span>
                                                                     <span className="hb-allotment">Dostupno: {rate.available_rooms}</span>
                                                                     <button
@@ -611,7 +652,7 @@ const ExpediaTest: React.FC = () => {
                         {bookingResult && (
                             <div className="hb-booking-confirmed">
                                 <div className="hb-booking-header">
-                                    <CheckCircle size={32} color="#10b981" />
+                                    <CheckCircle2 size={32} color="#10b981" />
                                     <div>
                                         <h2>Itinerer Kreiran!</h2>
                                         <p>Status: <strong className={`hb-status-text ${getStatusClass(bookingResult.status)}`}>{bookingResult.status}</strong></p>
@@ -805,7 +846,7 @@ const ExpediaTest: React.FC = () => {
                         {itinerary && (
                             <div className="hb-booking-confirmed">
                                 <div className="hb-booking-header">
-                                    <CheckCircle size={32} color="#10b981" />
+                                    <CheckCircle2 size={32} color="#10b981" />
                                     <div>
                                         <h2>Itinerer Pronađen</h2>
                                         <p>Room Status: <strong className={`hb-status-text ${getStatusClass(itinerary.rooms[0]?.status?.current ?? 'pending')}`}>{itinerary.rooms[0]?.status?.current}</strong></p>
@@ -935,6 +976,21 @@ const ExpediaTest: React.FC = () => {
                     </div>
                 )}
             </div>
+            <style>{`
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                .spin { animation: spin 1s linear infinite; }
+            `}</style>
+
+            {activeCalendar === 'shopping' && (
+                <ModernCalendar
+                    startDate={shopSearch.checkin}
+                    endDate={shopSearch.checkout}
+                    onChange={(start, end) => {
+                        setShopSearch(p => ({ ...p, checkin: start, checkout: end }));
+                    }}
+                    onClose={() => setActiveCalendar(null)}
+                />
+            )}
         </div>
     );
 };

@@ -1,10 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import {
-    Globe, Search, Star, Clock, MapPin, Users, Calendar,
-    CheckCircle, XCircle, RefreshCw, ChevronDown, ChevronUp,
+    Globe, Search, Star, Clock, MapPin, Users,
+    CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronUp,
     ArrowRight, Info, Shield, Ticket, Heart, AlertTriangle,
-    Zap, CreditCard, BookOpen, Tag, Navigation, MessageSquare
+    Zap, CreditCard, BookOpen, Tag, Navigation, MessageSquare, Calendar as CalendarIcon
 } from 'lucide-react';
+import { useThemeStore } from '../stores';
+import { ModernCalendar } from '../components/ModernCalendar';
 import viatorApiService from '../integrations/viator/api/viatorApiService';
 import type {
     ViatorCredentials,
@@ -71,6 +73,12 @@ const ViatorTest: React.FC = () => {
 
     // ─── Global Error ─────────────────────────────────────────────────
     const [error, setError] = useState<string | null>(null);
+
+    // ModernCalendar State
+    const [activeCalendar, setActiveCalendar] = useState<'availability' | null>(null);
+
+    const { theme } = useThemeStore();
+    const isLight = theme === 'light';
 
     // ─── Handlers ─────────────────────────────────────────────────────
 
@@ -280,7 +288,7 @@ const ViatorTest: React.FC = () => {
                 </div>
                 <div className="vtr-header-right">
                     <div className={`vtr-status-pill ${isConfigured ? 'configured' : 'unconfigured'}`}>
-                        {isConfigured ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                        {isConfigured ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
                         {isConfigured ? `${viatorApiService.getPartnerType().toUpperCase()} · ${viatorApiService.getEnvironment()}` : 'Nije konfigurisan'}
                     </div>
                     <div className="vtr-viator-badge">
@@ -305,7 +313,7 @@ const ViatorTest: React.FC = () => {
                     { id: 'config', label: 'Konfiguracija', icon: <Shield size={15} /> },
                     { id: 'search', label: 'Pretraga', icon: <Search size={15} /> },
                     { id: 'product', label: 'Produkt', icon: <BookOpen size={15} /> },
-                    { id: 'availability', label: 'Dostupnost', icon: <Calendar size={15} /> },
+                    { id: 'availability', label: 'Dostupnost', icon: <CalendarIcon size={15} /> },
                     { id: 'booking', label: 'Rezervacija', icon: <CreditCard size={15} /> },
                     { id: 'cancel', label: 'Otkazivanje', icon: <XCircle size={15} /> },
                 ].map(tab => (
@@ -358,9 +366,14 @@ const ViatorTest: React.FC = () => {
                             <div className="vtr-form-group">
                                 <label>Okruženje</label>
                                 <select className="vtr-select" value={credentials.environment}
-                                    onChange={e => setCredentials(p => ({ ...p, environment: e.target.value as any }))}>
-                                    <option value="sandbox">Sandbox / Test</option>
-                                    <option value="production">Produkcija</option>
+                                    onChange={e => setCredentials(p => ({ ...p, environment: e.target.value as any }))}
+                                    style={{
+                                        background: isLight ? '#fff' : 'rgba(0,0,0,0.2)',
+                                        color: isLight ? '#0f172a' : '#f1f5f9'
+                                    }}
+                                >
+                                    <option value="sandbox" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>Sandbox / Test</option>
+                                    <option value="production" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>Produkcija</option>
                                 </select>
                             </div>
                         </div>
@@ -376,7 +389,7 @@ const ViatorTest: React.FC = () => {
 
                         {configStatus === 'success' && (
                             <div className="vtr-success-box">
-                                <CheckCircle size={20} />
+                                <CheckCircle2 size={20} />
                                 <div>
                                     <strong>Uspešno konfigurisano!</strong>
                                     <p>Viator servis je aktivan ({credentials.partnerType} mode). Koristite tabove iznad za testiranje.</p>
@@ -391,8 +404,8 @@ const ViatorTest: React.FC = () => {
                                 <div className="vtr-compare-card affiliate">
                                     <h4>🔗 Affiliate Partner</h4>
                                     <ul>
-                                        <li><CheckCircle size={13} color="#10b981" /> Pristup svim sadržajima (Products, Images, Reviews)</li>
-                                        <li><CheckCircle size={13} color="#10b981" /> Pretraga i prikazivanje produkata</li>
+                                        <li><CheckCircle2 size={13} color="#10b981" /> Pristup svim sadržajima (Products, Images, Reviews)</li>
+                                        <li><CheckCircle2 size={13} color="#10b981" /> Pretraga i prikazivanje produkata</li>
                                         <li><XCircle size={13} color="#ef4444" /> Booking — klijent se preusmerava na viator.com</li>
                                         <li><XCircle size={13} color="#ef4444" /> Nema direktnog upravljanja rezervacijama</li>
                                         <li>💰 Komisija na svaku prodaju</li>
@@ -401,10 +414,10 @@ const ViatorTest: React.FC = () => {
                                 <div className="vtr-compare-card merchant">
                                     <h4>💳 Merchant Partner</h4>
                                     <ul>
-                                        <li><CheckCircle size={13} color="#10b981" /> Pun pristup svim API endpointima</li>
-                                        <li><CheckCircle size={13} color="#10b981" /> Direktni booking (/bookings/hold + /bookings/book)</li>
-                                        <li><CheckCircle size={13} color="#10b981" /> Upravljanje otkazivanjem</li>
-                                        <li><CheckCircle size={13} color="#10b981" /> Voucher management</li>
+                                        <li><CheckCircle2 size={13} color="#10b981" /> Pun pristup svim API endpointima</li>
+                                        <li><CheckCircle2 size={13} color="#10b981" /> Direktni booking (/bookings/hold + /bookings/book)</li>
+                                        <li><CheckCircle2 size={13} color="#10b981" /> Upravljanje otkazivanjem</li>
+                                        <li><CheckCircle2 size={13} color="#10b981" /> Voucher management</li>
                                         <li>💰 Merchant of record — direktna naplata</li>
                                     </ul>
                                 </div>
@@ -643,14 +656,14 @@ const ViatorTest: React.FC = () => {
                                     <div className="vtr-detail-section">
                                         <div className="vtr-detail-section-title"
                                             onClick={() => setExpandedSection(expandedSection === 'incl' ? null : 'incl')}>
-                                            <CheckCircle size={16} color="#10b981" /> Uključeno
+                                            <CheckCircle2 size={16} color="#10b981" /> Uključeno
                                             {expandedSection === 'incl' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                         </div>
                                         {expandedSection === 'incl' && (
                                             <div className="vtr-detail-section-body">
                                                 {productDetail.inclusions.map((inc, i) => (
                                                     <div key={i} className="vtr-incl-row">
-                                                        <CheckCircle size={14} color="#10b981" />
+                                                        <CheckCircle2 size={14} color="#10b981" />
                                                         <span>{inc.typeDescription}</span>
                                                     </div>
                                                 ))}
@@ -683,7 +696,7 @@ const ViatorTest: React.FC = () => {
 
                                 <button className="vtr-btn primary"
                                     onClick={() => { setActiveTab('availability'); setAvailCheck(p => ({ ...p, productCode: productDetail.productCode })); }}>
-                                    <Calendar size={16} /> Proveri Dostupnost →
+                                    <CalendarIcon size={16} /> Proveri Dostupnost →
                                 </button>
                             </div>
                         )}
@@ -694,7 +707,7 @@ const ViatorTest: React.FC = () => {
                 {activeTab === 'availability' && (
                     <div className="vtr-section">
                         <div className="vtr-section-header">
-                            <Calendar size={22} />
+                            <CalendarIcon size={22} />
                             <h2>Availability Check — Dostupnost & Cena</h2>
                         </div>
 
@@ -706,9 +719,22 @@ const ViatorTest: React.FC = () => {
                                         onChange={e => setAvailCheck(p => ({ ...p, productCode: e.target.value }))} />
                                 </div>
                                 <div className="vtr-form-group">
-                                    <label><Calendar size={14} /> Datum Putovanja</label>
-                                    <input type="date" className="vtr-input" value={availCheck.travelDate}
-                                        onChange={e => setAvailCheck(p => ({ ...p, travelDate: e.target.value }))} />
+                                    <label><CalendarIcon size={14} /> Datum Putovanja</label>
+                                    <div
+                                        onClick={() => setActiveCalendar('availability')}
+                                        className="vtr-input"
+                                        style={{
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            background: isLight ? '#fff' : 'rgba(0,0,0,0.2)',
+                                            color: isLight ? '#0f172a' : '#f1f5f9'
+                                        }}
+                                    >
+                                        <CalendarIcon size={14} />
+                                        {availCheck.travelDate}
+                                    </div>
                                 </div>
                                 <div className="vtr-form-group">
                                     <label><Clock size={14} /> Vreme Polaska</label>
@@ -728,14 +754,21 @@ const ViatorTest: React.FC = () => {
                                 <div className="vtr-form-group">
                                     <label>Valuta</label>
                                     <select className="vtr-select" value={availCheck.currency}
-                                        onChange={e => setAvailCheck(p => ({ ...p, currency: e.target.value }))}>
-                                        {['EUR', 'USD', 'GBP', 'AUD', 'CAD'].map(c => <option key={c}>{c}</option>)}
+                                        onChange={e => setAvailCheck(p => ({ ...p, currency: e.target.value }))}
+                                        style={{
+                                            background: isLight ? '#fff' : 'rgba(0,0,0,0.2)',
+                                            color: isLight ? '#0f172a' : '#f1f5f9'
+                                        }}
+                                    >
+                                        {['EUR', 'USD', 'GBP', 'AUD', 'CAD'].map(c => (
+                                            <option key={c} style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>{c}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
                             <button className="vtr-btn primary fw" onClick={handleCheckAvail}
                                 disabled={isAvailLoading || !isConfigured}>
-                                {isAvailLoading ? <RefreshCw size={16} className="spin" /> : <Calendar size={16} />}
+                                {isAvailLoading ? <RefreshCw size={16} className="spin" /> : <CalendarIcon size={16} />}
                                 {isAvailLoading ? 'Proveravam...' : 'Proveri Dostupnost & Cenu'}
                             </button>
                         </div>
@@ -743,7 +776,7 @@ const ViatorTest: React.FC = () => {
                         {availResult && (
                             <div className="vtr-avail-result">
                                 <div className="vtr-avail-header">
-                                    <CheckCircle size={22} color="#10b981" />
+                                    <CheckCircle2 size={22} color="#10b981" />
                                     <div>
                                         <h3>Dostupno!</h3>
                                         <p>{availResult.productCode} · {availResult.travelDate} {availResult.startTime && `@ ${availResult.startTime}`}</p>
@@ -862,7 +895,7 @@ const ViatorTest: React.FC = () => {
                         {bookingResult?.bookings?.[0] && (
                             <div className="vtr-confirmed">
                                 <div className="vtr-confirmed-header">
-                                    <CheckCircle size={36} color="#10b981" />
+                                    <CheckCircle2 size={36} color="#10b981" />
                                     <div>
                                         <h2>Rezervacija Potvrđena!</h2>
                                         <p>Status: <strong className="green">{bookingResult.bookings[0].bookingStatus}</strong>
@@ -948,6 +981,22 @@ const ViatorTest: React.FC = () => {
                     </div>
                 )}
             </div>
+            <style>{`
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                .spin { animation: spin 1s linear infinite; }
+            `}</style>
+
+            {activeCalendar === 'availability' && (
+                <ModernCalendar
+                    startDate={availCheck.travelDate}
+                    endDate={availCheck.travelDate}
+                    singleMode
+                    onChange={(start) => {
+                        setAvailCheck(p => ({ ...p, travelDate: start }));
+                    }}
+                    onClose={() => setActiveCalendar(null)}
+                />
+            )}
         </div>
     );
 };

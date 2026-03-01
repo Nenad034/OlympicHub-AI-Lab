@@ -1,24 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import {
-    CloudSnow, MapPin, Wind, Thermometer, Info,
-    CheckCircle, XCircle, AlertTriangle, Search,
-    RefreshCw, Navigation, Maximize2, Mountain,
-    BarChart3, Clock, ArrowUpCircle, ArrowDownCircle
+    CloudSnow, MapPin, Wind, Search,
+    RefreshCw, Navigation, Mountain,
+    BarChart3, Clock, ArrowRight
 } from 'lucide-react';
+import { useThemeStore } from '../stores';
 import { skiApiService } from '../integrations/ski/api/skiApiService';
 import type { SkiResort } from '../integrations/ski/types/skiTypes';
-import './HotelbedsTest.css'; // Reusing established styles
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import './SkiResort.css'; // Dedicated CSS for high-fidelity UI
 
 const SkiTest: React.FC = () => {
+    const { theme } = useThemeStore();
+    const navigate = useNavigate();
+    const isLight = theme === 'light';
     const [searchTerm, setSearchTerm] = useState('');
     const [resorts, setResorts] = useState<SkiResort[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<string>('');
 
-    const fetchData = async () => {
+    const fetchData = async (query: string = searchTerm) => {
         setIsLoading(true);
         try {
-            const data = await skiApiService.searchResorts(searchTerm);
+            const data = await skiApiService.searchResorts(query);
             setResorts(data.resorts);
             setLastUpdated(new Date().toLocaleTimeString());
         } catch (error) {
@@ -30,7 +35,7 @@ const SkiTest: React.FC = () => {
 
     useEffect(() => {
         fetchData();
-        const interval = setInterval(fetchData, 300000); // refresh every 5 mins
+        const interval = setInterval(() => fetchData(), 300000);
         return () => clearInterval(interval);
     }, []);
 
@@ -39,161 +44,263 @@ const SkiTest: React.FC = () => {
         fetchData();
     };
 
+    const diffToClass: Record<string, string> = {
+        'easy': 'diff-easy',
+        'novice': 'diff-novice',
+        'intermediate': 'diff-intermediate',
+        'advanced': 'diff-advanced',
+        'expert': 'diff-expert'
+    };
+
+    const diffColors: Record<string, string> = {
+        'easy': '#3b82f6',
+        'novice': '#10b981',
+        'intermediate': '#ef4444',
+        'advanced': '#000000',
+        'expert': '#581c87'
+    };
+
     return (
-        <div className="hb-test-page">
-            <div className="hb-header" style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)' }}>
-                <div className="hb-header-left">
-                    <div className="hb-logo" style={{ background: '#fff' }}>
-                        <CloudSnow size={36} color="#1e3a8a" />
+        <div className={`ski-container ${isLight ? 'light-mode' : ''}`}>
+            {/* Premium Header */}
+            <div className="mountain-hero" style={{ height: '300px', marginBottom: '40px' }}>
+                <img
+                    src="https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?auto=format&fit=crop&q=80&w=2000"
+                    className="mountain-hero-bg"
+                    alt="Ski Background"
+                />
+                <div className="mountain-hero-content">
+                    <div className="location">
+                        <CloudSnow size={18} />
+                        Live Mountain Analytics
                     </div>
-                    <div>
-                        <h1 style={{ color: '#fff' }}>Ski Live Dashboard</h1>
-                        <p style={{ color: '#bfdbfe' }}>Real-time snow reports, trail status and mountain weather</p>
-                    </div>
-                </div>
-                <div className="hb-header-right">
-                    <div className="hb-status-pill configured">
-                        <Clock size={14} />
-                        <span>Last update: {lastUpdated}</span>
-                    </div>
-                </div>
-            </div>
-
-            <div className="hb-content">
-                <div className="hb-section">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                        <h2>Praćenje Ski Centara</h2>
-                        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '10px' }}>
-                            <div className="hb-form-group" style={{ marginBottom: 0 }}>
-                                <input
-                                    className="hb-input"
-                                    placeholder="Pretraži centar ili državu..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    style={{ width: '300px' }}
-                                />
-                            </div>
-                            <button className="hb-btn primary" type="submit" disabled={isLoading}>
-                                {isLoading ? <RefreshCw className="spin" size={16} /> : <Search size={16} />}
-                            </button>
-                        </form>
-                    </div>
-
-                    <div className="hb-results" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', display: 'grid', gap: '20px' }}>
-                        {resorts.map(resort => (
-                            <div key={resort.id} className="hb-hotel-card" style={{ padding: '0', overflow: 'hidden' }}>
-                                <div style={{ padding: '20px', borderBottom: '1px solid var(--border)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                        <div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                                <span className="hb-api-badge" style={{ background: '#dbeafe', color: '#1e40af' }}>{resort.country}</span>
-                                                <span className={`hb-status-pill ${resort.status === 'open' ? 'configured' : 'unconfigured'}`}>
-                                                    {resort.status === 'open' ? 'OTVORENO' : 'ZATVORENO'}
-                                                </span>
-                                            </div>
-                                            <h3 style={{ fontSize: '1.4rem', margin: '4px 0' }}>{resort.name}</h3>
-                                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                                                <MapPin size={12} /> {resort.region}
-                                            </p>
-                                        </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#3b82f6' }}>{resort.snowReport.summitDepth}cm</div>
-                                            <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>Sneg na vrhu</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', padding: '15px', background: 'rgba(255,255,255,0.03)', gap: '15px' }}>
-                                    <div className="ski-stat-box">
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                                            <CloudSnow size={16} /> <strong>Snow Report</strong>
-                                        </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span>Base Depth:</span>
-                                                <span>{resort.snowReport.baseDepth} cm</span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#10b981', fontWeight: 'bold' }}>
-                                                <span>New 24h:</span>
-                                                <span>+{resort.snowReport.newSnow24h} cm</span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span>Stanje:</span>
-                                                <span>{resort.snowReport.snowCondition}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="ski-stat-box">
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                                            <Mountain size={16} /> <strong>Mountain Status</strong>
-                                        </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span>Liftovi:</span>
-                                                <span>{resort.mountainStatus.liftsOpen}/{resort.mountainStatus.liftsTotal}</span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span>Staze:</span>
-                                                <span>{resort.mountainStatus.trailsOpen}/{resort.mountainStatus.trailsTotal}</span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span>Noćno:</span>
-                                                <span>{resort.mountainStatus.nightSkiing ? 'DA' : 'NE'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div style={{ padding: '20px' }}>
-                                    <h4 style={{ marginBottom: '12px', fontSize: '0.9rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Prognoza po visinama</h4>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
-                                        {['summit', 'mid', 'base'].map((level) => {
-                                            const w = resort.weather[level as keyof typeof resort.weather];
-                                            return (
-                                                <div key={level} style={{ flex: 1, textAlign: 'center', padding: '10px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}>
-                                                    <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '5px', opacity: 0.6 }}>{level}</div>
-                                                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{w.temp}°C</div>
-                                                    <div style={{ fontSize: '0.8rem', margin: '4px 0' }}>{w.conditions}</div>
-                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '0.7rem', opacity: 0.8 }}>
-                                                        <Wind size={10} /> {w.windSpeed} km/h
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                <div className="card-footer" style={{ borderTop: '1px solid var(--border)', background: 'transparent' }}>
-                                    <button className="hb-btn primary full-width" style={{ borderRadius: 0 }}>
-                                        Detaljna Ski Mapa <Navigation size={14} />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {resorts.length === 0 && !isLoading && (
-                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-                            <CloudSnow size={48} style={{ opacity: 0.2, marginBottom: '10px' }} />
-                            <p>Nema rezultata za vašu pretragu.</p>
+                    <h1>Ski Dashboard</h1>
+                    <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
+                        <div className="glass-pane" style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 600 }}>
+                            <Clock size={14} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                            Ažurirano: {lastUpdated}
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
 
-            <style>{`
-                .ski-stat-box {
-                    font-size: 0.85rem;
-                }
-                .spin {
-                    animation: spin 1s linear infinite;
-                }
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-            `}</style>
+            {/* Search & Filters */}
+            <div className="glass-card" style={{ padding: '40px', marginBottom: '40px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '30px' }}>
+                    <div style={{ flex: 1, minWidth: '300px' }}>
+                        <h2 style={{ fontSize: '2.2rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-1.5px', marginBottom: '10px' }}>
+                            Ski Monitoring
+                        </h2>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600 }}>Pronađite idealne uslove za skijanje širom sveta</p>
+                    </div>
+
+                    <form onSubmit={handleSearch} style={{ display: 'flex', gap: '15px', flex: 1, justifyContent: 'flex-end', minWidth: '350px' }}>
+                        <div style={{ position: 'relative', flex: 1, maxWidth: '500px' }}>
+                            <input
+                                placeholder="Pretraži skijalište, državu ili regiju..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    paddingRight: '20px',
+                                    paddingLeft: '55px',
+                                    height: '56px',
+                                    borderRadius: '16px',
+                                    background: 'rgba(2, 11, 20, 0.6)',
+                                    border: '1px solid var(--border)',
+                                    color: 'white',
+                                    fontSize: '0.95rem',
+                                    fontWeight: 500,
+                                    outline: 'none',
+                                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+                                }}
+                            />
+                            <Search
+                                style={{ position: 'absolute', left: '20px', top: '16px', opacity: 0.8, color: 'var(--accent-cyan)' }}
+                                size={22}
+                            />
+                        </div>
+                        <button
+                            className="btn-primary"
+                            type="submit"
+                            disabled={isLoading}
+                            style={{
+                                height: '56px',
+                                padding: '0 30px',
+                                borderRadius: '16px',
+                                fontSize: '0.85rem',
+                                fontWeight: 800,
+                                letterSpacing: '1px',
+                                background: 'linear-gradient(135deg, var(--petrol-500), var(--petrol-700))',
+                                boxShadow: '0 8px 20px rgba(0, 229, 255, 0.15)'
+                            }}
+                        >
+                            {isLoading ? <RefreshCw className="spin-slow" size={20} /> : 'PRETRAGA'}
+                        </button>
+                    </form>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '35px', paddingTop: '30px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-secondary)', alignSelf: 'center', marginRight: '10px', letterSpacing: '1px' }}>
+                        Popularne regije:
+                    </span>
+                    {[
+                        { label: 'Srbija', query: 'Srbija' },
+                        { label: 'Austrija', query: 'Austrija' },
+                        { label: 'Italija', query: 'Italija' },
+                        { label: 'Francuska', query: 'Francuska' },
+                        { label: 'Švajcarska', query: 'Švajcarska' },
+                        { label: 'Sve lokacije', query: '' }
+                    ].map((chip) => (
+                        <button
+                            key={chip.label}
+                            onClick={() => {
+                                setSearchTerm(chip.query);
+                                fetchData(chip.query);
+                            }}
+                            className={searchTerm === chip.query ? 'btn-primary' : 'glass-pane'}
+                            style={{
+                                padding: '12px 24px',
+                                borderRadius: '15px',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '0.75rem',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px',
+                                transition: 'all 0.3s ease'
+                            }}
+                        >
+                            {chip.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Results Grid */}
+            <div className="ski-grid">
+                <AnimatePresence mode="popLayout">
+                    {resorts.map((resort, idx) => (
+                        <motion.div
+                            key={resort.id}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.4, delay: idx * 0.05 }}
+                            className="glass-card ski-card"
+                            onClick={() => navigate(`/ski-test/resort/${resort.id}`)}
+                            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', height: '100%' }}
+                        >
+                            <div className="ski-card-header">
+                                <img
+                                    src={resort.mapImageUrl || `https://images.unsplash.com/photo-1551698618-1dfe5d97d256?auto=format&fit=crop&q=80&w=800`}
+                                    className="ski-card-img"
+                                    alt={resort.name}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?auto=format&fit=crop&q=80&w=800';
+                                    }}
+                                />
+                                <div className="ski-card-overlay" />
+                                <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 10 }}>
+                                    <span style={{
+                                        padding: '4px 10px',
+                                        borderRadius: '8px',
+                                        background: 'rgba(255,255,255,0.1)',
+                                        backdropFilter: 'blur(5px)',
+                                        fontSize: '0.6rem',
+                                        fontWeight: 900,
+                                        textTransform: 'uppercase'
+                                    }}>
+                                        {resort.country}
+                                    </span>
+                                </div>
+                                <div style={{ position: 'absolute', bottom: '20px', right: '20px', zIndex: 10, textAlign: 'right' }}>
+                                    <div style={{ fontSize: '2rem', fontWeight: 900 }}>{resort.snowReport.summitDepth}cm</div>
+                                    <div style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--accent-cyan)', textTransform: 'uppercase' }}>Sneg na vrhu</div>
+                                </div>
+                            </div>
+
+                            <div className="ski-card-content" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                                <div style={{ marginBottom: '20px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', minHeight: '65px', marginBottom: '5px' }}>
+                                        <h3 style={{ fontSize: '1.4rem', fontWeight: 900, textTransform: 'uppercase', lineHeight: 1.2, paddingRight: '10px' }}>
+                                            {resort.country !== 'Srbija' && resort.country !== 'Serbia' ? (
+                                                <>
+                                                    {resort.localizedName || resort.name}
+                                                    {resort.localizedName !== resort.name && (
+                                                        <span style={{ fontSize: '0.6em', opacity: 0.7, textTransform: 'none', marginLeft: '8px', display: 'inline-block' }}>
+                                                            ({resort.name})
+                                                        </span>
+                                                    )}
+                                                </>
+                                            ) : resort.name}
+                                        </h3>
+                                        <div className={`status-pill ${resort.status}`} style={{ flexShrink: 0 }}>
+                                            {resort.status === 'open' ? 'Otvoreno' : 'Zatvoreno'}
+                                        </div>
+                                    </div>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                        <MapPin size={12} className="text-emerald-500" /> {resort.region}
+                                    </p>
+                                </div>
+
+                                {/* Infrastructure Visualization */}
+                                {resort.mountainStatus?.stats && (
+                                    <div style={{ marginBottom: '25px', marginTop: 'auto' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                                            <span>Infrastruktura staza</span>
+                                            <span style={{ color: 'white' }}>{resort.mountainStatus.stats.runs.totalLengthKm.toFixed(1)} km</span>
+                                        </div>
+                                        <div className="difficulty-bar-container">
+                                            {Object.entries(resort.mountainStatus.stats.runs.byDifficulty).map(([diff, s]: [string, any]) => {
+                                                const width = (s.lengthKm / (resort.mountainStatus.stats?.runs.totalLengthKm || 1)) * 100;
+                                                return (
+                                                    <div
+                                                        key={diff}
+                                                        className={`diff-bar ${diffToClass[diff] || ''}`}
+                                                        style={{ width: `${width}%` }}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Weather Mini-Grid */}
+                                <div className="weather-mini-grid" style={{ marginBottom: '30px' }}>
+                                    {['summit', 'mid', 'base'].map((level) => {
+                                        const w = resort.weather[level as keyof typeof resort.weather];
+                                        return (
+                                            <div key={level} className="weather-box">
+                                                <div className="label">{level}</div>
+                                                <div className="temp">{w.temp}°</div>
+                                                <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', fontWeight: 700 }}>{w.conditions}</div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                                    Detalji <ArrowRight size={18} />
+                                </button>
+                            </div>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </div>
+
+            {resorts.length === 0 && !isLoading && (
+                <div style={{ textAlign: 'center', padding: '100px 20px' }}>
+                    <CloudSnow size={64} style={{ opacity: 0.1, marginBottom: '20px' }} />
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: 900, textTransform: 'uppercase' }}>Nema rezultata</h3>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '10px' }}>Pokušajte sa drugim imenom planine ili države.</p>
+                </div>
+            )}
+
+            <div style={{ textAlign: 'center', marginTop: '60px', padding: '40px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <p style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px' }}>
+                    PrimeClickToTravel | Powered by Open-Meteo & OpenSkiMap
+                </p>
+            </div>
         </div>
     );
 };

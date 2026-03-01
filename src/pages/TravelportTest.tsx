@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import {
-    Plane, Globe, MapPin, Calendar, Users, Search,
-    CheckCircle, XCircle, Clock, CreditCard, ArrowRight,
-    RefreshCw, Info, AlertTriangle, Zap, Shield, Ticket
+    Plane, Globe, MapPin, Users, Search,
+    CheckCircle2, XCircle, Clock, CreditCard, ArrowRight,
+    RefreshCw, Info, AlertTriangle, Zap, Shield, Ticket, Calendar as CalendarIcon
 } from 'lucide-react';
+import { useThemeStore } from '../stores';
+import { ModernCalendar } from '../components/ModernCalendar';
 import travelportApiService from '../integrations/travelport/api/travelportApiService';
 import type {
     TravelportCredentials,
@@ -41,6 +43,12 @@ const TravelportTest: React.FC = () => {
 
     // --- Error ---
     const [error, setError] = useState<string | null>(null);
+
+    // ModernCalendar State
+    const [activeCalendar, setActiveCalendar] = useState<'departure' | null>(null);
+
+    const { theme } = useThemeStore();
+    const isLight = theme === 'light';
 
     const handleConfigure = () => {
         if (!credentials.clientId || !credentials.clientSecret) {
@@ -125,7 +133,7 @@ const TravelportTest: React.FC = () => {
                 </div>
                 <div className="hb-header-right">
                     <div className={`hb-status-pill ${isConfigured ? 'configured' : 'unconfigured'}`}>
-                        {isConfigured ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                        {isConfigured ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
                         <span>{isConfigured ? 'Konfigurisan' : 'Nije konfigurisan'}</span>
                     </div>
                     <div className="hb-env-badge">
@@ -197,8 +205,22 @@ const TravelportTest: React.FC = () => {
                                     <input className="hb-input" value={searchParams.destination} onChange={e => setSearchParams({ ...searchParams, destination: e.target.value.toUpperCase() })} />
                                 </div>
                                 <div className="hb-form-group">
-                                    <label>Date</label>
-                                    <input className="hb-input" type="date" value={searchParams.departureDate} onChange={e => setSearchParams({ ...searchParams, departureDate: e.target.value })} />
+                                    <label><CalendarIcon size={14} /> Date</label>
+                                    <div
+                                        onClick={() => setActiveCalendar('departure')}
+                                        className="hb-input"
+                                        style={{
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            background: isLight ? '#fff' : 'rgba(0,0,0,0.2)',
+                                            color: isLight ? '#0f172a' : '#f1f5f9'
+                                        }}
+                                    >
+                                        <CalendarIcon size={14} />
+                                        {searchParams.departureDate}
+                                    </div>
                                 </div>
                                 <div className="hb-form-group">
                                     <label>Passengers</label>
@@ -253,7 +275,7 @@ const TravelportTest: React.FC = () => {
                         <h2>Rezervacije i PNR — Order Create</h2>
                         {bookingResult ? (
                             <div className="hb-success-box">
-                                <CheckCircle size={24} color="#10b981" />
+                                <CheckCircle2 size={24} color="#10b981" />
                                 <div>
                                     <strong>Rezervacija uspesna!</strong>
                                     <p>PNR: <span className="hb-ref-code">{bookingResult.pnr}</span></p>
@@ -269,6 +291,18 @@ const TravelportTest: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {activeCalendar === 'departure' && (
+                <ModernCalendar
+                    startDate={searchParams.departureDate}
+                    endDate={searchParams.departureDate}
+                    singleMode
+                    onChange={(date) => {
+                        setSearchParams(p => ({ ...p, departureDate: date }));
+                    }}
+                    onClose={() => setActiveCalendar(null)}
+                />
+            )}
         </div>
     );
 };

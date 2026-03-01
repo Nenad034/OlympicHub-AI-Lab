@@ -161,15 +161,19 @@ const WorldpayTest: React.FC = () => {
             padding: '32px',
             fontFamily: "'Inter', sans-serif",
             color: isLight ? '#0e4b5e' : '#e2e8f0',
+            transition: 'all 0.3s ease',
         }}>
             {/* HEADER */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
                 <button
                     onClick={() => navigate('/api-connections')}
                     style={{
-                        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                        color: '#cbd5e1', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer',
+                        background: isLight ? '#ffffff' : 'rgba(255,255,255,0.05)',
+                        border: `1px solid ${isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)'}`,
+                        color: isLight ? '#475569' : '#cbd5e1',
+                        padding: '8px 12px', borderRadius: '8px', cursor: 'pointer',
                         display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, marginRight: '12px',
+                        boxShadow: isLight ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
                     }}
                 >
                     <ArrowLeft size={16} /> Nazad
@@ -205,16 +209,16 @@ const WorldpayTest: React.FC = () => {
 
                     {/* Config Panel */}
                     <div style={CARD_STYLE}>
-                        <h2 style={{ margin: '0 0 20px', fontSize: '15px', fontWeight: 700, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h2 style={{ margin: '0 0 20px', fontSize: '15px', fontWeight: 700, color: isLight ? '#0e4b5e' : '#f1f5f9', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Key size={16} color="#3b82f6" /> Konfiguracija Naloga
                         </h2>
 
-                        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', background: 'rgba(0,0,0,0.2)', padding: '5px', borderRadius: '8px' }}>
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', background: isLight ? '#f1f5f9' : 'rgba(0,0,0,0.2)', padding: '5px', borderRadius: '8px' }}>
                             {(['sandbox', 'production'] as const).map(env => (
                                 <button key={env} onClick={() => setEnvironment(env)} style={{
                                     flex: 1, padding: '7px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600,
-                                    background: environment === env ? (env === 'sandbox' ? 'rgba(59,130,246,0.2)' : 'rgba(239,68,68,0.2)') : 'transparent',
-                                    color: environment === env ? (env === 'sandbox' ? '#60a5fa' : '#f87171') : '#64748b',
+                                    background: environment === env ? (env === 'sandbox' ? (isLight ? '#dbeafe' : 'rgba(59,130,246,0.2)') : (isLight ? '#fee2e2' : 'rgba(239,68,68,0.2)')) : 'transparent',
+                                    color: environment === env ? (env === 'sandbox' ? (isLight ? '#1d4ed8' : '#60a5fa') : (isLight ? '#dc2626' : '#f87171')) : (isLight ? '#64748b' : '#64748b'),
                                 }}>
                                     {env === 'sandbox' ? '🧪 Sandbox' : '🔴 Production'}
                                 </button>
@@ -249,7 +253,7 @@ const WorldpayTest: React.FC = () => {
 
                     {/* Card Input Panel */}
                     <div style={CARD_STYLE}>
-                        <h2 style={{ margin: '0 0 20px', fontSize: '15px', fontWeight: 700, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h2 style={{ margin: '0 0 20px', fontSize: '15px', fontWeight: 700, color: isLight ? '#0e4b5e' : '#f1f5f9', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <CreditCard size={16} color="#3b82f6" /> Podaci o Kartici
                         </h2>
 
@@ -277,7 +281,7 @@ const WorldpayTest: React.FC = () => {
                         </div>
 
                         {/* Test Cards Info */}
-                        <div style={{ padding: '12px', borderRadius: '10px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', fontSize: '12px', color: '#93c5fd' }}>
+                        <div style={{ padding: '12px', borderRadius: '10px', background: isLight ? '#eff6ff' : 'rgba(59,130,246,0.08)', border: `1px solid ${isLight ? '#bfdbfe' : 'rgba(59,130,246,0.2)'}`, fontSize: '12px', color: isLight ? '#1e40af' : '#93c5fd' }}>
                             💡 <strong>Test kartice:</strong><br />
                             <code>...1111</code> → Autorizovano ✅<br />
                             <code>...0002</code> → Odbijeno ❌<br />
@@ -292,15 +296,16 @@ const WorldpayTest: React.FC = () => {
                     {/* Tab Bar + Content */}
                     <div style={CARD_STYLE}>
                         {/* Tab Bar */}
-                        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '10px' }}>
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', background: isLight ? '#f1f5f9' : 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '10px' }}>
                             {tabConfig.map(tab => (
                                 <button key={tab.id} onClick={() => { setActiveTab(tab.id); setStatus('idle'); }} style={{
                                     flex: 1, padding: '10px', border: 'none', borderRadius: '8px', cursor: 'pointer',
-                                    background: activeTab === tab.id ? 'rgba(37,99,235,0.2)' : 'transparent',
-                                    color: activeTab === tab.id ? '#60a5fa' : '#94a3b8',
-                                    fontWeight: 600, fontSize: '13px',
+                                    background: activeTab === tab.id ? (isLight ? '#ffffff' : 'rgba(37,99,235,0.2)') : 'transparent',
+                                    color: activeTab === tab.id ? (isLight ? '#2563eb' : '#60a5fa') : (isLight ? '#64748b' : '#94a3b8'),
+                                    fontWeight: 700, fontSize: '13px',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
                                     transition: 'all 0.2s',
+                                    boxShadow: activeTab === tab.id && isLight ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
                                 }}>
                                     {tab.icon} {tab.label}
                                 </button>
@@ -319,10 +324,10 @@ const WorldpayTest: React.FC = () => {
                                         <label style={LABEL_STYLE}>Valuta</label>
                                         <select value={currency} onChange={e => setCurrency(e.target.value)}
                                             style={{ ...INPUT_STYLE, appearance: 'none' }}>
-                                            <option value="EUR" style={{ background: '#1e293b' }}>EUR</option>
-                                            <option value="USD" style={{ background: '#1e293b' }}>USD</option>
-                                            <option value="GBP" style={{ background: '#1e293b' }}>GBP</option>
-                                            <option value="RSD" style={{ background: '#1e293b' }}>RSD</option>
+                                            <option value="EUR" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>EUR</option>
+                                            <option value="USD" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>USD</option>
+                                            <option value="GBP" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>GBP</option>
+                                            <option value="RSD" style={{ background: isLight ? '#fff' : '#1e293b', color: isLight ? '#000' : '#fff' }}>RSD</option>
                                         </select>
                                     </div>
                                     <div>
@@ -498,8 +503,8 @@ const WorldpayTest: React.FC = () => {
                     </div>
 
                     {/* API Info Card */}
-                    <div style={{ ...CARD_STYLE, background: 'rgba(37,99,235,0.04)', borderColor: 'rgba(37,99,235,0.15)' }}>
-                        <h3 style={{ margin: '0 0 14px', fontSize: '13px', fontWeight: 600, color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ ...CARD_STYLE, background: isLight ? '#f0f9ff' : 'rgba(37,99,235,0.04)', borderColor: isLight ? '#bae6fd' : 'rgba(37,99,235,0.15)' }}>
+                        <h3 style={{ margin: '0 0 14px', fontSize: '13px', fontWeight: 700, color: isLight ? '#0369a1' : '#60a5fa', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Building2 size={14} /> WORLDPAY ACCESS API — BOOKING FLOW
                         </h3>
                         {[

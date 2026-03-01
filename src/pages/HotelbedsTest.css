@@ -1151,6 +1151,42 @@
     background: #f0fdf4;
 }
 
+.light-theme .hb-select option {
+    background: white;
+    color: #0f172a;
+}
+
+.light-theme .hb-info-box {
+    background: rgba(59, 130, 246, 0.05);
+    color: #1e40af;
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.light-theme .hb-success-box {
+    background: rgba(16, 185, 129, 0.05);
+    color: #065f46;
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.light-theme .hb-results-dates {
+    color: #64748b;
+}
+
+.light-theme .hb-hotel-rooms {
+    border-color: #f1f5f9;
+}
+
+.light-theme .hb-rate-row {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.light-theme .hb-room-code {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+
 /* ─── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .hb-content {

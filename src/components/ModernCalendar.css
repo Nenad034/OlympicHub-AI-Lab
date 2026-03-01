@@ -167,6 +167,45 @@
     justify-content: center;
 }
 
+/* --- LIGHT THEME OVERRIDES --- */
+.light-theme .modern-calendar-popup.wide {
+    background: white;
+    border-color: #e2e8f0;
+    box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.15);
+}
+
+.light-theme .month-header,
+.light-theme .cal-nav {
+    color: #0f172a;
+}
+
+.light-theme .cal-nav {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+}
+
+.light-theme .calendar-day {
+    color: #334155;
+}
+
+.light-theme .calendar-day:not(.empty):hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.light-theme .calendar-day.in-range {
+    background: rgba(142, 36, 172, 0.08) !important;
+    color: #8E24AC !important;
+}
+
+.light-theme .calendar-day.selected {
+    color: white !important;
+}
+
+.light-theme .month-divider {
+    background: #e2e8f0;
+}
+
 @media (max-width: 768px) {
     .months-container {
         flex-direction: column;

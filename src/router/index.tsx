@@ -85,6 +85,8 @@ const ViatorTest = React.lazy(() => import('../pages/ViatorTest'));
 const ExpediaTest = React.lazy(() => import('../pages/ExpediaTest'));
 const TravelportTest = React.lazy(() => import('../pages/TravelportTest'));
 const SkiTest = React.lazy(() => import('../pages/SkiTest'));
+const SkiResortDetail = React.lazy(() => import('../pages/SkiResortDetail'));
+const TrafficsTest = React.lazy(() => import('../pages/TrafficsTest'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
@@ -789,6 +791,14 @@ export const router = createBrowserRouter([
                     {
                         path: 'ski-test',
                         element: <SkiTest />,
+                    },
+                    {
+                        path: 'ski-test/resort/:resortId',
+                        element: <SkiResortDetail />,
+                    },
+                    {
+                        path: 'traffics-test',
+                        element: <TrafficsTest />,
                     },
                     /* {
                         path: 'master-search',

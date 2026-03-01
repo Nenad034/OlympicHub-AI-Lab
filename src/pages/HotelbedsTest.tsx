@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import {
-    Hotel, Globe, MapPin, Star, Calendar, Users, Search,
-    CheckCircle, XCircle, Clock, CreditCard, ArrowRight,
+    Hotel, Globe, MapPin, Star, Users, Search,
+    XCircle, Clock, CreditCard, ArrowRight,
     Activity, Car, Plane, RefreshCw, Info, AlertTriangle,
-    ChevronDown, ChevronUp, Zap, Shield, Building2, Waves
+    ChevronDown, ChevronUp, Zap, Shield, Building2, Waves,
+    ExternalLink, Euro, Calendar as CalendarIcon, Filter, Link2,
+    ChevronRight, Image, Wifi, Dumbbell, Utensils, Copy, Eye, Bus, X, CheckCircle2
 } from 'lucide-react';
+import { ModernCalendar } from '../components/ModernCalendar';
 import hotelbedsApiService from '../integrations/hotelbeds/api/hotelbedsApiService';
 import type {
     HotelbedsCredentials,
@@ -15,11 +18,14 @@ import type {
     HotelBookingResponse,
     TransferBookingResponse,
 } from '../integrations/hotelbeds/types/hotelbedsTypes';
+import { useThemeStore } from '../stores';
 import './HotelbedsTest.css';
 
 type TabType = 'config' | 'hotels' | 'activities' | 'transfers' | 'bookings';
 
 const HotelbedsTest: React.FC = () => {
+    const { theme } = useThemeStore();
+    const isLight = theme === 'light';
     const [activeTab, setActiveTab] = useState<TabType>('config');
 
     // ─── Konfiguracija ────────────────────────────────────────────────
@@ -71,6 +77,7 @@ const HotelbedsTest: React.FC = () => {
 
     // ─── Error / Status ───────────────────────────────────────────────
     const [error, setError] = useState<string | null>(null);
+    const [activeCalendar, setActiveCalendar] = useState<'hotels' | 'activities' | null>(null);
 
     // ─── Handlers ─────────────────────────────────────────────────────
 
@@ -263,7 +270,7 @@ const HotelbedsTest: React.FC = () => {
                 </div>
                 <div className="hb-header-right">
                     <div className={`hb-status-pill ${isConfigured ? 'configured' : 'unconfigured'}`}>
-                        {isConfigured ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                        {isConfigured ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
                         <span>{isConfigured ? `Konfigurisan (${hotelbedsApiService.getEnvironment()})` : 'Nije konfigurisan'}</span>
                     </div>
                     <div className="hb-env-badge">
@@ -365,7 +372,7 @@ const HotelbedsTest: React.FC = () => {
 
                         {configStatus === 'success' && (
                             <div className="hb-success-box">
-                                <CheckCircle size={20} />
+                                <CheckCircle2 size={20} />
                                 <div>
                                     <strong>Uspešno konfigurisano!</strong>
                                     <p>Hotelbeds servis je aktivan. Koristite tabove iznad da testirate Hotels, Activities i Transfers API.</p>
@@ -421,15 +428,23 @@ const HotelbedsTest: React.FC = () => {
                                         placeholder="npr. PMI, IBZ, BCN, DBV"
                                     />
                                 </div>
-                                <div className="hb-form-group">
-                                    <label><Calendar size={14} /> Check-in</label>
-                                    <input type="date" className="hb-input" value={hotelSearch.checkIn}
-                                        onChange={e => setHotelSearch(p => ({ ...p, checkIn: e.target.value }))} />
-                                </div>
-                                <div className="hb-form-group">
-                                    <label><Calendar size={14} /> Check-out</label>
-                                    <input type="date" className="hb-input" value={hotelSearch.checkOut}
-                                        onChange={e => setHotelSearch(p => ({ ...p, checkOut: e.target.value }))} />
+                                <div className="hb-form-group" style={{ gridColumn: 'span 2' }}>
+                                    <label><CalendarIcon size={14} /> Period boravka</label>
+                                    <div
+                                        className="hb-input"
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            cursor: 'pointer',
+                                            background: isLight ? '#fff' : 'rgba(0,0,0,0.2)',
+                                            color: isLight ? '#0f172a' : '#f1f5f9'
+                                        }}
+                                        onClick={() => setActiveCalendar('hotels')}
+                                    >
+                                        <CalendarIcon size={16} color="#10b981" />
+                                        <span>{hotelSearch.checkIn} — {hotelSearch.checkOut}</span>
+                                    </div>
                                 </div>
                                 <div className="hb-form-group">
                                     <label><Users size={14} /> Odrasli</label>
@@ -527,7 +542,7 @@ const HotelbedsTest: React.FC = () => {
                         {checkRatesResult && (
                             <div className="hb-rate-result-card">
                                 <div className="hb-rate-result-header">
-                                    <CheckCircle size={20} color="#10b981" />
+                                    <CheckCircle2 size={20} color="#10b981" />
                                     <h3>CheckRates — Potvrđena Cena</h3>
                                 </div>
                                 <div className="hb-rate-result-body">
@@ -565,7 +580,7 @@ const HotelbedsTest: React.FC = () => {
                         {bookingResult && (
                             <div className="hb-booking-confirmed">
                                 <div className="hb-booking-header">
-                                    <CheckCircle size={32} color="#10b981" />
+                                    <CheckCircle2 size={32} color="#10b981" />
                                     <div>
                                         <h2>Rezervacija Potvrđena!</h2>
                                         <p>Status: <strong className={`hb-status-text ${bookingResult.booking.status.toLowerCase()}`}>{bookingResult.booking.status}</strong></p>
@@ -614,15 +629,16 @@ const HotelbedsTest: React.FC = () => {
                                         onChange={e => setActivitySearch(p => ({ ...p, destinationCode: e.target.value }))}
                                         placeholder="PMI, IBZ, BCN..." />
                                 </div>
-                                <div className="hb-form-group">
-                                    <label><Calendar size={14} /> Od Datuma</label>
-                                    <input type="date" className="hb-input" value={activitySearch.from}
-                                        onChange={e => setActivitySearch(p => ({ ...p, from: e.target.value }))} />
-                                </div>
-                                <div className="hb-form-group">
-                                    <label><Calendar size={14} /> Do Datuma</label>
-                                    <input type="date" className="hb-input" value={activitySearch.to}
-                                        onChange={e => setActivitySearch(p => ({ ...p, to: e.target.value }))} />
+                                <div className="hb-form-group" style={{ gridColumn: 'span 2' }}>
+                                    <label><CalendarIcon size={14} /> Period boravka</label>
+                                    <div
+                                        className="hb-input"
+                                        style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                                        onClick={() => setActiveCalendar('activities')}
+                                    >
+                                        <CalendarIcon size={16} color="#10b981" />
+                                        <span>{activitySearch.from} — {activitySearch.to}</span>
+                                    </div>
                                 </div>
                             </div>
                             <button className="hb-btn primary full-width" onClick={handleSearchActivities}
@@ -723,7 +739,7 @@ const HotelbedsTest: React.FC = () => {
                                         placeholder="Hotel kod iz Hotelbeds" />
                                 </div>
                                 <div className="hb-form-group">
-                                    <label><Calendar size={14} /> Datum i Vreme Dolaska</label>
+                                    <label><CalendarIcon size={14} /> Datum i Vreme Dolaska</label>
                                     <input type="datetime-local" className="hb-input" value={transferSearch.dateTime}
                                         onChange={e => setTransferSearch(p => ({ ...p, dateTime: e.target.value }))} />
                                 </div>
@@ -786,7 +802,7 @@ const HotelbedsTest: React.FC = () => {
                         {transferBooking && (
                             <div className="hb-booking-confirmed">
                                 <div className="hb-booking-header">
-                                    <CheckCircle size={32} color="#10b981" />
+                                    <CheckCircle2 size={32} color="#10b981" />
                                     <div>
                                         <h2>Transfer Potvrđen!</h2>
                                         <p>Status: <strong className="hb-status-text confirmed">{transferBooking.booking.status}</strong></p>
@@ -855,6 +871,22 @@ const HotelbedsTest: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {activeCalendar && (
+                <ModernCalendar
+                    startDate={activeCalendar === 'hotels' ? hotelSearch.checkIn : activitySearch.from}
+                    endDate={activeCalendar === 'hotels' ? hotelSearch.checkOut : activitySearch.to}
+                    onChange={(s, e) => {
+                        if (activeCalendar === 'hotels') {
+                            setHotelSearch(p => ({ ...p, checkIn: s, checkOut: e }));
+                        } else {
+                            setActivitySearch(p => ({ ...p, from: s, to: e }));
+                        }
+                        if (e) setActiveCalendar(null);
+                    }}
+                    onClose={() => setActiveCalendar(null)}
+                />
+            )}
         </div>
     );
 };
