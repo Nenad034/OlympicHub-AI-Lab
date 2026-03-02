@@ -28,208 +28,19 @@ import { getTranslation } from '../utils/translations';
 import type { Language } from '../utils/translations';
 import { generateDossierPDF, generateDossierHTML } from '../utils/dossierExport';
 import supplierService from '../services/SupplierService';
+import { SummaryTab } from '../components/ReservationArchitect/SummaryTab';
+import { PassengersTab } from '../components/ReservationArchitect/PassengersTab';
 import { FinancialCoreService } from '../services/financialCoreService';
 import { useToast } from '../components/ui/Toast';
 import { ActionConfirmModal } from '../components/ui/ActionConfirmModal';
 
-// --- Global Constants ---
-const NBS_RATES = {
-    'EUR': 117.00,
-    'USD': 108.00,
-    'RSD': 1.00
-} as const;
-
-// --- Types ---
-type TripType = 'Smestaj' | 'Avio karte' | 'Dinamicki paket' | 'Putovanja' | 'Transfer' | 'Čarter' | 'Bus' | 'Krstarenje';
-type CustomerType = 'B2C-Individual' | 'B2C-Legal' | 'B2B-Subagent';
-type ResStatus = 'Active' | 'Reservation' | 'Canceled' | 'Offer' | 'Request' | 'Processing' | 'Zatvoreno';
-
-interface Passenger {
-    id: string;
-    firstName: string;
-    lastName: string;
-    idNumber: string;
-    birthDate: string;
-    type: 'Adult' | 'Child' | 'Infant';
-    address?: string;
-    city?: string;
-    country?: string;
-    phone?: string;
-    email?: string;
-}
-
-
-interface TripItem {
-    id: string;
-    type: 'Smestaj' | 'Avio karte' | 'Dinamicki paket' | 'Putovanja' | 'Transfer' | 'Čarter' | 'Bus' | 'Krstarenje';
-    supplier: string;
-    country?: string;
-    city?: string;
-    subject: string; // Hotel name, Flight route, etc.
-    details: string; // Room type, Flight class, etc.
-    mealPlan?: string; // Meal plan (e.g. All Inclusive)
-    accomType?: string; // Tip smeštaja (e.g. Hotel, Apartman)
-    stars?: number; // Hotel category
-    notes?: string; // Napomene za stavku
-    supplierNotes?: string; // Napomena za dobavljača (stavka)
-    checkIn: string;
-    checkOut: string;
-    netPrice: number;
-    bruttoPrice: number;
-    passengers?: Passenger[];
-    supplierRef?: string;
-    solvexStatus?: string;
-    solvexKey?: string;
-    supplierPaymentDeadline?: string; // Deadline for paying the supplier
-    cancellationPolicyConfirmed?: boolean;
-    cancellationPolicy?: any; // Stored cancellation policy JSON
-    // Flight specific
-    flightLegs?: FlightLeg[];
-}
-
-interface FlightLeg {
-    id: string;
-    depAirport: string;
-    depDate: string;
-    depTime: string;
-    arrAirport: string;
-    arrDate: string;
-    arrTime: string;
-    flightNumber: string;
-    airline: string;
-    class?: string;
-    baggage?: string;
-}
-
-interface CheckData {
-    id: string;
-    checkNumber: string;
-    bank: string;
-    amount: number;
-    realizationDate: string;
-}
-
-interface PaymentRecord {
-    id: string;
-    date: string;
-    amount: number;
-    currency: 'RSD' | 'EUR' | 'USD';
-    method: 'Cash' | 'Card' | 'Transfer' | 'Check';
-    receiptNo: string;
-    fiscalReceiptNo?: string;
-    registrationMark?: string;
-    cardType?: 'Master' | 'Visa' | 'Dina' | 'American';
-    cardNumber?: string;
-    installmentsCount?: number;
-    // Transfer specific
-    bankName?: string;
-    payerName?: string;
-    // Payer details if not a traveler
-    payerDetails?: {
-        fullName: string;
-        phone: string;
-        email: string;
-        address: string;
-        city: string;
-        country: string;
-    };
-    isExternalPayer?: boolean;
-    travelerPayerId?: string; // ID of traveler from dossier.passengers
-    exchangeRate?: number;
-    amountInRsd?: number;
-    status?: 'active' | 'deleted';
-    // Check specific
-    checks?: CheckData[];
-}
-
-interface Installment {
-    id: string;
-    amount: number;
-    dueDate: string;
-    status: 'pending' | 'paid';
-}
-
-interface ActivityLog {
-    id: string;
-    timestamp: string;
-    operator: string;
-    action: string;
-    details: string;
-    type: 'info' | 'warning' | 'success' | 'danger';
-}
-
-interface Dossier {
-    id: string;
-    cisCode: string;
-    resCode: string | null;
-    status: ResStatus;
-    customerType: CustomerType;
-    clientReference: string;
-    booker: {
-        fullName: string;
-        address: string;
-        city: string;
-        country: string;
-        idNumber: string;
-        phone: string;
-        email: string;
-        companyPib: string;
-        companyName: string;
-    };
-    passengers: Passenger[];
-    tripItems: TripItem[];
-    finance: {
-        currency: string;
-        installments: Installment[];
-        payments: PaymentRecord[];
-    };
-    insurance: {
-        guaranteePolicy: string;
-        insurerContact: string;
-        insurerEmail: string;
-        cancellationOffered: boolean;
-        healthOffered: boolean;
-        confirmationText: string;
-        confirmationTimestamp: string;
-    };
-    logs: ActivityLog[];
-    notes: {
-        general: string;
-        contract: string;
-        voucher: string;
-        internal: string;
-        financial: string;
-        specialRequests: string;
-        supplier: string;
-    };
-    repChecked?: boolean;
-    repCheckedAt?: string;
-    repCheckedBy?: string;
-    repInternalNote?: string;
-    documentTracker: {
-        [key: string]: {
-            generated: boolean;
-            sentEmail: boolean;
-            sentViber: boolean;
-            sentPrint: boolean;
-        };
-    };
-    language: Language;
-}
-
-interface DossierCancellationModalProps {
-    item: TripItem;
-    onClose: () => void;
-}
-
-interface PaymentEntryModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    draft: PaymentRecord | null;
-    setDraft: (p: PaymentRecord) => void;
-    onSave: (p: PaymentRecord, shouldConfirm?: boolean) => void;
-    dossier: Dossier;
-}
+import type {
+    TripType, CustomerType, ResStatus, Passenger, TripItem, FlightLeg,
+    CheckData, PaymentRecord, Installment, ActivityLog, Dossier,
+    DossierCancellationModalProps, PaymentEntryModalProps
+} from '../types/reservationArchitect';
+import { NBS_RATES, DOCUMENT_TRACKER_DEFAULT } from '../constants/reservationArchitect';
+import { getRoomDescription, getMealPlanDescription } from '../utils/reservationArchitect';
 
 // --- Component ---
 const ReservationArchitect: React.FC = () => {
@@ -238,7 +49,6 @@ const ReservationArchitect: React.FC = () => {
     const [activeSection, setActiveSection] = useQueryState<string>('section', 'summary');
 
     const [advisorType, setAdvisorType] = useState('accomodation');
-    const [expandedPassengers, setExpandedPassengers] = useState<string[]>([]);
 
     const { success: toastSuccess, error: toastError, info: toastInfo, warning: toastWarning } = useToast();
     const [confirmModal, setConfirmModal] = useState<{
@@ -760,12 +570,7 @@ const ReservationArchitect: React.FC = () => {
         if (isInitialized && !dossier.documentTracker) {
             setDossier(prev => ({
                 ...prev,
-                documentTracker: {
-                    contract: { generated: false, sentEmail: false, sentViber: false, sentPrint: false },
-                    voucher: { generated: false, sentEmail: false, sentViber: false, sentPrint: false },
-                    itinerary: { generated: false, sentEmail: false, sentViber: false, sentPrint: false },
-                    proforma: { generated: false, sentEmail: false, sentViber: false, sentPrint: false }
-                }
+                documentTracker: DOCUMENT_TRACKER_DEFAULT
             }));
         }
     }, [isInitialized, dossier.documentTracker]);
@@ -863,33 +668,8 @@ const ReservationArchitect: React.FC = () => {
         }
     }, [isInitialized, dossier.tripItems.length]); // Only re-run if number of items changes or on init
 
-    const addPassenger = () => {
-        const newPax: Passenger = {
-            id: Math.random().toString(),
-            firstName: '',
-            lastName: '',
-            idNumber: '',
-            birthDate: '',
-            type: 'Adult',
-            address: '',
-            phone: '',
-            email: ''
-        };
-        setDossier(prev => ({ ...prev, passengers: [...prev.passengers, newPax] }));
-        addLog('Dodavanje Putnika', 'Novi prazan red za putnika je dodat u listu.', 'info');
-        // Auto-expand new passenger
-        setExpandedPassengers(prev => [...prev, newPax.id]);
-    };
 
 
-    const removePassenger = (id: string) => {
-        setDossier(prev => {
-            const paxToRemove = prev.passengers.find(p => p.id === id);
-            addLog('Brisanje Putnika', `Putnik ${paxToRemove?.firstName || ''} ${paxToRemove?.lastName || ''} je uklonjen iz dosijea.`, 'danger');
-            return { ...prev, passengers: prev.passengers.filter(p => p.id !== id) };
-        });
-        setExpandedPassengers(prev => prev.filter(pId => pId !== id));
-    };
 
 
     const removeTripItem = (id: string) => {
@@ -1210,33 +990,7 @@ const ReservationArchitect: React.FC = () => {
         addLog('Brisanje Čeka', `Ček ID: ${checkId} je uklonjen iz uplate ID: ${paymentId}.`, 'danger');
     };
 
-    const togglePassengerExpand = (id: string) => {
-        setExpandedPassengers(prev =>
-            prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
-        );
-    };
 
-    const copyBookerToPassengers = () => {
-        setDossier(prev => {
-            const nextPassengers = prev.passengers.map(p => ({
-                ...p,
-                address: prev.booker.address || '',
-                city: prev.booker.city || '',
-                country: prev.booker.country || '',
-                phone: prev.booker.phone || '',
-                email: prev.booker.email || ''
-            }));
-
-            // Expand all after update
-            setExpandedPassengers(nextPassengers.map(px => px.id));
-            addLog('Kopiranje Podataka', 'Podaci ugovarača kopirani na sve putnike.', 'info');
-
-            return {
-                ...prev,
-                passengers: nextPassengers
-            };
-        });
-    };
 
 
     // --- NOTEPAD SHARE FUNCTIONS ---
@@ -1285,114 +1039,7 @@ const ReservationArchitect: React.FC = () => {
         }
     };
 
-    const getSummaryNotepadText = () => {
-        let text = `Rezervacija broj : ${dossier.resCode || '---'}\n`;
-        text += `Status: ${dossier.status}\n`;
-        text += `Ref broj dobavljača: ${dossier.clientReference}\n`;
-        text += `Cis oznaka: ${dossier.cisCode}\n`;
-        text += `\nUGOVARAČ:\n${dossier.booker.fullName}\n${dossier.booker.email} | ${dossier.booker.phone}\n${dossier.booker.address}, ${dossier.booker.city}\n`;
-        text += `\nPUTNICI (${dossier.passengers.length}):\n`;
-        dossier.passengers.forEach((p, i) => {
-            text += `${i + 1}. ${p.firstName} ${p.lastName} (${p.type}) ${p.idNumber ? `- ${p.idNumber}` : ''}\n`;
-        });
-        text += `\nPLAN PUTOVANJA:\n`;
-        dossier.tripItems.forEach((item, i) => {
-            text += `${i + 1}. ${item.type.toUpperCase()}: ${item.subject}\n`;
-            text += `> Termin: ${formatDate(item.checkIn)} - ${formatDate(item.checkOut)}\n`;
-            text += `> Lokacija: ${item.city}, ${item.country}\n`;
-            text += `> Detalji: ${item.details} ${item.mealPlan ? `(${item.mealPlan})` : ''}\n`;
-            if (item.notes) text += `> Napomena: ${item.notes}\n`;
-            if (item.supplierNotes) text += `> Napomena za dobavljača: ${item.supplierNotes}\n`;
-        });
 
-        // Add Notes Section
-        const hasNotes = dossier.notes.general || dossier.notes.internal || dossier.notes.financial || dossier.notes.specialRequests || dossier.notes.contract || dossier.notes.voucher || dossier.notes.supplier || dossier.tripItems.some(item => item.supplierNotes);
-        if (hasNotes) {
-            text += `\nNAPOMENE:\n`;
-            if (dossier.notes.general) text += `- Opšte: ${dossier.notes.general}\n`;
-            if (dossier.notes.internal) text += `- Interne: ${dossier.notes.internal}\n`;
-            if (dossier.notes.financial) text += `- Finansijske: ${dossier.notes.financial}\n`;
-            if (dossier.notes.specialRequests) text += `- Specijalni zahtevi: ${dossier.notes.specialRequests}\n`;
-            if (dossier.notes.contract) text += `- Za ugovor: ${dossier.notes.contract}\n`;
-            if (dossier.notes.voucher) text += `- Za vaučer: ${dossier.notes.voucher}\n`;
-            if (dossier.notes.supplier) text += `- Dobavljač: ${dossier.notes.supplier}\n`;
-            dossier.tripItems.forEach(item => {
-                if (item.supplierNotes) text += `- Dobavljač (${item.subject}): ${item.supplierNotes}\n`;
-            });
-        }
-
-        // Add Generated Documents Section
-        const docs = [
-            { id: 'contract', label: 'Ugovor o Putovanju' },
-            { id: 'voucher', label: 'Vaučer / Smeštaj' },
-            { id: 'proforma', label: 'Račun / Profaktura' },
-            { id: 'finalFiscal', label: 'Konačni fiskalni račun' },
-            { id: 'itinerary', label: 'Plan Puta / Itinerer' }
-        ];
-        const generatedDocs = docs.filter(d => (dossier.documentTracker as any)?.[d.id]?.generated);
-        if (generatedDocs.length > 0) {
-            text += `\nGENERISANA DOKUMENTA:\n`;
-            generatedDocs.forEach(d => {
-                text += `- ${d.label}\n`;
-            });
-        }
-
-        text += `\nUKUPNO ZA NAPLATU: ${totalBrutto.toFixed(2)} ${dossier.finance.currency}\n`;
-        text += `UPLAĆENO: ${totalPaid.toFixed(2)} ${dossier.finance.currency}\n`;
-        text += `SALDO (DUG): ${balance.toFixed(2)} ${dossier.finance.currency}\n`;
-        text += `\nHvala što putujete sa Olympic Travel!`;
-        return text;
-    };
-
-    const copySummaryToClipboard = () => {
-        navigator.clipboard.writeText(getSummaryNotepadText());
-        addLog('Sistem', 'Rezime rezervacije kopiran u clipboard.', 'success');
-        alert('Rezime rezervacije je kopiran! Sada ga možete nalepiti (Paste) u Viber, Instagram ili bilo koji drugi chat.');
-    };
-
-    const shareSummaryToEmail = () => {
-        const subject = encodeURIComponent(`Rezime rezervacije - Dossier ${dossier.cisCode}`);
-        const body = encodeURIComponent(getSummaryNotepadText());
-        window.location.href = `mailto:?subject=${subject}&body=${body}`;
-    };
-
-    const shareSummaryGeneric = async () => {
-        const shareData = {
-            title: `Rezime rezervacije - Dossier ${dossier.cisCode}`,
-            text: getSummaryNotepadText()
-        };
-
-        if (navigator.share) {
-            try {
-                await navigator.share(shareData);
-                addLog('Sistem', 'Rezime rezervacije podeljen putem eksterne aplikacije.', 'info');
-            } catch (err) {
-                console.log('Share cancelled');
-            }
-        } else {
-            copySummaryToClipboard();
-        }
-    };
-
-    const getPartiesNotepadText = () => {
-        let text = `--- PUTNICI I UGOVARAČ / DOSSIER ${dossier.cisCode} ---\n`;
-        text += `TIP KLIJENTA: ${dossier.customerType}\n\n`;
-        text += `UGOVARAČ:\n`;
-        if (dossier.booker.companyName) text += `FIRMA: ${dossier.booker.companyName}\n`;
-        text += `IME: ${dossier.booker.fullName}\n`;
-        text += `ADRESA: ${dossier.booker.address}, ${dossier.booker.city}, ${dossier.booker.country}\n`;
-        text += `EMAIL: ${dossier.booker.email}\n`;
-        text += `TEL: ${dossier.booker.phone}\n`;
-        text += `JEZIK: ${dossier.language}\n\n`;
-        text += `SPISAK PUTNIKA (${dossier.passengers.length}):\n`;
-        dossier.passengers.forEach((p, i) => {
-            text += `${i + 1}. ${p.firstName} ${p.lastName} (${p.type})\n`;
-            text += `   DOC: ${p.idNumber || '---'} | ROĐEN: ${p.birthDate || '---'}\n`;
-            if (p.phone) text += `   TEL: ${p.phone}\n`;
-            if (p.email) text += `   EMAIL: ${p.email}\n`;
-        });
-        return text;
-    };
 
     const getFinanceNotepadText = () => {
         let text = `--- FINANSIJSKI IZVEŠTAJ / DOSSIER ${dossier.cisCode} ---\n`;
@@ -1462,24 +1109,6 @@ const ReservationArchitect: React.FC = () => {
         return text;
     };
 
-    const copyPartiesToClipboard = () => { navigator.clipboard.writeText(getPartiesNotepadText()); addLog('Sistem', 'Podaci o putnicima kopirani.', 'success'); alert('Kopirano!'); };
-    const copyFinanceToClipboard = () => { navigator.clipboard.writeText(getFinanceNotepadText()); addLog('Sistem', 'Finansijski podaci kopirani.', 'success'); alert('Kopirano!'); };
-    const copyNotesToClipboard = () => { navigator.clipboard.writeText(getNotesNotepadText()); addLog('Sistem', 'Napomene kopirane.', 'success'); alert('Kopirano!'); };
-    const copyHistoryToClipboard = () => { navigator.clipboard.writeText(getHistoryNotepadText()); addLog('Sistem', 'Istorija izmena kopirana.', 'success'); alert('Kopirano!'); };
-    const copyLegalToClipboard = () => { navigator.clipboard.writeText(getLegalNotepadText()); addLog('Sistem', 'Podaci o pravima i obavezama kopirani.', 'success'); alert('Kopirano!'); };
-    const copyCommsToClipboard = () => { navigator.clipboard.writeText(getCommsNotepadText()); addLog('Sistem', 'Podaci o komunikaciji kopirani.', 'success'); alert('Kopirano!'); };
-
-    const sharePartiesToEmail = () => { window.location.href = `mailto:?subject=${encodeURIComponent(`Putnici - Dossier ${dossier.cisCode}`)}&body=${encodeURIComponent(getPartiesNotepadText())}`; };
-    const shareFinanceToEmail = () => { window.location.href = `mailto:?subject=${encodeURIComponent(`Finansije - Dossier ${dossier.cisCode}`)}&body=${encodeURIComponent(getFinanceNotepadText())}`; };
-    const shareNotesToEmail = () => { window.location.href = `mailto:?subject=${encodeURIComponent(`Napomene - Dossier ${dossier.cisCode}`)}&body=${encodeURIComponent(getNotesNotepadText())}`; };
-    const shareLegalToEmail = () => { window.location.href = `mailto:?subject=${encodeURIComponent(`Prava - Dossier ${dossier.cisCode}`)}&body=${encodeURIComponent(getLegalNotepadText())}`; };
-    const shareCommsToEmail = () => { window.location.href = `mailto:?subject=${encodeURIComponent(`B2B Comms - Dossier ${dossier.cisCode}`)}&body=${encodeURIComponent(getCommsNotepadText())}`; };
-
-    const sharePartiesGeneric = async () => { if (navigator.share) try { await navigator.share({ title: `Putnici - ${dossier.cisCode}`, text: getPartiesNotepadText() }); } catch (e) { } else copyPartiesToClipboard(); };
-    const shareFinanceGeneric = async () => { if (navigator.share) try { await navigator.share({ title: `Finansije - ${dossier.cisCode}`, text: getFinanceNotepadText() }); } catch (e) { } else copyFinanceToClipboard(); };
-    const shareNotesGeneric = async () => { if (navigator.share) try { await navigator.share({ title: `Napomene - ${dossier.cisCode}`, text: getNotesNotepadText() }); } catch (e) { } else copyNotesToClipboard(); };
-    const shareLegalGeneric = async () => { if (navigator.share) try { await navigator.share({ title: `Prava - ${dossier.cisCode}`, text: getLegalNotepadText() }); } catch (e) { } else copyLegalToClipboard(); };
-    const shareCommsGeneric = async () => { if (navigator.share) try { await navigator.share({ title: `B2B Comms - ${dossier.cisCode}`, text: getCommsNotepadText() }); } catch (e) { } else copyCommsToClipboard(); };
 
     const handleSave = async () => {
         // Obavezni podaci nosioca (Booker)
@@ -1557,10 +1186,6 @@ const ReservationArchitect: React.FC = () => {
         }
     };
 
-    // Helper to get booker label based on customer type
-    const getBookerLabel = () => {
-        return 'Kontakt Osoba (Ime i Prezime)';
-    };
 
     const getTripTypeIcon = (type: string) => {
         const lowerType = type.toLowerCase();
@@ -1590,55 +1215,8 @@ const ReservationArchitect: React.FC = () => {
                         <div className="res-badge">
                             <FileText size={14} />
                             <span>REZ: <strong>{dossier.resCode || dossier.clientReference}</strong></span>
-                            {dossier.tripItems.some(i => i.supplier?.toLowerCase().includes('solvex')) && (
-                                <div className="solvex-info-tag">
-                                    <Zap size={10} color="#fbbf24" />
-                                    <span>Solvex: <strong>{dossier.tripItems.find(i => i.supplier?.toLowerCase().includes('solvex'))?.solvexStatus || 'Checking...'}</strong></span>
-                                    {dossier.tripItems.find(i => i.supplier?.toLowerCase().includes('solvex'))?.solvexKey && (
-                                        <span className="solvex-internal-id">ID: {dossier.tripItems.find(i => i.supplier?.toLowerCase().includes('solvex'))?.solvexKey}</span>
-                                    )}
-                                    <button
-                                        className="sync-solvex-btn"
-                                        title="Sinhronizuj sa Solvexom"
-                                        onClick={async (e) => {
-                                            e.stopPropagation();
-                                            const item = dossier.tripItems.find(i => i.supplier?.toLowerCase().includes('solvex'));
-                                            if (!item || !item.supplierRef) return;
+                            {/* Per-item supplier checking is now in the Summary tab */}
 
-                                            addLog('Solvex Sync', 'Pokrenuta ručna provera statusa...', 'info');
-
-                                            try {
-                                                const res = await getSolvexReservation(item.supplierRef);
-                                                if (res.success && res.data) {
-                                                    setDossier(prev => ({
-                                                        ...prev,
-                                                        tripItems: prev.tripItems.map(ti => ti.id === item.id ? {
-                                                            ...ti,
-                                                            solvexStatus: res.data.Status,
-                                                            solvexKey: res.data.ID
-                                                        } : ti)
-                                                    }));
-                                                    addLog('Solvex Sync Uspeh', `Novi status: ${res.data.Status}`, 'success');
-                                                } else {
-                                                    addLog('Solvex Sync', res.error || 'Rezervacija nije pronađena.', 'danger');
-                                                    setDossier(prev => ({
-                                                        ...prev,
-                                                        tripItems: prev.tripItems.map(ti => ti.id === item.id ? { ...ti, solvexStatus: 'Nije pronađeno' } : ti)
-                                                    }));
-                                                }
-                                            } catch (err) {
-                                                addLog('Solvex Sync Greška', err instanceof Error ? err.message : 'Greška u komunikaciji', 'danger');
-                                                setDossier(prev => ({
-                                                    ...prev,
-                                                    tripItems: prev.tripItems.map(ti => ti.id === item.id ? { ...ti, solvexStatus: 'Greška' } : ti)
-                                                }));
-                                            }
-                                        }}
-                                    >
-                                        <RefreshCw size={10} />
-                                    </button>
-                                </div>
-                            )}
                         </div>
                         <div className="horizontal-status-tags" style={{ marginLeft: dossier.resCode ? '16px' : '0' }}>
 
@@ -1790,1122 +1368,34 @@ const ReservationArchitect: React.FC = () => {
 
                         {/* SECTION 0: SUMMARY (Rezervacija) */}
                         {activeSection === 'summary' && (
-                            <section className="res-section fade-in">
-                                <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                    <div>
-                                        <h3 style={{ fontSize: '20px' }}><ShieldCheck size={20} color="var(--accent)" style={{ marginRight: '10px' }} /> Pregled Rezervacije</h3>
-                                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Konsolidovani prikaz svih stavki i podataka iz dosijea</p>
-                                    </div>
-                                    <button
-                                        className="btn-notepad-toggle"
-                                        style={{
-                                            padding: '8px 16px',
-                                            borderRadius: '8px',
-                                            background: isSummaryNotepadView ? 'var(--accent)' : 'rgba(255, 255, 255, 0.05)',
-                                            color: isSummaryNotepadView ? 'white' : 'var(--text-secondary)',
-                                            border: '1px solid var(--border)',
-                                            fontSize: '11px',
-                                            fontWeight: 800,
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px'
-                                        }}
-                                        onClick={() => setIsSummaryNotepadView(!isSummaryNotepadView)}
-                                    >
-                                        <FileText size={14} /> {isSummaryNotepadView ? 'Zatvori Notepad' : 'Notepad Pregled'}
-                                    </button>
-                                </div>
-
-                                {isSummaryNotepadView ? (
-                                    <div className="notepad-container" style={{
-                                        background: '#1e293b',
-                                        padding: '30px',
-                                        borderRadius: '16px',
-                                        border: '1px solid var(--border)',
-                                        fontFamily: 'monospace',
-                                        color: '#cbd5e1',
-                                        lineHeight: '1.6',
-                                        boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.3)',
-                                        position: 'relative'
-                                    }}>
-                                        <div className="notepad-actions" style={{
-                                            position: 'absolute',
-                                            top: '20px',
-                                            right: '25px',
-                                            display: 'flex',
-                                            gap: '8px'
-                                        }}>
-                                            <button
-                                                onClick={copySummaryToClipboard}
-                                                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'white', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}
-                                            >
-                                                <Copy size={14} /> Kopiraj
-                                            </button>
-                                            <button
-                                                onClick={shareSummaryToEmail}
-                                                style={{ background: 'rgba(59, 130, 246, 0.2)', border: '1px solid #3b82f6', color: '#60a5fa', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}
-                                            >
-                                                <Mail size={14} /> Email
-                                            </button>
-                                            <button
-                                                onClick={handlePrint}
-                                                style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', color: 'white', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}
-                                            >
-                                                <Printer size={14} /> Štampaj
-                                            </button>
-                                            <button
-                                                onClick={shareSummaryGeneric}
-                                                style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#34d399', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}
-                                            >
-                                                <Share2 size={14} /> Viber/Wapp/Insta
-                                            </button>
-                                        </div>
-                                        <div style={{ borderBottom: '1px dashed #475569', marginBottom: '20px', paddingBottom: '10px' }}>
-                                            <div style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Rezervacija broj : {dossier.resCode || '---'}</div>
-                                            <div>Status: {dossier.status}</div>
-                                            <div>Ref broj dobavljača: {dossier.clientReference}</div>
-                                            <div>Cis oznaka: {dossier.cisCode}</div>
-                                        </div>
-
-                                        <div style={{ marginBottom: '20px' }}>
-                                            <div style={{ color: '#fff', fontWeight: 'bold' }}>UGOVARAČ:</div>
-                                            <div>{dossier.booker.fullName}</div>
-                                            <div>{dossier.booker.email} | {dossier.booker.phone}</div>
-                                            <div>{dossier.booker.address}, {dossier.booker.city}</div>
-                                        </div>
-
-                                        <div style={{ marginBottom: '20px' }}>
-                                            <div style={{ color: '#fff', fontWeight: 'bold' }}>PUTNICI ({dossier.passengers.length}):</div>
-                                            {dossier.passengers.map((p, i) => (
-                                                <div key={p.id}>{i + 1}. {p.firstName} {p.lastName} ({p.type}) {p.idNumber ? `- ${p.idNumber}` : ''}</div>
-                                            ))}
-                                        </div>
-
-                                        <div style={{ marginBottom: '20px' }}>
-                                            <div style={{ color: '#fff', fontWeight: 'bold' }}>PLAN PUTOVANJA:</div>
-                                            {dossier.tripItems.map((item, i) => (
-                                                <div key={item.id} style={{ marginBottom: '10px', paddingLeft: '10px', borderLeft: '2px solid #3b82f6' }}>
-                                                    <strong>{i + 1}. {item.type.toUpperCase()}: {item.subject}</strong><br />
-                                                    &gt; Termin: {formatDate(item.checkIn)} - {formatDate(item.checkOut)}<br />
-                                                    &gt; Lokacija: {item.city}, {item.country}<br />
-                                                    &gt; Detalji: {item.details} {item.mealPlan ? `(${item.mealPlan})` : ''}
-                                                    {item.notes && <><br />&gt; Napomena: {item.notes}</>}
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {/* Combined Notes Section for Notepad */}
-                                        {(dossier.notes.general || dossier.notes.internal || dossier.notes.financial || dossier.notes.specialRequests || dossier.notes.contract || dossier.notes.voucher) && (
-                                            <div style={{ marginBottom: '20px' }}>
-                                                <div style={{ color: '#fff', fontWeight: 'bold' }}>NAPOMENE:</div>
-                                                {dossier.notes.general && <div>- Opšte: {dossier.notes.general}</div>}
-                                                {dossier.notes.internal && <div>- Interne: {dossier.notes.internal}</div>}
-                                                {dossier.notes.financial && <div>- Finansijske: {dossier.notes.financial}</div>}
-                                                {dossier.notes.specialRequests && <div>- Specijalni zahtevi: {dossier.notes.specialRequests}</div>}
-                                                {dossier.notes.contract && <div>- Za ugovor: {dossier.notes.contract}</div>}
-                                                {dossier.notes.voucher && <div>- Za vaučer: {dossier.notes.voucher}</div>}
-                                            </div>
-                                        )}
-
-                                        {/* Generated Documents Section for Notepad */}
-                                        {(() => {
-                                            const docs = [
-                                                { id: 'contract', label: 'Ugovor o Putovanju' },
-                                                { id: 'voucher', label: 'Vaučer / Smeštaj' },
-                                                { id: 'proforma', label: 'Račun / Profaktura' },
-                                                { id: 'finalFiscal', label: 'Konačni fiskalni račun' },
-                                                { id: 'itinerary', label: 'Plan Puta / Itinerer' }
-                                            ];
-                                            const generatedDocs = docs.filter(d => (dossier.documentTracker as any)?.[d.id]?.generated);
-                                            if (generatedDocs.length > 0) {
-                                                return (
-                                                    <div style={{ marginBottom: '20px' }}>
-                                                        <div style={{ color: '#fff', fontWeight: 'bold' }}>GENERISANA DOKUMENTA:</div>
-                                                        {generatedDocs.map(d => (
-                                                            <div key={d.id}>- {d.label}</div>
-                                                        ))}
-                                                    </div>
-                                                );
-                                            }
-                                            return null;
-                                        })()}
-
-                                        <div style={{ borderTop: '1px dashed #475569', marginTop: '20px', paddingTop: '10px' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span>UKUPNO ZA NAPLATU:</span>
-                                                <span style={{ color: '#fff', fontWeight: 'bold' }}>{totalBrutto.toFixed(2)} {dossier.finance.currency}</span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span>UPLAĆENO:</span>
-                                                <span style={{ color: '#10b981' }}>{totalPaid.toFixed(2)} {dossier.finance.currency}</span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #475569', marginTop: '5px', paddingTop: '5px' }}>
-                                                <span>SALDO (DUG):</span>
-                                                <span style={{ color: balance > 0 ? '#ef4444' : '#10b981', fontWeight: 'bold' }}>{balance.toFixed(2)} {dossier.finance.currency}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="summary-html-view" style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '20px',
-                                        maxWidth: '1200px',
-                                        margin: '0 auto',
-                                        width: '100%'
-                                    }}>
-                                        {/* OSNOVNI KODOVI REZERVACIJE */}
-                                        <div className="info-group codes-management-card" style={{
-                                            padding: '24px',
-                                            background: 'rgba(59, 130, 246, 0.03)',
-                                            borderRadius: '16px',
-                                            border: '1.5px dashed var(--border)',
-                                            display: 'grid',
-                                            gridTemplateColumns: '1fr 1fr 1fr',
-                                            gap: '24px'
-                                        }}>
-                                            <div className="input-field">
-                                                <label style={{ color: 'var(--accent)', fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Sistemski Broj Rezervacije (REZ)</label>
-                                                <input
-                                                    value={dossier.resCode || ''}
-                                                    placeholder="npr. 0000001/2026"
-                                                    onChange={e => setDossier({ ...dossier, resCode: e.target.value })}
-                                                    style={{
-                                                        background: 'var(--bg-card)',
-                                                        border: '1.5px solid var(--accent)',
-                                                        borderRadius: '10px',
-                                                        height: '42px',
-                                                        padding: '0 16px',
-                                                        fontSize: '15px',
-                                                        fontWeight: 700,
-                                                        width: '100%'
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className="input-field">
-                                                <label style={{ fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Klijentska Referenca (REF)</label>
-                                                <input
-                                                    value={dossier.clientReference}
-                                                    onChange={e => setDossier({ ...dossier, clientReference: e.target.value })}
-                                                    style={{
-                                                        background: 'var(--bg-card)',
-                                                        borderRadius: '10px',
-                                                        height: '42px',
-                                                        padding: '0 16px',
-                                                        fontSize: '14px',
-                                                        width: '100%'
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className="input-field">
-                                                <label style={{ fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Interni CIS Kod</label>
-                                                <input
-                                                    value={dossier.cisCode}
-                                                    readOnly
-                                                    style={{
-                                                        background: 'transparent',
-                                                        border: '1px solid var(--border)',
-                                                        borderRadius: '10px',
-                                                        height: '42px',
-                                                        padding: '0 16px',
-                                                        fontSize: '14px',
-                                                        color: 'var(--text-secondary)',
-                                                        cursor: 'not-allowed',
-                                                        width: '100%'
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-                                        {/* 1. NOSILAC PUTOVANJA - COMPACT HEADER */}
-                                        <div className="summary-card" style={{
-                                            background: 'var(--bg-card)',
-                                            borderRadius: '16px',
-                                            border: '1px solid var(--border)',
-                                            padding: '24px 32px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '24px'
-                                        }}>
-                                            <div style={{
-                                                width: '48px',
-                                                height: '48px',
-                                                borderRadius: '12px',
-                                                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.05))',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                color: 'var(--accent)',
-                                                flexShrink: 0
-                                            }}>
-                                                <User size={24} />
-                                            </div>
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 700, marginBottom: '4px' }}>Glavni Nosilac Putovanja / Ugovarač</div>
-                                                <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)', marginBottom: '8px' }}>{dossier.booker.fullName}</div>
-                                                <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                                                        <Mail size={14} color="var(--accent)" />
-                                                        {dossier.booker.email}
-                                                    </div>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                                                        <Phone size={14} color="var(--accent)" />
-                                                        {dossier.booker.phone}
-                                                    </div>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                                                        <MapPin size={14} color="var(--accent)" />
-                                                        {dossier.booker.city}, {dossier.booker.country}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* 2. PLAN PUTOVANJA - COMPACT CARDS */}
-                                        <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
-                                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <Briefcase size={18} color="var(--accent)" />
-                                                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Specifikacija Putovanja</h4>
-                                            </div>
-                                            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                                {dossier.tripItems.map((item, idx) => (
-                                                    <div key={item.id} style={{
-                                                        padding: '16px 20px',
-                                                        background: 'rgba(255,255,255,0.01)',
-                                                        borderRadius: '12px',
-                                                        border: '1px solid rgba(255,255,255,0.04)'
-                                                    }}>
-                                                        {/* Header Row */}
-                                                        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', marginBottom: '12px' }}>
-                                                            <div style={{
-                                                                width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg-panel)',
-                                                                display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', flexShrink: 0
-                                                            }}>
-                                                                {item.type === 'Smestaj' && <Building2 size={20} />}
-                                                                {item.type === 'Avio karte' && <Plane size={20} />}
-                                                                {item.type === 'Čarter' && <Zap size={20} />}
-                                                                {item.type === 'Bus' && <Compass size={20} />}
-                                                                {item.type === 'Krstarenje' && <Ship size={20} />}
-                                                                {item.type === 'Transfer' && <Truck size={20} />}
-                                                                {item.type === 'Putovanja' && <Globe size={20} />}
-                                                                {item.type === 'Dinamicki paket' && <PackageIcon size={20} />}
-                                                            </div>
-                                                            <div style={{ flex: 1 }}>
-                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                                                                    <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '1px' }}>{item.type}</div>
-                                                                    {item.supplier && <div style={{ fontSize: '10px', color: 'var(--text-secondary)', padding: '2px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }}>Provajder: {item.supplier}</div>}
-                                                                </div>
-                                                                <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                    {item.subject}
-                                                                    {item.stars && item.stars > 0 && (
-                                                                        <div style={{ display: 'flex', gap: '1px', background: 'rgba(251, 191, 36, 0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(251, 191, 36, 0.2)' }}>
-                                                                            {[...Array(item.stars)].map((_, i) => <Star key={i} size={8} fill="#fbbf24" color="#fbbf24" />)}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                                                                    <MapPin size={12} /> {item.city}, {item.country}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Details Row - 3 Columns */}
-                                                        <div style={{
-                                                            display: 'grid',
-                                                            gridTemplateColumns: 'repeat(3, 1fr)',
-                                                            gap: '12px',
-                                                            padding: '12px 16px',
-                                                            background: 'rgba(0,0,0,0.08)',
-                                                            borderRadius: '8px',
-                                                            borderTop: '1px solid rgba(255,255,255,0.05)'
-                                                        }}>
-                                                            <div>
-                                                                <div style={{ color: 'var(--text-secondary)', marginBottom: '2px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Tip Smeštaja / Opis</div>
-                                                                <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-primary)' }}>{item.details || 'Standard Room'}</div>
-                                                            </div>
-                                                            <div>
-                                                                <div style={{ color: 'var(--text-secondary)', marginBottom: '2px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Datum Putovanja</div>
-                                                                <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-primary)' }}>{formatDate(item.checkIn)} - {formatDate(item.checkOut)}</div>
-                                                            </div>
-                                                            <div>
-                                                                <div style={{ color: 'var(--text-secondary)', marginBottom: '2px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Usluga / Aranžman</div>
-                                                                <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-primary)' }}>{item.mealPlan || 'BB - Noćenje sa doručkom'}</div>
-                                                            </div>
-                                                            {item.supplierPaymentDeadline && (
-                                                                <div style={{ gridColumn: 'span 3', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                    <Clock size={12} color="#f59e0b" />
-                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 600 }}>ROK PLAĆANJA DOBAVLJAČU:</span>
-                                                                        <span style={{
-                                                                            fontSize: '11px',
-                                                                            fontWeight: 800,
-                                                                            color: new Date(item.supplierPaymentDeadline) < new Date() ? '#ef4444' : '#f59e0b'
-                                                                        }}>
-                                                                            {formatDate(item.supplierPaymentDeadline)}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                            {item.cancellationPolicy && (
-                                                                <div style={{ gridColumn: 'span 3', borderTop: '1px dashed rgba(255,255,255,0.05)', paddingTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                                        <ShieldAlert size={12} color="#94a3b8" />
-                                                                        <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>OTKAZNI USLOVI:</span>
-                                                                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Dostupni u bazi</span>
-                                                                    </div>
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setPolicyToShow({ item, idx });
-                                                                        }}
-                                                                        style={{
-                                                                            background: 'rgba(59, 130, 246, 0.1)',
-                                                                            border: '1px solid rgba(59, 130, 246, 0.2)',
-                                                                            color: 'var(--accent)',
-                                                                            padding: '2px 8px',
-                                                                            borderRadius: '4px',
-                                                                            fontSize: '10px',
-                                                                            fontWeight: 800,
-                                                                            cursor: 'pointer'
-                                                                        }}
-                                                                    >
-                                                                        PRIKAŽI USLOVE
-                                                                    </button>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        {item.supplierNotes && (
-                                                            <div style={{ marginTop: '12px', padding: '10px 14px', background: 'rgba(251, 191, 36, 0.05)', borderLeft: '3px solid #fbbf24', borderRadius: '8px' }}>
-                                                                <div style={{ fontWeight: 700, marginBottom: '2px', color: '#fbbf24', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                                    <Briefcase size={12} /> Napomena za Dobavljača
-                                                                </div>
-                                                                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.4' }}>{item.supplierNotes}</p>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        {/* 3. PUTNICI - COMPACT GRID */}
-                                        <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
-                                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <Users size={18} color="var(--accent)" />
-                                                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Učesnici Putovanja</h4>
-                                            </div>
-                                            <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
-                                                {dossier.passengers.map((p, pIdx) => (
-                                                    <div key={p.id} style={{
-                                                        padding: '12px 16px',
-                                                        background: 'rgba(255,255,255,0.02)',
-                                                        borderRadius: '10px',
-                                                        border: '1px solid rgba(255,255,255,0.05)',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '12px'
-                                                    }}>
-                                                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--bg-panel)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 800, flexShrink: 0 }}>
-                                                            {pIdx + 1}
-                                                        </div>
-                                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                                            <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.firstName} {p.lastName}</div>
-                                                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>{p.type} {p.idNumber ? `| Dok: ${p.idNumber}` : ''}</div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        {/* 4. DOKUMENTA I NAPOMENE - TWO COLUMNS */}
-                                        <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '20px', alignItems: 'stretch' }}>
-                                            {/* Document Tracking */}
-                                            <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <FileText size={18} color="var(--accent)" />
-                                                    <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Slanje Dokumenata</h4>
-                                                </div>
-                                                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-                                                    {[
-                                                        { id: 'contract', label: 'Ugovor o Putovanju' },
-                                                        { id: 'voucher', label: 'Vaučer / Smeštaj' },
-                                                        { id: 'proforma', label: 'Račun / Profaktura' },
-                                                        { id: 'finalFiscal', label: 'Konačni fiskalni račun' },
-                                                        { id: 'itinerary', label: 'Plan Puta / Itinerer' }
-                                                    ].map(doc => {
-                                                        const isSentEmail = (dossier as any).documentTracker?.[doc.id]?.sentEmail;
-                                                        const isSentViber = (dossier as any).documentTracker?.[doc.id]?.sentViber;
-                                                        const isSentPrint = (dossier as any).documentTracker?.[doc.id]?.sentPrint;
-
-                                                        return (
-                                                            <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                                                                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>{doc.label}</span>
-                                                                <div style={{ display: 'flex', gap: '4px' }}>
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setDossier(prev => ({
-                                                                                ...prev,
-                                                                                documentTracker: {
-                                                                                    ...prev.documentTracker,
-                                                                                    [doc.id]: { ...(prev.documentTracker as any)[doc.id], sentEmail: !isSentEmail }
-                                                                                }
-                                                                            } as any));
-                                                                        }}
-                                                                        style={{
-                                                                            width: '24px', height: '24px', borderRadius: '4px',
-                                                                            background: isSentEmail ? 'var(--accent)' : 'var(--bg-panel)',
-                                                                            color: isSentEmail ? 'white' : 'var(--text-secondary)',
-                                                                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s',
-                                                                            border: '1px solid var(--border)'
-                                                                        }}
-                                                                        title="Email"
-                                                                    >
-                                                                        <Mail size={10} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setDossier(prev => ({
-                                                                                ...prev,
-                                                                                documentTracker: {
-                                                                                    ...prev.documentTracker,
-                                                                                    [doc.id]: { ...(prev.documentTracker as any)[doc.id], sentViber: !isSentViber }
-                                                                                }
-                                                                            } as any));
-                                                                        }}
-                                                                        style={{
-                                                                            width: '24px', height: '24px', borderRadius: '4px',
-                                                                            background: isSentViber ? '#22c55e' : 'var(--bg-panel)',
-                                                                            color: isSentViber ? 'white' : 'var(--text-secondary)',
-                                                                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s',
-                                                                            border: '1px solid var(--border)'
-                                                                        }}
-                                                                        title="Viber/WhatsApp"
-                                                                    >
-                                                                        <Share2 size={10} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setDossier(prev => ({
-                                                                                ...prev,
-                                                                                documentTracker: {
-                                                                                    ...prev.documentTracker,
-                                                                                    [doc.id]: { ...(prev.documentTracker as any)[doc.id], sentPrint: !isSentPrint }
-                                                                                }
-                                                                            } as any));
-                                                                        }}
-                                                                        style={{
-                                                                            width: '24px', height: '24px', borderRadius: '4px',
-                                                                            background: isSentPrint ? '#94a3b8' : 'var(--bg-panel)',
-                                                                            color: isSentPrint ? 'white' : 'var(--text-secondary)',
-                                                                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s',
-                                                                            border: '1px solid var(--border)'
-                                                                        }}
-                                                                        title="Print"
-                                                                    >
-                                                                        <Printer size={10} />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-
-                                            {/* Unified Notes Card */}
-                                            <div className="summary-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <AlertTriangle size={18} color="var(--accent)" />
-                                                    <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Sve Napomene i Specijalni Zahtevi</h4>
-                                                </div>
-                                                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
-                                                    {/* General Notes */}
-                                                    {dossier.notes.general && (
-                                                        <div style={{ padding: '12px 14px', background: 'rgba(59, 130, 246, 0.05)', borderLeft: '3px solid var(--accent)', borderRadius: '8px' }}>
-                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: 'var(--accent)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📋 Opšte Napomene</div>
-                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{dossier.notes.general}</p>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Internal Notes */}
-                                                    {dossier.notes.internal && (
-                                                        <div style={{ padding: '12px 14px', background: 'rgba(168, 85, 247, 0.05)', borderLeft: '3px solid #a855f7', borderRadius: '8px' }}>
-                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: '#a855f7', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🔒 Interne Napomene</div>
-                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{dossier.notes.internal}</p>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Financial Notes */}
-                                                    {dossier.notes.financial && (
-                                                        <div style={{ padding: '12px 14px', background: 'rgba(34, 197, 94, 0.05)', borderLeft: '3px solid #22c55e', borderRadius: '8px' }}>
-                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: '#22c55e', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>💰 Finansijske</div>
-                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{dossier.notes.financial}</p>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Special Requests */}
-                                                    {dossier.notes.specialRequests && (
-                                                        <div style={{ padding: '12px 14px', background: 'rgba(234, 179, 8, 0.05)', borderLeft: '3px solid #eab308', borderRadius: '8px' }}>
-                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: '#eab308', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>⭐ Specijalni Zahtevi</div>
-                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{dossier.notes.specialRequests}</p>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Contract Notes */}
-                                                    {dossier.notes.contract && (
-                                                        <div style={{ padding: '12px 14px', background: 'rgba(59, 130, 246, 0.05)', borderLeft: '3px solid var(--accent)', borderRadius: '8px' }}>
-                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: 'var(--accent)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📝 Napomena za Ugovor</div>
-                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{dossier.notes.contract}</p>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Voucher Notes */}
-                                                    {dossier.notes.voucher && (
-                                                        <div style={{ padding: '12px 14px', background: 'rgba(16, 185, 129, 0.05)', borderLeft: '3px solid #10b981', borderRadius: '8px' }}>
-                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: '#10b981', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🎫 Napomena za Vaučer</div>
-                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{dossier.notes.voucher}</p>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Supplier Notes - Always Visible and Editable */}
-                                                    <div style={{ padding: '12px 14px', background: 'rgba(251, 191, 36, 0.05)', borderLeft: '3px solid #fbbf24', borderRadius: '8px' }}>
-                                                        <div style={{ fontWeight: 700, marginBottom: '8px', color: '#fbbf24', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                            <Briefcase size={12} /> Napomena za Dobavljača
-                                                        </div>
-                                                        <textarea
-                                                            value={dossier.notes.supplier}
-                                                            onChange={(e) => setDossier({ ...dossier, notes: { ...dossier.notes, supplier: e.target.value } })}
-                                                            style={{
-                                                                width: '100%',
-                                                                minHeight: '45px',
-                                                                background: 'transparent',
-                                                                border: 'none',
-                                                                padding: 0,
-                                                                color: 'var(--text-primary)',
-                                                                resize: 'vertical',
-                                                                fontSize: '12px',
-                                                                lineHeight: '1.5',
-                                                                outline: 'none'
-                                                            }}
-                                                            placeholder="Unesite napomenu za dobavljača..."
-                                                        />
-                                                    </div>
-
-                                                    {/* Trip Item Notes */}
-                                                    {dossier.tripItems.filter(item => item.notes).map((item) => (
-                                                        <div key={item.id} style={{ padding: '12px 14px', background: 'rgba(239, 68, 68, 0.05)', borderLeft: '3px solid #ef4444', borderRadius: '8px' }}>
-                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: '#ef4444', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>⚠️ {item.subject}</div>
-                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{item.notes}</p>
-                                                        </div>
-                                                    ))}
-
-                                                    {/* Trip Item Supplier Notes */}
-                                                    {dossier.tripItems.filter(item => item.supplierNotes).map((item) => (
-                                                        <div key={item.id} style={{ padding: '12px 14px', background: 'rgba(251, 191, 36, 0.05)', borderLeft: '3px solid #fbbf24', borderRadius: '8px' }}>
-                                                            <div style={{ fontWeight: 700, marginBottom: '4px', color: '#fbbf24', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>💼 {item.subject} (Dobavljač)</div>
-                                                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>{item.supplierNotes}</p>
-                                                        </div>
-                                                    ))}
-
-                                                    {/* No Notes Message */}
-                                                    {!dossier.notes.general && !dossier.notes.internal && !dossier.notes.financial && !dossier.notes.specialRequests && !dossier.notes.contract && !dossier.notes.voucher && !dossier.notes.supplier && !dossier.tripItems.some(item => item.notes || item.supplierNotes) && (
-                                                        <div style={{ padding: '10px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '12px', fontStyle: 'italic' }}>
-                                                            Nema dodatnih napomena.
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* 5. FINANSIJSKI PREGLED - COMPACT & BALANCED */}
-                                        <div className="summary-card finance-final-card" style={{
-                                            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05))',
-                                            borderRadius: '16px',
-                                            padding: '24px 32px',
-                                            border: '1px solid rgba(59, 130, 246, 0.3)',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '20px'
-                                        }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <div>
-                                                    <div style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Status Rezervacije</div>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                        <div style={{ padding: '6px 16px', background: 'var(--accent)', borderRadius: '20px', fontWeight: 800, fontSize: '14px', color: 'white' }}>
-                                                            {dossier.status.toUpperCase()}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div style={{ textAlign: 'right' }}>
-                                                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 600 }}>Ukupna Vrednost Dosijea</div>
-                                                    <div style={{ fontSize: '32px', fontWeight: 900, lineHeight: 1, color: 'var(--text-primary)' }}>{totalBrutto.toFixed(2)} <span style={{ fontSize: '18px', fontWeight: 700 }}>{dossier.finance.currency}</span></div>
-                                                </div>
-                                            </div>
-
-                                            <div style={{ height: '1px', background: 'rgba(255,255,255,0.15)' }}></div>
-
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px', fontWeight: 700, letterSpacing: '1px' }}>Dosad uplaćeno</div>
-                                                    <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)' }}>{totalPaid.toFixed(2)} {dossier.finance.currency}</div>
-                                                    <div style={{ fontSize: '11px', marginTop: '6px', color: 'var(--text-secondary)', fontWeight: 600 }}>{((totalPaid / totalBrutto) * 100).toFixed(1)}% od ukupne sume</div>
-                                                </div>
-                                                <div style={{
-                                                    background: balance > 0.01 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                                                    padding: '16px 20px',
-                                                    borderRadius: '12px',
-                                                    border: `1px solid ${balance > 0.01 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`
-                                                }}>
-                                                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px', fontWeight: 700, letterSpacing: '1px' }}>Preostalo (SALDO)</div>
-                                                    <div style={{ fontSize: '20px', fontWeight: 900, color: balance > 0.01 ? '#ef4444' : '#10b981' }}>{balance.toFixed(2)} {dossier.finance.currency}</div>
-                                                    <div style={{ fontSize: '11px', marginTop: '6px', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                                                        {balance > 0.01 ? `${((balance / totalBrutto) * 100).toFixed(1)}% preostalo za naplatu` : 'DOSIJE JE U CELOSTI ISPLAĆEN'}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div style={{ textAlign: 'center', fontSize: '10px', color: 'var(--text-secondary)', marginTop: '8px', fontStyle: 'italic' }}>
-                                                * Ovaj dokument je informativnog karaktera. Sva plaćanja se vrše u skladu sa Opštim uslovima putovanja.
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </section>
+                            <SummaryTab
+                                dossier={dossier}
+                                setDossier={setDossier}
+                                totalBrutto={totalBrutto}
+                                totalPaid={totalPaid}
+                                balance={balance}
+                                isSummaryNotepadView={isSummaryNotepadView}
+                                setIsSummaryNotepadView={setIsSummaryNotepadView}
+                                addLog={addLog}
+                                setPolicyToShow={setPolicyToShow}
+                                handlePrint={handlePrint}
+                            />
                         )}
 
                         {/* SECTION 1: CUSTOMER & PASSENGERS */}
                         {activeSection === 'parties' && (
-                            <section className="res-section fade-in">
-                                <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                    <div>
-                                        <h3 style={{ fontSize: '20px' }}><Users size={20} color="var(--accent)" style={{ marginRight: '10px' }} /> Svi Putnici</h3>
-                                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Podaci o ugovaraču (nalagodavcu) i svim učesnicima putovanja</p>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                        <button
-                                            className="btn-notepad-toggle"
-                                            style={{
-                                                padding: '8px 16px',
-                                                borderRadius: '8px',
-                                                background: isPartiesNotepadView ? 'var(--accent)' : 'rgba(255, 255, 255, 0.05)',
-                                                color: isPartiesNotepadView ? 'white' : 'var(--text-secondary)',
-                                                border: '1px solid var(--border)',
-                                                fontSize: '11px',
-                                                fontWeight: 800,
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '6px'
-                                            }}
-                                            onClick={() => setIsPartiesNotepadView(!isPartiesNotepadView)}
-                                        >
-                                            <FileText size={14} /> {isPartiesNotepadView ? 'Zatvori Notepad' : 'Notepad Pregled'}
-                                        </button>
-                                        <div className="type-toggle">
-                                            <button className={dossier.customerType === 'B2C-Individual' ? 'selected' : ''} disabled={isSubagent} onClick={() => { setDossier({ ...dossier, customerType: 'B2C-Individual' }); addLog('Tip Klijenta', 'Tip klijenta promenjen u "Individualni".', 'info'); }}>Individualni</button>
-                                            <button className={dossier.customerType === 'B2B-Subagent' ? 'selected' : ''} disabled={isSubagent} onClick={() => { setDossier({ ...dossier, customerType: 'B2B-Subagent' }); addLog('Tip Klijenta', 'Tip klijenta promenjen u "Subagent".', 'info'); }}>Subagent</button>
-                                            <button className={dossier.customerType === 'B2C-Legal' ? 'selected' : ''} disabled={isSubagent} onClick={() => { setDossier({ ...dossier, customerType: 'B2C-Legal' }); addLog('Tip Klijenta', 'Tip klijenta promenjen u "Pravno Lice".', 'info'); }}>Pravno Lice</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {isPartiesNotepadView ? (
-                                    <div className="notepad-container" style={{
-                                        background: '#1e293b',
-                                        padding: '30px',
-                                        borderRadius: '16px',
-                                        border: '1px solid var(--border)',
-                                        fontFamily: 'monospace',
-                                        color: '#cbd5e1',
-                                        lineHeight: '1.6',
-                                        boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.3)',
-                                        position: 'relative',
-                                        marginBottom: '30px'
-                                    }}>
-                                        <div className="notepad-actions" style={{
-                                            position: 'absolute',
-                                            top: '20px',
-                                            right: '25px',
-                                            display: 'flex',
-                                            gap: '8px'
-                                        }}>
-                                            <button
-                                                onClick={copyPartiesToClipboard}
-                                                style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', color: 'white', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}
-                                            >
-                                                <Copy size={14} /> Kopiraj
-                                            </button>
-                                            <button
-                                                onClick={sharePartiesToEmail}
-                                                style={{ background: 'rgba(59, 130, 246, 0.2)', border: '1px solid #3b82f6', color: '#60a5fa', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}
-                                            >
-                                                <Mail size={14} /> Email
-                                            </button>
-                                            <button
-                                                onClick={handlePrint}
-                                                style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', color: 'white', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}
-                                            >
-                                                <Printer size={14} /> Štampaj
-                                            </button>
-                                            <button
-                                                onClick={sharePartiesGeneric}
-                                                style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#34d399', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}
-                                            >
-                                                <Share2 size={14} /> Viber/Wapp/Insta
-                                            </button>
-                                        </div>
-
-                                        <div style={{ borderBottom: '1px dashed #475569', marginBottom: '20px', paddingBottom: '10px' }}>
-                                            <h4 style={{ margin: 0, color: 'var(--accent)' }}>--- PUTNICI I UGOVARAČ / DOSSIER {dossier.cisCode} ---</h4>
-                                        </div>
-                                        <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
-                                            {getPartiesNotepadText()}
-                                        </pre>
-                                    </div>
-                                ) : (
-                                    <>
-
-                                        <div className="info-group main-booker-card">
-                                            <div className="booker-header-row">
-                                                <label>Ugovarač (Nalagodavac)</label>
-                                                <button className="copy-to-all-btn" onClick={copyBookerToPassengers}>
-                                                    <ArrowRightLeft size={12} /> Kopiraj podatke na sve putnike
-                                                </button>
-                                            </div>
-
-                                            <div className="grid-v4">
-                                                {dossier.customerType !== 'B2C-Individual' && (
-                                                    <div className="input-field">
-                                                        <label>{dossier.customerType === 'B2B-Subagent' ? 'Naziv Subagenta' : 'Naziv Firme'}</label>
-                                                        <div style={{ position: 'relative' }}>
-                                                            <input
-                                                                value={dossier.booker.companyName}
-                                                                onChange={e => setDossier({ ...dossier, booker: { ...dossier.booker, companyName: e.target.value } })}
-                                                                placeholder={dossier.customerType === 'B2B-Subagent' ? 'Pretraži bazu subagenata...' : 'Naziv kompanije...'}
-                                                                style={{ paddingRight: '40px' }}
-                                                            />
-                                                            <Search size={16} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                < div className="input-field">
-                                                    <label>{getBookerLabel()}</label>
-                                                    <input
-                                                        value={dossier.booker.fullName}
-                                                        onChange={e => setDossier({ ...dossier, booker: { ...dossier.booker, fullName: e.target.value } })}
-                                                        placeholder="Unesite ime i prezime osobe"
-                                                    />
-                                                </div>
-                                                <div className="input-field">
-                                                    <label>Adresa</label>
-                                                    <input
-                                                        value={dossier.booker.address}
-                                                        onChange={e => setDossier({ ...dossier, booker: { ...dossier.booker, address: e.target.value } })}
-                                                        placeholder="Zmaj Jovina 1"
-                                                    />
-                                                </div>
-                                                <div className="input-field">
-                                                    <label>Grad</label>
-                                                    <input
-                                                        value={dossier.booker.city}
-                                                        onChange={e => setDossier({ ...dossier, booker: { ...dossier.booker, city: e.target.value } })}
-                                                        placeholder="Beograd"
-                                                    />
-                                                </div>
-                                                <div className="input-field">
-                                                    <label>Država</label>
-                                                    <select
-                                                        value={dossier.booker.country || 'Srbija'}
-                                                        onChange={e => setDossier({ ...dossier, booker: { ...dossier.booker, country: e.target.value } })}
-                                                    >
-                                                        {NATIONALITIES.map(n => (
-                                                            <option key={n.code} value={n.name}>{n.name}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div className="input-field">
-                                                    <label>Email</label>
-                                                    <input
-                                                        value={dossier.booker.email}
-                                                        onChange={e => setDossier({ ...dossier, booker: { ...dossier.booker, email: e.target.value } })}
-                                                    />
-                                                </div>
-                                                <div className="input-field">
-                                                    <label>Telefon</label>
-                                                    <input
-                                                        value={dossier.booker.phone}
-                                                        onChange={e => setDossier({ ...dossier, booker: { ...dossier.booker, phone: e.target.value } })}
-                                                        placeholder="+381..."
-                                                    />
-                                                </div>
-                                                <div className="input-field">
-                                                    <label>Jezik Dokumentacije</label>
-                                                    <div className="language-selector-pills" style={{
-                                                        display: 'flex',
-                                                        gap: '8px',
-                                                        background: 'rgba(255,255,255,0.05)',
-                                                        border: '1px solid rgba(255,255,255,0.1)',
-                                                        padding: '4px',
-                                                        borderRadius: '10px'
-                                                    }}>
-                                                        <button
-                                                            className={`lang-pill ${dossier.language === 'Srpski' ? 'active' : ''}`}
-                                                            style={{
-                                                                flex: 1,
-                                                                padding: '8px',
-                                                                borderRadius: '8px',
-                                                                border: 'none',
-                                                                cursor: 'pointer',
-                                                                fontSize: '11px',
-                                                                fontWeight: 800,
-                                                                transition: 'all 0.2s',
-                                                                background: dossier.language === 'Srpski' ? 'var(--accent)' : 'transparent',
-                                                                color: dossier.language === 'Srpski' ? 'white' : 'var(--text-secondary)'
-                                                            }}
-                                                            onClick={() => setDossier({ ...dossier, language: 'Srpski' })}
-                                                        >
-                                                            SRPSKI
-                                                        </button>
-                                                        <button
-                                                            className={`lang-pill ${dossier.language === 'Engleski' ? 'active' : ''}`}
-                                                            style={{
-                                                                flex: 1,
-                                                                padding: '8px',
-                                                                borderRadius: '8px',
-                                                                border: 'none',
-                                                                cursor: 'pointer',
-                                                                fontSize: '11px',
-                                                                fontWeight: 800,
-                                                                transition: 'all 0.2s',
-                                                                background: dossier.language === 'Engleski' ? 'var(--accent)' : 'transparent',
-                                                                color: dossier.language === 'Engleski' ? 'white' : 'var(--text-secondary)'
-                                                            }}
-                                                            onClick={() => setDossier({ ...dossier, language: 'Engleski' })}
-                                                        >
-                                                            ENGLISH
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                {dossier.customerType !== 'B2C-Individual' && (
-                                                    <div className="input-field">
-                                                        <label>PIB / MB (Srpske Kompanije)</label>
-                                                        <div style={{ display: 'flex', gap: '8px' }}>
-                                                            <input
-                                                                value={dossier.booker.companyPib}
-                                                                placeholder="Unesite PIB za auto-popunjavanje..."
-                                                                onChange={e => setDossier({ ...dossier, booker: { ...dossier.booker, companyPib: e.target.value } })}
-                                                            />
-                                                            <button
-                                                                className="btn-sync-cis"
-                                                                style={{ width: 'auto', padding: '0 12px', fontSize: '11px', whiteSpace: 'nowrap' }}
-                                                                onClick={() => {
-                                                                    if (!dossier.booker.companyPib) return alert('Molimo unesite PIB');
-                                                                    addLog('APR Pretraga', `Pokrenuta pretraga za PIB: ${dossier.booker.companyPib}`, 'info');
-                                                                    // Mocking company fetch
-                                                                    setTimeout(() => {
-                                                                        setDossier({
-                                                                            ...dossier,
-                                                                            booker: {
-                                                                                ...dossier.booker,
-                                                                                companyName: 'OLYMPIC DEVELOPMENT DOO',
-                                                                                address: 'Bulevar Despota Stefana 12',
-                                                                                city: 'Beograd',
-                                                                                country: 'Srbija'
-                                                                            }
-                                                                        });
-                                                                        setShowSaveClientBtn(true);
-                                                                        addLog('APR Uspeh', 'Podaci o firmi uspešno povučeni sa APR-a.', 'success');
-                                                                    }, 800);
-                                                                }}
-                                                            >
-                                                                <Zap size={14} /> APR Provera
-                                                            </button>
-                                                            {showSaveClientBtn && (
-                                                                <button
-                                                                    className="btn-sync-cis"
-                                                                    style={{
-                                                                        width: 'auto',
-                                                                        padding: '0 12px',
-                                                                        fontSize: '11px',
-                                                                        whiteSpace: 'nowrap',
-                                                                        background: '#10b981',
-                                                                        borderColor: '#059669',
-                                                                        color: 'white'
-                                                                    }}
-                                                                    onClick={handleSaveToClients}
-                                                                >
-                                                                    <Save size={14} /> Sačuvaj Klijenta
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="passengers-list">
-                                            <div className="list-header">
-                                                <h4>Svi putnici na ugovoru</h4>
-                                                <button className="add-btn" onClick={addPassenger}><UserPlus size={14} /> Dodaj putnika</button>
-                                            </div>
-                                            <table className="pax-table-v4">
-                                                <thead>
-                                                    <tr>
-                                                        <th style={{ width: '40px' }}></th>
-                                                        <th>Ime</th>
-                                                        <th>Prezime</th>
-                                                        <th>ID / Pasoš</th>
-                                                        <th>Datum Rođenja</th>
-                                                        <th>Tip</th>
-                                                        <th></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {dossier.passengers.map((pax, pIdx) => (
-                                                        <React.Fragment key={pax.id}>
-                                                            <tr>
-                                                                <td>
-                                                                    <button
-                                                                        className={`expand-pax-btn ${expandedPassengers.includes(pax.id) ? 'expanded' : ''}`}
-                                                                        onClick={() => togglePassengerExpand(pax.id)}
-                                                                    >
-                                                                        <Plus size={14} />
-                                                                    </button>
-                                                                </td>
-                                                                <td>
-                                                                    <input
-                                                                        value={pax.firstName}
-                                                                        onChange={e => {
-                                                                            const next = [...dossier.passengers];
-                                                                            next[pIdx].firstName = e.target.value;
-                                                                            setDossier({ ...dossier, passengers: next });
-                                                                        }}
-                                                                    />
-                                                                </td>
-                                                                <td>
-                                                                    <input
-                                                                        value={pax.lastName}
-                                                                        onChange={e => {
-                                                                            const next = [...dossier.passengers];
-                                                                            next[pIdx].lastName = e.target.value;
-                                                                            setDossier({ ...dossier, passengers: next });
-                                                                        }}
-                                                                    />
-                                                                </td>
-                                                                <td>
-                                                                    <input
-                                                                        value={pax.idNumber}
-                                                                        onChange={e => {
-                                                                            const next = [...dossier.passengers];
-                                                                            next[pIdx].idNumber = e.target.value;
-                                                                            setDossier({ ...dossier, passengers: next });
-                                                                        }}
-                                                                    />
-                                                                </td>
-                                                                <td>
-                                                                    <input
-                                                                        type="date"
-                                                                        value={pax.birthDate}
-                                                                        onChange={e => {
-                                                                            const next = [...dossier.passengers];
-                                                                            next[pIdx].birthDate = e.target.value;
-                                                                            setDossier({ ...dossier, passengers: next });
-                                                                        }}
-                                                                    />
-                                                                </td>
-                                                                <td>
-                                                                    <select
-                                                                        value={pax.type}
-                                                                        onChange={e => {
-                                                                            const next = [...dossier.passengers];
-                                                                            next[pIdx].type = e.target.value as any;
-                                                                            setDossier({ ...dossier, passengers: next });
-                                                                        }}
-                                                                    >
-                                                                        <option value="Adult" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Odrasli</option>
-                                                                        <option value="Child" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Dete</option>
-                                                                        <option value="Infant" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Beba</option>
-                                                                    </select>
-                                                                </td>
-                                                                <td><button className="del-btn-v4" onClick={() => removePassenger(pax.id)}><Trash2 size={14} /></button></td>
-                                                            </tr>
-                                                            {expandedPassengers.includes(pax.id) && (
-                                                                <tr className="pax-extra-info-row fade-in">
-                                                                    <td colSpan={1}></td>
-                                                                    <td colSpan={6}>
-                                                                        <div className="pax-extra-fields" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-                                                                            <div className="extra-field-group">
-                                                                                <label>Adresa</label>
-                                                                                <input
-                                                                                    value={pax.address || ''}
-                                                                                    placeholder="Unesite adresu..."
-                                                                                    onChange={e => {
-                                                                                        const next = [...dossier.passengers];
-                                                                                        next[pIdx].address = e.target.value;
-                                                                                        setDossier({ ...dossier, passengers: next });
-                                                                                    }}
-                                                                                />
-                                                                            </div>
-                                                                            <div className="extra-field-group">
-                                                                                <label>Grad</label>
-                                                                                <input
-                                                                                    value={pax.city || ''}
-                                                                                    placeholder="Unesite grad..."
-                                                                                    onChange={e => {
-                                                                                        const next = [...dossier.passengers];
-                                                                                        next[pIdx].city = e.target.value;
-                                                                                        setDossier({ ...dossier, passengers: next });
-                                                                                    }}
-                                                                                />
-                                                                            </div>
-                                                                            <div className="extra-field-group">
-                                                                                <label>Država</label>
-                                                                                <select
-                                                                                    value={pax.country || 'Srbija'}
-                                                                                    onChange={e => {
-                                                                                        const next = [...dossier.passengers];
-                                                                                        next[pIdx].country = e.target.value;
-                                                                                        setDossier({ ...dossier, passengers: next });
-                                                                                    }}
-                                                                                >
-                                                                                    {NATIONALITIES.map(n => (
-                                                                                        <option key={n.code} value={n.name}>{n.name}</option>
-                                                                                    ))}
-                                                                                </select>
-                                                                            </div>
-                                                                            <div className="extra-field-group">
-                                                                                <label>Telefon</label>
-                                                                                <input
-                                                                                    value={pax.phone || ''}
-                                                                                    placeholder="+381..."
-                                                                                    onChange={e => {
-                                                                                        const next = [...dossier.passengers];
-                                                                                        next[pIdx].phone = e.target.value;
-                                                                                        setDossier({ ...dossier, passengers: next });
-                                                                                    }}
-                                                                                />
-                                                                            </div>
-                                                                            <div className="extra-field-group">
-                                                                                <label>Email</label>
-                                                                                <input
-                                                                                    value={pax.email || ''}
-                                                                                    placeholder="email@example.com"
-                                                                                    onChange={e => {
-                                                                                        const next = [...dossier.passengers];
-                                                                                        next[pIdx].email = e.target.value;
-                                                                                        setDossier({ ...dossier, passengers: next });
-                                                                                    }}
-                                                                                />
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            )}
-                                                        </React.Fragment>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-
-                                        </div>
-                                    </>
-                                )}
-                            </section>
+                            <PassengersTab
+                                dossier={dossier}
+                                setDossier={setDossier}
+                                addLog={addLog}
+                                isPartiesNotepadView={isPartiesNotepadView}
+                                setIsPartiesNotepadView={setIsPartiesNotepadView}
+                                isSubagent={isSubagent}
+                                showSaveClientBtn={showSaveClientBtn}
+                                setShowSaveClientBtn={setShowSaveClientBtn}
+                                handleSaveToClients={handleSaveToClients}
+                                handlePrint={handlePrint}
+                            />
                         )}
 
                         {/* SECTION 2: TRIP ITEMS (Stavke Rezervacije) */}
@@ -3030,7 +1520,7 @@ const ReservationArchitect: React.FC = () => {
                                     ) : (
                                         dossier.tripItems.map((item, idx) => (
                                             <div key={item.id} className="trip-item-card">
-                                                <div className="item-header" style={{ marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '16px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '16px' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                         <div className="type-tag" style={{ background: (item.type === 'Smestaj' || item.type === 'Krstarenje') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(56, 189, 248, 0.1)', color: (item.type === 'Smestaj' || item.type === 'Krstarenje') ? '#10b981' : '#38bdf8', padding: '0 8px', display: 'flex', alignItems: 'center' }}>
                                                             {item.type === 'Smestaj' && <Building2 size={16} />}
@@ -3051,11 +1541,10 @@ const ReservationArchitect: React.FC = () => {
                                                                         tripItems: prev.tripItems.map(ti => {
                                                                             if (ti.id === item.id) {
                                                                                 const updates: Partial<TripItem> = { type: newType };
-                                                                                // Initialize/Clear flightLegs
                                                                                 if (newType === 'Avio karte') {
                                                                                     if (!ti.flightLegs) updates.flightLegs = [];
                                                                                 } else {
-                                                                                    updates.flightLegs = undefined; // Clean up
+                                                                                    updates.flightLegs = undefined;
                                                                                 }
                                                                                 return { ...ti, ...updates };
                                                                             }
@@ -3063,21 +1552,7 @@ const ReservationArchitect: React.FC = () => {
                                                                         })
                                                                     }));
                                                                 }}
-                                                                style={{
-                                                                    background: 'transparent',
-                                                                    border: 'none',
-                                                                    color: 'inherit',
-                                                                    fontWeight: 800,
-                                                                    fontSize: '11px',
-                                                                    textTransform: 'uppercase',
-                                                                    cursor: 'pointer',
-                                                                    marginLeft: '4px',
-                                                                    appearance: 'none',
-                                                                    WebkitAppearance: 'none',
-                                                                    outline: 'none',
-                                                                    minWidth: '80px', // Ensure clickable area
-                                                                    zIndex: 10
-                                                                }}
+                                                                style={{ background: 'transparent', border: 'none', color: 'inherit', fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', cursor: 'pointer', marginLeft: '4px', appearance: 'none', WebkitAppearance: 'none', outline: 'none', minWidth: '80px', zIndex: 10 }}
                                                             >
                                                                 <option value="Smestaj" style={{ color: '#333' }}>SMEŠTAJ</option>
                                                                 <option value="Avio karte" style={{ color: '#333' }}>AVIO KARTE</option>
@@ -3090,73 +1565,88 @@ const ReservationArchitect: React.FC = () => {
                                                             </select>
                                                             <ChevronDown size={10} style={{ marginLeft: 2, opacity: 0.7 }} />
                                                         </div>
-                                                        <div className="supplier-inline" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                                            <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-secondary)' }}>DOBAVLJAČ:</span>
-                                                            <input
-                                                                value={item.supplier}
-                                                                placeholder="Npr. OpenGreece"
-                                                                style={{
-                                                                    background: 'transparent',
-                                                                    border: 'none',
-                                                                    color: 'var(--accent)',
-                                                                    fontWeight: 800,
-                                                                    fontSize: '12px',
-                                                                    width: '150px',
-                                                                    padding: '0'
-                                                                }}
-                                                                onChange={e => {
-                                                                    const newItems = [...dossier.tripItems];
-                                                                    newItems[idx].supplier = e.target.value;
-                                                                    setDossier({ ...dossier, tripItems: newItems });
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <div className="supplier-inline" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                                            <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-secondary)' }}>REF BROJ:</span>
-                                                            <input
-                                                                value={item.supplierRef || ''}
-                                                                placeholder="Npr. 123456"
-                                                                style={{
-                                                                    background: 'transparent',
-                                                                    border: 'none',
-                                                                    color: '#fbbf24',
-                                                                    fontWeight: 800,
-                                                                    fontSize: '12px',
-                                                                    width: '100px',
-                                                                    padding: '0'
-                                                                }}
-                                                                onChange={e => {
-                                                                    const newItems = [...dossier.tripItems];
-                                                                    newItems[idx].supplierRef = e.target.value;
-                                                                    setDossier({ ...dossier, tripItems: newItems });
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <div className="supplier-inline" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                                            <span style={{ fontSize: '10px', fontWeight: 800, color: item.supplierPaymentDeadline && new Date(item.supplierPaymentDeadline) < new Date() ? '#ef4444' : '#fbbf24' }}>ROK PLAĆANJA:</span>
-                                                            <input
-                                                                type="date"
-                                                                value={item.supplierPaymentDeadline || ''}
-                                                                style={{
-                                                                    background: 'transparent',
-                                                                    border: 'none',
-                                                                    color: item.supplierPaymentDeadline && new Date(item.supplierPaymentDeadline) < new Date() ? '#ef4444' : '#fbbf24',
-                                                                    fontWeight: 800,
-                                                                    fontSize: '11px',
-                                                                    width: '110px',
-                                                                    padding: '0',
-                                                                    fontFamily: 'monospace',
-                                                                    colorScheme: 'dark'
-                                                                }}
-                                                                onChange={e => {
-                                                                    const newItems = [...dossier.tripItems];
-                                                                    newItems[idx].supplierPaymentDeadline = e.target.value;
-                                                                    setDossier({ ...dossier, tripItems: newItems });
-                                                                }}
-                                                            />
-                                                        </div>
+                                                        {item.supplier && (
+                                                            <div className="supplier-inline" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                                <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-secondary)' }}>DOBAVLJAČ:</span>
+                                                                <input
+                                                                    value={item.supplier}
+                                                                    placeholder="Npr. OpenGreece"
+                                                                    style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontWeight: 800, fontSize: '12px', width: '150px', padding: '0' }}
+                                                                    onChange={e => {
+                                                                        const newItems = [...dossier.tripItems];
+                                                                        newItems[idx].supplier = e.target.value;
+                                                                        setDossier({ ...dossier, tripItems: newItems });
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <button className="del-btn-v4" onClick={() => removeTripItem(item.id)}><Trash2 size={14} /></button>
+
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        {item.supplier && (
+                                                            <div className="solvex-info-tag" style={{ margin: 0, padding: '2px 10px' }}>
+                                                                <Zap size={10} color="#fbbf24" />
+                                                                <span>{item.supplier} checking: <strong>{item.solvexStatus || 'Checking...'}</strong></span>
+                                                                {item.solvexKey && <span className="solvex-internal-id">ID: {item.solvexKey}</span>}
+                                                                {item.supplier?.toLowerCase().includes('solvex') && item.supplierRef && (
+                                                                    <button
+                                                                        className="sync-solvex-btn"
+                                                                        title={`Sinhronizuj sa ${item.supplier}`}
+                                                                        onClick={async (e) => {
+                                                                            e.stopPropagation();
+                                                                            addLog('Solvex Sync', `Pokrenuta provera za ${item.subject}...`, 'info');
+                                                                            try {
+                                                                                const res = await getSolvexReservation(item.supplierRef!);
+                                                                                if (res.success && res.data) {
+                                                                                    setDossier(prev => ({
+                                                                                        ...prev,
+                                                                                        tripItems: prev.tripItems.map(ti => ti.id === item.id ? { ...ti, solvexStatus: res.data.Status, solvexKey: res.data.ID } : ti)
+                                                                                    }));
+                                                                                    addLog('Solvex Sync Uspeh', `Novi status: ${res.data.Status}`, 'success');
+                                                                                } else {
+                                                                                    addLog('Solvex Sync', res.error || 'Rezervacija nije pronađena.', 'danger');
+                                                                                }
+                                                                            } catch (err) {
+                                                                                addLog('Solvex Sync Greška', err instanceof Error ? err.message : 'Greška u komunikaciji', 'danger');
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <RefreshCw size={10} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        <button className="del-btn-v4" onClick={() => removeTripItem(item.id)}><Trash2 size={14} /></button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="item-details-grid" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                                                    <div className="supplier-inline" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                        <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-secondary)' }}>REF BROJ:</span>
+                                                        <input
+                                                            value={item.supplierRef || ''}
+                                                            placeholder="Npr. 123456"
+                                                            style={{ background: 'transparent', border: 'none', color: '#fbbf24', fontWeight: 800, fontSize: '12px', width: '100px', padding: '0' }}
+                                                            onChange={e => {
+                                                                const newItems = [...dossier.tripItems];
+                                                                newItems[idx].supplierRef = e.target.value;
+                                                                setDossier({ ...dossier, tripItems: newItems });
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="supplier-inline" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                        <span style={{ fontSize: '10px', fontWeight: 800, color: item.supplierPaymentDeadline && new Date(item.supplierPaymentDeadline) < new Date() ? '#ef4444' : '#fbbf24' }}>ROK PLAĆANJA:</span>
+                                                        <input
+                                                            type="date"
+                                                            value={item.supplierPaymentDeadline || ''}
+                                                            style={{ background: 'transparent', border: 'none', color: item.supplierPaymentDeadline && new Date(item.supplierPaymentDeadline) < new Date() ? '#ef4444' : '#fbbf24', fontWeight: 800, fontSize: '11px', width: '110px', padding: '0', fontFamily: 'monospace', colorScheme: 'dark' }}
+                                                            onChange={e => {
+                                                                const newItems = [...dossier.tripItems];
+                                                                newItems[idx].supplierPaymentDeadline = e.target.value;
+                                                                setDossier({ ...dossier, tripItems: newItems });
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
 
                                                 {/* CONDITIONAL FORM RENDERING */}
