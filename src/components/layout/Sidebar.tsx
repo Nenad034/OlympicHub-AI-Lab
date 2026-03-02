@@ -17,7 +17,9 @@ import {
     BarChart3,
     X,
     Building2,
-    RefreshCw
+    RefreshCw,
+    ShieldCheck,
+    PieChart
 } from 'lucide-react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { GeometricBrain } from '../icons/GeometricBrain';
@@ -101,7 +103,7 @@ const Sidebar: React.FC = () => {
             <div className="sidebar-header">
                 {/* Logo wrapper now follows header flex/padding constraints */}
                 <Link to="/" className="sidebar-logo-container" style={{ display: 'block', textDecoration: 'none' }}>
-                    <ClickToTravelLogo height={isSidebarCollapsed ? 128 : 288} showText={!isSidebarCollapsed} />
+                    <ClickToTravelLogo height={isSidebarCollapsed ? 56 : 288} showText={!isSidebarCollapsed} iconOnly={isSidebarCollapsed} />
                 </Link>
             </div>
 
@@ -121,6 +123,7 @@ const Sidebar: React.FC = () => {
                     <div className="nav-group">
                         <h3 className="nav-label">{!isSidebarCollapsed && 'Main'}</h3>
                         <NavGroupItem to="/" icon={LayoutDashboard} label={!isSidebarCollapsed && t.dashboard} title={t.dashboard} />
+                        <NavGroupItem to="/financial-hub" icon={PieChart} label={!isSidebarCollapsed && 'Financial Intelligence'} title="Financial Intelligence (FIL)" />
                     </div>
                 )}
 

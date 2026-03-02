@@ -1,7 +1,9 @@
 import { supabase } from '../supabaseClient';
 import type { Uplata, UlazniRacun, PoreskaEvidencijaCl35 } from '../types/financialCore.types';
 
-console.log('[FinancialCoreService] Module loaded - v2');
+import { sefApiService } from './sefApiService';
+
+console.log('[FinancialCoreService] Module loaded - v2 with SEF integration');
 // Mocked Integrations for testing AI Agent flow
 const ESIRService = {
     // Simuliramo pozivanje procesora fiskalnih računa za fizičko lice
@@ -18,14 +20,26 @@ const ESIRService = {
 
 const SEFService = {
     async pretragaKompanije(pib: string): Promise<boolean> {
-        return true;
+        const company = await sefApiService.checkCompany(pib);
+        return !!company;
     },
     // Kategorija PDV na SEF-u za Član 35 je "AE".
     async posaljiAvansniRacunAE(iznos: number, pibKupca: string, napomena: string): Promise<string> {
         console.log(`[SEF] Slanje e-Fakture za Avans uplate. Klijent: ${pibKupca}. Iznos: ${iznos} RSD.`);
         console.log(`[SEF] Kategorija: AE. Napomena: ${napomena}`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return `SEF-AV-${Math.random().toString().substring(2, 8).toUpperCase()}`;
+
+        const response = await sefApiService.uploadArticle35Invoice({
+            amount: iznos,
+            customerPib: pibKupca,
+            category: 'AE',
+            note: napomena
+        });
+
+        if (response.success) {
+            return response.salesInvoiceId || `SEF-AV-${Math.random().toString().substring(2, 8).toUpperCase()}`;
+        } else {
+            throw new Error(response.error || "Greška pri slanju na SEF");
+        }
     }
 }
 

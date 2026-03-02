@@ -314,18 +314,19 @@ h3,
 }
 
 .sidebar-header {
-  height: 320px;
-  padding: 0 24px;
+  height: 120px;
+  padding: 0 20px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   position: relative;
   background: transparent !important;
+  overflow: visible;
 }
 
 .sidebar.collapsed .sidebar-header {
-  height: 160px;
-  padding: 0 18px;
+  height: 120px;
+  padding: 10px;
   justify-content: center;
 }
 
@@ -336,6 +337,8 @@ h3,
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+  max-width: 260px;
+  margin: 0 auto;
 }
 
 .collapse-toggle {
@@ -440,7 +443,7 @@ h3,
 }
 
 .horizontal-nav {
-  height: 320px;
+  height: 120px;
   background: var(--bg-sidebar);
   border-bottom: 1px solid var(--border);
   display: flex;

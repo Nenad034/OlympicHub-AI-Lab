@@ -34,13 +34,31 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({
             if (!ctx) return;
 
             const resolutionScale = 4;
-            // If iconOnly, we assume the icon is the leftmost square part of the image
-            const targetWidth = iconOnly ? img.height : img.width;
-            canvas.width = targetWidth * resolutionScale;
-            canvas.height = img.height * resolutionScale;
+
+            let finalX = 0, finalY = 0, finalW = img.width, finalH = img.height;
+
+            if (iconOnly) {
+                // Tačno izolovane koordinate štita na osnovu izvornog 1024x1024 PNG fajla
+                if (img.width === 1024 && img.height === 1024) {
+                    finalX = 160;
+                    finalY = 410;
+                    finalW = 190;
+                    finalH = 205;
+                } else {
+                    // Fallback procenti za slučaj budućih promena logotipa
+                    finalX = img.width * 0.15;
+                    finalY = img.height * 0.40;
+                    finalW = img.width * 0.20;
+                    finalH = img.height * 0.20;
+                }
+            }
+
+            canvas.width = finalW * resolutionScale;
+            canvas.height = finalH * resolutionScale;
 
             ctx.scale(resolutionScale, resolutionScale);
-            ctx.drawImage(img, 0, 0);
+            // Draw properly cropped emblem
+            ctx.drawImage(img, finalX, finalY, finalW, finalH, 0, 0, finalW, finalH);
 
             try {
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -80,6 +98,7 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({
             className={`click-to-travel-logo ${className}`}
             style={{
                 height: showText ? 'auto' : height,
+                maxWidth: '100%',
                 display: 'inline-flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -97,15 +116,17 @@ export const ClickToTravelLogo: React.FC<LogoProps> = ({
                     100% { transform: translateY(0px); }
                 }
             `}</style>
-            <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ height, maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <canvas
                     ref={canvasRef}
                     style={{
                         height: '100%',
                         width: 'auto',
+                        maxWidth: '100%',
+                        objectFit: 'contain',
                         display: imgLoaded ? 'block' : 'none',
                         transition: 'all 0.3s ease',
-                        transform: iconScale ? `scale(${iconScale})` : (iconOnly ? 'scale(1.4)' : 'scale(1.1)'),
+                        transform: iconScale ? `scale(${iconScale})` : (iconOnly ? 'scale(1.6)' : 'scale(1.1)'),
                         filter: (forceOutline || !isLight) ? `
                             drop-shadow(0.64px 0 0 #fff)
                             drop-shadow(-0.64px 0 0 #fff)

@@ -24,7 +24,8 @@ import {
     TrendingUp,
     RefreshCcw,
     DollarSign,
-    User
+    User,
+    PieChart
 } from 'lucide-react';
 import { useThemeStore, useAppStore, useAuthStore } from '../stores';
 import { translations } from '../translations';
@@ -49,6 +50,7 @@ const apps: AppConfig[] = [
     { id: 'smart-search', name: 'Smart Search', desc: 'Inteligentna pretraga i preporuka smeštaja sa AI asistencijom i analizom tržišta.', icon: <Sparkles size={24} />, category: 'sales', color: 'var(--gradient-blue)', badge: 'AI', minLevel: 1, path: '/smart-search' },
 
     { id: 'reservations', name: 'Rezervacije', desc: 'Centralni pregled i upravljanje svim rezervacijama.', icon: <FileText size={24} />, category: 'sales', color: 'var(--gradient-blue)', badge: 'Novo', minLevel: 1, path: '/reservations' },
+    { id: 'financial-hub', name: 'Financial Intelligence', desc: 'Sveobuhvatni finansijski hub, KIR, KUR, Član 35 i blagajna sa AI analitikom.', icon: <PieChart size={24} />, category: 'finance', color: 'var(--gradient-purple)', badge: 'FIL', minLevel: 6, path: '/financial-hub' },
     { id: 'mars-analysis', name: 'Mars ERP Analitika', desc: 'Finansijska i operativna analiza procesa.', icon: <Database size={24} />, category: 'production', color: 'var(--gradient-blue)', badge: 'Live', minLevel: 1, path: '/mars-analysis' },
     { id: 'production-hub', name: 'Upravljanje Produkcijom', desc: 'Smeštaj, putovanja, transferi i paketi.', icon: <Package size={24} />, category: 'production', color: 'var(--gradient-green)', badge: 'Novo', minLevel: 1, path: '/production' },
     { id: 'contact-architect', name: 'Master Contact Hub', desc: 'Centralna inteligencija svih kontakata, putnika, dobavljača i subagenata sa AI analitikom.', icon: <Users size={24} />, category: 'production', color: 'var(--gradient-purple)', badge: 'AI CRM', minLevel: 1, path: '/contact-architect' },
@@ -204,7 +206,7 @@ const Dashboard: React.FC = () => {
         navigate(app.path);
     };
 
-    const ROW1_IDS = ['smart-search', 'global-hub', 'reservations'];
+    const ROW1_IDS = ['smart-search', 'reservations', 'financial-hub'];
     const ROW2_IDS = ['supplier-finance', 'mars-analysis', 'subagent-admin'];
 
     const row1Apps = userApps.filter(app => ROW1_IDS.includes(app.id) && userLevel >= app.minLevel);
