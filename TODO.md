@@ -10,3 +10,4 @@
     - [ ] AI personalizacija poruka (topla, ljudska komunikacija bez spamovanja)
     - [ ] Tracking ponašanja (CTR, otvaranje, konverzije)
     - [ ] Pametna frekvencija (da se klijenti ne "dave" porukama)
+- [ ] Refaktorisanje: Izdvojiti sekciju ''Stavke Rezervacije'' (Trip Items) iz ReservationArchitect.tsx u posebnu komponentu (npr. TripItemsTab.tsx). Ovo je prvi zadatak za sutra!

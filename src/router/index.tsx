@@ -54,6 +54,7 @@ const MarsTest = React.lazy(() => import('../pages/MarsTest'));
 const SoftZoneDashboard = React.lazy(() => import('../components/SoftZoneDashboard'));
 const SmartSearch = React.lazy(() => import('../pages/SmartSearch'));
 const ReservationArchitect = React.lazy(() => import('../pages/ReservationArchitect'));
+const ReservationArchitectV5 = React.lazy(() => import('../pages/ReservationArchitectV5'));
 const ReservationsDashboard = React.lazy(() => import('../pages/ReservationsDashboard'));
 const AdminHotelImport = React.lazy(() => import('../pages/AdminHotelImport'));
 const APIConnectionsHub = React.lazy(() => import('../pages/APIConnectionsHub'));
@@ -397,6 +398,16 @@ export const router = createBrowserRouter([
                         <p>Molimo osvežite stranicu ili kontaktirajte podršku.</p>
                         <button onClick={() => window.location.reload()}>Osveži</button>
                     </div>
+                )
+            },
+            {
+                path: '/reservation-architect-v5',
+                element: (
+                    <AuthGuard>
+                        <React.Suspense fallback={<LoadingFallback />}>
+                            <ReservationArchitectV5 />
+                        </React.Suspense>
+                    </AuthGuard>
                 )
             },
             {

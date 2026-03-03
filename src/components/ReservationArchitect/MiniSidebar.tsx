@@ -1,9 +1,9 @@
 import React from 'react';
 import {
     LayoutDashboard, Users, CreditCard,
-    FileText, Zap, Settings, History, Shield, Mail, MessageSquare
+    FileText, Zap, Settings, History, Shield, Mail, MessageSquare, Folders
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface MiniSidebarProps {
     activeSection: string;
@@ -20,6 +20,7 @@ export const MiniSidebar: React.FC<MiniSidebarProps> = ({
         { id: 'summary', icon: <LayoutDashboard size={20} />, label: 'REZIME' },
         { id: 'passengers', icon: <Users size={20} />, label: 'PUTNICI' },
         { id: 'finance', icon: <CreditCard size={20} />, label: 'FINANSIJE' },
+        { id: 'documents', icon: <Folders size={20} />, label: 'DOKUMENTI' },
         { id: 'notes', icon: <FileText size={20} />, label: 'NAPOMENE' },
         { id: 'legal', icon: <Zap size={20} />, label: 'GARANCIJE' },
         { id: 'rep', icon: <Shield size={20} />, label: 'PREDSTAVNIK' },
@@ -29,109 +30,68 @@ export const MiniSidebar: React.FC<MiniSidebarProps> = ({
     ];
 
     return (
-        <aside className="mini-sidebar-v2 glass">
-            {navItems.map((item) => (
-                <div key={item.id} className="nav-item-container">
-                    <button
-                        className={`nav-item ${activeSection === item.id ? 'active' : ''}`}
-                        onClick={() => onSectionChange(item.id)}
-                    >
-                        <div className="icon-wrapper">
-                            {item.icon}
+        <aside className="v3-mini-sidebar v3-glass-panel">
+            <div className="nav-stack">
+                {navItems.map((item) => (
+                    <div key={item.id} className="v3-nav-item-group">
+                        <button
+                            className={`v3-nav-btn ${activeSection === item.id ? 'active' : ''}`}
+                            onClick={() => onSectionChange(item.id)}
+                            title={item.label}
+                        >
+                            <div className="icon-slot">
+                                {item.icon}
+                            </div>
                             {activeSection === item.id && (
                                 <motion.div
-                                    layoutId="nav-glow"
-                                    className="nav-icon-glow"
+                                    layoutId="sidebar-active-pill"
+                                    className="active-indicator"
+                                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                                 />
                             )}
-                        </div>
-                        {activeSection === item.id && (
-                            <motion.div
-                                layoutId="active-nav-glow"
-                                className="nav-glow"
-                            />
-                        )}
-                    </button>
-                    <span className="nav-label">{item.label}</span>
-                </div>
-            ))}
+                        </button>
+                        <span className="v3-nav-tooltip">{item.label}</span>
+                    </div>
+                ))}
+            </div>
 
             <style>{`
-                .mini-sidebar-v2 {
-                    width: 70px;
-                    height: fit-content;
-                    padding: 15px 0;
+                .v3-mini-sidebar {
+                    width: 72px;
+                    height: calc(100vh - 160px);
+                    padding: 24px 0;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    gap: 12px;
-                    border-radius: 20px;
                     position: sticky;
                     top: 130px;
-                    z-index: 1000;
                 }
-                .nav-item-container {
-                    position: relative;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
+                .nav-stack {
+                    display: flex; flex-direction: column; gap: 12px; width: 100%; align-items: center;
                 }
-                .nav-item {
-                    width: 50px;
-                    height: 50px;
-                    border-radius: 14px;
-                    border: none;
-                    background: transparent;
-                    color: var(--fil-text-dim);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                    position: relative;
+                .v3-nav-item-group { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+                
+                .v3-nav-btn {
+                    width: 48px; height: 48px; border-radius: 14px; border: none; background: transparent;
+                    color: var(--v3-text-dim); display: flex; align-items: center; justify-content: center;
+                    cursor: pointer; transition: 0.3s; position: relative; z-index: 2;
                 }
-                .nav-item:hover {
-                    background: rgba(255,255,255,0.05);
-                    color: var(--fil-text);
+                .v3-nav-btn:hover { color: var(--v3-accent); background: var(--v3-accent-dim); }
+                .v3-nav-btn.active { color: #000; background: var(--v3-accent); box-shadow: 0 0 20px var(--v3-accent-glow); }
+
+                .active-indicator {
+                    position: absolute; inset: 0; border-radius: 14px; background: var(--v3-accent); z-index: -1;
                 }
-                .nav-item.active {
-                    color: white;
-                    background: var(--fil-accent);
+
+                .v3-nav-tooltip {
+                    position: absolute; left: 80px; background: #000; color: #fff;
+                    padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: 900;
+                    white-space: nowrap; opacity: 0; pointer-events: none; transform: translateX(-10px);
+                    transition: 0.3s; border: 1px solid var(--v3-border); z-index: 100;
                 }
-                .nav-label {
-                    position: absolute;
-                    left: 100%;
-                    margin-left: 15px;
-                    background: var(--fil-bg-card);
-                    color: white;
-                    padding: 6px 12px;
-                    border-radius: 8px;
-                    font-size: 10px;
-                    font-weight: 800;
-                    white-space: nowrap;
-                    opacity: 0;
-                    pointer-events: none;
-                    transform: translateX(-10px);
-                    transition: all 0.3s;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-                    border: 1px solid var(--fil-border);
-                    z-index: 1100;
-                }
-                .nav-item-container:hover .nav-label {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-                .nav-glow {
-                    position: absolute;
-                    inset: 0;
-                    border-radius: 14px;
-                    box-shadow: 0 0 20px var(--fil-accent-glow);
-                    z-index: -1;
-                }
-                .icon-wrapper {
-                    position: relative;
-                    z-index: 1;
-                }
+                .v3-nav-item-group:hover .v3-nav-tooltip { opacity: 1; transform: translateX(0); }
+
+                .icon-slot { position: relative; z-index: 3; display: flex; align-items: center; justify-content: center; }
             `}</style>
         </aside>
     );

@@ -1,7 +1,8 @@
 import {
     Hash, Globe, User, Phone, Mail, MapPin,
     TrendingUp, Wallet, ArrowRightLeft,
-    X, ShieldCheck, Zap, RotateCcw, Save, Loader2, RotateCw, Smartphone, Sun, Moon
+    X, ShieldCheck, Zap, RotateCcw, Save, Loader2, RotateCw, Smartphone, Sun, Moon,
+    ChevronDown, ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Dossier, ResStatus } from '../../types/reservationArchitect';
@@ -38,337 +39,330 @@ export const DossierHeader: React.FC<DossierHeaderProps> = ({
     const statuses: ResStatus[] = ['Request', 'Processing', 'Offer', 'Reservation', 'Active', 'Canceled', 'Zatvoreno'];
 
     return (
-        <header className="dossier-header-v2">
-            <div className="header-glass-wrapper">
-                {/* Top Section: Title & Codes */}
-                <div className="header-top-row">
-                    <div className="dossier-id-section">
-                        <div className="cis-pill">
-                            <Hash size={14} className="cyan" />
-                            <span>CIS: <strong>{dossier.cisCode}</strong></span>
+        <header className="v3-dossier-header v3-animate-in">
+            <div className="v3-header-container v3-glass-panel">
+                {/* --- TOP ROW: DOSSIER IDENTITY & ACTIONS --- */}
+                <div className="v3-header-top">
+                    <div className="v3-id-badges">
+                        <div className="v3-id-pill">
+                            <Hash size={12} className="cyan" />
+                            <span className="label">CIS:</span>
+                            <span className="value">{dossier.cisCode}</span>
                         </div>
-                        <div className="ref-pill">
-                            <Globe size={14} className="cyan" />
-                            <span>REF: <strong>{dossier.clientReference}</strong></span>
+                        <div className="v3-id-pill">
+                            <Globe size={12} className="cyan" />
+                            <span className="label">REF:</span>
+                            <span className="value">{dossier.clientReference}</span>
                         </div>
                         {dossier.resCode && (
-                            <div className="res-pill glow-active">
-                                <Zap size={14} className="gold" />
-                                <span>REZ: <strong>{dossier.resCode}</strong></span>
+                            <div className="v3-id-pill active-glow">
+                                <Zap size={12} className="gold" />
+                                <span className="label">REZ:</span>
+                                <span className="value bold">{dossier.resCode}</span>
                             </div>
                         )}
-
-                        {/* Mobile App Status */}
-                        <div className="app-status-pill">
-                            <Smartphone size={14} className="orange" />
-                            <span>App: <strong className="dim">Inactive</strong></span>
-                        </div>
-
-                        {/* Auto-save Indicator */}
-                        <div className={`save-status-pill ${isSaving ? 'saving' : ''}`}>
-                            {isSaving ? (
-                                <><Loader2 size={12} className="animate-spin" /> <span>Sinhronizacija...</span></>
-                            ) : (
-                                <><Save size={12} /> <span>Sačuvano</span></>
-                            )}
+                        <div className={`v3-save-indicator ${isSaving ? 'saving' : ''}`}>
+                            {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                            <span>{isSaving ? 'Sinhronizacija' : 'Arhivirano'}</span>
                         </div>
                     </div>
 
-                    <div className="dossier-title-center">
-                        <motion.h1
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bold"
-                        >
-                            DOSIJE REZERVACIJE
-                        </motion.h1>
-                        <div className="booker-name-header">
-                            <User size={14} className="cyan" />
-                            <span>Nosilac: <strong>{dossier.booker.fullName}</strong></span>
+                    <div className="v3-header-center">
+                        <h1>RESERVATION ARCHITECT<sup>V3</sup></h1>
+                        <div className="v3-operator-mini">
+                            <div className="v3-mini-avatar">SA</div>
+                            <span>Agent: <strong>Stefan Arsić</strong></span>
                         </div>
                     </div>
 
-                    <div className="header-actions">
-                        <AnimatePresence>
-                            {isHistoryAvailable && onUndo && (
-                                <motion.button
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.8 }}
-                                    className="undo-btn"
-                                    onClick={onUndo}
-                                    title="Poništi poslednju izmenu (Undo)"
-                                >
+                    <div className="v3-header-actions">
+                        <div className="v3-action-group">
+                            <button className="v3-circle-btn theme" onClick={onToggleTheme}>
+                                {isLightTheme ? <Moon size={18} /> : <Sun size={18} />}
+                            </button>
+                            <button className="v3-circle-btn" onClick={onDeepReset}>
+                                <RotateCw size={18} />
+                            </button>
+                            {isHistoryAvailable && (
+                                <button className="v3-circle-btn undo" onClick={onUndo}>
                                     <RotateCcw size={18} />
-                                </motion.button>
+                                </button>
                             )}
-                        </AnimatePresence>
-
-                        <button
-                            className="theme-toggle-btn"
-                            onClick={onToggleTheme}
-                            title={isLightTheme ? "Prebaci na Dark Mode" : "Prebaci na Light Mode"}
-                        >
-                            {isLightTheme ? <Moon size={18} /> : <Sun size={18} />}
-                        </button>
-
-                        <button
-                            className="reset-btn"
-                            onClick={() => {
-                                if (confirm('Da li ste sigurni da želite da vratite dosije na početno stanje? Sve današnje izmene će biti izgubljene.')) {
-                                    onDeepReset?.();
-                                }
-                            }}
-                            title="Vrati na originalno stanje"
-                        >
-                            <RotateCw size={18} />
-                        </button>
-
-                        <button className="close-btn" onClick={onClose}>
+                        </div>
+                        <button className="v3-close-btn" onClick={onClose}>
                             <X size={20} />
                         </button>
                     </div>
                 </div>
 
-                {/* Bottom Section: Status & Financials */}
-                <div className="header-main-row">
-                    {/* Status Tabs */}
-                    <div className="status-timeline">
-                        {statuses.map((status) => (
-                            <button
-                                key={status}
-                                onClick={() => onStatusChange(status)}
-                                className={`status-tab ${dossier.status === status ? 'active' : ''} status-${status.toLowerCase()}`}
-                            >
-                                {status.toUpperCase()}
-                                {dossier.status === status && (
-                                    <motion.div
-                                        layoutId="status-glow"
-                                        className="tab-glow"
-                                    />
-                                )}
-                            </button>
-                        ))}
+                {/* --- BOTTOM ROW: STATUS & STATS --- */}
+                <div className="v3-header-bottom">
+                    <div className="v3-status-container">
+                        <div className="v3-status-track">
+                            {statuses.map((status) => (
+                                <button
+                                    key={status}
+                                    onClick={() => onStatusChange(status)}
+                                    className={`v3-tab ${dossier.status === status ? 'active' : ''} v3-st-${status.toLowerCase()}`}
+                                >
+                                    {status}
+                                    {dossier.status === status && (
+                                        <motion.div layoutId="v3-st-glow" className="v3-tab-glow" />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
-                    {/* Financial Quick Cards */}
-                    <div className="financial-ticker">
-                        <div className="mini-stat-card glass">
-                            <div className="stat-info">
-                                <span className="label">UKUPNO ZA NAPLATU</span>
-                                <span className="value">{financialStats.totalBrutto.toLocaleString()} <small>{dossier.finance.currency}</small></span>
+                    <div className="v3-stats-ticker">
+                        <div className="v3-mini-stat">
+                            <div className="v3-stat-content">
+                                <label>POTRAŽIVANJE</label>
+                                <div className="v3-stat-val">
+                                    {financialStats.totalBrutto.toLocaleString()} <small>{dossier.finance.currency}</small>
+                                </div>
                             </div>
-                            <div className="stat-icon-box cyan-glow">
-                                <Wallet size={18} />
-                            </div>
+                            <div className="v3-stat-icon cyan"><Wallet size={16} /></div>
                         </div>
 
-                        <div className="mini-stat-card glass">
-                            <div className="stat-info">
-                                <span className="label">DOSAD UPLAĆENO</span>
-                                <span className="value success">{financialStats.totalPaid.toLocaleString()} <small>{dossier.finance.currency}</small></span>
+                        <div className="v3-mini-stat">
+                            <div className="v3-stat-content">
+                                <label>UPLAĆENO</label>
+                                <div className="v3-stat-val success">
+                                    {financialStats.totalPaid.toLocaleString()} <small>{dossier.finance.currency}</small>
+                                </div>
                             </div>
-                            <div className="stat-icon-box success-glow">
-                                <TrendingUp size={18} />
-                            </div>
+                            <div className="v3-stat-icon success"><TrendingUp size={16} /></div>
                         </div>
 
-                        <div className="mini-stat-card glass">
-                            <div className="stat-info">
-                                <span className="label">SALDO (DUG)</span>
-                                <span className="value danger">{financialStats.balance.toLocaleString()} <small>{dossier.finance.currency}</small></span>
+                        <div className="v3-mini-stat highlight">
+                            <div className="v3-stat-content">
+                                <label>SALDO ZA NAPLATU</label>
+                                <div className={`v3-stat-val ${financialStats.balance > 0 ? 'danger' : 'success'}`}>
+                                    {financialStats.balance.toLocaleString()} <small>{dossier.finance.currency}</small>
+                                </div>
                             </div>
-                            <div className="stat-icon-box danger-glow">
-                                <ArrowRightLeft size={18} />
-                            </div>
+                            <div className="v3-stat-icon danger"><ShieldAlert size={16} /></div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <style>{`
-                .dossier-header-v2 {
-                    width: 100%;
-                    padding: 0;
-                    margin-bottom: 30px;
+                .v3-dossier-header {
+                    margin-bottom: 32px;
                     position: sticky;
                     top: 0;
                     z-index: 1000;
+                    padding-bottom: 10px;
                 }
-                .header-glass-wrapper {
-                    background: var(--fil-card);
-                    backdrop-filter: blur(15px);
-                    border-bottom: 1px solid var(--fil-border);
-                    padding: 15px 30px;
+                .v3-header-container {
+                    padding: 20px 32px;
                     display: flex;
                     flex-direction: column;
-                    gap: 15px;
+                    gap: 20px;
                 }
-                .header-top-row {
+                .v3-header-top {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                 }
-                .dossier-id-section {
+                .v3-id-badges {
                     display: flex;
-                    gap: 12px;
+                    gap: 10px;
+                    align-items: center;
                 }
-                .cis-pill, .ref-pill, .res-pill {
+                .v3-id-pill {
                     display: flex;
                     align-items: center;
                     gap: 8px;
                     padding: 6px 12px;
                     background: rgba(255,255,255,0.03);
-                    border: 1px solid var(--fil-border);
-                    border-radius: 8px;
+                    border: 1px solid var(--v3-border);
+                    border-radius: 10px;
                     font-size: 11px;
-                    color: var(--fil-text-dim);
                 }
-                .save-status-pill {
+                .v3-id-pill .label { color: var(--v3-text-dim); font-weight: 700; }
+                .v3-id-pill .value { color: var(--v3-text); font-weight: 800; }
+                .v3-id-pill.active-glow {
+                    background: rgba(251, 191, 36, 0.05);
+                    border-color: rgba(251, 191, 36, 0.2);
+                    color: var(--v3-gold);
+                }
+                .v3-save-indicator {
                     display: flex;
                     align-items: center;
                     gap: 6px;
-                    padding: 6px 12px;
-                    background: rgba(16, 185, 129, 0.05);
-                    border: 1px solid rgba(16, 185, 129, 0.2);
-                    border-radius: 8px;
                     font-size: 10px;
                     font-weight: 800;
-                    color: #10b981;
-                    transition: all 0.3s;
+                    color: var(--v3-success);
+                    margin-left: 8px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
                 }
-                .save-status-pill.saving {
-                    background: rgba(0, 229, 255, 0.05);
-                    border-color: rgba(0, 229, 255, 0.2);
-                    color: var(--fil-accent);
+                .v3-save-indicator.saving { color: var(--v3-accent); }
+                
+                .v3-header-center {
+                    text-align: center;
                 }
-                .res-pill.glow-active {
-                    background: rgba(255, 179, 0, 0.05);
-                    border-color: rgba(255, 179, 0, 0.2);
-                    color: var(--fil-gold);
+                .v3-header-center h1 {
+                    font-size: 15px;
+                    font-weight: 900;
+                    letter-spacing: 5px;
+                    margin: 0 0 6px 0;
+                    color: var(--v3-text);
+                    text-transform: uppercase;
                 }
-                .dossier-title-center h1 {
-                    font-size: 16px;
-                    letter-spacing: 3px;
-                    color: var(--fil-text);
-                    margin: 0;
-                    text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+                .v3-header-center h1 sup {
+                    font-size: 9px;
+                    color: var(--v3-accent);
+                    margin-left: 2px;
+                    letter-spacing: 0;
                 }
-                .header-main-row {
+                .v3-operator-mini {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    font-size: 11px;
+                    color: var(--v3-text-dim);
+                }
+                .v3-mini-avatar {
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 6px;
+                    background: var(--v3-accent);
+                    color: #000;
+                    font-size: 9px;
+                    font-weight: 950;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .v3-header-actions {
+                    display: flex;
+                    gap: 16px;
+                    align-items: center;
+                }
+                .v3-action-group {
+                    display: flex;
+                    gap: 8px;
+                    background: rgba(0,0,0,0.2);
+                    padding: 4px;
+                    border-radius: 12px;
+                    border: 1px solid var(--v3-border);
+                }
+                .v3-circle-btn {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
+                    border: none;
+                    background: transparent;
+                    color: var(--v3-text-dim);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .v3-circle-btn:hover { background: rgba(255,255,255,0.05); color: var(--v3-text); }
+                .v3-close-btn {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 12px;
+                    background: rgba(239, 68, 68, 0.1);
+                    border: 1px solid rgba(239, 68, 68, 0.2);
+                    color: #ef4444;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: 0.2s;
+                }
+                .v3-close-btn:hover { background: #ef4444; color: #fff; }
+
+                .v3-header-bottom {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                     gap: 40px;
                 }
-                .status-timeline {
+                .v3-status-track {
                     display: flex;
+                    gap: 4px;
                     background: rgba(0,0,0,0.2);
                     padding: 4px;
-                    border-radius: 12px;
-                    gap: 4px;
+                    border-radius: 14px;
                 }
-                .status-tab {
+                .v3-tab {
                     padding: 8px 16px;
-                    border-radius: 8px;
-                    border: none;
-                    background: transparent;
-                    color: var(--fil-text-dim);
+                    border-radius: 10px;
                     font-size: 10px;
                     font-weight: 800;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    color: var(--v3-text-dim);
+                    background: transparent;
+                    border: none;
                     cursor: pointer;
-                    transition: all 0.2s;
                     position: relative;
+                    transition: 0.2s;
                 }
-                .status-tab:hover {
-                    color: var(--fil-text);
-                    background: rgba(255,255,255,0.05);
-                }
-                .status-tab.active {
-                    color: white;
-                }
-                .status-tab.active.status-request { background: #3b82f6; }
-                .status-tab.active.status-processing { background: #8b5cf6; }
-                .status-tab.active.status-offer { background: #06b6d4; }
-                .status-tab.active.status-reservation { background: #f59e0b; }
-                .status-tab.active.status-active { background: #10b981; }
-                .status-tab.active.status-canceled { background: #ef4444; }
-                .status-tab.active.status-zatvoreno { background: #64748b; }
+                .v3-tab:hover { color: var(--v3-text); }
+                .v3-tab.active { color: #fff; }
+                .v3-st-request.active { background: #3b82f6; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3); }
+                .v3-st-processing.active { background: #8b5cf6; box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3); }
+                .v3-st-offer.active { background: #0891b2; box-shadow: 0 5px 15px rgba(8, 145, 178, 0.3); }
+                .v3-st-reservation.active { background: #d97706; box-shadow: 0 5px 15px rgba(217, 119, 6, 0.3); }
+                .v3-st-active.active { background: #059669; box-shadow: 0 5px 15px rgba(5, 150, 105, 0.3); }
+                .v3-st-canceled.active { background: #dc2626; box-shadow: 0 5px 15px rgba(220, 38, 38, 0.3); }
+                .v3-st-zatvoreno.active { background: #475569; box-shadow: 0 5px 15px rgba(71, 85, 105, 0.3); }
 
-                .tab-glow {
-                    position: absolute;
-                    inset: 0;
-                    border-radius: 8px;
-                    box-shadow: 0 0 15px rgba(255,255,255,0.2);
-                    pointer-events: none;
-                }
-
-                .financial-ticker {
+                .v3-stats-ticker {
                     display: flex;
-                    gap: 15px;
+                    gap: 14px;
                 }
-                .mini-stat-card {
+                .v3-mini-stat {
                     display: flex;
                     align-items: center;
-                    gap: 15px;
-                    padding: 10px 20px;
+                    gap: 14px;
+                    background: rgba(0,0,0,0.1);
+                    padding: 10px 18px;
                     border-radius: 16px;
-                    min-width: 220px;
+                    border: 1px solid var(--v3-border);
+                    min-width: 180px;
                 }
-                .stat-info {
-                    display: flex;
-                    flex-direction: column;
-                    flex: 1;
+                .v3-mini-stat.highlight {
+                    background: var(--v3-accent-dim);
+                    border-color: var(--v3-accent-glow);
                 }
-                .stat-info .label {
-                    font-size: 9px;
-                    color: var(--fil-text-dim);
-                    font-weight: 700;
+                .v3-mini-stat label {
+                    font-size: 8px;
+                    font-weight: 800;
+                    color: var(--v3-text-dim);
                     letter-spacing: 0.5px;
+                    margin-bottom: 2px;
+                    display: block;
                 }
-                .stat-info .value {
-                    font-size: 18px;
+                .v3-stat-val {
+                    font-size: 16px;
                     font-weight: 900;
                 }
-                .stat-info .value.success { color: var(--fil-success); }
-                .stat-info .value.danger { color: var(--fil-danger); }
-                .stat-icon-box {
-                    width: 36px;
-                    height: 36px;
-                    border-radius: 10px;
+                .v3-stat-val.success { color: var(--v3-success); }
+                .v3-stat-val.danger { color: var(--v3-danger); }
+                .v3-stat-icon {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    color: var(--fil-bg);
+                    background: rgba(255,255,255,0.03);
                 }
-                .cyan-glow { background: var(--fil-accent); box-shadow: 0 0 15px var(--fil-accent-glow); }
-                .success-glow { background: var(--fil-success); box-shadow: 0 0 15px rgba(63, 185, 80, 0.4); }
-                .danger-glow { background: var(--fil-danger); box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
-
-                .header-actions {
-                    display: flex;
-                    gap: 10px;
-                    align-items: center;
-                }
-                .undo-btn, .reset-btn, .close-btn {
-                    background: rgba(255,255,255,0.05);
-                    border: 1px solid var(--fil-border);
-                    color: var(--fil-text-dim);
-                    width: 36px;
-                    height: 36px;
-                    border-radius: 10px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .undo-btn:hover { color: var(--fil-accent); border-color: var(--fil-accent); background: rgba(0, 229, 255, 0.05); }
-                .reset-btn:hover { color: var(--fil-gold); border-color: var(--fil-gold); background: rgba(255, 179, 0, 0.05); }
-                .close-btn:hover {
-                    background: var(--fil-danger);
-                    color: white;
-                    border-color: var(--fil-danger);
-                }
+                .v3-stat-icon.cyan { color: var(--v3-accent); background: var(--v3-accent-glow); }
+                .v3-stat-icon.success { color: var(--v3-success); background: rgba(16, 185, 129, 0.1); }
+                .v3-stat-icon.danger { color: var(--v3-danger); background: rgba(239, 68, 68, 0.1); }
             `}</style>
         </header>
     );

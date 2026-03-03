@@ -1,6 +1,6 @@
 import React from 'react';
-import { FileText, Download, Send, Printer, FileSearch } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { FileText, Download, Send, Printer, FileSearch, CheckCircle, Clock, AlertCircle, ShieldCheck, Globe, Languages } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Dossier } from '../../types/reservationArchitect';
 
 interface DocumentsViewProps {
@@ -12,80 +12,75 @@ interface DocumentsViewProps {
 
 export const DocumentsView: React.FC<DocumentsViewProps> = ({ dossier, onGenerate, onPrint, onSend }) => {
     const docs = [
-        { id: 'contract', label: 'Ugovor o Putovanju', desc: 'Glavni dokument o ugovorenim uslugama' },
-        { id: 'voucher', label: 'Vaučer / Smeštaj', desc: 'Potvrda o plaćenom smeštaju i uslugama' },
-        { id: 'itinerary', label: 'Plan Puta / Itinerer', desc: 'Detaljan raspored letova i transfera' },
-        { id: 'proforma', label: 'Račun / Profaktura', desc: 'Dokument za uplatu preko računa' },
-        { id: 'paxList', label: 'Lista Putnika', desc: 'Interni spisak učesnika za dobavljače' }
+        { id: 'contract', label: 'Ugovor o Putovanju', desc: 'Glavni dokument o ugovorenim uslugama', icon: <ShieldCheck size={24} /> },
+        { id: 'voucher', label: 'Vaučer / Smeštaj', desc: 'Potvrda o plaćenom smeštaju i uslugama', icon: <FileText size={24} /> },
+        { id: 'itinerary', label: 'Plan Puta / Itinerer', desc: 'Detaljan raspored letova i transfera', icon: <Globe size={24} /> },
+        { id: 'proforma', label: 'Račun / Profaktura', desc: 'Dokument za uplatu preko računa', icon: <FileText size={24} /> },
+        { id: 'paxList', label: 'Lista Putnika', desc: 'Interni spisak učesnika za dobavljače', icon: <FileText size={24} /> }
     ];
 
     return (
-        <div className="documents-view-v2">
-            <div className="section-header-v2">
-                <div className="title">
-                    <FileSearch size={20} className="cyan" />
-                    <h3>ARHIVA DOKUMENATA</h3>
-                </div>
+        <div className="v4-documents-view" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <FileSearch size={22} className="cyan-text" />
+                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 950, letterSpacing: '1px' }}>ARHIVA DOKUMENATA I GENERATOR</h3>
             </div>
 
-            <div className="docs-grid">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
                 {docs.map((doc, index) => {
-                    const status = dossier.documentTracker[doc.id] || { generated: false, sentEmail: false, sentViber: false, sentPrint: false };
+                    const status = dossier.documentTracker[doc.id] || {
+                        generated: false, sentEmail: false, sentViber: false, sentPrint: false
+                    };
 
                     return (
                         <motion.div
                             key={doc.id}
+                            className="v4-table-card"
+                            style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
-                            className="doc-box glass"
                         >
-                            <div className="doc-meta">
-                                <div className="doc-icon-circle">
-                                    <FileText size={20} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(0, 229, 255, 0.1)', color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        {doc.icon}
+                                    </div>
+                                    <div>
+                                        <div className="v4-text-main" style={{ fontSize: '16px' }}>{doc.label}</div>
+                                        <div className="v4-text-dim" style={{ fontSize: '12px' }}>{doc.desc}</div>
+                                    </div>
                                 </div>
-                                <div className="text">
-                                    <h4>{doc.label}</h4>
-                                    <p>{doc.desc}</p>
-                                </div>
-                            </div>
-
-                            <div className="status-timeline">
-                                <div className={`status-step ${status.generated ? 'done' : ''}`}>
-                                    <div className="dot"></div>
-                                    <span>Generisan</span>
-                                </div>
-                                <div className={`status-step ${status.sentEmail ? 'done' : ''}`}>
-                                    <div className="dot"></div>
-                                    <span>Email</span>
-                                </div>
-                                <div className={`status-step ${status.sentViber ? 'done' : ''}`}>
-                                    <div className="dot"></div>
-                                    <span>Viber</span>
+                                <div className="v4-status-pill success" style={{ transform: 'scale(0.8)', transformOrigin: 'right' }}>
+                                    VERZIJA 1.0
                                 </div>
                             </div>
 
-                            <div className="quick-actions">
-                                <button
-                                    className="mini-btn"
-                                    title="Preuzmi PDF"
-                                    onClick={() => onGenerate(doc.id, 'PDF')}
-                                >
-                                    <Download size={14} />
+                            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '16px', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', opacity: status.generated ? 1 : 0.2 }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-cyan)' }}></div>
+                                    <span style={{ fontSize: '9px', fontWeight: 900, color: 'var(--text-secondary)' }}>KREIRAN</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', opacity: status.sentEmail ? 1 : 0.2 }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }}></div>
+                                    <span style={{ fontSize: '9px', fontWeight: 900, color: 'var(--text-secondary)' }}>EMAIL</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', opacity: status.sentViber ? 1 : 0.2 }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#8b5cf6' }}></div>
+                                    <span style={{ fontSize: '9px', fontWeight: 900, color: 'var(--text-secondary)' }}>VIBER</span>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                                <button className="v4-tab-btn" style={{ background: 'var(--bg-secondary)', height: '40px', justifyContent: 'center' }} onClick={() => onGenerate(doc.id, 'PDF')}>
+                                    <Download size={16} /> PDF
                                 </button>
-                                <button
-                                    className="mini-btn"
-                                    title="Štampaj"
-                                    onClick={onPrint}
-                                >
-                                    <Printer size={14} />
+                                <button className="v4-tab-btn" style={{ background: 'var(--bg-secondary)', height: '40px', justifyContent: 'center' }} onClick={onPrint}>
+                                    <Printer size={16} /> PRINT
                                 </button>
-                                <button
-                                    className="mini-btn highlight"
-                                    title="Pošalji Email"
-                                    onClick={() => onSend(doc.id, 'Email')}
-                                >
-                                    <Send size={14} />
+                                <button className="v4-tab-btn active" style={{ height: '40px', justifyContent: 'center' }} onClick={() => onSend(doc.id, 'Email')}>
+                                    <Send size={16} /> POŠALJI
                                 </button>
                             </div>
                         </motion.div>
@@ -93,110 +88,23 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ dossier, onGenerat
                 })}
             </div>
 
-            <style>{`
-                .documents-view-v2 {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 30px;
-                }
-                .section-header-v2 h3 {
-                    margin: 0;
-                    font-size: 14px;
-                    font-weight: 900;
-                    letter-spacing: 2px;
-                    color: var(--fil-text);
-                }
-                .docs-grid {
-                    display: grid;
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 20px;
-                }
-                .doc-box {
-                    padding: 20px;
-                    border-radius: 20px;
-                    background: rgba(255, 255, 255, 0.02);
-                    display: flex;
-                    flex-direction: column;
-                    gap: 20px;
-                    border: 1px solid var(--fil-border);
-                }
-                .doc-meta {
-                    display: flex;
-                    gap: 15px;
-                    align-items: center;
-                }
-                .doc-icon-circle {
-                    width: 44px;
-                    height: 44px;
-                    border-radius: 12px;
-                    background: rgba(0, 229, 255, 0.1);
-                    color: var(--fil-accent);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                .doc-meta h4 {
-                    margin: 0;
-                    font-size: 13px;
-                    font-weight: 800;
-                    color: var(--fil-text);
-                }
-                .doc-meta p {
-                    margin: 2px 0 0 0;
-                    font-size: 11px;
-                    color: var(--fil-text-dim);
-                }
-                .status-timeline {
-                    display: flex;
-                    gap: 20px;
-                    padding: 12px 15px;
-                    background: rgba(0,0,0,0.2);
-                    border-radius: 14px;
-                }
-                .status-step {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    font-size: 10px;
-                    font-weight: 700;
-                    color: var(--fil-text-dim);
-                }
-                .status-step .dot {
-                    width: 6px;
-                    height: 6px;
-                    border-radius: 50%;
-                    background: var(--fil-border);
-                }
-                .status-step.done { color: var(--fil-success); }
-                .status-step.done .dot { background: var(--fil-success); box-shadow: 0 0 5px var(--fil-success); }
-
-                .quick-actions {
-                    display: flex;
-                    gap: 10px;
-                }
-                .mini-btn {
-                    flex: 1;
-                    padding: 10px;
-                    background: transparent;
-                    border: 1px solid var(--fil-border);
-                    color: var(--fil-text-dim);
-                    border-radius: 10px;
-                    cursor: pointer;
-                    display: flex;
-                    justify-content: center;
-                    transition: all 0.2s;
-                }
-                .mini-btn:hover { 
-                    color: var(--fil-text); 
-                    background: rgba(255,255,255,0.05);
-                    border-color: var(--fil-text-dim);
-                }
-                .mini-btn.highlight:hover {
-                    color: var(--fil-bg);
-                    background: var(--fil-accent);
-                    border-color: var(--fil-accent);
-                }
-            `}</style>
+            {/* Quick Settings Section integrated from DocumentCenter */}
+            <div className="v4-table-card" style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '24px' }}>
+                    <Languages size={20} className="cyan-text" />
+                    <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 950, letterSpacing: '1px' }}>PODEŠAVANJA JEZIKA I LOKALIZACIJE</h3>
+                </div>
+                <div className="v4-metrics-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+                    <div className="v4-input-group">
+                        <label className="v4-label">JEZIK DOKUMENTACIJE</label>
+                        <select className="v4-input" defaultValue="Srpski">
+                            <option>Srpski</option>
+                            <option>Engleski</option>
+                            <option>Nemački</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

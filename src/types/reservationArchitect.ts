@@ -59,6 +59,7 @@ export interface TripItem {
     cancellationPolicyConfirmed?: boolean;
     cancellationPolicy?: any; // Stored cancellation policy JSON
     flightLegs?: FlightLeg[];
+    currency: string;
 }
 
 export interface CheckData {
@@ -176,6 +177,9 @@ export interface Dossier {
     repCheckedAt?: string;
     repCheckedBy?: string;
     repInternalNote?: string;
+    hotelNotified?: boolean;
+    proformaSent?: boolean;
+    invoiceCreated?: boolean;
     documentTracker: {
         [key: string]: {
             generated: boolean;

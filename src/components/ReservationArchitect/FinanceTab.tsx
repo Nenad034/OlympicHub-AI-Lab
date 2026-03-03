@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
     CreditCard, Banknote, Receipt, ArrowRightLeft,
     Plus, Trash2, ShieldCheck, Euro, Coins, Printer,
-    FileText, Download, TrendingUp, AlertCircle
+    FileText, Download, TrendingUp, AlertCircle, Trash
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Dossier, PaymentRecord, Installment } from '../../types/reservationArchitect';
+import type { Dossier, PaymentRecord } from '../../types/reservationArchitect';
 import { formatDate } from '../../utils/dateUtils';
 
 interface FinanceTabProps {
@@ -26,220 +26,127 @@ export const FinanceTab: React.FC<FinanceTabProps> = ({
     onRemovePayment
 }) => {
     return (
-        <div className="finance-view-v2">
+        <div className="v4-finance-tab" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
             {/* Top Metrics Grid */}
-            <div className="metrics-grid">
-                <div className="metric-card glass cyan-border">
-                    <div className="icon-bg cyan-glow"><TrendingUp size={24} /></div>
-                    <div className="info">
-                        <span className="label">UKUPNA VREDNOST</span>
-                        <span className="value">{financialStats.totalBrutto.toLocaleString()} <small>{dossier.finance.currency}</small></span>
+            <div className="v4-metrics-grid">
+                <div className="v4-metric-card">
+                    <div className="v4-metric-info">
+                        <label>UKUPNA VREDNOST</label>
+                        <div className="value">{financialStats.totalBrutto.toLocaleString()} {dossier.finance.currency}</div>
+                        <div className="v4-text-dim" style={{ marginTop: '4px' }}>Bazirano na trip-item specifikaciji</div>
+                    </div>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(0, 229, 255, 0.1)', color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <TrendingUp size={24} />
                     </div>
                 </div>
-                <div className="metric-card glass green-border">
-                    <div className="icon-bg success-glow"><ShieldCheck size={24} /></div>
-                    <div className="info">
-                        <span className="label">UPLAĆENO</span>
-                        <span className="value success">{financialStats.totalPaid.toLocaleString()} <small>{dossier.finance.currency}</small></span>
+
+                <div className="v4-metric-card">
+                    <div className="v4-metric-info">
+                        <label>UKUPNO UPLAĆENO</label>
+                        <div className="value success">{financialStats.totalPaid.toLocaleString()} {dossier.finance.currency}</div>
+                        <div className="v4-text-dim" style={{ marginTop: '4px' }}>{dossier.finance.payments.length} Proknjiženih transakcija</div>
+                    </div>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <ShieldCheck size={24} />
                     </div>
                 </div>
-                <div className="metric-card glass red-border">
-                    <div className="icon-bg danger-glow"><AlertCircle size={24} /></div>
-                    <div className="info">
-                        <span className="label">PREOSTALO DUGA</span>
-                        <span className="value danger">{financialStats.balance.toLocaleString()} <small>{dossier.finance.currency}</small></span>
+
+                <div className="v4-metric-card">
+                    <div className="v4-metric-info">
+                        <label>PREOSTALO ZA NAPLATU</label>
+                        <div className={`value ${financialStats.balance > 0 ? 'danger' : 'success'}`}>{financialStats.balance.toLocaleString()} {dossier.finance.currency}</div>
+                        <div className="v4-text-dim" style={{ marginTop: '4px' }}>Rok za uplatu: 25.04.2026</div>
+                    </div>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: financialStats.balance > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: financialStats.balance > 0 ? '#ef4444' : '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <AlertCircle size={24} />
                     </div>
                 </div>
             </div>
 
             {/* Payments Table */}
-            <div className="payments-section glass">
-                <div className="section-header">
-                    <div className="title">
-                        <Receipt size={20} className="cyan" />
-                        <h3>EVIDENCIJA UPLATA</h3>
+            <div className="v4-table-card">
+                <div style={{ padding: '24px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <Receipt size={20} className="cyan-text" />
+                        <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 950, letterSpacing: '1px' }}>EVIDENCIJA UPLATA</h3>
                     </div>
-                    <button className="add-btn" onClick={onAddPayment}>
+                    <button className="v4-tab-btn active" onClick={onAddPayment}>
                         <Plus size={16} /> NOVA UPLATA
                     </button>
                 </div>
 
-                <div className="table-wrapper">
-                    <table className="fil-table">
-                        <thead>
-                            <tr>
-                                <th>DATUM</th>
-                                <th>UPLATILAC</th>
-                                <th>METOD</th>
-                                <th>VALUTA</th>
-                                <th>IZNOS</th>
-                                <th>RSD EKVIVALENT</th>
-                                <th style={{ textAlign: 'right' }}>AKCIJE</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <AnimatePresence>
-                                {dossier.finance.payments.map((p) => (
-                                    <motion.tr
-                                        key={p.id}
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        className={p.status === 'deleted' ? 'row-deleted' : ''}
-                                    >
-                                        <td>{formatDate(p.date)}</td>
-                                        <td>{p.payerName}</td>
-                                        <td>{p.method}</td>
-                                        <td><strong>{p.currency}</strong></td>
-                                        <td className="value">{p.amount.toLocaleString()}</td>
-                                        <td className="value-rsd">{(p.amountInRsd || 0).toLocaleString()} RSD</td>
-                                        <td className="actions">
-                                            <button className="icon-btn" title="Štampaj priznanicu"><Printer size={14} /></button>
-                                            <button
-                                                className="icon-btn delete"
-                                                title="Storniraj uplatu"
-                                                onClick={() => onRemovePayment(p.id)}
-                                            >
-                                                <Trash2 size={14} />
+                <table className="v4-table">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Uplatilac</th>
+                            <th>Metod</th>
+                            <th style={{ textAlign: 'right' }}>Iznos ({dossier.finance.currency})</th>
+                            <th style={{ textAlign: 'right' }}>U RSD (NBS)</th>
+                            <th style={{ textAlign: 'center' }}>Status</th>
+                            <th style={{ textAlign: 'right' }}>Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <AnimatePresence>
+                            {dossier.finance.payments.map((p) => (
+                                <motion.tr
+                                    key={p.id}
+                                    className={`v4-row-hover ${p.status === 'deleted' ? 'storno-row' : ''}`}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: p.status === 'deleted' ? 0.35 : 1 }}
+                                    style={{ background: p.status === 'deleted' ? 'rgba(239, 68, 68, 0.05)' : 'transparent' }}
+                                >
+                                    <td style={{ fontFamily: 'monospace', fontSize: '13px' }}>{formatDate(p.date)}</td>
+                                    <td><div className="v4-text-main" style={{ fontSize: '14px' }}>{p.payerName}</div></td>
+                                    <td>
+                                        <div className="v4-status-pill" style={{ background: 'rgba(255,255,255,0.05)', height: '28px', padding: '0 10px', fontSize: '11px' }}>
+                                            {p.method}
+                                        </div>
+                                    </td>
+                                    <td style={{ textAlign: 'right' }}>
+                                        <div className="v4-price" style={{ color: p.status === 'deleted' ? 'var(--text-secondary)' : 'var(--text-primary)' }}>{p.amount.toLocaleString()}</div>
+                                    </td>
+                                    <td style={{ textAlign: 'right' }}>
+                                        <div className="v4-text-dim" style={{ fontSize: '12px' }}>{(p.amountInRsd || 0).toLocaleString()} RSD</div>
+                                    </td>
+                                    <td style={{ textAlign: 'center' }}>
+                                        <div className={`v4-status-pill ${p.status === 'deleted' ? 'danger' : 'success'}`} style={{ transform: 'scale(0.85)' }}>
+                                            {p.status === 'deleted' ? 'STORNO' : 'ACTIVE'}
+                                        </div>
+                                    </td>
+                                    <td style={{ textAlign: 'right' }}>
+                                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                            <button className="v4-tab-btn" style={{ width: '36px', height: '36px', padding: 0, justifyContent: 'center', background: 'var(--bg-secondary)' }} title="Štampaj priznanicu">
+                                                <Printer size={16} />
                                             </button>
-                                        </td>
-                                    </motion.tr>
-                                ))}
-                            </AnimatePresence>
-                            {dossier.finance.payments.length === 0 && (
-                                <tr>
-                                    <td colSpan={7} className="empty-state">Nema evidentiranih uplata.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                            <button
+                                                className="v4-tab-btn"
+                                                style={{ width: '36px', height: '36px', padding: 0, justifyContent: 'center', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}
+                                                onClick={() => onRemovePayment(p.id)}
+                                                title="Storniraj"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </motion.tr>
+                            ))}
+                        </AnimatePresence>
+                        {dossier.finance.payments.length === 0 && (
+                            <tr>
+                                <td colSpan={7} style={{ height: '160px', textAlign: 'center' }}>
+                                    <div style={{ opacity: 0.3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                        <Coins size={48} />
+                                        <span style={{ fontWeight: 800 }}>NEMA EVIDENTIRANIH UPLATA</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
-
-            <style>{`
-                .finance-view-v2 {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 30px;
-                }
-                .metrics-grid {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 20px;
-                }
-                .metric-card {
-                    padding: 24px;
-                    border-radius: 20px;
-                    display: flex;
-                    align-items: center;
-                    gap: 20px;
-                    border: 1px solid var(--fil-border);
-                }
-                .cyan-border { border-left: 4px solid var(--fil-accent); }
-                .green-border { border-left: 4px solid var(--fil-success); }
-                .red-border { border-left: 4px solid var(--fil-danger); }
-
-                .icon-bg {
-                    width: 50px;
-                    height: 50px;
-                    border-radius: 14px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                }
-                .info {
-                    display: flex;
-                    flex-direction: column;
-                }
-                .info .label {
-                    font-size: 11px;
-                    font-weight: 800;
-                    color: var(--fil-text-dim);
-                    letter-spacing: 1px;
-                }
-                .info .value {
-                    font-size: 24px;
-                    font-weight: 900;
-                }
-                .info .value.success { color: var(--fil-success); }
-                .info .value.danger { color: var(--fil-danger); }
-
-                .payments-section {
-                    padding: 24px;
-                    border-radius: 24px;
-                }
-                .section-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 24px;
-                }
-                .section-header .title {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-                .section-header h3 {
-                    margin: 0;
-                    font-size: 14px;
-                    font-weight: 900;
-                    letter-spacing: 2px;
-                }
-                .add-btn {
-                    padding: 10px 20px;
-                    background: var(--fil-accent);
-                    color: var(--fil-bg);
-                    border: none;
-                    border-radius: 12px;
-                    font-size: 12px;
-                    font-weight: 800;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    box-shadow: 0 0 15px var(--fil-accent-glow);
-                }
-
-                .fil-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-                .fil-table th {
-                    text-align: left;
-                    padding: 15px;
-                    font-size: 11px;
-                    font-weight: 800;
-                    color: var(--fil-text-dim);
-                    border-bottom: 1px solid var(--fil-border);
-                }
-                .fil-table td {
-                    padding: 15px;
-                    font-size: 13px;
-                    border-bottom: 1px solid var(--fil-border);
-                }
-                .fil-table td.value { font-weight: 800; }
-                .fil-table td.value-rsd { color: var(--fil-text-dim); font-size: 12px; }
-                .row-deleted { opacity: 0.3; text-decoration: line-through; }
-                .empty-state {
-                    text-align: center;
-                    padding: 40px !important;
-                    color: var(--fil-text-dim);
-                    font-style: italic;
-                }
-
-                .icon-btn {
-                    padding: 8px;
-                    background: transparent;
-                    border: 1px solid var(--fil-border);
-                    color: var(--fil-text-dim);
-                    border-radius: 8px;
-                    cursor: pointer;
-                    margin-left: 5px;
-                }
-                .icon-btn:hover { color: var(--fil-text); background: rgba(255,255,255,0.05); }
-                .icon-btn.delete:hover { border-color: var(--fil-danger); color: var(--fil-danger); }
-            `}</style>
         </div>
     );
 };

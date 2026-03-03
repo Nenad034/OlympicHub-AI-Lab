@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Sparkles, Building2, Shield, Briefcase, Copy, Mail, Printer, Share2 } from 'lucide-react';
+import { FileText, Sparkles, Building2, Shield, Briefcase, Copy, Mail, Printer, Share2, StickyNote, Terminal } from 'lucide-react';
 import type { Dossier, TripItem } from '../../types/reservationArchitect';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -22,281 +22,96 @@ export const NotesTab: React.FC<NotesTabProps> = ({ dossier, setDossier, addLog 
         });
     };
 
-    const getNotesNotepadText = () => {
-        let text = `--- NAPOMENE REZERVACIJE / DOSSIER ${dossier.cisCode} ---\n\n`;
-        text += `OPŠTE NAPOMENE:\n${dossier.notes.general || 'Nema napomena.'}\n\n`;
-        text += `NAPOMENE ZA UGOVOR:\n${dossier.notes.contract || 'Nema napomena.'}\n\n`;
-        text += `NAPOMENE ZA VAUČER:\n${dossier.notes.voucher || 'Nema napomena.'}\n\n`;
-        text += `NAPOMENE DOBAVLJAČA (GLOBALNO):\n${dossier.notes.supplier || 'Nema napomena.'}\n\n`;
-        text += `INTERNE NAPOMENE:\n${dossier.notes.internal || 'Nema napomena.'}\n\n`;
-
-        const itemNotes = dossier.tripItems.filter(item => item.notes || item.supplierNotes);
-        if (itemNotes.length > 0) {
-            text += `--- NAPOMENE PO STAVKAMA ---\n`;
-            itemNotes.forEach((item: TripItem) => {
-                text += `\nSTAVKA: ${item.subject}\n`;
-                if (item.notes) text += `- Opšta napomena: ${item.notes}\n`;
-                if (item.supplierNotes) text += `- Za dobavljača: ${item.supplierNotes}\n`;
-            });
-        }
-        return text;
-    };
-
-    const copyToClipboard = () => {
-        navigator.clipboard.writeText(getNotesNotepadText());
-        addLog('Sistem', 'Napomene kopirane u clipboard.', 'success');
-    };
-
     return (
-        <div className="notes-tab-v2">
-            <div className="tab-header-v2">
-                <div className="title-group">
-                    <div className="icon-box">
-                        <FileText size={20} />
-                    </div>
-                    <div>
-                        <h2>NAPOMENE REZERVACIJE</h2>
-                        <p>Upravljajte napomenama za putnike, ugovore i internu evidenciju</p>
-                    </div>
+        <div className="v4-notes-tab" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <StickyNote size={22} className="cyan-text" />
+                    <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 950, letterSpacing: '1px' }}>NAPOMENE I BELEŠKE</h3>
                 </div>
-                <button
-                    className={`notepad-toggle ${isNotepadView ? 'active' : ''}`}
-                    onClick={() => setIsNotepadView(!isNotepadView)}
-                >
-                    <FileText size={16} />
-                    {isNotepadView ? 'INTERAKTIVNI PRIKAZ' : 'NOTEPAD PREGLED'}
-                </button>
+
+                <div className="v4-nav-tabs" style={{ marginBottom: 0 }}>
+                    <button className={`v4-tab-btn ${!isNotepadView ? 'active' : ''}`} onClick={() => setIsNotepadView(false)}>
+                        <Terminal size={18} /> INTERAKTIVNO
+                    </button>
+                    <button className={`v4-tab-btn ${isNotepadView ? 'active' : ''}`} onClick={() => setIsNotepadView(true)}>
+                        <Sparkles size={18} /> RAW PREGLED
+                    </button>
+                </div>
             </div>
 
-            <AnimatePresence mode="wait">
-                {isNotepadView ? (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="fil-card notepad-view"
-                        key="notepad"
-                    >
-                        <div className="notepad-header">
-                            <span className="file-name">notes_{dossier.cisCode}.txt</span>
-                            <div className="actions">
-                                <button onClick={copyToClipboard}><Copy size={14} /> Kopiraj</button>
-                                <button><Mail size={14} /> Email</button>
-                                <button onClick={() => window.print()}><Printer size={14} /> Štampaj</button>
-                            </div>
-                        </div>
-                        <div className="notepad-body">
-                            <pre>{getNotesNotepadText()}</pre>
-                        </div>
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="notes-grid"
-                        key="grid"
-                    >
-                        <div className="fil-card note-input-box">
-                            <div className="box-header">
-                                <Sparkles size={16} className="text-accent" />
-                                <h3>Generalna Napomena</h3>
-                            </div>
-                            <textarea
-                                value={dossier.notes.general}
-                                onChange={(e) => handleNoteChange('general', e.target.value)}
-                                placeholder="Napomena od putnika..."
-                            />
-                        </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+                <div className="v4-table-card" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+                        <Sparkles size={18} className="cyan-text" />
+                        <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)' }}>OPŠTA NAPOMENA</h4>
+                    </div>
+                    <textarea
+                        className="v4-input"
+                        style={{ width: '100%', minHeight: '120px', resize: 'none' }}
+                        value={dossier.notes.general}
+                        onChange={(e) => handleNoteChange('general', e.target.value)}
+                        placeholder="Unesite opšte napomene..."
+                    />
+                </div>
 
-                        <div className="fil-card note-input-box">
-                            <div className="box-header">
-                                <FileText size={16} className="text-success" />
-                                <h3>Napomena za Ugovor</h3>
-                            </div>
-                            <textarea
-                                value={dossier.notes.contract}
-                                onChange={(e) => handleNoteChange('contract', e.target.value)}
-                                placeholder="Tekst koji ide na ugovor..."
-                            />
-                        </div>
+                <div className="v4-table-card" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+                        <FileText size={18} style={{ color: '#10b981' }} />
+                        <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)' }}>NAPOMENA ZA UGOVOR</h4>
+                    </div>
+                    <textarea
+                        className="v4-input"
+                        style={{ width: '100%', minHeight: '120px', resize: 'none' }}
+                        value={dossier.notes.contract}
+                        onChange={(e) => handleNoteChange('contract', e.target.value)}
+                        placeholder="Tekst koji se štampa na ugovoru..."
+                    />
+                </div>
 
-                        <div className="fil-card note-input-box">
-                            <div className="box-header">
-                                <Building2 size={16} className="text-cyan" />
-                                <h3>Napomena za Vaučer</h3>
-                            </div>
-                            <textarea
-                                value={dossier.notes.voucher}
-                                onChange={(e) => handleNoteChange('voucher', e.target.value)}
-                                placeholder="Napomena za hotel..."
-                            />
-                        </div>
+                <div className="v4-table-card" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+                        <Building2 size={18} style={{ color: '#3b82f6' }} />
+                        <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)' }}>NAPOMENA ZA VAUČER</h4>
+                    </div>
+                    <textarea
+                        className="v4-input"
+                        style={{ width: '100%', minHeight: '120px', resize: 'none' }}
+                        value={dossier.notes.voucher}
+                        onChange={(e) => handleNoteChange('voucher', e.target.value)}
+                        placeholder="Napomene za dobavljača i vaučer..."
+                    />
+                </div>
 
-                        <div className="fil-card note-input-box internal">
-                            <div className="box-header">
-                                <Shield size={16} className="text-danger" />
-                                <h3>Interna Napomena</h3>
-                            </div>
-                            <textarea
-                                value={dossier.notes.internal}
-                                onChange={(e) => handleNoteChange('internal', e.target.value)}
-                                placeholder="Interni dogovori, upozorenja..."
-                            />
-                        </div>
+                <div className="v4-table-card" style={{ padding: '24px', borderLeft: '4px solid #ef4444' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+                        <Shield size={18} style={{ color: '#ef4444' }} />
+                        <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)' }}>INTERNA BELEŠKA</h4>
+                    </div>
+                    <textarea
+                        className="v4-input"
+                        style={{ width: '100%', minHeight: '120px', resize: 'none' }}
+                        value={dossier.notes.internal}
+                        onChange={(e) => handleNoteChange('internal', e.target.value)}
+                        placeholder="Samo za interne potrebe operatera..."
+                    />
+                </div>
 
-                        <div className="fil-card note-input-box supplier">
-                            <div className="box-header">
-                                <Briefcase size={16} className="text-amber" />
-                                <h3>Napomena za Dobavljača</h3>
-                            </div>
-                            <textarea
-                                value={dossier.notes.supplier}
-                                onChange={(e) => handleNoteChange('supplier', e.target.value)}
-                                placeholder="Unesite napomenu za dobavljača..."
-                            />
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            <style>{`
-                .notes-tab-v2 {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 25px;
-                }
-                .tab-header-v2 {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-                .title-group {
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                }
-                .icon-box {
-                    width: 50px;
-                    height: 50px;
-                    background: var(--fil-bg-card);
-                    border: 1px solid var(--fil-border);
-                    border-radius: 14px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: var(--fil-accent);
-                }
-                .title-group h2 { margin: 0; font-size: 20px; font-weight: 800; }
-                .title-group p { margin: 5px 0 0 0; font-size: 13px; color: var(--fil-text-dim); }
-
-                .notepad-toggle {
-                    background: var(--fil-bg-card);
-                    border: 1px solid var(--fil-border);
-                    padding: 10px 20px;
-                    border-radius: 12px;
-                    color: var(--fil-text);
-                    font-size: 11px;
-                    font-weight: 800;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    transition: all 0.2s;
-                }
-                .notepad-toggle.active {
-                    background: var(--fil-accent);
-                    color: var(--fil-bg);
-                    border-color: var(--fil-accent);
-                }
-
-                .notes-grid {
-                    display: grid;
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 20px;
-                }
-                .note-input-box {
-                    padding: 20px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 15px;
-                }
-                .box-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }
-                .box-header h3 { font-size: 13px; font-weight: 800; margin: 0; }
-                .note-input-box textarea {
-                    width: 100%;
-                    min-height: 120px;
-                    background: var(--fil-bg);
-                    border: 1px solid var(--fil-border);
-                    border-radius: 12px;
-                    padding: 15px;
-                    color: var(--fil-text);
-                    font-size: 14px;
-                    line-height: 1.6;
-                    resize: vertical;
-                    transition: border-color 0.2s;
-                }
-                .note-input-box textarea:focus {
-                    border-color: var(--fil-accent);
-                    outline: none;
-                }
-
-                .note-input-box.internal { border-left: 4px solid #ef4444; }
-                .note-input-box.supplier { border-left: 4px solid #fbbf24; grid-column: span 2; }
-
-                .notepad-view {
-                    padding: 0;
-                    overflow: hidden;
-                    background: #111;
-                }
-                .notepad-header {
-                    padding: 15px 25px;
-                    background: rgba(255,255,255,0.03);
-                    border-bottom: 1px solid var(--fil-border);
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-                .file-name { font-family: monospace; font-size: 12px; color: var(--fil-text-dim); }
-                .notepad-header .actions { display: flex; gap: 10px; }
-                .notepad-header button {
-                    background: transparent;
-                    border: 1px solid var(--fil-border);
-                    color: var(--fil-text-dim);
-                    padding: 5px 12px;
-                    border-radius: 6px;
-                    font-size: 10px;
-                    font-weight: 800;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                }
-                .notepad-header button:hover { color: white; border-color: white; }
-                .notepad-body {
-                    padding: 30px;
-                    max-height: 600px;
-                    overflow-y: auto;
-                }
-                .notepad-body pre {
-                    font-family: 'Fira Code', 'Courier New', monospace;
-                    font-size: 13px;
-                    line-height: 1.6;
-                    color: #cbd5e1;
-                    margin: 0;
-                    white-space: pre-wrap;
-                }
-
-                .text-accent { color: var(--fil-accent); }
-                .text-success { color: #10b981; }
-                .text-danger { color: #ef4444; }
-                .text-amber { color: #fbbf24; }
-                .text-cyan { color: #06b6d4; }
-            `}</style>
+                <div className="v4-table-card" style={{ padding: '24px', gridColumn: 'span 2' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+                        <Briefcase size={18} style={{ color: '#fbbf24' }} />
+                        <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)' }}>NAPOMENA ZA DOBAVLJAČA (GLOBAL)</h4>
+                    </div>
+                    <textarea
+                        className="v4-input"
+                        style={{ width: '100%', minHeight: '160px', resize: 'none' }}
+                        value={dossier.notes.supplier}
+                        onChange={(e) => handleNoteChange('supplier', e.target.value)}
+                        placeholder="Globalne napomene za sve dobavljače u dosijeu..."
+                    />
+                </div>
+            </div>
         </div>
     );
 };

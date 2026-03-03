@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Globe, Bell, Shield, Database, Trash2, Save } from 'lucide-react';
+import { Settings, Globe, Bell, Shield, Database, Trash2, Save, Cpu, Smartphone, Activity } from 'lucide-react';
 import type { Dossier } from '../../types/reservationArchitect';
 
 interface SettingsViewProps {
@@ -9,173 +9,95 @@ interface SettingsViewProps {
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ dossier, setDossier }) => {
     return (
-        <div className="settings-view-v2">
-            <div className="section-header">
-                <div className="title">
-                    <Settings size={20} className="cyan" />
-                    <h3>PODEŠAVANJA DOSIJEA</h3>
-                </div>
+        <div className="v4-settings-view" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <Settings size={22} className="cyan-text" />
+                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 950, letterSpacing: '1px' }}>KONFIGURACIJA DOSIJEA</h3>
             </div>
 
-            <div className="settings-grid">
-                <div className="settings-card glass">
-                    <div className="card-header">
-                        <Globe size={18} className="cyan" />
-                        <h4>LOKALIZACIJA</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+
+                {/* LOKALIZACIJA */}
+                <div className="v4-table-card" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px' }}>
+                        <Globe size={18} className="cyan-text" />
+                        <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)' }}>LOKALIZACIJA I JEZIK</h4>
                     </div>
-                    <div className="setting-item">
-                        <label>JEZIK DOKUMENTACIJE</label>
+                    <div className="v4-input-group">
+                        <label className="v4-label">PRIMARNI JEZIK DOKUMENTACIJE</label>
                         <select
+                            className="v4-input"
                             value={dossier.language}
                             onChange={(e) => setDossier({ ...dossier, language: e.target.value as any })}
                         >
-                            <option value="Srpski">Srpski (SR)</option>
-                            <option value="Engleski">Engleski (EN)</option>
+                            <option value="Srpski">Srpski (RS-LAT)</option>
+                            <option value="Engleski">Engleski (UK-EN)</option>
                         </select>
                     </div>
                 </div>
 
-                <div className="settings-card glass">
-                    <div className="card-header">
-                        <Bell size={18} className="gold" />
-                        <h4>NOTIFIKACIJE</h4>
+                {/* AUTOMATIZACIJA */}
+                <div className="v4-table-card" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px' }}>
+                        <Bell size={18} style={{ color: '#fbbf24' }} />
+                        <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)' }}>AUTOMATIZACIJA I NOTIFIKACIJE</h4>
                     </div>
-                    <div className="setting-item toggle">
-                        <label>PODSETNIK ZA PLAĆANJE</label>
-                        <input type="checkbox" defaultChecked />
-                    </div>
-                    <div className="setting-item toggle">
-                        <label>VIBER POTVRDA UPLATE</label>
-                        <input type="checkbox" defaultChecked />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <div className="v4-text-main" style={{ fontSize: '14px' }}>PODSETNIK PLAĆANJA</div>
+                                <div className="v4-text-dim" style={{ fontSize: '11px' }}>Slanje SMS/Viber poruke pred rok</div>
+                            </div>
+                            <div className="v4-status-pill success" style={{ cursor: 'pointer' }}>ENABLED</div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <div className="v4-text-main" style={{ fontSize: '14px' }}>VIBER POTVRDA</div>
+                                <div className="v4-text-dim" style={{ fontSize: '11px' }}>Automatska potvrda uplate klijentu</div>
+                            </div>
+                            <div className="v4-status-pill success" style={{ cursor: 'pointer' }}>ENABLED</div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="settings-card glass">
-                    <div className="card-header">
-                        <Shield size={18} className="success" />
-                        <h4>ADMINISTRACIJA</h4>
+                {/* SYNC NODES */}
+                <div className="v4-table-card" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px' }}>
+                        <Cpu size={18} style={{ color: '#3b82f6' }} />
+                        <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)' }}>CORE MODULE SYNC NODES</h4>
                     </div>
-                    <button className="admin-btn danger">
-                        <Trash2 size={16} /> OBRIŠI DOSIJE
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', fontWeight: 800 }}>
+                                <Activity size={14} style={{ color: '#10b981' }} /> SOLVEX CLOUD
+                            </div>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', fontWeight: 800 }}>
+                                <Activity size={14} style={{ color: '#ef4444' }} /> SABRE GDS GATEWAY
+                            </div>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }}></div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* CRITICAL ACTIONS */}
+                <div className="v4-table-card" style={{ padding: '24px', border: '1px solid rgba(239, 68, 68, 0.2)', background: 'rgba(239, 68, 68, 0.02)' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px' }}>
+                        <Shield size={18} style={{ color: '#ef4444' }} />
+                        <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 900, color: '#ef4444' }}>CRITICAL ACTIONS</h4>
+                    </div>
+                    <button className="v4-tab-btn" style={{ width: '100%', height: '44px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', justifyContent: 'center' }}>
+                        <Trash2 size={18} /> OBRIŠI DOSIJE
                     </button>
-                    <p className="hint">Ova akcija je nepovratna i zahteva administratorsku šifru.</p>
+                    <p style={{ fontSize: '11px', fontStyle: 'italic', color: 'var(--text-secondary)', marginTop: '12px', textAlign: 'center' }}>
+                        Ova akcija je nepovratna i zahteva Root privilegije.
+                    </p>
                 </div>
 
-                <div className="settings-card glass">
-                    <div className="card-header">
-                        <Database size={18} className="cyan" />
-                        <h4>INTEGRACIJE</h4>
-                    </div>
-                    <div className="integration-status">
-                        <div className="node">
-                            <span>SOLVEX SYNC</span>
-                            <span className="status-dot online"></span>
-                        </div>
-                        <div className="node">
-                            <span>SABRE GDS</span>
-                            <span className="status-dot offline"></span>
-                        </div>
-                    </div>
-                </div>
             </div>
-
-            <style>{`
-                .settings-view-v2 {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 30px;
-                }
-                .section-header h3 {
-                    margin: 0;
-                    font-size: 14px;
-                    font-weight: 900;
-                    letter-spacing: 2px;
-                }
-                .settings-grid {
-                    display: grid;
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 20px;
-                }
-                .settings-card {
-                    padding: 24px;
-                    border-radius: 20px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 15px;
-                }
-                .card-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    margin-bottom: 5px;
-                }
-                .card-header h4 {
-                    margin: 0;
-                    font-size: 12px;
-                    font-weight: 800;
-                    color: var(--fil-text);
-                }
-                .setting-item {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                }
-                .setting-item.toggle {
-                    flex-direction: row;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-                .setting-item label {
-                    font-size: 10px;
-                    font-weight: 800;
-                    color: var(--fil-text-dim);
-                }
-                .setting-item select {
-                    background: rgba(0,0,0,0.2);
-                    border: 1px solid var(--fil-border);
-                    color: white;
-                    padding: 10px;
-                    border-radius: 10px;
-                }
-                .admin-btn {
-                    width: 100%;
-                    padding: 12px;
-                    border-radius: 12px;
-                    border: 1px solid var(--fil-danger);
-                    background: rgba(255, 77, 77, 0.1);
-                    color: var(--fil-danger);
-                    font-weight: 800;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 10px;
-                }
-                .hint {
-                    font-size: 10px;
-                    color: var(--fil-text-dim);
-                    font-style: italic;
-                }
-                .integration-status {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 10px;
-                }
-                .integration-status .node {
-                    display: flex;
-                    justify-content: space-between;
-                    font-size: 11px;
-                    font-weight: 700;
-                    color: var(--fil-text-dim);
-                }
-                .status-dot {
-                    width: 8px;
-                    height: 8px;
-                    border-radius: 50%;
-                }
-                .status-dot.online { background: var(--fil-success); box-shadow: 0 0 5px var(--fil-success); }
-                .status-dot.offline { background: var(--fil-danger); }
-            `}</style>
         </div>
     );
 };

@@ -2,7 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    X, Printer, FileText,
+    X, Printer, FileText, LayoutDashboard, Settings, History, MessageSquare, ShieldCheck, Info,
+    Hash, Globe, User, Phone, Mail, MapPin, TrendingUp, Wallet, ShieldAlert,
+    RotateCcw, Save, Loader2, RotateCw, Smartphone, Sun, Moon,
+    ChevronDown, Zap, FileJson, CreditCard, Users, Briefcase
 } from 'lucide-react';
 
 // Specialized Hook & Utils
@@ -10,17 +13,12 @@ import { useThemeStore } from '../stores';
 import { useReservationDossier } from '../hooks/useReservationDossier';
 import { useQueryState } from '../hooks/useQueryState';
 import { useToast } from '../components/ui/Toast';
-import { formatDate } from '../utils/dateUtils';
-import { NBS_RATES } from '../constants/reservationArchitect';
 import { dossierDocumentService } from '../services/dossierDocumentService';
 
 // Components
-import { DossierHeader } from '../components/ReservationArchitect/DossierHeader';
-import { MiniSidebar } from '../components/ReservationArchitect/MiniSidebar';
 import { SummaryTab } from '../components/ReservationArchitect/SummaryTab';
 import { PassengersTab } from '../components/ReservationArchitect/PassengersTab';
 import { FinanceTab } from '../components/ReservationArchitect/FinanceTab';
-import { DocumentCenter } from '../components/ReservationArchitect/DocumentCenter';
 import { LogsView } from '../components/ReservationArchitect/LogsView';
 import { SettingsView } from '../components/ReservationArchitect/SettingsView';
 import { DocumentsView } from '../components/ReservationArchitect/DocumentsView';
@@ -31,16 +29,16 @@ import { CommunicationTab } from '../components/ReservationArchitect/Communicati
 import { PaymentEntryModal } from '../components/ReservationArchitect/modals/PaymentEntryModal';
 import { DossierCancellationModal } from '../components/ReservationArchitect/modals/DossierCancellationModal';
 import ReservationEmailModal from '../components/ReservationEmailModal';
-import { ModernCalendar } from '../components/ModernCalendar';
 
 // Types
 import type {
-    Language, ResStatus, PaymentRecord, CheckData,
-    TripItem, ActivityLog
+    Language, ResStatus, PaymentRecord, TripItem
 } from '../types/reservationArchitect';
 
+import { NBS_RATES } from '../constants/reservationArchitect';
+
 // Styles
-import './ReservationArchitectV2.css';
+import './ReservationArchitectV4.css';
 
 const ReservationArchitect: React.FC = () => {
     const navigate = useNavigate();
@@ -51,7 +49,6 @@ const ReservationArchitect: React.FC = () => {
     // 1. Core State via Hook
     const {
         dossier, setDossier, updateDossier,
-        updateTripItem, removeTripItem, addTripItem,
         financialStats, addLog, addCommunication,
         undo, deepReset, isHistoryAvailable, isSaving,
         isInitialized
@@ -60,11 +57,6 @@ const ReservationArchitect: React.FC = () => {
     // 2. UI State
     const { theme: globalTheme } = useThemeStore();
     const [activeSection, setActiveSection] = useQueryState<string>('section', 'summary');
-    const [isLightTheme, setIsLightTheme] = useState(globalTheme === 'light');
-
-    useEffect(() => {
-        setIsLightTheme(globalTheme === 'light');
-    }, [globalTheme]);
 
     const { success: toastSuccess, error: toastError } = useToast();
     const [isSummaryNotepadView, setIsSummaryNotepadView] = useState(false);
@@ -162,182 +154,126 @@ const ReservationArchitect: React.FC = () => {
         toastSuccess(shouldFiscalize ? 'Uplata sačuvana i fiskalizovana!' : 'Uplata sačuvana.');
     };
 
-    if (!isInitialized) return <div className="loading-screen">Učitavanje dosijea...</div>;
+    if (!isInitialized) return (
+        <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-dark)', color: 'var(--accent-cyan)' }}>
+            <div style={{ fontSize: '12px', letterSpacing: '4px', fontWeight: 900 }}>UČITAVANJE DOSIJEA...</div>
+        </div>
+    );
+
+    const sections = [
+        { id: 'summary', label: 'REZIME', icon: <LayoutDashboard size={18} /> },
+        { id: 'passengers', label: 'PUTNICI', icon: <Users size={18} /> },
+        { id: 'finance', label: 'FINANSIJE', icon: <CreditCard size={18} /> },
+        { id: 'communication', label: 'CRM / KOMUNIKACIJA', icon: <MessageSquare size={18} /> },
+        { id: 'documents', label: 'DOKUMENTI', icon: <FileText size={18} /> },
+        { id: 'notes', label: 'BELEŠKE', icon: <Info size={18} /> },
+        { id: 'legal', label: 'LEGAL / REKL.', icon: <ShieldCheck size={18} /> },
+        { id: 'rep', label: 'DESTINACIJA', icon: <MapPin size={18} /> },
+        { id: 'logs', label: 'AUDIT', icon: <History size={18} /> },
+        { id: 'settings', label: 'PODEŠAVANJA', icon: <Settings size={18} /> }
+    ];
 
     return (
-        <div className={`reservation-architect-v2 ${isLightTheme ? 'light-theme' : ''}`}>
-            {/* 1. Header Area (Full Width) */}
-            <DossierHeader
-                dossier={dossier}
-                financialStats={financialStats}
-                isSaving={isSaving}
-                isHistoryAvailable={isHistoryAvailable}
-                onUndo={undo}
-                onDeepReset={deepReset}
-                onClose={handleClose}
-                onStatusChange={handleStatusChange}
-                isLightTheme={isLightTheme}
-                onToggleTheme={() => setIsLightTheme(!isLightTheme)}
-            />
-
-            {/* 2. Main content Grid (Proposal No. 2) */}
-            <div className="architect-main-grid">
-
-                {/* Left: Mini Sidebar Navigation */}
-                <MiniSidebar
-                    activeSection={activeSection}
-                    onSectionChange={setActiveSection}
-                    isSubagent={dossier.customerType === 'B2B-Subagent'}
-                />
-
-                {/* Center: Active Content Panel */}
-                <main className="content-panel glass">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={activeSection}
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.2 }}
-                            className="tab-content-wrapper"
-                        >
-                            {activeSection === 'summary' && (
-                                <SummaryTab
-                                    dossier={dossier}
-                                    setDossier={setDossier}
-                                    totalBrutto={financialStats.totalBrutto}
-                                    totalPaid={financialStats.totalPaid}
-                                    balance={financialStats.balance}
-                                    isSummaryNotepadView={isSummaryNotepadView}
-                                    setIsSummaryNotepadView={setIsSummaryNotepadView}
-                                    addLog={addLog}
-                                    setPolicyToShow={setPolicyToShow}
-                                    handlePrint={handlePrint}
-                                    setActiveSection={setActiveSection}
-                                />
-                            )}
-                            {activeSection === 'passengers' && (
-                                <PassengersTab
-                                    dossier={dossier}
-                                    setDossier={setDossier}
-                                    addLog={addLog}
-                                    isPartiesNotepadView={isPartiesNotepadView}
-                                    setIsPartiesNotepadView={setIsPartiesNotepadView}
-                                    isSubagent={dossier.customerType === 'B2B-Subagent'}
-                                    showSaveClientBtn={showSaveClientBtn}
-                                    setShowSaveClientBtn={setShowSaveClientBtn}
-                                    handleSaveToClients={handleSaveToClients}
-                                    handlePrint={handlePrint}
-                                />
-                            )}
-                            {activeSection === 'finance' && (
-                                <FinanceTab
-                                    dossier={dossier}
-                                    financialStats={financialStats}
-                                    onAddPayment={handleAddPaymentClick}
-                                    onRemovePayment={handleRemovePayment}
-                                />
-                            )}
-                            {activeSection === 'notes' && (
-                                <NotesTab
-                                    dossier={dossier}
-                                    setDossier={setDossier}
-                                    addLog={addLog}
-                                />
-                            )}
-                            {activeSection === 'legal' && (
-                                <LegalTab
-                                    dossier={dossier}
-                                    setDossier={setDossier}
-                                />
-                            )}
-                            {activeSection === 'rep' && (
-                                <RepTab dossier={dossier} />
-                            )}
-                            {activeSection === 'communication' && (
-                                <CommunicationTab
-                                    dossier={dossier}
-                                    addLog={addLog}
-                                    addCommunication={addCommunication}
-                                    onOpenEmailModal={() => setIsEmailModalOpen(true)}
-                                />
-                            )}
-                            {activeSection === 'documents' && (
-                                <DocumentsView
-                                    dossier={dossier}
-                                    onGenerate={handleGenerateDoc}
-                                    onPrint={handlePrint}
-                                    onSend={handleSendDoc}
-                                />
-                            )}
-                            {activeSection === 'logs' && (
-                                <LogsView dossier={dossier} />
-                            )}
-                            {activeSection === 'settings' && (
-                                <SettingsView dossier={dossier} setDossier={setDossier} />
-                            )}
-                        </motion.div>
-                    </AnimatePresence>
-                </main>
-
-                {/* Right: Actions Side Panel */}
-                <aside className="actions-side-panel">
-                    <DocumentCenter
-                        dossier={dossier}
-                        docSettings={docSettings}
-                        onLanguageChange={handleLanguageChange}
-                        onGenerate={handleGenerateDoc}
-                        onSend={handleSendDoc}
-                    />
-
-                    <div className="quick-notes-panel glass">
-                        <div className="panel-header">
-                            <FileText size={16} />
-                            <h3>INTERNE NAPOMENE</h3>
-                        </div>
-                        <textarea
-                            value={dossier.notes.internal}
-                            onChange={(e) => updateDossier({ notes: { ...dossier.notes, internal: e.target.value } })}
-                            placeholder="Samo za zaposlene..."
-                        />
+        <div className="v4-architect-container v4-scroll-area">
+            {/* Header Area following Accommodations Detail style */}
+            <div className="v4-header">
+                <div className="v4-header-id">
+                    <h1>RESERVATION ARCHITECT <span style={{ opacity: 0.3, marginLeft: '10px' }}>DOSIJE: {dossier.cisCode}</span></h1>
+                    <div className="meta">
+                        <span className="v4-status-pill success"><Zap size={14} fill="currentColor" /> {dossier.resCode}</span>
+                        <span className="v4-status-pill warning">{dossier.status.toUpperCase()}</span>
+                        <span className="v4-text-dim">KLIJENT REF: {dossier.clientReference}</span>
                     </div>
-                </aside>
+                </div>
+
+                <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                    <div className="v4-metric-info" style={{ textAlign: 'right' }}>
+                        <label>PREOSTALO ZA NAPLATU</label>
+                        <div className={`value ${financialStats.balance > 0 ? 'danger' : 'success'}`} style={{ fontSize: '24px', fontWeight: 900 }}>
+                            {financialStats.balance.toLocaleString()} {dossier.finance.currency}
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleClose}
+                        style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Navigation Tabs mimicking Production Hub */}
+            <div className="v4-nav-tabs">
+                {sections.map(s => (
+                    <button
+                        key={s.id}
+                        onClick={() => setActiveSection(s.id)}
+                        className={`v4-tab-btn ${activeSection === s.id ? 'active' : ''}`}
+                    >
+                        {s.icon} {s.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Content Hub - Wide View */}
+            <div className="v4-content-hub">
+                <AnimatePresence mode="wait">
+                    <motion.main
+                        key={activeSection}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        style={{ width: '100%' }}
+                    >
+                        {activeSection === 'summary' && (
+                            <SummaryTab
+                                dossier={dossier} setDossier={setDossier}
+                                totalBrutto={financialStats.totalBrutto} totalPaid={financialStats.totalPaid} balance={financialStats.balance}
+                                isSummaryNotepadView={isSummaryNotepadView} setIsSummaryNotepadView={setIsSummaryNotepadView}
+                                addLog={addLog} setPolicyToShow={setPolicyToShow} handlePrint={handlePrint} setActiveSection={setActiveSection}
+                            />
+                        )}
+                        {activeSection === 'passengers' && (
+                            <PassengersTab
+                                dossier={dossier} setDossier={setDossier} addLog={addLog}
+                                isPartiesNotepadView={isPartiesNotepadView} setIsPartiesNotepadView={setIsPartiesNotepadView}
+                                isSubagent={dossier.customerType === 'B2B-Subagent'} showSaveClientBtn={showSaveClientBtn}
+                                setShowSaveClientBtn={setShowSaveClientBtn} handleSaveToClients={handleSaveToClients} handlePrint={handlePrint}
+                            />
+                        )}
+                        {activeSection === 'finance' && (
+                            <FinanceTab dossier={dossier} financialStats={financialStats} onAddPayment={handleAddPaymentClick} onRemovePayment={handleRemovePayment} />
+                        )}
+                        {activeSection === 'notes' && <NotesTab dossier={dossier} setDossier={setDossier} addLog={addLog} />}
+                        {activeSection === 'legal' && <LegalTab dossier={dossier} setDossier={setDossier} />}
+                        {activeSection === 'rep' && <RepTab dossier={dossier} />}
+                        {activeSection === 'communication' && <CommunicationTab dossier={dossier} addLog={addLog} addCommunication={addCommunication} onOpenEmailModal={() => setIsEmailModalOpen(true)} />}
+                        {activeSection === 'documents' && <DocumentsView dossier={dossier} onGenerate={handleGenerateDoc} onPrint={handlePrint} onSend={handleSendDoc} />}
+                        {activeSection === 'logs' && <LogsView dossier={dossier} />}
+                        {activeSection === 'settings' && <SettingsView dossier={dossier} setDossier={setDossier} />}
+                    </motion.main>
+                </AnimatePresence>
             </div>
 
             {/* Modals */}
-            {policyToShow && (
-                <DossierCancellationModal
-                    item={policyToShow.item}
-                    onClose={() => setPolicyToShow(null)}
-                />
-            )}
-
+            {policyToShow && <DossierCancellationModal item={policyToShow.item} onClose={() => setPolicyToShow(null)} />}
             {isPaymentModalOpen && paymentDraft && (
                 <PaymentEntryModal
-                    isOpen={isPaymentModalOpen}
-                    onClose={() => setIsPaymentModalOpen(false)}
-                    draft={paymentDraft}
-                    setDraft={setPaymentDraft}
-                    onSave={handleSavePayment}
-                    dossier={dossier!}
+                    isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)}
+                    draft={paymentDraft} setDraft={setPaymentDraft} onSave={handleSavePayment} dossier={dossier!}
                 />
             )}
-
             {isEmailModalOpen && dossier && (
                 <ReservationEmailModal
-                    isOpen={isEmailModalOpen}
-                    onClose={() => setIsEmailModalOpen(false)}
-                    reservations={[
-                        {
-                            cisCode: dossier.cisCode || '',
-                            customerName: dossier.booker.fullName,
-                            supplier: dossier.tripItems[0]?.supplier || 'N/A',
-                            email: dossier.booker.email
-                        }
-                    ]}
+                    isOpen={isEmailModalOpen} onClose={() => setIsEmailModalOpen(false)}
+                    reservations={[{
+                        cisCode: dossier.cisCode || '', customerName: dossier.booker.fullName,
+                        supplier: dossier.tripItems[0]?.supplier || 'N/A', email: dossier.booker.email
+                    }]}
                 />
             )}
-
         </div>
     );
 };

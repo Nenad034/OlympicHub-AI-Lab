@@ -2,12 +2,12 @@ import React from 'react';
 import {
     Briefcase, Zap, RefreshCw, MapPin, Star, Clock, ShieldAlert,
     Users, FileText, Mail, Share2, Printer, AlertTriangle,
-    Building2, Plane, Compass, Ship, Truck, Globe, Package as PackageIcon,
-    FileEdit, LayoutDashboard, Copy, User, Phone, ChevronRight, Smartphone, MessageCircle, MessagesSquare
+    Building2, Plane, Compass, Ship, Truck, Globe, Package as PackageIcon, Hash,
+    FileEdit, LayoutDashboard, Copy, User, Phone, ChevronRight, Smartphone, MessageCircle, MessagesSquare,
+    ExternalLink, Download, ArrowUpRight
 } from 'lucide-react';
 import type { Dossier, TripItem, ActivityLog } from '../../types/reservationArchitect';
 import { formatDate } from '../../utils/dateUtils';
-import { getReservation as getSolvexReservation } from '../../integrations/solvex/api/solvexBookingService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { generatePremiumDocument } from '../../utils/dossierExport';
 
@@ -55,43 +55,35 @@ export const SummaryTab: React.FC<SummaryTabProps> = ({
     const copyToClipboard = () => {
         navigator.clipboard.writeText(getSummaryNotepadText());
         addLog('Sistem', 'Rezime kopiran.', 'success');
-        alert('Kopirano!');
     };
 
     const renderTripIcon = (type: string) => {
         switch (type) {
-            case 'Smestaj': return <Building2 size={20} />;
-            case 'Avio karte': return <Plane size={20} />;
-            case 'Čarter': return <Zap size={20} />;
-            case 'Transfer': return <Truck size={20} />;
-            default: return <Globe size={20} />;
+            case 'Smestaj': return <Building2 size={24} className="cyan-text" />;
+            case 'Avio karte': return <Plane size={24} className="cyan-text" />;
+            case 'Čarter': return <Zap size={24} className="gold-text" />;
+            case 'Transfer': return <Truck size={24} className="cyan-text" />;
+            default: return <Globe size={24} className="cyan-text" />;
         }
     };
 
     return (
-        <div className="summary-v2">
-            {/* Header Actions: Print & View Toggle */}
-            <div className="summary-top-actions">
-                <div className="print-actions glass">
-                    <span className="text-xs bold dim" style={{ paddingLeft: '8px' }}>Štampa:</span>
-                    <button onClick={() => generatePremiumDocument(dossier, 'SUMMARY')} className="print-btn"><Printer size={14} /> Rezime</button>
-                    <button className="print-btn" onClick={() => generatePremiumDocument(dossier, 'PROFORMA')}><FileText size={14} /> Profaktura</button>
-                    <button className="print-btn" onClick={() => generatePremiumDocument(dossier, 'CONTRACT')}><FileText size={14} /> Ugovor</button>
-                    <button className="print-btn" onClick={() => generatePremiumDocument(dossier, 'VOUCHER')}><FileText size={14} /> Vaučer</button>
+        <div className="v4-summary-tab" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
+            {/* Control Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <button onClick={() => generatePremiumDocument(dossier, 'SUMMARY')} className="v4-tab-btn" style={{ background: 'var(--bg-card)' }}><Printer size={16} /> REZIME</button>
+                    <button onClick={() => generatePremiumDocument(dossier, 'PROFORMA')} className="v4-tab-btn" style={{ background: 'var(--bg-card)' }}><FileText size={16} /> PROFAKTURA</button>
+                    <button onClick={() => generatePremiumDocument(dossier, 'CONTRACT')} className="v4-tab-btn" style={{ background: 'var(--bg-card)' }}><Download size={16} /> UGOVOR</button>
                 </div>
 
-                <div className="view-switcher glass">
-                    <button
-                        className={!isSummaryNotepadView ? 'active' : ''}
-                        onClick={() => setIsSummaryNotepadView(false)}
-                    >
-                        <LayoutDashboard size={14} /> INTERAKTIVNO
+                <div className="v4-nav-tabs" style={{ marginBottom: 0 }}>
+                    <button className={`v4-tab-btn ${!isSummaryNotepadView ? 'active' : ''}`} onClick={() => setIsSummaryNotepadView(false)}>
+                        <LayoutDashboard size={18} /> INTERAKTIVNO
                     </button>
-                    <button
-                        className={isSummaryNotepadView ? 'active' : ''}
-                        onClick={() => setIsSummaryNotepadView(true)}
-                    >
-                        <FileEdit size={14} /> NOTEPAD
+                    <button className={`v4-tab-btn ${isSummaryNotepadView ? 'active' : ''}`} onClick={() => setIsSummaryNotepadView(true)}>
+                        <FileEdit size={18} /> NOTEPAD
                     </button>
                 </div>
             </div>
@@ -100,218 +92,144 @@ export const SummaryTab: React.FC<SummaryTabProps> = ({
                 {isSummaryNotepadView ? (
                     <motion.div
                         key="notepad"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="notepad-container glass"
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                        className="v4-table-card"
+                        style={{ padding: '32px' }}
                     >
-                        <div className="notepad-header">
-                            <span className="text-xs">TEKSTUALNI REZIME</span>
-                            <button onClick={copyToClipboard} className="fil-btn-ghost mini">
-                                <Copy size={12} /> KOPIRAJ
-                            </button>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                            <span className="v4-label">TEXTUAL SUMMARY</span>
+                            <button onClick={copyToClipboard} className="v4-tab-btn" style={{ background: 'var(--bg-secondary)', color: 'var(--accent-cyan)' }}><Copy size={14} /> KOPIRAJ SADRŽAJ</button>
                         </div>
-                        <pre className="notepad-content">{getSummaryNotepadText()}</pre>
+                        <pre style={{
+                            fontFamily: 'monospace', fontSize: '14px', whiteSpace: 'pre-wrap',
+                            background: 'rgba(0,0,0,0.2)', padding: '24px', borderRadius: '16px', border: '1px solid var(--glass-border)'
+                        }}>{getSummaryNotepadText()}</pre>
                     </motion.div>
                 ) : (
                     <motion.div
                         key="interactive"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="interactive-summary"
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                        style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}
                     >
-                        {/* STATUS TAG */}
-                        <div className="big-status-tag">
-                            <span className="st-lbl">STATUS</span>
-                            <div className={`st-pill st-${dossier.status.toLowerCase()}`}>
-                                {dossier.status}
-                            </div>
-                        </div>
-
-                        {/* 1. Codes Card */}
-                        <div className="fil-card codes-card">
-                            <div className="code-item">
-                                <label className="text-xs">SISTEMSKI REZ</label>
-                                <input
-                                    className="fil-input bold cyan"
-                                    value={dossier.resCode || ''}
-                                    onChange={(e) => setDossier({ ...dossier, resCode: e.target.value })}
-                                />
-                            </div>
-                            <div className="code-item">
-                                <label className="text-xs">KLIJENT REF</label>
-                                <input
-                                    className="fil-input"
-                                    value={dossier.clientReference}
-                                    onChange={(e) => setDossier({ ...dossier, clientReference: e.target.value })}
-                                />
-                            </div>
-                            <div className="code-item">
-                                <label className="text-xs">CIS KOD</label>
-                                <div className="fil-input read-only">{dossier.cisCode}</div>
-                            </div>
-                        </div>
-
-                        {/* 2. Booker Card */}
-                        <div className="fil-card booker-summary">
-                            <div className="avatar">
-                                <User size={24} />
-                            </div>
-                            <div className="details">
-                                <span className="text-xs">NOSILAC PUTOVANJA</span>
-                                <h3>{dossier.booker.fullName}</h3>
-                                <div className="meta">
-                                    <span><Mail size={12} /> {dossier.booker.email}</span>
-                                    <span><Phone size={12} /> {dossier.booker.phone}</span>
-                                    <span><MapPin size={12} /> {dossier.booker.city}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 3. Communication Center Access */}
-                        <div className="section-title-v2">
-                            <MessagesSquare size={18} className="cyan" />
-                            <h3>KOMUNIKACIONI CENTAR</h3>
-                        </div>
-                        <div className="communication-hub-card fil-card" onClick={() => setActiveSection('communication')} style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '20px',
-                            cursor: 'pointer',
-                            marginBottom: '24px'
-                        }}>
-                            <div style={{
-                                width: '56px',
-                                height: '56px',
-                                borderRadius: '16px',
-                                background: 'linear-gradient(135deg, #9333ea 0%, #6366f1 100%)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'white',
-                                boxShadow: '0 8px 16px rgba(147, 51, 234, 0.3)'
-                            }}>
-                                <MessagesSquare size={28} />
-                            </div>
-                            <div style={{ flex: 1 }}>
-                                <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: 'var(--fil-text)' }}>Centralni Hub za Komunikaciju</h4>
-                                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--fil-text-dim)' }}>
-                                    Istorija četa, Viber, WhatsApp i Email poruke na jednom mestu.
-                                </p>
-                            </div>
-                            <button
-                                className="fil-btn-primary"
-                                style={{ padding: '10px 20px', fontSize: '12px' }}
-                            >
-                                OTVORI KOMUNIKACIJU
-                            </button>
-                        </div>
-                        <div className="section-title-v2">
-                            <Users size={18} className="cyan" />
-                            <h3>PUTNICI</h3>
-                        </div>
-                        <div className="fil-card passengers-compact">
-                            <div className="pax-list">
-                                {dossier.passengers.length > 0 ? (
-                                    dossier.passengers.map((p, idx) => (
-                                        <div key={p.id} className="pax-item">
-                                            <span className="idx">{idx + 1}.</span>
-                                            <span className="name">{p.firstName} {p.lastName}</span>
-                                            <span className={`pax-type-badge ${p.type.toLowerCase()}`}>{p.type}</span>
-                                            {p.idNumber && <span className="doc">Dok: {p.idNumber}</span>}
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="empty-state">Nema unetih putnika</div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* 4. Trip Items */}
-                        <div className="section-title-v2">
-                            <Briefcase size={18} className="cyan" />
-                            <h3>PLAN PUTOVANJA</h3>
-                        </div>
-
-                        <div className="trip-grid">
-                            {dossier.tripItems.map((item) => (
-                                <div key={item.id} className="fil-card trip-item-v2">
-                                    <div className="trip-header">
-                                        <div className="type-badge">
-                                            {renderTripIcon(item.type)}
-                                            <span className="text-xs">{item.type}</span>
-                                        </div>
-                                        {item.supplier && <span className="supplier-tag">{item.supplier}</span>}
+                        {/* Metrics Grid */}
+                        <div className="v4-metrics-grid">
+                            <div className="v4-metric-card">
+                                <div className="v4-metric-info">
+                                    <label>UGOVARAČ PUTOVANJA</label>
+                                    <div className="value" style={{ fontSize: '20px' }}>{dossier.booker.fullName}</div>
+                                    <div className="v4-text-dim" style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
+                                        <Mail size={12} /> {dossier.booker.email} | <Phone size={12} /> {dossier.booker.phone}
                                     </div>
-                                    <div className="trip-main">
-                                        <h4>{item.subject}</h4>
-                                        <p className="location"><MapPin size={12} /> {item.city}, {item.country}</p>
-                                    </div>
-                                    <div className="trip-details-grid">
-                                        <div className="detail">
-                                            <label>DATUMI</label>
-                                            <span>{formatDate(item.checkIn)} - {formatDate(item.checkOut)}</span>
-                                        </div>
-                                        <div className="detail">
-                                            <label>USLUGA</label>
-                                            <span>{item.mealPlan || 'Nije navedeno'}</span>
-                                        </div>
-                                        <div className="detail">
-                                            <label>DETALJI</label>
-                                            <span>{item.details || 'Standardna usluga'}</span>
-                                        </div>
-                                    </div>
-                                    {item.cancellationPolicy && (
-                                        <button className="policy-trigger" onClick={() => setPolicyToShow({ item, idx: 0 })}>
-                                            <ShieldAlert size={14} /> OTKAZNE POLISE <ChevronRight size={12} />
-                                        </button>
-                                    )}
                                 </div>
-                            ))}
-                        </div>
+                                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(0, 229, 255, 0.1)', color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', justifyCenter: 'center', justifyContent: 'center' }}>
+                                    <User size={24} />
+                                </div>
+                            </div>
 
-                        {/* 5. Notes Summary */}
-                        <div className="section-title-v2">
-                            <FileText size={18} className="cyan" />
-                            <h3>NAPOMENE</h3>
-                        </div>
-                        <div className="notes-summary-grid">
-                            <div className="fil-card note-compact">
-                                <label className="text-xs">UGOVOR</label>
-                                <p>{dossier.notes.contract || 'Nema napomene za ugovor.'}</p>
+                            <div className="v4-metric-card">
+                                <div className="v4-metric-info">
+                                    <label>SISTEMSKA IDENTIFIKACIJA</label>
+                                    <div className="value" style={{ fontSize: '14px', fontFamily: 'monospace' }}>CIS: {dossier.cisCode}</div>
+                                    <div className="value" style={{ fontSize: '14px', fontFamily: 'monospace', color: 'var(--accent-gold)' }}>REZ: {dossier.resCode || '---'}</div>
+                                </div>
+                                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(251, 191, 36, 0.1)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Hash size={24} />
+                                </div>
                             </div>
-                            <div className="fil-card note-compact">
-                                <label className="text-xs">VAUČER</label>
-                                <p>{dossier.notes.voucher || 'Nema napomene za vaučer.'}</p>
-                            </div>
-                            <div className="fil-card note-compact internal">
-                                <label className="text-xs">INTERNA</label>
-                                <p>{dossier.notes.internal || 'Nema interne napomene.'}</p>
+
+                            <div className="v4-metric-card">
+                                <div className="v4-metric-info">
+                                    <label>BRZA STATISTIKA</label>
+                                    <div className="value" style={{ fontSize: '18px' }}>{dossier.passengers.length} Putnika / {dossier.tripItems.length} Stavki</div>
+                                    <div className="v4-text-dim" style={{ marginTop: '4px' }}>10 Dana / 9 Noćenja</div>
+                                </div>
+                                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Star size={24} />
+                                </div>
                             </div>
                         </div>
 
-                        {/* 6. Financial Summary Bottom */}
-                        <div className="fil-card finance-summary-compact">
-                            <div className="price-pillar">
-                                <div className="item">
-                                    <label>UKUPNO</label>
-                                    <span className="val">{totalBrutto.toLocaleString()} {dossier.finance.currency}</span>
+                        {/* Communication Promo Section */}
+                        <div
+                            className="v4-table-card"
+                            style={{
+                                padding: '24px 32px', cursor: 'pointer',
+                                background: 'linear-gradient(90deg, var(--bg-card) 0%, rgba(0, 229, 255, 0.05) 100%)',
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                            }}
+                            onClick={() => setActiveSection('communication')}
+                        >
+                            <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                                <div style={{ width: '64px', height: '64px', borderRadius: '18px', background: 'var(--accent-cyan)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <MessagesSquare size={32} />
                                 </div>
-                                <div className="item">
-                                    <label>UPLAĆENO</label>
-                                    <span className="val success">{totalPaid.toLocaleString()} {dossier.finance.currency}</span>
-                                </div>
-                                <div className="item highlight">
-                                    <label>SALDO</label>
-                                    <span className={`val ${balance > 0 ? 'danger' : 'success'}`}>{balance.toLocaleString()} {dossier.finance.currency}</span>
+                                <div>
+                                    <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 900 }}>Communication Hub</h4>
+                                    <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '14px' }}>Kliknite za pristup centrali za poruke (Mail, Viber, SMS).</p>
                                 </div>
                             </div>
+                            <button className="v4-tab-btn active"><ArrowUpRight size={18} /> OTVORI</button>
+                        </div>
+
+                        {/* Plan Putovanja Table */}
+                        <div className="v4-table-card">
+                            <div style={{ padding: '24px', borderBottom: '1px solid var(--glass-border)', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                <Compass size={20} className="cyan-text" />
+                                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 950, letterSpacing: '1px' }}>PLAN PUTOVANJA (ITEMS)</h3>
+                            </div>
+                            <table className="v4-table">
+                                <thead>
+                                    <tr>
+                                        <th>Usluga</th>
+                                        <th>Dobavljač</th>
+                                        <th>Termin</th>
+                                        <th>Lokacija</th>
+                                        <th style={{ textAlign: 'right' }}>Cena (Bruto)</th>
+                                        <th style={{ textAlign: 'right' }}>Akcije</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {dossier.tripItems.map((item, idx) => (
+                                        <tr key={item.id} className="v4-row-hover">
+                                            <td>
+                                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                                                    {renderTripIcon(item.type)}
+                                                    <div>
+                                                        <div className="v4-text-main">{item.subject}</div>
+                                                        <div className="v4-text-dim" style={{ fontSize: '11px' }}>{item.type.toUpperCase()}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="v4-status-pill" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                                                    {item.supplier}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="v4-text-main" style={{ fontSize: '14px' }}>{formatDate(item.checkIn)} - {formatDate(item.checkOut)}</div>
+                                            </td>
+                                            <td>
+                                                <div className="v4-text-main" style={{ fontSize: '14px' }}>{item.city}, {item.country}</div>
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <div className="v4-price">{item.bruttoPrice.toLocaleString()} {dossier.finance.currency}</div>
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setPolicyToShow({ item, idx }); }}
+                                                    style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', height: '36px', padding: '0 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}
+                                                >
+                                                    POLISA OTKAZA
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
-
         </div>
     );
 };

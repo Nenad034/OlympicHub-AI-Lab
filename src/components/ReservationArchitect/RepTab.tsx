@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Shield, ShieldAlert, MessageCircle, Send, User, MapPin, Phone, History, Clock } from 'lucide-react';
+import { Shield, ShieldAlert, MessageCircle, Send, User, MapPin, Phone, History, Clock, Globe } from 'lucide-react';
 import type { Dossier } from '../../types/reservationArchitect';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface RepTabProps {
     dossier: Dossier;
@@ -9,122 +10,121 @@ interface RepTabProps {
 export const RepTab: React.FC<RepTabProps> = ({ dossier }) => {
     const [message, setMessage] = useState('');
 
-    // Mock messages for display
     const mockMessages = [
-        { id: 1, role: 'rep', sender: 'Miloš (Hurgada)', text: 'Putnici su smešteni, sve je u redu.', timestamp: '2026-03-02 14:20' },
-        { id: 2, role: 'agent', sender: 'Agent Nenad', text: 'Hvala Miloše, javi ako bude bilo kakvih promena.', timestamp: '2026-03-02 14:25' }
+        { id: 1, role: 'rep', sender: 'Miloš (Hurgada)', text: 'Putnici su smešteni u sobi 412, sprat 4. Sve je u redu.', timestamp: '2026-03-02 14:20' },
+        { id: 2, role: 'agent', sender: 'Agent Nenad', text: 'Hvala Miloše, javi ako bude bilo kakvih promena vezanih za transfer.', timestamp: '2026-03-02 14:25' }
     ];
 
     return (
-        <div className="rep-tab-v2">
-            <div className="tab-header-v2">
-                <div className="title-group">
-                    <div className="icon-box">
-                        <Shield size={20} />
-                    </div>
-                    <div>
-                        <h2>KOMUNIKACIJA SA PREDSTAVNIKOM</h2>
-                        <p>Direktna veza sa predstavnicima na destinaciji</p>
-                    </div>
-                </div>
+        <div className="v4-rep-tab" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <Globe size={22} className="cyan-text" />
+                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 950, letterSpacing: '1px' }}>KOMUNIKACIJA NA DESTINACIJI (REP HUB)</h3>
             </div>
 
-            <div className="rep-grid">
-                <div className="chat-section">
-                    <div className="fil-card chat-card">
-                        <div className="chat-header">
-                            <div className="status-indicator online"></div>
-                            <span>Destinacijski Chat (Region: Hurgada)</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '32px', minHeight: '600px' }}>
+
+                {/* Chat Section */}
+                <div className="v4-table-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#000' }}>
+                    <div style={{ padding: '16px 24px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px #10b981' }}></div>
+                        <div>
+                            <div className="v4-label" style={{ fontSize: '10px' }}>REGION: HURGHADA, EGYPT</div>
+                            <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)' }}>LIVE CONNECTIONS: 2 OPS</div>
                         </div>
-                        <div className="chat-messages">
-                            {mockMessages.map((msg) => (
-                                <div key={msg.id} className={`message-bubble ${msg.role}`}>
-                                    <div className="msg-meta">{msg.sender} • {msg.timestamp}</div>
-                                    <div className="msg-text">{msg.text}</div>
+                    </div>
+
+                    <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', background: 'linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.4) 100%)' }} className="v4-scroll-area">
+                        {mockMessages.map((msg, index) => (
+                            <motion.div
+                                key={msg.id}
+                                initial={{ opacity: 0, x: msg.role === 'rep' ? -10 : 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                style={{ alignSelf: msg.role === 'rep' ? 'flex-start' : 'flex-end', maxWidth: '75%' }}
+                            >
+                                <div style={{ fontSize: '9px', fontWeight: 900, marginBottom: '6px', opacity: 0.5, textAlign: msg.role === 'rep' ? 'left' : 'right' }}>{msg.sender} • {msg.timestamp}</div>
+                                <div style={{
+                                    padding: '14px 20px', borderRadius: '18px', fontSize: '14px', lineHeight: 1.5, fontWeight: 600,
+                                    background: msg.role === 'rep' ? 'rgba(255,255,255,0.05)' : 'var(--accent-cyan)',
+                                    color: msg.role === 'rep' ? 'var(--text-primary)' : '#000',
+                                    border: msg.role === 'rep' ? '1px solid var(--glass-border)' : 'none',
+                                    borderTopLeftRadius: msg.role === 'rep' ? '4px' : '18px',
+                                    borderTopRightRadius: msg.role === 'rep' ? '18px' : '4px'
+                                }}>
+                                    {msg.text}
                                 </div>
-                            ))}
-                        </div>
-                        <div className="chat-input-wrapper">
-                            <input
-                                type="text"
-                                placeholder="Pošaljite poruku predstavniku..."
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                            />
-                            <button className="send-btn">
-                                <Send size={18} />
-                            </button>
-                        </div>
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: '16px' }}>
+                        <input
+                            className="v4-input"
+                            style={{ flex: 1, height: '48px', background: '#000' }}
+                            placeholder="Pošalji poruku predstavniku..."
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                        />
+                        <button
+                            className="v4-tab-btn active"
+                            style={{ width: '48px', height: '48px', padding: 0, justifyContent: 'center' }}
+                            disabled={!message.trim()}
+                        >
+                            <Send size={20} />
+                        </button>
                     </div>
                 </div>
 
-                <div className="info-section">
-                    <div className="fil-card status-card">
-                        <h3>Status Provere</h3>
-                        <div className={`check-badge ${dossier.repChecked ? 'checked' : 'pending'}`}>
+                {/* Info Section */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+                    <div className="v4-table-card" style={{ padding: '24px' }}>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px' }}>
+                            <Shield size={18} className="cyan-text" />
+                            <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)' }}>STATUS OPERACIJE</h4>
+                        </div>
+                        <div className={`v4-status-pill ${dossier.repChecked ? 'success' : 'danger'}`} style={{ width: '100%', justifyContent: 'center', height: '44px', fontSize: '14px' }}>
                             {dossier.repChecked ? (
-                                <><Shield size={16} /> PROVERENO (CHECKED)</>
+                                <><Shield size={18} style={{ marginRight: '8px' }} /> OPERATIVNO (OK)</>
                             ) : (
-                                <><ShieldAlert size={16} /> NIJE PROVERENO</>
+                                <><ShieldAlert size={18} style={{ marginRight: '8px' }} /> ČEKA NA PROVERU</>
                             )}
                         </div>
                         {dossier.repChecked && (
-                            <div className="check-meta">
-                                <Clock size={12} /> {dossier.repCheckedAt} by {dossier.repCheckedBy}
+                            <div style={{ marginTop: '16px', fontSize: '11px', color: 'var(--text-secondary)', textAlign: 'center', fontWeight: 800 }}>
+                                <Clock size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> {dossier.repCheckedAt}
+                                <span style={{ marginLeft: '6px', color: 'var(--text-primary)' }}>by {dossier.repCheckedBy}</span>
                             </div>
                         )}
                     </div>
 
-                    <div className="fil-card rep-info-card">
-                        <h3>Dodeljeni Predstavnik</h3>
-                        <div className="rep-profile">
-                            <div className="avatar">MP</div>
-                            <div className="details">
-                                <div className="name">Miloš Predstavnik</div>
-                                <div className="meta"><MapPin size={10} /> Hurghada, Egypt</div>
-                                <div className="meta"><Phone size={10} /> +20 123 456 789</div>
+                    <div className="v4-table-card" style={{ padding: '24px' }}>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px' }}>
+                            <User size={18} className="cyan-text" />
+                            <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 900, color: 'var(--text-secondary)' }}>PROFIL PREDSTAVNIKA</h4>
+                        </div>
+                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                            <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'var(--accent-cyan)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 950 }}>
+                                MP
+                            </div>
+                            <div>
+                                <div className="v4-text-main" style={{ fontSize: '16px' }}>Miloš Predstavnik</div>
+                                <div className="v4-text-dim" style={{ fontSize: '12px', marginTop: '4px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                    <MapPin size={12} /> Hurghada, Egypt
+                                </div>
+                                <div className="v4-text-dim" style={{ fontSize: '12px', marginTop: '4px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                    <Phone size={12} /> +20 123 456 789
+                                </div>
                             </div>
                         </div>
+                        <button className="v4-tab-btn" style={{ width: '100%', marginTop: '20px', background: 'var(--bg-secondary)', height: '40px', justifyContent: 'center' }}>
+                            DIREKTAN POZIV
+                        </button>
                     </div>
+
                 </div>
             </div>
-
-            <style>{`
-                .rep-tab-v2 { display: flex; flex-direction: column; gap: 25px; }
-                .rep-grid { display: grid; grid-template-columns: 1fr 350px; gap: 25px; height: 600px; }
-                
-                .chat-card { display: flex; flex-direction: column; height: 100%; padding: 0; overflow: hidden; }
-                .chat-header { padding: 15px 25px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--fil-border); display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 800; color: var(--fil-text-dim); }
-                .status-indicator { width: 8px; height: 8px; border-radius: 50%; }
-                .status-indicator.online { background: #10b981; box-shadow: 0 0 10px #10b981; }
-
-                .chat-messages { flex: 1; padding: 25px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; background: rgba(0,0,0,0.1); }
-                .message-bubble { max-width: 80%; padding: 12px 18px; border-radius: 16px; position: relative; }
-                .message-bubble.rep { align-self: flex-start; background: var(--fil-bg-card); border: 1px solid var(--fil-border); }
-                .message-bubble.agent { align-self: flex-end; background: var(--fil-accent); color: var(--fil-bg); }
-                
-                .msg-meta { font-size: 9px; font-weight: 800; margin-bottom: 5px; opacity: 0.7; }
-                .msg-text { font-size: 14px; line-height: 1.5; }
-
-                .chat-input-wrapper { padding: 20px; background: var(--fil-bg-card); border-top: 1px solid var(--fil-border); display: flex; gap: 15px; }
-                .chat-input-wrapper input { flex: 1; background: var(--fil-bg); border: 1px solid var(--fil-border); border-radius: 12px; padding: 12px 18px; color: var(--fil-text); }
-                .send-btn { width: 44px; height: 44px; border-radius: 12px; border: none; background: var(--fil-accent); color: var(--fil-bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
-                .send-btn:hover { transform: scale(1.05); }
-
-                .info-section { display: flex; flex-direction: column; gap: 20px; }
-                .info-section h3 { font-size: 11px; font-weight: 900; color: var(--fil-text-dim); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 15px 0; }
-                .status-card, .rep-info-card { padding: 20px; }
-
-                .check-badge { padding: 12px; border-radius: 10px; font-size: 12px; font-weight: 900; display: flex; align-items: center; gap: 10px; justify-content: center; }
-                .check-badge.checked { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
-                .check-badge.pending { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
-                .check-meta { font-size: 10px; color: var(--fil-text-dim); margin-top: 10px; text-align: center; display: flex; align-items: center; gap: 5px; justify-content: center; }
-
-                .rep-profile { display: flex; gap: 15px; align-items: center; }
-                .rep-profile .avatar { width: 44px; height: 44px; border-radius: 12px; background: var(--fil-accent); color: var(--fil-bg); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
-                .rep-profile .name { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
-                .rep-profile .meta { font-size: 11px; color: var(--fil-text-dim); display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
-            `}</style>
         </div>
     );
 };
