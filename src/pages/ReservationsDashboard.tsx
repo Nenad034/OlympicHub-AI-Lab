@@ -7,7 +7,7 @@ import {
     Download, LayoutGrid, List, CalendarDays,
     Eye, Edit, Mail, Trash2, CheckCircle2, AlertCircle, Copy,
     X as XIcon, RefreshCw, BarChart3, TrendingUp, TrendingDown,
-    MapPin, Building2, Phone, Briefcase, Tag, XCircle, Package, Globe, Truck, Plane, Zap, Compass, Ship, Star, User, ArrowUpDown, ChevronLeft, ChevronRight, CheckCheck, Receipt, CloudLightning, Bell, Send, Table, Code, FileCode, Check, Shield, MessageCircle, FileText, FileCheck, ShieldCheck
+    MapPin, Building2, Phone, Briefcase, Tag, XCircle, Package, Globe, Truck, Plane, Zap, Compass, Ship, Star, User, ArrowUpDown, ChevronLeft, ChevronRight, CheckCheck, Receipt, CloudLightning, Bell, Send, Table, Code, FileCode, Check, Shield, MessageCircle, FileText, FileCheck, ShieldCheck, MessagesSquare
 } from 'lucide-react';
 import './ReservationsDashboard.css';
 import ReservationEmailModal from '../components/ReservationEmailModal';
@@ -1945,52 +1945,23 @@ ${data.map(r => `  <reservation>
                                         <div className="actions-stack">
                                             {/* Action Buttons */}
                                             <div className="action-buttons-group">
-                                                {/* Reminder Triggers */}
-                                                {res.totalPrice - res.paid > 0 && (
-                                                    <>
-                                                        <button
-                                                            className="action-btn whatsapp"
-                                                            title="Pošalji podsetnik na WhatsApp"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                const msg = `Poštovani, podsećamo Vas da je rok za finalnu uplatu za Vaše putovanje (${res.accommodationName}) do ${new Date(res.clientDeadline || '').toLocaleDateString('sr-RS')}. Preostali iznos je ${formatPrice(res.totalPrice - res.paid)} ${res.currency}. Srdačan pozdrav, Vaš ClickToTravel.`;
-                                                                window.open(`https://wa.me/${res.phone.replace(/\+/g, '').replace(/ /g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
-                                                            }}
-                                                            style={{ color: '#25D366', background: 'rgba(37, 211, 102, 0.1)' }}
-                                                        >
-                                                            <MessageCircle size={16} />
-                                                        </button>
-                                                        <button
-                                                            className="action-btn viber"
-                                                            title="Pošalji podsetnik na Viber"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                alert('Viber Desktop link se otvara...');
-                                                                const msg = `Poštovani, podsećamo Vas da je rok za finalnu uplatu...`;
-                                                                window.open(`viber://forward?text=${encodeURIComponent(msg)}`, '_blank');
-                                                            }}
-                                                            style={{ color: '#7360f2', background: 'rgba(115, 96, 242, 0.1)' }}
-                                                        >
-                                                            <Zap size={16} />
-                                                        </button>
-                                                    </>
-                                                )}
+                                                <button
+                                                    className="action-btn communication"
+                                                    title="Komunikacioni centar"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(`/reservation-architect?id=${res.id}&section=communication`, '_blank');
+                                                    }}
+                                                    style={{ color: '#9333ea', background: 'rgba(147, 51, 234, 0.1)', borderColor: 'rgba(147, 51, 234, 0.2)' }}
+                                                >
+                                                    <MessagesSquare size={16} />
+                                                </button>
+
                                                 <button className="action-btn view" title="Pregled">
                                                     <Eye size={16} />
                                                 </button>
                                                 <button className="action-btn edit" title="Izmeni">
                                                     <Edit size={16} />
-                                                </button>
-                                                <button
-                                                    className="action-btn email"
-                                                    title="Pošalji Email"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSelectedReservation(res);
-                                                        setEmailModalOpen(true);
-                                                    }}
-                                                >
-                                                    <Mail size={16} />
                                                 </button>
                                                 <button className="action-btn download" title="Preuzmi">
                                                     <Download size={16} />
@@ -2206,17 +2177,9 @@ ${data.map(r => `  <reservation>
                                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
                                             {[
                                                 {
-                                                    icon: <MessageCircle size={14} />,
-                                                    title: 'WhatsApp',
-                                                    onClick: () => {
-                                                        const msg = `Poštovani, podsećamo Vas...`;
-                                                        window.open(`https://wa.me/${res.phone.replace(/\+/g, '').replace(/ /g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
-                                                    }
-                                                },
-                                                {
-                                                    icon: <Zap size={14} />,
-                                                    title: 'Viber',
-                                                    onClick: () => window.open(`viber://forward?text=Podsetnik`, '_blank')
+                                                    icon: <MessagesSquare size={14} />,
+                                                    title: 'Komunikacioni centar',
+                                                    onClick: () => window.open(`/reservation-architect?id=${res.id}&section=communication`, '_blank')
                                                 },
                                                 {
                                                     icon: <Eye size={14} />,
@@ -2227,11 +2190,6 @@ ${data.map(r => `  <reservation>
                                                     icon: <Edit size={14} />,
                                                     title: 'Izmeni',
                                                     onClick: () => { }
-                                                },
-                                                {
-                                                    icon: <Mail size={14} />,
-                                                    title: 'Email',
-                                                    onClick: () => { setSelectedReservation(res); setEmailModalOpen(true); }
                                                 },
                                                 {
                                                     icon: <Download size={14} />,

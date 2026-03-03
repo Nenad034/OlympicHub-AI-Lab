@@ -1,4 +1,5 @@
-import type { Language } from '../utils/translations';
+import type { Language as TransLanguage } from '../utils/translations';
+export type Language = TransLanguage;
 
 export type TripType = 'Smestaj' | 'Avio karte' | 'Dinamicki paket' | 'Putovanja' | 'Transfer' | 'Čarter' | 'Bus' | 'Krstarenje';
 export type CustomerType = 'B2C-Individual' | 'B2C-Legal' | 'B2B-Subagent';
@@ -16,6 +17,7 @@ export interface Passenger {
     country?: string;
     phone?: string;
     email?: string;
+    isLeadPassenger?: boolean;
 }
 
 export interface FlightLeg {
@@ -104,6 +106,18 @@ export interface Installment {
     status: 'pending' | 'paid';
 }
 
+export interface CommunicationRecord {
+    id: string;
+    timestamp: string;
+    channel: 'email' | 'viber' | 'whatsapp' | 'telegram' | 'app' | 'sms';
+    direction: 'sent' | 'received';
+    subject?: string;
+    message: string;
+    recipient: string;
+    attachments?: string[];
+    status?: 'sent' | 'delivered' | 'read' | 'failed';
+}
+
 export interface ActivityLog {
     id: string;
     timestamp: string;
@@ -148,6 +162,7 @@ export interface Dossier {
         confirmationTimestamp: string;
     };
     logs: ActivityLog[];
+    communications?: CommunicationRecord[];
     notes: {
         general: string;
         contract: string;
