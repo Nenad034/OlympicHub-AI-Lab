@@ -68,7 +68,7 @@ const CommandCenter: React.FC = () => {
             flexDirection: 'column',
             alignItems: 'center'
         }}>
-            <div style={{ width: '90%', maxWidth: '1800px' }}>
+            <div style={{ width: '95%', maxWidth: '2400px' }}>
 
                 {/* TOP BAR - PREMIUM NAVIGATION */}
                 <div style={{
@@ -242,7 +242,7 @@ const CommandCenter: React.FC = () => {
                 {/* TWO-COLUMN WORKSPACE */}
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: '1fr 400px',
+                    gridTemplateColumns: 'minmax(0, 1fr) 400px',
                     gap: '32px'
                 }}>
 
@@ -254,7 +254,8 @@ const CommandCenter: React.FC = () => {
                         padding: '32px',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '24px'
+                        gap: '24px',
+                        overflowX: 'auto'
                     }}>
                         {/* Feed Toolbar */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
@@ -311,11 +312,14 @@ const CommandCenter: React.FC = () => {
                                 <thead>
                                     <tr style={{ textAlign: 'left', color: 'var(--text-secondary)', fontSize: '11px', textTransform: 'uppercase', fontWeight: '900' }}>
                                         <th style={{ padding: '0 24px' }}>ID / VREME</th>
-                                        <th>KUPAC / PUTNIK</th>
-                                        <th>VRSTA KUPCA</th>
-                                        <th>DOBAVLJAČ</th>
-                                        <th>IZNOS</th>
-                                        <th>STATUS</th>
+                                        <th>Kupac / Putnik</th>
+                                        <th>Vrsta Kupca</th>
+                                        <th>Dobavljač</th>
+                                        <th>Poslovnica</th>
+                                        <th style={{ textAlign: 'right' }}>Zaduženje</th>
+                                        <th style={{ textAlign: 'right' }}>Naplaćeno</th>
+                                        <th style={{ textAlign: 'right' }}>Za uplatu</th>
+                                        <th style={{ textAlign: 'center' }}>Status</th>
                                         <th style={{ width: '60px' }}></th>
                                     </tr>
                                 </thead>
@@ -340,7 +344,7 @@ const CommandCenter: React.FC = () => {
                                             </td>
                                             <td>
                                                 <div style={{ fontWeight: '800', color: 'var(--accent)', fontSize: '14px' }}>{res.customer}</div>
-                                                <div style={{ fontSize: '10px', opacity: 0.5 }}>{res.branch}</div>
+                                                <div style={{ fontSize: '10px', opacity: 0.5 }}>Grčka, Rodos</div>
                                             </td>
                                             <td>
                                                 <div style={{
@@ -365,11 +369,17 @@ const CommandCenter: React.FC = () => {
                                                     {res.supplier}
                                                 </div>
                                             </td>
-                                            <td style={{ fontWeight: '900', fontSize: '16px' }}>{res.amount.toLocaleString()} €</td>
+                                            <td>
+                                                <div style={{ fontSize: '12px', fontWeight: '700' }}>{res.branch}</div>
+                                            </td>
+                                            <td style={{ fontWeight: '900', fontSize: '15px', textAlign: 'right' }}>{res.debt.toLocaleString()} €</td>
+                                            <td style={{ fontWeight: '900', fontSize: '15px', textAlign: 'right', color: '#10b981' }}>{res.payment.toLocaleString()} €</td>
+                                            <td style={{ fontWeight: '900', fontSize: '15px', textAlign: 'right', color: '#ef4444' }}>{(res.debt - res.payment).toLocaleString()} €</td>
                                             <td>
                                                 <div style={{
                                                     display: 'flex',
                                                     alignItems: 'center',
+                                                    justifyContent: 'center',
                                                     gap: '8px',
                                                     color: res.status === 'Confirmed' ? '#10b981' : res.status === 'Cancelled' ? '#ef4444' : '#f59e0b',
                                                     fontSize: '11px',
@@ -377,6 +387,7 @@ const CommandCenter: React.FC = () => {
                                                     background: res.status === 'Confirmed' ? 'rgba(16, 185, 129, 0.1)' : res.status === 'Cancelled' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
                                                     padding: '6px 12px',
                                                     borderRadius: '10px',
+                                                    margin: '0 auto',
                                                     width: 'fit-content'
                                                 }}>
                                                     {res.status === 'Confirmed' ? <CheckCircle2 size={12} /> : res.status === 'Cancelled' ? <XCircle size={12} /> : <Clock size={12} />}
