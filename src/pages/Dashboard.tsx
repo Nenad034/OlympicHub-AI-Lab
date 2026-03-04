@@ -135,7 +135,8 @@ const apps: AppConfig[] = [
     { id: 'b2b-promo', name: 'B2B Promo Manager', desc: 'Upravljanje promocijama i obaveštenjima za B2B partnere.', icon: <Sparkles size={24} />, category: 'marketing', color: 'var(--gradient-orange)', badge: 'B2B', minLevel: 6, path: '/b2b-promo-manager' },
     { id: 'main-hub', name: 'Dashboard Central', desc: 'Glavni kontrolni panel sa pregledom osnovnih KPI i brzom navigacijom.', icon: <Database size={24} />, category: 'system', color: 'var(--gradient-blue)', minLevel: 1, path: '/' },
     { id: 'my-reservations', name: 'Moje Rezervacije', desc: 'Pregled svih vaših aktivnih i arhiviranih rezervacija sa statusima plaćanja.', icon: <ClipboardList size={24} />, category: 'sales', color: 'var(--gradient-green)', badge: 'B2B', minLevel: 1, path: '/my-reservations' },
-    { id: 'b2b-portal', name: 'B2B Partner Portal', desc: 'Vaša glavna baza za upravljanje prodajom, subagentima i dokumentacijom.', icon: <Building2 size={24} />, category: 'sales', color: 'var(--gradient-purple)', badge: 'HUB', minLevel: 1, path: '/b2b-portal' }
+    { id: 'b2b-portal', name: 'B2B Partner Portal', desc: 'Vaša glavna baza za upravljanje prodajom, subagentima i dokumentacijom.', icon: <Building2 size={24} />, category: 'sales', color: 'var(--gradient-purple)', badge: 'HUB', minLevel: 1, path: '/b2b-portal' },
+    { id: 'operational-reports', name: 'Operativni Izveštaji', desc: 'Centralni hub za upravljanje kapacitetima, rooming listama i PAX statistikom.', icon: <Activity size={24} />, category: 'production', color: 'var(--gradient-orange)', badge: 'Premium', minLevel: 3, path: '/operational-reports' }
 ];
 
 
@@ -222,14 +223,23 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
         localStorage.setItem('hub-apps-order', JSON.stringify(userApps.map(a => a.id)));
     }, [userApps]);
 
-    // Force sync new apps into user preference
+    // Force sync app properties and new apps into user preference
     useEffect(() => {
-        const currentIds = userApps.map(a => a.id);
-        const missingFromUser = apps.filter(a => !currentIds.includes(a.id));
+        setUserApps(prev => {
+            // Update properties of existing apps from the master list
+            const updated = prev.map(userApp => {
+                const masterApp = apps.find(a => a.id === userApp.id);
+                return masterApp ? { ...userApp, ...masterApp } : userApp;
+            });
 
-        if (missingFromUser.length > 0) {
-            setUserApps(prev => [...missingFromUser, ...prev]);
-        }
+            // Find apps in master list that are missing in the user order
+            const missingIds = apps.filter(a => !updated.some(ua => ua.id === a.id));
+
+            if (missingIds.length > 0) {
+                return [...updated, ...missingIds];
+            }
+            return updated;
+        });
     }, []);
 
     const filteredApps = userApps.filter(app => {
@@ -249,9 +259,9 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
 
     const ROW1_IDS = isB2BView
         ? ['smart-search', 'reservations', 'my-reservations', 'b2b-portal']
-        : ['smart-search', 'reservations', 'subagent-admin'];
+        : ['reservations', 'smart-search', 'subagent-admin'];
 
-    const ROW2_IDS = isStaff ? ['financial-hub', 'supplier-finance', 'mars-analysis'] : [];
+    const ROW2_IDS: string[] = []; // Hide second row as per user request
 
     // Quick Info Data
     const staffInfo = [
@@ -771,141 +781,115 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
                                     </div>
 
 
-                                    {/* Other Apps Section */}
-                                    <Reorder.Group
-                                        values={userApps}
-                                        onReorder={setUserApps}
-                                        className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`}
-                                        style={{ listStyle: 'none', padding: 0 }}
-                                    >
-                                        {filteredOtherApps.map((app, idx) => (
-
-                                            <Reorder.Item
-                                                key={app.id}
-                                                value={app}
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: idx * 0.05 }}
-
-                                                className={`module-card draggable ${viewMode === 'list' ? 'list-item' : ''}`}
-                                                onClick={() => handleAppClick(app)}
-                                                style={{ cursor: 'grab', position: 'relative' }}
-                                                whileDrag={{
-                                                    scale: 1.05,
-                                                    boxShadow: "0 25px 50px rgba(0,0,0,0.4)",
-                                                    zIndex: 50,
-                                                }}
-                                            >
-                                                <div style={{
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    alignItems: viewMode === 'list' ? 'center' : 'flex-start',
-                                                    flexDirection: viewMode === 'list' ? 'row' : 'column',
-                                                    gap: viewMode === 'list' ? '20px' : '0'
-                                                }}>
+                                    {/* Other Apps Section - Only visible in Catalog/Modules view */}
+                                    {forceShowAll && (
+                                        <Reorder.Group
+                                            values={userApps}
+                                            onReorder={setUserApps}
+                                            className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`}
+                                            style={{ listStyle: 'none', padding: 0 }}
+                                        >
+                                            {filteredOtherApps.map((app, idx) => (
+                                                <Reorder.Item
+                                                    key={app.id}
+                                                    value={app}
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: idx * 0.05 }}
+                                                    className={`module-card draggable ${viewMode === 'list' ? 'list-item' : ''}`}
+                                                    onClick={() => handleAppClick(app)}
+                                                    style={{ cursor: 'grab', position: 'relative' }}
+                                                    whileDrag={{
+                                                        scale: 1.05,
+                                                        boxShadow: "0 25px 50px rgba(0,0,0,0.4)",
+                                                        zIndex: 50,
+                                                    }}
+                                                >
                                                     <div style={{
                                                         display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '16px',
-                                                        flex: 1
+                                                        justifyContent: 'space-between',
+                                                        alignItems: viewMode === 'list' ? 'center' : 'flex-start',
+                                                        flexDirection: viewMode === 'list' ? 'row' : 'column',
+                                                        gap: viewMode === 'list' ? '20px' : '0',
+                                                        width: '100%',
+                                                        padding: viewMode === 'list' ? '0' : '24px'
                                                     }}>
-                                                        <div className="card-icon" style={{
-                                                            background: app.color,
-                                                            width: viewMode === 'list' ? '40px' : '48px',
-                                                            height: viewMode === 'list' ? '40px' : '48px',
-                                                            minWidth: viewMode === 'list' ? '40px' : '48px'
-                                                        }}>{app.icon}</div>
-                                                        <div style={{ flex: 1 }}>
-                                                            <h3 className="card-title" style={{ margin: 0 }}>{app.name}</h3>
-                                                            {viewMode === 'list' && <p className="card-desc" style={{ marginTop: '4px', marginBottom: 0 }}>{app.desc}</p>}
-                                                        </div>
-                                                    </div>
-
-                                                    {viewMode === 'list' && (
                                                         <div style={{
                                                             display: 'flex',
                                                             alignItems: 'center',
-                                                            gap: '24px'
+                                                            gap: '16px',
+                                                            flex: 1
                                                         }}>
-                                                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                                                {app.badge && (
-                                                                    <span className="badge" style={{ position: 'static', margin: 0 }}>
-                                                                        {app.badge}
-                                                                    </span>
-                                                                )}
-                                                                <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                                    <ShieldAlert size={10} /> {getUserRights(app.minLevel)}
-                                                                </span>
-                                                            </div>
-                                                            <div className="card-footer" style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '600', color: 'var(--accent)' }}>
-                                                                <ChevronRight size={18} />
+                                                            <div className="card-icon" style={{
+                                                                background: app.color,
+                                                                width: viewMode === 'list' ? '40px' : '48px',
+                                                                height: viewMode === 'list' ? '40px' : '48px',
+                                                                minWidth: viewMode === 'list' ? '40px' : '48px'
+                                                            }}>{app.icon}</div>
+                                                            <div style={{ flex: 1 }}>
+                                                                <h3 className="card-title" style={{ margin: 0, fontSize: '16px' }}>{app.name}</h3>
+                                                                {viewMode === 'list' && <p className="card-desc" style={{ marginTop: '4px', marginBottom: 0 }}>{app.desc.substring(0, 100)}...</p>}
                                                             </div>
                                                         </div>
-                                                    )}
 
-                                                    {viewMode === 'grid' && (
-                                                        <>
-                                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
-                                                                {app.badge && (
-                                                                    <span className="badge">
-                                                                        {app.badge}
-                                                                    </span>
-                                                                )}
-                                                                <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', position: 'absolute', top: '24px', right: '24px' }}>
-                                                                    <ShieldAlert size={10} /> {getUserRights(app.minLevel)}
-                                                                </span>
+                                                        {viewMode === 'list' ? (
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                                                                <div className="card-footer" style={{ color: 'var(--accent)' }}>
+                                                                    <ChevronRight size={18} />
+                                                                </div>
                                                             </div>
-                                                            <p className="card-desc" style={{ marginBottom: '32px' }}>{app.desc}</p>
-                                                            <div className="card-footer" style={{
-                                                                position: 'absolute',
-                                                                bottom: '20px',
-                                                                right: '24px',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '4px',
-                                                                fontSize: '12px',
-                                                                fontWeight: '800',
-                                                                color: 'var(--accent)',
-                                                                textShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                                                            }}>
-                                                                {t.openModule} <ChevronRight size={14} />
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </Reorder.Item>
-                                        ))}
-                                    </Reorder.Group>
+                                                        ) : (
+                                                            <>
+                                                                <p className="card-desc" style={{ marginTop: '12px', fontSize: '12px' }}>{app.desc.substring(0, 80)}...</p>
+                                                                <div className="card-footer" style={{
+                                                                    marginTop: 'auto',
+                                                                    display: 'flex',
+                                                                    justifyContent: 'flex-end',
+                                                                    color: 'var(--accent)',
+                                                                    fontWeight: '800',
+                                                                    fontSize: '11px'
+                                                                }}>
+                                                                    OTVORI <ChevronRight size={14} />
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </Reorder.Item>
+                                            ))}
+                                        </Reorder.Group>
+                                    )}
                                 </motion.div>
                             )}
 
                             {/* GLOBAL PULSE: LIVE RESERVATIONS MODULE */}
-                            {isStaff && !forceShowAll && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 40 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.6 }}
-                                    style={{
-                                        maxWidth: '1850px', // Wider container (+10%)
-                                        margin: '60px auto 100px',
-                                        width: '100%',
-                                        padding: '0 20px'
-                                    }}
-                                >
-                                    <GlobalPulse />
-                                </motion.div>
-                            )}
+                            {
+                                isStaff && !forceShowAll && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 40 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.6 }}
+                                        style={{
+                                            maxWidth: '1850px', // Wider container (+10%)
+                                            margin: '60px auto 100px',
+                                            width: '100%',
+                                            padding: '0 20px'
+                                        }}
+                                    >
+                                        <GlobalPulse />
+                                    </motion.div>
+                                )
+                            }
                         </>
                     )
                 }
-            </motion.div>
+            </motion.div >
 
         </>
     );
 };
 
 // --- GLOBAL PULSE COMPONENT ---
-const GlobalPulse: React.FC = () => {
+function GlobalPulse() {
     const navigate = useNavigate();
     const [aggMode, setAggMode] = useState<'feed' | 'subagent' | 'supplier' | 'branch'>('feed');
     const [statusFilter, setStatusFilter] = useState<'all' | 'Confirmed' | 'Pending' | 'Cancelled'>('all');

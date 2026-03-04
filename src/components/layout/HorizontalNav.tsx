@@ -11,6 +11,7 @@ import {
     Compass,
     ClipboardList,
     Sparkles,
+    Activity,
     X,
     DollarSign,
     BarChart3,
@@ -69,6 +70,7 @@ const HorizontalNav: React.FC = () => {
                 { to: '/deep-archive', label: 'Arhiva', icon: X },
             ]
         },
+        { to: '/operational-reports', icon: Activity, label: 'Operativni Izveštaji' },
         {
             to: '/financial-hub', icon: PieChart, label: 'Financial Intelligence',
             subItems: [
@@ -92,6 +94,7 @@ const HorizontalNav: React.FC = () => {
                 { to: '/production?view=transport', label: 'Brodski Prevoz', icon: Anchor },
                 { to: '/production?view=services', label: 'Izleti', icon: Waves },
                 { to: '/production?view=services', label: 'Ulaznice', icon: Ticket },
+                { to: '/price-list-architect', label: 'Pricing Architect', icon: Calculator },
                 { to: '/price-list-architect', label: 'Pricing Architect', icon: Calculator },
             ]
         },
@@ -131,7 +134,7 @@ const HorizontalNav: React.FC = () => {
         },
     ];
 
-    const mainItems = staffNavItems.filter(i => ['/', '/reservations', '/financial-hub'].includes(i.to));
+    const mainItems = staffNavItems.filter(i => ['/', '/reservations', '/financial-hub', '/operational-reports'].includes(i.to));
     const sectorItems = staffNavItems.filter(i => ['/production', '/suppliers', '/customers', '/modules'].includes(i.to));
     const systemItems = staffNavItems.filter(i => i.to === '/settings');
 
@@ -206,63 +209,71 @@ const HorizontalNav: React.FC = () => {
             </Link>
 
             <div className="nav-horizontal-items">
-                {/* Staff items */}
-                {isStaff && (
+                {/* Staff / Main Hub items */}
+                {(userLevel >= 3 || isStaff) && (
                     <>
                         <div className="h-nav-group">
                             <span className="h-group-label">Main</span>
                             <div className="h-group-items">
-                                {mainItems.map((item) => (
-                                    <div
-                                        key={item.to}
-                                        ref={(el) => { itemRefs.current[item.to] = el; }}
-                                        onMouseEnter={() => openSubmenu(item.to)}
-                                        onMouseLeave={scheduleClose}
-                                    >
-                                        <NavLink to={item.to} className={({ isActive }) => navItemClass(isActive)}>
-                                            <item.icon size={18} /> {item.label}
-                                        </NavLink>
-                                    </div>
-                                ))}
-                                {renderMailLink()}
+                                {mainItems.map((item) => {
+                                    // Skip financial intelligence for levels < 6
+                                    if (item.to === '/financial-hub' && userLevel < 6) return null;
+                                    return (
+                                        <div
+                                            key={item.to}
+                                            ref={(el) => { itemRefs.current[item.to] = el; }}
+                                            onMouseEnter={() => openSubmenu(item.to)}
+                                            onMouseLeave={scheduleClose}
+                                        >
+                                            <NavLink to={item.to} className={({ isActive }) => navItemClass(isActive)}>
+                                                <item.icon size={18} /> {item.label}
+                                            </NavLink>
+                                        </div>
+                                    );
+                                })}
+                                {isStaff && renderMailLink()}
                             </div>
                         </div>
 
-                        <div className="h-nav-group">
-                            <span className="h-group-label">Sektori</span>
-                            <div className="h-group-items">
-                                {sectorItems.map((item) => (
-                                    <div
-                                        key={item.to}
-                                        ref={(el) => { itemRefs.current[item.to] = el; }}
-                                        onMouseEnter={() => openSubmenu(item.to)}
-                                        onMouseLeave={scheduleClose}
-                                    >
-                                        <NavLink to={item.to} className={({ isActive }) => navItemClass(isActive)}>
-                                            <item.icon size={18} /> {item.label}
-                                        </NavLink>
+                        {isStaff && (
+                            <>
+                                <div className="h-nav-group">
+                                    <span className="h-group-label">Sektori</span>
+                                    <div className="h-group-items">
+                                        {sectorItems.map((item) => (
+                                            <div
+                                                key={item.to}
+                                                ref={(el) => { itemRefs.current[item.to] = el; }}
+                                                onMouseEnter={() => openSubmenu(item.to)}
+                                                onMouseLeave={scheduleClose}
+                                            >
+                                                <NavLink to={item.to} className={({ isActive }) => navItemClass(isActive)}>
+                                                    <item.icon size={18} /> {item.label}
+                                                </NavLink>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        </div>
+                                </div>
 
-                        <div className="h-nav-group">
-                            <span className="h-group-label">Sistem</span>
-                            <div className="h-group-items">
-                                {systemItems.map((item) => (
-                                    <div
-                                        key={item.to}
-                                        ref={(el) => { itemRefs.current[item.to] = el; }}
-                                        onMouseEnter={() => openSubmenu(item.to)}
-                                        onMouseLeave={scheduleClose}
-                                    >
-                                        <NavLink to={item.to} className={({ isActive }) => navItemClass(isActive)}>
-                                            <item.icon size={18} /> {item.label}
-                                        </NavLink>
+                                <div className="h-nav-group">
+                                    <span className="h-group-label">Sistem</span>
+                                    <div className="h-group-items">
+                                        {systemItems.map((item) => (
+                                            <div
+                                                key={item.to}
+                                                ref={(el) => { itemRefs.current[item.to] = el; }}
+                                                onMouseEnter={() => openSubmenu(item.to)}
+                                                onMouseLeave={scheduleClose}
+                                            >
+                                                <NavLink to={item.to} className={({ isActive }) => navItemClass(isActive)}>
+                                                    <item.icon size={18} /> {item.label}
+                                                </NavLink>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        </div>
+                                </div>
+                            </>
+                        )}
                     </>
                 )}
 

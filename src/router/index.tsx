@@ -88,6 +88,7 @@ const TravelportTest = React.lazy(() => import('../pages/TravelportTest'));
 const SkiTest = React.lazy(() => import('../pages/SkiTest'));
 const SkiResortDetail = React.lazy(() => import('../pages/SkiResortDetail'));
 const TrafficsTest = React.lazy(() => import('../pages/TrafficsTest'));
+const OperationalReports = React.lazy(() => import('../modules/production/OperationalReports.tsx'));
 
 
 const FinancialIntelligenceHub = React.lazy(() => import('../pages/FinancialIntelligenceHub'));
@@ -429,6 +430,14 @@ export const router = createBrowserRouter([
                     </AuthGuard>
                 ),
                 children: [
+                    {
+                        path: 'operational-reports',
+                        element: (
+                            <ProtectedRoute minLevel={3}>
+                                <OperationalReports />
+                            </ProtectedRoute>
+                        ),
+                    },
                     {
                         path: 'price-list-architect',
                         element: <PriceListArchitect />,

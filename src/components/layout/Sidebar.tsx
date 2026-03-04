@@ -9,6 +9,7 @@ import {
     Mail,
     Compass,
     Sparkles,
+    Activity,
     ClipboardList,
     Search,
     DollarSign,
@@ -124,7 +125,7 @@ const Sidebar: React.FC = () => {
 
             <nav className="nav-section" style={{ marginTop: '32px' }}>
                 {/* Main Section */}
-                {userLevel >= 6 && !impersonatedSubagent && (
+                {(userLevel >= 3 || (userLevel >= 6 && !impersonatedSubagent)) && (
                     <div className="nav-group">
                         <h3 className="nav-label">{!isSidebarCollapsed && 'Main'}</h3>
                         <NavGroupItem to="/" icon={LayoutDashboard} label={!isSidebarCollapsed && t.dashboard} title={t.dashboard} />
@@ -142,18 +143,21 @@ const Sidebar: React.FC = () => {
                             ]}
                         />
 
-                        <NavGroupItem
-                            to="/financial-hub"
-                            icon={PieChart}
-                            label={!isSidebarCollapsed && 'Financial Intelligence'}
-                            title="Financial Intelligence"
-                            subItems={[
-                                { to: '/financial-hub', label: 'FIL Dashboard', icon: LayoutDashboard },
-                                { to: '/financial-hub?tab=payments', label: 'Isplate Dobavljačima', icon: DollarSign },
-                                { to: '/fx-service', label: 'Kursna Lista / NBS', icon: RefreshCw },
-                                { to: '/financial-hub?tab=payments', label: 'VCC Postavke', icon: Compass }
-                            ]}
-                        />
+                        {userLevel >= 6 && !impersonatedSubagent && (
+                            <NavGroupItem
+                                to="/financial-hub"
+                                icon={PieChart}
+                                label={!isSidebarCollapsed && 'Financial Intelligence'}
+                                title="Financial Intelligence"
+                                subItems={[
+                                    { to: '/financial-hub', label: 'FIL Dashboard', icon: LayoutDashboard },
+                                    { to: '/financial-hub?tab=payments', label: 'Isplate Dobavljačima', icon: DollarSign },
+                                    { to: '/fx-service', label: 'Kursna Lista / NBS', icon: RefreshCw },
+                                    { to: '/financial-hub?tab=payments', label: 'VCC Postavke', icon: Compass }
+                                ]}
+                            />
+                        )}
+                        <NavGroupItem to="/operational-reports" icon={Activity} label={!isSidebarCollapsed && 'Operativni Izveštaji'} title="Operativni Izveštaji" />
                     </div>
                 )}
 
@@ -179,6 +183,7 @@ const Sidebar: React.FC = () => {
                                 { to: '/production?view=transport', label: 'Brodski Prevoz', icon: Anchor },
                                 { to: '/production?view=services', label: 'Izleti', icon: Waves },
                                 { to: '/production?view=services', label: 'Ulaznice', icon: Ticket },
+                                { to: '/price-list-architect', label: 'Pricing Architect', icon: Calculator },
                                 { to: '/price-list-architect', label: 'Pricing Architect', icon: Calculator },
                             ]}
                         />
