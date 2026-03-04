@@ -96,11 +96,13 @@ const FinancialIntelligenceHub = React.lazy(() => import('../pages/FinancialInte
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
 const B2BPromoManager = React.lazy(() => import('../pages/B2BPromoManager'));
 const B2BFinance = React.lazy(() => import('../pages/B2BFinance'));
+const CommandCenter = React.lazy(() => import('../pages/CommandCenter'));
 
 
 // Stores
 import { useThemeStore, useAuthStore, useAppStore } from '../stores';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import DailyWisdom from '../components/DailyWisdom';
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -208,10 +210,19 @@ const OrchestratorPage: React.FC = () => {
 const GlobalUIWrapper: React.FC = () => {
     const { isChatOpen, setChatOpen } = useAppStore();
     const { lang } = useThemeStore();
+    const location = useLocation();
+
+    // Wisdom is only shown on exactly / path (Dashboard)
+    const isDashboard = location.pathname === '/';
 
     return (
         <>
             <Outlet />
+
+            {/* Global Footer */}
+            <footer className="system-footer">
+                Powered By Prime Click
+            </footer>
 
             {/* Persistent AI Assistant */}
             <AnimatePresence>
@@ -225,7 +236,7 @@ const GlobalUIWrapper: React.FC = () => {
                         onClick={() => setChatOpen(true)}
                         style={{
                             position: 'fixed',
-                            bottom: '32px',
+                            bottom: '72px', // Moved up to clear footer and wisdom
                             right: '32px',
                             width: '64px',
                             height: '64px',
@@ -426,6 +437,10 @@ export const router = createBrowserRouter([
                     {
                         path: '/finance',
                         element: <B2BFinance />,
+                    },
+                    {
+                        path: 'modules',
+                        element: <Dashboard forceShowAll={true} />,
                     },
                     {
                         index: true,
@@ -827,6 +842,14 @@ export const router = createBrowserRouter([
                         element: (
                             <ProtectedRoute minLevel={6}>
                                 <SubagentAdmin />
+                            </ProtectedRoute>
+                        ),
+                    },
+                    {
+                        path: 'command-center',
+                        element: (
+                            <ProtectedRoute minLevel={6}>
+                                <CommandCenter />
                             </ProtectedRoute>
                         ),
                     },

@@ -11,3 +11,5 @@
     - [ ] Tracking ponašanja (CTR, otvaranje, konverzije)
     - [ ] Pametna frekvencija (da se klijenti ne "dave" porukama)
 - [ ] Refaktorisanje: Izdvojiti sekciju ''Stavke Rezervacije'' (Trip Items) iz ReservationArchitect.tsx u posebnu komponentu (npr. TripItemsTab.tsx). Ovo je prvi zadatak za sutra!
+- [ ] **Technical Check**: Proveriti šta sve treba da se uradi na Google Console u vezi reCAPTCHA integracije.
+

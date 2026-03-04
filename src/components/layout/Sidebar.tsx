@@ -8,7 +8,6 @@ import {
     ChevronRight,
     Mail,
     Compass,
-    Brain,
     Sparkles,
     ClipboardList,
     Search,
@@ -18,18 +17,26 @@ import {
     X,
     Building2,
     RefreshCw,
-    ShieldCheck,
-    PieChart
+    PieChart,
+    Calculator,
+    User,
+    Ship,
+    Navigation,
+    Car,
+    Train,
+    Anchor,
+    Waves,
+    Ticket,
+    LayoutGrid,
+    Cpu
 } from 'lucide-react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { GeometricBrain } from '../icons/GeometricBrain';
 import { ClickToTravelLogo } from '../icons/ClickToTravelLogo';
 import { useThemeStore, useAppStore, useAuthStore } from '../../stores';
 import { translations } from '../../translations';
 
 const Sidebar: React.FC = () => {
     const { lang, isSidebarCollapsed, toggleSidebar } = useThemeStore();
-    const { setChatOpen } = useAppStore();
     const { userLevel, impersonatedSubagent, setImpersonatedSubagent } = useAuthStore();
     const location = useLocation();
     const [expandedItem, setExpandedItem] = React.useState<string | null>(null);
@@ -62,9 +69,8 @@ const Sidebar: React.FC = () => {
                     title={title}
                 >
                     <NavLink
-                        to={subItems ? '#' : to}
+                        to={to}
                         style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'inherit', width: '100%' }}
-                        onClick={(e) => { if (subItems) e.preventDefault(); }}
                     >
                         <Icon size={20} /> {label}
                     </NavLink>
@@ -87,6 +93,12 @@ const Sidebar: React.FC = () => {
                                 key={idx}
                                 to={sub.to}
                                 className={({ isActive }) => `submenu-item ${isActive ? 'active' : ''}`}
+                                style={sub.to === '/smart-search' ? {
+                                    color: 'var(--accent)',
+                                    fontWeight: '800',
+                                    background: 'rgba(59, 130, 246, 0.1)',
+                                    borderRadius: '10px'
+                                } : {}}
                             >
                                 {sub.icon && <sub.icon size={16} />}
                                 {!isSidebarCollapsed && sub.label}
@@ -101,34 +113,51 @@ const Sidebar: React.FC = () => {
     return (
         <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
             <div className="sidebar-header">
-                {/* Logo wrapper now follows header flex/padding constraints */}
                 <Link to="/" className="sidebar-logo-container" style={{ display: 'block', textDecoration: 'none' }}>
                     <ClickToTravelLogo height={isSidebarCollapsed ? 56 : 288} showText={!isSidebarCollapsed} iconOnly={isSidebarCollapsed} />
                 </Link>
             </div>
 
             <button className="collapse-toggle" onClick={toggleSidebar}>
-                {isSidebarCollapsed ? (
-                    <ChevronRight size={16} />
-                ) : (
-                    <div style={{ transform: 'rotate(180deg)' }}>
-                        <ChevronRight size={16} />
-                    </div>
-                )}
+                <ChevronRight size={16} style={{ transform: isSidebarCollapsed ? 'none' : 'rotate(180deg)', transition: '0.2s' }} />
             </button>
 
             <nav className="nav-section" style={{ marginTop: '32px' }}>
-                {/* Main Section - Only for Staff */}
+                {/* Main Section */}
                 {userLevel >= 6 && !impersonatedSubagent && (
                     <div className="nav-group">
                         <h3 className="nav-label">{!isSidebarCollapsed && 'Main'}</h3>
                         <NavGroupItem to="/" icon={LayoutDashboard} label={!isSidebarCollapsed && t.dashboard} title={t.dashboard} />
-                        <NavGroupItem to="/financial-hub" icon={PieChart} label={!isSidebarCollapsed && 'Financial Intelligence'} title="Financial Intelligence (FIL)" />
+
+                        <NavGroupItem
+                            to="/reservations"
+                            icon={ClipboardList}
+                            label={!isSidebarCollapsed && t.reservations}
+                            title={t.reservations}
+                            subItems={[
+                                { to: '/reservations', label: 'Status Dashboard', icon: BarChart3 },
+                                { to: '/reservation-architect', label: 'Novi Dosije', icon: Plus },
+                                { to: '/destination-rep', label: 'Dest. Predstavnici', icon: Users },
+                                { to: '/deep-archive', label: 'Arhiva', icon: X }
+                            ]}
+                        />
+
+                        <NavGroupItem
+                            to="/financial-hub"
+                            icon={PieChart}
+                            label={!isSidebarCollapsed && 'Financial Intelligence'}
+                            title="Financial Intelligence"
+                            subItems={[
+                                { to: '/financial-hub', label: 'FIL Dashboard', icon: LayoutDashboard },
+                                { to: '/financial-hub?tab=payments', label: 'Isplate Dobavljačima', icon: DollarSign },
+                                { to: '/fx-service', label: 'Kursna Lista / NBS', icon: RefreshCw },
+                                { to: '/financial-hub?tab=payments', label: 'VCC Postavke', icon: Compass }
+                            ]}
+                        />
                     </div>
                 )}
 
-
-                {/* Sectors Section - Only for Staff */}
+                {/* Sectors Section */}
                 {userLevel >= 6 && !impersonatedSubagent && (
                     <div className="nav-group">
                         <h3 className="nav-label">{!isSidebarCollapsed && t.sectors}</h3>
@@ -139,13 +168,20 @@ const Sidebar: React.FC = () => {
                             label={!isSidebarCollapsed && t.production}
                             title={t.production}
                             subItems={[
-                                { to: '/hotels', label: 'Lista Hotela', icon: Compass },
-                                { to: '/package-search', label: 'Paket Aranžmani', icon: Sparkles },
-                                { to: '/flight-search', label: 'Avio Karte', icon: Compass }
+                                { to: '/smart-search', label: 'Smart Search ✨', icon: Sparkles },
+                                { to: '/production?view=accommodations', label: 'Smeštaj', icon: Building2 },
+                                { to: '/production?tab=trips', label: 'Grupna Putovanja', icon: Users },
+                                { to: '/production?tab=trips', label: 'Individualna Putovanja', icon: User },
+                                { to: '/production?tab=trips', label: 'Krstarenja', icon: Ship },
+                                { to: '/production?view=transport', label: 'Avio Karte', icon: Navigation },
+                                { to: '/production?view=transport', label: 'Autobuski Prevoz', icon: Car },
+                                { to: '/production?view=transport', label: 'Železnički Prevoz', icon: Train },
+                                { to: '/production?view=transport', label: 'Brodski Prevoz', icon: Anchor },
+                                { to: '/production?view=services', label: 'Izleti', icon: Waves },
+                                { to: '/production?view=services', label: 'Ulaznice', icon: Ticket },
+                                { to: '/price-list-architect', label: 'Pricing Architect', icon: Calculator },
                             ]}
                         />
-
-                        <NavGroupItem to="/mail" icon={Mail} label={!isSidebarCollapsed && 'ClickToTravel Mail'} title="ClickToTravel Mail" />
 
                         <NavGroupItem
                             to="/suppliers"
@@ -155,7 +191,8 @@ const Sidebar: React.FC = () => {
                             subItems={[
                                 { to: '/api-connections', label: 'API Connections', icon: SettingsIcon },
                                 { to: '/suppliers', label: 'Lista Dobavljača', icon: Users },
-                                { to: '/pricing-rules', label: 'Pricing Pravila', icon: DollarSign }
+                                { to: '/supplier-admin', label: 'Upravljanje Partnerima', icon: Building2 },
+                                { to: '/pricing-intelligence', label: 'Pricing Pravila', icon: DollarSign }
                             ]}
                         />
 
@@ -169,124 +206,82 @@ const Sidebar: React.FC = () => {
                                 { to: '/subagent-admin', label: 'B2B Subagenti', icon: Users }
                             ]}
                         />
-
                         <NavGroupItem
-                            to="/reservations"
-                            icon={ClipboardList}
-                            label={!isSidebarCollapsed && t.reservations}
-                            title={t.reservations}
+                            to="/modules"
+                            icon={LayoutGrid}
+                            label={!isSidebarCollapsed && 'Moduli'}
+                            title="Moduli"
                             subItems={[
-                                { to: '/reservations', label: 'Status Dashboard', icon: BarChart3 },
-                                { to: '/reservation-architect', label: 'Novi Dosije', icon: Plus },
-                                { to: '/deep-archive', label: 'Arhiva', icon: X }
+                                { to: '/modules', label: 'Svi Moduli', icon: LayoutGrid },
+                                { to: '/b2b-promo-manager', label: 'B2B Promo Manager', icon: Sparkles },
+                                { to: '/katana', label: 'Katana Engine', icon: Cpu },
+                                { to: '/', label: 'Glavni Dashboard', icon: LayoutDashboard },
                             ]}
-                        />
-
-                        <NavGroupItem
-                            to="/supplier-finance"
-                            icon={DollarSign}
-                            label={!isSidebarCollapsed && 'Plaćanja'}
-                            title="Plaćanja"
-                            subItems={[
-                                { to: '/supplier-finance', label: 'Isplate Dobavljačima', icon: DollarSign },
-                                { to: '/fx-service', label: 'Kursna Lista / NBS', icon: RefreshCw },
-                                { to: '/vcc-settings', label: 'VCC Postavke', icon: Compass }
-                            ]}
-                        />
-
-                        <NavGroupItem
-                            to="/price-list-architect"
-                            icon={DollarSign}
-                            label={!isSidebarCollapsed && 'Pricing Architect'}
-                            title="Pricing Architect"
-                        />
-
-                        <NavGroupItem
-                            to="/shifts-generator"
-                            icon={RefreshCw}
-                            label={!isSidebarCollapsed && 'Generator Smena'}
-                            title="Generator Smena"
                         />
                     </div>
                 )}
 
-                {/* B2B Partners Section - Only for Subagents or Impersonation */}
+                {/* B2B Sections for Partners */}
                 {isB2BView && (
-                    <div className="nav-group b2b-nav-group" style={{
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        borderRadius: '12px',
-                        padding: '12px 8px',
-                        border: '1px solid var(--border)'
-                    }}>
-                        <h3 className="nav-label">
-                            {!isSidebarCollapsed && (impersonatedSubagent ? `🤝 ${impersonatedSubagent.companyName}` : '🤝 B2B PARTNER')}
-                        </h3>
-                        <NavLink
-                            to="/smart-search"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="Smart Search (New)"
-                        >
-                            <Sparkles size={20} /> {!isSidebarCollapsed && (
-                                <span style={{ fontWeight: 700 }}>Smart Search ✨</span>
-                            )}
+                    <div className="nav-group b2b-nav-group">
+                        <h3 className="nav-label">{!isSidebarCollapsed && 'B2B Partner'}</h3>
+                        <NavLink to="/smart-search" className={({ isActive }) => navItemClass(isActive)}>
+                            <Sparkles size={20} /> {!isSidebarCollapsed && 'Smart Search ✨'}
                         </NavLink>
-                        <NavLink
-                            to="/my-reservations"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="My Reservations"
-                        >
-                            <ClipboardList size={20} /> {!isSidebarCollapsed && (
-                                <span style={{ fontWeight: 700 }}>Moje Rezervacije</span>
-                            )}
-                        </NavLink>
-                        <NavLink
-                            to="/b2b-portal?tab=settings"
-                            className={({ isActive }) => navItemClass(isActive)}
-                            title="AI Podešavanja"
-                        >
-                            <SettingsIcon size={20} /> {!isSidebarCollapsed && (
-                                <span style={{ fontWeight: 700 }}>AI Podešavanja</span>
-                            )}
+                        <NavLink to="/my-reservations" className={({ isActive }) => navItemClass(isActive)}>
+                            <ClipboardList size={20} /> {!isSidebarCollapsed && 'Moje Rezervacije'}
                         </NavLink>
                     </div>
                 )}
 
-
-
-                {/* System Section - Only for Staff */}
+                {/* System Section at bottom */}
                 {userLevel >= 6 && !impersonatedSubagent && (
-                    <div className="nav-group" style={{ marginTop: 'auto', paddingBottom: '10px' }}>
+                    <div className="nav-group" style={{ marginTop: 'auto', paddingBottom: '20px' }}>
                         <h3 className="nav-label">{!isSidebarCollapsed && t.system}</h3>
-                        <NavLink
+                        <NavGroupItem
                             to="/settings"
-                            className={({ isActive }) => navItemClass(isActive)}
+                            icon={SettingsIcon}
+                            label={!isSidebarCollapsed && t.settings}
                             title={t.settings}
-                        >
-                            <SettingsIcon size={20} /> {!isSidebarCollapsed && t.settings}
-                        </NavLink>
-                    </div>
-                )}
-                {/* Exit B2B View Button for Impersonating Admins */}
-                {impersonatedSubagent && userLevel >= 6 && (
-                    <div className="nav-group" style={{ marginTop: 'auto', paddingBottom: '10px' }}>
-                        <button
-                            className="nav-item"
-                            onClick={() => setImpersonatedSubagent(undefined)}
-                            style={{
-                                color: '#f87171',
-                                background: 'rgba(239, 68, 68, 0.1)',
-                                border: '1px solid rgba(239, 68, 68, 0.2)',
-                                cursor: 'pointer',
-                                width: '100%',
-                                textAlign: 'left'
-                            }}
-                        >
-                            <SettingsIcon size={20} /> {!isSidebarCollapsed && 'Zatvori B2B Prikaz'}
-                        </button>
+                            subItems={[
+                                { to: '/b2b-promo-manager', label: 'B2B Promo Manager', icon: Sparkles },
+                                { to: '/settings', label: 'Globalne Postavke', icon: SettingsIcon },
+                                { to: '/activity-log', label: 'Dnevnik Aktivnosti', icon: ClipboardList },
+                                { to: '/katana', label: 'Katana Engine', icon: Sparkles }
+                            ]}
+                        />
+
+                        <div style={{ padding: '0 8px', marginTop: '12px' }}>
+                            <NavLink
+                                to="/mail"
+                                style={({ isActive }) => ({
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px',
+                                    padding: '12px',
+                                    textDecoration: 'none',
+                                    borderRadius: '14px',
+                                    background: isActive
+                                        ? 'linear-gradient(135deg, #FFD700 0%, #DAA520 100%)'
+                                        : 'rgba(255, 215, 0, 0.1)',
+                                    color: isActive ? '#000' : '#FFD700',
+                                    border: '1px solid rgba(255,215,0,0.3)',
+                                    boxShadow: isActive ? '0 8px 20px rgba(218, 165, 32, 0.4)' : 'none',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                })}
+                            >
+                                <Mail size={22} style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
+                                {!isSidebarCollapsed && (
+                                    <span style={{ fontWeight: 800, fontSize: '13px', letterSpacing: '0.5px' }}>
+                                        TCT MAIL ✨
+                                    </span>
+                                )}
+                            </NavLink>
+                        </div>
                     </div>
                 )}
             </nav>
-        </aside >
+        </aside>
     );
 };
 

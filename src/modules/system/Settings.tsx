@@ -339,7 +339,10 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
             const { success: s1, data: d1 } = await loadFromCloud('user_accounts');
             if (s1 && d1 && d1.length > 0) setUsers(d1 as UserAccount[]);
             else {
-                setUsers([{ id: '1', firstName: 'Nenad', lastName: 'Admin', email: 'nenad@example.com', fixedPhone: '', mobilePhone: '', level: 6 }]);
+                setUsers([
+                    { id: '1', firstName: 'Nenad', lastName: 'Tomić', email: 'nenad.tomic@olympic.rs', fixedPhone: '', mobilePhone: '', level: 6, username: 'nenad.admin' },
+                    { id: '2', firstName: 'Olympic', lastName: 'Support', email: 'support@olympic.rs', fixedPhone: '', mobilePhone: '', level: 6, username: 'admin' }
+                ]);
             }
             const { success: s2, data: d2 } = await loadFromCloud('archived_users');
             if (s2 && d2) setArchivedUsers(d2 as UserAccount[]);

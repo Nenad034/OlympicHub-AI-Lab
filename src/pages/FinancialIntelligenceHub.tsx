@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     DollarSign, TrendingUp, TrendingDown, FileText, Download, Upload,
@@ -13,6 +14,7 @@ import * as XLSX from 'xlsx';
 import { useThemeStore } from '../stores';
 import DateRangeInput from '../components/DateRangeInput';
 import './FinancialIntelligenceHub.css';
+import SupplierFinance from './SupplierFinance';
 
 // --- TYPES & INTERFACES ---
 interface Transaction {
@@ -102,9 +104,19 @@ const generateMockData = (): Transaction[] => {
 const FinancialIntelligenceHub: React.FC = () => {
     // --- THEME ---
     const { theme } = useThemeStore();
+    const location = useLocation();
 
     // --- STATE ---
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'kir' | 'kur' | 'tax' | 'cashier' | 'bank' | 'settings'>('kir');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'kir' | 'kur' | 'tax' | 'cashier' | 'bank' | 'settings' | 'payments'>(
+        (new URLSearchParams(window.location.search).get('tab') as any) || 'kir'
+    );
+
+    useEffect(() => {
+        const tab = new URLSearchParams(location.search).get('tab');
+        if (tab && ['dashboard', 'kir', 'kur', 'tax', 'cashier', 'bank', 'settings', 'payments'].includes(tab)) {
+            setActiveTab(tab as any);
+        }
+    }, [location.search]);
     const [data, setData] = useState<Transaction[]>(() => generateMockData());
     const [isAiOpen, setIsAiOpen] = useState(false);
     const [activeOffice, setActiveOffice] = useState('Beograd');
@@ -653,6 +665,8 @@ const FinancialIntelligenceHub: React.FC = () => {
                         </div>
                     </div>
                 );
+            case 'payments':
+                return <SupplierFinance />;
             default:
                 return <div>Nepoznata sekcija</div>;
         }
@@ -825,6 +839,12 @@ const FinancialIntelligenceHub: React.FC = () => {
                             onClick={() => setActiveTab('tax')}
                         >
                             <Scale size={18} /> Član 35 (Knjiga)
+                        </button>
+                        <button
+                            className={`btn-export ${activeTab === 'payments' ? 'cyan' : ''}`}
+                            onClick={() => setActiveTab('payments')}
+                        >
+                            <CreditCard size={18} /> Plaćanja
                         </button>
                         <button
                             className={`btn-export ${activeTab === 'cashier' ? 'cyan' : ''}`}

@@ -40,7 +40,8 @@ import {
     FileText,
     ChevronLeft,
     Zap,
-    Trash2
+    Trash2,
+    Calculator as CalcIcon
 } from 'lucide-react';
 import { exportToJSON } from '../../utils/exportUtils';
 import PropertyWizard from '../../components/PropertyWizard';
@@ -234,8 +235,10 @@ const unifyHotelName = (name: string): string => {
 
 // Helper for title case to handle Serbian characters correctly if needed
 const wordSlice = (w: string) => w.slice(1);
+import { useNavigate } from 'react-router-dom';
 
 const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all', initialView = 'hub' }) => {
+    const navigate = useNavigate();
     const [viewMode, setViewMode] = useQueryState<'hub' | 'accommodations' | 'detail' | 'transport' | 'services'>('view', (initialView as string) === 'list' ? 'accommodations' : initialView as any);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchPills, setSearchPills] = useState<string[]>([]);
@@ -1198,8 +1201,11 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
 
                         // DODATNE USLUGE
                         { id: 'trips', category: 'amenities', name: 'Izleti', desc: 'Lokalni izleti i fakultativne ture.', icon: <Waves />, color: '#8b5cf6', badge: 'USKORO' },
-                        { id: 'tickets', category: 'amenities', name: 'Ulaznice', desc: 'Karte za muzeje, parkove i događaje.', icon: <Ticket />, color: '#f43f5e', badge: 'USKORO' }
-                    ].filter(s => activeModuleTab === 'all' || s.category === activeModuleTab).map(s => (
+                        { id: 'tickets', category: 'amenities', name: 'Ulaznice', desc: 'Karte za muzeje, parkove i događaje.', icon: <Ticket />, color: '#f43f5e', badge: 'USKORO' },
+
+                        // PRICING
+                        { id: 'pricing', category: 'pricing', name: 'Pricing Architect', desc: 'Napredno upravljanje cenovnicima i maržama.', icon: <CalcIcon />, color: '#f59e0b', badge: 'LIVE' }
+                    ].filter(s => activeModuleTab === 'all' || s.category === activeModuleTab || (s.id === 'pricing' && activeModuleTab === 'accommodation')).map(s => (
                         <motion.div
                             key={s.id}
                             layout
@@ -1212,10 +1218,11 @@ const ProductionHub: React.FC<ProductionHubProps> = ({ onBack, initialTab = 'all
                                 if (s.id === 'group_trips') startCreateTour();
                                 if (s.category === 'transport') setViewMode('transport');
                                 if (s.category === 'amenities') setViewMode('services');
+                                if (s.id === 'pricing') navigate('/price-list-architect');
                             }}
                             style={{
                                 cursor: 'pointer',
-                                border: (s.id === 'accommodation' || s.id === 'group_trips' || s.category === 'transport' || s.category === 'amenities') ? '1px solid var(--accent)' : '1px solid var(--border)'
+                                border: (s.id === 'accommodation' || s.id === 'group_trips' || s.category === 'transport' || s.category === 'amenities' || s.id === 'pricing') ? '1px solid var(--accent)' : '1px solid var(--border)'
                             }}
                         >
                             <div className="module-icon" style={{ background: `linear-gradient(135deg, ${s.color}, ${s.color}dd)` }}>

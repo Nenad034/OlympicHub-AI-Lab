@@ -113,14 +113,34 @@ const Customers: React.FC<CustomersProps> = ({ onBack }) => {
                     const saved = localStorage.getItem('olympic_hub_customers');
                     if (saved) {
                         const parsed = JSON.parse(saved);
-                        if (Array.isArray(parsed)) {
+                        if (Array.isArray(parsed) && parsed.length > 0) {
                             console.log("Loaded customers from LocalStorage:", parsed.length);
                             setCustomers(parsed);
+                            loadedFromCloudSuccess = true;
                         }
                     }
                 } catch (e) {
                     console.error("Failed to parse local customers:", e);
                 }
+            }
+
+            // 3. Last Fallback: Mock Data
+            if (!loadedFromCloudSuccess) {
+                const mockCustomers: Customer[] = [
+                    // B2C
+                    { id: 'KUP-24-MKM', type: 'B2C', category: 'Individualni putnici', fname: 'Marko', lname: 'Marković', email: 'marko@example.com', phone: '+381 64 111 222', address: 'Knez Mihailova 1', city: 'Beograd', country: 'RS', newsletter: true, language: 'Srpski', contacts: [] },
+                    { id: 'KUP-24-JLJ', type: 'B2C', category: 'Individualni putnici', fname: 'Jelena', lname: 'Janković', email: 'jelena@example.com', phone: '+381 64 333 444', address: 'Zmaj Jovina 5', city: 'Novi Sad', country: 'RS', newsletter: true, language: 'Srpski', contacts: [] },
+                    { id: 'KUP-24-NKN', type: 'B2C', category: 'Individualni putnici', fname: 'Nikola', lname: 'Nikolić', email: 'nikola@example.com', phone: '+381 64 555 666', address: 'Obrenovićeva 10', city: 'Niš', country: 'RS', newsletter: false, language: 'Srpski', contacts: [] },
+                    { id: 'KUP-24-ANA', type: 'B2C', category: 'Pravna lica (Firme)', fname: 'Ana', lname: 'Anić', email: 'ana.anic@firma.rs', phone: '+381 64 777 888', firmName: 'Tech Solutions d.o.o.', cui: '102345678', address: 'Bulevar Oslobođenja 45', city: 'Čačak', country: 'RS', newsletter: true, language: 'Srpski', contacts: [] },
+                    { id: 'KUP-24-PTP', type: 'B2C', category: 'Individualni putnici', fname: 'Petar', lname: 'Petrović', email: 'petar@example.com', phone: '+381 64 999 000', address: 'Takovo 12', city: 'Kraljevo', country: 'RS', newsletter: true, language: 'Engleski', contacts: [] },
+                    // B2B
+                    { id: 'KUP-24-SUN', type: 'B2B', category: 'Subagenti', fname: 'Jovan', lname: 'Agencijski', email: 'office@travelsunce.rs', phone: '+381 11 222 333', firmName: 'Travel Agency Sunce', cui: '109876543', address: 'Terazije 15', city: 'Beograd', country: 'RS', newsletter: true, language: 'Srpski', contacts: [{ id: '1', name: 'Jovan Jovanović', title: 'Director', phone: '+381 63 111 222' }] },
+                    { id: 'KUP-24-ADR', type: 'B2B', category: 'Subagenti', fname: 'Marija', lname: 'Tours', email: 'info@adriatours.rs', phone: '+381 11 333 444', firmName: 'Adria Tours', cui: '108765432', address: 'Korzo 3', city: 'Subotica', country: 'RS', newsletter: true, language: 'Srpski', contacts: [] },
+                    { id: 'KUP-24-BAL', type: 'B2B', category: 'Touroperatori', fname: 'Dragan', lname: 'Balkan', email: 'booking@balkanholidays.rs', phone: '+381 11 555 666', firmName: 'Balkan Holidays', cui: '107654321', address: 'Voždova 20', city: 'Niš', country: 'RS', newsletter: false, language: 'Engleski', contacts: [] },
+                    { id: 'KUP-24-GLB', type: 'B2B', category: 'Subagenti', fname: 'Stefan', lname: 'Global', email: 'stefan@globaltravel.rs', phone: '+381 11 777 888', firmName: 'Global Travel', cui: '106543210', address: 'Krunska 8', city: 'Beograd', country: 'RS', newsletter: true, language: 'Srpski', contacts: [] },
+                    { id: 'KUP-24-ELT', type: 'B2B', category: 'Subagenti', fname: 'Ivana', lname: 'Elite', email: 'ivana@eliteagency.rs', phone: '+381 11 999 000', firmName: 'Elite Agencija', cui: '105432109', address: 'Maksima Gorkog 22', city: 'Novi Sad', country: 'RS', newsletter: true, language: 'Srpski', contacts: [] }
+                ];
+                setCustomers(mockCustomers);
             }
         };
         loadCustomers();
@@ -406,21 +426,21 @@ const Customers: React.FC<CustomersProps> = ({ onBack }) => {
                             className="modal-content glass-panel"
                             onClick={e => e.stopPropagation()}
                             style={{
-                                width: '800px',
-                                height: '600px',
+                                width: '1200px',
+                                height: '900px',
                                 position: 'fixed',
-                                top: 'calc(50% - 300px)',
-                                left: 'calc(50% - 400px)',
+                                top: 'calc(50% - 450px)',
+                                left: 'calc(50% - 600px)',
                                 resize: 'both',
-                                minWidth: '800px',
-                                minHeight: '600px',
-                                maxWidth: '95vw',
-                                maxHeight: '95vh',
+                                minWidth: '1200px',
+                                minHeight: '900px',
+                                maxWidth: '98vw',
+                                maxHeight: '98vh',
                                 padding: 0,
                                 display: 'flex',
                                 flexDirection: 'column',
                                 overflow: 'hidden',
-                                boxShadow: '0 50px 100px -20px rgba(0,0,0,0.5)',
+                                boxShadow: '0 60px 120px -30px rgba(0,0,0,0.6)',
                                 border: '1px solid var(--glass-border)',
                                 zIndex: 1001
                             }}
@@ -429,30 +449,31 @@ const Customers: React.FC<CustomersProps> = ({ onBack }) => {
                             <div
                                 className="drag-handle"
                                 onPointerDown={(e) => dragControls.start(e)}
-                                style={{ background: 'var(--bg-main)', borderBottom: '1px solid var(--border)' }}
+                                style={{ background: 'var(--bg-main)', borderBottom: '1px solid var(--border)', padding: '24px' }}
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <div style={{ cursor: 'grab', padding: '4px' }}><GripHorizontal size={20} color="var(--text-secondary)" /></div>
-                                    <h3 style={{ fontSize: '16px', fontWeight: '700', margin: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <div style={{ cursor: 'grab', padding: '10px' }}><GripHorizontal size={28} color="var(--text-secondary)" /></div>
+                                    <h3 style={{ fontSize: '24px', fontWeight: '700', margin: 0 }}>
                                         {formData.id ? 'Izmena Kupca' : 'Novi Kupac'} ({selectedTab})
                                     </h3>
                                 </div>
                                 <button onClick={() => setShowAddForm(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                                    <X size={20} />
+                                    <X size={28} />
                                 </button>
                             </div>
 
                             <form onSubmit={handleSaveCustomer} style={{ display: 'flex', height: '100%' }}>
                                 {/* Sidebar Navigation */}
-                                <div style={{ width: '220px', background: 'rgba(0,0,0,0.2)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '4px', borderRight: '1px solid var(--border)' }}>
+                                <div style={{ width: '320px', background: 'rgba(0,0,0,0.2)', padding: '30px', display: 'flex', flexDirection: 'column', gap: '10px', borderRight: '1px solid var(--border)' }}>
                                     {modalTabs.map(tab => (
                                         <button
                                             type="button"
                                             key={tab.id}
                                             onClick={() => setActiveModalTab(tab.id as any)}
                                             className={`vtab-btn ${activeModalTab === tab.id ? 'active' : ''}`}
+                                            style={{ padding: '24px', fontSize: '17px', borderRadius: '14px' }}
                                         >
-                                            {tab.icon}
+                                            {React.cloneElement(tab.icon as React.ReactElement, { size: 24 })}
                                             {tab.label}
                                         </button>
                                     ))}
@@ -465,13 +486,15 @@ const Customers: React.FC<CustomersProps> = ({ onBack }) => {
                                         style={{
                                             width: '100%',
                                             justifyContent: 'center',
-                                            padding: '16px',
+                                            padding: '24px',
                                             marginTop: '20px',
-                                            borderRadius: '16px',
-                                            boxShadow: '0 10px 30px -10px var(--accent)'
+                                            borderRadius: '18px',
+                                            fontSize: '18px',
+                                            fontWeight: 700,
+                                            boxShadow: '0 15px 35px -12px var(--accent)'
                                         }}
                                     >
-                                        <Plus size={18} /> Sačuvaj
+                                        <Plus size={24} /> Sačuvaj Podatke
                                     </button>
                                 </div>
 

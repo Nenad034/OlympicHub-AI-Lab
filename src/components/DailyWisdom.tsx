@@ -97,120 +97,94 @@ const DailyWisdom: React.FC = () => {
     if (isMobileApp) return null;
 
     return (
-        <div className="daily-wisdom-container">
-            <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '40px', marginBottom: '40px' }}>
+        <div className="daily-wisdom-container" style={{
+            width: '100%',
+            padding: '40px 20px',
+            marginTop: '20px'
+        }}>
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ y: -5 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
                     className="wisdom-card"
                     style={{
-                        width: '100%',
-                        maxWidth: '900px',
-                        background: 'rgba(255, 255, 255, 0.03)',
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        borderRadius: '24px',
-                        padding: '30px 40px',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
+                        pointerEvents: 'auto',
+                        width: 'calc(100% - 60px)',
+                        maxWidth: '1400px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        backdropFilter: 'blur(15px)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '14px',
+                        padding: '10px 30px',
+                        boxShadow: '0 10px 30px rgba(142, 36, 172, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.05)',
                         display: 'flex',
-                        flexDirection: 'column',
-                        gap: '20px'
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '20px',
+                        minHeight: '48px',
+                        textAlign: 'center',
+                        borderBottom: '1.5px solid #8e24ac' // Matching the purple in screenshot
                     }}
                 >
-                    {/* Background quote mark */}
-                    <div style={{ position: 'absolute', top: '10px', right: '20px', opacity: 0.05, color: 'var(--accent)' }}>
-                        <Quote size={120} />
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{
-                                background: 'var(--accent-glow)',
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '10px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                <Sparkles size={16} color="var(--accent)" />
-                            </div>
-                            <span style={{
-                                fontSize: '12px',
-                                fontWeight: '800',
-                                letterSpacing: '2px',
-                                textTransform: 'uppercase',
-                                color: 'var(--accent)',
-                                opacity: 0.8
-                            }}>
-                                Misao Dana
-                            </span>
-                        </div>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        flexWrap: 'wrap',
+                        justifyContent: 'center'
+                    }}>
                         <div style={{
-                            fontSize: '10px',
-                            color: 'var(--text-secondary)',
-                            fontWeight: 700,
-                            opacity: 0.6
+                            background: 'var(--accent-glow)',
+                            width: '24px',
+                            height: '24px',
+                            minWidth: '24px',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
                         }}>
-                            {new Date().toLocaleDateString('sr-RS', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            <Sparkles size={12} color="var(--accent)" />
                         </div>
-                    </div>
 
-                    <div style={{ position: 'relative' }}>
+                        <span style={{
+                            fontSize: '10px',
+                            fontWeight: '800',
+                            letterSpacing: '1px',
+                            textTransform: 'uppercase',
+                            color: 'var(--accent)',
+                            opacity: 0.9,
+                            whiteSpace: 'nowrap'
+                        }}>
+                            Misao Dana:
+                        </span>
+
                         <p style={{
-                            fontSize: '20px',
+                            fontSize: '14px',
                             fontWeight: '500',
-                            lineHeight: '1.6',
-                            fontStyle: 'italic',
                             color: 'var(--text-primary)',
-                            textAlign: 'center',
                             fontFamily: "'Outfit', sans-serif",
-                            margin: '10px 0'
+                            margin: 0,
+                            lineHeight: '1.4'
                         }}>
                             "{todayWisdom.text}"
                         </p>
-                    </div>
 
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        gap: '12px',
-                        borderTop: '1px solid rgba(255,255,255,0.05)',
-                        paddingTop: '20px'
-                    }}>
                         <div style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '12px',
-                            background: 'rgba(255,255,255,0.03)',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            border: '1px solid rgba(255,255,255,0.05)'
+                            gap: '8px',
+                            opacity: 0.8,
+                            paddingLeft: '10px',
+                            borderLeft: '1px solid rgba(255,255,255,0.1)'
                         }}>
-                            {todayWisdom.author.includes('Musashi') ? <Sword size={18} color="var(--accent)" /> : <GeometricBrain size={18} color="var(--accent)" />}
-                        </div>
-                        <div style={{ textAlign: 'left' }}>
-                            <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>{todayWisdom.author}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>{todayWisdom.role}</div>
+                            <span style={{ fontSize: '12px', fontWeight: '800', color: 'var(--accent)', whiteSpace: 'nowrap' }}>
+                                {todayWisdom.author}
+                            </span>
+                            <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                                — {todayWisdom.role}
+                            </span>
                         </div>
                     </div>
-
-                    {/* Accent line */}
-                    <div style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        width: '60%',
-                        height: '2px',
-                        background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
-                        opacity: 0.3
-                    }}></div>
                 </motion.div>
             </div>
         </div>

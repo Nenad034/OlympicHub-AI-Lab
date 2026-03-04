@@ -2363,3 +2363,144 @@
     color: #a855f7;
     background: rgba(168, 85, 247, 0.05);
 }
+
+/* Performance Dashboard Specifics */
+.performance-dashboard {
+    padding: 32px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.perf-filters-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.perf-filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.perf-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.perf-title h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.perf-filter-options {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.perf-btn {
+    padding: 8px 16px;
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.perf-btn:hover {
+    background: var(--border);
+    color: var(--text-primary);
+}
+
+.perf-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.perf-custom-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-sidebar);
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+
+.perf-custom-range input {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 12px;
+    outline: none;
+    font-family: inherit;
+}
+
+.perf-activity-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.subagents-table.performance td {
+    padding: 20px 16px;
+}
+
+.perf-sub-link:hover {
+    color: var(--accent-hover) !important;
+    text-decoration: underline;
+}
+
+.status-pill {
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.status-pill.confirmed {
+    background: #10b98120;
+    color: #10b981;
+}
+
+.status-pill.pending {
+    background: #f59e0b20;
+    color: #f59e0b;
+}
+
+.status-pill.cancelled {
+    background: #ef444420;
+    color: #ef4444;
+}
+
+.text-accent {
+    color: var(--accent);
+}
+
+@media (max-width: 1024px) {
+    .perf-filter-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .perf-filter-options {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 8px;
+    }
+}

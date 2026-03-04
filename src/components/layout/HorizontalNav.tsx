@@ -16,7 +16,19 @@ import {
     BarChart3,
     Plus,
     RefreshCw,
-    Building2
+    Building2,
+    Calculator,
+    PieChart,
+    User,
+    Ship,
+    Navigation,
+    Car,
+    Train,
+    Anchor,
+    Waves,
+    Ticket,
+    LayoutGrid,
+    Cpu
 } from 'lucide-react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { ClickToTravelLogo } from '../icons/ClickToTravelLogo';
@@ -49,23 +61,47 @@ const HorizontalNav: React.FC = () => {
     const staffNavItems: NavItemDef[] = [
         { to: '/', icon: LayoutDashboard, label: t.dashboard },
         {
-            to: '/production', icon: Package, label: t.production,
+            to: '/reservations', icon: ClipboardList, label: t.reservations,
             subItems: [
-                { to: '/hotels', label: 'Lista Hotela', icon: Compass },
-                { to: '/package-search', label: 'Paket Aranžmani', icon: Sparkles },
-                { to: '/flight-search', label: 'Avio Karte', icon: Compass },
-                { to: '/shifts-generator', label: 'Generator Smena', icon: RefreshCw },
-                { to: '/ors-test', label: 'ORS Engine', icon: Search },
+                { to: '/reservations', label: 'Status Dashboard', icon: BarChart3 },
+                { to: '/reservation-architect', label: 'Novi Dosije', icon: Plus },
+                { to: '/destination-rep', label: 'Dest. Predstavnici', icon: Users },
+                { to: '/deep-archive', label: 'Arhiva', icon: X },
             ]
         },
-        { to: '/mail', icon: Mail, label: 'ClickToTravel Mail' },
+        {
+            to: '/financial-hub', icon: PieChart, label: 'Financial Intelligence',
+            subItems: [
+                { to: '/financial-hub', label: 'FIL Dashboard', icon: LayoutDashboard },
+                { to: '/financial-hub?tab=payments', label: 'Isplate Dobavljačima', icon: DollarSign },
+                { to: '/fx-service', label: 'Kursna Lista / NBS', icon: RefreshCw },
+                { to: '/financial-hub?tab=payments', label: 'VCC Postavke', icon: Compass },
+            ]
+        },
+        {
+            to: '/production', icon: Package, label: t.production,
+            subItems: [
+                { to: '/smart-search', label: 'Smart Search ✨', icon: Sparkles },
+                { to: '/production?view=accommodations', label: 'Smeštaj', icon: Building2 },
+                { to: '/production?tab=trips', label: 'Grupna Putovanja', icon: Users },
+                { to: '/production?tab=trips', label: 'Individualna Putovanja', icon: User },
+                { to: '/production?tab=trips', label: 'Krstarenja', icon: Ship },
+                { to: '/production?view=transport', label: 'Avio Karte', icon: Navigation },
+                { to: '/production?view=transport', label: 'Autobuski Prevoz', icon: Car },
+                { to: '/production?view=transport', label: 'Železnički Prevoz', icon: Train },
+                { to: '/production?view=transport', label: 'Brodski Prevoz', icon: Anchor },
+                { to: '/production?view=services', label: 'Izleti', icon: Waves },
+                { to: '/production?view=services', label: 'Ulaznice', icon: Ticket },
+                { to: '/price-list-architect', label: 'Pricing Architect', icon: Calculator },
+            ]
+        },
         {
             to: '/suppliers', icon: Truck, label: 'Dobavljači',
             subItems: [
                 { to: '/api-connections', label: 'API Connections', icon: SettingsIcon },
                 { to: '/suppliers', label: 'Lista Dobavljača', icon: Users },
                 { to: '/supplier-admin', label: 'Upravljanje Partnerima', icon: Building2 },
-                { to: '/pricing-rules', label: 'Pricing Pravila', icon: DollarSign },
+                { to: '/pricing-intelligence', label: 'Pricing Pravila', icon: DollarSign },
             ]
         },
         {
@@ -76,23 +112,14 @@ const HorizontalNav: React.FC = () => {
             ]
         },
         {
-            to: '/reservations', icon: ClipboardList, label: t.reservations,
+            to: '/modules', icon: LayoutGrid, label: 'Moduli',
             subItems: [
-                { to: '/reservations', label: 'Status Dashboard', icon: BarChart3 },
-                { to: '/reservation-architect', label: 'Novi Dosije', icon: Plus },
-                { to: '/destination-rep', label: 'Dest. Predstavnici', icon: Users },
-                { to: '/deep-archive', label: 'Arhiva', icon: X },
+                { to: '/modules', label: 'Svi Moduli', icon: LayoutGrid },
+                { to: '/b2b-promo-manager', label: 'B2B Promo Manager', icon: Sparkles },
+                { to: '/katana', label: 'Katana Engine', icon: Cpu },
+                { to: '/', label: 'Glavni Dashboard', icon: LayoutDashboard },
             ]
         },
-        {
-            to: '/supplier-finance', icon: DollarSign, label: 'Plaćanja',
-            subItems: [
-                { to: '/supplier-finance', label: 'Isplate Dobavljačima', icon: DollarSign },
-                { to: '/fx-service', label: 'Kursna Lista / NBS', icon: RefreshCw },
-                { to: '/vcc-settings', label: 'VCC Postavke', icon: Compass },
-            ]
-        },
-        { to: '/price-list-architect', icon: DollarSign, label: 'Pricing Architect' },
         {
             to: '/settings', icon: SettingsIcon, label: t.settings,
             subItems: [
@@ -103,6 +130,37 @@ const HorizontalNav: React.FC = () => {
             ]
         },
     ];
+
+    const mainItems = staffNavItems.filter(i => ['/', '/reservations', '/financial-hub'].includes(i.to));
+    const sectorItems = staffNavItems.filter(i => ['/production', '/suppliers', '/customers', '/modules'].includes(i.to));
+    const systemItems = staffNavItems.filter(i => i.to === '/settings');
+
+    const b2bItems = [
+        { to: '/smart-search', icon: Sparkles, label: 'Smart Search ✨' },
+        { to: '/my-reservations', icon: ClipboardList, label: 'Moje Rezervacije' }
+    ];
+
+    // Premium Mail Item (Horizontal)
+    const renderMailLink = () => (
+        <NavLink
+            to="/mail"
+            className={({ isActive }) => `h-nav-item ${isActive ? 'active' : ''}`}
+            style={({ isActive }) => ({
+                background: isActive
+                    ? 'linear-gradient(135deg, #FFD700 0%, #DAA520 100%)'
+                    : 'rgba(255, 215, 0, 0.1)',
+                color: isActive ? '#000' : '#FFD700',
+                border: '1px solid rgba(255,215,0,0.3)',
+                padding: '6px 14px',
+                borderRadius: '10px',
+                fontWeight: 700,
+                fontSize: '12px',
+                marginLeft: '8px'
+            })}
+        >
+            <Mail size={16} /> TCT MAIL ✨
+        </NavLink>
+    );
 
     // --- Submenu hover state ---
     const [openMenu, setOpenMenu] = React.useState<string | null>(null);
@@ -148,34 +206,77 @@ const HorizontalNav: React.FC = () => {
             </Link>
 
             <div className="nav-horizontal-items">
-
                 {/* Staff items */}
-                {isStaff && staffNavItems.map((item) => (
-                    <div
-                        key={item.to}
-                        ref={(el) => { itemRefs.current[item.to] = el; }}
-                        style={{ display: 'inline-block' }}
-                        onMouseEnter={() => openSubmenu(item.to)}
-                        onMouseLeave={scheduleClose}
-                    >
-                        <NavLink
-                            to={item.to}
-                            className={({ isActive }) => navItemClass(isActive)}
-                        >
-                            <item.icon size={18} /> {item.label}
-                        </NavLink>
-                    </div>
-                ))}
+                {isStaff && (
+                    <>
+                        <div className="h-nav-group">
+                            <span className="h-group-label">Main</span>
+                            <div className="h-group-items">
+                                {mainItems.map((item) => (
+                                    <div
+                                        key={item.to}
+                                        ref={(el) => { itemRefs.current[item.to] = el; }}
+                                        onMouseEnter={() => openSubmenu(item.to)}
+                                        onMouseLeave={scheduleClose}
+                                    >
+                                        <NavLink to={item.to} className={({ isActive }) => navItemClass(isActive)}>
+                                            <item.icon size={18} /> {item.label}
+                                        </NavLink>
+                                    </div>
+                                ))}
+                                {renderMailLink()}
+                            </div>
+                        </div>
+
+                        <div className="h-nav-group">
+                            <span className="h-group-label">Sektori</span>
+                            <div className="h-group-items">
+                                {sectorItems.map((item) => (
+                                    <div
+                                        key={item.to}
+                                        ref={(el) => { itemRefs.current[item.to] = el; }}
+                                        onMouseEnter={() => openSubmenu(item.to)}
+                                        onMouseLeave={scheduleClose}
+                                    >
+                                        <NavLink to={item.to} className={({ isActive }) => navItemClass(isActive)}>
+                                            <item.icon size={18} /> {item.label}
+                                        </NavLink>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="h-nav-group">
+                            <span className="h-group-label">Sistem</span>
+                            <div className="h-group-items">
+                                {systemItems.map((item) => (
+                                    <div
+                                        key={item.to}
+                                        ref={(el) => { itemRefs.current[item.to] = el; }}
+                                        onMouseEnter={() => openSubmenu(item.to)}
+                                        onMouseLeave={scheduleClose}
+                                    >
+                                        <NavLink to={item.to} className={({ isActive }) => navItemClass(isActive)}>
+                                            <item.icon size={18} /> {item.label}
+                                        </NavLink>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </>
+                )}
 
                 {/* B2B Subagent items */}
-                {isB2BView && (
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <NavLink to="/smart-search" className={({ isActive }) => navItemClass(isActive)}>
-                            <Sparkles size={18} /> Smart Search ✨
-                        </NavLink>
-                        <NavLink to="/reservations" className={({ isActive }) => navItemClass(isActive)}>
-                            <ClipboardList size={18} /> Moje Rezervacije
-                        </NavLink>
+                {isB2BView && !isStaff && (
+                    <div className="h-nav-group">
+                        <span className="h-group-label">B2B Partner</span>
+                        <div className="h-group-items">
+                            {b2bItems.map((item) => (
+                                <NavLink key={item.to} to={item.to} className={({ isActive }) => navItemClass(isActive)}>
+                                    <item.icon size={18} /> {item.label}
+                                </NavLink>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
@@ -208,8 +309,8 @@ const HorizontalNav: React.FC = () => {
                         top: menuPos.top,
                         left: menuPos.left,
                         minWidth: '220px',
-                        background: '#1e293b',
-                        border: '1px solid rgba(255,255,255,0.12)',
+                        background: 'var(--bg-sidebar)',
+                        border: '1px solid var(--border)',
                         borderRadius: '12px',
                         boxShadow: '0 16px 48px rgba(0,0,0,0.7)',
                         padding: '8px',

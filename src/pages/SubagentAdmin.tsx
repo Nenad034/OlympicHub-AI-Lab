@@ -255,9 +255,20 @@ const MOCK_MATRIX: { [key: string]: { [key: string]: PricingRule['settings'] } }
     }
 };
 
+const MOCK_PERFORMANCE_DATA = [
+    { id: 'RES-9421', subagent: 'Travel Pro DOO', date: '2026-03-04', amount: 1240.50, status: 'Confirmed', passengers: 'Petrović + 3', items: 'Hotel + Flight' },
+    { id: 'RES-9420', subagent: 'Globe Trotters', date: '2026-03-04', amount: 450.00, status: 'Pending', passengers: 'Jovanović + 1', items: 'Hotel' },
+    { id: 'RES-9418', subagent: 'SuperTravel', date: '2026-03-03', amount: 2100.00, status: 'Confirmed', passengers: 'Nikolić + 2', items: 'Package' },
+    { id: 'RES-9415', subagent: 'Travel Pro DOO', date: '2026-03-02', amount: 890.00, status: 'Confirmed', passengers: 'Popović + 4', items: 'Flight' },
+    { id: 'RES-9412', subagent: 'Montenegro Fly', date: '2026-03-01', amount: 3200.00, status: 'Cancelled', passengers: 'Milošević + 1', items: 'Package' },
+    { id: 'RES-9411', subagent: 'Globe Trotters', date: '2026-02-28', amount: 150.00, status: 'Confirmed', passengers: 'Gajić + 1', items: 'Transfer' },
+];
+
 const SubagentAdmin: React.FC = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'subagents' | 'matrix' | 'rules' | 'analytics'>('subagents');
+    const [activeTab, setActiveTab] = useState<'subagents' | 'matrix' | 'rules' | 'analytics' | 'performance'>('performance');
+    const [perfFilter, setPerfFilter] = useState<'today' | '7days' | '30days' | 'custom'>('7days');
+    const [perfDates, setPerfDates] = useState({ from: '', to: '' });
     const [subagents, setSubagents] = useState<Subagent[]>(MOCK_SUBAGENTS);
     const [rules, setRules] = useState<PricingRule[]>(MOCK_RULES);
     const [matrix, setMatrix] = useState(MOCK_MATRIX);
@@ -608,6 +619,13 @@ const SubagentAdmin: React.FC = () => {
             {/* Admin Tabs */}
             <div className="admin-tabs-bar">
                 <button
+                    className={`tab-item ${activeTab === 'performance' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('performance')}
+                >
+                    <TrendingUp size={18} />
+                    Performance Dashboard
+                </button>
+                <button
                     className={`tab-item ${activeTab === 'subagents' ? 'active' : ''}`}
                     onClick={() => setActiveTab('subagents')}
                 >
@@ -638,6 +656,133 @@ const SubagentAdmin: React.FC = () => {
             </div>
 
             <div className="admin-tab-content">
+                {activeTab === 'performance' && (
+                    <div className="performance-dashboard fade-in">
+                        {/* Filters Row */}
+                        <div className="perf-filters-card">
+                            <div className="perf-filter-header">
+                                <div className="perf-title">
+                                    <TrendingUp size={22} style={{ color: 'var(--accent)' }} />
+                                    <h3>Performance Dashboard</h3>
+                                </div>
+                                <div className="perf-filter-options">
+                                    <button
+                                        className={`perf-btn ${perfFilter === 'today' ? 'active' : ''}`}
+                                        onClick={() => setPerfFilter('today')}
+                                    >Danas</button>
+                                    <button
+                                        className={`perf-btn ${perfFilter === '7days' ? 'active' : ''}`}
+                                        onClick={() => setPerfFilter('7days')}
+                                    >7 dana</button>
+                                    <button
+                                        className={`perf-btn ${perfFilter === '30days' ? 'active' : ''}`}
+                                        onClick={() => setPerfFilter('30days')}
+                                    >30 dana</button>
+                                    <div className="perf-custom-range">
+                                        <Calendar size={14} />
+                                        <input type="date" value={perfDates.from} onChange={e => { setPerfDates({ ...perfDates, from: e.target.value }); setPerfFilter('custom'); }} />
+                                        <span>-</span>
+                                        <input type="date" value={perfDates.to} onChange={e => { setPerfDates({ ...perfDates, to: e.target.value }); setPerfFilter('custom'); }} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* KPI Cards */}
+                        <div className="stats-grid">
+                            <div className="stat-card" style={{ borderLeft: '4px solid #f59e0b' }}>
+                                <div className="stat-icon" style={{ background: '#f59e0b20', color: '#f59e0b' }}><FileText size={24} /></div>
+                                <div className="stat-info">
+                                    <span className="stat-label">Rezervacije u periodu</span>
+                                    <span className="stat-value">142</span>
+                                </div>
+                            </div>
+                            <div className="stat-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
+                                <div className="stat-icon" style={{ background: '#8b5cf620', color: '#8b5cf6' }}><Euro size={24} /></div>
+                                <div className="stat-info">
+                                    <span className="stat-label">Ukupna Vrednost</span>
+                                    <span className="stat-value">84.250 €</span>
+                                </div>
+                            </div>
+                            <div className="stat-card" style={{ borderLeft: '4px solid #3b82f6' }}>
+                                <div className="stat-icon" style={{ background: '#3b82f620', color: '#3b82f6' }}><Users size={24} /></div>
+                                <div className="stat-info">
+                                    <span className="stat-label">Top Subagent</span>
+                                    <span className="stat-value" style={{ fontSize: '18px' }}>Travel Pro DOO</span>
+                                </div>
+                            </div>
+                            <div className="stat-card" style={{ borderLeft: '4px solid #10b981' }}>
+                                <div className="stat-icon" style={{ background: '#10b98120', color: '#10b981' }}><TrendingUp size={24} /></div>
+                                <div className="stat-info">
+                                    <span className="stat-label">Trend (% rasta)</span>
+                                    <span className="stat-value">+12.4%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Activity List */}
+                        <div className="perf-activity-card">
+                            <div className="card-header" style={{ padding: '24px 32px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h3 style={{ margin: 0, fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}><Activity size={20} className="text-accent" /> Poslednje Aktivnosti Subagenata</h3>
+                                <button className="btn-text" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>Vidi sve rezervacije <ArrowUpRight size={14} /></button>
+                            </div>
+                            <div className="table-container compact" style={{ padding: '0' }}>
+                                <table className="subagents-table performance">
+                                    <thead>
+                                        <tr>
+                                            <th style={{ paddingLeft: '32px' }}>ID / Datum</th>
+                                            <th>Subagent</th>
+                                            <th>Putnici / Sadržaj</th>
+                                            <th>Vrednost</th>
+                                            <th>Status</th>
+                                            <th style={{ paddingRight: '32px' }}>Akcije</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {MOCK_PERFORMANCE_DATA.map(res => (
+                                            <tr key={res.id}>
+                                                <td style={{ paddingLeft: '32px' }}>
+                                                    <div style={{ fontWeight: '800', color: 'var(--text-primary)' }}>{res.id}</div>
+                                                    <div style={{ fontSize: '11px', opacity: 0.6 }}>{res.date}</div>
+                                                </td>
+                                                <td>
+                                                    <div className="perf-sub-link"
+                                                        style={{ color: 'var(--accent)', fontWeight: '700', cursor: 'pointer', textDecoration: 'underline' }}
+                                                        onClick={() => {
+                                                            const sub = subagents.find(s => s.companyName === res.subagent);
+                                                            if (sub) handleViewDetails(sub);
+                                                        }}
+                                                    >
+                                                        {res.subagent}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div style={{ fontWeight: '600' }}>{res.passengers}</div>
+                                                    <div style={{ fontSize: '12px', opacity: 0.7 }}>{res.items}</div>
+                                                </td>
+                                                <td className="amount" style={{ fontWeight: '800' }}>{res.amount.toLocaleString()} €</td>
+                                                <td>
+                                                    <span className="status-badge" style={{
+                                                        background: res.status === 'Confirmed' ? '#10b981' : res.status === 'Pending' ? '#f59e0b' : '#ef4444',
+                                                        fontSize: '10px',
+                                                        padding: '4px 10px'
+                                                    }}>{res.status}</span>
+                                                </td>
+                                                <td style={{ paddingRight: '32px' }}>
+                                                    <div className="perf-row-actions">
+                                                        <button className="action-btn reservations" onClick={() => navigate(`/reservation-architect?id=${res.id}`)} title="Otvori Rezervaciju">
+                                                            <ExternalLink size={14} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {activeTab === 'subagents' && (
                     <>
                         {/* Stats Cards */}
