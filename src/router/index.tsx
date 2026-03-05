@@ -336,6 +336,14 @@ export const router = createBrowserRouter([
                 ),
             },
             {
+                path: '/public-inventory',
+                element: (
+                    <React.Suspense fallback={<LoadingFallback />}>
+                        <OperationalReports />
+                    </React.Suspense>
+                ),
+            },
+            {
                 path: '/b2b-portal',
                 element: (
                     <AuthGuard>

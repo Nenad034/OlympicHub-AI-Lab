@@ -232,40 +232,52 @@
 }
 
 .th-date-container {
-    position: relative;
-    height: 58px !important;
-    width: 58px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 6px 8px;
+    height: 100% !important;
+    width: 100% !important;
+}
+
+.th-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
 .th-day-name {
-    position: absolute;
-    top: 5px;
-    left: 6px;
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 700;
-    text-transform: uppercase;
     color: var(--text-secondary);
+    opacity: 0.6;
 }
 
 .th-day-num {
-    position: absolute;
-    top: 4px;
-    right: 6px;
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 900;
     color: var(--text-primary);
+    line-height: 1;
+}
+
+.th-bottom-row {
+    text-align: center;
+    border-top: 1px solid rgba(59, 130, 246, 0.1);
+    padding-top: 4px;
 }
 
 .th-month-name {
-    position: absolute;
-    bottom: 3px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 7.5px;
+    font-size: 11px;
     font-weight: 850;
     text-transform: uppercase;
     color: var(--accent);
-    letter-spacing: 0.2px;
+    letter-spacing: 0.5px;
+}
+
+.th-year-label {
+    font-size: 8px;
+    opacity: 0.5;
+    margin-left: 2px;
 }
 
 .sticky-col {
@@ -315,13 +327,56 @@
     color: #ef4444;
 }
 
-.cap-available {
+.cap-avail-tag-wrapper {
     position: absolute;
     bottom: 4px;
     right: 6px;
-    font-size: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.cap-available-label {
+    font-size: 8px;
     font-weight: 800;
-    color: #10b981;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    opacity: 0.6;
+    margin-bottom: -2px;
+}
+
+.cap-available-tag {
+    background: #10b981;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 900;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    min-width: 24px;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.cap-available-tag.small {
+    font-size: 13px;
+    padding: 1px 6px;
+    border-radius: 5px;
+}
+
+.cap-available-tag.gold {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.cap-cell:hover .cap-available-tag {
+    transform: scale(1.1);
+}
+
+.secure-link-preview-link:hover {
+    background: rgba(59, 130, 246, 0.1) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
 }
 
 .cap-occ-percent {
@@ -1204,15 +1259,25 @@
 
 .visual-report-modal {
     background: var(--bg-card);
-    width: 900px;
+    width: 1100px;
     max-width: 95vw;
-    border-radius: 20px;
+    border-radius: 24px;
     padding: 30px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.7);
     border: 1px solid var(--border);
-    max-height: 85vh;
+    max-height: 90vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+}
+
+.visual-report-modal.large-modal {
+    width: 1200px;
+}
+
+.drag-handle {
+    cursor: move;
+    user-select: none;
 }
 
 .report-modal-header {
@@ -1249,9 +1314,370 @@
 
 .report-body {
     flex: 1;
-    overflow-y: auto;
-    padding-right: 10px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 40px;
+    margin-top: 10px;
+}
+
+.report-link-section {
+    padding-right: 40px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+}
+
+.report-agent-config {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.config-header h4 {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.config-header p {
+    font-size: 12px;
+    color: var(--text-secondary);
     margin-bottom: 20px;
+}
+
+.report-filters {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.report-filters .f-item {
+    flex: 1;
+}
+
+.report-filters label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    opacity: 0.6;
+}
+
+.agent-search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.agent-search-wrapper svg {
+    position: absolute;
+    left: 12px;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.agent-search-wrapper input {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 10px 35px 10px 35px;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.agent-search-wrapper input:focus {
+    border-color: var(--accent);
+    background: #1e2945;
+}
+
+.clear-search {
+    position: absolute;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: var(--text-secondary);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.clear-search:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.report-filters select {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.selected-agents-pool {
+    margin-bottom: 20px;
+    background: rgba(59, 130, 246, 0.05);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.selected-agents-pool label {
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.selected-chips-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+.selected-agent-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.selected-agent-chip button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.selected-agent-chip button:hover {
+    background: #ef4444;
+}
+
+.report-filters select option {
+    background: #1e293b;
+    color: #ffffff;
+}
+
+/* Ensure visibility if system/browser forces themes */
+@media (prefers-color-scheme: light) {
+    .report-filters select {
+        color: #ffffff;
+    }
+}
+
+.agent-selection-grid {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 16px;
+    padding: 15px;
+    border: 1px solid var(--border);
+}
+
+@media (prefers-color-scheme: dark) {
+    .agent-selection-grid {
+        background: rgba(0, 0, 0, 0.2);
+    }
+}
+
+.selection-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.selection-actions button {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.selection-actions button:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.agents-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    padding-right: 5px;
+}
+
+.agent-checkbox-card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+    user-select: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.agent-checkbox-card:hover {
+    border-color: var(--accent);
+    background: rgba(59, 130, 246, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.agent-checkbox-card.active {
+    border-color: var(--accent);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.agent-checkbox-card input {
+    display: none;
+}
+
+.agent-box-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.agent-box-info .a-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.agent-box-info .a-loc {
+    font-size: 10px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.agent-checkbox-card .check-icon {
+    margin-left: auto;
+    color: var(--accent);
+}
+
+.report-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pag-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pag-btn:hover:not(:disabled) {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.pag-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pag-info {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.pag-info strong {
+    color: white;
+}
+
+.secure-link-preview-link {
+    background: rgba(59, 130, 246, 0.05);
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 11px;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 20px;
+    border: 1px dashed var(--accent);
+    word-break: break-all;
+    display: block;
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.2s;
+    cursor: pointer;
+    line-height: 1.4;
+}
+
+.link-btn-large {
+    background: var(--accent);
+    color: white;
+    padding: 14px 24px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    width: 100%;
 }
 
 .report-hotel-card {

@@ -151,13 +151,67 @@ const OperationalReports: React.FC = () => {
     const isReportOnlyView = searchParams.get('reportView') === 'true';
 
     const MOCK_SUBAGENTS = [
-        { id: '1', name: 'Fly Travel', email: 'fly-travel@gmail.com', city: 'Budva', active: true },
-        { id: '2', name: 'Alun Travel', email: 'alun@aluntravel.me', city: 'Podgorica', active: true },
-        { id: '3', name: 'Boka Explorer', email: 'info@boka-explorer.com', city: 'Kotor', active: true },
-        { id: '4', name: 'Sun & Sea', email: 'sun-sea@yahoo.com', city: 'Bar', active: true },
-        { id: '5', name: 'Olimpik Travel', email: 'booking@olimpik.com', city: 'Berane', active: true },
-        { id: '6', name: 'Nenad Tomić', email: 'nenad.tomic1403@gmail.com', city: 'Beograd', active: true }
+        { id: '1', name: 'Fly Travel', email: 'fly-travel@gmail.com', city: 'Budva', country: 'Crna Gora', active: true },
+        { id: '2', name: 'Alun Travel', email: 'alun@aluntravel.me', city: 'Podgorica', country: 'Crna Gora', active: true },
+        { id: '3', name: 'Boka Explorer', email: 'info@boka-explorer.com', city: 'Kotor', country: 'Crna Gora', active: true },
+        { id: '4', name: 'Sun & Sea', email: 'sun-sea@yahoo.com', city: 'Bar', country: 'Crna Gora', active: true },
+        { id: '5', name: 'Olimpik Travel', email: 'booking@olimpik.com', city: 'Berane', country: 'Crna Gora', active: true },
+        { id: '6', name: 'Nenad Tomić', email: 'nenad.tomic1403@gmail.com', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '7', name: 'Olimpic Travel SRB', email: 'contact@olimpic.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '8', name: 'Sabra Travel', email: 'office@sabra.rs', city: 'Novi Sad', country: 'Srbija', active: true },
+        { id: '9', name: 'Big Blue', email: 'info@bigblue.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '10', name: 'Kontiki Travel', email: 'booking@kontiki.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '11', name: 'Wayout', email: 'info@wayout.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '12', name: 'Mona Travel', email: 'office@monatravel.me', city: 'Budva', country: 'Crna Gora', active: true },
+        { id: '13', name: 'Trend Travel', email: 'trend@travel.me', city: 'Herceg Novi', country: 'Crna Gora', active: true },
+        { id: '14', name: 'Adria Line', email: 'info@adrialine.me', city: 'Budva', country: 'Crna Gora', active: true },
+        { id: '15', name: 'Grand Travel', email: 'grand@travel.rs', city: 'Novi Sad', country: 'Srbija', active: true },
+        { id: '16', name: 'Astra Travel', email: 'astra@travel.rs', city: 'Niš', country: 'Srbija', active: true },
+        { id: '17', name: 'Filip Travel', email: 'booking@filiptravel.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '18', name: 'Odeon World Travel', email: 'info@odeon.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '19', name: 'Argus Tours', email: 'argus@tours.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '20', name: 'Plana Tours', email: 'office@planatours.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '21', name: 'Jungle Tribe', email: 'jungle@tribe.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '22', name: 'Viva Travel', email: 'viva@travel.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '23', name: 'Rapsody Travel', email: 'rapsody@travel.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '24', name: 'Lider Travel', email: 'lider@travel.rs', city: 'Niš', country: 'Srbija', active: true },
+        { id: '25', name: 'Eurojet', email: 'eurojet@travel.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '26', name: 'Robinson', email: 'office@robinson.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '27', name: 'Spirit Travel', email: 'spirit@travel.rs', city: 'Novi Sad', country: 'Srbija', active: true },
+        { id: '28', name: 'Manga Trip', email: 'manga@trip.rs', city: 'Beograd', country: 'Srbija', active: true },
+        { id: '29', name: 'Travelland', email: 'office@travelland.rs', city: 'Beograd', country: 'Srbija', active: true }
     ];
+
+    const [reportFilterCountry, setReportFilterCountry] = useState<string>('Sve');
+    const [reportFilterCity, setReportFilterCity] = useState<string>('Sve');
+    const [agentSearchQuery, setAgentSearchQuery] = useState('');
+    const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>(MOCK_SUBAGENTS.map(a => a.id));
+    const [reportCurrentPage, setReportCurrentPage] = useState(1);
+    const agentsPerPage = 20;
+
+    const countries = useMemo(() => ['Sve', ...new Set(MOCK_SUBAGENTS.map(a => a.country))], []);
+    const cities = useMemo(() => {
+        const filtered = reportFilterCountry === 'Sve' ? MOCK_SUBAGENTS : MOCK_SUBAGENTS.filter(a => a.country === reportFilterCountry);
+        return ['Sve', ...new Set(filtered.map(a => a.city))];
+    }, [reportFilterCountry]);
+
+    const filteredAgents = useMemo(() => {
+        setReportCurrentPage(1); // Reset pagination on filter change
+        return MOCK_SUBAGENTS.filter(a => {
+            const countryMatch = reportFilterCountry === 'Sve' || a.country === reportFilterCountry;
+            const cityMatch = reportFilterCity === 'Sve' || a.city === reportFilterCity;
+            const searchMatch = a.name.toLowerCase().includes(agentSearchQuery.toLowerCase()) ||
+                a.email.toLowerCase().includes(agentSearchQuery.toLowerCase());
+            return countryMatch && cityMatch && searchMatch;
+        });
+    }, [reportFilterCountry, reportFilterCity, agentSearchQuery]);
+
+    const paginatedAgents = useMemo(() => {
+        const start = (reportCurrentPage - 1) * agentsPerPage;
+        return filteredAgents.slice(start, start + agentsPerPage);
+    }, [filteredAgents, reportCurrentPage]);
+
+    const totalReportPages = Math.ceil(filteredAgents.length / agentsPerPage);
 
     // --- GLOBAL FILTERS ---
     const [bookingFrom, setBookingFrom] = useState('2026-01-01');
@@ -707,9 +761,16 @@ const OperationalReports: React.FC = () => {
                                             {dates.map((date, idx) => (
                                                 <th key={idx} className={date.getDay() === 0 || date.getDay() === 6 ? 'weekend' : ''} onClick={() => handleDateClick(date)}>
                                                     <div className="th-date-container">
-                                                        <span className="th-day-name">{date.toLocaleDateString('sr-Latn-RS', { weekday: 'short' }).replace('.', '')}</span>
-                                                        <span className="th-day-num">{date.getDate()}</span>
-                                                        <span className="th-month-name">{date.toLocaleDateString('sr-Latn-RS', { month: 'short' }).replace('.', '')}</span>
+                                                        <div className="th-top-row">
+                                                            <span className="th-day-name">{date.toLocaleDateString('sr-Latn-RS', { weekday: 'short' }).replace('.', '').toUpperCase()}</span>
+                                                            <span className="th-day-num">{date.getDate()}</span>
+                                                        </div>
+                                                        <div className="th-bottom-row">
+                                                            <span className="th-month-name">
+                                                                {date.toLocaleDateString('sr-Latn-RS', { month: 'short' }).replace('.', '').toUpperCase()}
+                                                                <span className="th-year-label">'{date.getFullYear().toString().substring(2)}</span>
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </th>
                                             ))}
@@ -757,7 +818,9 @@ const OperationalReports: React.FC = () => {
                                                                         <span className="cap-total">{hTotalAll}</span>
                                                                         <span className="cap-sold">{hTotalSold}</span>
                                                                         <span className="cap-occ-percent">{occPercent}%</span>
-                                                                        <span className="cap-available">{avail}</span>
+                                                                        <div className="cap-avail-tag-wrapper">
+                                                                            <span className="cap-available-tag">{avail}</span>
+                                                                        </div>
                                                                     </div>
                                                                 </td>
                                                             );
@@ -794,7 +857,9 @@ const OperationalReports: React.FC = () => {
                                                                                 <span className="cap-occ-mini">{occPercent}%</span>
                                                                                 <span className="cap-status-badge">{rec.status.substring(0, 3)}</span>
                                                                             </div>
-                                                                            <span className="cap-available">{available}</span>
+                                                                            <div className="cap-avail-tag-wrapper">
+                                                                                <span className="cap-available-tag small">{available}</span>
+                                                                            </div>
                                                                         </div>
                                                                     </td>
                                                                 );
@@ -832,7 +897,9 @@ const OperationalReports: React.FC = () => {
                                                             <span className="cap-total">{totalAll}</span>
                                                             <span className="cap-sold">{totalSold}</span>
                                                             <span className="cap-occ-percent">{occPercent}%</span>
-                                                            <span className="cap-available">{available}</span>
+                                                            <div className="cap-avail-tag-wrapper">
+                                                                <span className="cap-available-tag">{available}</span>
+                                                            </div>
                                                         </div>
                                                     </td>
                                                 );
@@ -942,7 +1009,7 @@ const OperationalReports: React.FC = () => {
                                     <tbody>
                                         {MOCK_RESERVATIONS.map(res => (
                                             <tr key={res.id}>
-                                                <td><span className="res-id-link">#{res.id}</span></td>
+                                                <td><span className="res-id-link" onClick={() => navigate(`/reservations?id=${res.id}`)}>#{res.id}</span></td>
                                                 <td><div className="px-name">{res.customer}</div></td>
                                                 <td><div className="date-cell">{res.checkIn}</div></td>
                                                 <td><div className="date-cell">{res.checkOut}</div></td>
@@ -950,7 +1017,7 @@ const OperationalReports: React.FC = () => {
                                                 <td>{res.adults} + {res.children} + {res.babies}</td>
                                                 <td><span className="badge-status confirmed">Uplaćeno</span></td>
                                                 <td>
-                                                    <button className="btn-action-small">
+                                                    <button className="btn-action-small" onClick={() => navigate(`/reservations?id=${res.id}`)}>
                                                         <ExternalLink size={14} />
                                                     </button>
                                                 </td>
@@ -1167,13 +1234,15 @@ const OperationalReports: React.FC = () => {
                 {showReportModal.show && (
                     <div className="modal-overlay" onClick={() => setShowReportModal({ ...showReportModal, show: false })}>
                         <motion.div
-                            className="visual-report-modal"
+                            drag
+                            dragMomentum={false}
+                            className="visual-report-modal large-modal"
                             onClick={e => e.stopPropagation()}
                             initial={{ scale: 0.9, opacity: 0, y: 50 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 50 }}
                         >
-                            <div className="report-modal-header">
+                            <div className="report-modal-header drag-handle">
                                 <div className="report-title-section">
                                     <div className={`report-icon-box ${showReportModal.type}`}>
                                         {showReportModal.type === 'stop' ? <AlertTriangle size={24} /> : <Sparkles size={24} />}
@@ -1183,71 +1252,164 @@ const OperationalReports: React.FC = () => {
                                         <p className="report-subtitle">Generisano: {new Date().toLocaleDateString('sr-Latn-RS')} • Svi statusi (Stop, On Request, Slobodno)</p>
                                     </div>
                                 </div>
+                                <div className="drag-info" style={{ marginLeft: 'auto', marginRight: '20px', fontSize: '10px', opacity: 0.4, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <Activity size={12} /> DRAGGABLE
+                                </div>
                                 <button className="report-close-btn" onClick={() => setShowReportModal({ ...showReportModal, show: false })}>
                                     <X size={20} />
                                 </button>
                             </div>
 
-                            <div className="report-body" style={{ textAlign: 'center', padding: '30px 20px' }}>
-                                <div style={{ marginBottom: '25px', color: 'var(--text-secondary)' }}>
-                                    <Eye size={40} style={{ opacity: 0.3, marginBottom: '10px' }} />
-                                    <h4 style={{ color: 'var(--text-primary)', marginBottom: '4px' }}>Jedinstveni B2B Link</h4>
-                                    <p style={{ fontSize: '13px' }}>Subagenti mogu pristupiti ovom linku bez logovanja u sistem.</p>
+                            <div className="report-body">
+                                <div className="report-link-section">
+                                    <div style={{ marginBottom: '15px', color: 'var(--text-secondary)' }}>
+                                        <Eye size={32} style={{ opacity: 0.3, marginBottom: '8px' }} />
+                                        <h4 style={{ color: 'var(--text-primary)', marginBottom: '4px' }}>Jedinstveni B2B Link</h4>
+                                        <p style={{ fontSize: '12px' }}>Subagenti mogu pristupiti ovom linku bez logovanja u sistem.</p>
+                                    </div>
+
+                                    <a
+                                        href={`${window.location.protocol}//${window.location.host}/public-inventory?reportView=true&token=SR-${Math.random().toString(36).substring(7).toUpperCase()}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="secure-link-preview-link"
+                                    >
+                                        {`${window.location.protocol}//${window.location.host}/public-inventory?reportView=true&token=SR-...`}
+                                        <div style={{ marginTop: '8px', fontSize: '10px', opacity: 0.6 }}>Klikni da otvoriš u novom prozoru</div>
+                                    </a>
+
+                                    <button
+                                        className="link-btn-large"
+                                        onClick={() => {
+                                            const token = `SR-${Math.random().toString(36).substring(7).toUpperCase()}`;
+                                            const url = `${window.location.protocol}//${window.location.host}/public-inventory?reportView=true&token=${token}`;
+                                            window.open(url, '_blank');
+                                        }}
+                                    >
+                                        <ArrowUpRight size={18} /> Otvori Public View (Demo)
+                                    </button>
                                 </div>
 
-                                <div className="secure-link-preview" style={{
-                                    background: '#f1f5f9',
-                                    padding: '15px',
-                                    borderRadius: '10px',
-                                    fontSize: '11px',
-                                    color: '#64748b',
-                                    fontFamily: 'monospace',
-                                    marginBottom: '20px',
-                                    border: '1px dashed #cbd5e1',
-                                    wordBreak: 'break-all'
-                                }}>
-                                    {`${window.location.protocol}//${window.location.host}${window.location.pathname}?token=SR-${Math.random().toString(36).substring(7).toUpperCase()}&view=inventory`}
-                                </div>
+                                <div className="report-agent-config">
+                                    <div className="config-header">
+                                        <h4>Podešavanje Distribucije</h4>
+                                        <p>Odaberite subagente koji će dobiti ovaj izveštaj</p>
+                                    </div>
 
-                                <button
-                                    className="link-btn-large"
-                                    style={{
-                                        background: 'var(--accent)',
-                                        color: 'white',
-                                        padding: '12px 24px',
-                                        borderRadius: '12px',
-                                        border: 'none',
-                                        fontWeight: '800',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '10px',
-                                        cursor: 'pointer'
-                                    }}
-                                    onClick={() => {
-                                        const token = `SR-${Math.random().toString(36).substring(7).toUpperCase()}`;
-                                        const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}?reportView=true&token=${token}`;
-                                        window.open(url, '_blank');
-                                    }}
-                                >
-                                    <ArrowUpRight size={18} /> Otvori Public View (Demo)
-                                </button>
+                                    <div className="report-filters">
+                                        <div className="f-item" style={{ flex: 2 }}>
+                                            <label>Pretraga Agenta (Ime ili Email)</label>
+                                            <div className="agent-search-wrapper">
+                                                <Search size={14} />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Kucaj za pretragu..."
+                                                    value={agentSearchQuery}
+                                                    onChange={e => setAgentSearchQuery(e.target.value)}
+                                                />
+                                                {agentSearchQuery && (
+                                                    <button className="clear-search" onClick={() => setAgentSearchQuery('')}>
+                                                        <X size={12} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="f-item">
+                                            <label>Država</label>
+                                            <select value={reportFilterCountry} onChange={e => {
+                                                setReportFilterCountry(e.target.value);
+                                                setReportFilterCity('Sve');
+                                            }}>
+                                                {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="f-item">
+                                            <label>Grad</label>
+                                            <select value={reportFilterCity} onChange={e => setReportFilterCity(e.target.value)}>
+                                                {cities.map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {selectedAgentIds.length > 0 && (
+                                        <div className="selected-agents-pool">
+                                            <label>Trenutno odabrani ({selectedAgentIds.length}):</label>
+                                            <div className="selected-chips-area">
+                                                {MOCK_SUBAGENTS.filter(a => selectedAgentIds.includes(a.id)).map(agent => (
+                                                    <div key={agent.id} className="selected-agent-chip">
+                                                        <span>{agent.name}</span>
+                                                        <button onClick={() => setSelectedAgentIds(prev => prev.filter(id => id !== agent.id))}>
+                                                            <X size={10} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="agent-selection-grid">
+                                        <div className="selection-actions">
+                                            <button onClick={() => setSelectedAgentIds(MOCK_SUBAGENTS.map(a => a.id))}>Odaberi sve</button>
+                                            <button onClick={() => setSelectedAgentIds([])}>Poništi sve</button>
+                                            <button onClick={() => setSelectedAgentIds(filteredAgents.map(a => a.id))}>Samo filtrirane</button>
+                                        </div>
+                                        <div className="agents-scroll-area">
+                                            {paginatedAgents.map(agent => (
+                                                <label key={agent.id} className={`agent-checkbox-card ${selectedAgentIds.includes(agent.id) ? 'active' : ''}`}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedAgentIds.includes(agent.id)}
+                                                        onChange={() => {
+                                                            const next = selectedAgentIds.includes(agent.id)
+                                                                ? selectedAgentIds.filter(id => id !== agent.id)
+                                                                : [...selectedAgentIds, agent.id];
+                                                            setSelectedAgentIds(next);
+                                                        }}
+                                                    />
+                                                    <div className="agent-box-info">
+                                                        <span className="a-name">{agent.name}</span>
+                                                        <span className="a-loc">{agent.city}, {agent.country}</span>
+                                                    </div>
+                                                    {selectedAgentIds.includes(agent.id) && <Check size={14} className="check-icon" />}
+                                                </label>
+                                            ))}
+                                        </div>
+
+                                        {totalReportPages > 1 && (
+                                            <div className="report-pagination">
+                                                <button
+                                                    disabled={reportCurrentPage === 1}
+                                                    onClick={() => setReportCurrentPage(prev => Math.max(1, prev - 1))}
+                                                    className="pag-btn"
+                                                >
+                                                    <ChevronLeft size={16} />
+                                                </button>
+                                                <span className="pag-info">
+                                                    Stranica <strong>{reportCurrentPage}</strong> od {totalReportPages}
+                                                </span>
+                                                <button
+                                                    disabled={reportCurrentPage === totalReportPages}
+                                                    onClick={() => setReportCurrentPage(prev => Math.min(totalReportPages, prev + 1))}
+                                                    className="pag-btn"
+                                                >
+                                                    <ChevronRight size={16} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="report-footer">
                                 <div className="subagent-bulk-info">
                                     <div className="subagent-summary">
                                         <MailCheck size={18} />
-                                        <span>Target: <strong>nenad.tomic1403@gmail.com</strong> + {MOCK_SUBAGENTS.length - 1} agenata</span>
-                                    </div>
-                                    <div className="agent-chips">
-                                        {MOCK_SUBAGENTS.map(agent => (
-                                            <span key={agent.id} className="agent-chip">{agent.name}</span>
-                                        ))}
+                                        <span>Target: <strong>{selectedAgentIds.length}</strong> subagenata</span>
                                     </div>
                                 </div>
 
                                 <button
-                                    disabled={isSendingReport}
+                                    disabled={isSendingReport || selectedAgentIds.length === 0}
                                     className={`send-bulk-btn ${reportSentAt ? 'success' : ''}`}
                                     onClick={async () => {
                                         setIsSendingReport(true);
@@ -1259,9 +1421,9 @@ const OperationalReports: React.FC = () => {
                                     {isSendingReport ? (
                                         <><Clock className="animate-spin" size={18} /> Slanje u toku...</>
                                     ) : reportSentAt ? (
-                                        <><CheckCircle2 size={18} /> Poslato na nenad.tomic1403@gmail.com</>
+                                        <><CheckCircle2 size={18} /> Uspešno poslato!</>
                                     ) : (
-                                        <><Send size={18} /> Pošalji svima</>
+                                        <><Send size={18} /> Pošalji odabranima</>
                                     )}
                                 </button>
                             </div>
