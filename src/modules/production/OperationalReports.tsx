@@ -12,6 +12,7 @@ import {
     Filter,
     ArrowUpRight,
     Users2,
+    User,
     Baby,
     Moon,
     TrendingUp,
@@ -179,6 +180,8 @@ const OperationalReports: React.FC = () => {
     const [activeTags, setActiveTags] = useState<string[]>(['Država', 'Destinacija', 'Hotel']);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [isAllExpanded, setIsAllExpanded] = useState(false);
+    const [roomingExpandedRows, setRoomingExpandedRows] = useState<Set<string>>(new Set());
+    const [isRoomingAllExpanded, setIsRoomingAllExpanded] = useState(false);
     const [showPublicLinkModal, setShowPublicLinkModal] = useState<string | null>(null);
     const [selectedDate, setSelectedDate] = useState(new Date('2026-06-20'));
     const [searchTerm, setSearchTerm] = useState('');
@@ -708,6 +711,9 @@ const OperationalReports: React.FC = () => {
                             </button>
                             <button className="action-pill" onClick={() => setShowPublicLinkModal(row.name)}>
                                 <Link size={14} /> Link
+                            </button>
+                            <button className="action-pill" onClick={() => alert(`Slanje detaljnog izveštaja za: ${row.name}`)} style={{ color: '#3b82f6', background: '#eff6ff', borderColor: '#bfdbfe' }}>
+                                <Mail size={14} /> Slanje
                             </button>
                         </div>
                     </td>
@@ -1293,6 +1299,9 @@ const OperationalReports: React.FC = () => {
                                     <button className="op-btn-secondary" onClick={() => setShowLogsModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <HistoryIcon size={16} /> Istorija (Logs)
                                     </button>
+                                    <button className="op-btn-secondary" onClick={() => alert('Slanje Inventory izveštaja svim hotelima u gridu.')} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6', borderColor: '#3b82f6' }}>
+                                        <Mail size={16} /> Pošalji Svima
+                                    </button>
                                     <button
                                         className="report-btn stop-sale-btn"
                                         onClick={() => setShowReportModal({ show: true, type: 'stop' })}
@@ -1347,6 +1356,14 @@ const OperationalReports: React.FC = () => {
                                                                     <strong>{group.hotel?.name || 'Nepoznat'}</strong>
                                                                     <span className="hotel-tags">{group.hotel?.destination} • {group.hotel?.category}</span>
                                                                 </div>
+                                                                <button
+                                                                    className="btn-action-small"
+                                                                    title="Pošalji izveštaj hotelu"
+                                                                    onClick={(e) => { e.stopPropagation(); alert(`Slanje Inventory izveštaja za: ${group.hotel?.name}`); }}
+                                                                    style={{ marginLeft: 'auto', marginRight: '5px', background: 'transparent', border: 'none', color: '#3b82f6' }}
+                                                                >
+                                                                    <Mail size={18} />
+                                                                </button>
                                                             </div>
                                                         </td>
                                                         {dates.map((date, dIdx) => {
@@ -1477,16 +1494,24 @@ const OperationalReports: React.FC = () => {
                             }}
                             className="stats-view"
                         >
-                            <div className="stats-header-actions">
+                            <div className="stats-header-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                                 <div>
                                     <h2 className="section-subtitle">Pregled PAX Statistike</h2>
                                     <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Analitika za period: <strong>{new Date(stayFrom).toLocaleDateString()} - {new Date(stayTo).toLocaleDateString()}</strong></p>
                                 </div>
-                                <button className="op-btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px' }}>
-                                    <Download size={18} /> Export Excel
-                                </button>
+                                <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+                                    <button className="op-btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px' }}>
+                                        <Download size={18} /> Export Excel
+                                    </button>
+                                    <button
+                                        className="btn-primary"
+                                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px', background: '#3b82f6' }}
+                                        onClick={() => alert('Slanje sistemske PAX Statistike na menadžmentske mejlove.')}
+                                    >
+                                        <Mail size={18} /> Pošalji Statistiku
+                                    </button>
+                                </div>
                             </div>
-
                             <div className="stats-grid">
                                 <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="stat-card">
                                     <div className="icon-box" style={{ background: '#ecfdf5' }}>
@@ -1581,7 +1606,7 @@ const OperationalReports: React.FC = () => {
                                 <div>
                                     <h2 className="section-subtitle">Dynamic Reporting Engine</h2>
                                     <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                                        Konstruišite sopstveni izveštaj biranjem nivoa grupisanja. Redosled kliktanja definiše hijerarhiju.
+                                        Konstruište sopstveni izveštaj biranjem nivoa grupisanja. Redosled kliktanja definiše hijerarhiju.
                                     </p>
                                 </div>
 
@@ -1631,6 +1656,13 @@ const OperationalReports: React.FC = () => {
                                             );
                                         })}
                                         <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+                                            <button
+                                                className="btn-create-cap"
+                                                style={{ borderRadius: '12px', background: '#10b981' }}
+                                                onClick={() => alert(`Slanje hijerarhijskog izveštaja svima sa liste! (${activeTags.join(' > ')})`)}
+                                            >
+                                                <Mail size={16} /> Bulk Slanje Svima
+                                            </button>
                                             <button
                                                 className="btn-create-cap"
                                                 style={{ borderRadius: '12px', background: 'var(--accent)' }}
@@ -1704,60 +1736,240 @@ const OperationalReports: React.FC = () => {
                             exit={{ opacity: 0, y: -20 }}
                             className="rooming-list-view"
                         >
-                            <div className="rooming-header-bar">
-                                <div className="search-box">
-                                    <Search size={18} />
+                            <div className="rooming-header-bar" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                                <div className="search-box" style={{ display: 'flex', alignItems: 'center', background: 'white', padding: '8px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', width: '300px' }}>
+                                    <Search size={18} color="#64748b" style={{ marginRight: '10px' }} />
                                     <input
                                         type="text"
-                                        placeholder="Pretraži listu (putnik, soba...)"
+                                        placeholder="Pretraži putnika ili rezervaciju..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
+                                        style={{ border: 'none', outline: 'none', width: '100%', fontSize: '14px' }}
                                     />
                                 </div>
-                                <div className="rooming-actions">
-                                    <button className="btn-secondary">
-                                        <Download size={18} /> Export PDF
+                                <div className="rooming-actions" style={{ display: 'flex', gap: '10px' }}>
+                                    <button
+                                        className="op-btn-secondary"
+                                        style={{
+                                            padding: '6px 14px',
+                                            fontSize: '12px',
+                                            borderRadius: '8px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            background: isRoomingAllExpanded ? 'rgba(var(--accent-rgb), 0.1)' : 'white'
+                                        }}
+                                        onClick={() => {
+                                            if (isRoomingAllExpanded) {
+                                                setRoomingExpandedRows(new Set());
+                                                setIsRoomingAllExpanded(false);
+                                            } else {
+                                                setRoomingExpandedRows(new Set(MOCK_RESERVATIONS.map(r => r.id)));
+                                                setIsRoomingAllExpanded(true);
+                                            }
+                                        }}
+                                    >
+                                        {isRoomingAllExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                                        {isRoomingAllExpanded ? 'Skupi Sve' : 'Raširi Sve (Bulk)'}
                                     </button>
-                                    <button className="btn-primary">
-                                        <Mail size={18} /> Pošalji listu hotelu
+                                    <button
+                                        className="btn-primary"
+                                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#f59e0b', color: 'white', borderRadius: '10px', border: 'none', fontWeight: 600, cursor: 'pointer' }}
+                                        onClick={() => alert('Bulk slanje generisanih Rooming lista svim ugovorenim hotelima!')}
+                                    >
+                                        <Mail size={18} /> Bulk Slanje Mejlom
+                                    </button>
+                                    <button
+                                        className="btn-secondary"
+                                        onClick={async () => {
+                                            try {
+                                                const XLSX = await import('xlsx');
+
+                                                const exportData: any[] = [];
+
+                                                MOCK_HOTELS.forEach(hotel => {
+                                                    const hotelReservations = MOCK_RESERVATIONS.filter(r => r.hotelId === hotel.id && (!searchTerm || r.customer.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase())));
+                                                    hotelReservations.forEach(res => {
+                                                        const totalPax = res.adults + res.children + res.babies;
+                                                        for (let i = 0; i < totalPax; i++) {
+                                                            const name = i === 0 ? res.customer : `Gost ${i + 1} (${res.customer})`;
+                                                            const dob = i >= res.adults ? '15.05.2018' : '';
+                                                            const passport = `PA${Math.floor(Math.random() * 8000000 + 1000000)}`;
+                                                            exportData.push({
+                                                                "Hotel": hotel.name,
+                                                                "ID Rez": res.id,
+                                                                "Od": res.checkIn,
+                                                                "Do": res.checkOut,
+                                                                "Soba": res.roomType,
+                                                                "Usluga": "All Inclusive",
+                                                                "Putnik": name,
+                                                                "Datum Rodjenja": dob,
+                                                                "Pasos": passport,
+                                                                "Napomena": ""
+                                                            });
+                                                        }
+                                                    });
+                                                });
+
+                                                const worksheet = XLSX.utils.json_to_sheet(exportData);
+                                                const workbook = XLSX.utils.book_new();
+                                                XLSX.utils.book_append_sheet(workbook, worksheet, "Rooming Lista");
+                                                XLSX.writeFile(workbook, `Rooming_Lista_${new Date().toISOString().split('T')[0]}.xlsx`);
+                                            } catch (error) {
+                                                console.error("Error exporting to Excel:", error);
+                                                alert("Došlo je do greške prilikom exporta u Excel.");
+                                            }
+                                        }}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#10b981', color: 'white', borderRadius: '10px', border: 'none', fontWeight: 600, cursor: 'pointer' }}
+                                    >
+                                        <Download size={18} /> Export Excel
+                                    </button>
+                                    <button
+                                        className="btn-primary"
+                                        onClick={() => {
+                                            const token = `RM-${Math.random().toString(36).substring(7).toUpperCase()}`;
+                                            const url = `${window.location.protocol}//${window.location.host}/public-inventory?reportView=true&token=${token}&type=rooming`;
+                                            navigator.clipboard.writeText(url);
+                                            alert('Public Link za Rooming Listu je kopiran u clipboard:\n' + url);
+                                        }}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#3b82f6', color: 'white', borderRadius: '10px', border: 'none', fontWeight: 600, cursor: 'pointer' }}
+                                    >
+                                        <Link size={18} /> Link za Hotel
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="rooming-table-card">
-                                <table className="op-table">
-                                    <thead>
-                                        <tr>
-                                            <th>ID Rez.</th>
-                                            <th>Glavni Putnik</th>
-                                            <th>Check-In</th>
-                                            <th>Check-Out</th>
-                                            <th>Tip Smeštaja</th>
-                                            <th>PAX</th>
-                                            <th>Status</th>
-                                            <th>Akcije</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {MOCK_RESERVATIONS.map(res => (
-                                            <tr key={res.id}>
-                                                <td><span className="res-id-link" onClick={() => navigate(`/reservations?id=${res.id}`)}>#{res.id}</span></td>
-                                                <td><div className="px-name">{res.customer}</div></td>
-                                                <td><div className="date-cell">{res.checkIn}</div></td>
-                                                <td><div className="date-cell">{res.checkOut}</div></td>
-                                                <td><span className="room-badge">{res.roomType}</span></td>
-                                                <td>{res.adults} + {res.children} + {res.babies}</td>
-                                                <td><span className="badge-status confirmed">Uplaćeno</span></td>
-                                                <td>
-                                                    <button className="btn-action-small" onClick={() => navigate(`/reservations?id=${res.id}`)}>
-                                                        <ExternalLink size={14} />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            {MOCK_HOTELS.filter(h => MOCK_RESERVATIONS.some(r => r.hotelId === h.id && (!searchTerm || r.customer.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase())))).map(hotel => {
+                                const hotelReservations = MOCK_RESERVATIONS.filter(r => r.hotelId === hotel.id && (!searchTerm || r.customer.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase())));
+
+                                return (
+                                    <div key={hotel.id} className="rooming-table-card" style={{ background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '30px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                                        <div style={{ padding: '20px', background: '#f8fafc', borderBottom: '2px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                            <Building2 size={24} color="#3b82f6" />
+                                            <div>
+                                                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>{hotel.name}</h2>
+                                                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>{hotel.destination}, {hotel.country}</div>
+                                            </div>
+                                            <button
+                                                className="op-btn-secondary"
+                                                style={{ marginLeft: 'auto', padding: '6px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', borderColor: '#10b981' }}
+                                                onClick={() => alert(`Slanje Rooming liste isključivo hotelu: ${hotel.name}`)}
+                                            >
+                                                <Mail size={14} /> Pošalji Hotelu Mejlom
+                                            </button>
+                                        </div>
+                                        <div style={{ overflowX: 'auto' }}>
+                                            <table className="op-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+                                                <thead>
+                                                    <tr style={{ background: '#f1f5f9' }}>
+                                                        <th style={{ padding: '15px', fontWeight: 800, color: '#475569' }}>Detalji Rezervacije</th>
+                                                        <th style={{ padding: '15px', fontWeight: 800, color: '#475569' }}>Period Boravka</th>
+                                                        <th style={{ padding: '15px', fontWeight: 800, color: '#475569' }}>Smeštaj</th>
+                                                        <th style={{ padding: '15px', fontWeight: 800, color: '#475569' }}>Glavni Putnik</th>
+                                                        <th style={{ padding: '15px', fontWeight: 800, color: '#475569' }}>Pasoš (Glavni)</th>
+                                                        <th style={{ padding: '15px', fontWeight: 800, color: '#475569' }}>Napomena</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {hotelReservations.map(res => {
+                                                        const isExpanded = roomingExpandedRows.has(res.id);
+                                                        const totalPax = res.adults + res.children + res.babies;
+                                                        const paxArray = Array.from({ length: totalPax }).map((_, i) => ({
+                                                            name: i === 0 ? res.customer : `Gost ${i + 1} (${res.customer.split(' ')[1] || ''})`,
+                                                            isChild: i >= res.adults,
+                                                            dob: i >= res.adults ? '15.05.2018' : '01.01.1980',
+                                                            passport: `PA${Math.floor(Math.random() * 8000000 + 1000000)}`
+                                                        }));
+
+                                                        return (
+                                                            <React.Fragment key={res.id}>
+                                                                <tr style={{ borderBottom: isExpanded ? 'none' : '1px solid #f1f5f9' }}>
+                                                                    <td style={{ padding: '12px 15px', verticalAlign: 'middle' }}>
+                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    const newSet = new Set(roomingExpandedRows);
+                                                                                    if (isExpanded) newSet.delete(res.id);
+                                                                                    else newSet.add(res.id);
+                                                                                    setRoomingExpandedRows(newSet);
+                                                                                }}
+                                                                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--accent)', display: 'flex', alignItems: 'center' }}
+                                                                            >
+                                                                                {isExpanded ? <ChevronDown size={18} /> : <Plus size={18} />}
+                                                                            </button>
+                                                                            <span className="res-id-link" onClick={() => navigate(`/reservations?id=${res.id}`)} style={{ cursor: 'pointer', color: '#3b82f6', fontWeight: 800 }}>#{res.id}</span>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td style={{ padding: '12px 15px' }}>
+                                                                        <div className="date-cell" style={{ display: 'inline-block', background: '#f8fafc', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, color: '#475569', border: '1px solid #e2e8f0' }}>
+                                                                            {new Date(res.checkIn).toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: '2-digit' })} - {new Date(res.checkOut).toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: '2-digit' })}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td style={{ padding: '12px 15px' }}>
+                                                                        <div className="room-badge" style={{ display: 'inline-block', background: '#e0e7ff', color: '#4338ca', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 800 }}>{res.roomType}</div>
+                                                                    </td>
+                                                                    <td style={{ padding: '12px 15px' }}>
+                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                            <User size={16} color="#64748b" />
+                                                                            <strong style={{ color: '#1e293b' }}>{res.customer}</strong>
+                                                                            {totalPax > 1 && <span style={{ fontSize: '10px', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#64748b' }}>+{totalPax - 1} više</span>}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td style={{ padding: '12px 15px' }}>
+                                                                        <code style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', color: '#334155', fontWeight: 700, fontSize: '11px' }}>{paxArray[0].passport}</code>
+                                                                    </td>
+                                                                    <td style={{ padding: '12px 15px' }}>
+                                                                        {Math.random() > 0.7 ? (
+                                                                            <div style={{ fontSize: '12px', color: '#92400e', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
+                                                                                <Info size={14} style={{ minWidth: '14px' }} />
+                                                                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>Late check-in req...</span>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <span style={{ color: '#cbd5e1', fontSize: '11px', fontStyle: 'italic' }}>Bez napomene</span>
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                                {isExpanded && (
+                                                                    <tr>
+                                                                        <td colSpan={6} style={{ padding: '0 15px 15px 15px', background: '#fcfcfc' }}>
+                                                                            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', overflow: 'hidden' }}>
+                                                                                <div style={{ padding: '8px 15px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '11px', fontWeight: 800, color: '#64748b', display: 'flex', justifyContent: 'space-between' }}>
+                                                                                    <span>DETALJNA LISTA PUTNIKA</span>
+                                                                                    <span>USLUGA: ALL INCLUSIVE</span>
+                                                                                </div>
+                                                                                {paxArray.map((pax, pIdx) => (
+                                                                                    <div key={pIdx} style={{
+                                                                                        display: 'grid',
+                                                                                        gridTemplateColumns: '1fr 1fr 1fr',
+                                                                                        padding: '10px 15px',
+                                                                                        borderBottom: pIdx === paxArray.length - 1 ? 'none' : '1px solid rgba(226, 232, 240, 0.3)',
+                                                                                        alignItems: 'center'
+                                                                                    }}>
+                                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                                            {pax.isChild ? <Baby size={14} color="#f97316" /> : <User size={14} color="#64748b" />}
+                                                                                            <span style={{ fontWeight: 600, color: '#334155' }}>{pax.name}</span>
+                                                                                        </div>
+                                                                                        <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                                                                            {pax.isChild ? `Datum rođ: ${pax.dob}` : 'Odrasla osoba'}
+                                                                                        </div>
+                                                                                        <div style={{ fontSize: '12px', color: '#64748b', textAlign: 'right' }}>
+                                                                                            Pasoš: <code style={{ fontWeight: 700 }}>{pax.passport}</code>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                )}
+                                                            </React.Fragment>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </motion.div>
                     )}
                 </AnimatePresence>
