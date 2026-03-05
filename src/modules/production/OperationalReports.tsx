@@ -49,6 +49,7 @@ import {
 } from 'lucide-react';
 import { ModernCalendar } from '../../components/ModernCalendar';
 import { useNavigate, NavLink, useSearchParams } from 'react-router-dom';
+import { useToast } from '../../components/ui/Toast';
 import './OperationalReports.css';
 
 // --- TYPES ---
@@ -148,8 +149,12 @@ const GENERATE_MOCK_CAPACITIES = (hotels: typeof MOCK_HOTELS) => {
                     };
                 });
 
-                const totalAll = hotelContracts.reduce((acc, c) => acc + c.all, 0);
+                let totalAll = hotelContracts.reduce((acc, c) => acc + c.all, 0);
                 const totalSold = hotelContracts.reduce((acc, c) => acc + c.sold, 0);
+
+                // For demo purposes: make some dates have critical capacity (2 units)
+                if (i % 15 === 5) totalAll = totalSold + 2;
+                if (i % 15 === 10) totalAll = totalSold + 1;
 
                 records[dateStr] = {
                     date: dateStr,
@@ -171,6 +176,9 @@ const GENERATE_MOCK_CAPACITIES = (hotels: typeof MOCK_HOTELS) => {
 };
 
 const OperationalReports: React.FC = () => {
+    const { addToast } = useToast();
+    const notifiedUnits = React.useRef<Set<string>>(new Set());
+
     useEffect(() => {
         console.log("🚀 OperationalReports module mounted at /operational-reports");
     }, []);
@@ -301,7 +309,44 @@ const OperationalReports: React.FC = () => {
         GENERATE_MOCK_CAPACITIES(MOCK_HOTELS)
     );
 
+    // Monitoring for low capacity alerts
+    useEffect(() => {
+        let alertsCount = 0;
+        allCapacities.forEach(cap => {
+            Object.entries(cap.records).forEach(([dateStr, rec]) => {
+                const avail = rec.totalAll - rec.totalSold;
+                const unitId = `${cap.hotelId}-${cap.roomType}-${dateStr}`;
+
+                // Only notify for positive low capacity (1 or 2) and skip if already notified
+                if (avail <= 2 && avail > 0 && !notifiedUnits.current.has(unitId)) {
+                    if (alertsCount < 3) { // Limit initial burst of notifications
+                        if (avail === 1) {
+                            addToast({
+                                type: 'error',
+                                title: "DANGER: Samo 1 jedinica!",
+                                message: `Hotel: ${cap.hotelName}, Soba: ${cap.roomType} (${dateStr}). Hitno zatvaranje prodaje!`,
+                                duration: 10000
+                            });
+                        } else {
+                            addToast({
+                                type: 'warning',
+                                title: "Upozorenje: 2 jedinice",
+                                message: `Nizak nivo za ${cap.hotelName} (${cap.roomType}) na dan ${dateStr}.`,
+                                duration: 10000
+                            });
+                        }
+                        alertsCount++;
+                    }
+                    notifiedUnits.current.add(unitId);
+                }
+            });
+        });
+    }, [allCapacities, addToast]);
+
     const groupedData = useMemo(() => {
+        const hasSelection = selectedDestinations.length > 0 || selectedCategories.length > 0 || hotelFilter.trim() !== '';
+        if (!hasSelection && reportTrigger === 0) return [];
+
         const filtered = allCapacities.filter(cap => {
             const hotel = MOCK_HOTELS.find(h => h.id === cap.hotelId);
             const matchesDest = selectedDestinations.length === 0 ||
@@ -1296,17 +1341,14 @@ const OperationalReports: React.FC = () => {
                             <div className="inventory-sub-header">
                                 <h2 className="inventory-title">Pregled Kapaciteta po Danima</h2>
                                 <div className="report-actions">
-                                    <button className="op-btn-secondary" onClick={() => setShowLogsModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <HistoryIcon size={16} /> Istorija (Logs)
+                                    <button className="op-header-btn logs" onClick={() => setShowLogsModal(true)}>
+                                        <HistoryIcon size={18} /> Istorija (Logs)
                                     </button>
-                                    <button className="op-btn-secondary" onClick={() => alert('Slanje Inventory izveštaja svim hotelima u gridu.')} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6', borderColor: '#3b82f6' }}>
-                                        <Mail size={16} /> Pošalji Svima
+                                    <button className="op-header-btn mail" onClick={() => alert('Slanje Inventory izveštaja svim hotelima u gridu.')}>
+                                        <Mail size={18} /> Pošalji Svima
                                     </button>
-                                    <button
-                                        className="report-btn stop-sale-btn"
-                                        onClick={() => setShowReportModal({ show: true, type: 'stop' })}
-                                    >
-                                        <CalendarIcon size={14} /> Inventory Report
+                                    <button className="op-header-btn report" onClick={() => setShowReportModal({ show: true, type: 'stop' })}>
+                                        <CalendarIcon size={18} /> Inventory Report
                                     </button>
                                 </div>
                             </div>
@@ -1336,142 +1378,187 @@ const OperationalReports: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {groupedData.map((group, gIdx) => {
-                                            const isExpanded = expandedHotels.has(group.hotel?.id || '');
+                                        {groupedData.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={dates.length + 1} style={{ padding: '100px 0', textAlign: 'center' }}>
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        style={{
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            alignItems: 'center',
+                                                            gap: '15px'
+                                                        }}
+                                                    >
+                                                        <div style={{
+                                                            width: '80px',
+                                                            height: '80px',
+                                                            borderRadius: '50%',
+                                                            background: 'var(--accent-glow)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            color: 'var(--accent)',
+                                                            marginBottom: '10px'
+                                                        }}>
+                                                            <PieChart size={40} />
+                                                        </div>
+                                                        <h3 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)' }}>Izveštaj je prazan</h3>
+                                                        <p style={{ color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto', fontSize: '15px', lineHeight: '1.6' }}>
+                                                            Odaberite <strong>destinaciju</strong>, <strong>kategoriju</strong> ili pretražite specifičan <strong>hotel</strong> u filterima iznad kako biste generisali izveštaj.
+                                                        </p>
+                                                        <button
+                                                            className="btn-primary"
+                                                            style={{ marginTop: '10px', padding: '12px 30px', borderRadius: '14px', background: 'var(--accent)' }}
+                                                            onClick={(e) => {
+                                                                const searchInput = document.querySelector('.hotel-search-box input') as HTMLInputElement;
+                                                                if (searchInput) searchInput.focus();
+                                                            }}
+                                                        >
+                                                            Započni pretragu
+                                                        </button>
+                                                    </motion.div>
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            <>
+                                                {groupedData.map((group, gIdx) => {
+                                                    const isExpanded = expandedHotels.has(group.hotel?.id || '');
 
-                                            // Calculate Hotel Total Row for this group
-                                            return (
-                                                <React.Fragment key={group.hotel?.id || gIdx}>
-                                                    {/* Hotel Summary Row */}
-                                                    <tr className="hotel-group-row">
-                                                        <td className="sticky-col">
-                                                            <div className="hotel-row-identity">
-                                                                <button
-                                                                    className={`expand-btn ${isExpanded ? 'active' : ''}`}
-                                                                    onClick={() => group.hotel && toggleHotel(group.hotel.id)}
-                                                                >
-                                                                    {isExpanded ? <ChevronUp size={14} /> : <Plus size={14} />}
-                                                                </button>
-                                                                <div className="hotel-info">
-                                                                    <strong>{group.hotel?.name || 'Nepoznat'}</strong>
-                                                                    <span className="hotel-tags">{group.hotel?.destination} • {group.hotel?.category}</span>
-                                                                </div>
-                                                                <button
-                                                                    className="btn-action-small"
-                                                                    title="Pošalji izveštaj hotelu"
-                                                                    onClick={(e) => { e.stopPropagation(); alert(`Slanje Inventory izveštaja za: ${group.hotel?.name}`); }}
-                                                                    style={{ marginLeft: 'auto', marginRight: '5px', background: 'transparent', border: 'none', color: '#3b82f6' }}
-                                                                >
-                                                                    <Mail size={18} />
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                        {dates.map((date, dIdx) => {
-                                                            const dateStr = date.toISOString().split('T')[0];
-                                                            let hTotalAll = 0, hTotalSold = 0;
-                                                            group.rooms.forEach(r => {
-                                                                const rec = r.records[dateStr];
-                                                                if (rec) {
-                                                                    hTotalAll += rec.totalAll;
-                                                                    hTotalSold += rec.totalSold;
-                                                                }
-                                                            });
-                                                            const avail = hTotalAll - hTotalSold;
-                                                            const occPercent = hTotalAll > 0 ? Math.round((hTotalSold / hTotalAll) * 100) : 0;
-
-                                                            return (
-                                                                <td key={dIdx} className="cap-cell hotel-sum-cell" onClick={() => handleDateClick(date, group.hotel)}>
-                                                                    <div className="cap-content">
-                                                                        <span className="cap-total">{hTotalAll}</span>
-                                                                        <span className="cap-sold">{hTotalSold}</span>
-                                                                        <span className="cap-occ-percent">{occPercent}%</span>
-                                                                        <div className="cap-avail-tag-wrapper">
-                                                                            <span className="cap-available-tag">{avail}</span>
+                                                    // Calculate Hotel Total Row for this group
+                                                    return (
+                                                        <React.Fragment key={group.hotel?.id || gIdx}>
+                                                            {/* Hotel Summary Row */}
+                                                            <tr className="hotel-group-row">
+                                                                <td className="sticky-col">
+                                                                    <div className="hotel-row-identity">
+                                                                        <button
+                                                                            className={`expand-btn ${isExpanded ? 'active' : ''}`}
+                                                                            onClick={() => group.hotel && toggleHotel(group.hotel.id)}
+                                                                        >
+                                                                            {isExpanded ? <ChevronUp size={14} /> : <Plus size={14} />}
+                                                                        </button>
+                                                                        <div className="hotel-info">
+                                                                            <strong>{group.hotel?.name || 'Nepoznat'}</strong>
+                                                                            <span className="hotel-tags">{group.hotel?.destination} • {group.hotel?.category}</span>
                                                                         </div>
+                                                                        <button
+                                                                            className="btn-action-small"
+                                                                            title="Pošalji izveštaj hotelu"
+                                                                            onClick={(e) => { e.stopPropagation(); alert(`Slanje Inventory izveštaja za: ${group.hotel?.name}`); }}
+                                                                            style={{ marginLeft: 'auto', marginRight: '5px', background: 'transparent', border: 'none', color: '#3b82f6' }}
+                                                                        >
+                                                                            <Mail size={18} />
+                                                                        </button>
                                                                     </div>
                                                                 </td>
-                                                            );
-                                                        })}
-                                                    </tr>
+                                                                {dates.map((date, dIdx) => {
+                                                                    const dateStr = date.toISOString().split('T')[0];
+                                                                    let hTotalAll = 0, hTotalSold = 0;
+                                                                    group.rooms.forEach(r => {
+                                                                        const rec = r.records[dateStr];
+                                                                        if (rec) {
+                                                                            hTotalAll += rec.totalAll;
+                                                                            hTotalSold += rec.totalSold;
+                                                                        }
+                                                                    });
+                                                                    const avail = hTotalAll - hTotalSold;
+                                                                    const occPercent = hTotalAll > 0 ? Math.round((hTotalSold / hTotalAll) * 100) : 0;
 
-                                                    {/* Room Type Details (Conditional) */}
-                                                    {isExpanded && group.rooms.map((room, rIdx) => (
-                                                        <motion.tr
-                                                            key={`${group.hotel?.id || gIdx}-${rIdx}`}
-                                                            initial={{ opacity: 0, y: -10 }}
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            className="room-detail-row"
-                                                        >
-                                                            <td className="sticky-col">
-                                                                <div className="room-type-inner">
-                                                                    <span>{room.roomType}</span>
-                                                                </div>
-                                                            </td>
-                                                            {dates.map((date, dIdx) => {
-                                                                const dateStr = date.toISOString().split('T')[0];
-                                                                const rec = room.records[dateStr];
-                                                                if (!rec) return <td key={dIdx} className="cap-cell cell-empty"></td>;
-                                                                const available = rec.totalAll - rec.totalSold;
-                                                                const occPercent = rec.totalAll > 0 ? Math.round((rec.totalSold / rec.totalAll) * 100) : 0;
-                                                                const statusClass = `stat-${rec.masterStatus.replace(' ', '-')}`;
+                                                                    return (
+                                                                        <td key={dIdx} className="cap-cell hotel-sum-cell" onClick={() => handleDateClick(date, group.hotel)}>
+                                                                            <div className="cap-content">
+                                                                                <span className="cap-total">{hTotalAll}</span>
+                                                                                <span className="cap-sold">{hTotalSold}</span>
+                                                                                <span className="cap-occ-percent">{occPercent}%</span>
+                                                                                <div className="cap-avail-tag-wrapper">
+                                                                                    <span className={`cap-available-tag ${avail === 2 ? 'critical-warn' : avail === 1 ? 'critical-danger' : ''}`}>{avail}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                    );
+                                                                })}
+                                                            </tr>
 
-                                                                return (
-                                                                    <td key={dIdx} className={`cap-cell ${statusClass}`} onClick={() => handleDateClick(date, group.hotel)}>
-                                                                        <div className="cap-content">
-                                                                            <span className="cap-total">{rec.totalAll}</span>
-                                                                            <span className="cap-sold">{rec.totalSold}</span>
-                                                                            <div className="cap-meta-info">
-                                                                                <span className="cap-occ-mini">{occPercent}%</span>
-                                                                                <span className="cap-status-badge">{rec.masterStatus.substring(0, 3)}</span>
-                                                                            </div>
-                                                                            <div className="cap-avail-tag-wrapper">
-                                                                                <span className="cap-available-tag small">{available}</span>
-                                                                            </div>
+                                                            {/* Room Type Details (Conditional) */}
+                                                            {isExpanded && group.rooms.map((room, rIdx) => (
+                                                                <motion.tr
+                                                                    key={`${group.hotel?.id || gIdx}-${rIdx}`}
+                                                                    initial={{ opacity: 0, y: -10 }}
+                                                                    animate={{ opacity: 1, y: 0 }}
+                                                                    className="room-detail-row"
+                                                                >
+                                                                    <td className="sticky-col">
+                                                                        <div className="room-type-inner">
+                                                                            <span>{room.roomType}</span>
                                                                         </div>
                                                                     </td>
-                                                                );
-                                                            })}
-                                                        </motion.tr>
-                                                    ))}
-                                                </React.Fragment>
-                                            );
-                                        })}
+                                                                    {dates.map((date, dIdx) => {
+                                                                        const dateStr = date.toISOString().split('T')[0];
+                                                                        const rec = room.records[dateStr];
+                                                                        if (!rec) return <td key={dIdx} className="cap-cell cell-empty"></td>;
+                                                                        const available = rec.totalAll - rec.totalSold;
+                                                                        const occPercent = rec.totalAll > 0 ? Math.round((rec.totalSold / rec.totalAll) * 100) : 0;
+                                                                        const statusClass = `stat-${rec.masterStatus.replace(' ', '-')}`;
 
-                                        {/* TOTAL ROW (Grand Total) */}
-                                        <tr className="total-row grand-total">
-                                            <td className="sticky-col">
-                                                <div className="room-type-label">
-                                                    <strong>UKUPNO PRODAJA</strong>
-                                                </div>
-                                            </td>
-                                            {dates.map((date, dIdx) => {
-                                                const dateStr = date.toISOString().split('T')[0];
-                                                let totalAll = 0, totalSold = 0;
-                                                groupedData.forEach(group => {
-                                                    group.rooms.forEach(cap => {
-                                                        const rec = cap.records[dateStr];
-                                                        if (rec) {
-                                                            totalAll += rec.totalAll;
-                                                            totalSold += rec.totalSold;
-                                                        }
-                                                    });
-                                                });
-                                                const available = totalAll - totalSold;
-                                                const occPercent = totalAll > 0 ? Math.round((totalSold / totalAll) * 100) : 0;
-                                                return (
-                                                    <td key={dIdx} className="cap-cell total-cell">
-                                                        <div className="cap-content">
-                                                            <span className="cap-total">{totalAll}</span>
-                                                            <span className="cap-sold">{totalSold}</span>
-                                                            <span className="cap-occ-percent">{occPercent}%</span>
-                                                            <div className="cap-avail-tag-wrapper">
-                                                                <span className="cap-available-tag">{available}</span>
-                                                            </div>
+                                                                        return (
+                                                                            <td key={dIdx} className={`cap-cell ${statusClass}`} onClick={() => handleDateClick(date, group.hotel)}>
+                                                                                <div className="cap-content">
+                                                                                    <span className="cap-total">{rec.totalAll}</span>
+                                                                                    <span className="cap-sold">{rec.totalSold}</span>
+                                                                                    <div className="cap-meta-info">
+                                                                                        <span className="cap-occ-mini">{occPercent}%</span>
+                                                                                        <span className="cap-status-badge">{rec.masterStatus.substring(0, 3)}</span>
+                                                                                    </div>
+                                                                                    <div className="cap-avail-tag-wrapper">
+                                                                                        <span className={`cap-available-tag small ${available === 2 ? 'critical-warn' : available === 1 ? 'critical-danger' : ''}`}>{available}</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </td>
+                                                                        );
+                                                                    })}
+                                                                </motion.tr>
+                                                            ))}
+                                                        </React.Fragment>
+                                                    );
+                                                })}
+                                                <tr className="total-row grand-total">
+                                                    <td className="sticky-col">
+                                                        <div className="room-type-label">
+                                                            <strong>UKUPNO PRODAJA</strong>
                                                         </div>
                                                     </td>
-                                                );
-                                            })}
-                                        </tr>
+                                                    {dates.map((date, dIdx) => {
+                                                        const dateStr = date.toISOString().split('T')[0];
+                                                        let totalAll = 0, totalSold = 0;
+                                                        groupedData.forEach(group => {
+                                                            group.rooms.forEach(cap => {
+                                                                const rec = cap.records[dateStr];
+                                                                if (rec) {
+                                                                    totalAll += rec.totalAll;
+                                                                    totalSold += rec.totalSold;
+                                                                }
+                                                            });
+                                                        });
+                                                        const available = totalAll - totalSold;
+                                                        const occPercent = totalAll > 0 ? Math.round((totalSold / totalAll) * 100) : 0;
+                                                        return (
+                                                            <td key={dIdx} className="cap-cell total-cell">
+                                                                <div className="cap-content">
+                                                                    <span className="cap-total">{totalAll}</span>
+                                                                    <span className="cap-sold">{totalSold}</span>
+                                                                    <span className="cap-occ-percent">{occPercent}%</span>
+                                                                    <div className="cap-avail-tag-wrapper">
+                                                                        <span className={`cap-available-tag ${available === 2 ? 'critical-warn' : available === 1 ? 'critical-danger' : ''}`}>{available}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            </>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
@@ -1840,15 +1927,24 @@ const OperationalReports: React.FC = () => {
                             </div>
 
                             {MOCK_HOTELS.filter(h => MOCK_RESERVATIONS.some(r => r.hotelId === h.id && (!searchTerm || r.customer.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase())))).map(hotel => {
-                                const hotelReservations = MOCK_RESERVATIONS.filter(r => r.hotelId === hotel.id && (!searchTerm || r.customer.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase())));
+                                const hotelReservations = MOCK_RESERVATIONS
+                                    .filter(r => r.hotelId === hotel.id && (!searchTerm || r.customer.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase())))
+                                    .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
 
                                 return (
-                                    <div key={hotel.id} className="rooming-table-card" style={{ background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '30px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-                                        <div style={{ padding: '20px', background: '#f8fafc', borderBottom: '2px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <div key={hotel.id} className="rooming-table-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)', marginBottom: '30px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
+                                        <div style={{
+                                            padding: '20px 25px',
+                                            background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.01) 100%)',
+                                            borderBottom: '2px solid var(--border)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '15px'
+                                        }}>
                                             <Building2 size={24} color="#3b82f6" />
                                             <div>
-                                                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>{hotel.name}</h2>
-                                                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>{hotel.destination}, {hotel.country}</div>
+                                                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>{hotel.name}</h2>
+                                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>{hotel.destination}, {hotel.country}</div>
                                             </div>
                                             <button
                                                 className="op-btn-secondary"
@@ -1858,34 +1954,56 @@ const OperationalReports: React.FC = () => {
                                                 <Mail size={14} /> Pošalji Hotelu Mejlom
                                             </button>
                                         </div>
+
                                         <div style={{ overflowX: 'auto' }}>
-                                            <table className="op-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+                                            <table className="op-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left', tableLayout: 'fixed' }}>
                                                 <thead>
-                                                    <tr style={{ background: '#f1f5f9' }}>
-                                                        <th style={{ padding: '15px', fontWeight: 800, color: '#475569' }}>Detalji Rezervacije</th>
-                                                        <th style={{ padding: '15px', fontWeight: 800, color: '#475569' }}>Period Boravka</th>
-                                                        <th style={{ padding: '15px', fontWeight: 800, color: '#475569' }}>Smeštaj</th>
-                                                        <th style={{ padding: '15px', fontWeight: 800, color: '#475569' }}>Glavni Putnik</th>
-                                                        <th style={{ padding: '15px', fontWeight: 800, color: '#475569' }}>Pasoš (Glavni)</th>
-                                                        <th style={{ padding: '15px', fontWeight: 800, color: '#475569' }}>Napomena</th>
+                                                    <tr style={{ background: '#fff1f2', borderBottom: '1px solid var(--border)' }}>
+                                                        <th style={{ width: '130px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Broj rezervacije</th>
+                                                        <th style={{ width: '220px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>Termin boravka</th>
+                                                        <th style={{ width: '200px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>Smeštaj / Usluga</th>
+                                                        <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>Lista Putnika</th>
+                                                        <th style={{ width: '140px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>Pasoš</th>
+                                                        <th style={{ width: '360px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>Napomena</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {hotelReservations.map(res => {
                                                         const isExpanded = roomingExpandedRows.has(res.id);
-                                                        const totalPax = res.adults + res.children + res.babies;
-                                                        const paxArray = Array.from({ length: totalPax }).map((_, i) => ({
-                                                            name: i === 0 ? res.customer : `Gost ${i + 1} (${res.customer.split(' ')[1] || ''})`,
-                                                            isChild: i >= res.adults,
-                                                            dob: i >= res.adults ? '15.05.2018' : '01.01.1980',
-                                                            passport: `PA${Math.floor(Math.random() * 8000000 + 1000000)}`
-                                                        }));
+                                                        const nights = Math.ceil((new Date(res.checkOut).getTime() - new Date(res.checkIn).getTime()) / (1000 * 60 * 60 * 24));
+                                                        const paxArray = [
+                                                            ...Array.from({ length: res.adults }).map((_, i) => ({
+                                                                name: i === 0 ? res.customer : `Gost ${i + 1} (${res.customer.split(' ')[1] || ''})`,
+                                                                type: 'adult',
+                                                                age: 0,
+                                                                passport: `PA${Math.floor(Math.random() * 8000000 + 1000000)}`
+                                                            })) as any[],
+                                                            ...Array.from({ length: res.children }).map((_, i) => ({
+                                                                name: `Gost ${res.adults + i + 1} (${res.customer.split(' ')[1] || ''})`,
+                                                                type: 'child',
+                                                                age: i === 0 ? 7 : 12,
+                                                                passport: `PA${Math.floor(Math.random() * 8000000 + 1000000)}`
+                                                            })) as any[],
+                                                            ...Array.from({ length: res.babies }).map((_, i) => ({
+                                                                name: `Gost ${res.adults + res.children + i + 1} (${res.customer.split(' ')[1] || ''})`,
+                                                                type: 'baby',
+                                                                age: 1,
+                                                                passport: `PA${Math.floor(Math.random() * 8000000 + 1000000)}`
+                                                            })) as any[]
+                                                        ];
 
                                                         return (
                                                             <React.Fragment key={res.id}>
-                                                                <tr style={{ borderBottom: isExpanded ? 'none' : '1px solid #f1f5f9' }}>
-                                                                    <td style={{ padding: '12px 15px', verticalAlign: 'middle' }}>
-                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                                {/* MAIN ROW */}
+                                                                <tr style={{
+                                                                    borderBottom: isExpanded ? '1px solid rgba(0,0,0,0.1)' : '1px solid var(--border)',
+                                                                    background: isExpanded ? 'rgba(59, 130, 246, 0.03)' : 'transparent',
+                                                                    borderLeft: '4px solid transparent',
+                                                                    borderLeftColor: isExpanded ? 'var(--accent)' : 'transparent',
+                                                                    transition: 'all 0.1s ease'
+                                                                }}>
+                                                                    <td style={{ padding: '6px 12px', verticalAlign: 'top' }}>
+                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
                                                                             <button
                                                                                 onClick={() => {
                                                                                     const newSet = new Set(roomingExpandedRows);
@@ -1895,71 +2013,84 @@ const OperationalReports: React.FC = () => {
                                                                                 }}
                                                                                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--accent)', display: 'flex', alignItems: 'center' }}
                                                                             >
-                                                                                {isExpanded ? <ChevronDown size={18} /> : <Plus size={18} />}
+                                                                                {isExpanded ? <ChevronDown size={16} /> : <Plus size={16} />}
                                                                             </button>
-                                                                            <span className="res-id-link" onClick={() => navigate(`/reservations?id=${res.id}`)} style={{ cursor: 'pointer', color: '#3b82f6', fontWeight: 800 }}>#{res.id}</span>
+                                                                            <span className="res-id-link" onClick={() => navigate(`/reservations?id=${res.id}`)} style={{ cursor: 'pointer', color: '#3b82f6', fontWeight: 900, fontSize: '13px' }}>#{res.id}</span>
                                                                         </div>
                                                                     </td>
-                                                                    <td style={{ padding: '12px 15px' }}>
-                                                                        <div className="date-cell" style={{ display: 'inline-block', background: '#f8fafc', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, color: '#475569', border: '1px solid #e2e8f0' }}>
-                                                                            {new Date(res.checkIn).toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: '2-digit' })} - {new Date(res.checkOut).toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: '2-digit' })}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td style={{ padding: '12px 15px' }}>
-                                                                        <div className="room-badge" style={{ display: 'inline-block', background: '#e0e7ff', color: '#4338ca', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 800 }}>{res.roomType}</div>
-                                                                    </td>
-                                                                    <td style={{ padding: '12px 15px' }}>
-                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                            <User size={16} color="#64748b" />
-                                                                            <strong style={{ color: '#1e293b' }}>{res.customer}</strong>
-                                                                            {totalPax > 1 && <span style={{ fontSize: '10px', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#64748b' }}>+{totalPax - 1} više</span>}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td style={{ padding: '12px 15px' }}>
-                                                                        <code style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', color: '#334155', fontWeight: 700, fontSize: '11px' }}>{paxArray[0].passport}</code>
-                                                                    </td>
-                                                                    <td style={{ padding: '12px 15px' }}>
-                                                                        {Math.random() > 0.7 ? (
-                                                                            <div style={{ fontSize: '12px', color: '#92400e', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
-                                                                                <Info size={14} style={{ minWidth: '14px' }} />
-                                                                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>Late check-in req...</span>
+                                                                    <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)', verticalAlign: 'top' }}>
+                                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                                            <div className="date-cell" style={{ display: 'inline-block', background: 'var(--bg-main)', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 900, color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
+                                                                                {new Date(res.checkIn).toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })} - {new Date(res.checkOut).toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                                             </div>
-                                                                        ) : (
-                                                                            <span style={{ color: '#cbd5e1', fontSize: '11px', fontStyle: 'italic' }}>Bez napomene</span>
-                                                                        )}
+                                                                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 800, marginLeft: '4px' }}>{nights} noćenja</span>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)', verticalAlign: 'top' }}>
+                                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                                                            <div className="room-badge" style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '6px', fontSize: '9px', fontWeight: 900, width: 'fit-content' }}>{res.roomType}</div>
+                                                                            <div style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '2px 8px', borderRadius: '6px', fontSize: '8px', fontWeight: 900, letterSpacing: '0.4px', width: 'fit-content', border: '1px solid rgba(59, 130, 246, 0.2)' }}>ALL INCLUSIVE</div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)', verticalAlign: 'top' }}>
+                                                                        <div style={{
+                                                                            display: 'inline-flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '6px',
+                                                                            background: 'var(--bg-main)',
+                                                                            padding: '3px 10px',
+                                                                            borderRadius: '6px',
+                                                                            border: '1px solid var(--border)',
+                                                                            marginTop: '1px'
+                                                                        }}>
+                                                                            <User size={14} color="var(--text-secondary)" style={{ minWidth: '14px' }} />
+                                                                            <strong style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap', fontSize: '13px', fontWeight: 950 }}>{res.customer}</strong>
+                                                                            <div style={{ display: 'flex', gap: '3px', alignItems: 'center', marginLeft: '4px' }}>
+                                                                                <span style={{ fontSize: '9px', background: 'rgba(59, 130, 246, 0.1)', padding: '1px 5px', borderRadius: '4px', color: '#3b82f6', fontWeight: 900, border: '1px solid rgba(59, 130, 246, 0.2)', whiteSpace: 'nowrap' }}>{res.adults} Adl</span>
+                                                                                {res.children > 0 && (
+                                                                                    <span style={{ fontSize: '9px', background: 'rgba(249, 115, 22, 0.1)', padding: '1px 5px', borderRadius: '4px', color: '#fb923c', fontWeight: 900, border: '1px solid rgba(249, 115, 22, 0.1)', whiteSpace: 'nowrap' }}>
+                                                                                        {res.children} Chd
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)', verticalAlign: 'top' }}>
+                                                                        <div style={{ marginTop: '2px' }}>
+                                                                            <code style={{ background: 'var(--bg-main)', padding: '1px 6px', borderRadius: '4px', color: 'var(--text-primary)', border: '1px solid var(--border)', fontWeight: 900, fontSize: '11px' }}>{paxArray[0].passport}</code>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)', verticalAlign: 'top' }}>
+                                                                        <span style={{ color: '#94a3b8', fontSize: '11px', lineHeight: '1.3', fontWeight: 600 }}>Uvek slati sobu sa pogledom na more. Putnik je stari klijent.</span>
                                                                     </td>
                                                                 </tr>
-                                                                {isExpanded && (
-                                                                    <tr>
-                                                                        <td colSpan={6} style={{ padding: '0 15px 15px 15px', background: '#fcfcfc' }}>
-                                                                            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', overflow: 'hidden' }}>
-                                                                                <div style={{ padding: '8px 15px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '11px', fontWeight: 800, color: '#64748b', display: 'flex', justifyContent: 'space-between' }}>
-                                                                                    <span>DETALJNA LISTA PUTNIKA</span>
-                                                                                    <span>USLUGA: ALL INCLUSIVE</span>
-                                                                                </div>
-                                                                                {paxArray.map((pax, pIdx) => (
-                                                                                    <div key={pIdx} style={{
-                                                                                        display: 'grid',
-                                                                                        gridTemplateColumns: '1fr 1fr 1fr',
-                                                                                        padding: '10px 15px',
-                                                                                        borderBottom: pIdx === paxArray.length - 1 ? 'none' : '1px solid rgba(226, 232, 240, 0.3)',
-                                                                                        alignItems: 'center'
-                                                                                    }}>
+
+                                                                {/* EXPANDED PASSENGER DETAILS */}
+                                                                {isExpanded && paxArray.length > 1 && (
+                                                                    <>
+                                                                        {paxArray.slice(1).map((pax, pIdx) => (
+                                                                            <tr key={pIdx} style={{ background: 'var(--bg-card)', borderBottom: pIdx === paxArray.length - 2 ? '1px solid var(--border)' : '1px solid rgba(0,0,0,0.06)', borderLeft: '4px solid var(--accent)' }}>
+                                                                                <td style={{ padding: '4px 12px' }}></td>
+                                                                                <td style={{ padding: '4px 12px', borderLeft: '1px solid var(--border)' }}></td>
+                                                                                <td style={{ padding: '4px 12px', borderLeft: '1px solid var(--border)' }}></td>
+                                                                                <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)' }}>
+                                                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                                            {pax.isChild ? <Baby size={14} color="#f97316" /> : <User size={14} color="#64748b" />}
-                                                                                            <span style={{ fontWeight: 600, color: '#334155' }}>{pax.name}</span>
+                                                                                            {pax.type === 'baby' ? <Baby size={13} color="#4ade80" /> : pax.type === 'child' ? <Baby size={13} color="#fb923c" /> : <User size={13} color="var(--text-secondary)" />}
+                                                                                            <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '12px' }}>{pax.name}</span>
                                                                                         </div>
-                                                                                        <div style={{ fontSize: '12px', color: '#64748b' }}>
-                                                                                            {pax.isChild ? `Datum rođ: ${pax.dob}` : 'Odrasla osoba'}
-                                                                                        </div>
-                                                                                        <div style={{ fontSize: '12px', color: '#64748b', textAlign: 'right' }}>
-                                                                                            Pasoš: <code style={{ fontWeight: 700 }}>{pax.passport}</code>
-                                                                                        </div>
+                                                                                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                                                                                            {pax.type === 'adult' ? 'Odrasla osoba' : pax.type === 'baby' ? 'Beba (Infant)' : `Dete (${pax.age} god)`}
+                                                                                        </span>
                                                                                     </div>
-                                                                                ))}
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
+                                                                                </td>
+                                                                                <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)' }}>
+                                                                                    <code style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '11px' }}>{pax.passport}</code>
+                                                                                </td>
+                                                                                <td style={{ padding: '4px 12px', borderLeft: '1px solid var(--border)' }}></td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </>
                                                                 )}
                                                             </React.Fragment>
                                                         );
@@ -1970,9 +2101,9 @@ const OperationalReports: React.FC = () => {
                                     </div>
                                 );
                             })}
-                        </motion.div>
+                        </motion.div >
                     )}
-                </AnimatePresence>
+                </AnimatePresence >
             </main >
 
             {/* Daily Pulse Modal */}
@@ -2108,7 +2239,7 @@ const OperationalReports: React.FC = () => {
                                 animate={{ scale: 1, opacity: 1 }}
                                 exit={{ scale: 0.9, opacity: 0 }}
                                 className="visual-report-modal capacity-wizard-premium"
-                                style={{ padding: 0, maxWidth: '1100px', width: '90%', height: 'auto', maxHeight: '90vh' }}
+                                style={{ padding: 0, maxWidth: '1100px', width: '90%', height: 'auto', maxHeight: '72vh' }}
                                 onClick={e => e.stopPropagation()}
                             >
                                 <div className="report-modal-header drag-handle" style={{ margin: 0, background: '#fff', borderBottom: '1px solid #f1f5f9', padding: '15px 30px' }}>
@@ -2297,7 +2428,7 @@ const OperationalReports: React.FC = () => {
                                                             <button
                                                                 className={`agent-checkbox-card ${capSelectedContract === 'Svi Ugovori' ? 'active' : ''}`}
                                                                 onClick={() => setCapSelectedContract('Svi Ugovori')}
-                                                                style={{ padding: '18px', textAlign: 'left', position: 'relative' }}
+                                                                style={{ padding: '12px', textAlign: 'left', position: 'relative' }}
                                                             >
                                                                 <div className="agent-box-info">
                                                                     <span className="a-name" style={{ fontSize: '14px', fontWeight: 800 }}>Zajednička Kvote</span>
@@ -2310,7 +2441,7 @@ const OperationalReports: React.FC = () => {
                                                                     key={c}
                                                                     className={`agent-checkbox-card ${capSelectedContract === c ? 'active' : ''}`}
                                                                     onClick={() => setCapSelectedContract(c)}
-                                                                    style={{ padding: '18px', textAlign: 'left', position: 'relative' }}
+                                                                    style={{ padding: '12px', textAlign: 'left', position: 'relative' }}
                                                                 >
                                                                     <div className="agent-box-info">
                                                                         <span className="a-name" style={{ fontSize: '14px', fontWeight: 800 }}>{c}</span>
@@ -2785,48 +2916,60 @@ const OperationalReports: React.FC = () => {
                                                 <FileText size={18} /> Text Inventory Report
                                             </button>
                                         </div>
-                                    </div>
 
-                                    <div className="report-agent-config">
-                                        <div className="config-header">
-                                            <h4>Podešavanje Distribucije</h4>
-                                            <p>Odaberite subagente koji će dobiti ovaj izveštaj</p>
-                                        </div>
+                                        <div className="report-sidebar-filters" style={{ marginTop: '25px', display: 'flex', flexDirection: 'column', gap: '15px', padding: '20px', background: 'var(--bg-main)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                            <div style={{ marginBottom: '5px' }}>
+                                                <h5 style={{ margin: 0, fontSize: '14px', fontWeight: 800 }}>Podešavanje Distribucije</h5>
+                                                <p style={{ margin: 0, fontSize: '11px', opacity: 0.6 }}>Filteri za odabir subagenata</p>
+                                            </div>
 
-                                        <div className="report-filters">
-                                            <div className="f-item" style={{ flex: 2 }}>
-                                                <label>Pretraga Agenta (Ime ili Email)</label>
-                                                <div className="agent-search-wrapper">
-                                                    <Search size={14} />
+                                            <div className="f-item">
+                                                <label style={{ display: 'block', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px' }}>Pretraga Agenta</label>
+                                                <div className="agent-search-wrapper" style={{ position: 'relative' }}>
+                                                    <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }} />
                                                     <input
                                                         type="text"
-                                                        placeholder="Kucaj za pretragu..."
+                                                        placeholder="Ime ili Email..."
                                                         value={agentSearchQuery}
                                                         onChange={e => setAgentSearchQuery(e.target.value)}
+                                                        style={{ width: '100%', padding: '10px 10px 10px 35px', borderRadius: '10px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                                                     />
                                                     {agentSearchQuery && (
-                                                        <button className="clear-search" onClick={() => setAgentSearchQuery('')}>
+                                                        <button style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }} onClick={() => setAgentSearchQuery('')}>
                                                             <X size={12} />
                                                         </button>
                                                     )}
                                                 </div>
                                             </div>
+
                                             <div className="f-item">
-                                                <label>Država</label>
-                                                <select value={reportFilterCountry} onChange={e => {
-                                                    setReportFilterCountry(e.target.value);
-                                                    setReportFilterCity('Sve');
-                                                }}>
+                                                <label style={{ display: 'block', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px' }}>Država</label>
+                                                <select
+                                                    value={reportFilterCountry}
+                                                    onChange={e => {
+                                                        setReportFilterCountry(e.target.value);
+                                                        setReportFilterCity('Sve');
+                                                    }}
+                                                    style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
+                                                >
                                                     {countries.map(c => <option key={c} value={c}>{c}</option>)}
                                                 </select>
                                             </div>
+
                                             <div className="f-item">
-                                                <label>Grad</label>
-                                                <select value={reportFilterCity} onChange={e => setReportFilterCity(e.target.value)}>
+                                                <label style={{ display: 'block', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px' }}>Grad</label>
+                                                <select
+                                                    value={reportFilterCity}
+                                                    onChange={e => setReportFilterCity(e.target.value)}
+                                                    style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
+                                                >
                                                     {cities.map(c => <option key={c} value={c}>{c}</option>)}
                                                 </select>
                                             </div>
                                         </div>
+                                    </div>
+
+                                    <div className="report-agent-config">
 
                                         {selectedAgentIds.length > 0 && (
                                             <div className="selected-agents-pool">
@@ -2943,7 +3086,7 @@ const OperationalReports: React.FC = () => {
                                     maxWidth: '1600px',
                                     height: 'auto',
                                     minHeight: '300px',
-                                    maxHeight: '90vh',
+                                    maxHeight: '72vh',
                                     display: 'flex',
                                     flexDirection: 'column'
                                 }}
@@ -3076,20 +3219,22 @@ const OperationalReports: React.FC = () => {
                         </div>
                     )
                 }
-            </AnimatePresence>
+            </AnimatePresence >
 
-            {showBookingCal && (
-                <ModernCalendar
-                    startDate={bookingFrom}
-                    endDate={bookingTo}
-                    onChange={(start, end) => {
-                        setBookingFrom(start || '2026-01-01');
-                        setBookingTo(end || '2026-12-31');
-                    }}
-                    onClose={() => setShowBookingCal(false)}
-                    allowPast={true}
-                />
-            )}
+            {
+                showBookingCal && (
+                    <ModernCalendar
+                        startDate={bookingFrom}
+                        endDate={bookingTo}
+                        onChange={(start, end) => {
+                            setBookingFrom(start || '2026-01-01');
+                            setBookingTo(end || '2026-12-31');
+                        }}
+                        onClose={() => setShowBookingCal(false)}
+                        allowPast={true}
+                    />
+                )
+            }
 
             {
                 showStayCal && (
