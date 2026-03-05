@@ -33,17 +33,38 @@ import {
     PieChart,
     Sparkles,
     CheckCircle,
-    Eye
+    Eye,
+    FileText,
+    Copy,
+    Share2,
+    Download as DownloadIcon,
+    Globe,
+    History as HistoryIcon,
+    Info,
+    Link,
+    RotateCcw,
+    Maximize2,
+    Minimize2
 } from 'lucide-react';
+import { ModernCalendar } from '../../components/ModernCalendar';
 import { useNavigate, NavLink, useSearchParams } from 'react-router-dom';
 import './OperationalReports.css';
 
 // --- TYPES ---
-interface CapacityRecord {
-    date: string;
+interface ContractStatus {
+    id: string;
+    name: string;
     all: number;
     sold: number;
     status: 'Alotman' | 'Fix' | 'On Request' | 'Stop';
+}
+
+interface CapacityRecord {
+    date: string;
+    totalAll: number;
+    totalSold: number;
+    contracts: ContractStatus[];
+    masterStatus: 'Alotman' | 'Fix' | 'On Request' | 'Stop';
 }
 
 interface RoomCapacity {
@@ -54,24 +75,39 @@ interface RoomCapacity {
 }
 
 // --- MOCK DATA ---
+const MOCK_CONTRACTS = ['Ugovor A', 'Ugovor B', 'Ugovor C', 'Ugovor Special', 'Last Minute'];
+
 const MOCK_HOTELS = [
-    { id: '50', name: 'Hotel Hunguest Sun Resort', destination: 'Herceg Novi', category: '4*', roomTypes: ['Double Room', 'Suite', 'Apartment'] },
-    { id: '62', name: 'Mitsis Grand Hotel', destination: 'Rhodes', category: '5*', roomTypes: ['Standard Sea View', 'Family Room', 'Executive Suite'] },
-    { id: '75', name: 'Rixos Premium Belek', destination: 'Belek', category: '5*', roomTypes: ['Deluxe Room', 'Pool Suite', 'Royal King Suite'] },
-    { id: '80', name: 'Hotel Splendid', destination: 'Budva', category: '5*', roomTypes: ['Superior Room', 'Premium Suite'] },
-    { id: '81', name: 'Hotel Budva', destination: 'Budva', category: '4*', roomTypes: ['Standard Room', 'Studio'] },
+    { id: '50', name: 'Hotel Hunguest Sun Resort', destination: 'Herceg Novi', country: 'Crna Gora', category: '4*', roomTypes: ['Double Room', 'Suite', 'Apartment'] },
+    { id: '62', name: 'Mitsis Grand Hotel', destination: 'Rhodes', country: 'Grčka', category: '5*', roomTypes: ['Standard Sea View', 'Family Room', 'Executive Suite'] },
+    { id: '75', name: 'Rixos Premium Belek', destination: 'Belek', country: 'Turska', category: '5*', roomTypes: ['Deluxe Room', 'Pool Suite', 'Royal King Suite'] },
+    { id: '80', name: 'Hotel Splendid', destination: 'Budva', country: 'Crna Gora', category: '5*', roomTypes: ['Superior Room', 'Premium Suite'] },
+    { id: '81', name: 'Hotel Budva', destination: 'Budva', country: 'Crna Gora', category: '4*', roomTypes: ['Standard Room', 'Studio'] },
 ];
 
 const DESTINATIONS = ['Sve', 'Budva', 'Herceg Novi', 'Rhodes', 'Belek'];
 const CATEGORIES = ['Sve', '5*', '4*', '3*'];
 
+const MOCK_SUPPLIERS = ['Solvex', 'Fibula', 'Big Blue B2B', 'Direct Hotel', 'Bedsonline'];
+const MOCK_BRANCHES = ['Poslovnica Beograd - Centar', 'Poslovnica Novi Sad', 'Poslovnica Niš', 'Online Shop'];
+
 const MOCK_RESERVATIONS = [
-    { id: 'R-9452', customer: 'Jovan Jovanović', hotelId: '50', roomType: 'Double Room', checkIn: '2026-06-20', checkOut: '2026-06-30', adults: 2, children: 1, babies: 0, amount: 1250, createdAt: '2026-03-01', status: 'Active' },
-    { id: 'R-9451', customer: 'Marko Marković', hotelId: '62', roomType: 'Standard Sea View', checkIn: '2026-06-21', checkOut: '2026-06-28', adults: 2, children: 0, babies: 1, amount: 850, createdAt: '2026-03-02', status: 'Active' },
-    { id: 'R-9450', customer: 'Ana Anić', hotelId: '50', roomType: 'Suite', checkIn: '2026-06-20', checkOut: '2026-06-27', adults: 2, children: 2, babies: 0, amount: 2100, createdAt: '2026-03-03', status: 'Reservation' },
-    { id: 'R-9460', customer: 'Petar Petrović', hotelId: '50', roomType: 'Apartment', checkIn: '2026-06-18', checkOut: '2026-06-25', adults: 4, children: 0, babies: 0, amount: 3200, createdAt: '2026-03-04', status: 'Active' },
-    { id: 'R-9461', customer: 'Milica Milić', hotelId: '50', roomType: 'Double Room', checkIn: '2026-06-15', checkOut: '2026-06-18', adults: 2, children: 0, babies: 0, amount: 900, createdAt: '2026-03-05', status: 'Reservation' },
-    { id: 'R-9462', customer: 'Dragan Dragić', hotelId: '50', roomType: 'Suite', checkIn: '2026-06-18', checkOut: '2026-06-28', adults: 2, children: 1, babies: 1, amount: 2400, createdAt: '2026-03-06', status: 'Active' },
+    { id: 'R-9452', customer: 'Jovan Jovanović', hotelId: '50', roomType: 'Double Room', checkIn: '2026-06-20', checkOut: '2026-06-30', adults: 2, children: 1, babies: 0, amount: 1250, createdAt: '2026-03-01', status: 'Active', contract: 'Ugovor A', supplier: 'Solvex', subagentId: '1', branchId: null, isB2C: false },
+    { id: 'R-9451', customer: 'Marko Marković', hotelId: '62', roomType: 'Standard Sea View', checkIn: '2026-06-21', checkOut: '2026-06-28', adults: 2, children: 0, babies: 1, amount: 1850, createdAt: '2026-03-02', status: 'Active', contract: 'Ugovor B', supplier: 'Fibula', subagentId: null, branchId: '1', isB2C: false },
+    { id: 'R-9450', customer: 'Ana Anić', hotelId: '50', roomType: 'Suite', checkIn: '2026-06-20', checkOut: '2026-06-27', adults: 2, children: 2, babies: 0, amount: 2100, createdAt: '2026-03-03', status: 'Reservation', contract: 'Ugovor A', supplier: 'Direct Hotel', subagentId: '2', branchId: null, isB2C: false },
+    { id: 'R-9460', customer: 'Petar Petrović', hotelId: '50', roomType: 'Apartment', checkIn: '2026-06-18', checkOut: '2026-06-25', adults: 4, children: 0, babies: 0, amount: 3200, createdAt: '2026-03-04', status: 'Active', contract: 'Ugovor C', supplier: 'Big Blue B2B', subagentId: null, branchId: null, isB2C: true },
+    { id: 'R-9461', customer: 'Milica Milić', hotelId: '50', roomType: 'Double Room', checkIn: '2026-06-15', checkOut: '2026-06-18', adults: 2, children: 0, babies: 0, amount: 900, createdAt: '2026-03-05', status: 'Reservation', contract: 'Ugovor B', supplier: 'Solvex', subagentId: '6', branchId: null, isB2C: false },
+    { id: 'R-9462', customer: 'Dragan Dragić', hotelId: '50', roomType: 'Suite', checkIn: '2026-06-18', checkOut: '2026-06-28', adults: 2, children: 1, babies: 1, amount: 2400, createdAt: '2026-03-06', status: 'Active', contract: 'Ugovor A', supplier: 'Fibula', subagentId: '1', branchId: null, isB2C: false },
+    { id: 'R-9470', customer: 'Zoran Zorić', hotelId: '75', roomType: 'Deluxe Room', checkIn: '2026-07-05', checkOut: '2026-07-15', adults: 2, children: 0, babies: 0, amount: 4500, createdAt: '2026-03-07', status: 'Active', contract: 'Ugovor Special', supplier: 'Bedsonline', subagentId: '9', branchId: null, isB2C: false },
+    { id: 'R-9471', customer: 'Savo Savić', hotelId: '75', roomType: 'Pool Suite', checkIn: '2026-07-10', checkOut: '2026-07-20', adults: 2, children: 2, babies: 0, amount: 6200, createdAt: '2026-03-08', status: 'Active', contract: 'Last Minute', supplier: 'Direct Hotel', subagentId: null, branchId: '2', isB2C: false },
+    { id: 'R-9472', customer: 'Ivana Ivić', hotelId: '80', roomType: 'Superior Room', checkIn: '2026-06-25', checkOut: '2026-07-05', adults: 2, children: 1, babies: 0, amount: 2800, createdAt: '2026-03-09', status: 'Active', contract: 'Ugovor A', supplier: 'Solvex', subagentId: '1', branchId: null, isB2C: false },
+    { id: 'R-9480', customer: 'Nikola Nikolić', hotelId: '62', roomType: 'Family Room', checkIn: '2026-08-01', checkOut: '2026-08-10', adults: 2, children: 2, babies: 1, amount: 3500, createdAt: '2026-03-10', status: 'Reservation', contract: 'Ugovor B', supplier: 'Fibula', subagentId: null, branchId: null, isB2C: true },
+    { id: 'R-9481', customer: 'Jelena Jelić', hotelId: '81', roomType: 'Standard Room', checkIn: '2026-07-15', checkOut: '2026-07-25', adults: 2, children: 0, babies: 0, amount: 1600, createdAt: '2026-03-11', status: 'Active', contract: 'Ugovor A', supplier: 'Solvex', subagentId: '12', branchId: null, isB2C: false },
+    { id: 'R-9490', customer: 'Bojan Bojić', hotelId: '50', roomType: 'Double Room', checkIn: '2026-06-10', checkOut: '2026-06-17', adults: 2, children: 0, babies: 0, amount: 840, createdAt: '2026-03-12', status: 'Active', contract: 'Ugovor B', supplier: 'Fibula', subagentId: '1', branchId: null, isB2C: false },
+    { id: 'R-9491', customer: 'Sanja Savić', hotelId: '62', roomType: 'Standard Sea View', checkIn: '2026-06-12', checkOut: '2026-06-19', adults: 2, children: 1, babies: 0, amount: 1100, createdAt: '2026-03-13', status: 'Active', contract: 'Ugovor B', supplier: 'Direct Hotel', subagentId: '15', branchId: null, isB2C: false },
+    { id: 'R-9492', customer: 'Goran Gocić', hotelId: '75', roomType: 'Deluxe Room', checkIn: '2026-07-01', checkOut: '2026-07-10', adults: 2, children: 0, babies: 0, amount: 3800, createdAt: '2026-03-14', status: 'Active', contract: 'Ugovor Special', supplier: 'Solvex', subagentId: null, branchId: '1', isB2C: false },
+    { id: 'R-9493', customer: 'Tanja Tanić', hotelId: '80', roomType: 'Superior Room', checkIn: '2026-08-05', checkOut: '2026-08-15', adults: 2, children: 2, babies: 0, amount: 3100, createdAt: '2026-03-15', status: 'Active', contract: 'Ugovor A', supplier: 'Bedsonline', subagentId: '1', branchId: null, isB2C: false },
+    { id: 'R-9494', customer: 'Luka Lukić', hotelId: '50', roomType: 'Suite', checkIn: '2026-06-25', checkOut: '2026-07-02', adults: 2, children: 1, babies: 1, amount: 1950, createdAt: '2026-03-16', status: 'Active', contract: 'Ugovor A', supplier: 'Fibula', subagentId: null, branchId: '3', isB2C: false },
 ];
 
 const GENERATE_MOCK_CAPACITIES = (hotels: typeof MOCK_HOTELS) => {
@@ -88,34 +124,38 @@ const GENERATE_MOCK_CAPACITIES = (hotels: typeof MOCK_HOTELS) => {
                 const dateStr = d.toISOString().split('T')[0];
                 const currentDay = d.getTime();
 
-                // DYNAMIC CALCULATION: Count real reservations from MOCK_RESERVATIONS
-                const soldCount = MOCK_RESERVATIONS.filter(res => {
-                    const checkIn = new Date(res.checkIn).getTime();
-                    const checkOut = new Date(res.checkOut).getTime();
-                    const isValidStatus = ['Active', 'Reservation'].includes(res.status);
-                    return res.hotelId === hotel.id &&
-                        res.roomType === room &&
-                        currentDay >= checkIn &&
-                        currentDay < checkOut &&
-                        isValidStatus;
-                }).length;
+                // Dynamic split for demo
+                const hotelContracts: ContractStatus[] = MOCK_CONTRACTS.slice(0, 3).map((name, idx) => {
+                    const baseAlloc = idx === 0 ? 2 : (idx === 1 ? 4 : 6);
 
-                const total = 5 + Math.floor(Math.random() * 5);
-                const statuses: Array<CapacityRecord['status']> = ['Alotman', 'Fix', 'On Request', 'Stop'];
-                let status: CapacityRecord['status'] = 'Alotman';
+                    const soldForContract = MOCK_RESERVATIONS.filter(res => {
+                        const checkIn = new Date(res.checkIn).getTime();
+                        const checkOut = new Date(res.checkOut).getTime();
+                        return res.hotelId === hotel.id &&
+                            res.roomType === room &&
+                            res.contract === name &&
+                            currentDay >= checkIn &&
+                            currentDay < checkOut;
+                    }).length;
 
-                // FORCE SOME DATA FOR DEMO
-                if (i % 15 === 0) status = 'Stop';
-                else if (i % 7 === 0) status = 'On Request';
-                else if (soldCount >= total) status = 'Stop';
-                else if (soldCount >= total * 0.8) status = 'On Request';
-                else status = statuses[Math.floor(Math.random() * 2)];
+                    return {
+                        id: `C-${idx}`,
+                        name: name,
+                        all: baseAlloc,
+                        sold: soldForContract,
+                        status: 'Alotman'
+                    };
+                });
+
+                const totalAll = hotelContracts.reduce((acc, c) => acc + c.all, 0);
+                const totalSold = hotelContracts.reduce((acc, c) => acc + c.sold, 0);
 
                 records[dateStr] = {
                     date: dateStr,
-                    all: total,
-                    sold: i % 10 === 0 ? 0 : soldCount, // Force some 0 sold for "Free"
-                    status: status
+                    totalAll,
+                    totalSold,
+                    contracts: hotelContracts,
+                    masterStatus: totalSold >= totalAll ? 'Stop' : 'Alotman'
                 };
             }
             allCapacities.push({
@@ -135,7 +175,11 @@ const OperationalReports: React.FC = () => {
     }, []);
 
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'inventory' | 'stats' | 'rooming'>('inventory');
+    const [activeTab, setActiveTab] = useState<'inventory' | 'stats' | 'rooming' | 'analytics'>('inventory');
+    const [activeTags, setActiveTags] = useState<string[]>(['Država', 'Destinacija', 'Hotel']);
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+    const [isAllExpanded, setIsAllExpanded] = useState(false);
+    const [showPublicLinkModal, setShowPublicLinkModal] = useState<string | null>(null);
     const [selectedDate, setSelectedDate] = useState(new Date('2026-06-20'));
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedHotel, setSelectedHotel] = useState(MOCK_HOTELS[0]);
@@ -147,8 +191,23 @@ const OperationalReports: React.FC = () => {
     const [showReportModal, setShowReportModal] = useState<{ show: boolean, type: 'stop' | 'free' }>({ show: false, type: 'stop' });
     const [isSendingReport, setIsSendingReport] = useState(false);
     const [reportSentAt, setReportSentAt] = useState<string | null>(null);
+    const [reportTrigger, setReportTrigger] = useState(0);
     const [searchParams] = useSearchParams();
     const isReportOnlyView = searchParams.get('reportView') === 'true';
+    const reportEntity = searchParams.get('entity');
+
+    useEffect(() => {
+        if (isReportOnlyView) {
+            const type = searchParams.get('type');
+            if (type === 'analytics') {
+                setActiveTab('analytics');
+                const tags = searchParams.get('tags');
+                if (tags) {
+                    setActiveTags(tags.split(','));
+                }
+            }
+        }
+    }, [isReportOnlyView, searchParams]);
 
     const MOCK_SUBAGENTS = [
         { id: '1', name: 'Fly Travel', email: 'fly-travel@gmail.com', city: 'Budva', country: 'Crna Gora', active: true },
@@ -223,6 +282,16 @@ const OperationalReports: React.FC = () => {
     const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [hotelFilter, setHotelFilter] = useState('');
+    const [showBookingCal, setShowBookingCal] = useState(false);
+    const [showStayCal, setShowStayCal] = useState(false);
+    const [showGridCal, setShowGridCal] = useState(false);
+
+    const formatDateRange = (start: string, end: string) => {
+        if (!start || !end) return 'Odaberite datum';
+        const s = new Date(start);
+        const e = new Date(end);
+        return `${s.toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: '2-digit' })} - ${e.toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+    };
 
     // --- CAPACITY STATE ---
     const [allCapacities, setAllCapacities] = useState<RoomCapacity[]>(() =>
@@ -232,7 +301,9 @@ const OperationalReports: React.FC = () => {
     const groupedData = useMemo(() => {
         const filtered = allCapacities.filter(cap => {
             const hotel = MOCK_HOTELS.find(h => h.id === cap.hotelId);
-            const matchesDest = selectedDestinations.length === 0 || selectedDestinations.includes(hotel?.destination || '');
+            const matchesDest = selectedDestinations.length === 0 ||
+                selectedDestinations.includes(hotel?.destination || '') ||
+                selectedDestinations.includes(hotel?.country || '');
             const matchesCat = selectedCategories.length === 0 || selectedCategories.includes(hotel?.category || '');
             const matchesSearch = cap.hotelName.toLowerCase().includes(hotelFilter.toLowerCase());
 
@@ -247,10 +318,48 @@ const OperationalReports: React.FC = () => {
                     rooms: []
                 };
             }
-            groups[cap.hotelId].rooms.push(cap);
+
+            // DYNAMICALLY CALCULATE SOLD BASED ON BOOKING FILTERS
+            const dynamicCap = { ...cap };
+            const newRecords = { ...cap.records };
+
+            Object.keys(newRecords).forEach(dateStr => {
+                const currentDay = new Date(dateStr).getTime();
+
+                // Filter reservations by booking date AND stay date
+                const soldForDay = MOCK_RESERVATIONS.filter(res => {
+                    const checkIn = new Date(res.checkIn).getTime();
+                    const checkOut = new Date(res.checkOut).getTime();
+                    const isWithinBookingRange = res.createdAt >= bookingFrom && res.createdAt <= bookingTo;
+                    const isWithinStayRange = currentDay >= checkIn && currentDay < checkOut;
+
+                    return res.hotelId === cap.hotelId &&
+                        res.roomType === cap.roomType &&
+                        isWithinBookingRange &&
+                        isWithinStayRange;
+                });
+
+                const totalSold = soldForDay.length;
+
+                // Update contracts sold counts too
+                const updatedContracts = newRecords[dateStr].contracts.map(c => ({
+                    ...c,
+                    sold: soldForDay.filter(r => r.contract === c.name).length
+                }));
+
+                newRecords[dateStr] = {
+                    ...newRecords[dateStr],
+                    totalSold,
+                    contracts: updatedContracts,
+                    masterStatus: totalSold >= newRecords[dateStr].totalAll ? 'Stop' : newRecords[dateStr].masterStatus
+                };
+            });
+
+            dynamicCap.records = newRecords;
+            groups[cap.hotelId].rooms.push(dynamicCap);
         });
         return Object.values(groups);
-    }, [allCapacities, selectedDestinations, selectedCategories, hotelFilter]);
+    }, [allCapacities, selectedDestinations, selectedCategories, hotelFilter, bookingFrom, bookingTo]);
 
     const toggleHotel = (id: string) => {
         const newExpanded = new Set(expandedHotels);
@@ -260,7 +369,11 @@ const OperationalReports: React.FC = () => {
     };
 
     // --- MOCK DATA FOR DROPDOWNS ---
-    const DEST_OPTIONS = DESTINATIONS.filter(d => d !== 'Sve');
+    const UNIFIED_GEO_OPTIONS = useMemo(() => {
+        const countries = Array.from(new Set(MOCK_HOTELS.map(h => h.country)));
+        const destinations = Array.from(new Set(MOCK_HOTELS.map(h => h.destination)));
+        return [...countries, ...destinations];
+    }, []);
     const CAT_OPTIONS = CATEGORIES.filter(c => c !== 'Sve');
 
     // --- REUSABLE DROPDOWN COMPONENT ---
@@ -334,9 +447,93 @@ const OperationalReports: React.FC = () => {
     // --- CAPACITY MODAL STATE ---
     const [capDateFrom, setCapDateFrom] = useState('2026-06-01');
     const [capDateTo, setCapDateTo] = useState('2026-06-30');
+    const [capBookingFrom, setCapBookingFrom] = useState('2026-01-01');
+    const [capBookingTo, setCapBookingTo] = useState('2026-12-31');
     const [capRooms, setCapRooms] = useState<string[]>([]);
-    const [capValue, setCapValue] = useState(10);
-    const [capStatus, setCapStatus] = useState<CapacityRecord['status']>('Alotman');
+    const [capValue, setCapValue] = useState<string>("10");
+    const [capStatus, setCapStatus] = useState<CapacityRecord['masterStatus']>('Alotman');
+    const [capSelectedContract, setCapSelectedContract] = useState<string>('Svi Ugovori');
+    const [showCapStartCal, setShowCapStartCal] = useState(false);
+    const [showCapEndCal, setShowCapEndCal] = useState(false);
+    const [showCapBookStartCal, setShowCapBookStartCal] = useState(false);
+    const [showCapBookEndCal, setShowCapBookEndCal] = useState(false);
+    const [showReviewPreview, setShowReviewPreview] = useState(false);
+    const [capOverwrite, setCapOverwrite] = useState(false);
+    const [showLogsModal, setShowLogsModal] = useState(false);
+    const [wizardVersion, setWizardVersion] = useState<'classic' | 'studio'>('classic');
+
+    // Audit Trail Storage (Mock)
+    const [capacityLogs, setCapacityLogs] = useState<any[]>([
+        { id: 1, user: 'Nenad P.', action: 'Ažuriranje', hotel: 'Hotel Hunguest Sun Resort', room: 'Double Room', period: '01.06 - 15.06.2026', change: '+5', timestamp: '2026-03-05 09:15' },
+        { id: 2, user: 'Admin', action: 'Prebrisano', hotel: 'Mitsis Grand Hotel', room: 'Suite Pool View', period: '10.07.2026', change: 'Set 12', timestamp: '2026-03-05 08:30' }
+    ]);
+
+    // Tiered Search State & Search Inputs
+    const [capCountry, setCapCountry] = useState('');
+    const [capCountryQuery, setCapCountryQuery] = useState('');
+    const [showCountryChoices, setShowCountryChoices] = useState(false);
+
+    const [capDest, setCapDest] = useState('');
+    const [capDestQuery, setCapDestQuery] = useState('');
+    const [showDestChoices, setShowDestChoices] = useState(false);
+
+    const [capHotelSearch, setCapHotelSearch] = useState('');
+
+    const hotelCountries = useMemo(() => Array.from(new Set(MOCK_HOTELS.map(h => h.country))).sort(), []);
+    const filteredCountriesList = useMemo(() =>
+        hotelCountries.filter(c => c.toLowerCase().includes(capCountryQuery.toLowerCase())),
+        [hotelCountries, capCountryQuery]);
+
+    const filteredDests = useMemo(() => {
+        const dests = MOCK_HOTELS.filter(h => !capCountry || h.country === capCountry).map(h => h.destination);
+        return Array.from(new Set(dests)).sort();
+    }, [capCountry]);
+
+    const filteredDestsList = useMemo(() =>
+        filteredDests.filter(d => d.toLowerCase().includes(capDestQuery.toLowerCase())),
+        [filteredDests, capDestQuery]);
+
+    const filteredHotelsForWizard = useMemo(() => {
+        return MOCK_HOTELS.filter(h => {
+            const matchCountry = !capCountry || h.country === capCountry;
+            const matchDest = !capDest || h.destination === capDest;
+            const matchSearch = !capHotelSearch || h.name.toLowerCase().includes(capHotelSearch.toLowerCase());
+            return matchCountry && matchDest && matchSearch;
+        });
+    }, [capCountry, capDest, capHotelSearch]);
+
+    const generateTextInventoryReport = () => {
+        let report = `<strong>*** TEXT INVENTORY REPORT</strong> - ${new Date().toLocaleString('sr-RS')} ***\n\n`;
+        report += `<strong>PERIOD BUKIRANJA:</strong> ${new Date(bookingFrom).toLocaleDateString()} - ${new Date(bookingTo).toLocaleDateString()}\n`;
+        report += `<strong>DESTINACIJE:</strong> ${selectedDestinations.length > 0 ? selectedDestinations.join(', ') : 'Sve'}\n`;
+        report += `------------------------------------------------------------\n\n`;
+
+        groupedData.forEach(group => {
+            report += `<strong>HOTEL: ${group.hotel.name.toUpperCase()}</strong> (${group.hotel.destination}, ${group.hotel.country})\n`;
+
+            group.rooms.forEach(room => {
+                report += `  <strong>> TIP SOBE: ${room.roomType}</strong>\n`;
+
+                const dates = Object.keys(room.records).sort().slice(0, 10);
+                dates.forEach(d => {
+                    const rec = room.records[d];
+                    const avail = rec.totalAll - rec.totalSold;
+                    report += `    <span style="color: #991b1b;">[${d}] Kapacitet: ${rec.totalAll} | Prodato: ${rec.totalSold} | Slobodno: ${avail} | Status: ${rec.masterStatus}</span>\n`;
+
+                    if (rec.contracts && rec.contracts.length > 0) {
+                        report += `      <strong>DETALJI PO UGOVORIMA:</strong>\n`;
+                        rec.contracts.forEach(c => {
+                            report += `      - ${c.name.padEnd(15)} | Kvota: ${c.all} | Prodato: ${c.sold} | Status: ${c.status}\n`;
+                        });
+                    }
+                });
+                report += `\n`;
+            });
+            report += `============================================================\n\n`;
+        });
+
+        return report;
+    };
 
     const handleDateClick = (date: Date, hotelInfo?: any) => {
         const dateStr = date.toISOString().split('T')[0];
@@ -346,27 +543,68 @@ const OperationalReports: React.FC = () => {
     };
 
     const handleSaveCapacity = () => {
-        const newCapacities = [...allCapacities];
-        const startDate = new Date(capDateFrom);
-        const endDate = new Date(capDateTo);
+        const val = parseInt(capValue);
+        const isIncrement = capValue.startsWith('-') || capValue.startsWith('+');
 
-        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-            const dateStr = d.toISOString().split('T')[0];
-            capRooms.forEach(roomType => {
-                // Find capacity record in our flat list
-                const idx = newCapacities.findIndex(rc => rc.roomType === roomType && rc.hotelId === selectedHotel.id);
-                if (idx !== -1) {
-                    newCapacities[idx].records[dateStr] = {
-                        date: dateStr,
-                        all: capValue,
-                        sold: Math.floor(Math.random() * (capValue < 5 ? capValue : 5)),
-                        status: capStatus
-                    };
+        const updated = allCapacities.map(cap => {
+            if (cap.hotelId === selectedHotel.id && capRooms.includes(cap.roomType)) {
+                const newRecords = { ...cap.records };
+                const start = new Date(capDateFrom);
+                const end = new Date(capDateTo);
+
+                for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                    const dateStr = d.toISOString().split('T')[0];
+                    if (newRecords[dateStr]) {
+                        const rec = { ...newRecords[dateStr] };
+
+                        // Determine the new totalAll value based on capOverwrite and isIncrement
+                        let newTotalAll;
+                        if (capOverwrite) {
+                            newTotalAll = Math.max(0, val);
+                        } else if (isIncrement) {
+                            newTotalAll = Math.max(0, rec.totalAll + val);
+                        } else { // Absolute value when not incrementing and not overwriting
+                            newTotalAll = Math.max(0, val);
+                        }
+                        rec.totalAll = newTotalAll;
+                        rec.masterStatus = capStatus;
+
+                        if (capSelectedContract === 'Svi Ugovori') {
+                            rec.contracts = rec.contracts.map(c => ({
+                                ...c,
+                                all: capOverwrite ? Math.max(0, val) : (isIncrement ? Math.max(0, c.all + val) : Math.max(0, val)),
+                                status: capStatus
+                            }));
+                        } else {
+                            rec.contracts = rec.contracts.map(c =>
+                                c.name === capSelectedContract
+                                    ? { ...c, all: capOverwrite ? Math.max(0, val) : (isIncrement ? Math.max(0, c.all + val) : Math.max(0, val)), status: capStatus }
+                                    : c
+                            );
+                        }
+                        newRecords[dateStr] = rec;
+                    }
                 }
-            });
-        }
-        setAllCapacities(newCapacities);
+                return { ...cap, records: newRecords };
+            }
+            return cap;
+        });
+
+        const newLogEntry = {
+            id: Date.now(),
+            user: 'Trenutni Korisnik',
+            action: capOverwrite ? 'Prebrisano' : 'Ažuriranje',
+            hotel: selectedHotel.name,
+            room: capRooms.join(', '),
+            period: `${new Date(capDateFrom).toLocaleDateString()} - ${new Date(capDateTo).toLocaleDateString()}`,
+            change: capOverwrite ? `Postavljeno: ${capValue}` : `Promena: ${capValue.startsWith('-') || capValue.startsWith('+') ? '' : '+'}${capValue}`,
+            timestamp: new Date().toLocaleString()
+        };
+
+        setCapacityLogs(prev => [newLogEntry, ...prev]);
+        setAllCapacities(updated);
         setShowCapacityModal(false);
+        setShowReviewPreview(false);
     };
 
     // --- Inventory View Helpers ---
@@ -418,6 +656,148 @@ const OperationalReports: React.FC = () => {
         };
     }, [bookingFrom, bookingTo, stayFrom, stayTo]);
 
+    const AnalyticsRow = ({ row, level = 0 }: { row: any; level?: number }) => {
+        const isExpanded = expandedRows.has(row.id);
+        const hasChildren = row.children && row.children.length > 0;
+
+        return (
+            <>
+                <tr className={`drill-row ${isExpanded ? 'expanded' : ''}`}>
+                    <td style={{ paddingLeft: `${level * 40 + 20}px` }}>
+                        <div className="drill-cell-name">
+                            {hasChildren ? (
+                                <button
+                                    className={`drill-expand-btn ${isExpanded ? 'active' : ''}`}
+                                    onClick={() => {
+                                        const newExpanded = new Set(expandedRows);
+                                        if (isExpanded) newExpanded.delete(row.id);
+                                        else newExpanded.add(row.id);
+                                        setExpandedRows(newExpanded);
+                                    }}
+                                >
+                                    {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                </button>
+                            ) : <div style={{ width: 24 }} />}
+                            <div>
+                                <div style={{ fontSize: '14px', fontWeight: 700 }}>{row.name}</div>
+                                <div className="drill-level-badge">{row.levelName}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td />
+                    <td>
+                        <span className="kpi-value">{row.count}</span>
+                        <span className="kpi-label">Rezervacija</span>
+                    </td>
+                    <td>
+                        <span className="kpi-value">{row.pax}</span>
+                        <span className="kpi-label">PAX</span>
+                    </td>
+                    <td>
+                        <span className="kpi-value">{row.revenue.toLocaleString('sr-RS')} €</span>
+                        <span className="kpi-label">Revenue</span>
+                    </td>
+                    <td>
+                        <span className="kpi-value">{row.personNights}</span>
+                        <span className="kpi-label">Noćenja (PAX x N)</span>
+                    </td>
+                    <td>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button className="action-pill" onClick={() => setShowReportModal({ show: true, type: 'free' })}>
+                                <FileText size={14} /> Report
+                            </button>
+                            <button className="action-pill" onClick={() => setShowPublicLinkModal(row.name)}>
+                                <Link size={14} /> Link
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {isExpanded && row.children.map((child: any) => (
+                    <AnalyticsRow key={child.id} row={child} level={level + 1} />
+                ))}
+            </>
+        );
+    };
+    const getDimensionValue = (res: any, tag: string) => {
+        const hotel = MOCK_HOTELS.find(h => h.id === res.hotelId);
+        const subagent = MOCK_SUBAGENTS.find(s => s.id === res.subagentId);
+        switch (tag) {
+            case 'Država': return hotel?.country || 'Nepoznato';
+            case 'Destinacija': return hotel?.destination || 'Nepoznato';
+            case 'Hotel': return hotel?.name || 'Nepoznato';
+            case 'Dobavljač': return res.supplier || 'Direktno';
+            case 'Subagent': return subagent?.name || 'Direktna Prodaja';
+            case 'Poslovnica': return res.branchId ? MOCK_BRANCHES[parseInt(res.branchId) - 1] : 'Nema';
+            case 'B2C': return res.isB2C ? 'Online (B2C)' : 'Partneri (B2B)';
+            default: return 'N/A';
+        }
+    };
+
+    const analyticsData = useMemo(() => {
+        const filtered = MOCK_RESERVATIONS.filter(r =>
+            (r.createdAt >= bookingFrom && r.createdAt <= bookingTo) &&
+            (r.checkIn >= stayFrom && r.checkIn <= stayTo)
+        );
+
+        const groupRecursive = (data: any[], tags: string[], level: number, parentId: string = ''): any[] => {
+            if (level >= tags.length) return [];
+            const tag = tags[level];
+            const groups: Record<string, any[]> = {};
+
+            data.forEach(r => {
+                const val = getDimensionValue(r, tag);
+                if (!groups[val]) groups[val] = [];
+                groups[val].push(r);
+            });
+
+            return Object.entries(groups).map(([name, items]) => {
+                const id = `${parentId}|${name}`;
+                const revenue = items.reduce((acc, r) => acc + r.amount, 0);
+                const pax = items.reduce((acc, r) => acc + (r.adults + r.children + r.babies), 0);
+                const nights = items.reduce((acc, r) => {
+                    const n = Math.max(1, Math.ceil((new Date(r.checkOut).getTime() - new Date(r.checkIn).getTime()) / 86400000));
+                    return acc + n;
+                }, 0);
+
+                return {
+                    id,
+                    name,
+                    levelName: tag,
+                    count: items.length,
+                    revenue,
+                    pax,
+                    nights,
+                    personNights: items.reduce((acc, r) => {
+                        const n = Math.max(1, Math.ceil((new Date(r.checkOut).getTime() - new Date(r.checkIn).getTime()) / 86400000));
+                        const p = r.adults + r.children + r.babies;
+                        return acc + (n * p);
+                    }, 0),
+                    children: groupRecursive(items, tags, level + 1, id)
+                };
+            });
+        };
+
+        return groupRecursive(filtered, activeTags, 0);
+    }, [activeTags, bookingFrom, bookingTo, stayFrom, stayTo, reportTrigger]);
+
+    const handleExpandAll = () => {
+        const allIds = new Set<string>();
+        const collectIds = (rows: any[]) => {
+            rows.forEach(row => {
+                allIds.add(row.id);
+                if (row.children) collectIds(row.children);
+            });
+        };
+        collectIds(analyticsData);
+        setExpandedRows(allIds);
+        setIsAllExpanded(true);
+    };
+
+    const handleCollapseAll = () => {
+        setExpandedRows(new Set());
+        setIsAllExpanded(false);
+    };
+
     // --- Daily Pulse Data ---
     const getArrivalsDepartures = (dateStr: string) => {
         const arrivals = MOCK_RESERVATIONS.filter(r => r.checkIn === dateStr);
@@ -440,6 +820,130 @@ const OperationalReports: React.FC = () => {
 
     if (isReportOnlyView) {
         const reportToken = searchParams.get('token') || 'PUBLIC-DEMO';
+        const type = searchParams.get('type');
+
+        if (type === 'analytics') {
+            return (
+                <div className="full-report-standalone analytics-standalone">
+                    <style>{`
+                        /* Nuclear Hide: Kill app navigation */
+                        header, nav, aside, .top-header, .main-menu, .navbar, .sidebar { display: none !important; }
+                        #root, .app-container, .main-layout { padding: 0 !important; margin: 0 !important; overflow: visible !important; }
+
+                        .analytics-standalone {
+                            position: fixed;
+                            inset: 0;
+                            background: #f8fafc;
+                            z-index: 99999999;
+                            overflow-y: auto;
+                            color: #1e293b;
+                            font-family: 'Outfit', sans-serif;
+                            padding: 40px;
+                        }
+
+                        .analytics-standalone .report-wrapper {
+                            margin: 0 auto;
+                            max-width: 1200px;
+                            background: #fff;
+                            border-radius: 16px;
+                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                            padding: 40px;
+                        }
+
+                        .analytics-standalone .report-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
+                            margin-bottom: 40px;
+                            padding-bottom: 20px;
+                            border-bottom: 2px solid #e2e8f0;
+                        }
+
+                        .analytics-standalone .drill-down-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 20px;
+                            background: white;
+                        }
+
+                        .analytics-standalone .drill-down-table th {
+                            background: #f8fafc;
+                            padding: 16px 20px;
+                            text-align: left;
+                            font-size: 11px;
+                            font-weight: 800;
+                            color: #64748b;
+                            text-transform: uppercase;
+                            border-bottom: 2px solid #e2e8f0;
+                            letter-spacing: 0.5px;
+                        }
+
+                        .analytics-standalone .drill-down-table td {
+                            padding: 16px 20px;
+                            border-bottom: 1px solid #f1f5f9;
+                            color: #1e293b;
+                        }
+                    `}</style>
+                    <div className="report-wrapper">
+                        <div className="report-header">
+                            <div>
+                                <h1 style={{ margin: '0 0 10px 0', fontSize: '28px', fontWeight: 800, color: '#0f172a' }}>
+                                    B2B Analytics Report
+                                </h1>
+                                <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
+                                    Entity: <strong style={{ color: '#3b82f6' }}>{reportEntity || 'All'}</strong> <br />
+                                    Filteri: <strong style={{ color: '#64748b' }}>{activeTags.join(' > ')}</strong>
+                                </p>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '12px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>
+                                    Kreirano
+                                </div>
+                                <div style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>
+                                    {new Date().toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '30px' }}>
+                            <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '10px' }}>
+                                <strong>Period Prodaje:</strong> {new Date(bookingFrom).toLocaleDateString()} - {new Date(bookingTo).toLocaleDateString()}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                <strong>Period Boravka:</strong> {new Date(stayFrom).toLocaleDateString()} - {new Date(stayTo).toLocaleDateString()}
+                            </div>
+                        </div>
+
+                        <table className="drill-down-table">
+                            <thead>
+                                <tr>
+                                    <th>Struktura Rezultata (Drill-down)</th>
+                                    <th></th>
+                                    <th>Rezervacije</th>
+                                    <th>Putnici</th>
+                                    <th>Promet (Revenue)</th>
+                                    <th>Noćenja</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {analyticsData.length > 0 ? (
+                                    analyticsData.map(row => (
+                                        <AnalyticsRow key={row.id} row={row} />
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                                            Nema podataka za prikaz
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        }
 
         return (
             <div className="full-report-standalone">
@@ -448,21 +952,21 @@ const OperationalReports: React.FC = () => {
                     header, nav, aside, .top-header, .main-menu, .navbar, .sidebar { display: none !important; }
                     #root, .app-container, .main-layout { padding: 0 !important; margin: 0 !important; overflow: visible !important; }
 
-                    .full-report-standalone { 
-                        position: fixed; 
+                    .full-report-standalone {
+                        position: fixed;
                         inset: 0;
-                        background: #f8fafc; 
+                        background: #f8fafc;
                         z-index: 99999999;
                         overflow-y: auto;
                         color: #1e293b;
                         font-family: 'Outfit', sans-serif;
                     }
-                    
+
                     .report-wrapper { max-width: 1800px; margin: 0 auto; background: white; min-height: 100vh; display: flex; flex-direction: column; }
 
-                    .report-header { 
-                        display: flex; justify-content: space-between; align-items: center; 
-                        padding: 20px 40px; border-bottom: 2px solid #e2e8f0; 
+                    .report-header {
+                        display: flex; justify-content: space-between; align-items: center;
+                        padding: 20px 40px; border-bottom: 2px solid #e2e8f0;
                         background: white; position: sticky; top: 0; z-index: 50;
                     }
 
@@ -473,13 +977,13 @@ const OperationalReports: React.FC = () => {
                     }
 
                     .standalone-table-container { padding: 40px; flex-grow: 1; }
-                    .report-table { 
+                    .report-table {
                         width: 100%; border-collapse: collapse; border-spacing: 0;
                         table-layout: fixed;
                     }
-                    
-                    .report-table th, .report-table td { 
-                        border: 1px solid #e2e8f0; 
+
+                    .report-table th, .report-table td {
+                        border: 1px solid #e2e8f0;
                         padding: 0; height: 40px;
                         text-align: center;
                     }
@@ -495,8 +999,8 @@ const OperationalReports: React.FC = () => {
                     .hotel-name-cell p { margin: 2px 0 0; font-size: 10px; color: #64748b; font-weight: 600; }
 
                     .room-row { background: #fbfbfc; }
-                    .room-name-cell { 
-                        padding-left: 45px !important; text-align: left !important; 
+                    .room-name-cell {
+                        padding-left: 45px !important; text-align: left !important;
                         font-size: 12px; font-weight: 700; color: #475569;
                     }
 
@@ -509,7 +1013,7 @@ const OperationalReports: React.FC = () => {
 
                     .expand-icon { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; background: #f1f5f9; color: #64748b; margin-right: 10px; }
                     .expanded .expand-icon { background: #3b82f6; color: white; }
-                    
+
                     .report-footer { padding: 40px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 12px; }
                 `}</style>
 
@@ -571,11 +1075,11 @@ const OperationalReports: React.FC = () => {
                                                 </td>
                                                 {dates.map((date, idx) => {
                                                     const dateStr = date.toISOString().split('T')[0];
-                                                    let worstStatus: CapacityRecord['status'] = 'Alotman';
+                                                    let worstStatus: CapacityRecord['masterStatus'] = 'Alotman';
                                                     group.rooms.forEach(r => {
                                                         const rec = r.records[dateStr];
-                                                        if (rec?.status === 'Stop') worstStatus = 'Stop';
-                                                        else if (rec?.status === 'On Request' && worstStatus !== 'Stop') worstStatus = 'On Request';
+                                                        if (rec?.masterStatus === 'Stop') worstStatus = 'Stop';
+                                                        else if (rec?.masterStatus === 'On Request' && worstStatus !== 'Stop') worstStatus = 'On Request';
                                                     });
                                                     return (
                                                         <td key={idx}>
@@ -590,7 +1094,7 @@ const OperationalReports: React.FC = () => {
                                                     {dates.map((date, idx) => {
                                                         const dateStr = date.toISOString().split('T')[0];
                                                         const rec = room.records[dateStr];
-                                                        const status = rec?.status || 'Alotman';
+                                                        const status = rec?.masterStatus || 'Alotman';
                                                         return (
                                                             <td key={idx}>
                                                                 <span className={`cell-status status-${status.replace(' ', '-')}`}></span>
@@ -654,6 +1158,13 @@ const OperationalReports: React.FC = () => {
                             PAX & Statistika
                         </button>
                         <button
+                            className={`op-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('analytics')}
+                        >
+                            <TrendingUp size={18} />
+                            Dynamic Analytics
+                        </button>
+                        <button
                             className={`op-tab-btn ${activeTab === 'rooming' ? 'active' : ''}`}
                             onClick={() => setActiveTab('rooming')}
                         >
@@ -677,7 +1188,7 @@ const OperationalReports: React.FC = () => {
                             onClick={() => setShowMonthSelector(true)}
                             title="Promeni mesec"
                         >
-                            {dates[0].toLocaleDateString('sr-Latn-RS', { month: 'long', year: 'numeric' })}
+                            {monthNames[selectedDate.getMonth()]} {selectedDate.getFullYear()}
                         </span>
                         <button className="btn-icon" onClick={() => setSelectedDate(new Date(selectedDate.getTime() + 7 * 86400000))}>
                             <ChevronRight size={16} />
@@ -689,17 +1200,27 @@ const OperationalReports: React.FC = () => {
 
                 <div className="filter-group">
                     <label>Rezervacije (od-do)</label>
-                    <div className="range">
-                        <input type="date" value={bookingFrom} onChange={e => setBookingFrom(e.target.value)} />
-                        <input type="date" value={bookingTo} onChange={e => setBookingTo(e.target.value)} />
+                    <div className="date-field-modern" onClick={() => setShowBookingCal(true)}>
+                        <CalendarIcon size={14} className="df-icon" />
+                        <span className="df-value">{formatDateRange(bookingFrom, bookingTo)}</span>
+                    </div>
+                </div>
+
+                <div className="filter-divider" />
+
+                <div className="filter-group">
+                    <label>Period Boravka</label>
+                    <div className="date-field-modern" onClick={() => setShowStayCal(true)}>
+                        <Users size={14} className="df-icon" />
+                        <span className="df-value">{formatDateRange(stayFrom, stayTo)}</span>
                     </div>
                 </div>
                 <div className="filter-divider" />
 
                 <div className="adv-filters-group">
                     <SearchableMultiSelect
-                        label="Destinacija"
-                        options={DEST_OPTIONS}
+                        label="Destinacija (Država / Grad)"
+                        options={UNIFIED_GEO_OPTIONS}
                         selected={selectedDestinations}
                         onChange={setSelectedDestinations}
                         icon={MapPin}
@@ -726,6 +1247,32 @@ const OperationalReports: React.FC = () => {
                         </div>
                     </div>
                 </div>
+
+                <div className="filter-divider" />
+
+                <button
+                    className="btn-create-cap apply-filters-btn"
+                    style={{
+                        background: 'var(--accent)',
+                        alignSelf: 'center',
+                        height: '42px',
+                        padding: '0 25px',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        color: 'white',
+                        fontWeight: 800,
+                        border: 'none',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)'
+                    }}
+                    onClick={() => {
+                        setReportTrigger(prev => prev + 1);
+                    }}
+                >
+                    <PieChart size={18} /> Prikaži Izveštaj
+                </button>
             </section>
 
             {/* Main Content View */}
@@ -743,6 +1290,9 @@ const OperationalReports: React.FC = () => {
                             <div className="inventory-sub-header">
                                 <h2 className="inventory-title">Pregled Kapaciteta po Danima</h2>
                                 <div className="report-actions">
+                                    <button className="op-btn-secondary" onClick={() => setShowLogsModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <HistoryIcon size={16} /> Istorija (Logs)
+                                    </button>
                                     <button
                                         className="report-btn stop-sale-btn"
                                         onClick={() => setShowReportModal({ show: true, type: 'stop' })}
@@ -805,8 +1355,8 @@ const OperationalReports: React.FC = () => {
                                                             group.rooms.forEach(r => {
                                                                 const rec = r.records[dateStr];
                                                                 if (rec) {
-                                                                    hTotalAll += rec.all;
-                                                                    hTotalSold += rec.sold;
+                                                                    hTotalAll += rec.totalAll;
+                                                                    hTotalSold += rec.totalSold;
                                                                 }
                                                             });
                                                             const avail = hTotalAll - hTotalSold;
@@ -844,18 +1394,18 @@ const OperationalReports: React.FC = () => {
                                                                 const dateStr = date.toISOString().split('T')[0];
                                                                 const rec = room.records[dateStr];
                                                                 if (!rec) return <td key={dIdx} className="cap-cell cell-empty"></td>;
-                                                                const available = rec.all - rec.sold;
-                                                                const occPercent = rec.all > 0 ? Math.round((rec.sold / rec.all) * 100) : 0;
-                                                                const statusClass = `stat-${rec.status.replace(' ', '-')}`;
+                                                                const available = rec.totalAll - rec.totalSold;
+                                                                const occPercent = rec.totalAll > 0 ? Math.round((rec.totalSold / rec.totalAll) * 100) : 0;
+                                                                const statusClass = `stat-${rec.masterStatus.replace(' ', '-')}`;
 
                                                                 return (
                                                                     <td key={dIdx} className={`cap-cell ${statusClass}`} onClick={() => handleDateClick(date, group.hotel)}>
                                                                         <div className="cap-content">
-                                                                            <span className="cap-total">{rec.all}</span>
-                                                                            <span className="cap-sold">{rec.sold}</span>
+                                                                            <span className="cap-total">{rec.totalAll}</span>
+                                                                            <span className="cap-sold">{rec.totalSold}</span>
                                                                             <div className="cap-meta-info">
                                                                                 <span className="cap-occ-mini">{occPercent}%</span>
-                                                                                <span className="cap-status-badge">{rec.status.substring(0, 3)}</span>
+                                                                                <span className="cap-status-badge">{rec.masterStatus.substring(0, 3)}</span>
                                                                             </div>
                                                                             <div className="cap-avail-tag-wrapper">
                                                                                 <span className="cap-available-tag small">{available}</span>
@@ -884,8 +1434,8 @@ const OperationalReports: React.FC = () => {
                                                     group.rooms.forEach(cap => {
                                                         const rec = cap.records[dateStr];
                                                         if (rec) {
-                                                            totalAll += rec.all;
-                                                            totalSold += rec.sold;
+                                                            totalAll += rec.totalAll;
+                                                            totalSold += rec.totalSold;
                                                         }
                                                     });
                                                 });
@@ -914,52 +1464,234 @@ const OperationalReports: React.FC = () => {
                     {activeTab === 'stats' && (
                         <motion.div
                             key="stats"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
+                            initial="hidden"
+                            animate="show"
+                            variants={{
+                                hidden: { opacity: 0 },
+                                show: {
+                                    opacity: 1,
+                                    transition: {
+                                        staggerChildren: 0.1
+                                    }
+                                }
+                            }}
                             className="stats-view"
                         >
                             <div className="stats-header-actions">
-                                <h2 className="section-subtitle">Pregled PAX Statistike za odabrani period</h2>
-                                <button className="export-btn">
+                                <div>
+                                    <h2 className="section-subtitle">Pregled PAX Statistike</h2>
+                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Analitika za period: <strong>{new Date(stayFrom).toLocaleDateString()} - {new Date(stayTo).toLocaleDateString()}</strong></p>
+                                </div>
+                                <button className="op-btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px' }}>
                                     <Download size={18} /> Export Excel
                                 </button>
                             </div>
 
                             <div className="stats-grid">
-                                <div className="stat-card">
-                                    <Users2 size={24} color="#3fb950" />
+                                <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="stat-card">
+                                    <div className="icon-box" style={{ background: '#ecfdf5' }}>
+                                        <Users2 size={24} color="#10b981" />
+                                    </div>
                                     <div className="stat-info">
                                         <span className="label">Ukupno Putnika (PAX)</span>
                                         <span className="value">{statsData.totalPAX}</span>
                                     </div>
                                     <div className="pax-breakdown">
-                                        <div className="pax-tag">ADL: <strong>{statsData.totalAdults}</strong></div>
-                                        <div className="pax-tag">CHD: <strong>{statsData.totalKids}</strong></div>
-                                        <div className="pax-tag">INF: <strong>{statsData.totalBabies}</strong></div>
+                                        <div className="pax-tag"><Users size={12} /> ADL: <strong>{statsData.totalAdults}</strong></div>
+                                        <div className="pax-tag"><Baby size={12} /> CHD: <strong>{statsData.totalKids}</strong></div>
+                                        <div className="pax-tag"><Baby size={12} style={{ opacity: 0.5 }} /> INF: <strong>{statsData.totalBabies}</strong></div>
                                     </div>
-                                </div>
-                                <div className="stat-card">
-                                    <Moon size={24} color="#a855f7" />
+                                </motion.div>
+
+                                <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="stat-card">
+                                    <div className="icon-box" style={{ background: '#f5f3ff' }}>
+                                        <Moon size={24} color="#7c3aed" />
+                                    </div>
                                     <div className="stat-info">
                                         <span className="label">Ukupno Noćenja</span>
                                         <span className="value">{statsData.totalNights}</span>
                                     </div>
-                                </div>
-                                <div className="stat-card">
-                                    <TrendingUp size={24} color="#3b82f6" />
+                                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0, fontWeight: 600 }}>Prosečno {statsData.totalPAX > 0 ? (statsData.totalNights / statsData.totalPAX).toFixed(1) : 0} noći po putniku</p>
+                                </motion.div>
+
+                                <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="stat-card">
+                                    <div className="icon-box" style={{ background: '#eff6ff' }}>
+                                        <TrendingUp size={24} color="#3b82f6" />
+                                    </div>
                                     <div className="stat-info">
                                         <span className="label">Prosečna Cena Putovanja</span>
-                                        <span className="value">€{statsData.avgPricePAX.toFixed(2)}</span>
+                                        <span className="value">€{statsData.avgPricePAX.toFixed(0)}</span>
                                     </div>
-                                </div>
-                                <div className="stat-card highlight">
-                                    <Activity size={24} color="var(--accent)" />
+                                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0, fontWeight: 600 }}>Po PAX-u (Bazirano na {statsData.totalRevenue.toLocaleString()}€)</p>
+                                </motion.div>
+
+                                <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="stat-card highlight">
+                                    <div className="icon-box" style={{ background: 'white' }}>
+                                        <Activity size={24} color="var(--accent)" />
+                                    </div>
                                     <div className="stat-info">
-                                        <span className="label">Ukupno Finansija</span>
+                                        <span className="label">Ukupno Finansija (Revenue)</span>
                                         <span className="value">€{statsData.totalRevenue.toLocaleString()}</span>
                                     </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 800, color: 'var(--accent)' }}>
+                                        <CheckCircle size={14} /> SVE REZERVACIJE UKLJUČENE
+                                    </div>
+                                </motion.div>
+                            </div>
+
+                            {/* Optional: Add a subtle chart placeholder or more info if needed */}
+                            <div style={{ background: 'white', padding: '30px', borderRadius: '24px', border: '1px solid var(--border)', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+                                    <div className="op-icon-badge" style={{ width: '40px', height: '40px' }}>
+                                        <TrendingUp size={18} color="var(--accent)" />
+                                    </div>
+                                    <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800 }}>Trend i Distribucija</h3>
                                 </div>
+                                <div style={{ height: '80px', display: 'flex', alignItems: 'flex-end', gap: '8px', padding: '10px 0' }}>
+                                    {[40, 70, 45, 90, 65, 80, 55, 95, 40, 60, 85, 50].map((h, i) => (
+                                        <motion.div
+                                            key={i}
+                                            initial={{ height: 0 }}
+                                            animate={{ height: `${h}%` }}
+                                            transition={{ delay: 0.5 + i * 0.05, duration: 0.5 }}
+                                            style={{
+                                                flex: 1,
+                                                background: i === 7 ? 'var(--accent)' : '#f1f5f9',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer'
+                                            }}
+                                            whileHover={{ background: 'var(--accent)', scaleY: 1.05 }}
+                                        />
+                                    ))}
+                                </div>
+                                <p style={{ margin: '15px 0 0', fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center' }}>Vizuelni prikaz distribucije rezervacija po mesecima (Demo)</p>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {activeTab === 'analytics' && (
+                        <motion.div
+                            key="analytics"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="analytics-view"
+                        >
+                            <div className="analytics-controls">
+                                <div>
+                                    <h2 className="section-subtitle">Dynamic Reporting Engine</h2>
+                                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                                        Konstruišite sopstveni izveštaj biranjem nivoa grupisanja. Redosled kliktanja definiše hijerarhiju.
+                                    </p>
+                                </div>
+
+                                <div className="tag-cloud-wrapper">
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <span className="tag-cloud-label">Dostupni Nivoi (Kliknite za aktivaciju):</span>
+                                        <div className="analytics-presets">
+                                            <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', marginRight: '10px' }}>PREPORUČENI PRESETI:</span>
+                                            <button className="preset-btn" onClick={() => setActiveTags(['Država', 'Destinacija', 'Dobavljač', 'Hotel'])}>
+                                                <PieChart size={12} /> 360 Master Overview
+                                            </button>
+                                            <button className="preset-btn" onClick={() => setActiveTags(['Subagent', 'Poslovnica', 'B2C'])}>
+                                                <Users size={12} /> Market Channels
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="tag-cloud" style={{ marginTop: '10px' }}>
+                                        <button
+                                            className="analytics-tag reset-tag"
+                                            style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fecaca' }}
+                                            onClick={() => setActiveTags([])}
+                                        >
+                                            <RotateCcw size={14} /> Reset
+                                        </button>
+                                        <div style={{ width: '1px', height: '30px', background: '#e2e8f0', margin: '0 10px' }} />
+                                        {['Država', 'Destinacija', 'Hotel', 'Dobavljač', 'Subagent', 'Poslovnica', 'B2C'].map((tag) => {
+                                            const index = activeTags.indexOf(tag);
+                                            const isActive = index !== -1;
+                                            return (
+                                                <div
+                                                    key={tag}
+                                                    className={`analytics-tag ${isActive ? 'active' : ''}`}
+                                                    onClick={() => {
+                                                        if (isActive) {
+                                                            setActiveTags(activeTags.filter(t => t !== tag));
+                                                        } else {
+                                                            setActiveTags([...activeTags, tag]);
+                                                        }
+                                                        setExpandedRows(new Set()); // Reset on hierarchy change
+                                                        setIsAllExpanded(false);
+                                                    }}
+                                                >
+                                                    {isActive && <span className="tag-order">{index + 1}</span>}
+                                                    {tag}
+                                                    {isActive ? <CheckCircle2 size={16} /> : <Plus size={16} />}
+                                                </div>
+                                            );
+                                        })}
+                                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+                                            <button
+                                                className="btn-create-cap"
+                                                style={{ borderRadius: '12px', background: 'var(--accent)' }}
+                                                onClick={() => setShowPublicLinkModal(`Full Report (${activeTags.join(' > ')})`)}
+                                            >
+                                                <Share2 size={16} /> Share Full Report
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="drill-down-card">
+                                <table className="drill-down-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Struktura Rezultata (Drill-down)</th>
+                                            <th style={{ width: '120px' }}>
+                                                <button
+                                                    className="op-btn-secondary"
+                                                    style={{
+                                                        padding: '6px 14px',
+                                                        fontSize: '11px',
+                                                        borderRadius: '8px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                        whiteSpace: 'nowrap',
+                                                        background: isAllExpanded ? 'rgba(var(--accent-rgb), 0.1)' : 'white'
+                                                    }}
+                                                    onClick={() => isAllExpanded ? handleCollapseAll() : handleExpandAll()}
+                                                >
+                                                    {isAllExpanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+                                                    {isAllExpanded ? 'Skupi Sve' : 'Raširi Sve'}
+                                                </button>
+                                            </th>
+                                            <th>Rezervacije</th>
+                                            <th>Putnici</th>
+                                            <th>Promet (Revenue)</th>
+                                            <th>Noćenja</th>
+                                            <th>Akcije</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {analyticsData.length > 0 ? (
+                                            analyticsData.map(row => (
+                                                <AnalyticsRow key={row.id} row={row} />
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={7} style={{ padding: '100px', textAlign: 'center' }}>
+                                                    <div style={{ opacity: 0.3, marginBottom: '15px' }}>
+                                                        <Search size={48} />
+                                                    </div>
+                                                    <h3 style={{ margin: 0, color: '#64748b' }}>Nema podataka za izabranu hijerarhiju ili filtere</h3>
+                                                    <p style={{ color: '#94a3b8' }}>Pokušajte da aktivirate neki od tagova iznad ili promenite period stay/booking.</p>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         </motion.div>
                     )}
@@ -1029,408 +1761,1155 @@ const OperationalReports: React.FC = () => {
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </main>
+            </main >
 
             {/* Daily Pulse Modal */}
             <AnimatePresence>
-                {showDailyPulse && (
-                    <div className="modal-overlay" onClick={() => setShowDailyPulse(false)}>
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="daily-pulse-modal"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <div className="pulse-header">
-                                <div>
-                                    <h3>Daily Pulse: {pulseDate}</h3>
-                                    <p>{selectedHotel.name}</p>
-                                </div>
-                                <button className="close-btn" onClick={() => setShowDailyPulse(false)}>
-                                    <X size={20} />
-                                </button>
-                            </div>
-
-                            <div className="pulse-content">
-                                <div className="pulse-section">
-                                    <div className="section-title">
-                                        <div className="title-left">
-                                            <ArrowUpRight size={18} color="#10b981" />
-                                            Arrivals (Dolasci)
-                                        </div>
-                                        <NavLink to={`/reservations?checkIn=${pulseDate}`} className="section-link">
-                                            Vidi sve dolaske <ChevronRight size={14} />
-                                        </NavLink>
+                {
+                    showDailyPulse && (
+                        <div className="modal-overlay" onClick={() => setShowDailyPulse(false)}>
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="daily-pulse-modal"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div className="pulse-header">
+                                    <div>
+                                        <h3>Daily Pulse: {pulseDate}</h3>
+                                        <p>{selectedHotel.name}</p>
                                     </div>
-                                    <div className="pulse-list">
-                                        {getArrivalsDepartures(pulseDate!).arrivals.length > 0 ? (
-                                            getArrivalsDepartures(pulseDate!).arrivals.map(r => (
-                                                <div key={r.id} className="pulse-item-card">
-                                                    <div className="p-info">
-                                                        <strong>{r.customer}</strong>
-                                                        <span>{r.roomType}</span>
-                                                    </div>
-                                                    <div className="p-pax">{r.adults + r.children} PAX</div>
-                                                    <NavLink to={`/reservations?id=${r.id}`} className="p-link">
-                                                        Dosije <ChevronRight size={14} />
-                                                    </NavLink>
-                                                </div>
-                                            ))
-                                        ) : <p className="empty-msg">Nema dolazaka.</p>}
-                                    </div>
+                                    <button className="close-btn" onClick={() => setShowDailyPulse(false)}>
+                                        <X size={20} />
+                                    </button>
                                 </div>
 
-                                <div className="pulse-section">
-                                    <div className="section-title">
-                                        <div className="title-left">
-                                            <ExternalLink size={18} color="#ef4444" style={{ transform: 'rotate(90deg)' }} />
-                                            Departures (Odlasci)
+                                <div className="pulse-content">
+                                    <div className="pulse-section">
+                                        <div className="section-title">
+                                            <div className="title-left">
+                                                <ArrowUpRight size={18} color="#10b981" />
+                                                Arrivals (Dolasci)
+                                            </div>
+                                            <NavLink to={`/reservations?checkIn=${pulseDate}`} className="section-link">
+                                                Vidi sve dolaske <ChevronRight size={14} />
+                                            </NavLink>
                                         </div>
-                                        <NavLink to={`/reservations?checkOut=${pulseDate}`} className="section-link">
-                                            Vidi sve odlaske <ChevronRight size={14} />
-                                        </NavLink>
-                                    </div>
-                                    <div className="pulse-list">
-                                        {getArrivalsDepartures(pulseDate!).departures.length > 0 ? (
-                                            getArrivalsDepartures(pulseDate!).departures.map(r => (
-                                                <div key={r.id} className="pulse-item-card">
-                                                    <div className="p-info">
-                                                        <strong>{r.customer}</strong>
-                                                        <span>{r.roomType}</span>
+                                        <div className="pulse-list">
+                                            {getArrivalsDepartures(pulseDate!).arrivals.length > 0 ? (
+                                                getArrivalsDepartures(pulseDate!).arrivals.map(r => (
+                                                    <div key={r.id} className="pulse-item-card">
+                                                        <div className="p-info">
+                                                            <strong>{r.customer}</strong>
+                                                            <span>{r.roomType}</span>
+                                                        </div>
+                                                        <div className="p-pax">{r.adults + r.children} PAX</div>
+                                                        <NavLink to={`/reservations?id=${r.id}`} className="p-link">
+                                                            Dosije <ChevronRight size={14} />
+                                                        </NavLink>
                                                     </div>
-                                                    <div className="p-pax">{r.adults + r.children} PAX</div>
-                                                    <NavLink to={`/reservations?id=${r.id}`} className="p-link">
-                                                        Dosije <ChevronRight size={14} />
-                                                    </NavLink>
-                                                </div>
-                                            ))
-                                        ) : <p className="empty-msg">Nema odlazaka.</p>}
+                                                ))
+                                            ) : <p className="empty-msg">Nema dolazaka.</p>}
+                                        </div>
+                                    </div>
+
+                                    <div className="pulse-section">
+                                        <div className="section-title">
+                                            <div className="title-left">
+                                                <ExternalLink size={18} color="#ef4444" style={{ transform: 'rotate(90deg)' }} />
+                                                Departures (Odlasci)
+                                            </div>
+                                            <NavLink to={`/reservations?checkOut=${pulseDate}`} className="section-link">
+                                                Vidi sve odlaske <ChevronRight size={14} />
+                                            </NavLink>
+                                        </div>
+                                        <div className="pulse-list">
+                                            {getArrivalsDepartures(pulseDate!).departures.length > 0 ? (
+                                                getArrivalsDepartures(pulseDate!).departures.map(r => (
+                                                    <div key={r.id} className="pulse-item-card">
+                                                        <div className="p-info">
+                                                            <strong>{r.customer}</strong>
+                                                            <span>{r.roomType}</span>
+                                                        </div>
+                                                        <div className="p-pax">{r.adults + r.children} PAX</div>
+                                                        <NavLink to={`/reservations?id=${r.id}`} className="p-link">
+                                                            Dosije <ChevronRight size={14} />
+                                                        </NavLink>
+                                                    </div>
+                                                ))
+                                            ) : <p className="empty-msg">Nema odlazaka.</p>}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                            </motion.div>
+                        </div>
+                    )
+                }
+            </AnimatePresence >
 
             {/* Month Selector Modal */}
             <AnimatePresence>
-                {showMonthSelector && (
-                    <div className="modal-overlay" onClick={() => setShowMonthSelector(false)}>
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="month-selector-modal"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <div className="wizard-header">
-                                <h3>Odaberi Mesec ({selectedDate.getFullYear()})</h3>
-                                <button className="close-btn" onClick={() => setShowMonthSelector(false)}>
-                                    <X size={20} />
-                                </button>
-                            </div>
-                            <div className="month-grid">
-                                {monthNames.map((name, idx) => (
-                                    <button
-                                        key={idx}
-                                        className={`month-square ${selectedDate.getMonth() === idx ? 'active' : ''}`}
-                                        onClick={() => handleMonthSelect(idx)}
-                                    >
-                                        <span className="m-num">{idx + 1}</span>
-                                        <span className="m-name">{name}</span>
+                {
+                    showMonthSelector && (
+                        <div className="modal-overlay" onClick={() => setShowMonthSelector(false)}>
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="month-selector-modal"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div className="wizard-header">
+                                    <h3>Odaberi Mesec ({selectedDate.getFullYear()})</h3>
+                                    <button className="close-btn" onClick={() => setShowMonthSelector(false)}>
+                                        <X size={20} />
                                     </button>
-                                ))}
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* Capacity Management Modal */}
-            <AnimatePresence>
-                {showCapacityModal && (
-                    <div className="modal-overlay" onClick={() => setShowCapacityModal(false)}>
-                        <motion.div
-                            initial={{ x: 300, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: 300, opacity: 0 }}
-                            className="capacity-wizard-modal"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <div className="wizard-header">
-                                <h3>Upravljanje Kapacitetom</h3>
-                                <button className="close-btn" onClick={() => setShowCapacityModal(false)}><X size={20} /></button>
-                            </div>
-                            <div className="wizard-content">
-                                <div className="wizard-field">
-                                    <label>Period boravka</label>
-                                    <div className="wizard-range">
-                                        <input type="date" value={capDateFrom} onChange={e => setCapDateFrom(e.target.value)} />
-                                        <input type="date" value={capDateTo} onChange={e => setCapDateTo(e.target.value)} />
-                                    </div>
                                 </div>
-
-                                <div className="form-group full-width">
-                                    <label>Za Hotel:</label>
-                                    <div className="search-input-wrapper">
-                                        <Building2 size={16} />
-                                        <select
-                                            className="op-select"
-                                            style={{ width: '100%', background: 'transparent', border: 'none' }}
-                                            value={selectedHotel.id}
-                                            onChange={(e) => setSelectedHotel(MOCK_HOTELS.find(h => h.id === e.target.value) || MOCK_HOTELS[0])}
+                                <div className="month-grid">
+                                    {monthNames.map((name, idx) => (
+                                        <button
+                                            key={idx}
+                                            className={`month-square ${selectedDate.getMonth() === idx ? 'active' : ''}`}
+                                            onClick={() => handleMonthSelect(idx)}
                                         >
-                                            {MOCK_HOTELS.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-                                        </select>
-                                    </div>
+                                            <span className="m-num">{idx + 1}</span>
+                                            <span className="m-name">{name}</span>
+                                        </button>
+                                    ))}
                                 </div>
+                            </motion.div>
+                        </div>
+                    )
+                }
+            </AnimatePresence >
 
-                                <div className="form-group full-width">
-                                    <label>Tipovi Smeštaja:</label>
-                                    <div className="rooms-checklist">
-                                        {selectedHotel.roomTypes.map(room => (
+            {/* Capacity Management Modal - REDESIGNED TO SPLIT-PANE */}
+            <AnimatePresence>
+                {
+                    showCapacityModal && (
+                        <div className="modal-overlay" onClick={() => setShowCapacityModal(false)}>
+                            <motion.div
+                                drag
+                                dragMomentum={false}
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="visual-report-modal capacity-wizard-premium"
+                                style={{ padding: 0, maxWidth: '1100px', width: '90%', height: 'auto', maxHeight: '90vh' }}
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div className="report-modal-header drag-handle" style={{ margin: 0, background: '#fff', borderBottom: '1px solid #f1f5f9', padding: '15px 30px' }}>
+                                    <div className="report-title-section">
+                                        <div className="report-icon-box" style={{ background: '#7c3aed' }}>
+                                            <Activity size={24} />
+                                        </div>
+                                        <div>
+                                            <h3 style={{ fontSize: '18px', margin: 0 }}>Upravljanje Kapacitetom i Ugovorima</h3>
+                                            <p className="report-subtitle">Definišite kvote i stop-sale statuse po specifičnim ugovorima</p>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '15px', marginRight: '20px' }}>
+                                        <div style={{ background: '#f1f5f9', padding: '4px', borderRadius: '10px', display: 'flex', gap: '4px' }}>
                                             <button
-                                                key={room}
-                                                className={`room-chip ${capRooms.includes(room) ? 'selected' : ''}`}
-                                                onClick={() => setCapRooms(prev => prev.includes(room) ? prev.filter(p => p !== room) : [...prev, room])}
+                                                onClick={() => setWizardVersion('classic')}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '8px',
+                                                    border: 'none',
+                                                    fontSize: '11px',
+                                                    fontWeight: 800,
+                                                    cursor: 'pointer',
+                                                    background: wizardVersion === 'classic' ? 'white' : 'transparent',
+                                                    color: wizardVersion === 'classic' ? '#7c3aed' : '#64748b',
+                                                    boxShadow: wizardVersion === 'classic' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                                                }}
                                             >
-                                                {room}
+                                                Classic
                                             </button>
-                                        ))}
+                                            <button
+                                                onClick={() => setWizardVersion('studio')}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '8px',
+                                                    border: 'none',
+                                                    fontSize: '11px',
+                                                    fontWeight: 800,
+                                                    cursor: 'pointer',
+                                                    background: wizardVersion === 'studio' ? 'white' : 'transparent',
+                                                    color: wizardVersion === 'studio' ? '#7c3aed' : '#64748b',
+                                                    boxShadow: wizardVersion === 'studio' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                                                }}
+                                            >
+                                                Studio (V2)
+                                            </button>
+                                        </div>
+                                        <div className="drag-info" style={{ fontSize: '10px', opacity: 0.4 }}>
+                                            DRAGGABLE
+                                        </div>
+                                    </div>
+
+                                    <button className="report-close-btn" onClick={() => setShowCapacityModal(false)}><X size={20} /></button>
+                                </div>
+
+                                <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: wizardVersion === 'studio' ? '#f8fafc' : '#fff' }}>
+                                    {wizardVersion === 'classic' ? (
+                                        <div className="capacity-wizard-container" style={{ display: 'flex', flex: 1, height: '100%', background: '#fff', overflow: 'hidden' }}>
+                                            {/* LEFT SIDEBAR: ALL FILTERS */}
+                                            <div className="wizard-left-sidebar" style={{ width: '340px', minWidth: '340px', padding: '25px', borderRight: '1px solid #e2e8f0', background: '#f8fafc', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                                                {/* TIERED SEARCH WITH SEARCHABLE INPUTS */}
+                                                <div className="filter-group" style={{ marginBottom: '15px' }}>
+                                                    {/* Country Searchable */}
+                                                    <div style={{ position: 'relative', marginBottom: '10px' }}>
+                                                        <input
+                                                            className="op-input-modern"
+                                                            placeholder="-- Odabir Drzave --"
+                                                            value={capCountry || capCountryQuery}
+                                                            onChange={e => { setCapCountryQuery(e.target.value); setCapCountry(''); setShowCountryChoices(true); }}
+                                                            onFocus={() => setShowCountryChoices(true)}
+                                                            style={{ width: '100%' }}
+                                                        />
+                                                        {showCountryChoices && (
+                                                            <div className="custom-dropdown-list">
+                                                                <div className="dropdown-item" onClick={() => { setCapCountry(''); setCapCountryQuery(''); setShowCountryChoices(false); }}>Sve Drzave</div>
+                                                                {filteredCountriesList.map(c => (
+                                                                    <div key={c} className="dropdown-item" onClick={() => { setCapCountry(c); setCapCountryQuery(''); setShowCountryChoices(false); setCapDest(''); }}>{c}</div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Destination Searchable */}
+                                                    <div style={{ position: 'relative', marginBottom: '10px' }}>
+                                                        <input
+                                                            className="op-input-modern"
+                                                            placeholder="-- Odabir Destinacije --"
+                                                            value={capDest || capDestQuery}
+                                                            onChange={e => { setCapDestQuery(e.target.value); setCapDest(''); setShowDestChoices(true); }}
+                                                            onFocus={() => setShowDestChoices(true)}
+                                                            style={{ width: '100%' }}
+                                                        />
+                                                        {showDestChoices && (
+                                                            <div className="custom-dropdown-list">
+                                                                <div className="dropdown-item" onClick={() => { setCapDest(''); setCapDestQuery(''); setShowDestChoices(false); }}>Sve Destinacije</div>
+                                                                {filteredDestsList.map(d => (
+                                                                    <div key={d} className="dropdown-item" onClick={() => { setCapDest(d); setCapDestQuery(''); setShowDestChoices(false); }}>{d}</div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div style={{ position: 'relative', marginBottom: '10px' }}>
+                                                        <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }} />
+                                                        <input
+                                                            type="text"
+                                                            className="op-input-modern"
+                                                            placeholder="Pretraga hotela..."
+                                                            value={capHotelSearch}
+                                                            onChange={e => setCapHotelSearch(e.target.value)}
+                                                            style={{ paddingLeft: '35px', width: '100%' }}
+                                                        />
+                                                    </div>
+
+                                                    <select
+                                                        className="op-select-modern"
+                                                        value={selectedHotel.id}
+                                                        onChange={(e) => setSelectedHotel(MOCK_HOTELS.find(h => h.id === e.target.value) || MOCK_HOTELS[0])}
+                                                        style={{ width: '100%', padding: '10px', borderRadius: '12px', height: '150px', fontStyle: 'italic', border: '1px solid #e2e8f0' }}
+                                                        size={5}
+                                                    >
+                                                        {filteredHotelsForWizard.map((h: any) => <option key={h.id} value={h.id} style={{ fontStyle: 'italic', padding: '8px', borderBottom: '1px solid #f1f5f9' }}>{h.name} ({h.destination})</option>)}
+                                                    </select>
+                                                </div>
+
+                                                <div className="filter-group" style={{ marginBottom: '20px' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                        {/* Booking Period FIRST per user request */}
+                                                        <div style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', marginBottom: '2px', textTransform: 'uppercase' }}>Rezervacije od...do</div>
+                                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
+                                                            <div className="modern-date-field-small" onClick={() => setShowCapBookStartCal(true)}>
+                                                                <span>{new Date(capBookingFrom).toLocaleDateString()}</span>
+                                                            </div>
+                                                            <div className="modern-date-field-small" onClick={() => setShowCapBookEndCal(true)}>
+                                                                <span>{new Date(capBookingTo).toLocaleDateString()}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Stay Period SECOND per user request */}
+                                                        <div style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', marginBottom: '2px', textTransform: 'uppercase', marginTop: '5px' }}>Period Boravka</div>
+                                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
+                                                            <div className="modern-date-field-small" onClick={() => setShowCapStartCal(true)}>
+                                                                <span>{new Date(capDateFrom).toLocaleDateString()}</span>
+                                                            </div>
+                                                            <div className="modern-date-field-small" onClick={() => setShowCapEndCal(true)}>
+                                                                <span>{new Date(capDateTo).toLocaleDateString()}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {showCapStartCal && <ModernCalendar startDate={capDateFrom} endDate={null} singleMode onChange={(s) => setCapDateFrom(s)} onClose={() => setShowCapStartCal(false)} />}
+                                                    {showCapEndCal && <ModernCalendar startDate={capDateTo} endDate={null} singleMode onChange={(s) => setCapDateTo(s)} onClose={() => setShowCapEndCal(false)} />}
+                                                    {showCapBookStartCal && <ModernCalendar startDate={capBookingFrom} endDate={null} singleMode onChange={(s) => setCapBookingFrom(s)} onClose={() => setShowCapBookStartCal(false)} />}
+                                                    {showCapBookEndCal && <ModernCalendar startDate={capBookingTo} endDate={null} singleMode onChange={(s) => setCapBookingTo(s)} onClose={() => setShowCapBookEndCal(false)} />}
+                                                </div>
+
+                                                <div className="filter-group">
+                                                    <div style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase' }}>Tip Smeštaja</div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', maxHeight: '350px', overflowY: 'auto' }} className="custom-tiny-scroll">
+                                                        {selectedHotel.roomTypes.map(room => (
+                                                            <button
+                                                                key={room}
+                                                                className={`room-chip-compact ${capRooms.includes(room) ? 'selected' : ''}`}
+                                                                onClick={() => setCapRooms(prev => prev.includes(room) ? prev.filter(p => p !== room) : [...prev, room])}
+                                                            >
+                                                                {room}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* RIGHT PANEL: DEFINITION */}
+                                            <div className="wizard-right-main" style={{ flex: 1, padding: '40px', background: '#fff', overflowY: 'auto', height: '100%' }}>
+                                                <div style={{ marginBottom: '35px' }}>
+                                                    <h4 style={{ fontSize: '22px', fontWeight: 900, margin: 0 }}>Definisanje Uslova</h4>
+                                                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '4px' }}>Unesite konkretne vrednosti za odabrane parametre</p>
+                                                </div>
+
+                                                <div className="form-section" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '30px' }}>
+                                                    <div className="form-group">
+                                                        <label style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '15px' }}>Vrsta Ugovora (Selektor kanala)</label>
+                                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '15px' }}>
+                                                            <button
+                                                                className={`agent-checkbox-card ${capSelectedContract === 'Svi Ugovori' ? 'active' : ''}`}
+                                                                onClick={() => setCapSelectedContract('Svi Ugovori')}
+                                                                style={{ padding: '18px', textAlign: 'left', position: 'relative' }}
+                                                            >
+                                                                <div className="agent-box-info">
+                                                                    <span className="a-name" style={{ fontSize: '14px', fontWeight: 800 }}>Zajednička Kvote</span>
+                                                                    <span className="a-loc" style={{ fontSize: '11px', opacity: 0.6 }}>Primeni na sve ugovore</span>
+                                                                </div>
+                                                                {capSelectedContract === 'Svi Ugovori' && <div style={{ position: 'absolute', top: '10px', right: '10px', color: 'var(--accent)' }}><CheckCircle size={16} /></div>}
+                                                            </button>
+                                                            {MOCK_CONTRACTS.map(c => (
+                                                                <button
+                                                                    key={c}
+                                                                    className={`agent-checkbox-card ${capSelectedContract === c ? 'active' : ''}`}
+                                                                    onClick={() => setCapSelectedContract(c)}
+                                                                    style={{ padding: '18px', textAlign: 'left', position: 'relative' }}
+                                                                >
+                                                                    <div className="agent-box-info">
+                                                                        <span className="a-name" style={{ fontSize: '14px', fontWeight: 800 }}>{c}</span>
+                                                                        <span className="a-loc" style={{ fontSize: '11px', opacity: 0.6 }}>Specifična distribucija</span>
+                                                                    </div>
+                                                                    {capSelectedContract === c && <div style={{ position: 'absolute', top: '10px', right: '10px', color: 'var(--accent)' }}><CheckCircle size={16} /></div>}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '24px' }}>
+                                                        <div className="form-group">
+                                                            <label style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '10px' }}>BROJ SOBA (KOLIČINA)</label>
+                                                            <div className="capacity-input-modern">
+                                                                <button onClick={() => setCapValue(prev => (parseInt(prev) - 1).toString())}>-</button>
+                                                                <input
+                                                                    type="text"
+                                                                    value={capValue}
+                                                                    onChange={e => setCapValue(e.target.value)}
+                                                                    placeholder="Unesite ili npr. -5"
+                                                                />
+                                                                <button onClick={() => setCapValue(prev => (parseInt(prev) + 1).toString())}>+</button>
+                                                            </div>
+                                                            <p style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '5px' }}>* Unesite npr. <strong>-5</strong> da umanjite trenutni kapacitet</p>
+
+                                                            <div style={{ marginTop: '20px', padding: '15px', background: capOverwrite ? '#fee2e2' : '#f8fafc', borderRadius: '12px', border: `1px solid ${capOverwrite ? '#fecaca' : '#e2e8f0'}` }}>
+                                                                <label className="op-checkbox-container" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: 800, color: capOverwrite ? '#dc2626' : '#475569', cursor: 'pointer' }}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={capOverwrite}
+                                                                        onChange={e => setCapOverwrite(e.target.checked)}
+                                                                        style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                                                                    />
+                                                                    <span>PREBRIŠI POSTOJEĆE KAPACITETE</span>
+                                                                </label>
+                                                                <p style={{ fontSize: '11px', opacity: 0.6, marginTop: '6px', color: capOverwrite ? '#dc2626' : 'inherit' }}>* Ako je štiklirano, nove vrednosti će zameniti stare bez sabiranja</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="form-group">
+                                                            <label style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '10px' }}>Status Prodaje</label>
+                                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                                                                {['Alotman', 'Stop', 'On Request', 'Fix'].map(st => (
+                                                                    <button
+                                                                        key={st}
+                                                                        className={`room-chip ${capStatus === st ? 'selected' : ''}`}
+                                                                        onClick={() => setCapStatus(st as any)}
+                                                                        style={{ height: '50px', fontSize: '11px', textTransform: 'uppercase', fontWeight: 800, margin: 0 }}
+                                                                    >
+                                                                        {st}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="contract-info-box" style={{ padding: '24px', borderRadius: '20px', background: 'var(--accent-glow)', border: '1px solid var(--accent)', display: 'flex', gap: '15px', alignItems: 'center' }}>
+                                                        <div style={{ width: '48px', height: '48px', background: 'var(--accent)', color: 'white', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                            <Activity size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <h5 style={{ margin: 0, fontSize: '15px', fontWeight: 800 }}>Bezbedna Primena</h5>
+                                                            <p style={{ margin: '4px 0 0 0', fontSize: '12px', opacity: 0.7, lineHeight: 1.4 }}>
+                                                                Ove promene će biti zabeležene u logu sistema.
+                                                                {capSelectedContract === 'Svi Ugovori' ? ' Ukupan kapacitet će biti ažuriran za sve kanale prodaje.' : ` Samo prodajni kanal ${capSelectedContract} će biti pogođen ovom izmenom.`}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        /* STUDIO UI (VERSION 2) */
+                                        <div className="studio-wizard-container" style={{ flex: 1, padding: '40px', display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '30px', height: '100%', overflowY: 'auto' }}>
+                                            {/* STUDIO LEFT: SELECTION & CONFIG */}
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                                                <div className="studio-card" style={{ background: 'white', padding: '24px', borderRadius: '24px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>
+                                                        <div style={{ width: '32px', height: '32px', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <MapPin size={16} color="#7c3aed" />
+                                                        </div>
+                                                        <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 800 }}>Lokacija i Hotel</h4>
+                                                    </div>
+
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                        <div style={{ position: 'relative' }}>
+                                                            <Globe size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }} />
+                                                            <input
+                                                                className="op-input-modern"
+                                                                placeholder="Država"
+                                                                value={capCountry || capCountryQuery}
+                                                                onChange={e => { setCapCountryQuery(e.target.value); setCapCountry(''); setShowCountryChoices(true); }}
+                                                                style={{ width: '100%', paddingLeft: '35px' }}
+                                                            />
+                                                        </div>
+                                                        <div style={{ position: 'relative' }}>
+                                                            <MapPin size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }} />
+                                                            <input
+                                                                className="op-input-modern"
+                                                                placeholder="Destinacija"
+                                                                value={capDest || capDestQuery}
+                                                                onChange={e => { setCapDestQuery(e.target.value); setCapDest(''); setShowDestChoices(true); }}
+                                                                style={{ width: '100%', paddingLeft: '35px' }}
+                                                            />
+                                                        </div>
+                                                        <div style={{ position: 'relative' }}>
+                                                            <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }} />
+                                                            <input
+                                                                className="op-input-modern"
+                                                                placeholder="Pretraga hotela..."
+                                                                value={capHotelSearch}
+                                                                onChange={e => setCapHotelSearch(e.target.value)}
+                                                                style={{ width: '100%', paddingLeft: '35px' }}
+                                                            />
+                                                        </div>
+                                                        <select
+                                                            className="op-select-modern"
+                                                            value={selectedHotel.id}
+                                                            onChange={(e) => setSelectedHotel(MOCK_HOTELS.find(h => h.id === e.target.value) || MOCK_HOTELS[0])}
+                                                            style={{ height: '120px', fontSize: '13px', fontStyle: 'italic' }}
+                                                            size={5}
+                                                        >
+                                                            {filteredHotelsForWizard.map((h: any) => <option key={h.id} value={h.id}>{h.name}</option>)}
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="studio-card" style={{ background: 'white', padding: '24px', borderRadius: '24px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>
+                                                        <div style={{ width: '32px', height: '32px', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <Tag size={16} color="#7c3aed" />
+                                                        </div>
+                                                        <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 800 }}>Ugovori</h4>
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                                        <button
+                                                            onClick={() => setCapSelectedContract('Svi Ugovori')}
+                                                            style={{
+                                                                padding: '10px 16px', borderRadius: '12px', border: capSelectedContract === 'Svi Ugovori' ? '2px solid #7c3aed' : '1px solid #e2e8f0',
+                                                                background: capSelectedContract === 'Svi Ugovori' ? '#f5f3ff' : 'white',
+                                                                fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: '0.2s'
+                                                            }}
+                                                        >
+                                                            Svi Ugovori
+                                                        </button>
+                                                        {MOCK_CONTRACTS.map(c => (
+                                                            <button
+                                                                key={c}
+                                                                onClick={() => setCapSelectedContract(c)}
+                                                                style={{
+                                                                    padding: '10px 16px', borderRadius: '12px', border: capSelectedContract === c ? '2px solid #7c3aed' : '1px solid #e2e8f0',
+                                                                    background: capSelectedContract === c ? '#f5f3ff' : 'white',
+                                                                    fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: '0.2s'
+                                                                }}
+                                                            >
+                                                                {c}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* STUDIO RIGHT: TIMING & ROOMS & ACTIONS */}
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                                                <div className="studio-card" style={{ background: 'white', padding: '30px', borderRadius: '24px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '40px' }}>
+                                                        <div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                                                                <CalendarIcon size={18} color="#7c3aed" />
+                                                                <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 900 }}>Vremenski Okviri</h4>
+                                                            </div>
+                                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                                                <div>
+                                                                    <div style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>Rezervacije</div>
+                                                                    <div className="modern-date-field-small" style={{ height: '50px' }} onClick={() => setShowCapBookStartCal(true)}>{new Date(capBookingFrom).toLocaleDateString()}</div>
+                                                                    <div className="modern-date-field-small" style={{ height: '50px', marginTop: '8px' }} onClick={() => setShowCapBookEndCal(true)}>{new Date(capBookingTo).toLocaleDateString()}</div>
+                                                                </div>
+                                                                <div>
+                                                                    <div style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>Boravak</div>
+                                                                    <div className="modern-date-field-small" style={{ height: '50px' }} onClick={() => setShowCapStartCal(true)}>{new Date(capDateFrom).toLocaleDateString()}</div>
+                                                                    <div className="modern-date-field-small" style={{ height: '50px', marginTop: '8px' }} onClick={() => setShowCapEndCal(true)}>{new Date(capDateTo).toLocaleDateString()}</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                                                                <Building2 size={18} color="#7c3aed" />
+                                                                <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 900 }}>Tipovi Smeštaja</h4>
+                                                            </div>
+                                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', maxHeight: '150px', overflowY: 'auto', paddingRight: '10px' }} className="custom-tiny-scroll">
+                                                                {selectedHotel.roomTypes.map(room => (
+                                                                    <div
+                                                                        key={room}
+                                                                        onClick={() => setCapRooms(prev => prev.includes(room) ? prev.filter(p => p !== room) : [...prev, room])}
+                                                                        style={{
+                                                                            padding: '12px 15px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer',
+                                                                            background: capRooms.includes(room) ? '#7c3aed' : 'white',
+                                                                            color: capRooms.includes(room) ? 'white' : 'inherit',
+                                                                            transition: '0.2s'
+                                                                        }}
+                                                                    >
+                                                                        <div style={{ width: '18px', height: '18px', borderRadius: '4px', border: '2px solid rgba(0,0,0,0.1)', background: capRooms.includes(room) ? 'white' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                            {capRooms.includes(room) && <Check size={12} color="#7c3aed" />}
+                                                                        </div>
+                                                                        <span style={{ fontSize: '13px', fontWeight: 700 }}>{room}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
+                                                    <div className="studio-card" style={{ background: 'white', padding: '30px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(124, 58, 237, 0.08)', border: '2px solid #f1f5f9' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                                                            <div>
+                                                                <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 900 }}>Konfiguracija Kapaciteta</h4>
+                                                                <p style={{ margin: 0, fontSize: '12px', opacity: 0.6 }}>Unesite broj soba i status</p>
+                                                            </div>
+                                                            <div className="capacity-input-modern" style={{ width: '160px', borderRadius: '16px', border: '2px solid #7c3aed' }}>
+                                                                <button style={{ color: '#7c3aed' }} onClick={() => setCapValue(prev => (parseInt(prev) - 1).toString())}>-</button>
+                                                                <input value={capValue} onChange={e => setCapValue(e.target.value)} style={{ fontWeight: 800, color: '#1e293b' }} />
+                                                                <button style={{ color: '#7c3aed' }} onClick={() => setCapValue(prev => (parseInt(prev) + 1).toString())}>+</button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '20px' }}>
+                                                            {['ALOTMAN', 'STOP', 'ON REQUEST', 'FIX'].map(st => (
+                                                                <button
+                                                                    key={st}
+                                                                    onClick={() => setCapStatus(st as any)}
+                                                                    style={{
+                                                                        padding: '12px 5px', borderRadius: '12px', border: 'none', fontSize: '10px', fontWeight: 900, cursor: 'pointer', transition: '0.2s',
+                                                                        background: capStatus === st ? '#7c3aed' : '#f1f5f9',
+                                                                        color: capStatus === st ? 'white' : '#64748b'
+                                                                    }}
+                                                                >
+                                                                    {st}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+
+                                                        <div
+                                                            onClick={() => setCapOverwrite(!capOverwrite)}
+                                                            style={{
+                                                                padding: '15px', borderRadius: '16px', cursor: 'pointer', border: '1px solid',
+                                                                borderColor: capOverwrite ? '#dc2626' : '#e2e8f0',
+                                                                background: capOverwrite ? '#fef2f2' : '#f8fafc',
+                                                                display: 'flex', alignItems: 'center', gap: '15px'
+                                                            }}
+                                                        >
+                                                            <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: capOverwrite ? '#dc2626' : '#fff', border: '2px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                {capOverwrite && <Check size={16} color="white" />}
+                                                            </div>
+                                                            <div>
+                                                                <div style={{ fontSize: '13px', fontWeight: 800, color: capOverwrite ? '#991b1b' : '#334155' }}>PREBRIŠI KAPACITETE</div>
+                                                                <div style={{ fontSize: '10px', opacity: 0.6 }}>Nove vrednosti menjaju stare (bez sabiranja)</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', justifyContent: 'center' }}>
+                                                        <div style={{ background: '#f5f3ff', padding: '20px', borderRadius: '24px', display: 'flex', gap: '15px', alignItems: 'center' }}>
+                                                            <div style={{ width: '40px', height: '40px', background: 'white', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                                <Sparkles size={20} color="#7c3aed" />
+                                                            </div>
+                                                            <p style={{ margin: 0, fontSize: '13px', lineHeight: '1.4', color: '#5b21b6' }}>
+                                                                <strong>Studio Režim:</strong> Sve izmene su pod nadzorom i biće zabeležene u <strong>Audit Trail</strong> logovima.
+                                                            </p>
+                                                        </div>
+                                                        <div style={{ background: '#fff', border: '1px dashed #7c3aed', padding: '20px', borderRadius: '24px', textAlign: 'center' }}>
+                                                            <p style={{ margin: '0 0 10px 0', fontSize: '12px', opacity: 0.6 }}>Spremni za primenu?</p>
+                                                            <button
+                                                                className="preview-trigger-btn"
+                                                                onClick={() => setShowReviewPreview(true)}
+                                                                style={{ width: '100%', justifyContent: 'center', background: '#e0e7ff', color: '#4338ca', padding: '15px', borderRadius: '16px' }}
+                                                            >
+                                                                <Eye size={18} /> PROVERI DETALJE
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="wizard-footer" style={{ padding: '24px 40px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '20px', background: '#f8fafc', borderBottomLeftRadius: '24px', borderBottomRightRadius: '24px' }}>
+                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                        <button
+                                            className="op-btn-cancel-modern"
+                                            onClick={() => setShowCapacityModal(false)}
+                                            style={{
+                                                background: 'white',
+                                                border: '1px solid #e2e8f0',
+                                                padding: '12px 24px',
+                                                borderRadius: '12px',
+                                                fontSize: '14px',
+                                                fontWeight: 700,
+                                                color: '#64748b',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            Odustani
+                                        </button>
+                                        <button
+                                            className="op-btn-save-modern"
+                                            onClick={handleSaveCapacity}
+                                            style={{
+                                                background: '#7c3aed',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '12px 32px',
+                                                borderRadius: '14px',
+                                                fontSize: '14px',
+                                                fontWeight: 800,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '10px',
+                                                cursor: 'pointer',
+                                                boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            <Check size={20} /> POTVRDI I SAČUVAJ
+                                        </button>
                                     </div>
                                 </div>
 
-                                <div className="wizard-half-fields">
-                                    <div className="wizard-field">
-                                        <label>Broj soba (zadato)</label>
-                                        <input type="number" value={capValue} onChange={e => setCapValue(parseInt(e.target.value))} />
+                                {/* NEW SUMMARY & CONFIRM POPUP (REPLACES NOTEPAD PREVIEW) */}
+                                {showReviewPreview && (
+                                    <div
+                                        onClick={() => setShowReviewPreview(false)}
+                                        style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.96)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+                                    >
+                                        <div
+                                            onClick={e => e.stopPropagation()}
+                                            style={{ width: '100%', maxWidth: '650px', background: 'white', borderRadius: '24px', display: 'flex', flexDirection: 'column', border: 'none', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'hidden' }}
+                                        >
+                                            <div style={{ padding: '30px', background: capOverwrite ? '#fee2e2' : '#f0f9ff', textAlign: 'center' }}>
+                                                {capOverwrite ? <AlertTriangle size={48} color="#dc2626" /> : <Info size={48} color="#0284c7" />}
+                                                <h2 style={{ margin: '15px 0 5px', color: '#1e293b' }}>Potvrda Akcije</h2>
+                                                <p style={{ margin: 0, opacity: 0.7 }}>Pregledajte rezime pre nego što primenite izmene u bazu podataka.</p>
+                                            </div>
+
+                                            <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                                <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '16px' }}>
+                                                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '10px' }}>Rezime Izmena</div>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+                                                        <div style={{ fontSize: '14px' }}><strong>Hotel:</strong> {selectedHotel.name}</div>
+                                                        <div style={{ fontSize: '14px' }}><strong>Period:</strong> {new Date(capDateFrom).toLocaleDateString()} - {new Date(capDateTo).toLocaleDateString()}</div>
+                                                        <div style={{ fontSize: '14px' }}><strong>Tipovi soba:</strong> {capRooms.length} odabrana</div>
+                                                        <div style={{ fontSize: '14px', padding: '10px', background: capOverwrite ? '#fef2f2' : '#f0fdf4', borderRadius: '8px', border: `1px dashed ${capOverwrite ? '#f87171' : '#4ade80'}` }}>
+                                                            <strong>Način upisa:</strong> {capOverwrite ? 'PREBRISAVANJE (Gube se stare vrednosti)' : 'DODAVANJE (Sabiranje sa postojećim)'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div style={{ fontSize: '13px' }}>
+                                                    <div style={{ fontWeight: 800, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}><HistoryIcon size={14} /> Mock Primeri Rezultata:</div>
+                                                    <div className="summary-mock-table" style={{ border: '1px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden' }}>
+                                                        <div style={{ background: '#f1f5f9', padding: '8px 12px', fontSize: '11px', fontWeight: 800, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
+                                                            <span>Datum</span>
+                                                            <span>Staro</span>
+                                                            <span>Novo</span>
+                                                        </div>
+                                                        <div style={{ padding: '8px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: '1px solid #f1f5f9' }}>
+                                                            <span>{new Date(capDateFrom).toLocaleDateString()}</span>
+                                                            <span style={{ opacity: 0.5 }}>12</span>
+                                                            <span style={{ color: '#7c3aed', fontWeight: 700 }}>{capOverwrite ? capValue : 12 + parseInt(capValue)}</span>
+                                                        </div>
+                                                        <div style={{ padding: '8px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
+                                                            <span>...</span>
+                                                            <span style={{ opacity: 0.5 }}>12</span>
+                                                            <span style={{ color: '#7c3aed', fontWeight: 700 }}>{capOverwrite ? capValue : 12 + parseInt(capValue)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div style={{ padding: '24px 30px', background: '#f8fafc', display: 'flex', gap: '15px' }}>
+                                                <button className="op-btn-secondary" onClick={() => setShowReviewPreview(false)} style={{ flex: 1, height: '54px' }}>Nazad</button>
+                                                <button
+                                                    className="op-btn-primary"
+                                                    onClick={handleSaveCapacity}
+                                                    style={{ flex: 2, height: '54px', background: capOverwrite ? '#dc2626' : '#7c3aed' }}
+                                                >
+                                                    <Check size={20} /> POTVRDI I SAČUVAJ
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="wizard-field">
-                                        <label>Status</label>
-                                        <select value={capStatus} onChange={e => setCapStatus(e.target.value as any)}>
-                                            <option value="Alotman">Alotman</option>
-                                            <option value="Fix">Fix</option>
-                                            <option value="On Request">On Request</option>
-                                            <option value="Stop">Stop Sale</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="wizard-footer">
-                                <button className="btn-cancel" onClick={() => setShowCapacityModal(false)}>Odustani</button>
-                                <button className="btn-save" onClick={handleSaveCapacity}>
-                                    <Check size={18} /> Primeni Kapacitet
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                                )}
+                            </motion.div>
+                        </div>
+                    )
+                }
+            </AnimatePresence >
 
             {/* Visual Report Modal (Stop Sale / Free Capacity) */}
             <AnimatePresence>
-                {showReportModal.show && (
-                    <div className="modal-overlay" onClick={() => setShowReportModal({ ...showReportModal, show: false })}>
-                        <motion.div
-                            drag
-                            dragMomentum={false}
-                            className="visual-report-modal large-modal"
-                            onClick={e => e.stopPropagation()}
-                            initial={{ scale: 0.9, opacity: 0, y: 50 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 50 }}
-                        >
-                            <div className="report-modal-header drag-handle">
-                                <div className="report-title-section">
-                                    <div className={`report-icon-box ${showReportModal.type}`}>
-                                        {showReportModal.type === 'stop' ? <AlertTriangle size={24} /> : <Sparkles size={24} />}
+                {
+                    showReportModal.show && (
+                        <div className="modal-overlay" onClick={() => setShowReportModal({ ...showReportModal, show: false })}>
+                            <motion.div
+                                drag
+                                dragMomentum={false}
+                                className="visual-report-modal large-modal"
+                                onClick={e => e.stopPropagation()}
+                                initial={{ scale: 0.9, opacity: 0, y: 50 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 50 }}
+                            >
+                                <div className="report-modal-header drag-handle">
+                                    <div className="report-title-section">
+                                        <div className={`report-icon-box ${showReportModal.type}`}>
+                                            {showReportModal.type === 'stop' ? <AlertTriangle size={24} /> : <Sparkles size={24} />}
+                                        </div>
+                                        <div>
+                                            <h3>Hotelski Kapaciteti - Pregled po Danima</h3>
+                                            <p className="report-subtitle">Generisano: {new Date().toLocaleDateString('sr-Latn-RS')} • Svi statusi (Stop, On Request, Slobodno)</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3>Hotelski Kapaciteti - Pregled po Danima</h3>
-                                        <p className="report-subtitle">Generisano: {new Date().toLocaleDateString('sr-Latn-RS')} • Svi statusi (Stop, On Request, Slobodno)</p>
-                                    </div>
-                                </div>
-                                <div className="drag-info" style={{ marginLeft: 'auto', marginRight: '20px', fontSize: '10px', opacity: 0.4, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <Activity size={12} /> DRAGGABLE
-                                </div>
-                                <button className="report-close-btn" onClick={() => setShowReportModal({ ...showReportModal, show: false })}>
-                                    <X size={20} />
-                                </button>
-                            </div>
-
-                            <div className="report-body">
-                                <div className="report-link-section">
-                                    <div style={{ marginBottom: '15px', color: 'var(--text-secondary)' }}>
-                                        <Eye size={32} style={{ opacity: 0.3, marginBottom: '8px' }} />
-                                        <h4 style={{ color: 'var(--text-primary)', marginBottom: '4px' }}>Jedinstveni B2B Link</h4>
-                                        <p style={{ fontSize: '12px' }}>Subagenti mogu pristupiti ovom linku bez logovanja u sistem.</p>
-                                    </div>
-
-                                    <a
-                                        href={`${window.location.protocol}//${window.location.host}/public-inventory?reportView=true&token=SR-${Math.random().toString(36).substring(7).toUpperCase()}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="secure-link-preview-link"
-                                    >
-                                        {`${window.location.protocol}//${window.location.host}/public-inventory?reportView=true&token=SR-...`}
-                                        <div style={{ marginTop: '8px', fontSize: '10px', opacity: 0.6 }}>Klikni da otvoriš u novom prozoru</div>
-                                    </a>
-
-                                    <button
-                                        className="link-btn-large"
-                                        onClick={() => {
-                                            const token = `SR-${Math.random().toString(36).substring(7).toUpperCase()}`;
-                                            const url = `${window.location.protocol}//${window.location.host}/public-inventory?reportView=true&token=${token}`;
-                                            window.open(url, '_blank');
-                                        }}
-                                    >
-                                        <ArrowUpRight size={18} /> Otvori Public View (Demo)
-                                    </button>
+                                    <button className="report-close-btn" onClick={() => setShowReportModal({ ...showReportModal, show: false })}><X size={20} /></button>
                                 </div>
 
-                                <div className="report-agent-config">
-                                    <div className="config-header">
-                                        <h4>Podešavanje Distribucije</h4>
-                                        <p>Odaberite subagente koji će dobiti ovaj izveštaj</p>
+                                <div className="report-body">
+                                    <div className="report-link-section">
+                                        <div style={{ marginBottom: '15px', color: 'var(--text-secondary)' }}>
+                                            <Eye size={32} style={{ opacity: 0.3, marginBottom: '8px' }} />
+                                            <h4 style={{ color: 'var(--text-primary)', marginBottom: '4px' }}>Jedinstveni B2B Link</h4>
+                                            <p style={{ fontSize: '12px' }}>Subagenti mogu pristupiti ovom linku bez logovanja u sistem.</p>
+                                        </div>
+
+                                        <a
+                                            href={`${window.location.protocol}//${window.location.host}/public-inventory?reportView=true&token=SR-${Math.random().toString(36).substring(7).toUpperCase()}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="secure-link-preview-link"
+                                        >
+                                            {`${window.location.protocol}//${window.location.host}/public-inventory?reportView=true&token=SR-...`}
+                                            <div style={{ marginTop: '8px', fontSize: '10px', opacity: 0.6 }}>Klikni da otvoriš u novom prozoru</div>
+                                        </a>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                            <button
+                                                className="link-btn-large"
+                                                onClick={() => {
+                                                    const token = `SR-${Math.random().toString(36).substring(7).toUpperCase()}`;
+                                                    const url = `${window.location.protocol}//${window.location.host}/public-inventory?reportView=true&token=${token}`;
+                                                    window.open(url, '_blank');
+                                                }}
+                                            >
+                                                <ArrowUpRight size={18} /> Otvori Public View (Demo)
+                                            </button>
+
+                                            <button
+                                                className="link-btn-large"
+                                                style={{ background: '#f8fafc', color: '#1e293b', border: '1px solid #e2e8f0' }}
+                                                onClick={() => {
+                                                    const text = generateTextInventoryReport();
+                                                    const blob = new Blob([`<html><body style="font-family: monospace; white-space: pre-wrap; padding: 40px; background: #f1f5f9;"><div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 5px solid #7c3aed;">${text}</div></body></html>`], { type: 'text/html' });
+                                                    const url = URL.createObjectURL(blob);
+                                                    const a = document.createElement('a');
+                                                    a.href = url;
+                                                    a.download = `Inventory_Report_${new Date().toISOString().slice(0, 10)}.html`;
+                                                    a.click();
+                                                }}
+                                            >
+                                                <FileText size={18} /> Text Inventory Report
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    <div className="report-filters">
-                                        <div className="f-item" style={{ flex: 2 }}>
-                                            <label>Pretraga Agenta (Ime ili Email)</label>
-                                            <div className="agent-search-wrapper">
-                                                <Search size={14} />
-                                                <input
-                                                    type="text"
-                                                    placeholder="Kucaj za pretragu..."
-                                                    value={agentSearchQuery}
-                                                    onChange={e => setAgentSearchQuery(e.target.value)}
-                                                />
-                                                {agentSearchQuery && (
-                                                    <button className="clear-search" onClick={() => setAgentSearchQuery('')}>
-                                                        <X size={12} />
-                                                    </button>
-                                                )}
-                                            </div>
+                                    <div className="report-agent-config">
+                                        <div className="config-header">
+                                            <h4>Podešavanje Distribucije</h4>
+                                            <p>Odaberite subagente koji će dobiti ovaj izveštaj</p>
                                         </div>
-                                        <div className="f-item">
-                                            <label>Država</label>
-                                            <select value={reportFilterCountry} onChange={e => {
-                                                setReportFilterCountry(e.target.value);
-                                                setReportFilterCity('Sve');
-                                            }}>
-                                                {countries.map(c => <option key={c} value={c}>{c}</option>)}
-                                            </select>
-                                        </div>
-                                        <div className="f-item">
-                                            <label>Grad</label>
-                                            <select value={reportFilterCity} onChange={e => setReportFilterCity(e.target.value)}>
-                                                {cities.map(c => <option key={c} value={c}>{c}</option>)}
-                                            </select>
-                                        </div>
-                                    </div>
 
-                                    {selectedAgentIds.length > 0 && (
-                                        <div className="selected-agents-pool">
-                                            <label>Trenutno odabrani ({selectedAgentIds.length}):</label>
-                                            <div className="selected-chips-area">
-                                                {MOCK_SUBAGENTS.filter(a => selectedAgentIds.includes(a.id)).map(agent => (
-                                                    <div key={agent.id} className="selected-agent-chip">
-                                                        <span>{agent.name}</span>
-                                                        <button onClick={() => setSelectedAgentIds(prev => prev.filter(id => id !== agent.id))}>
-                                                            <X size={10} />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="agent-selection-grid">
-                                        <div className="selection-actions">
-                                            <button onClick={() => setSelectedAgentIds(MOCK_SUBAGENTS.map(a => a.id))}>Odaberi sve</button>
-                                            <button onClick={() => setSelectedAgentIds([])}>Poništi sve</button>
-                                            <button onClick={() => setSelectedAgentIds(filteredAgents.map(a => a.id))}>Samo filtrirane</button>
-                                        </div>
-                                        <div className="agents-scroll-area">
-                                            {paginatedAgents.map(agent => (
-                                                <label key={agent.id} className={`agent-checkbox-card ${selectedAgentIds.includes(agent.id) ? 'active' : ''}`}>
+                                        <div className="report-filters">
+                                            <div className="f-item" style={{ flex: 2 }}>
+                                                <label>Pretraga Agenta (Ime ili Email)</label>
+                                                <div className="agent-search-wrapper">
+                                                    <Search size={14} />
                                                     <input
-                                                        type="checkbox"
-                                                        checked={selectedAgentIds.includes(agent.id)}
-                                                        onChange={() => {
-                                                            const next = selectedAgentIds.includes(agent.id)
-                                                                ? selectedAgentIds.filter(id => id !== agent.id)
-                                                                : [...selectedAgentIds, agent.id];
-                                                            setSelectedAgentIds(next);
-                                                        }}
+                                                        type="text"
+                                                        placeholder="Kucaj za pretragu..."
+                                                        value={agentSearchQuery}
+                                                        onChange={e => setAgentSearchQuery(e.target.value)}
                                                     />
-                                                    <div className="agent-box-info">
-                                                        <span className="a-name">{agent.name}</span>
-                                                        <span className="a-loc">{agent.city}, {agent.country}</span>
-                                                    </div>
-                                                    {selectedAgentIds.includes(agent.id) && <Check size={14} className="check-icon" />}
-                                                </label>
-                                            ))}
+                                                    {agentSearchQuery && (
+                                                        <button className="clear-search" onClick={() => setAgentSearchQuery('')}>
+                                                            <X size={12} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="f-item">
+                                                <label>Država</label>
+                                                <select value={reportFilterCountry} onChange={e => {
+                                                    setReportFilterCountry(e.target.value);
+                                                    setReportFilterCity('Sve');
+                                                }}>
+                                                    {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                                                </select>
+                                            </div>
+                                            <div className="f-item">
+                                                <label>Grad</label>
+                                                <select value={reportFilterCity} onChange={e => setReportFilterCity(e.target.value)}>
+                                                    {cities.map(c => <option key={c} value={c}>{c}</option>)}
+                                                </select>
+                                            </div>
                                         </div>
 
-                                        {totalReportPages > 1 && (
-                                            <div className="report-pagination">
-                                                <button
-                                                    disabled={reportCurrentPage === 1}
-                                                    onClick={() => setReportCurrentPage(prev => Math.max(1, prev - 1))}
-                                                    className="pag-btn"
-                                                >
-                                                    <ChevronLeft size={16} />
-                                                </button>
-                                                <span className="pag-info">
-                                                    Stranica <strong>{reportCurrentPage}</strong> od {totalReportPages}
-                                                </span>
-                                                <button
-                                                    disabled={reportCurrentPage === totalReportPages}
-                                                    onClick={() => setReportCurrentPage(prev => Math.min(totalReportPages, prev + 1))}
-                                                    className="pag-btn"
-                                                >
-                                                    <ChevronRight size={16} />
-                                                </button>
+                                        {selectedAgentIds.length > 0 && (
+                                            <div className="selected-agents-pool">
+                                                <label>Trenutno odabrani ({selectedAgentIds.length}):</label>
+                                                <div className="selected-chips-area">
+                                                    {MOCK_SUBAGENTS.filter(a => selectedAgentIds.includes(a.id)).map(agent => (
+                                                        <div key={agent.id} className="selected-agent-chip">
+                                                            <span>{agent.name}</span>
+                                                            <button onClick={() => setSelectedAgentIds(prev => prev.filter(id => id !== agent.id))}>
+                                                                <X size={10} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
+
+                                        <div className="agent-selection-grid">
+                                            <div className="selection-actions">
+                                                <button onClick={() => setSelectedAgentIds(MOCK_SUBAGENTS.map(a => a.id))}>Odaberi sve</button>
+                                                <button onClick={() => setSelectedAgentIds([])}>Poništi sve</button>
+                                                <button onClick={() => setSelectedAgentIds(filteredAgents.map(a => a.id))}>Samo filtrirane</button>
+                                            </div>
+                                            <div className="agents-scroll-area">
+                                                {paginatedAgents.map(agent => (
+                                                    <label key={agent.id} className={`agent-checkbox-card ${selectedAgentIds.includes(agent.id) ? 'active' : ''}`}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedAgentIds.includes(agent.id)}
+                                                            onChange={() => {
+                                                                const next = selectedAgentIds.includes(agent.id)
+                                                                    ? selectedAgentIds.filter(id => id !== agent.id)
+                                                                    : [...selectedAgentIds, agent.id];
+                                                                setSelectedAgentIds(next);
+                                                            }}
+                                                        />
+                                                        <div className="agent-box-info">
+                                                            <span className="a-name">{agent.name}</span>
+                                                            <span className="a-loc">{agent.city}, {agent.country}</span>
+                                                        </div>
+                                                        {selectedAgentIds.includes(agent.id) && <Check size={14} className="check-icon" />}
+                                                    </label>
+                                                ))}
+                                            </div>
+
+                                            {totalReportPages > 1 && (
+                                                <div className="report-pagination">
+                                                    <button
+                                                        disabled={reportCurrentPage === 1}
+                                                        onClick={() => setReportCurrentPage(prev => Math.max(1, prev - 1))}
+                                                        className="pag-btn"
+                                                    >
+                                                        <ChevronLeft size={16} />
+                                                    </button>
+                                                    <span className="pag-info">
+                                                        Stranica <strong>{reportCurrentPage}</strong> od {totalReportPages}
+                                                    </span>
+                                                    <button
+                                                        disabled={reportCurrentPage === totalReportPages}
+                                                        onClick={() => setReportCurrentPage(prev => Math.min(totalReportPages, prev + 1))}
+                                                        className="pag-btn"
+                                                    >
+                                                        <ChevronRight size={16} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="report-footer">
-                                <div className="subagent-bulk-info">
-                                    <div className="subagent-summary">
-                                        <MailCheck size={18} />
-                                        <span>Target: <strong>{selectedAgentIds.length}</strong> subagenata</span>
+                                <div className="report-footer">
+                                    <div className="subagent-bulk-info">
+                                        <div className="subagent-summary">
+                                            <MailCheck size={18} />
+                                            <span>Target: <strong>{selectedAgentIds.length}</strong> subagenata</span>
+                                        </div>
                                     </div>
+
+                                    <button
+                                        disabled={isSendingReport || selectedAgentIds.length === 0}
+                                        className={`send-bulk-btn ${reportSentAt ? 'success' : ''}`}
+                                        onClick={async () => {
+                                            setIsSendingReport(true);
+                                            await new Promise(r => setTimeout(r, 2000));
+                                            setIsSendingReport(false);
+                                            setReportSentAt(new Date().toLocaleTimeString('sr-Latn-RS'));
+                                        }}
+                                    >
+                                        {isSendingReport ? (
+                                            <><Clock className="animate-spin" size={18} /> Slanje u toku...</>
+                                        ) : reportSentAt ? (
+                                            <><CheckCircle2 size={18} /> Uspešno poslato!</>
+                                        ) : (
+                                            <><Send size={18} /> Pošalji odabranima</>
+                                        )}
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )
+                }
+            </AnimatePresence >
+            {/* AUDIT LOGS MODAL */}
+            <AnimatePresence>
+                {
+                    showLogsModal && (
+                        <div className="modal-overlay" onClick={() => setShowLogsModal(false)}>
+                            <motion.div
+                                drag
+                                dragMomentum={false}
+                                className="visual-report-modal"
+                                style={{
+                                    width: '98%',
+                                    maxWidth: '1600px',
+                                    height: 'auto',
+                                    minHeight: '300px',
+                                    maxHeight: '90vh',
+                                    display: 'flex',
+                                    flexDirection: 'column'
+                                }}
+                                onClick={e => e.stopPropagation()}
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                            >
+                                <div className="report-modal-header drag-handle">
+                                    <div className="report-title-section">
+                                        <div className="report-icon-box" style={{ background: '#64748b' }}>
+                                            <HistoryIcon size={24} />
+                                        </div>
+                                        <div>
+                                            <h3>Audit Trail - Istorija Izmena Kapaciteta</h3>
+                                            <p className="report-subtitle">Evidencija svih operacija, ko je izvršio promenu i šta je tačno urađeno.</p>
+                                        </div>
+                                    </div>
+                                    <button className="report-close-btn" onClick={() => setShowLogsModal(false)}><X size={20} /></button>
                                 </div>
 
-                                <button
-                                    disabled={isSendingReport || selectedAgentIds.length === 0}
-                                    className={`send-bulk-btn ${reportSentAt ? 'success' : ''}`}
-                                    onClick={async () => {
-                                        setIsSendingReport(true);
-                                        await new Promise(r => setTimeout(r, 2000));
-                                        setIsSendingReport(false);
-                                        setReportSentAt(new Date().toLocaleTimeString('sr-Latn-RS'));
-                                    }}
-                                >
-                                    {isSendingReport ? (
-                                        <><Clock className="animate-spin" size={18} /> Slanje u toku...</>
-                                    ) : reportSentAt ? (
-                                        <><CheckCircle2 size={18} /> Uspešno poslato!</>
-                                    ) : (
-                                        <><Send size={18} /> Pošalji odabranima</>
-                                    )}
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
+                                <div className="report-body" style={{ background: '#fff', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                                    <div style={{ overflow: 'auto', width: '100%', padding: '0' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                                            <thead>
+                                                <tr style={{ textAlign: 'left', background: '#f8fafc', borderBottom: '2px solid #cbd5e1', position: 'sticky', top: 0, zIndex: 10 }}>
+                                                    <th style={{ padding: '20px' }}>Datum i Vreme</th>
+                                                    <th style={{ padding: '20px' }}>Korisnik</th>
+                                                    <th style={{ padding: '20px' }}>Akcija</th>
+                                                    <th style={{ padding: '20px' }}>Hotel</th>
+                                                    <th style={{ padding: '20px' }}>Tip Sobe</th>
+                                                    <th style={{ padding: '20px' }}>Opis Promene</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {capacityLogs.map((log, index) => (
+                                                    <tr key={log.id} style={{ borderBottom: '1px solid #f1f5f9', background: index % 2 === 0 ? '#fff' : '#faffff' }}>
+                                                        <td style={{ padding: '18px 20px', whiteSpace: 'nowrap', color: '#64748b' }}>{log.timestamp}</td>
+                                                        <td style={{ padding: '18px 20px' }}><strong>{log.user}</strong></td>
+                                                        <td style={{ padding: '18px 20px' }}>
+                                                            <span style={{
+                                                                padding: '5px 10px',
+                                                                borderRadius: '8px',
+                                                                background: log.action === 'Prebrisano' ? '#fee2e2' : '#f0f9ff',
+                                                                color: log.action === 'Prebrisano' ? '#dc2626' : '#0284c7',
+                                                                fontSize: '11px',
+                                                                fontWeight: 900,
+                                                                textTransform: 'uppercase'
+                                                            }}>
+                                                                {log.action}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: '18px 20px' }}>{log.hotel}</td>
+                                                        <td style={{ padding: '18px 20px', color: '#475569', fontStyle: 'italic' }}>{log.room}</td>
+                                                        <td style={{ padding: '18px 20px' }}>
+                                                            <code style={{ background: '#7c3aed', color: 'white', padding: '6px 12px', borderRadius: '8px', fontWeight: 800 }}>{log.change}</code>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )
+                }
+
+                {
+                    showPublicLinkModal && (
+                        <div className="modal-overlay" onClick={() => setShowPublicLinkModal(null)}>
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="visual-report-modal"
+                                style={{ maxWidth: '500px', width: '90%', padding: '30px' }}
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div style={{ textAlign: 'center' }}>
+                                    <div className="op-icon-badge" style={{ margin: '0 auto 20px', width: '60px', height: '60px' }}>
+                                        <ExternalLink size={30} color="var(--accent)" />
+                                    </div>
+                                    <h3 style={{ margin: '0 0 10px', fontSize: '20px', fontWeight: 800 }}>Javni Link Generisan</h3>
+                                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '25px' }}>
+                                        Ovaj link omogućava direktan pristup izveštaju samo za entitet: <strong>{showPublicLinkModal}</strong>.
+                                    </p>
+
+                                    <div style={{
+                                        background: '#f8fafc',
+                                        padding: '15px',
+                                        borderRadius: '12px',
+                                        border: '1px solid #e2e8f0',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        marginBottom: '25px'
+                                    }}>
+                                        <a
+                                            href={`/public-inventory?reportView=true&entity=${encodeURIComponent(showPublicLinkModal || '')}&type=analytics&tags=${activeTags.join(',')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ flex: 1, fontSize: '12px', color: 'var(--accent)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 700 }}
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            https://prime-click.travel/report/public/{showPublicLinkModal?.toLowerCase().replace(/ /g, '-')}/{Date.now()}
+                                        </a>
+                                        <button
+                                            className="btn-icon"
+                                            title="Copy to clipboard"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const url = `${window.location.origin}/public-inventory?reportView=true&entity=${encodeURIComponent(showPublicLinkModal || '')}&type=analytics&tags=${activeTags.join(',')}`;
+                                                navigator.clipboard.writeText(url);
+                                                alert('Link kopiran u clipboard!');
+                                            }}
+                                        >
+                                            <Copy size={16} />
+                                        </button>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                        <button className="op-btn-secondary" onClick={() => setShowPublicLinkModal(null)}>Zatvori</button>
+                                        <button className="btn-create-cap" style={{ background: '#10b981' }}>
+                                            <Send size={16} /> Pošalji na Email
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )
+                }
             </AnimatePresence>
+
+            {showBookingCal && (
+                <ModernCalendar
+                    startDate={bookingFrom}
+                    endDate={bookingTo}
+                    onChange={(start, end) => {
+                        setBookingFrom(start || '2026-01-01');
+                        setBookingTo(end || '2026-12-31');
+                    }}
+                    onClose={() => setShowBookingCal(false)}
+                    allowPast={true}
+                />
+            )}
+
+            {
+                showStayCal && (
+                    <ModernCalendar
+                        startDate={stayFrom}
+                        endDate={stayTo}
+                        onChange={(start, end) => {
+                            setStayFrom(start || '2026-06-01');
+                            setStayTo(end || '2026-08-31');
+                        }}
+                        onClose={() => setShowStayCal(false)}
+                        allowPast={true}
+                    />
+                )
+            }
+
+            {
+                showGridCal && (
+                    <ModernCalendar
+                        startDate={selectedDate.toISOString().split('T')[0]}
+                        endDate={selectedDate.toISOString().split('T')[0]}
+                        singleMode={true}
+                        onChange={(start) => {
+                            setSelectedDate(new Date(start));
+                        }}
+                        onClose={() => setShowGridCal(false)}
+                        allowPast={true}
+                    />
+                )
+            }
+
+
         </div >
     );
 };
