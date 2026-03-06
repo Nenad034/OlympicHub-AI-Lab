@@ -473,7 +473,7 @@ const Customers: React.FC<CustomersProps> = ({ onBack }) => {
                                             className={`vtab-btn ${activeModalTab === tab.id ? 'active' : ''}`}
                                             style={{ padding: '24px', fontSize: '17px', borderRadius: '14px' }}
                                         >
-                                            {React.cloneElement(tab.icon as React.ReactElement, { size: 24 })}
+                                            {React.cloneElement(tab.icon as any, { size: 24 })}
                                             {tab.label}
                                         </button>
                                     ))}
@@ -682,7 +682,7 @@ const Customers: React.FC<CustomersProps> = ({ onBack }) => {
                 .nav-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary); padding: 12px 24px; borderRadius: 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 600; }
                 .nav-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
                 
-                .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: block; z-index: 1000; }
+                .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: transparent; backdrop-filter: none; display: block; z-index: 1000; }
                 .glass-panel { background: #1a1f2e; backdrop-filter: blur(20px); border-radius: 24px; }
 
                 .app-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; position: relative; overflow: hidden; }

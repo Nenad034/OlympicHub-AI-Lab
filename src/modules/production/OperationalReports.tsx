@@ -203,9 +203,77 @@ const OperationalReports: React.FC = () => {
     const [isSendingReport, setIsSendingReport] = useState(false);
     const [reportSentAt, setReportSentAt] = useState<string | null>(null);
     const [reportTrigger, setReportTrigger] = useState(0);
+    const [roomingLang, setRoomingLang] = useState<'sr' | 'en'>('sr');
     const [searchParams] = useSearchParams();
     const isReportOnlyView = searchParams.get('reportView') === 'true';
     const reportEntity = searchParams.get('entity');
+
+    const roomingTranslations = {
+        sr: {
+            bookingId: "Broj rezervacije",
+            stayPeriod: "Termin boravka",
+            accommodation: "Smeštaj / Usluga",
+            passengerList: "Lista Putnika",
+            passport: "Pasoš",
+            note: "Napomena",
+            nights: "noćenja",
+            adl: "Adl",
+            chd: "Chd",
+            guest: "Gost",
+            adult: "Odrasla osoba",
+            infant: "Beba (Infant)",
+            child: "Dete",
+            yrs: "god",
+            sendEmail: "Pošalji Hotelu Mejlom",
+            hotelLink: "Link za Hotel",
+            searchPlaceholder: "Pretraži putnika ili ID...",
+            dob: "datum rođenja",
+            expandAll: "Raširi Sve (Bulk)",
+            collapseAll: "Skupi Sve",
+            bulkSend: "Bulk Slanje Mejlom",
+            defaultNote: "Uvek slati sobu sa pogledom na more. Putnik je stari klijent."
+        },
+        en: {
+            bookingId: "Booking ID",
+            stayPeriod: "Stay Period",
+            accommodation: "Accommodation / Service",
+            passengerList: "Passenger List",
+            passport: "Passport",
+            note: "Note / Remarks",
+            nights: "nights",
+            adl: "Adl",
+            chd: "Chd",
+            guest: "Guest",
+            adult: "Adult",
+            infant: "Infant",
+            child: "Child",
+            yrs: "yrs",
+            sendEmail: "Send Email to Hotel",
+            hotelLink: "Hotel Link",
+            searchPlaceholder: "Search passengers or ID...",
+            dob: "date of birth",
+            expandAll: "Expand All (Bulk)",
+            collapseAll: "Collapse All",
+            bulkSend: "Bulk Email Sending",
+            defaultNote: "Always send a room with a sea view. The passenger is a long-time client."
+        }
+    };
+    const rt = roomingTranslations[roomingLang];
+
+    const normalizeString = (str: string) => {
+        if (!str) return '';
+        return str.toLowerCase()
+            .replace(/š/g, 's')
+            .replace(/đ/g, 'd')
+            .replace(/ž/g, 'z')
+            .replace(/č/g, 'c')
+            .replace(/ć/g, 'c');
+    };
+
+    const matchesSearch = (text: string) => {
+        if (!searchTerm) return true;
+        return normalizeString(text).includes(normalizeString(searchTerm));
+    };
 
     useEffect(() => {
         if (isReportOnlyView) {
@@ -1828,13 +1896,37 @@ const OperationalReports: React.FC = () => {
                                     <Search size={18} color="#64748b" style={{ marginRight: '10px' }} />
                                     <input
                                         type="text"
-                                        placeholder="Pretraži putnika ili rezervaciju..."
+                                        placeholder={rt.searchPlaceholder}
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         style={{ border: 'none', outline: 'none', width: '100%', fontSize: '14px' }}
                                     />
                                 </div>
-                                <div className="rooming-actions" style={{ display: 'flex', gap: '10px' }}>
+                                <div className="rooming-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', background: '#f1f5f9', padding: '4px', borderRadius: '10px', marginRight: '10px' }}>
+                                        <button
+                                            onClick={() => setRoomingLang('sr')}
+                                            style={{
+                                                padding: '6px 12px', borderRadius: '8px', border: 'none', fontSize: '11px', fontWeight: 800, cursor: 'pointer',
+                                                background: roomingLang === 'sr' ? 'white' : 'transparent',
+                                                color: roomingLang === 'sr' ? 'var(--accent)' : '#64748b',
+                                                boxShadow: roomingLang === 'sr' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                                            }}
+                                        >
+                                            SR
+                                        </button>
+                                        <button
+                                            onClick={() => setRoomingLang('en')}
+                                            style={{
+                                                padding: '6px 12px', borderRadius: '8px', border: 'none', fontSize: '11px', fontWeight: 800, cursor: 'pointer',
+                                                background: roomingLang === 'en' ? 'white' : 'transparent',
+                                                color: roomingLang === 'en' ? 'var(--accent)' : '#64748b',
+                                                boxShadow: roomingLang === 'en' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                                            }}
+                                        >
+                                            EN
+                                        </button>
+                                    </div>
                                     <button
                                         className="op-btn-secondary"
                                         style={{
@@ -1857,14 +1949,14 @@ const OperationalReports: React.FC = () => {
                                         }}
                                     >
                                         {isRoomingAllExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-                                        {isRoomingAllExpanded ? 'Skupi Sve' : 'Raširi Sve (Bulk)'}
+                                        {isRoomingAllExpanded ? rt.collapseAll : rt.expandAll}
                                     </button>
                                     <button
                                         className="btn-primary"
                                         style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#f59e0b', color: 'white', borderRadius: '10px', border: 'none', fontWeight: 600, cursor: 'pointer' }}
                                         onClick={() => alert('Bulk slanje generisanih Rooming lista svim ugovorenim hotelima!')}
                                     >
-                                        <Mail size={18} /> Bulk Slanje Mejlom
+                                        <Mail size={18} /> {rt.bulkSend}
                                     </button>
                                     <button
                                         className="btn-secondary"
@@ -1921,14 +2013,14 @@ const OperationalReports: React.FC = () => {
                                         }}
                                         style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#3b82f6', color: 'white', borderRadius: '10px', border: 'none', fontWeight: 600, cursor: 'pointer' }}
                                     >
-                                        <Link size={18} /> Link za Hotel
+                                        <Link size={18} /> {rt.hotelLink}
                                     </button>
                                 </div>
                             </div>
 
-                            {MOCK_HOTELS.filter(h => MOCK_RESERVATIONS.some(r => r.hotelId === h.id && (!searchTerm || r.customer.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase())))).map(hotel => {
+                            {MOCK_HOTELS.filter(h => MOCK_RESERVATIONS.some(r => r.hotelId === h.id && (matchesSearch(r.customer) || matchesSearch(r.id)))).map(hotel => {
                                 const hotelReservations = MOCK_RESERVATIONS
-                                    .filter(r => r.hotelId === hotel.id && (!searchTerm || r.customer.toLowerCase().includes(searchTerm.toLowerCase()) || r.id.toLowerCase().includes(searchTerm.toLowerCase())))
+                                    .filter(r => r.hotelId === hotel.id && (matchesSearch(r.customer) || matchesSearch(r.id)))
                                     .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
 
                                 return (
@@ -1951,7 +2043,7 @@ const OperationalReports: React.FC = () => {
                                                 style={{ marginLeft: 'auto', padding: '6px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', borderColor: '#10b981' }}
                                                 onClick={() => alert(`Slanje Rooming liste isključivo hotelu: ${hotel.name}`)}
                                             >
-                                                <Mail size={14} /> Pošalji Hotelu Mejlom
+                                                <Mail size={14} /> {rt.sendEmail}
                                             </button>
                                         </div>
 
@@ -1959,12 +2051,12 @@ const OperationalReports: React.FC = () => {
                                             <table className="op-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left', tableLayout: 'fixed' }}>
                                                 <thead>
                                                     <tr style={{ background: '#fff1f2', borderBottom: '1px solid var(--border)' }}>
-                                                        <th style={{ width: '130px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Broj rezervacije</th>
-                                                        <th style={{ width: '220px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>Termin boravka</th>
-                                                        <th style={{ width: '200px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>Smeštaj / Usluga</th>
-                                                        <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>Lista Putnika</th>
-                                                        <th style={{ width: '140px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>Pasoš</th>
-                                                        <th style={{ width: '360px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>Napomena</th>
+                                                        <th style={{ width: '130px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{rt.bookingId}</th>
+                                                        <th style={{ width: '220px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>{rt.stayPeriod}</th>
+                                                        <th style={{ width: '240px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>{rt.accommodation}</th>
+                                                        <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>{rt.passengerList}</th>
+                                                        <th style={{ width: '140px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>{rt.passport}</th>
+                                                        <th style={{ width: '360px', padding: '8px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 900, color: '#881337', textTransform: 'uppercase', letterSpacing: '0.8px', borderLeft: '1px solid rgba(136, 19, 55, 0.1)' }}>{rt.note}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -1973,21 +2065,26 @@ const OperationalReports: React.FC = () => {
                                                         const nights = Math.ceil((new Date(res.checkOut).getTime() - new Date(res.checkIn).getTime()) / (1000 * 60 * 60 * 24));
                                                         const paxArray = [
                                                             ...Array.from({ length: res.adults }).map((_, i) => ({
-                                                                name: i === 0 ? res.customer : `Gost ${i + 1} (${res.customer.split(' ')[1] || ''})`,
+                                                                name: i === 0 ? res.customer : `${rt.guest} ${i + 1} (${res.customer.split(' ')[1] || ''})`,
                                                                 type: 'adult',
                                                                 age: 0,
                                                                 passport: `PA${Math.floor(Math.random() * 8000000 + 1000000)}`
                                                             })) as any[],
-                                                            ...Array.from({ length: res.children }).map((_, i) => ({
-                                                                name: `Gost ${res.adults + i + 1} (${res.customer.split(' ')[1] || ''})`,
-                                                                type: 'child',
-                                                                age: i === 0 ? 7 : 12,
-                                                                passport: `PA${Math.floor(Math.random() * 8000000 + 1000000)}`
-                                                            })) as any[],
+                                                            ...Array.from({ length: res.children }).map((_, i) => {
+                                                                const age = i === 0 ? 7 : 12;
+                                                                return {
+                                                                    name: `${rt.guest} ${res.adults + i + 1} (${res.customer.split(' ')[1] || ''})`,
+                                                                    type: 'child',
+                                                                    age,
+                                                                    birthDate: `15.05.${2026 - age}`,
+                                                                    passport: `PA${Math.floor(Math.random() * 8000000 + 1000000)}`
+                                                                };
+                                                            }) as any[],
                                                             ...Array.from({ length: res.babies }).map((_, i) => ({
-                                                                name: `Gost ${res.adults + res.children + i + 1} (${res.customer.split(' ')[1] || ''})`,
+                                                                name: `${rt.guest} ${res.adults + res.children + i + 1} (${res.customer.split(' ')[1] || ''})`,
                                                                 type: 'baby',
                                                                 age: 1,
+                                                                birthDate: '01.01.2025',
                                                                 passport: `PA${Math.floor(Math.random() * 8000000 + 1000000)}`
                                                             })) as any[]
                                                         ];
@@ -2023,12 +2120,12 @@ const OperationalReports: React.FC = () => {
                                                                             <div className="date-cell" style={{ display: 'inline-block', background: 'var(--bg-main)', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 900, color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
                                                                                 {new Date(res.checkIn).toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })} - {new Date(res.checkOut).toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                                             </div>
-                                                                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 800, marginLeft: '4px' }}>{nights} noćenja</span>
+                                                                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 800, marginLeft: '4px' }}>{nights} {rt.nights}</span>
                                                                         </div>
                                                                     </td>
                                                                     <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)', verticalAlign: 'top' }}>
                                                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                                                            <div className="room-badge" style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '6px', fontSize: '9px', fontWeight: 900, width: 'fit-content' }}>{res.roomType}</div>
+                                                                            <div className="room-badge" style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 900, width: 'fit-content' }}>{res.roomType}</div>
                                                                             <div style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '2px 8px', borderRadius: '6px', fontSize: '8px', fontWeight: 900, letterSpacing: '0.4px', width: 'fit-content', border: '1px solid rgba(59, 130, 246, 0.2)' }}>ALL INCLUSIVE</div>
                                                                         </div>
                                                                     </td>
@@ -2044,12 +2141,12 @@ const OperationalReports: React.FC = () => {
                                                                             marginTop: '1px'
                                                                         }}>
                                                                             <User size={14} color="var(--text-secondary)" style={{ minWidth: '14px' }} />
-                                                                            <strong style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap', fontSize: '13px', fontWeight: 950 }}>{res.customer}</strong>
+                                                                            <strong style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap', fontSize: '13px', fontWeight: 950 }}>1. {res.customer}</strong>
                                                                             <div style={{ display: 'flex', gap: '3px', alignItems: 'center', marginLeft: '4px' }}>
-                                                                                <span style={{ fontSize: '9px', background: 'rgba(59, 130, 246, 0.1)', padding: '1px 5px', borderRadius: '4px', color: '#3b82f6', fontWeight: 900, border: '1px solid rgba(59, 130, 246, 0.2)', whiteSpace: 'nowrap' }}>{res.adults} Adl</span>
+                                                                                <span style={{ fontSize: '9px', background: 'rgba(59, 130, 246, 0.1)', padding: '1px 5px', borderRadius: '4px', color: '#3b82f6', fontWeight: 900, border: '1px solid rgba(59, 130, 246, 0.2)', whiteSpace: 'nowrap' }}>{res.adults} {rt.adl}</span>
                                                                                 {res.children > 0 && (
                                                                                     <span style={{ fontSize: '9px', background: 'rgba(249, 115, 22, 0.1)', padding: '1px 5px', borderRadius: '4px', color: '#fb923c', fontWeight: 900, border: '1px solid rgba(249, 115, 22, 0.1)', whiteSpace: 'nowrap' }}>
-                                                                                        {res.children} Chd
+                                                                                        {res.children} {rt.chd}
                                                                                     </span>
                                                                                 )}
                                                                             </div>
@@ -2061,7 +2158,7 @@ const OperationalReports: React.FC = () => {
                                                                         </div>
                                                                     </td>
                                                                     <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)', verticalAlign: 'top' }}>
-                                                                        <span style={{ color: '#94a3b8', fontSize: '11px', lineHeight: '1.3', fontWeight: 600 }}>Uvek slati sobu sa pogledom na more. Putnik je stari klijent.</span>
+                                                                        <span style={{ color: '#94a3b8', fontSize: '11px', lineHeight: '1.3', fontWeight: 600 }}>{rt.defaultNote}</span>
                                                                     </td>
                                                                 </tr>
 
@@ -2077,10 +2174,10 @@ const OperationalReports: React.FC = () => {
                                                                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                                                             {pax.type === 'baby' ? <Baby size={13} color="#4ade80" /> : pax.type === 'child' ? <Baby size={13} color="#fb923c" /> : <User size={13} color="var(--text-secondary)" />}
-                                                                                            <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '12px' }}>{pax.name}</span>
+                                                                                            <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '12px' }}>{pIdx + 2}. {pax.name}</span>
                                                                                         </div>
                                                                                         <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-                                                                                            {pax.type === 'adult' ? 'Odrasla osoba' : pax.type === 'baby' ? 'Beba (Infant)' : `Dete (${pax.age} god)`}
+                                                                                            {pax.type === 'adult' ? rt.adult : pax.type === 'baby' ? `${rt.infant} - DOB: ${pax.birthDate}` : `${rt.child} (${pax.age} ${rt.yrs}) - DOB: ${pax.birthDate}`}
                                                                                         </span>
                                                                                     </div>
                                                                                 </td>

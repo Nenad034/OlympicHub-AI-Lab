@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
+import * as XLSX from 'xlsx';
 import {
+    Download,
     Database,
     BarChart3,
     Mail,
@@ -48,17 +50,19 @@ import {
     CheckCircle2,
     XCircle,
     Clock,
-    Monitor
+    Monitor,
+    ChevronLeft,
+    Ship
 } from 'lucide-react';
 
 const MOCK_LIVE_RESERVATIONS = [
-    { id: 'R-9452', customer: 'Jovan Jovanović', country: 'Grčka', destination: 'Rodos', hotel: 'Mitsis Grand Hotel', subagent: 'Travel Pro DOO', supplier: 'Hotelbeds', branch: 'Beograd - Knez', amount: 1250, debt: 1250, payment: 800, status: 'Confirmed', time: 'Pre 2 min', type: 'Hotel', daysAgo: 0 },
-    { id: 'R-9451', customer: 'Marko Marković', country: 'Turska', destination: 'Antalija', hotel: 'Rixos Premium Belek', subagent: null, clientType: 'B2C', supplier: 'Amadeus', branch: 'Novi Sad', amount: 450, debt: 450, payment: 450, status: 'Confirmed', time: 'Pre 5 min', type: 'Flight', daysAgo: 0 },
-    { id: 'R-9450', customer: 'Ana Anić', country: 'Egipat', destination: 'Hurgada', hotel: 'Steigenberger ALDAU', subagent: 'SuperTravel', supplier: 'Mts Globe', branch: 'Niš', amount: 2100, debt: 2100, payment: 0, status: 'Pending', time: 'Pre 12 min', type: 'Package', daysAgo: 1 },
-    { id: 'R-9449', customer: 'Petar Petrović', country: 'Grčka', destination: 'Krit', hotel: 'Stella Island Luxury', subagent: null, clientType: 'B2B', supplier: 'Expedia', branch: 'Beograd - Knez', amount: 890, debt: 890, payment: 890, status: 'Confirmed', time: 'Pre 18 min', type: 'Hotel', daysAgo: 3 },
-    { id: 'R-9448', customer: 'Milica Milić', country: 'Grčka', destination: 'Halkidiki', hotel: 'Sani Beach', subagent: 'Montenegro Fly', supplier: 'Solvex', branch: 'Podgorica', amount: 3200, debt: 3200, payment: 1200, status: 'Cancelled', time: 'Pre 25 min', type: 'Package', daysAgo: 5 },
-    { id: 'R-9447', customer: 'Ivan Ivanović', country: 'Italija', destination: 'Rim', hotel: 'Hotel Quirinale', subagent: null, clientType: 'B2C', supplier: 'Hotelbeds', branch: 'Novi Sad', amount: 150, debt: 150, payment: 150, status: 'Confirmed', time: 'Pre 40 min', type: 'Transfer', daysAgo: 12 },
-    { id: 'R-9446', customer: 'Savo Savić', country: 'Turska', destination: 'Bodrum', hotel: 'Titanic Deluxe Bodrum', subagent: 'Travel Pro DOO', supplier: 'Amadeus', branch: 'Beograd - Knez', amount: 1100, debt: 1100, payment: 1100, status: 'Confirmed', time: 'Pre 1h', type: 'Flight', daysAgo: 20 },
+    { id: 'R-9452', customer: 'Jovan Jovanović', country: 'Grčka', destination: 'Rodos', hotel: 'Mitsis Grand Hotel', subagent: 'Travel Pro DOO', supplier: 'Hotelbeds', branch: 'Beograd - Knez', amount: 1250, debt: 1250, payment: 800, status: 'Confirmed', time: 'Pre 2 min', type: 'Hotel', daysAgo: 0, checkIn: '2026-06-15', checkOut: '2026-06-22', productType: 'hotel', productLabel: 'Smeštaj' },
+    { id: 'R-9451', customer: 'Marko Marković', country: 'Turska', destination: 'Antalija', hotel: 'Rixos Premium Belek', subagent: null, clientType: 'B2C', supplier: 'Amadeus', branch: 'Novi Sad', amount: 450, debt: 450, payment: 450, status: 'Confirmed', time: 'Pre 5 min', type: 'Flight', daysAgo: 0, checkIn: '2026-07-01', checkOut: '2026-07-10', productType: 'flight', productLabel: 'Avio' },
+    { id: 'R-9450', customer: 'Ana Anić', country: 'Egipat', destination: 'Hurgada', hotel: 'Steigenberger ALDAU', subagent: 'SuperTravel', supplier: 'Mts Globe', branch: 'Niš', amount: 2100, debt: 2100, payment: 0, status: 'Pending', time: 'Pre 12 min', type: 'Package', daysAgo: 1, checkIn: '2026-08-10', checkOut: '2026-08-20', productType: 'package', productLabel: 'Paket' },
+    { id: 'R-9449', customer: 'Petar Petrović', country: 'Grčka', destination: 'Krit', hotel: 'Stella Island Luxury', subagent: null, clientType: 'B2B', supplier: 'Expedia', branch: 'Beograd - Knez', amount: 890, debt: 890, payment: 890, status: 'Confirmed', time: 'Pre 18 min', type: 'Hotel', daysAgo: 3, checkIn: '2026-09-05', checkOut: '2026-09-12', productType: 'hotel', productLabel: 'Smeštaj' },
+    { id: 'R-9448', customer: 'Milica Milić', country: 'Grčka', destination: 'Halkidiki', hotel: 'Sani Beach', subagent: 'Montenegro Fly', supplier: 'Solvex', branch: 'Podgorica', amount: 3200, debt: 3200, payment: 1200, status: 'Cancelled', time: 'Pre 25 min', type: 'Package', daysAgo: 5, checkIn: '2026-10-12', checkOut: '2026-10-22', productType: 'travel', productLabel: 'Putovanje' },
+    { id: 'R-9447', customer: 'Ivan Ivanović', country: 'Italija', destination: 'Rim', hotel: 'Hotel Quirinale', subagent: null, clientType: 'B2C', supplier: 'Hotelbeds', branch: 'Novi Sad', amount: 150, debt: 150, payment: 0, status: 'Confirmed', time: 'Pre 40 min', type: 'Transfer', daysAgo: 12, checkIn: '2026-05-20', checkOut: '2026-05-25', productType: 'transfer', productLabel: 'Transfer' },
+    { id: 'R-9446', customer: 'Savo Savić', country: 'Turska', destination: 'Bodrum', hotel: 'Titanic Deluxe Bodrum', subagent: 'Travel Pro DOO', supplier: 'Amadeus', branch: 'Beograd - Knez', amount: 1100, debt: 1100, payment: 1100, status: 'Confirmed', time: 'Pre 1h', type: 'Flight', daysAgo: 20, checkIn: '2026-08-01', checkOut: '2026-08-08', productType: 'flight', productLabel: 'Avio' },
 ];
 
 // Types
@@ -891,15 +895,43 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
 // --- GLOBAL PULSE COMPONENT ---
 function GlobalPulse() {
     const navigate = useNavigate();
-    const [aggMode, setAggMode] = useState<'feed' | 'subagent' | 'supplier' | 'branch'>('feed');
-    const [statusFilter, setStatusFilter] = useState<'all' | 'Confirmed' | 'Pending' | 'Cancelled'>('all');
+    const { theme } = useThemeStore();
+    const isDark = theme === 'navy';
+    const [aggMode, setAggMode] = useState<'subagent' | 'supplier' | 'branch' | 'clientType'>('subagent');
+    const [viewMode, setViewMode] = useState<'feed' | 'agg'>('feed');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'Active' | 'Reservation' | 'Pending' | 'Cancelled'>('all');
+    const [productFilter, setProductFilter] = useState<string>('all');
+    const [currentPage, setCurrentPage] = useState(1);
     const [daysFilter, setDaysFilter] = useState<number | string>(30);
+    const itemsPerPage = 10;
 
     const filteredReservations = MOCK_LIVE_RESERVATIONS.filter(res => {
-        const matchesStatus = statusFilter === 'all' ? true : res.status === statusFilter;
+        const matchesStatus = statusFilter === 'all' ? true :
+            statusFilter === 'Active' ? (res.status === 'Confirmed' && res.payment > 0) :
+                statusFilter === 'Reservation' ? (res.status === 'Confirmed' && res.payment === 0) :
+                    res.status === statusFilter;
         const matchesDays = res.daysAgo < (typeof daysFilter === 'number' ? daysFilter : 30);
-        return matchesStatus && matchesDays;
+        const matchesProduct = productFilter === 'all' ? true : res.productType === productFilter;
+        return matchesStatus && matchesDays && matchesProduct;
     });
+
+    const totalPages = Math.ceil(filteredReservations.length / itemsPerPage);
+    const paginatedReservations = filteredReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    // Reset to first page when filtering or mode changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [statusFilter, daysFilter, aggMode, productFilter]);
+
+    const getStatusDisplay = (res: any) => {
+        if (res.status === 'Cancelled') return { label: 'Storno', color: '#ef4444' };
+        if (res.status === 'Pending') return { label: 'Pending', color: '#f59e0b' };
+        if (res.status === 'Confirmed') {
+            if (res.payment > 0) return { label: 'Aktivna', color: '#10b981' };
+            return { label: 'Rezervacija', color: '#3b82f6' };
+        }
+        return { label: res.status, color: '#64748b' };
+    };
 
     const totalReservations = filteredReservations.length;
     const totalDebt = filteredReservations.reduce((acc, res) => acc + res.debt, 0);
@@ -909,10 +941,15 @@ function GlobalPulse() {
         const result: any[] = [];
         const map = new Map();
 
-        const key = aggMode === 'subagent' ? 'subagent' : aggMode === 'supplier' ? 'supplier' : 'branch';
+        const key = aggMode === 'subagent' ? 'subagent' :
+            aggMode === 'supplier' ? 'supplier' :
+                aggMode === 'branch' ? 'branch' : 'clientType';
 
         filteredReservations.forEach(res => {
-            const val = (res as any)[key];
+            let val = (res as any)[key];
+            if (aggMode === 'clientType' && res.subagent) {
+                val = 'SUBAGENT';
+            }
             if (!map.has(val)) {
                 map.set(val, { name: val, count: 0, total: 0 });
             }
@@ -927,39 +964,124 @@ function GlobalPulse() {
 
     const aggregatedData = getAggregatedData();
 
+    const exportToExcel = () => {
+        const dataToExport = filteredReservations.map(res => ({
+            'ID': res.id,
+            'Vreme': res.time,
+            'Kupac': res.customer,
+            'Vrsta': res.productType?.toUpperCase() || 'N/A',
+            'Usluga': (res as any).type === 'Flight' ? `Itinerer: ${res.hotel}` : (res as any).type === 'Package' ? `Putovanje: ${res.hotel}` : `Hotel: ${res.hotel}`,
+            'Zemlja': res.country,
+            'Destinacija': res.destination,
+            'Partner/Subagent': res.subagent || (res.clientType === 'B2B' ? 'Agencijski Klijent' : 'Direktni Putnik'),
+            'Dobavljač': res.supplier,
+            'Iznos (€)': res.amount,
+            'Zaduženje (€)': res.debt,
+            'Uplaćeno (€)': res.payment,
+            'Status': res.status,
+            'Datum Boravka': `${res.checkIn} - ${res.checkOut}`
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Operacije');
+        XLSX.writeFile(workbook, `GlobalPulse_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
+    const openReport = () => {
+        const totalReservations = filteredReservations.length;
+        const reportWindow = window.open('', '_blank');
+        if (reportWindow) {
+            reportWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Operativni Izveštaj - Global Pulse</title>
+                        <style>
+                            body { font-family: sans-serif; padding: 40px; color: #333; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; border: 1px solid #777; }
+                            th, td { border: 1px solid #777; padding: 12px; text-align: left; }
+                            th { background-color: #f4f4f4; text-transform: uppercase; font-size: 11px; font-weight: bold; border-bottom: 2px solid #333; }
+                            h1 { color: #1e293b; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
+                            .meta { color: #64748b; font-size: 13px; margin-bottom: 20px; }
+                            .share-btn { margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Operativni Izveštaj - Global Pulse</h1>
+                        <div class="meta">
+                            Datum: ${new Date().toLocaleDateString('sr-RS')}<br/>
+                            Ukupno rezervacija: ${totalReservations}
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th><th>Kupac</th><th>Vrsta</th><th>Usluga</th><th>Vrsta Kupca</th><th>Dobavljač</th><th>Zaduženje</th><th>Uplaćeno</th><th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filteredReservations.map(res => `
+                                    <tr>
+                                        <td>${res.id}</td>
+                                        <td>${res.customer}</td>
+                                        <td>${res.productType?.toUpperCase() || 'N/A'}</td>
+                                        <td>${(res as any).type === 'Flight' ? `Itinerer: ${res.hotel}` : (res as any).type === 'Package' ? `Putovanje: ${res.hotel}` : `Hotel: ${res.hotel}`} (${res.country})</td>
+                                        <td>${res.subagent || (res.clientType === 'B2B' ? 'Agencijski Klijent' : 'Direktni Putnik')}</td>
+                                        <td>${res.supplier}</td>
+                                        <td>${res.debt.toLocaleString()} €</td>
+                                        <td>${res.payment.toLocaleString()} €</td>
+                                        <td>${res.status}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <button onclick="window.print()" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Štampaj Izveštaj</button>
+                                <button onclick="alert('Link kopiran: https://primeclick.travel/share/global_report_${Math.random().toString(36).substr(2, 9)}')" style="padding: 10px 20px; background: #f8fafc; color: #1e293b; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-weight: bold; margin-left: 10px;">Kopiraj Javni Link</button>
+                            </div>
+                            <button onclick="location.href='mailto:?subject=Global Pulse Izveštaj&body=Pogledajte izveštaj na linku...'" style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Pošalji Mejlom</button>
+                        </div>
+                    </body>
+                </html>
+            `);
+            reportWindow.document.close();
+        }
+    };
+
     return (
         <div style={{
-            background: 'rgba(255, 255, 255, 0.03)',
+            background: isDark ? 'rgba(255, 255, 255, 0.03)' : '#ffffff',
             backdropFilter: 'blur(20px)',
             borderRadius: '32px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0,0,0,0.05)',
             overflow: 'hidden',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+            boxShadow: isDark ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : '0 10px 30px rgba(0,0,0,0.05)'
         }}>
-            {/* Pulsing Header & Status Filters */}
+            {/* Clean Header Section */}
             <div style={{
-                padding: '16px 30px',
-                background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                padding: '24px 30px',
+                background: isDark ? 'linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%)',
+                borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.05)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 flexWrap: 'wrap',
-                gap: '12px'
+                alignItems: 'center',
+                gap: '24px'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                     <div style={{ position: 'relative' }}>
                         <div style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '10px',
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '12px',
                             background: 'var(--accent)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             color: 'white',
-                            boxShadow: '0 0 15px var(--accent-glow)'
+                            boxShadow: '0 8px 16px var(--accent-glow)'
                         }}>
-                            <Activity size={16} />
+                            <Activity size={20} />
                         </div>
                         <motion.div
                             animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
@@ -968,39 +1090,48 @@ function GlobalPulse() {
                                 position: 'absolute',
                                 top: -2,
                                 right: -2,
-                                width: '8px',
-                                height: '8px',
+                                width: '10px',
+                                height: '10px',
                                 background: '#10b981',
                                 borderRadius: '50%',
-                                border: '2px solid var(--bg-card)'
+                                border: `2px solid ${isDark ? '#1e293b' : '#fff'}`
                             }}
                         />
                     </div>
                     <div>
-                        <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800' }}>Global Pulse</h2>
+                        <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '900', letterSpacing: '-0.5px', color: isDark ? '#fff' : '#1e293b' }}>Global Pulse</h2>
                     </div>
 
-                    {/* STATUS FILTERS */}
-                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: '3px', borderRadius: '10px', margin: '0 10px' }}>
+                    {/* STATUS FILTERS - Simplified and Modernized */}
+                    <div style={{
+                        display: 'flex',
+                        background: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
+                        padding: '4px',
+                        borderRadius: '14px',
+                        marginLeft: '10px',
+                        border: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)'
+                    }}>
                         {[
                             { id: 'all', label: 'Sve' },
-                            { id: 'Confirmed', label: 'Potvrđene' },
+                            { id: 'Active', label: 'Aktivne' },
+                            { id: 'Reservation', label: 'Rezervacije' },
                             { id: 'Pending', label: 'Na čekanju' },
-                            { id: 'Cancelled', label: 'Otkazane' }
+                            { id: 'Cancelled', label: 'Storno' }
                         ].map(st => (
                             <button
                                 key={st.id}
-                                onClick={() => setStatusFilter(st.id as any)}
+                                onClick={() => setStatusFilter(st.id === statusFilter ? 'all' : st.id as any)}
                                 style={{
-                                    padding: '5px 12px',
-                                    borderRadius: '7px',
+                                    padding: '6px 16px',
+                                    borderRadius: '10px',
                                     border: 'none',
-                                    fontSize: '10px',
-                                    fontWeight: '700',
+                                    fontSize: '11px',
+                                    fontWeight: '800',
                                     cursor: 'pointer',
-                                    background: statusFilter === st.id ? 'var(--text-primary)' : 'transparent',
-                                    color: statusFilter === st.id ? 'var(--bg-card)' : 'var(--text-secondary)',
-                                    transition: '0.2s'
+                                    background: statusFilter === st.id ? (isDark ? '#fff' : '#1e293b') : 'transparent',
+                                    color: statusFilter === st.id ? (isDark ? '#0f172a' : '#fff') : (isDark ? '#94a3b8' : '#64748b'),
+                                    transition: 'all 0.2s ease',
+                                    boxShadow: statusFilter === st.id ? '0 4px 12px rgba(0,0,0,0.1)' : 'none'
                                 }}
                             >
                                 {st.label}
@@ -1011,48 +1142,67 @@ function GlobalPulse() {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     {/* DAYS FILTER */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '5px 12px', borderRadius: '10px' }}>
-                        <span style={{ fontSize: '10px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase' }}>Broj dana</span>
-                        <input
-                            type="number"
-                            min="1"
-                            max="365"
-                            value={daysFilter === 0 ? '' : daysFilter}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                setDaysFilter(val === '' ? 0 : Number(val));
-                            }}
-                            style={{
-                                width: '45px',
-                                background: 'rgba(255,255,255,0.05)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '5px',
-                                color: 'var(--text-primary)',
-                                fontSize: '11px',
-                                fontWeight: '700',
-                                textAlign: 'center',
-                                padding: '3px'
-                            }}
-                        />
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        background: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
+                        padding: '6px 14px',
+                        borderRadius: '12px',
+                        border: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)'
+                    }}>
+                        <span style={{ fontSize: '10px', fontWeight: '900', color: isDark ? '#94a3b8' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Period</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <input
+                                type="number"
+                                min="1"
+                                max="365"
+                                value={daysFilter === 0 ? '' : daysFilter}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setDaysFilter(val === '' ? 0 : Number(val));
+                                }}
+                                style={{
+                                    width: '40px',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: isDark ? '#fff' : '#1e293b',
+                                    fontSize: '13px',
+                                    fontWeight: '800',
+                                    textAlign: 'center',
+                                    padding: '0',
+                                    outline: 'none'
+                                }}
+                            />
+                            <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--accent)' }}>DANA</span>
+                        </div>
                     </div>
 
                     {/* Aggregator Switcher */}
                     <div style={{
                         display: 'flex',
-                        background: 'rgba(0,0,0,0.2)',
+                        background: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
                         padding: '4px',
-                        borderRadius: '12px',
-                        gap: '3px'
+                        borderRadius: '14px',
+                        gap: '4px',
+                        border: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)'
                     }}>
                         {[
                             { id: 'feed', label: 'Live Feed', icon: <Activity size={12} /> },
+                            { id: 'clientType', label: 'Po Tipu Kupca', icon: <Users size={12} /> },
                             { id: 'subagent', label: 'Po Subagentima', icon: <Users size={12} /> },
                             { id: 'supplier', label: 'Po Dobavljačima', icon: <Globe size={12} /> },
                             { id: 'branch', label: 'Po Poslovnicama', icon: <Building size={12} /> }
                         ].map(btn => (
                             <button
                                 key={btn.id}
-                                onClick={() => setAggMode(btn.id as any)}
+                                onClick={() => {
+                                    if (btn.id === 'feed') setViewMode('feed');
+                                    else {
+                                        setViewMode('agg');
+                                        setAggMode(btn.id as any);
+                                    }
+                                }}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -1060,8 +1210,8 @@ function GlobalPulse() {
                                     padding: '6px 12px',
                                     borderRadius: '8px',
                                     border: 'none',
-                                    background: aggMode === btn.id ? 'var(--accent)' : 'transparent',
-                                    color: aggMode === btn.id ? 'white' : 'var(--text-secondary)',
+                                    background: (btn.id === 'feed' && viewMode === 'feed') || (btn.id !== 'feed' && viewMode === 'agg' && aggMode === btn.id) ? 'var(--accent)' : 'transparent',
+                                    color: (btn.id === 'feed' && viewMode === 'feed') || (btn.id !== 'feed' && viewMode === 'agg' && aggMode === btn.id) ? 'white' : 'var(--text-secondary)',
                                     fontSize: '10px',
                                     fontWeight: '700',
                                     cursor: 'pointer',
@@ -1072,59 +1222,66 @@ function GlobalPulse() {
                             </button>
                         ))}
                     </div>
+
+                    <div style={{ display: 'flex', gap: '8px', marginLeft: '12px' }}>
+                        <button
+                            onClick={exportToExcel}
+                            title="Izvezi u Excel"
+                            style={{
+                                width: '32px', height: '32px', borderRadius: '10px',
+                                background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.2)',
+                                color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                                transition: '0.2s'
+                            }}
+                        >
+                            <Download size={16} />
+                        </button>
+                        <button
+                            onClick={openReport}
+                            title="Otvori Izveštaj"
+                            style={{
+                                width: '32px', height: '32px', borderRadius: '10px',
+                                background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.2)',
+                                color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                                transition: '0.2s'
+                            }}
+                        >
+                            <FileText size={16} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* QUICK SUMMARY KPI ROW - ENHANCED */}
+            {/* KPI Stats Bar */}
             <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '12px',
-                padding: '20px 30px',
-                background: 'rgba(0, 0, 0, 0.15)',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
+                display: 'flex',
+                background: isDark ? 'rgba(0, 0, 0, 0.2)' : '#f8fafc',
+                borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.05)',
+                justifyContent: 'space-around'
             }}>
                 {[
-                    {
-                        label: 'Ukupno rezervacija',
-                        value: totalReservations,
-                        icon: <FileText size={18} />,
-                        color: 'var(--accent)',
-                        gradient: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, transparent 100%)'
-                    },
-                    {
-                        label: 'Ukupno zaduženje',
-                        value: `${totalDebt.toLocaleString()} €`,
-                        icon: <CreditCard size={18} />,
-                        color: '#ef4444',
-                        gradient: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, transparent 100%)'
-                    },
-                    {
-                        label: 'Ukupno uplata',
-                        value: `${totalPayments.toLocaleString()} €`,
-                        icon: <Zap size={18} />,
-                        color: '#10b981',
-                        gradient: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%)'
-                    }
+                    { label: 'Ukupno Rezervacija', value: totalReservations, icon: <FileText size={24} />, color: 'var(--accent)', gradient: 'linear-gradient(135deg, rgba(142, 36, 172, 0.1) 0%, rgba(142, 36, 172, 0.05) 100%)' },
+                    { label: 'Ukupno Zaduženje', value: `${totalDebt.toLocaleString()} €`, icon: <CreditCard size={24} />, color: '#ef4444', gradient: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%)' },
+                    { label: 'Ukupno Uplata', value: `${totalPayments.toLocaleString()} €`, icon: <Zap size={24} />, color: '#10b981', gradient: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)' }
                 ].map((stat, i) => (
                     <motion.div
                         key={i}
-                        whileHover={{ translateY: -3, background: 'rgba(255, 255, 255, 0.05)' }}
+                        whileHover={{ translateY: -3, background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)' }}
                         style={{
-                            padding: '16px 20px',
-                            borderRadius: '16px',
-                            background: 'rgba(255, 255, 255, 0.02)',
-                            border: '1px solid rgba(255, 255, 255, 0.05)',
+                            padding: '24px 40px',
+                            background: 'transparent',
+                            borderLeft: i !== 0 ? (isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.05)') : 'none',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '15px',
-                            transition: 'all 0.3s ease'
+                            gap: '24px',
+                            transition: 'all 0.3s ease',
+                            flex: 1
                         }}
                     >
                         <div style={{
-                            width: '42px',
-                            height: '42px',
-                            borderRadius: '14px',
+                            width: '56px',
+                            height: '56px',
+                            borderRadius: '16px',
                             background: stat.gradient,
                             display: 'flex',
                             alignItems: 'center',
@@ -1135,18 +1292,82 @@ function GlobalPulse() {
                             {stat.icon}
                         </div>
                         <div>
-                            <div style={{ fontSize: '10px', opacity: 0.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>{stat.label}</div>
-                            <div style={{ fontSize: '20px', fontWeight: '900', color: stat.color, letterSpacing: '-0.5px' }}>{stat.value}</div>
+                            <div style={{ fontSize: '11px', opacity: 0.6, fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px', color: isDark ? 'var(--text-secondary)' : '#64748b' }}>{stat.label}</div>
+                            <div style={{ fontSize: '28px', fontWeight: '900', color: isDark ? stat.color : '#1e293b', letterSpacing: '-1px' }}>{stat.value}</div>
                         </div>
                     </motion.div>
                 ))}
             </div>
 
             {/* Content Area */}
-            <div style={{ padding: '0 20px 20px 20px' }}>
-                {aggMode === 'feed' ? (
+            <div style={{ flex: 1, padding: '30px 40px', background: isDark ? 'transparent' : '#fff' }}>
+                {/* PRODUCT TYPE FILTER BAR - Icon-based modern bar */}
+                <div style={{
+                    width: '100%',
+                    display: 'flex',
+                    gap: '10px',
+                    overflowX: 'auto',
+                    padding: '0 0 25px 0',
+                    scrollbarWidth: 'none',
+                    borderBottom: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)',
+                    marginBottom: '25px'
+                }}>
+                    {[
+                        { id: 'all', label: 'Sve', icon: <Activity size={18} /> },
+                        { id: 'hotel', label: 'Smeštaj', icon: <Building size={18} /> },
+                        { id: 'flight', label: 'Avio', icon: <Plane size={18} /> },
+                        { id: 'package', label: 'Paket', icon: <Package size={18} /> },
+                        { id: 'travel', label: 'Putovanje', icon: <Globe size={18} /> },
+                        { id: 'transfer', label: 'Transfer', icon: <TrendingUp size={18} /> },
+                        { id: 'charter', label: 'Čarteri', icon: <Zap size={18} /> },
+                        { id: 'bus', label: 'Bus Ture', icon: <Monitor size={18} /> },
+                        { id: 'cruise', label: 'Krstarenja', icon: <Ship size={18} /> }
+                    ].map(p => (
+                        <button
+                            key={p.id}
+                            onClick={() => setProductFilter(p.id === productFilter ? 'all' : p.id)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                padding: '12px 24px',
+                                borderRadius: '16px',
+                                border: 'none',
+                                background: productFilter === p.id ? 'var(--accent)' : (isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'),
+                                color: productFilter === p.id ? '#fff' : (isDark ? '#94a3b8' : '#64748b'),
+                                fontSize: '14px',
+                                fontWeight: '800',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                boxShadow: productFilter === p.id ? '0 8px 20px var(--accent-glow)' : 'none'
+                            }}
+                        >
+                            {p.icon} {p.label}
+                        </button>
+                    ))}
+                </div>
+
+                {viewMode === 'feed' ? (
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        {filteredReservations.map((res, idx) => (
+                        {/* Table Header Row */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            background: 'rgba(0, 0, 0, 0.2)',
+                            borderBottom: '1px solid var(--border)',
+                            borderTop: '1px solid var(--border)',
+                        }}>
+                            <div style={{ padding: '12px 15px', width: '130px', fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase', borderRight: '1px solid var(--border)' }}>ID / Vreme</div>
+                            <div style={{ padding: '12px 15px', flex: 1, fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase', borderRight: '1px solid var(--border)' }}>Kupac / Detalji</div>
+                            <div style={{ padding: '12px 15px', width: '100px', fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase', borderRight: '1px solid var(--border)' }}>Vrsta</div>
+                            <div style={{ padding: '12px 15px', flex: 1, fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase', borderRight: '1px solid var(--border)' }}>Vrsta Kupca</div>
+                            <div style={{ padding: '12px 15px', flex: 1, fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase', borderRight: '1px solid var(--border)' }}>Dobavljač</div>
+                            <div style={{ padding: '12px 15px', flex: 1, fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase', borderRight: '1px solid var(--border)' }}>Poslovnica</div>
+                            <div style={{ padding: '12px 15px', width: '120px', textAlign: 'right', fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase' }}>Iznos / Status</div>
+                        </div>
+
+                        {paginatedReservations.map((res, idx) => (
                             <motion.div
                                 key={res.id}
                                 initial={{ opacity: 0, x: -15 }}
@@ -1155,70 +1376,102 @@ function GlobalPulse() {
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    padding: '12px 15px',
                                     borderBottom: '1px solid var(--border)',
-                                    gap: '16px',
                                     transition: 'all 0.2s'
                                 }}
                                 className="pulse-row"
                             >
-                                <div style={{ width: '80px' }}>
-                                    <div style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '14px' }}>{res.id}</div>
-                                    <div style={{ fontSize: '11px', opacity: 0.5, marginTop: '2px' }}>{res.time}</div>
+                                <div style={{ padding: '12px 15px', width: '130px', borderRight: '1px solid var(--border)', alignSelf: 'stretch', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                    <a
+                                        href={`/reservation-architect?id=${res.id}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            fontWeight: '900',
+                                            background: getStatusDisplay(res).color,
+                                            color: 'white',
+                                            fontSize: '13px',
+                                            padding: '4px 8px',
+                                            borderRadius: '6px',
+                                            textAlign: 'center',
+                                            width: '80px',
+                                            marginBottom: '4px',
+                                            boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+                                            textDecoration: 'none',
+                                            display: 'block'
+                                        }}
+                                    >
+                                        {res.id}
+                                    </a>
+                                    <div style={{ fontSize: '11px', opacity: 0.5 }}>{res.time}</div>
                                 </div>
 
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '11px', opacity: 0.5, textTransform: 'uppercase', fontWeight: '800', marginBottom: '4px' }}>Kupac</div>
-                                    <div style={{ fontWeight: '700', color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>{res.customer}</div>
+                                <div style={{ padding: '12px 15px', flex: 1, borderRight: '1px solid var(--border)', alignSelf: 'stretch', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                    <div style={{ fontWeight: '700', color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline', fontSize: '15px' }}>{res.customer}</div>
                                     <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <div style={{ fontWeight: '800', fontSize: '12px', color: 'var(--text-primary)', opacity: 0.9 }}>
+                                            {(res as any).type === 'Flight' ? `Itinerer: ${res.hotel}` : (res as any).type === 'Package' ? `Putovanje: ${res.hotel}` : `Hotel: ${res.hotel}`}
+                                        </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                             <Globe size={10} /> {res.country}, {res.destination}
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <Hotel size={10} /> {res.hotel}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--accent)', fontWeight: '700' }}>
+                                            <Clock size={10} /> Boravak: {new Date((res as any).checkIn).toLocaleDateString('sr-Latn-RS')} - {new Date((res as any).checkOut).toLocaleDateString('sr-Latn-RS')}
                                         </div>
                                     </div>
                                 </div>
 
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '11px', opacity: 0.5, textTransform: 'uppercase', fontWeight: '800', marginBottom: '4px' }}>Vrsta kupca</div>
+                                <div style={{ padding: '12px 15px', width: '100px', borderRight: '1px solid var(--border)', alignSelf: 'stretch', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                    <div style={{
+                                        padding: '4px 10px',
+                                        borderRadius: '6px',
+                                        background: 'rgba(255, 255, 255, 0.05)',
+                                        color: 'var(--text-primary)',
+                                        fontSize: '10px',
+                                        fontWeight: '800',
+                                        textTransform: 'uppercase',
+                                        width: 'fit-content'
+                                    }}>
+                                        {res.productType}
+                                    </div>
+                                </div>
+
+                                <div style={{ padding: '12px 15px', flex: 1, borderRight: '1px solid var(--border)', alignSelf: 'stretch', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        <div style={{ fontWeight: '800', fontSize: '14px', color: 'var(--text-primary)' }}>
+                                            {res.subagent ? res.subagent : (res.clientType === 'B2B' ? 'Agencijski Klijent' : 'Direktni Putnik')}
+                                        </div>
                                         <div style={{
                                             display: 'inline-flex',
                                             padding: '4px 10px',
                                             borderRadius: '6px',
-                                            background: res.subagent ? 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)' : (res.clientType === 'B2B' ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)'),
-                                            color: 'white',
+                                            background: 'rgba(0, 0, 0, 0.05)',
+                                            border: '1px solid rgba(0, 0, 0, 0.05)',
+                                            color: 'var(--text-secondary)',
                                             fontSize: '10px',
-                                            paddingTop: '3px',
                                             fontWeight: '800',
-                                            width: 'fit-content'
+                                            width: '90px'
                                         }}>
                                             {res.subagent ? 'SUBAGENT' : res.clientType}
                                         </div>
-                                        {res.subagent && (
-                                            <div style={{ fontSize: '11px', fontWeight: '600', opacity: 0.8 }}>{res.subagent}</div>
-                                        )}
                                     </div>
                                 </div>
 
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '11px', opacity: 0.5, textTransform: 'uppercase', fontWeight: '800', marginBottom: '4px' }}>Dobavljač</div>
+                                <div style={{ padding: '12px 15px', flex: 1, borderRight: '1px solid var(--border)', alignSelf: 'stretch', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                     <div style={{ fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                         <Globe size={14} style={{ color: '#10b981' }} /> {res.supplier}
                                     </div>
                                 </div>
 
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '11px', opacity: 0.5, textTransform: 'uppercase', fontWeight: '800', marginBottom: '4px' }}>Poslovnica</div>
+                                <div style={{ padding: '12px 15px', flex: 1, borderRight: '1px solid var(--border)', alignSelf: 'stretch', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                     <div style={{ fontWeight: '600' }}>{res.branch}</div>
                                 </div>
 
-                                <div style={{ width: '120px', textAlign: 'right' }}>
+                                <div style={{ padding: '12px 15px', width: '120px', textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                     <div style={{ fontWeight: '900', fontSize: '18px', color: 'var(--text-primary)' }}>{res.amount.toLocaleString()} €</div>
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', marginTop: '4px' }}>
-                                        {res.status === 'Confirmed' ? <CheckCircle2 size={12} color="#10b981" /> : res.status === 'Pending' ? <Clock size={12} color="#f59e0b" /> : <XCircle size={12} color="#ef4444" />}
-                                        <span style={{ fontSize: '10px', fontWeight: '800', color: res.status === 'Confirmed' ? '#10b981' : res.status === 'Pending' ? '#f59e0b' : '#ef4444', textTransform: 'uppercase' }}>{res.status}</span>
+                                        {res.status === 'Confirmed' ? <CheckCircle2 size={12} color={getStatusDisplay(res).color} /> : res.status === 'Pending' ? <Clock size={12} color="#f59e0b" /> : <XCircle size={12} color="#ef4444" />}
+                                        <span style={{ fontSize: '10px', fontWeight: '800', color: getStatusDisplay(res).color, textTransform: 'uppercase' }}>{getStatusDisplay(res).label}</span>
                                     </div>
                                 </div>
 
@@ -1243,61 +1496,130 @@ function GlobalPulse() {
                                 </div>
                             </motion.div>
                         ))}
+                        {/* Pagination Controls */}
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            padding: '20px 0',
+                            gap: '15px'
+                        }}>
+                            <button
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                style={{
+                                    background: 'rgba(255,255,255,0.05)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    color: 'white',
+                                    borderRadius: '8px',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                    opacity: currentPage === 1 ? 0.3 : 1
+                                }}
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-secondary)' }}>
+                                Strana <span style={{ color: 'var(--text-primary)' }}>{currentPage}</span> od <span style={{ color: 'var(--text-primary)' }}>{totalPages || 1}</span>
+                            </div>
+                            <button
+                                disabled={currentPage >= totalPages}
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                style={{
+                                    background: 'rgba(255,255,255,0.05)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    color: 'white',
+                                    borderRadius: '8px',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer',
+                                    opacity: currentPage >= totalPages ? 0.3 : 1
+                                }}
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
                     </div>
                 ) : (
-                    <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        {/* Header for Aggregated View */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '12px 30px',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            borderBottom: '1px solid var(--border)',
+                            gap: '30px',
+                        }}>
+                            <div style={{ flex: 2, fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase' }}>
+                                {aggMode === 'subagent' ? 'Partner' : aggMode === 'supplier' ? 'Dobavljač' : aggMode === 'branch' ? 'Sektor' : 'Vrsta Kupca'}
+                            </div>
+                            <div style={{ flex: 1, textAlign: 'center', fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase' }}>Broj Rezervacija</div>
+                            <div style={{ flex: 1, textAlign: 'right', fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase' }}>Ukupan Promet</div>
+                            <div style={{ width: '120px' }}></div>
+                        </div>
+
                         {aggregatedData.map((data, idx) => (
                             <motion.div
                                 key={data.name}
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: idx * 0.05 }}
                                 style={{
-                                    background: 'rgba(255, 255, 255, 0.02)',
-                                    borderRadius: '24px',
-                                    padding: '24px',
-                                    border: '1px solid rgba(255, 255, 255, 0.05)',
                                     display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '16px'
+                                    alignItems: 'center',
+                                    padding: '16px 30px',
+                                    borderBottom: '2px solid #ddd', // Visible light grey line
+                                    gap: '30px',
+                                    background: 'rgba(255, 255, 255, 0.01)',
+                                    transition: 'all 0.2s'
                                 }}
+                                className="pulse-row"
                             >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                    <div>
-                                        <div style={{ fontSize: '11px', opacity: 0.5, textTransform: 'uppercase', fontWeight: '800', marginBottom: '4px' }}>
-                                            {aggMode === 'subagent' ? 'Partner' : aggMode === 'supplier' ? 'Dobavljač' : 'Sektor'}
-                                        </div>
-                                        <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>{data.name}</div>
-                                    </div>
+                                <div style={{ flex: 2 }}>
+                                    <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>{data.name}</div>
+                                </div>
+
+                                <div style={{ flex: 1, textAlign: 'center' }}>
                                     <div style={{
-                                        background: 'var(--accent)',
-                                        color: 'white',
-                                        padding: '4px 12px',
-                                        borderRadius: '8px',
-                                        fontSize: '12px',
-                                        fontWeight: '800'
+                                        display: 'inline-block',
+                                        background: 'rgba(168, 85, 247, 0.15)',
+                                        color: '#a855f7',
+                                        padding: '4px 16px',
+                                        borderRadius: '100px',
+                                        fontSize: '14px',
+                                        fontWeight: '900',
+                                        border: '1px solid rgba(168, 85, 247, 0.2)'
                                     }}>
                                         {data.count} Rez.
                                     </div>
                                 </div>
 
-                                <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)' }}></div>
+                                <div style={{ flex: 1, textAlign: 'right' }}>
+                                    <div style={{ fontSize: '24px', fontWeight: '900', color: '#10b981', letterSpacing: '-0.5px' }}>{data.total.toLocaleString()} €</div>
+                                </div>
 
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                                    <div>
-                                        <div style={{ fontSize: '10px', opacity: 0.5, textTransform: 'uppercase', fontWeight: '800', marginBottom: '2px' }}>Ukupan Promet</div>
-                                        <div style={{ fontSize: '22px', fontWeight: '900', color: '#10b981' }}>{data.total.toLocaleString()} €</div>
-                                    </div>
+                                <div style={{ width: '120px', display: 'flex', justifyContent: 'flex-end' }}>
                                     <button style={{
-                                        padding: '8px 12px',
-                                        borderRadius: '10px',
+                                        padding: '10px 20px',
+                                        borderRadius: '12px',
                                         border: '1px solid rgba(255,255,255,0.1)',
-                                        background: 'transparent',
-                                        color: 'var(--text-secondary)',
-                                        fontSize: '11px',
-                                        fontWeight: '700',
-                                        cursor: 'pointer'
-                                    }}>Detalji</button>
+                                        background: 'rgba(255,255,255,0.05)',
+                                        color: 'white',
+                                        fontSize: '12px',
+                                        fontWeight: '800',
+                                        cursor: 'pointer',
+                                        transition: '0.2s'
+                                    }}>
+                                        Detalji
+                                    </button>
                                 </div>
                             </motion.div>
                         ))}

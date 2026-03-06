@@ -98,6 +98,7 @@ const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
 const B2BPromoManager = React.lazy(() => import('../pages/B2BPromoManager'));
 const B2BFinance = React.lazy(() => import('../pages/B2BFinance'));
 const CommandCenter = React.lazy(() => import('../pages/CommandCenter'));
+const SharedReport = React.lazy(() => import('../pages/SharedReport'));
 
 
 // Stores
@@ -340,6 +341,14 @@ export const router = createBrowserRouter([
                 element: (
                     <React.Suspense fallback={<LoadingFallback />}>
                         <OperationalReports />
+                    </React.Suspense>
+                ),
+            },
+            {
+                path: '/share/report/:reportId',
+                element: (
+                    <React.Suspense fallback={<LoadingFallback />}>
+                        <SharedReport />
                     </React.Suspense>
                 ),
             },

@@ -1097,10 +1097,10 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: transparent;
-    /* Uklonjena tamna pozadina */
-    backdrop-filter: none;
-    /* Uklonjen blur */
+    background: transparent !important;
+    /* Forsirana prozirna pozadina */
+    backdrop-filter: none !important;
+    /* Forsirano uklanjanje blura */
     display: flex;
     align-items: center;
     justify-content: center;

@@ -708,7 +708,7 @@ const Suppliers: React.FC<SuppliersProps> = ({ onBack }) => {
                 .btn-secondary { background: var(--glass-bg); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 15px; borderRadius: 10px; cursor: pointer; font-size: 12px; font-weight: 600; }
                 .export-group { display: flex; background: var(--glass-bg); padding: 4px; borderRadius: 14px; border: 1px solid var(--border); gap: 4px; }
                 
-                .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: block; z-index: 1000; }
+                .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: transparent; backdrop-filter: none; display: block; z-index: 1000; }
                 .glass-panel { background: #1a1f2e; backdrop-filter: blur(20px); border-radius: 24px; }
 
                 .app-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; position: relative; overflow: hidden; transition: 0.2s; }

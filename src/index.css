@@ -158,3 +158,10 @@ select:focus {
 
 
 /* Mobile styles moved to mobile.css */
+
+/* Global override for ALL modal overlays to be transparent as per User Request */
+div[class*="modal-overlay"],
+div[class*="overlay-blur"] {
+  background: transparent !important;
+  backdrop-filter: none !important;
+}
