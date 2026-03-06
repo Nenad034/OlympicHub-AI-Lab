@@ -29,7 +29,9 @@ import {
     Waves,
     Ticket,
     LayoutGrid,
-    Cpu
+    Cpu,
+    Calendar,
+    TrendingUp
 } from 'lucide-react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { ClickToTravelLogo } from '../icons/ClickToTravelLogo';
@@ -70,7 +72,15 @@ const HorizontalNav: React.FC = () => {
                 { to: '/deep-archive', label: 'Arhiva', icon: X },
             ]
         },
-        { to: '/operational-reports', icon: Activity, label: 'Operativni Izveštaji' },
+        {
+            to: '/operational-reports', icon: Activity, label: 'Operativni Izveštaji',
+            subItems: [
+                { to: '/operational-reports?tab=inventory', label: 'Inventory Orchestrator', icon: Calendar },
+                { to: '/operational-reports?tab=stats', label: 'PAX & Statistika', icon: BarChart3 },
+                { to: '/operational-reports?tab=analytics', label: 'Dynamic Analytics', icon: TrendingUp },
+                { to: '/operational-reports?tab=rooming', label: 'Rooming Lista', icon: Users },
+            ]
+        },
         {
             to: '/financial-hub', icon: PieChart, label: 'Financial Intelligence',
             subItems: [

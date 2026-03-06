@@ -29,7 +29,9 @@ import {
     Waves,
     Ticket,
     LayoutGrid,
-    Cpu
+    Cpu,
+    Calendar,
+    TrendingUp
 } from 'lucide-react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { ClickToTravelLogo } from '../icons/ClickToTravelLogo';
@@ -157,7 +159,18 @@ const Sidebar: React.FC = () => {
                                 ]}
                             />
                         )}
-                        <NavGroupItem to="/operational-reports" icon={Activity} label={!isSidebarCollapsed && 'Operativni Izveštaji'} title="Operativni Izveštaji" />
+                        <NavGroupItem
+                            to="/operational-reports"
+                            icon={Activity}
+                            label={!isSidebarCollapsed && 'Operativni Izveštaji'}
+                            title="Operativni Izveštaji"
+                            subItems={[
+                                { to: '/operational-reports?tab=inventory', label: 'Inventory Orchestrator', icon: Calendar },
+                                { to: '/operational-reports?tab=stats', label: 'PAX & Statistika', icon: BarChart3 },
+                                { to: '/operational-reports?tab=analytics', label: 'Dynamic Analytics', icon: TrendingUp },
+                                { to: '/operational-reports?tab=rooming', label: 'Rooming Lista', icon: Users }
+                            ]}
+                        />
                     </div>
                 )}
 

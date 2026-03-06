@@ -1386,10 +1386,7 @@
     flex: 1;
 }
 
-.multi-select-container:first-of-type {
-    flex: 1.6;
-    /* Expanded Destinacija */
-}
+
 
 .filter-label {
     font-size: 11px;
@@ -1523,8 +1520,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    flex: 0.7;
-    /* Reduced Hotel Search */
+    flex: 1;
 }
 
 .search-input-wrapper {

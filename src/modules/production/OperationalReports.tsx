@@ -276,6 +276,11 @@ const OperationalReports: React.FC = () => {
     };
 
     useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab && ['inventory', 'stats', 'rooming', 'analytics'].includes(tab)) {
+            setActiveTab(tab as any);
+        }
+
         if (isReportOnlyView) {
             const type = searchParams.get('type');
             if (type === 'analytics') {
@@ -369,7 +374,8 @@ const OperationalReports: React.FC = () => {
         if (!start || !end) return 'Odaberite datum';
         const s = new Date(start);
         const e = new Date(end);
-        return `${s.toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: '2-digit' })} - ${e.toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+        const formatOptions: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
+        return `${s.toLocaleDateString('sr-Latn-RS', formatOptions)} - ${e.toLocaleDateString('sr-Latn-RS', formatOptions)}`;
     };
 
     // --- CAPACITY STATE ---
@@ -413,7 +419,7 @@ const OperationalReports: React.FC = () => {
 
     const groupedData = useMemo(() => {
         const hasSelection = selectedDestinations.length > 0 || selectedCategories.length > 0 || hotelFilter.trim() !== '';
-        if (!hasSelection && reportTrigger === 0) return [];
+        if (!hasSelection && reportTrigger === 0 && !isReportOnlyView) return [];
 
         const filtered = allCapacities.filter(cap => {
             const hotel = MOCK_HOTELS.find(h => h.id === cap.hotelId);
@@ -475,7 +481,7 @@ const OperationalReports: React.FC = () => {
             groups[cap.hotelId].rooms.push(dynamicCap);
         });
         return Object.values(groups);
-    }, [allCapacities, selectedDestinations, selectedCategories, hotelFilter, bookingFrom, bookingTo]);
+    }, [allCapacities, selectedDestinations, selectedCategories, hotelFilter, bookingFrom, bookingTo, reportTrigger, isReportOnlyView]);
 
     const toggleHotel = (id: string) => {
         const newExpanded = new Set(expandedHotels);
@@ -1345,14 +1351,6 @@ const OperationalReports: React.FC = () => {
                         icon={MapPin}
                     />
 
-                    <SearchableMultiSelect
-                        label="Kategorija"
-                        options={CAT_OPTIONS}
-                        selected={selectedCategories}
-                        onChange={setSelectedCategories}
-                        icon={Tag}
-                    />
-
                     <div className="hotel-search-box">
                         <label className="filter-label">Hotel (Search)</label>
                         <div className="search-input-wrapper">
@@ -1365,6 +1363,14 @@ const OperationalReports: React.FC = () => {
                             />
                         </div>
                     </div>
+
+                    <SearchableMultiSelect
+                        label="Kategorija"
+                        options={CAT_OPTIONS}
+                        selected={selectedCategories}
+                        onChange={setSelectedCategories}
+                        icon={Tag}
+                    />
                 </div>
 
                 <div className="filter-divider" />
@@ -1437,7 +1443,7 @@ const OperationalReports: React.FC = () => {
                                                         <div className="th-bottom-row">
                                                             <span className="th-month-name">
                                                                 {date.toLocaleDateString('sr-Latn-RS', { month: 'short' }).replace('.', '').toUpperCase()}
-                                                                <span className="th-year-label">'{date.getFullYear().toString().substring(2)}</span>
+                                                                <span className="th-year-label">{date.getFullYear()}</span>
                                                             </span>
                                                         </div>
                                                     </div>
@@ -2209,6 +2215,8 @@ const OperationalReports: React.FC = () => {
                     showDailyPulse && (
                         <div className="modal-overlay" onClick={() => setShowDailyPulse(false)}>
                             <motion.div
+                                drag
+                                dragMomentum={false}
                                 initial={{ scale: 0.9, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 exit={{ scale: 0.9, opacity: 0 }}
@@ -2217,7 +2225,7 @@ const OperationalReports: React.FC = () => {
                             >
                                 <div className="pulse-header">
                                     <div>
-                                        <h3>Daily Pulse: {pulseDate}</h3>
+                                        <h3>Daily Pulse: {pulseDate ? `${new Date(pulseDate).getDate().toString().padStart(2, '0')}/${(new Date(pulseDate).getMonth() + 1).toString().padStart(2, '0')}/${new Date(pulseDate).getFullYear()}` : ''}</h3>
                                         <p>{selectedHotel.name}</p>
                                     </div>
                                     <button className="close-btn" onClick={() => setShowDailyPulse(false)}>
@@ -2230,7 +2238,7 @@ const OperationalReports: React.FC = () => {
                                         <div className="section-title">
                                             <div className="title-left">
                                                 <ArrowUpRight size={18} color="#10b981" />
-                                                Arrivals (Dolasci)
+                                                Arrivals (Dolasci) {pulseDate && ` - ${new Date(pulseDate).getDate().toString().padStart(2, '0')}/${(new Date(pulseDate).getMonth() + 1).toString().padStart(2, '0')}/${new Date(pulseDate).getFullYear()}`}
                                             </div>
                                             <NavLink to={`/reservations?checkIn=${pulseDate}`} className="section-link">
                                                 Vidi sve dolaske <ChevronRight size={14} />
@@ -2258,7 +2266,7 @@ const OperationalReports: React.FC = () => {
                                         <div className="section-title">
                                             <div className="title-left">
                                                 <ExternalLink size={18} color="#ef4444" style={{ transform: 'rotate(90deg)' }} />
-                                                Departures (Odlasci)
+                                                Departures (Odlasci) {pulseDate && ` - ${new Date(pulseDate).getDate().toString().padStart(2, '0')}/${(new Date(pulseDate).getMonth() + 1).toString().padStart(2, '0')}/${new Date(pulseDate).getFullYear()}`}
                                             </div>
                                             <NavLink to={`/reservations?checkOut=${pulseDate}`} className="section-link">
                                                 Vidi sve odlaske <ChevronRight size={14} />
