@@ -1537,9 +1537,15 @@
 .search-input-wrapper input {
     background: transparent;
     border: none;
-    color: white;
+    color: var(--text-primary);
     width: 100%;
     font-size: 13px;
+    outline: none;
+}
+
+.search-input-wrapper:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 /* --- HIERARCHICAL TABLE STYLES --- */
