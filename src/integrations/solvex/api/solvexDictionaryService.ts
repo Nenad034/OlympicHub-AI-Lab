@@ -17,6 +17,26 @@ export async function searchDestinations(query: string, limit: number = 50): Pro
 
     try {
         const lowerQuery = query.toLowerCase();
+        const translationMap: Record<string, string[]> = {
+            'bugarska': ['bulgaria'],
+            'bulgaria': ['bugarska'],
+            'grcka': ['greece', 'grčka'],
+            'grčka': ['greece'],
+            'greece': ['grčka', 'grcka'],
+            'turska': ['turkey'],
+            'turkey': ['turska'],
+            'egipat': ['egypt'],
+            'egypt': ['egipat'],
+            'crna gora': ['montenegro'],
+            'montenegro': ['crna gora']
+        };
+
+        const isMatch = (name: string, query: string) => {
+            const n = name.toLowerCase();
+            const q = query.toLowerCase();
+            const related = translationMap[q] || [];
+            return n.includes(q) || related.some(r => n.includes(r));
+        };
 
         // 1. Get Countries
         const countriesRes = await getCountries();
@@ -24,7 +44,7 @@ export async function searchDestinations(query: string, limit: number = 50): Pro
 
         if (countriesRes.success && countriesRes.data) {
             countriesRes.data.forEach(c => {
-                if (c.name.toLowerCase().includes(lowerQuery)) {
+                if (isMatch(c.name, lowerQuery)) {
                     matches.push({
                         id: c.id,
                         name: c.name,
@@ -37,26 +57,52 @@ export async function searchDestinations(query: string, limit: number = 50): Pro
         }
 
         // 2. Napredna pretraga: Ako je upit naziv neke države (npr. "Bugarska"), dodaj gradove iz te države
+        const allowedBulgarianCities = [
+            'Zlatni Pjasci', 'Golden Sands',
+            'Suncev Breg', 'Sunny Beach',
+            'Nesebar', 'Nessebar',
+            'Elenite',
+            'Bansko',
+            'Borovec', 'Borovets',
+            'Pamporovo'
+        ];
+
+        const summerDestinations = [
+            'Zlatni Pjasci', 'Golden Sands',
+            'Suncev Breg', 'Sunny Beach',
+            'Nesebar', 'Nessebar',
+            'Elenite'
+        ];
+
         if (countriesRes.data) {
-            const countryQueryMatch = countriesRes.data.filter(c =>
-                c.name.toLowerCase() === lowerQuery ||
-                lowerQuery.includes(c.name.toLowerCase()) ||
-                c.name.toLowerCase().includes(lowerQuery)
-            );
+            const countryQueryMatch = countriesRes.data.filter(c => isMatch(c.name, lowerQuery));
 
             for (const country of countryQueryMatch) {
                 const citiesRes = await getCities(country.id);
                 if (citiesRes.success && citiesRes.data) {
+                    const isBulgaria = country.name.toLowerCase().includes('bugarska') || country.name.toLowerCase().includes('bulgaria');
+
                     citiesRes.data.forEach(city => {
+                        const cityName = city.nameLat || city.name;
+
+                        // Filter Bulgarian cities to only allowed list
+                        if (isBulgaria) {
+                            const isAllowed = allowedBulgarianCities.some(allowed =>
+                                cityName.toLowerCase().includes(allowed.toLowerCase())
+                            );
+                            if (!isAllowed) return;
+                        }
+
                         // Dodajemo gradove te države, ali pazimo da ne dupliramo
                         if (!matches.find(m => m.id === city.id && m.type === 'city')) {
                             matches.push({
                                 id: city.id,
-                                name: city.nameLat || city.name,
+                                name: cityName,
                                 type: 'city',
                                 country_name: country.name,
                                 country_code: country.code,
-                                region_id: city.regionId
+                                region_id: city.regionId,
+                                isSummer: summerDestinations.some(s => cityName.toLowerCase().includes(s.toLowerCase()))
                             });
                         }
                     });
@@ -78,19 +124,32 @@ export async function searchDestinations(query: string, limit: number = 50): Pro
             for (const country of commonCountries) {
                 const citiesRes = await getCities(country.id);
                 if (citiesRes.success && citiesRes.data) {
+                    const isBulgaria = country.name.toLowerCase().includes('bugarska') || country.name.toLowerCase().includes('bulgaria');
+
                     citiesRes.data.forEach(city => {
                         const cityName = city.name.toLowerCase();
                         const cityNameLat = (city.nameLat || '').toLowerCase();
 
+                        // Filter Bulgarian cities
+                        if (isBulgaria) {
+                            const isAllowed = allowedBulgarianCities.some(allowed =>
+                                cityName.toLowerCase().includes(allowed.toLowerCase()) ||
+                                cityNameLat.toLowerCase().includes(allowed.toLowerCase())
+                            );
+                            if (!isAllowed) return;
+                        }
+
                         if (cityName.includes(lowerQuery) || cityNameLat.includes(lowerQuery)) {
                             if (!matches.find(m => m.id === city.id && m.type === 'city')) {
+                                const finalName = city.nameLat || city.name;
                                 matches.push({
                                     id: city.id,
-                                    name: city.nameLat || city.name,
+                                    name: finalName,
                                     type: 'city',
                                     country_name: country.name,
                                     country_code: country.code,
-                                    region_id: city.regionId
+                                    region_id: city.regionId,
+                                    isSummer: summerDestinations.some(s => finalName.toLowerCase().includes(s.toLowerCase()))
                                 });
                             }
                         }
@@ -99,10 +158,59 @@ export async function searchDestinations(query: string, limit: number = 50): Pro
             }
         }
 
-        // 3. Hotels (Deep search) - Only if query is long enough
-        if (query.length > 4 && matches.length < 10) {
-            // This is hard without a global search endpoint. 
-            // We'll skip for now to avoid performance hit on every keystroke
+        // 3. Hotels (Global search via Supabase)
+        if (lowerQuery.length >= 2) {
+            try {
+                const { supabase } = await import('../../../supabaseClient');
+
+                // Map common Serbian names to database names (English)
+                let searchQuery = lowerQuery;
+                if (lowerQuery === 'bugarska') searchQuery = 'bulgaria';
+                else if (lowerQuery === 'grcka' || lowerQuery === 'grčka') searchQuery = 'greece';
+                else if (lowerQuery === 'crna gora') searchQuery = 'montenegro';
+                else if (lowerQuery === 'turska') searchQuery = 'turkey';
+                else if (lowerQuery === 'egipat') searchQuery = 'egypt';
+
+                // Query name or address city/country
+                const { data: hotels, error } = await supabase
+                    .from('properties')
+                    .select('id, name, address')
+                    .or(`name.ilike.%${lowerQuery}%,address->>city.ilike.%${searchQuery}%,address->>country.ilike.%${searchQuery}%`)
+                    .limit(20);
+
+                if (hotels && !error) {
+                    hotels.forEach((h: any) => {
+                        const hotelCity = h.address?.city || '';
+                        const hotelCountry = h.address?.country || 'Bugarska';
+                        const isBulgaria = hotelCountry.toLowerCase().includes('bulgaria') || hotelCountry.toLowerCase().includes('bugarska');
+
+                        // Filter Bulgarian hotels by allowed cities
+                        if (isBulgaria) {
+                            const isAllowed = allowedBulgarianCities.some(allowed =>
+                                hotelCity.toLowerCase().includes(allowed.toLowerCase())
+                            );
+                            if (!isAllowed) return;
+                        }
+
+                        const numericId = typeof h.id === 'string' ? (parseInt(h.id.replace('solvex_', '')) || h.id) : h.id;
+                        if (!matches.find(m => m.id === numericId && (m.type === 'hotel'))) {
+                            matches.push({
+                                id: numericId,
+                                name: h.name,
+                                type: 'hotel',
+                                country_name: hotelCountry,
+                                city_name: hotelCity,
+                                provider: 'Supabase',
+                                isSummer: summerDestinations.some(s => hotelCity.toLowerCase().includes(s.toLowerCase()))
+                            });
+                        }
+                    });
+                } else if (error) {
+                    console.error('Supabase query error:', error);
+                }
+            } catch (err) {
+                console.warn('Hotel search failed:', err);
+            }
         }
 
         return matches.slice(0, limit);

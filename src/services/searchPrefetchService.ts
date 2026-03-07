@@ -10,7 +10,7 @@ import { performSmartSearch, type SmartSearchResult } from './smartSearchService
 import { getMonthlyReservationCount, getBulkMonthlyReservationCounts } from './reservationService';
 
 interface PrefetchParams {
-    destinations: Array<{ id: string; name: string; type: 'destination' | 'hotel' | 'country'; provider?: string }>;
+    destinations: Array<{ id: string | number; name: string; type: 'destination' | 'hotel' | 'country' | 'city'; provider?: string }>;
     checkIn: string;
     checkOut: string;
     allocations: Array<{ adults: number; children: number; childrenAges: number[] }>;

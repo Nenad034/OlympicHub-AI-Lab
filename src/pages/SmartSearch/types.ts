@@ -4,11 +4,12 @@
  */
 
 export interface Destination {
-    id: string;
+    id: string | number;
     name: string;
-    type: 'destination' | 'hotel' | 'country';
+    type: 'destination' | 'city' | 'hotel' | 'country';
     country?: string;
     stars?: number;
+    region_id?: number;
     provider?: string;
 }
 
@@ -19,7 +20,7 @@ export interface RoomAllocation {
 }
 
 export type TabId = 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'ski';
-export type SearchMode = 'classic' | 'narrative' | 'immersive';
+export type SearchMode = 'classic' | 'narrative' | 'immersive' | 'immersive-v2' | 'immersive-map';
 export type ViewMode = 'grid' | 'list' | 'notepad';
 export type SortBy = 'smart' | 'price_low' | 'price_high';
 export type BudgetType = 'total' | 'person' | 'room';

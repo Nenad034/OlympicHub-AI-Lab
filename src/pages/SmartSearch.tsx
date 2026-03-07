@@ -45,8 +45,11 @@ import { HotelDetailsModal } from './SmartSearch/components/HotelDetailsModal';
 import { CancellationModal } from './SmartSearch/components/CancellationModal';
 import { NarrativeSearch } from '../components/packages/Steps/NarrativeSearch';
 import { ImmersiveSearch, type ImmersiveSearchData } from '../components/packages/Steps/ImmersiveSearch';
+import { ImmersiveSearchV2 } from '../components/packages/Steps/ImmersiveSearchV2';
+import { ImmersiveMapSearch, type ImmersiveMapSearchData } from '../components/packages/Steps/ImmersiveMapSearch';
 import type { BasicInfoData } from '../types/packageSearch.types';
 import type { HotelRoom } from '../types/hotel';
+import type { Destination, SearchHistoryItem, RoomAllocation, SearchMode, TabId, BudgetType } from './SmartSearch/types';
 
 /**
  * Constants for filtering
@@ -240,44 +243,6 @@ const cleanRoomName = (name: string): string => {
         .trim();
 };
 
-interface Destination {
-    id: string;
-    name: string;
-    type: 'destination' | 'hotel' | 'country';
-    country?: string;
-    stars?: number;
-    provider?: string;
-}
-
-interface RoomAllocation {
-    adults: number;
-    children: number;
-    childrenAges: number[];
-}
-
-interface SearchHistoryItem {
-    id: string;
-    timestamp: number;
-    query: {
-        destinations: Destination[];
-        checkIn: string;
-        checkOut: string;
-        roomAllocations: RoomAllocation[];
-        mealPlan: string;
-        nationality: string;
-        budgetType: 'total' | 'person' | 'room';
-        tab: 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'ski';
-        searchMode: 'classic' | 'narrative' | 'immersive';
-        budgetFrom?: string;
-        budgetTo?: string;
-        flexibleDays?: number;
-    };
-    resultsSummary?: {
-        count: number;
-        minPrice?: number;
-    };
-}
-
 
 
 
@@ -338,7 +303,7 @@ const SmartSearch: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
 
     // MODE SWITCH
-    const [searchMode, setSearchMode] = useState<'classic' | 'narrative' | 'immersive'>(() => {
+    const [searchMode, setSearchMode] = useState<'classic' | 'narrative' | 'immersive' | 'immersive-v2' | 'immersive-map'>(() => {
         const isMobileApp = document.body.classList.contains('mobile-view');
         if (isMobileApp) return 'immersive';
         const saved = localStorage.getItem('preferredSearchMode');
@@ -419,13 +384,13 @@ const SmartSearch: React.FC = () => {
     // API Providers State
     const [apiConnectionsEnabled, setApiConnectionsEnabled] = useState(true);
     const [enabledProviders, setEnabledProviders] = useState({
-        opengreece: true,
-        tct: true,
+        opengreece: false,
+        tct: false,
         solvex: true,
-        solvexai: true,
-        ors: true,
-        filos: true,
-        mtsglobe: true
+        solvexai: false,
+        ors: false,
+        filos: false,
+        mtsglobe: false
     });
     const [showProviderPanel, setShowProviderPanel] = useState(() => {
         const saved = localStorage.getItem('showProviderPanel');
@@ -446,7 +411,7 @@ const SmartSearch: React.FC = () => {
         // 1. Map Destinations
         if (data.destinations && data.destinations.length > 0) {
             const newMappedDestinations = data.destinations.map(dest => {
-                let finalId = dest.id;
+                let finalId: string | number = dest.id;
                 let finalType = (dest as any).type || 'destination';
                 let finalCountry = (dest as any).country_name || dest.country || 'Bugarska';
 
@@ -464,11 +429,11 @@ const SmartSearch: React.FC = () => {
                 }
 
                 return {
-                    id: finalId,
+                    id: finalId as string | number,
                     name: dest.city,
-                    type: finalType as 'destination' | 'hotel' | 'country',
+                    type: finalType as any,
                     country: finalCountry
-                };
+                } as Destination;
             });
 
             mappedDestinations = newMappedDestinations;
@@ -868,7 +833,7 @@ const SmartSearch: React.FC = () => {
         // Schedule pre-fetch when immersive wizard has enough data
         if (data.destinations.length > 0 && data.checkIn && data.checkOut) {
             searchPrefetchService.schedule({
-                destinations: data.destinations as any,
+                destinations: data.destinations as Destination[],
                 checkIn: data.checkIn,
                 checkOut: data.checkOut,
                 allocations: data.roomAllocations,
@@ -918,7 +883,7 @@ const SmartSearch: React.FC = () => {
         budgetTo?: string,
         budgetType?: 'total' | 'person' | 'room',
         searchType?: string,
-        searchMode?: 'classic' | 'narrative' | 'immersive'
+        searchMode?: 'classic' | 'narrative' | 'immersive' | 'immersive-v2'
     }) => {
         const activeSearchType = overrideParams?.searchType || activeTab;
         const activeSearchMode = overrideParams?.searchMode || searchMode;
@@ -1659,7 +1624,7 @@ const SmartSearch: React.FC = () => {
                             className={`mode-switch-btn ${searchMode === 'immersive' ? 'active' : ''}`}
                             onClick={() => { setSearchMode('immersive'); setSearchPerformed(false); }}
                             style={{
-                                padding: '12px 24px', borderRadius: '10px', border: 'none', fontSize: '15px', fontWeight: 700,
+                                padding: '12px 24px', borderRadius: '10px', border: 'none', fontSize: '14px', fontWeight: 700,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.3s',
                                 background: searchMode === 'immersive' ? 'var(--accent)' : 'rgba(15, 23, 42, 0.5)',
                                 color: searchMode === 'immersive' ? '#fff' : '#94a3b8',
@@ -1667,6 +1632,32 @@ const SmartSearch: React.FC = () => {
                             }}
                         >
                             <Zap size={16} /> Immersive (Smart)
+                        </button>
+                        <button
+                            className={`mode-switch-btn ${searchMode === 'immersive-v2' ? 'active' : ''}`}
+                            onClick={() => { setSearchMode('immersive-v2'); setSearchPerformed(false); }}
+                            style={{
+                                padding: '12px 24px', borderRadius: '10px', border: 'none', fontSize: '14px', fontWeight: 700,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.3s',
+                                background: searchMode === 'immersive-v2' ? '#FF5722' : 'rgba(15, 23, 42, 0.5)',
+                                color: searchMode === 'immersive-v2' ? '#fff' : '#94a3b8',
+                                flex: 1
+                            }}
+                        >
+                            <Zap size={16} /> Immersive V2 (Beta)
+                        </button>
+                        <button
+                            className={`mode-switch-btn ${searchMode === 'immersive-map' ? 'active' : ''}`}
+                            onClick={() => { setSearchMode('immersive-map'); setSearchPerformed(false); }}
+                            style={{
+                                padding: '12px 24px', borderRadius: '10px', border: 'none', fontSize: '14px', fontWeight: 700,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.3s',
+                                background: searchMode === 'immersive-map' ? '#0ea5e9' : 'rgba(15, 23, 42, 0.5)',
+                                color: searchMode === 'immersive-map' ? '#fff' : '#94a3b8',
+                                flex: 1
+                            }}
+                        >
+                            <Globe size={16} /> Geo Explorer (Map)
                         </button>
                     </div>
                 </div>
@@ -1856,12 +1847,51 @@ const SmartSearch: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* IMMERSIVE SEARCH UI - Simplified for now, or use ImmersiveSearch if ready */}
                                 {searchMode === 'immersive' && (
                                     <div className="immersive-mode-container">
                                         <ImmersiveSearch
                                             onSearch={(data: ImmersiveSearchData) => {
                                                 // Map ImmersiveSearchData to handleSearch params
+                                                handleSearch({
+                                                    destinations: data.destinations.map((d: any) => ({
+                                                        id: d.id,
+                                                        name: d.name,
+                                                        type: d.type as any,
+                                                        country: d.country || ''
+                                                    })),
+                                                    checkIn: data.checkIn,
+                                                    checkOut: data.checkOut,
+                                                    allocations: data.roomAllocations
+                                                });
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
+                                {searchMode === 'immersive-v2' && (
+                                    <div className="immersive-mode-container">
+                                        <ImmersiveSearchV2
+                                            onSearch={(data: ImmersiveSearchData) => {
+                                                handleSearch({
+                                                    destinations: data.destinations.map((d: any) => ({
+                                                        id: d.id,
+                                                        name: d.name,
+                                                        type: d.type as any,
+                                                        country: d.country || ''
+                                                    })),
+                                                    checkIn: data.checkIn,
+                                                    checkOut: data.checkOut,
+                                                    allocations: data.roomAllocations
+                                                });
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
+                                {searchMode === 'immersive-map' && (
+                                    <div className="immersive-mode-container" style={{ padding: '0 2rem 2rem 2rem' }}>
+                                        <ImmersiveMapSearch
+                                            onSearch={(data: ImmersiveMapSearchData) => {
                                                 handleSearch({
                                                     destinations: data.destinations.map((d: any) => ({
                                                         id: d.id,

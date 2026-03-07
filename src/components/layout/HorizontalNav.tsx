@@ -104,6 +104,7 @@ const HorizontalNav: React.FC = () => {
                 { to: '/production?view=transport', label: 'Brodski Prevoz', icon: Anchor },
                 { to: '/production?view=services', label: 'Izleti', icon: Waves },
                 { to: '/production?view=services', label: 'Ulaznice', icon: Ticket },
+                { to: '/destination-prime-explorer', label: 'Prime Explorer 🧭', icon: Compass },
                 { to: '/price-list-architect', label: 'Pricing Architect', icon: Calculator },
                 { to: '/price-list-architect', label: 'Pricing Architect', icon: Calculator },
             ]

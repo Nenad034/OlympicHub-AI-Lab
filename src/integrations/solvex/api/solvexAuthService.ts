@@ -57,6 +57,13 @@ export async function connect(): Promise<SolvexApiResponse<string>> {
             throw new Error('Solvex API nije vratio token (prazan odgovor)');
         }
 
+        // Check if result is an error message instead of a GUID
+        // GUID is typically: 8-4-4-4-12 hex chars or similar
+        // Solvex error messages start with "Connection result code:"
+        if (result.includes('Connection result code:') || result.toLowerCase().includes('invalid')) {
+            throw new Error(`Solvex API Auth Error: ${result}`);
+        }
+
         // Cache the token
         cachedToken = result;
         tokenExpiry = Date.now() + TOKEN_LIFETIME;

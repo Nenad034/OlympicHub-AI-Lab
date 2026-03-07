@@ -34,7 +34,8 @@ import {
     Headset,
     Zap,
     Star,
-    ArrowRight
+    ArrowRight,
+    Compass
 } from 'lucide-react';
 import { useThemeStore, useAppStore, useAuthStore } from '../stores';
 import { translations } from '../translations';
@@ -140,6 +141,7 @@ const apps: AppConfig[] = [
     { id: 'main-hub', name: 'Dashboard Central', desc: 'Glavni kontrolni panel sa pregledom osnovnih KPI i brzom navigacijom.', icon: <Database size={24} />, category: 'system', color: 'var(--gradient-blue)', minLevel: 1, path: '/' },
     { id: 'my-reservations', name: 'Moje Rezervacije', desc: 'Pregled svih vaših aktivnih i arhiviranih rezervacija sa statusima plaćanja.', icon: <ClipboardList size={24} />, category: 'sales', color: 'var(--gradient-green)', badge: 'B2B', minLevel: 1, path: '/my-reservations' },
     { id: 'b2b-portal', name: 'B2B Partner Portal', desc: 'Vaša glavna baza za upravljanje prodajom, subagentima i dokumentacijom.', icon: <Building2 size={24} />, category: 'sales', color: 'var(--gradient-purple)', badge: 'HUB', minLevel: 1, path: '/b2b-portal' },
+    { id: 'destination-prime-explorer', name: 'Destination Prime Explorer', desc: 'Napredni sistem za istraživanje destinacija i POI tačaka.', icon: <Compass size={24} />, category: 'production', color: 'var(--gradient-blue)', badge: 'NEW', minLevel: 1, path: '/destination-prime-explorer' },
     { id: 'operational-reports', name: 'Operativni Izveštaji', desc: 'Centralni hub za upravljanje kapacitetima, rooming listama i PAX statistikom.', icon: <Activity size={24} />, category: 'production', color: 'var(--gradient-orange)', badge: 'Premium', minLevel: 3, path: '/operational-reports' }
 ];
 

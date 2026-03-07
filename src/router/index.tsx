@@ -92,6 +92,7 @@ const OperationalReports = React.lazy(() => import('../modules/production/Operat
 
 
 const FinancialIntelligenceHub = React.lazy(() => import('../pages/FinancialIntelligenceHub'));
+const DestinationPrimeExplorer = React.lazy(() => import('../pages/DestinationPrimeExplorer'));
 
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
@@ -623,6 +624,10 @@ export const router = createBrowserRouter([
                     {
                         path: 'smart-search',
                         element: <SmartSearch />,
+                    },
+                    {
+                        path: 'destination-prime-explorer',
+                        element: <DestinationPrimeExplorer />,
                     },
                     {
                         path: 'my-reservations',

@@ -16,9 +16,9 @@ export interface RoomAllocation {
 export interface SmartSearchParams {
     searchType: 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'charter' | 'cruise' | 'event' | 'ski';
     destinations: Array<{
-        id: string;
+        id: string | number;
         name: string;
-        type: 'destination' | 'hotel' | 'country';
+        type: 'destination' | 'hotel' | 'country' | 'city';
         country?: string;
         provider?: string;
     }>;
