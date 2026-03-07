@@ -43,6 +43,9 @@ import { FilterSidebar } from './SmartSearch/components/FilterSidebar';
 import { HotelCard } from './SmartSearch/components/HotelCard';
 import { HotelDetailsModal } from './SmartSearch/components/HotelDetailsModal';
 import { CancellationModal } from './SmartSearch/components/CancellationModal';
+import { MilicaAdvisor } from './SmartSearch/components/MilicaAdvisor';
+import { MilicaStartSearch } from './SmartSearch/components/MilicaStartSearch';
+import { MilicaChat } from './SmartSearch/components/MilicaChat';
 import { NarrativeSearch } from '../components/packages/Steps/NarrativeSearch';
 import { ImmersiveSearch, type ImmersiveSearchData } from '../components/packages/Steps/ImmersiveSearch';
 import { ImmersiveSearchV2 } from '../components/packages/Steps/ImmersiveSearchV2';
@@ -387,7 +390,7 @@ const SmartSearch: React.FC = () => {
         opengreece: false,
         tct: false,
         solvex: true,
-        solvexai: false,
+        solvexai: true,
         ors: false,
         filos: false,
         mtsglobe: false
@@ -883,7 +886,7 @@ const SmartSearch: React.FC = () => {
         budgetTo?: string,
         budgetType?: 'total' | 'person' | 'room',
         searchType?: string,
-        searchMode?: 'classic' | 'narrative' | 'immersive' | 'immersive-v2'
+        searchMode?: 'classic' | 'narrative' | 'immersive' | 'immersive-v2' | 'immersive-map'
     }) => {
         const activeSearchType = overrideParams?.searchType || activeTab;
         const activeSearchMode = overrideParams?.searchMode || searchMode;
@@ -1825,7 +1828,11 @@ const SmartSearch: React.FC = () => {
                             <div className="search-init-zone animate-fade-in">
                                 {/* NARRATIVE SEARCH UI */}
                                 {searchMode === 'narrative' && (
-                                    <div className="narrative-mode-container" style={{ padding: '0 2rem 2rem 2rem' }}>
+                                    <div className="narrative-mode-container" style={{ padding: '0 2rem 2rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                        <MilicaStartSearch />
+
+                                        <div style={{ width: '100%', height: '1px', background: 'var(--border)', margin: '2rem 0', opacity: 0.5 }}></div>
+
                                         <NarrativeSearch
                                             basicInfo={getInitialNarrativeData()}
                                             onUpdate={(data: any) => handleNarrativeUpdate(data)}
@@ -2201,9 +2208,8 @@ const SmartSearch: React.FC = () => {
                                         {/* SEARCH BUTTONS ROW */}
                                         <div className="action-row-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', marginTop: '30px' }}>
                                             <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', borderRadius: '40px', background: 'var(--accent)', border: 'none', color: 'white', cursor: 'pointer' }}>
-                                                <div style={{ opacity: isSearching ? 0.2 : 1, transition: 'all 0.3s ease', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                                    <Search size={28} />
-                                                    <span style={{ fontSize: '1.4rem', fontWeight: 900 }}>PRONAĐI NAJBOLJE PONUDE</span>
+                                                <div style={{ opacity: isSearching ? 0.2 : 1, transition: 'all 0.3s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                                                    <ClickToTravelLogo height={42} iconOnly={true} forceOutline={true} />
                                                 </div>
                                                 {isSearching && (
                                                     <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2329,6 +2335,20 @@ const SmartSearch: React.FC = () => {
                 />
             )}
 
+            {/* Calendar Portal Overlay */}
+            {activeCalendar && (
+                <ModernCalendar
+                    startDate={checkIn}
+                    endDate={checkOut}
+                    onChange={(start, end) => {
+                        setCheckIn(start);
+                        setCheckOut(end);
+                        syncNightsFromDates(start, end);
+                    }}
+                    onClose={() => setActiveCalendar(null)}
+                />
+            )}
+
             {/* Floating History Toggle */}
             {createPortal(
                 <button
@@ -2341,6 +2361,23 @@ const SmartSearch: React.FC = () => {
                 </button>,
                 document.getElementById('portal-root') || document.body
             )}
+
+            {/* AI Advisor Milica */}
+            {searchPerformed && searchResults.length > 0 && (
+                <MilicaAdvisor
+                    searchResults={searchResults}
+                    searchParams={{
+                        destinations: selectedDestinations,
+                        checkIn,
+                        checkOut,
+                        roomAllocations,
+                        nationality
+                    }}
+                    isActuallyDark={isActuallyDark}
+                />
+            )}
+
+            <MilicaChat />
         </div>
     );
 };

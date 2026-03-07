@@ -4,6 +4,7 @@
  */
 
 import { SolvexProvider } from '../integrations/solvex/SolvexProvider';
+import { SolvexAiProvider } from '../integrations/solvex/SolvexAiProvider';
 import { FilosProvider } from '../integrations/filos/FilosProvider';
 import { MtsGlobeProvider } from '../integrations/mtsglobe/MtsGlobeProvider';
 
@@ -99,7 +100,8 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
         return [];
     }
 
-    const solvexProvider = new SolvexProvider();
+    const solvexAIProvider = new SolvexAiProvider();
+    const solvexProvider = params.enabledProviders?.solvexai ? solvexAIProvider : new SolvexProvider();
     const filosProvider = new FilosProvider();
     const mtsGlobeProvider = new MtsGlobeProvider();
     const finalResultsMap = new Map<string, SmartSearchResult>();

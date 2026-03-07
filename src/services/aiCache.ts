@@ -35,6 +35,7 @@ class AICacheService {
         chat: 24 * 60 * 60 * 1000,        // 24 hours
         analysis: 60 * 60 * 1000,          // 1 hour
         prices: 30 * 60 * 1000,            // 30 minutes
+        milica: 24 * 60 * 60 * 1000,        // 24 hours
         default: 60 * 60 * 1000            // 1 hour
     };
 
@@ -60,7 +61,7 @@ class AICacheService {
     /**
      * Get cached response
      */
-    get(prompt: string, category: 'chat' | 'analysis' | 'prices' | 'default' = 'default'): string | null {
+    get(prompt: string, category: 'chat' | 'analysis' | 'prices' | 'milica' | 'default' = 'default'): string | null {
         const key = this.generateKey(prompt, category);
         const cached = localStorage.getItem(key);
 
@@ -107,7 +108,7 @@ class AICacheService {
         prompt: string,
         response: string,
         tokens: number = 0,
-        category: 'chat' | 'analysis' | 'prices' | 'default' = 'default'
+        category: 'chat' | 'analysis' | 'prices' | 'milica' | 'default' = 'default'
     ): void {
         const key = this.generateKey(prompt, category);
         const ttl = this.ttlConfig[category];

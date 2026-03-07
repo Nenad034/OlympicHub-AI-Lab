@@ -9,17 +9,21 @@ interface AppStatus {
 interface AppState {
     appStatus: AppStatus;
     isChatOpen: boolean;
+    isMilicaChatOpen: boolean;
     chatContext: {
         type: 'general' | 'contact';
         contactId?: string;
         contactEmail?: string;
         contactName?: string;
         contactLanguage?: string;
+        requestedPersona?: 'specialist' | 'general' | 'group' | 'contact' | 'analyst';
+        initialMessage?: string;
     };
     searchQuery: string;
 
     setAppStatus: (status: AppStatus) => void;
     setChatOpen: (open: boolean) => void;
+    setMilicaChatOpen: (open: boolean) => void;
     setChatContext: (context: AppState['chatContext']) => void;
     toggleChat: () => void;
     setSearchQuery: (query: string) => void;
@@ -30,12 +34,14 @@ export const useAppStore = create<AppState>()(
         (set) => ({
             appStatus: { gitPushed: true, vercelLive: true },
             isChatOpen: false,
+            isMilicaChatOpen: false,
             chatContext: { type: 'general' },
             searchQuery: '',
 
             setAppStatus: (status: AppStatus) => set({ appStatus: status }),
 
             setChatOpen: (open: boolean) => set({ isChatOpen: open }),
+            setMilicaChatOpen: (open: boolean) => set({ isMilicaChatOpen: open }),
             setChatContext: (context) => set({ chatContext: context }),
             toggleChat: () => set((state) => ({ isChatOpen: !state.isChatOpen })),
 
@@ -45,7 +51,8 @@ export const useAppStore = create<AppState>()(
             name: 'olympic-app-storage',
             partialize: (state) => ({
                 // Only persist chat state, not search
-                isChatOpen: state.isChatOpen
+                isChatOpen: state.isChatOpen,
+                isMilicaChatOpen: state.isMilicaChatOpen
             }),
         }
     )

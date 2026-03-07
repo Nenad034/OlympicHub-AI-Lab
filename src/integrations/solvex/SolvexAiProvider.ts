@@ -12,10 +12,10 @@ import type {
     HotelSearchParams,
     HotelSearchResult,
     RoomOption
-} from '../../services/providers/HotelProviderInterface' ;
+} from '../../services/providers/HotelProviderInterface';
 
 import { SolvexProvider } from './SolvexProvider';
-import { AiIntelligenceService } from '../ai/AiIntelligenceService';
+import { AiIntelligenceService } from '../../services/ai/AiIntelligenceService';
 import { sentinelEvents } from '../../utils/sentinelEvents';
 
 export class SolvexAiProvider extends SolvexProvider implements HotelProvider {

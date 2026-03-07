@@ -3,6 +3,7 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup, Marker } from "re
 import { ArrowLeft, Search, MapPin } from 'lucide-react';
 import { getCountries, searchDestinations } from '../../../integrations/solvex/api/solvexDictionaryService';
 import { ImmersiveSearchV2 } from './ImmersiveSearchV2';
+import { ClickToTravelLogo } from '../../icons/ClickToTravelLogo';
 import './ImmersiveMapSearch.css';
 
 // A lightweight TopoJSON map of the world
@@ -376,7 +377,12 @@ export const ImmersiveMapSearch: React.FC<ImmersiveMapSearchProps> = ({ onSearch
                             }
                         }}
                     />
-                    <button onClick={() => { if (typedCountrySearch) jumpToCountry(typedCountrySearch); }}>Pretraži</button>
+                    <button
+                        onClick={() => { if (typedCountrySearch) jumpToCountry(typedCountrySearch); }}
+                        style={{ padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                        <ClickToTravelLogo height={18} iconOnly={true} />
+                    </button>
 
                     {showSuggestions && searchResults.length > 0 && (
                         <div className="geo-search-suggestions">

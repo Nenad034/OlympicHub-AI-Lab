@@ -1,0 +1,397 @@
+.milica-chat-window {
+    background: var(--bg-card);
+    border: 1px solid rgba(142, 36, 172, 0.4);
+    border-radius: 24px;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6), 0 0 50px rgba(142, 36, 172, 0.2);
+    display: flex;
+    flex-direction: column;
+    z-index: 100000;
+    overflow: hidden;
+    backdrop-filter: blur(30px);
+    touch-action: none;
+    /* Required for dragging */
+}
+
+.drag-handle {
+    cursor: move;
+}
+
+.milica-chat-header {
+    background: linear-gradient(135deg, #8E24AC, #6A1B9A);
+    padding: 20px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.milica-chat-header-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.milica-avatar-small {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.milica-chat-header-info h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.milica-chat-header-info span {
+    font-size: 10px;
+    opacity: 0.8;
+}
+
+.milica-header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.milica-header-actions button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: 0.2s;
+}
+
+.milica-header-actions button:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.milica-messages-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.milica-message-row {
+    display: flex;
+    width: 100%;
+    position: relative;
+}
+
+.milica-message-row.user {
+    justify-content: flex-end;
+}
+
+.milica-message-bubble {
+    max-width: 85%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.milica-message-content {
+    padding: 12px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.milica-message-row.ai .milica-message-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+}
+
+.milica-message-row.user .milica-message-content {
+    background: #8E24AC;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.milica-message-row.user .milica-message-bubble {
+    align-items: flex-end;
+}
+
+/* Copy button */
+.milica-copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+    padding: 2px 4px;
+    color: var(--text-secondary);
+    align-self: flex-end;
+}
+
+.milica-message-bubble:hover .milica-copy-btn {
+    opacity: 1;
+}
+
+/* Attachment preview inside message */
+.milica-attachment-preview {
+    max-width: 100%;
+    max-height: 150px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.milica-attachment-file {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    padding: 6px 10px;
+    background: rgba(142, 36, 172, 0.1);
+    border-radius: 8px;
+    color: #8E24AC;
+}
+
+/* Attachment strip (above input) */
+.milica-attachment-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-top: 1px solid var(--border);
+    background: rgba(142, 36, 172, 0.05);
+}
+
+.milica-strip-thumb {
+    height: 40px;
+    width: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.milica-strip-file {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.milica-strip-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 4px;
+    border-radius: 4px;
+    transition: 0.2s;
+    flex-shrink: 0;
+}
+
+.milica-strip-remove:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* Attach button in input area */
+.milica-attach-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 6px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    transition: 0.2s;
+    flex-shrink: 0;
+}
+
+.milica-attach-btn:hover {
+    color: #8E24AC;
+    background: rgba(142, 36, 172, 0.1);
+}
+
+.milica-attach-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.milica-thinking {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.milica-chat-input-area {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+}
+
+.milica-chat-input-area input {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 15px;
+    color: var(--text-primary);
+    outline: none;
+    font-size: 13px;
+}
+
+.milica-chat-input-area button {
+    background: #8E24AC;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.milica-chat-input-area button:hover {
+    transform: scale(1.05);
+}
+
+.milica-chat-input-area button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.milica-hotel-card {
+    background: var(--bg-sidebar);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 10px;
+    border: 1px solid var(--border);
+    max-width: 300px;
+}
+
+.milica-hotel-card img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+
+.milica-card-body {
+    padding: 12px;
+}
+
+.milica-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 5px;
+}
+
+.milica-card-header h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.risk-badge {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.risk-badge.green {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.risk-badge.yellow {
+    background: rgba(234, 179, 8, 0.1);
+    color: #eab308;
+}
+
+.risk-badge.red {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.milica-card-price {
+    font-size: 16px;
+    font-weight: 800;
+    color: #8E24AC;
+    margin-bottom: 10px;
+}
+
+.milica-book-btn {
+    display: block;
+    text-align: center;
+    background: #8E24AC;
+    color: white;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.milica-resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 24px;
+    height: 24px;
+    cursor: nwse-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    opacity: 0.5;
+    z-index: 10;
+}
+
+.rotate-45 {
+    transform: rotate(45deg);
+}
+
+@media (max-width: 480px) {
+    .milica-chat-window {
+        width: 100% !important;
+        height: 100% !important;
+        left: 0 !important;
+        top: 0 !important;
+        x: 0 !important;
+        y: 0 !important;
+        transform: none !important;
+        border-radius: 0;
+    }
+}

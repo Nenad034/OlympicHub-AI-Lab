@@ -23,7 +23,7 @@ interface APIKey {
 
 interface GenerateOptions {
     useCache?: boolean;
-    cacheCategory?: 'chat' | 'analysis' | 'prices' | 'default';
+    cacheCategory?: 'chat' | 'analysis' | 'prices' | 'milica' | 'default';
     model?: string;
     temperature?: number;
     maxOutputTokens?: number;
@@ -48,9 +48,8 @@ class MultiKeyAIService {
     private loadAPIKeys() {
         const keys: APIKey[] = [];
 
-        // All frontend Gemini requests to use Edge Function
-        // VITE_GEMINI keys have been moved to backend
-        const useProxy = true; // Always true for security
+        // Always try Supabase proxy first (most secure)
+        const useProxy = true;
 
         if (useProxy) {
             keys.push({
@@ -62,6 +61,27 @@ class MultiKeyAIService {
                 lastFailure: null,
                 isProxy: true
             });
+        }
+
+        // Direct Gemini API keys as fallback (for when proxy is unavailable)
+        const directKeyNames = [
+            'VITE_GEMINI_KEY_1', 'VITE_GEMINI_KEY_2', 'VITE_GEMINI_KEY_3',
+            'VITE_GEMINI_API_KEY', 'VITE_GEMINI_KEY'
+        ];
+        let directPriority = 2;
+        for (const keyName of directKeyNames) {
+            const keyValue = (import.meta.env as any)[keyName];
+            if (keyValue && keyValue.trim().length > 10 && keyValue !== 'YOUR_API_KEY') {
+                keys.push({
+                    key: keyValue.trim(),
+                    name: `Direct (${keyName})`,
+                    priority: directPriority++,
+                    enabled: true,
+                    failureCount: 0,
+                    lastFailure: null
+                });
+                console.log(`🔑 [MULTI-KEY] Found direct key: ${keyName}`);
+            }
         }
 
         this.apiKeys = keys;
@@ -281,14 +301,10 @@ class MultiKeyAIService {
                         error.message
                     );
 
-                    // If it's a rate limit error, try next key immediately
-                    if (this.isRateLimitError(error)) {
-                        console.log(`⏭️ [MULTI-KEY] Rate limit hit, trying next key...`);
-                        continue;
-                    }
-
-                    // For other errors, throw immediately
-                    throw error;
+                    // Always continue to next key (rate limit OR proxy errors)
+                    // This enables direct key fallback when proxy fails
+                    console.log(`⏭️ [MULTI-KEY] Trying next available key...`);
+                    continue;
                 }
             }
         } finally {
@@ -445,12 +461,12 @@ Ovo su trenutno najpovoljnije opcije. Želite li da pogledate kompletnu listu od
 
         // Generic assistance
         if (lowerPrompt.includes('pomoć') || lowerPrompt.includes('kako radi')) {
-            return "Ja sam vaš Smart Concierge. Mogu vam pomoći da pronađete najbolji smeštaj, odgovorim na pitanja o destinacijama ili vam pomognem oko rezervacije. Samo me pitajte nešto poput: 'Pronađi mi hotel na Krfu za 4 osobe'.";
+            return "Ja sam Milica, vaš turistički savetnik. Tu sam da vam pomognem da donesete najbolju odluku za vaš odmor. Možete me pitati o destinacijama, hotelima ili specifičnim zahtevima koje imate.";
         }
 
         // Default analysis/insight mock
         if (lowerPrompt.includes('hi') || lowerPrompt.includes('zdravo') || lowerPrompt.includes('ćao')) {
-            return "Zdravo! Ja sam vaš Smart Concierge. Kako vam mogu pomoći sa planiranjem putovanja danas?";
+            return "Zdravo! Ja sam Milica. Dozvolite mi da vam pomognem u kreiranju vašeg idealnog odmora. Gde biste najradije uživali ovog leta?";
         }
 
         return "Na osnovu dostupnih podataka, ova opcija predstavlja odličan izbor za putnike koji traže komfor i dobru lokaciju po pristupačnoj ceni.";

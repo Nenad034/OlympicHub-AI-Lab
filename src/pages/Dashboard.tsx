@@ -107,8 +107,8 @@ const apps: AppConfig[] = [
     { id: 'shifts-generator', name: 'Generator Smena', desc: 'Globalno upravljanje terminima, kapacitetima i vizuelna upozorenja za popunjenost.', icon: <RefreshCcw size={24} />, category: 'production', color: 'var(--gradient-blue)', badge: 'Critical', minLevel: 3, path: '/shifts-generator' },
     {
         id: 'smart-concierge',
-        name: 'Smart Concierge',
-        desc: 'AI prodajni agent sa yield optimizacijom i VCC sigurnosnom zaštitom.',
+        name: 'Savetnica Milica',
+        desc: 'Vaša lična AI savetnica za putovanja. Iskren pristup, vrhunska usluga i zaštita vašeg odmora.',
         icon: (
             <div style={{ position: 'relative' }}>
                 <Brain size={24} />

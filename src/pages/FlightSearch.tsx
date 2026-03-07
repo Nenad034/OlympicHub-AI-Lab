@@ -407,7 +407,7 @@ const FlightSearch: React.FC<FlightSearchProps> = ({ isInline }) => {
                                 >
                                     <div className="btn-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                                         <div style={{ opacity: isLoading ? 0.2 : 1, transition: 'all 0.3s ease' }}>
-                                            <ClickToTravelLogo height={65} iconOnly={true} iconScale={2.2} />
+                                            <ClickToTravelLogo height={44} iconOnly={true} />
                                         </div>
                                         {isLoading && (
                                             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

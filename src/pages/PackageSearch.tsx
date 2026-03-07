@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ClickToTravelLogo } from '../components/icons/ClickToTravelLogo';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     MapPin, Calendar, Users, Plane, Hotel,
@@ -272,7 +273,9 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
                             }}
                             onClick={() => navigate('/packages/created')}
                         >
-                            <Check size={20} /> KREIRAJ PAKET
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                                <ClickToTravelLogo height={28} iconOnly={true} />
+                            </div>
                         </button>
                     )}
                 </div>

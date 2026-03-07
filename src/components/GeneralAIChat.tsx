@@ -31,7 +31,7 @@ import { multiKeyAI } from '../services/multiKeyAI';
 import { ActivityLogger } from '../services/activityLogger';
 import { useAppStore } from '../stores';
 
-type ChatPersona = 'specialist' | 'general' | 'group' | 'contact' | 'concierge' | 'analyst';
+type ChatPersona = 'specialist' | 'general' | 'group' | 'contact' | 'analyst';
 
 interface Message {
     role: 'user' | 'ai' | 'player';
@@ -108,7 +108,6 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
         if (activePersona === 'contact') return chatContext.contactName || 'Client Chat';
         if (activePersona === 'specialist') return context.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + ' Specialist';
         if (activePersona === 'general') return activeLang === 'sr' ? 'Generalni AI' : 'General AI';
-        if (activePersona === 'concierge') return activeLang === 'sr' ? 'Smart Concierge' : 'Smart Concierge';
         if (activePersona === 'analyst') return activeLang === 'sr' ? 'Revenue Analyst' : 'Revenue Analyst';
         return activeLang === 'sr' ? 'Team Live Chat' : 'Team Live Chat';
     };
@@ -139,7 +138,6 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                 general: lang === 'sr' ? `Ja sam Generalni AI. Imam pristup znanju celog sveta. Pitajte bilo šta.` : `I am General AI. I have access to world knowledge. Ask anything.`,
                 group: lang === 'sr' ? `Dobrodošli u Live Chat grupu. Svi članovi tima i partneri su ovde.` : `Welcome to Live Chat group. All team members and partners are here.`,
                 contact: `Hello! I am ${chatContext.contactName}'s AI representative. How can I assist you today?`,
-                concierge: lang === 'sr' ? 'Ja sam vaš Smart Concierge. Kako vam mogu pomoći sa rezervacijom?' : 'I am your Smart Concierge. How can I help you with your booking?',
                 analyst: lang === 'sr' ? 'Ja sam vaš Revenue Analitičar. Pripremam jutarnji izveštaj o prihodima.' : 'I am your Revenue Analyst. Preparing the morning revenue report.'
             };
             const welcome = welcomeMsg[activePersona];
@@ -150,7 +148,6 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
 
     const [activeLang, setActiveLang] = useState<'sr' | 'en' | 'ru' | 'it' | 'de' | 'fr' | 'es'>(lang);
 
-    // Sync activeLang with chatContext when it changes
     useEffect(() => {
         if (chatContext.type === 'contact' && chatContext.contactLanguage) {
             setActiveLang(chatContext.contactLanguage as any);
@@ -250,14 +247,6 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
             if (activePersona === 'general') {
                 return `Ti si Generalni AI asistent. Pomažeš korisniku oko opštih pitanja o aplikaciji ClickToTravel Hub, ali i o bilo kojoj temi sa interneta.`;
             }
-            if (activePersona === 'concierge') {
-                return `Ti si "ClickToTravel Smart Concierge", napredni AI agent prodaje integrisan u ClickToTravel ERP.
-                CILJEVI: 1. Konverzija upita u rezervacije. 2. Favorizuj hotele sa "Green" statusom. 3. Budi koncizan (max 3 rečenice).
-                PRAVILA: Ako je hotel zauzet, koristi get_smart_offer za alternative. Koristi VCC kao argument sigurnosti.
-                AKO DOBRIŠ PODATKE IZ get_smart_offer, tvoj odgovor MORA sadržati vizuelni blok u formatu:
-                [CARD: {hotel_name} | Price: {price_total} | Risk: {risk_score}] (npr. [CARD: Hotel Mediterranean | 450€ | Green Status])
-                STROGO ZABRANJENO: Ne koristi fraze poput "Kao AI model..." ili "Naravno, rado ću vam pomoći". Pređi odmah na rešenje.`;
-            }
             if (activePersona === 'analyst') {
                 return `Ti si viši analitičar prihoda (Revenue Analyst) za Olympic Travel. 
                 Tvoj zadatak je da analiziraš logove i pružiš strateški izveštaj suvlasniku.
@@ -300,10 +289,9 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
 
                 // Use multiKeyAI service with caching and rate limiting
                 const response = await multiKeyAI.generateContent(prompt, {
-                    useCache: activePersona !== 'concierge', // Disable cache for tool-using persona to ensure fresh results
+                    useCache: true,
                     cacheCategory: 'chat',
                     model: modelName,
-                    tools: activePersona === 'concierge' ? concierge_tools : undefined,
                     history: messages.map(m => ({ role: m.role, text: m.text }))
                 });
 
@@ -486,7 +474,6 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
                         <div onPointerDown={e => e.stopPropagation()} style={{ display: 'flex', background: 'rgba(0,0,0,0.15)', padding: '4px', borderRadius: '18px', marginTop: '16px' }}>
                             <button onClick={() => { setActivePersona('specialist'); setSelectedUserIds([]); setMessages([]); setChatContext({ type: 'general' }); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'specialist' ? '#fff' : 'transparent', color: activePersona === 'specialist' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Specialist</button>
                             <button onClick={() => { setActivePersona('general'); setSelectedUserIds([]); setMessages([]); setChatContext({ type: 'general' }); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'general' ? '#fff' : 'transparent', color: activePersona === 'general' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>General</button>
-                            <button onClick={() => { setActivePersona('concierge'); setSelectedUserIds([]); setMessages([]); setChatContext({ type: 'general' }); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'concierge' ? '#fff' : 'transparent', color: activePersona === 'concierge' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Concierge</button>
                             <button onClick={() => { setActivePersona('analyst'); setSelectedUserIds([]); setMessages([]); setChatContext({ type: 'general' }); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'analyst' ? '#fff' : 'transparent', color: activePersona === 'analyst' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Analyst</button>
                             <button onClick={() => { setActivePersona('group'); setSelectedUserIds([]); setMessages([]); setShowUserList(true); setChatContext({ type: 'general' }); }} style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '14px', background: activePersona === 'group' ? '#fff' : 'transparent', color: activePersona === 'group' ? 'var(--accent)' : '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>Live Chat</button>
                         </div>

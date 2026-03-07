@@ -723,7 +723,7 @@ export const ImmersiveSearch: React.FC<ImmersiveSearchProps> = ({ onSearch, onPa
                             <ArrowLeftCircle size={36} />
                         </button>
                         <button className="immersive-next-btn luxury-btn" onClick={handleFinalSearch} style={{ minWidth: '200px', height: '60px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                            <ClickToTravelLogo height={58} iconOnly={true} iconScale={2.2} forceOutline={true} />
+                            <ClickToTravelLogo height={34} iconOnly={true} />
                         </button>
                     </div>
                 </div>
