@@ -94,22 +94,22 @@ const MOCK_SUPPLIERS = ['Solvex', 'Fibula', 'Big Blue B2B', 'Direct Hotel', 'Bed
 const MOCK_BRANCHES = ['Poslovnica Beograd - Centar', 'Poslovnica Novi Sad', 'Poslovnica Niš', 'Online Shop'];
 
 const MOCK_RESERVATIONS = [
-    { id: 'R-9452', customer: 'Jovan Jovanović', hotelId: '50', roomType: 'Double Room', checkIn: '2026-06-20', checkOut: '2026-06-30', adults: 2, children: 1, babies: 0, amount: 1250, createdAt: '2026-03-01', status: 'Active', contract: 'Ugovor A', supplier: 'Solvex', subagentId: '1', branchId: null, isB2C: false },
-    { id: 'R-9451', customer: 'Marko Marković', hotelId: '62', roomType: 'Standard Sea View', checkIn: '2026-06-21', checkOut: '2026-06-28', adults: 2, children: 0, babies: 1, amount: 1850, createdAt: '2026-03-02', status: 'Active', contract: 'Ugovor B', supplier: 'Fibula', subagentId: null, branchId: '1', isB2C: false },
-    { id: 'R-9450', customer: 'Ana Anić', hotelId: '50', roomType: 'Suite', checkIn: '2026-06-20', checkOut: '2026-06-27', adults: 2, children: 2, babies: 0, amount: 2100, createdAt: '2026-03-03', status: 'Reservation', contract: 'Ugovor A', supplier: 'Direct Hotel', subagentId: '2', branchId: null, isB2C: false },
-    { id: 'R-9460', customer: 'Petar Petrović', hotelId: '50', roomType: 'Apartment', checkIn: '2026-06-18', checkOut: '2026-06-25', adults: 4, children: 0, babies: 0, amount: 3200, createdAt: '2026-03-04', status: 'Active', contract: 'Ugovor C', supplier: 'Big Blue B2B', subagentId: null, branchId: null, isB2C: true },
-    { id: 'R-9461', customer: 'Milica Milić', hotelId: '50', roomType: 'Double Room', checkIn: '2026-06-15', checkOut: '2026-06-18', adults: 2, children: 0, babies: 0, amount: 900, createdAt: '2026-03-05', status: 'Reservation', contract: 'Ugovor B', supplier: 'Solvex', subagentId: '6', branchId: null, isB2C: false },
-    { id: 'R-9462', customer: 'Dragan Dragić', hotelId: '50', roomType: 'Suite', checkIn: '2026-06-18', checkOut: '2026-06-28', adults: 2, children: 1, babies: 1, amount: 2400, createdAt: '2026-03-06', status: 'Active', contract: 'Ugovor A', supplier: 'Fibula', subagentId: '1', branchId: null, isB2C: false },
-    { id: 'R-9470', customer: 'Zoran Zorić', hotelId: '75', roomType: 'Deluxe Room', checkIn: '2026-07-05', checkOut: '2026-07-15', adults: 2, children: 0, babies: 0, amount: 4500, createdAt: '2026-03-07', status: 'Active', contract: 'Ugovor Special', supplier: 'Bedsonline', subagentId: '9', branchId: null, isB2C: false },
-    { id: 'R-9471', customer: 'Savo Savić', hotelId: '75', roomType: 'Pool Suite', checkIn: '2026-07-10', checkOut: '2026-07-20', adults: 2, children: 2, babies: 0, amount: 6200, createdAt: '2026-03-08', status: 'Active', contract: 'Last Minute', supplier: 'Direct Hotel', subagentId: null, branchId: '2', isB2C: false },
-    { id: 'R-9472', customer: 'Ivana Ivić', hotelId: '80', roomType: 'Superior Room', checkIn: '2026-06-25', checkOut: '2026-07-05', adults: 2, children: 1, babies: 0, amount: 2800, createdAt: '2026-03-09', status: 'Active', contract: 'Ugovor A', supplier: 'Solvex', subagentId: '1', branchId: null, isB2C: false },
-    { id: 'R-9480', customer: 'Nikola Nikolić', hotelId: '62', roomType: 'Family Room', checkIn: '2026-08-01', checkOut: '2026-08-10', adults: 2, children: 2, babies: 1, amount: 3500, createdAt: '2026-03-10', status: 'Reservation', contract: 'Ugovor B', supplier: 'Fibula', subagentId: null, branchId: null, isB2C: true },
-    { id: 'R-9481', customer: 'Jelena Jelić', hotelId: '81', roomType: 'Standard Room', checkIn: '2026-07-15', checkOut: '2026-07-25', adults: 2, children: 0, babies: 0, amount: 1600, createdAt: '2026-03-11', status: 'Active', contract: 'Ugovor A', supplier: 'Solvex', subagentId: '12', branchId: null, isB2C: false },
-    { id: 'R-9490', customer: 'Bojan Bojić', hotelId: '50', roomType: 'Double Room', checkIn: '2026-06-10', checkOut: '2026-06-17', adults: 2, children: 0, babies: 0, amount: 840, createdAt: '2026-03-12', status: 'Active', contract: 'Ugovor B', supplier: 'Fibula', subagentId: '1', branchId: null, isB2C: false },
-    { id: 'R-9491', customer: 'Sanja Savić', hotelId: '62', roomType: 'Standard Sea View', checkIn: '2026-06-12', checkOut: '2026-06-19', adults: 2, children: 1, babies: 0, amount: 1100, createdAt: '2026-03-13', status: 'Active', contract: 'Ugovor B', supplier: 'Direct Hotel', subagentId: '15', branchId: null, isB2C: false },
-    { id: 'R-9492', customer: 'Goran Gocić', hotelId: '75', roomType: 'Deluxe Room', checkIn: '2026-07-01', checkOut: '2026-07-10', adults: 2, children: 0, babies: 0, amount: 3800, createdAt: '2026-03-14', status: 'Active', contract: 'Ugovor Special', supplier: 'Solvex', subagentId: null, branchId: '1', isB2C: false },
-    { id: 'R-9493', customer: 'Tanja Tanić', hotelId: '80', roomType: 'Superior Room', checkIn: '2026-08-05', checkOut: '2026-08-15', adults: 2, children: 2, babies: 0, amount: 3100, createdAt: '2026-03-15', status: 'Active', contract: 'Ugovor A', supplier: 'Bedsonline', subagentId: '1', branchId: null, isB2C: false },
-    { id: 'R-9494', customer: 'Luka Lukić', hotelId: '50', roomType: 'Suite', checkIn: '2026-06-25', checkOut: '2026-07-02', adults: 2, children: 1, babies: 1, amount: 1950, createdAt: '2026-03-16', status: 'Active', contract: 'Ugovor A', supplier: 'Fibula', subagentId: null, branchId: '3', isB2C: false },
+    { id: 'R-9452', customer: 'Jovan Jovanović', hotelId: '50', roomType: 'Double Room', checkIn: '2026-06-20', checkOut: '2026-06-30', adults: 2, children: 1, babies: 0, amount: 1250, paidAmount: 1250, createdAt: '2026-03-01', status: 'Active', contract: 'Ugovor A', supplier: 'Solvex', subagentId: '1', branchId: null, isB2C: false },
+    { id: 'R-9451', customer: 'Marko Marković', hotelId: '62', roomType: 'Standard Sea View', checkIn: '2026-06-21', checkOut: '2026-06-28', adults: 2, children: 0, babies: 1, amount: 1850, paidAmount: 500, createdAt: '2026-03-02', status: 'Active', contract: 'Ugovor B', supplier: 'Fibula', subagentId: null, branchId: '1', isB2C: false },
+    { id: 'R-9450', customer: 'Ana Anić', hotelId: '50', roomType: 'Suite', checkIn: '2026-06-20', checkOut: '2026-06-27', adults: 2, children: 2, babies: 0, amount: 2100, paidAmount: 2100, createdAt: '2026-03-03', status: 'Reservation', contract: 'Ugovor A', supplier: 'Direct Hotel', subagentId: '2', branchId: null, isB2C: false },
+    { id: 'R-9460', customer: 'Petar Petrović', hotelId: '50', roomType: 'Apartment', checkIn: '2026-06-18', checkOut: '2026-06-25', adults: 4, children: 0, babies: 0, amount: 3200, paidAmount: 0, createdAt: '2026-03-04', status: 'Active', contract: 'Ugovor C', supplier: 'Big Blue B2B', subagentId: null, branchId: null, isB2C: true },
+    { id: 'R-9461', customer: 'Milica Milić', hotelId: '50', roomType: 'Double Room', checkIn: '2026-06-15', checkOut: '2026-06-18', adults: 2, children: 0, babies: 0, amount: 900, paidAmount: 900, createdAt: '2026-03-05', status: 'Reservation', contract: 'Ugovor B', supplier: 'Solvex', subagentId: '6', branchId: null, isB2C: false },
+    { id: 'R-9462', customer: 'Dragan Dragić', hotelId: '50', roomType: 'Suite', checkIn: '2026-06-18', checkOut: '2026-06-28', adults: 2, children: 1, babies: 1, amount: 2400, paidAmount: 1200, createdAt: '2026-03-06', status: 'Active', contract: 'Ugovor A', supplier: 'Fibula', subagentId: '1', branchId: null, isB2C: false },
+    { id: 'R-9470', customer: 'Zoran Zorić', hotelId: '75', roomType: 'Deluxe Room', checkIn: '2026-07-05', checkOut: '2026-07-15', adults: 2, children: 0, babies: 0, amount: 4500, paidAmount: 4500, createdAt: '2026-03-07', status: 'Active', contract: 'Ugovor Special', supplier: 'Bedsonline', subagentId: '9', branchId: null, isB2C: false },
+    { id: 'R-9471', customer: 'Savo Savić', hotelId: '75', roomType: 'Pool Suite', checkIn: '2026-07-10', checkOut: '2026-07-20', adults: 2, children: 2, babies: 0, amount: 6200, paidAmount: 3000, createdAt: '2026-03-08', status: 'Active', contract: 'Last Minute', supplier: 'Direct Hotel', subagentId: null, branchId: '2', isB2C: false },
+    { id: 'R-9472', customer: 'Ivana Ivić', hotelId: '80', roomType: 'Superior Room', checkIn: '2026-06-25', checkOut: '2026-07-05', adults: 2, children: 1, babies: 0, amount: 2800, paidAmount: 2800, createdAt: '2026-03-09', status: 'Active', contract: 'Ugovor A', supplier: 'Solvex', subagentId: '1', branchId: null, isB2C: false },
+    { id: 'R-9480', customer: 'Nikola Nikolić', hotelId: '62', roomType: 'Family Room', checkIn: '2026-08-01', checkOut: '2026-08-10', adults: 2, children: 2, babies: 1, amount: 3500, paidAmount: 1500, createdAt: '2026-03-10', status: 'Reservation', contract: 'Ugovor B', supplier: 'Fibula', subagentId: null, branchId: null, isB2C: true },
+    { id: 'R-9481', customer: 'Jelena Jelić', hotelId: '81', roomType: 'Standard Room', checkIn: '2026-07-15', checkOut: '2026-07-25', adults: 2, children: 0, babies: 0, amount: 1600, paidAmount: 1600, createdAt: '2026-03-11', status: 'Active', contract: 'Ugovor A', supplier: 'Solvex', subagentId: '12', branchId: null, isB2C: false },
+    { id: 'R-9490', customer: 'Bojan Bojić', hotelId: '50', roomType: 'Double Room', checkIn: '2026-06-10', checkOut: '2026-06-17', adults: 2, children: 0, babies: 0, amount: 840, paidAmount: 840, createdAt: '2026-03-12', status: 'Active', contract: 'Ugovor B', supplier: 'Fibula', subagentId: '1', branchId: null, isB2C: false },
+    { id: 'R-9491', customer: 'Sanja Savić', hotelId: '62', roomType: 'Standard Sea View', checkIn: '2026-06-12', checkOut: '2026-06-19', adults: 2, children: 1, babies: 0, amount: 1100, paidAmount: 1100, createdAt: '2026-03-13', status: 'Active', contract: 'Ugovor B', supplier: 'Direct Hotel', subagentId: '15', branchId: null, isB2C: false },
+    { id: 'R-9492', customer: 'Goran Gocić', hotelId: '75', roomType: 'Deluxe Room', checkIn: '2026-07-01', checkOut: '2026-07-10', adults: 2, children: 0, babies: 0, amount: 3800, paidAmount: 0, createdAt: '2026-03-14', status: 'Active', contract: 'Ugovor Special', supplier: 'Solvex', subagentId: null, branchId: '1', isB2C: false },
+    { id: 'R-9493', customer: 'Tanja Tanić', hotelId: '80', roomType: 'Superior Room', checkIn: '2026-08-05', checkOut: '2026-08-15', adults: 2, children: 2, babies: 0, amount: 3100, paidAmount: 3100, createdAt: '2026-03-15', status: 'Active', contract: 'Ugovor A', supplier: 'Bedsonline', subagentId: '1', branchId: null, isB2C: false },
+    { id: 'R-9494', customer: 'Luka Lukić', hotelId: '50', roomType: 'Suite', checkIn: '2026-06-25', checkOut: '2026-07-02', adults: 2, children: 1, babies: 1, amount: 1950, paidAmount: 1950, createdAt: '2026-03-16', status: 'Active', contract: 'Ugovor A', supplier: 'Fibula', subagentId: null, branchId: '3', isB2C: false },
 ];
 
 const GENERATE_MOCK_CAPACITIES = (hotels: typeof MOCK_HOTELS) => {
@@ -820,6 +820,14 @@ const OperationalReports: React.FC = () => {
                         <span className="kpi-label">Revenue</span>
                     </td>
                     <td>
+                        <span className="kpi-value" style={{ color: '#10b981' }}>{row.paid.toLocaleString('sr-RS')} €</span>
+                        <span className="kpi-label">Uplaćeno</span>
+                    </td>
+                    <td>
+                        <span className="kpi-value" style={{ color: row.balance > 0 ? '#ef4444' : '#10b981' }}>{row.balance.toLocaleString('sr-RS')} €</span>
+                        <span className="kpi-label">Za uplatu</span>
+                    </td>
+                    <td>
                         <span className="kpi-value">{row.personNights}</span>
                         <span className="kpi-label">Noćenja (PAX x N)</span>
                     </td>
@@ -878,6 +886,8 @@ const OperationalReports: React.FC = () => {
             return Object.entries(groups).map(([name, items]) => {
                 const id = `${parentId}|${name}`;
                 const revenue = items.reduce((acc, r) => acc + r.amount, 0);
+                const paid = items.reduce((acc, r: any) => acc + (r.paidAmount || 0), 0);
+                const balance = revenue - paid;
                 const pax = items.reduce((acc, r) => acc + (r.adults + r.children + r.babies), 0);
                 const nights = items.reduce((acc, r) => {
                     const n = Math.max(1, Math.ceil((new Date(r.checkOut).getTime() - new Date(r.checkIn).getTime()) / 86400000));
@@ -890,6 +900,8 @@ const OperationalReports: React.FC = () => {
                     levelName: tag,
                     count: items.length,
                     revenue,
+                    paid,
+                    balance,
                     pax,
                     nights,
                     personNights: items.reduce((acc, r) => {
@@ -968,7 +980,8 @@ const OperationalReports: React.FC = () => {
 
                         .analytics-standalone .report-wrapper {
                             margin: 0 auto;
-                            max-width: 1200px;
+                            width: 95%;
+                            max-width: 2000px;
                             background: #fff;
                             border-radius: 16px;
                             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -1047,6 +1060,8 @@ const OperationalReports: React.FC = () => {
                                     <th>Rezervacije</th>
                                     <th>Putnici</th>
                                     <th>Promet (Revenue)</th>
+                                    <th>Uplaćeno</th>
+                                    <th>Za uplatu</th>
                                     <th>Noćenja</th>
                                     <th></th>
                                 </tr>
@@ -1836,7 +1851,7 @@ const OperationalReports: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="drill-down-card">
+                            <div className="drill-down-card" style={{ width: '95%', marginLeft: 'auto', marginRight: 'auto' }}>
                                 <table className="drill-down-table">
                                     <thead>
                                         <tr>
@@ -1863,6 +1878,8 @@ const OperationalReports: React.FC = () => {
                                             <th>Rezervacije</th>
                                             <th>Putnici</th>
                                             <th>Promet (Revenue)</th>
+                                            <th>Uplaćeno</th>
+                                            <th>Za uplatu</th>
                                             <th>Noćenja</th>
                                             <th>Akcije</th>
                                         </tr>

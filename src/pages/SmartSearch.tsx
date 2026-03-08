@@ -10,9 +10,9 @@ import {
     LayoutGrid, List as ListIcon, ArrowDownWideNarrow,
     CheckCircle2, CheckCircle, XCircle, RefreshCw, Clock, ArrowRight, Info, Calendar as CalendarIcon, ShieldCheck, AlertTriangle, HelpCircle,
     Plus, Globe, AlignLeft, Mountain, DollarSign, Coffee, Building2, Filter, Trash2,
-    Database, Power, Ship, Eye, EyeOff
+    Database, Power, Ship, Eye, EyeOff, Map
 } from 'lucide-react';
-import { useThemeStore } from '../stores';
+import { useThemeStore, useAppStore } from '../stores';
 import { performSmartSearch, type SmartSearchResult } from '../services/smartSearchService';
 import { searchPrefetchService } from '../services/searchPrefetchService';
 import { getMonthlyReservationCount, getBulkMonthlyReservationCounts } from '../services/reservationService';
@@ -50,6 +50,7 @@ import { NarrativeSearch } from '../components/packages/Steps/NarrativeSearch';
 import { ImmersiveSearch, type ImmersiveSearchData } from '../components/packages/Steps/ImmersiveSearch';
 import { ImmersiveSearchV2 } from '../components/packages/Steps/ImmersiveSearchV2';
 import { ImmersiveMapSearch, type ImmersiveMapSearchData } from '../components/packages/Steps/ImmersiveMapSearch';
+import SmartMapExplorer from './SmartSearch/components/SmartMapExplorer';
 import type { BasicInfoData } from '../types/packageSearch.types';
 import type { HotelRoom } from '../types/hotel';
 import type { Destination, SearchHistoryItem, RoomAllocation, SearchMode, TabId, BudgetType } from './SmartSearch/types';
@@ -580,6 +581,7 @@ const SmartSearch: React.FC = () => {
     const [budgetTo, setBudgetTo] = useState<string>('');
     const [selectedCancelPolicy, setSelectedCancelPolicy] = useState<string>('all');
     const [visibleCount, setVisibleCount] = useState<number>(20);
+    const [showMapExplorer, setShowMapExplorer] = useState(false);
 
     const tabId = useRef(Math.random().toString(36).substring(2, 11));
 
@@ -1742,8 +1744,22 @@ const SmartSearch: React.FC = () => {
                                         <strong>{filteredResults.length}</strong>
                                         <span style={{ marginLeft: '8px' }}>hotela</span>
                                     </div>
-                                    <div className="results-sort" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 800, letterSpacing: '0.5px', marginRight: '4px' }}>SORTIRAJ:</span>
+                                    <div className="results-sort" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                        <button
+                                            onClick={() => setShowMapExplorer(true)}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '8px',
+                                                padding: '8px 18px', borderRadius: '14px', border: '1px solid #0ea5e9',
+                                                background: 'rgba(14, 165, 233, 0.1)',
+                                                color: '#0ea5e9',
+                                                fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s',
+                                                boxShadow: '0 4px 15px rgba(14, 165, 233, 0.2)'
+                                            }}
+                                            onMouseEnter={e => (e.currentTarget.style.background = '#0ea5e9', e.currentTarget.style.color = 'white')}
+                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(14, 165, 233, 0.1)', e.currentTarget.style.color = '#0ea5e9')}
+                                        >
+                                            <MapPin size={16} /> Prikaži na mapi
+                                        </button>
                                         <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '3px' }}>
                                             <button
                                                 onClick={() => setSortBy('price_low')}
@@ -2324,61 +2340,87 @@ const SmartSearch: React.FC = () => {
                 )
             }
             {/* Search History Sidebar */}
-            {showHistorySidebar && (
-                <SearchHistorySidebar
-                    searchHistory={searchHistory}
-                    onClose={() => setShowHistorySidebar(false)}
-                    onLoad={handleLoadHistoryItem}
-                    onRefresh={handleRefreshHistoryItem}
-                    onRemove={removeFromHistory}
-                    onClearAll={clearSearchHistory}
-                />
-            )}
+            {
+                showHistorySidebar && (
+                    <SearchHistorySidebar
+                        searchHistory={searchHistory}
+                        onClose={() => setShowHistorySidebar(false)}
+                        onLoad={handleLoadHistoryItem}
+                        onRefresh={handleRefreshHistoryItem}
+                        onRemove={removeFromHistory}
+                        onClearAll={clearSearchHistory}
+                    />
+                )
+            }
 
             {/* Calendar Portal Overlay */}
-            {activeCalendar && (
-                <ModernCalendar
-                    startDate={checkIn}
-                    endDate={checkOut}
-                    onChange={(start, end) => {
-                        setCheckIn(start);
-                        setCheckOut(end);
-                        syncNightsFromDates(start, end);
-                    }}
-                    onClose={() => setActiveCalendar(null)}
-                />
-            )}
+            {
+                activeCalendar && (
+                    <ModernCalendar
+                        startDate={checkIn}
+                        endDate={checkOut}
+                        onChange={(start, end) => {
+                            setCheckIn(start);
+                            setCheckOut(end);
+                            syncNightsFromDates(start, end);
+                        }}
+                        onClose={() => setActiveCalendar(null)}
+                    />
+                )
+            }
 
             {/* Floating History Toggle */}
-            {createPortal(
-                <button
-                    className="history-toggle-float"
-                    onClick={() => setShowHistorySidebar(true)}
-                    style={{ zIndex: 999999 }}
-                >
-                    <Clock size={28} />
-                    {searchHistory.length > 0 && <span className="badge">{searchHistory.length}</span>}
-                </button>,
-                document.getElementById('portal-root') || document.body
-            )}
+            {
+                createPortal(
+                    <button
+                        className="history-toggle-float"
+                        onClick={() => setShowHistorySidebar(true)}
+                        style={{ zIndex: 999999 }}
+                    >
+                        <Clock size={28} />
+                        {searchHistory.length > 0 && <span className="badge">{searchHistory.length}</span>}
+                    </button>,
+                    document.getElementById('portal-root') || document.body
+                )
+            }
 
             {/* AI Advisor Milica */}
-            {searchPerformed && searchResults.length > 0 && (
-                <MilicaAdvisor
-                    searchResults={searchResults}
-                    searchParams={{
-                        destinations: selectedDestinations,
-                        checkIn,
-                        checkOut,
-                        roomAllocations,
-                        nationality
-                    }}
-                    isActuallyDark={isActuallyDark}
-                />
-            )}
+            {
+                searchPerformed && searchResults.length > 0 && (
+                    <MilicaAdvisor
+                        searchResults={searchResults}
+                        searchParams={{
+                            destinations: selectedDestinations,
+                            checkIn,
+                            checkOut,
+                            roomAllocations,
+                            nationality
+                        }}
+                        isActuallyDark={isActuallyDark}
+                    />
+                )
+            }
 
             <MilicaChat />
-        </div>
+            {
+                showMapExplorer && (
+                    <SmartMapExplorer
+                        hotels={filteredResults}
+                        onClose={() => setShowMapExplorer(false)}
+                        onOpenDetails={(hotel) => {
+                            // Do NOT close the map — open modal on top of it.
+                            // When the modal closes, the map will still be visible.
+                            setExpandedHotel(hotel);
+                        }}
+                        checkIn={checkIn}
+                        checkOut={checkOut}
+                        nights={nights}
+                        roomAllocations={roomAllocations}
+                        isSubagent={isSubagent}
+                    />
+                )
+            }
+        </div >
     );
 };
 

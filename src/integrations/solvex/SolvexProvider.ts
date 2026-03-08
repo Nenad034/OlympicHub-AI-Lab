@@ -218,6 +218,8 @@ export class SolvexProvider implements HotelProvider {
             images: (solvexResult as any).hotel.images || [],
             description: (solvexResult as any).hotel.description || '',
             availability: this.bridgeAvailability(solvexResult.quotaType),
+            latitude: (solvexResult as any).hotel.latitude,
+            longitude: (solvexResult as any).hotel.longitude,
             checkIn,
             checkOut,
             nights,

@@ -446,7 +446,7 @@ const APIConnectionsHub: React.FC = () => {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                     {selectedTab === 'overview' && (
-                        <div className="filter-group">
+                        <div className="api-hub-filters">
                             {[
                                 { id: 'all', label: 'Sve', icon: <Database size={14} /> },
                                 { id: 'flights', label: 'Letovi', icon: <Plane size={14} /> },

@@ -85,7 +85,7 @@ export async function searchHotels(
                 if (supabase) {
                     const { data: hotelsData } = await supabase
                         .from('properties')
-                        .select('id, images, content, propertyAmenities')
+                        .select('id, images, content, propertyAmenities, latitude, longitude')
                         .in('id', uniqueHotelIds.map(id => `solvex_${id}`));
 
                     if (hotelsData) {
@@ -116,17 +116,18 @@ export async function searchHotels(
                 if (nameStarMatch) starRating = parseInt(nameStarMatch[1]);
             }
 
-            // --- DEEP IMAGE EXTRACTION START ---
+            // --- DEEP CONTENT EXTRACTION START ---
             let extractedImages: string[] = [];
             let extractedDescription = rawDescription;
+            let extractedLat: number | undefined = undefined;
+            let extractedLng: number | undefined = undefined;
             const additionalParams = s.AdditionalParams?.ParameterPair;
 
-            // Recursive function to find images anywhere in the object
-            // This is a robust brute-force search because Solvex structure varies wildly
-            const findImagesRecursively = (obj: any) => {
+            // Recursive function to find images/coords anywhere in the object
+            const findContentRecursively = (obj: any) => {
                 if (!obj) return;
 
-                // 1. Direct string check for URLs or paths that look like images
+                // 1. Direct string check for URLs
                 if (typeof obj === 'string' &&
                     (obj.startsWith('http') || obj.startsWith('https') || obj.startsWith('/')) &&
                     (obj.match(/\.(jpg|jpeg|png|gif|webp)$/i) || obj.includes('image') || obj.includes('photo'))) {
@@ -136,7 +137,7 @@ export async function searchHotels(
 
                 // 2. Iterate Arrays
                 if (Array.isArray(obj)) {
-                    obj.forEach(item => findImagesRecursively(item));
+                    obj.forEach(item => findContentRecursively(item));
                     return;
                 }
 
@@ -144,20 +145,23 @@ export async function searchHotels(
                 if (typeof obj === 'object') {
                     for (const key in obj) {
                         const val = obj[key];
+                        const lowerKey = key.toLowerCase();
 
-                        // Check for Description keys while we are at it
+                        // Coordinates check
+                        if (lowerKey === 'latitude' || lowerKey === 'lat') extractedLat = extractedLat || parseFloat(val);
+                        if (lowerKey === 'longitude' || lowerKey === 'lng' || lowerKey === 'lon') extractedLng = extractedLng || parseFloat(val);
+
+                        // Description check
                         if ((key === 'Description' || key === 'HotelDescription') && typeof val === 'string' && val.length > extractedDescription.length) {
                             extractedDescription = val;
                         }
 
-                        // Heuristic: If key is "Image" or "Photo" and val is string, it's likely an image
-                        // Otherwise, recurse deeper
-                        const lowerKey = key.toLowerCase();
+                        // Image keywords search
                         if (lowerKey.includes('image') || lowerKey.includes('photo') || lowerKey.includes('picture') || lowerKey.includes('url')) {
                             if (typeof val === 'string' && (val.startsWith('http') || val.startsWith('/'))) extractedImages.push(val);
-                            else findImagesRecursively(val);
+                            else findContentRecursively(val);
                         } else {
-                            findImagesRecursively(val);
+                            findContentRecursively(val);
                         }
                     }
                 }
@@ -178,19 +182,25 @@ export async function searchHotels(
                             extractedDescription = val;
                         }
                     }
+                    else if (key === 'latitude' || key === 'lat') {
+                        extractedLat = extractedLat || parseFloat(val);
+                    }
+                    else if (key === 'longitude' || key === 'lng' || key === 'lon') {
+                        extractedLng = extractedLng || parseFloat(val);
+                    }
                 });
             }
 
-            // Second pass: If still no images, unleash the deep search on the whole item
-            if (extractedImages.length === 0) {
-                findImagesRecursively(s);
-                // Deduplicate
-                extractedImages = [...new Set(extractedImages)];
-            }
-            // --- DEEP IMAGE EXTRACTION END ---
+            // Second pass: unleashing the deep search
+            findContentRecursively(s);
+            // Deduplicate
+            extractedImages = [...new Set(extractedImages)];
+            // --- DEEP EXTRACTION END ---
 
-            const finalImages = enriched?.images || extractedImages;
+            const finalImages = enriched?.images || (extractedImages.length > 0 ? extractedImages : []);
             const finalDescription = enriched?.content?.description || extractedDescription;
+            const finalLat = enriched?.latitude || extractedLat;
+            const finalLng = enriched?.longitude || extractedLng;
 
             return {
                 hotel: {
@@ -213,6 +223,10 @@ export async function searchHotels(
                     description: finalDescription,
                     // @ts-ignore
                     images: finalImages,
+                    // @ts-ignore
+                    latitude: finalLat,
+                    // @ts-ignore
+                    longitude: finalLng,
                 },
                 room: {
                     roomType: {

@@ -51,6 +51,8 @@ export interface SmartSearchResult {
     originalData: any;
     salesCount?: number;
     availability?: string;
+    latitude?: number;
+    longitude?: number;
 }
 
 export const PROVIDER_MAPPING = {
@@ -256,7 +258,9 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                                 images: h.image ? [h.image] : [],
                                 rooms: [], // Legacy, will be empty in multi-room
                                 allocationResults: {},
-                                originalData: h.originalData
+                                originalData: h.originalData,
+                                latitude: h.latitude,
+                                longitude: h.longitude
                             });
                         }
 

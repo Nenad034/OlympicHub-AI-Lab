@@ -131,6 +131,12 @@ export interface HotelSearchResult {
 
     /** Original provider-specific data (for booking) */
     originalData?: any;
+
+    /** Latitude for map display */
+    latitude?: number;
+
+    /** Longitude for map display */
+    longitude?: number;
 }
 
 /**

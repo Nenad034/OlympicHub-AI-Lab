@@ -20,6 +20,7 @@ interface AppState {
         initialMessage?: string;
     };
     searchQuery: string;
+    showMapExplorer: boolean;
 
     setAppStatus: (status: AppStatus) => void;
     setChatOpen: (open: boolean) => void;
@@ -27,6 +28,7 @@ interface AppState {
     setChatContext: (context: AppState['chatContext']) => void;
     toggleChat: () => void;
     setSearchQuery: (query: string) => void;
+    setShowMapExplorer: (show: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -37,6 +39,7 @@ export const useAppStore = create<AppState>()(
             isMilicaChatOpen: false,
             chatContext: { type: 'general' },
             searchQuery: '',
+            showMapExplorer: false,
 
             setAppStatus: (status: AppStatus) => set({ appStatus: status }),
 
@@ -46,6 +49,7 @@ export const useAppStore = create<AppState>()(
             toggleChat: () => set((state) => ({ isChatOpen: !state.isChatOpen })),
 
             setSearchQuery: (query: string) => set({ searchQuery: query }),
+            setShowMapExplorer: (show: boolean) => set({ showMapExplorer: show }),
         }),
         {
             name: 'olympic-app-storage',

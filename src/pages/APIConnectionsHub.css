@@ -172,8 +172,9 @@
 
 
 /* Filter Group */
-.filter-group {
+.api-hub-filters {
     display: flex;
+    flex-direction: row;
     background: var(--bg-card);
     padding: 6px;
     border-radius: 12px;
