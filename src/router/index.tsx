@@ -515,7 +515,11 @@ export const router = createBrowserRouter([
                         children: [
                             {
                                 index: true,
-                                element: <SuppliersModule onBack={() => window.history.back()} />,
+                                element: (
+                                    <ProtectedRoute minLevel={6}>
+                                        <SupplierAdmin />
+                                    </ProtectedRoute>
+                                ),
                             },
                             {
                                 path: ':supplierId',
@@ -881,14 +885,6 @@ export const router = createBrowserRouter([
                         element: (
                             <ProtectedRoute minLevel={6}>
                                 <CommandCenter />
-                            </ProtectedRoute>
-                        ),
-                    },
-                    {
-                        path: 'supplier-admin',
-                        element: (
-                            <ProtectedRoute minLevel={6}>
-                                <SupplierAdmin />
                             </ProtectedRoute>
                         ),
                     },

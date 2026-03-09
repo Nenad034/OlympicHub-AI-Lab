@@ -1,5 +1,28 @@
+import React from 'react';
+// Imports su sačuvani za buduću upotrebu:
+// import { useState, useEffect, useCallback } from 'react';
+// import { AlertCircle, Clock, User, MessageCircle, ExternalLink, X } from 'lucide-react';
+// import { getUnansweredStats } from '../../services/emailService';
+// import { getUnansweredWebEnquiries } from '../../services/communicationService';
+// import { useMailStore } from '../../stores';
+// import './CommunicationGuard.css';
+
+export const CommunicationGuard: React.FC = () => {
+    // ============================================================
+    // PRIVREMENO UGAŠENO - aktivirati kada aplikacija bude operativna
+    // Da biste aktivirali, zamenite ovu komponentu sa verzijom iz git istorije
+    // ili odkomentarišite kod ispod.
+    // ============================================================
+    return null;
+};
+
+/*
+// ===================== UGAŠENA IMPLEMENTACIJA =====================
+// Aktivirati po potrebi kada aplikacija bude operativna.
+// Kopirati sadržaj ispod i zameniti export komponentu gore.
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { AlertCircle, Clock, User, MessageCircle, ExternalLink, X } from 'lucide-react';
+import { AlertCircle, Clock, MessageCircle, X } from 'lucide-react';
 import { getUnansweredStats } from '../../services/emailService';
 import { getUnansweredWebEnquiries } from '../../services/communicationService';
 import { useMailStore } from '../../stores';
@@ -10,7 +33,6 @@ export const CommunicationGuard: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
     const [stats, setStats] = useState<{ accountId: string; count: number; overdue: boolean }[]>([]);
     const [webEnquiries, setWebEnquiries] = useState<any[]>([]);
-    const [lastCheck, setLastCheck] = useState<number>(Date.now());
 
     const checkStatus = useCallback(async () => {
         const emailStats = await getUnansweredStats();
@@ -19,8 +41,6 @@ export const CommunicationGuard: React.FC = () => {
         setStats(emailStats);
         setWebEnquiries(enquiries);
 
-        // Show modal if any account has overdue messages OR if there are any web enquiries
-        // (Enquiries from site are usually high priority)
         const hasOverdue = emailStats.some(s => s.overdue);
         const hasEnquiries = enquiries.length > 0;
 
@@ -30,16 +50,8 @@ export const CommunicationGuard: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        // Initial check
         checkStatus();
-
-        // Check every 10 minutes (600,000 ms)
-        // Note: The user requested a "blocking notification every 2 hours"
-        // But the 2 hours usually refers to the age of the email.
-        // If we only show it every 2 hours, we might miss urgent ones.
-        // We'll show the modal if any emails are > 2 hours old.
-        const interval = setInterval(checkStatus, 600000);
-
+        const interval = setInterval(checkStatus, 600000); // svakih 10 minuta
         return () => clearInterval(interval);
     }, [checkStatus]);
 
@@ -119,3 +131,4 @@ export const CommunicationGuard: React.FC = () => {
         </div>
     );
 };
+*/

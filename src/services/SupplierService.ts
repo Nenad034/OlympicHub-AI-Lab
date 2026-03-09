@@ -22,6 +22,91 @@ export interface PricingRule {
     priority: number; // Higher number = higher priority override
 }
 
+// =====================================================================
+// KATEGORIJE TROŠKOVA DOBAVLJAČA
+// Generalna podela prema vrsti troška turističke agencije
+// =====================================================================
+export const SUPPLIER_CATEGORIES = {
+    'Operativni troškovi': [
+        'Zakup prostora',
+        'Komunalije',
+        'Osoblje i plate',
+        'Tehnologija i IT',
+        'Telekomunikacije',
+        'Amortizacija',
+        'Usluge čišćenja',
+    ],
+    'Direktni troškovi realizacije': [
+        'Smeštaj i ishrana',
+        'Prevoz - Avio',
+        'Prevoz - Charter',
+        'Prevoz - Autobus',
+        'Vodiči i saradnici',
+        'Ulaznice i fakultativa',
+        'Zakup kapaciteta',
+    ],
+    'Marketing i prodaja': [
+        'Digitalni marketing',
+        'Štampa i katalozi',
+        'Sajmovi i događaji',
+        'Provizije podagentima',
+        'SEO i web',
+        'Brendiranje',
+    ],
+    'Administrativni i zakonski': [
+        'Osiguranje i garancije',
+        'Bankarske provizije',
+        'Članarine (YUTA i dr.)',
+        'Računovodstvene usluge',
+        'Pravne usluge',
+        'Državne takse i naknade',
+    ],
+    'Nepredviđeni troškovi': [
+        'Povraćaji putnicima',
+        'Penali za kapacitete',
+        'Reklamacije',
+        'Vanredni troškovi',
+    ],
+    'Komunalije': [
+        'Električna energija',
+        'Voda i kanalizacija',
+        'Grejanje / Gas',
+        'Odnošenje smeća',
+        'Održavanje zgrade'
+    ],
+    'Marketing': [
+        'Google Ads',
+        'Social Media',
+        'Influencer marketing',
+        'Outdoor / Bilbordi',
+        'PR i mediji'
+    ],
+    'Zakupi': [
+        'Najam poslovnog prostora',
+        'Zakup parking mesta',
+        'Lizing vozila',
+        'Zakup opreme'
+    ]
+} as const;
+
+export const AVAILABLE_API_PROVIDERS = [
+    'Amadeus', 'Hotelbeds', 'Expedia', 'Viator', 'Worldpay', 'Travelport',
+    'Solvex', 'Mts Globe', 'Kyte', 'Travelgate', 'Travelsoft', 'Filos',
+    'Giata', 'Traffics', 'SkiData', 'OpenGreece', 'Booking.com', 'Hotelston'
+] as const;
+
+export type SupplierCategoryKey = keyof typeof SUPPLIER_CATEGORIES;
+export type SupplierSubcategory = typeof SUPPLIER_CATEGORIES[SupplierCategoryKey][number];
+
+// =====================================================================
+
+export interface SupplierContact {
+    name: string;
+    email: string;
+    phone: string;
+    role?: string;
+}
+
 // Define the shape of our unified supplier
 export interface UnifiedSupplier {
     id: string; // The internal DB ID (e.g., from Suppliers.tsx logic)
@@ -29,7 +114,21 @@ export interface UnifiedSupplier {
     type: 'API' | 'Offline' | 'Hybrid';
     status: 'Active' | 'Suspended' | 'Pending';
     country: string;
+    category?: SupplierCategoryKey;       // Kategorija troška
+    subcategory?: string;                  // Podkategorija
+    contactPerson?: string;               // Main Kontakt osoba (legacy/fallback)
+    contactEmail?: string;                // Main Email kontakta (legacy/fallback)
+    contactPhone?: string;                // Main Telefon kontakta (legacy/fallback)
+    contacts?: SupplierContact[];         // Up to 5 contact persons
+    address?: string;                     // Adresa / sedište
+    city?: string;                        // Grad
+    lat?: number;                         // Geografska širina
+    lng?: number;                         // Geografska dužina
+    pib?: string;                         // PIB (poreski identifikacioni broj)
+    regNumber?: string;                   // Matični broj (Registration Number)
+    notes?: string;                       // Interne napomene
     apiConnection?: string; // e.g., 'Solvex', 'Amadeus'
+    apiConnections?: string[]; // Multiple connections support
     apiStatus?: 'Connected' | 'Disconnected' | 'Unknown'; // Real-time status
 
     // Financials & Policy (Persisted in Supplier Pricing Rules or extended Supplier object)

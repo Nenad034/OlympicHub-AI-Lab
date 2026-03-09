@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -6,7 +7,7 @@ import {
     Search, Filter, Calendar, Users, Building2, Globe, ArrowRightLeft,
     CheckCircle2, AlertTriangle, MessageSquare, X, ChevronDown, RefreshCw,
     LayoutDashboard, Table as TableIcon, CreditCard, Scale, HelpCircle, Bot, Send, BrainCircuit, Wallet, PieChart,
-    Eye, EyeOff, Edit, Slash
+    Eye, EyeOff, Edit, Slash, Plus
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -15,6 +16,7 @@ import { useThemeStore } from '../stores';
 import DateRangeInput from '../components/DateRangeInput';
 import './FinancialIntelligenceHub.css';
 import SupplierFinance from './SupplierFinance';
+import supplierService, { type UnifiedSupplier as Supplier } from '../services/SupplierService';
 
 // --- TYPES & INTERFACES ---
 interface Transaction {
@@ -125,11 +127,29 @@ const FinancialIntelligenceHub: React.FC = () => {
         { role: 'ai', text: 'Zdravo! Ja sam vaš FIL AI finansijski asistent. Spreman sam za analizu KIR-a, KUR-a ili Knjige Člana 35. Šta želite da proverimo?' }
     ]);
     const [aiInput, setAiInput] = useState('');
+    const [allSuppliers, setAllSuppliers] = useState<Supplier[]>([]);
+
+    useEffect(() => {
+        const loadSuppliers = async () => {
+            const suppliers = await supplierService.getAllSuppliers();
+            setAllSuppliers(suppliers);
+        };
+        loadSuppliers();
+    }, []);
 
     // MODALS
     const [stornoModal, setStornoModal] = useState<{ isOpen: boolean, transactionId: string | null }>({ isOpen: false, transactionId: null });
     const [stornoPassword, setStornoPassword] = useState('');
     const [previewDoc, setPreviewDoc] = useState<Transaction | null>(null);
+    const [showAddManualModal, setShowAddManualModal] = useState(false);
+    const [newManualOb, setNewManualOb] = useState<Partial<Transaction>>({
+        cisCode: '',
+        client: '',
+        supplier: '',
+        bruttoRsd: 0,
+        currency: 'RSD',
+        status: 'Debt'
+    });
 
     // FILTERS (Mandatory per Request)
     const [filters, setFilters] = useState({
@@ -406,8 +426,17 @@ const FinancialIntelligenceHub: React.FC = () => {
                 return (
                     <div className="fil-ledger-container animate-fade-in">
                         <div className="fil-table-header glass" style={{ padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 className="bold gold">KUR - Knjiga Ulaznih Računa (Obaveze ka dobavljačima)</h3>
-                            <div className="status-badge status-pending">Potrebno uparivanje: 4 fakture</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <h3 className="bold gold">KUR - Knjiga Ulaznih Računa (Obaveze ka dobavljačima)</h3>
+                                <div className="status-badge status-pending">Potrebno uparivanje: 4 fakture</div>
+                            </div>
+                            <button
+                                className="btn-export"
+                                onClick={() => setShowAddManualModal(true)}
+                                style={{ background: 'var(--fil-accent)', color: '#020b0e', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800' }}
+                            >
+                                <Plus size={18} /> NOVA OBAVEZA
+                            </button>
                         </div>
                         <div className="fil-table-wrapper">
                             <table className="fil-table">
@@ -780,10 +809,18 @@ const FinancialIntelligenceHub: React.FC = () => {
                         <label>DOBAVLJAČ</label>
                         <select className="fil-select" style={{ width: '100%' }} value={filters.supplier} onChange={e => setFilters({ ...filters, supplier: e.target.value })}>
                             <option value="">Svi dobavljači</option>
-                            <option>Solvex</option>
-                            <option>Travelport</option>
-                            <option>Travelgate</option>
-                            <option>Global Booking</option>
+                            {Array.from(new Set(allSuppliers.map(s => s.category || 'Ostalo'))).map(cat => (
+                                <optgroup key={cat} label={cat} style={{ background: '#0f172a' }}>
+                                    {allSuppliers
+                                        .filter(s => (s.category || 'Ostalo') === cat)
+                                        .map(s => (
+                                            <option key={s.id} value={s.name}>
+                                                {s.name}
+                                            </option>
+                                        ))
+                                    }
+                                </optgroup>
+                            ))}
                         </select>
                     </div>
 
@@ -1016,116 +1053,298 @@ const FinancialIntelligenceHub: React.FC = () => {
                     </div>
                 )}
 
-                {/* DOCUMENT PREVIEW MODAL */}
-                {previewDoc && (
-                    <div className="fil-modal-overlay">
-                        <motion.div
-                            initial={{ opacity: 0, y: 100 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="fil-document-preview"
+                <AnimatePresence>
+                    {showAddManualModal && (
+                        <div
+                            className="fil-modal-overlay"
+                            style={{
+                                position: 'fixed',
+                                inset: 0,
+                                background: 'rgba(0,0,0,0.92)',
+                                backdropFilter: 'blur(15px)',
+                                zIndex: 10000,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '20px'
+                            }}
+                            onClick={() => setShowAddManualModal(false)}
                         >
-                            <div className="doc-preview-controls">
-                                <div className="bold">PFR PREGLED DOKUMENTA: {previewDoc.id}</div>
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <button className="btn-action-small" onClick={() => window.print()}><Download size={16} /></button>
-                                    <button className="btn-action-small storno" onClick={() => setPreviewDoc(null)}><X size={16} /></button>
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0, y: 30 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 30 }}
+                                className="fil-modal-content glass"
+                                style={{
+                                    width: '100%',
+                                    maxWidth: '520px',
+                                    padding: '40px',
+                                    borderRadius: '32px',
+                                    border: '1px solid rgba(0, 229, 255, 0.3)',
+                                    backgroundColor: '#050c14',
+                                    boxShadow: '0 30px 60px rgba(0,0,0,0.5), 0 0 100px rgba(0, 229, 255, 0.1)',
+                                    position: 'relative'
+                                }}
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                                    <div>
+                                        <h2 className="bold cyan" style={{ margin: 0, fontSize: '24px' }}>Nova Obaveza</h2>
+                                        <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>Ručni unos u Knjigu Ulaznih Računa</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowAddManualModal(false)}
+                                        style={{
+                                            background: 'rgba(255,255,255,0.05)',
+                                            border: 'none',
+                                            color: 'white',
+                                            cursor: 'pointer',
+                                            width: '40px',
+                                            height: '40px',
+                                            borderRadius: '50%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        <X size={24} />
+                                    </button>
                                 </div>
-                            </div>
 
-                            <div className="official-document-paper">
-                                {/* Header */}
-                                <div className="doc-header">
-                                    <div className="agency-info">
-                                        <div className="bold" style={{ fontSize: '18px' }}>Prime Click To Travel d.o.o.</div>
-                                        <div style={{ fontSize: '12px' }}>Knez Mihailova 12, 11000 Beograd</div>
-                                        <div style={{ fontSize: '12px' }}>PIB: 102938475 | MB: 08293847</div>
-                                        <div style={{ fontSize: '12px' }}>JBKJS: 92837 | Žiro: 160-394857-22</div>
+                                <div className="fil-form-grid" style={{ display: 'grid', gap: '20px' }}>
+                                    <div className="filter-group">
+                                        <label style={{ color: 'var(--fil-accent)', fontWeight: '800', fontSize: '11px', marginBottom: '8px' }}>DOBAVLJAČ</label>
+                                        <select
+                                            className="fil-input"
+                                            style={{
+                                                width: '100%',
+                                                background: 'rgba(255,255,255,0.03)',
+                                                height: '45px',
+                                                color: 'white',
+                                                border: '1px solid rgba(255,255,255,0.1)'
+                                            }}
+                                            value={newManualOb.supplier}
+                                            onChange={e => setNewManualOb({ ...newManualOb, supplier: e.target.value })}
+                                            autoFocus
+                                        >
+                                            <option value="">— Izaberite dobavljača —</option>
+                                            {/* Group by category for better organization */}
+                                            {Array.from(new Set(allSuppliers.map(s => s.category || 'Ostalo'))).map(cat => (
+                                                <optgroup key={cat} label={cat} style={{ background: '#050c14' }}>
+                                                    {allSuppliers
+                                                        .filter(s => (s.category || 'Ostalo') === cat)
+                                                        .map(s => (
+                                                            <option key={s.id} value={s.name}>
+                                                                {s.name} {s.subcategory ? `(${s.subcategory})` : ''}
+                                                            </option>
+                                                        ))
+                                                    }
+                                                </optgroup>
+                                            ))}
+                                            <option value="OSTALI TROŠKOVI">OSTALI TROŠKOVI (Nije na listi)</option>
+                                        </select>
                                     </div>
-                                    <div className="doc-meta">
-                                        <div className="bold cyan" style={{ fontSize: '20px' }}>FAKTURA br. {previewDoc.id.replace('TR-', '2026-F-')}</div>
-                                        <div style={{ fontSize: '12px' }}>Vreme prometa: {previewDoc.reservationDate}</div>
-                                        <div style={{ fontSize: '12px' }}>Mesto izdavanja: Beograd</div>
+                                    <div className="filter-group">
+                                        <label style={{ color: 'var(--fil-accent)', fontWeight: '800', fontSize: '11px', marginBottom: '8px' }}>BROJ RAČUNA / FAKTURE</label>
+                                        <input
+                                            type="text" className="fil-input" style={{ width: '100%', background: 'rgba(255,255,255,0.03)', height: '45px' }}
+                                            placeholder="FAK-2026-XXXX"
+                                            value={newManualOb.id}
+                                            onChange={e => setNewManualOb({ ...newManualOb, id: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="filter-group">
+                                        <label style={{ color: 'var(--fil-accent)', fontWeight: '800', fontSize: '11px', marginBottom: '8px' }}>IZNOS (RSD)</label>
+                                        <input
+                                            type="number" className="fil-input" style={{ width: '100%', background: 'rgba(255,255,255,0.03)', height: '45px' }}
+                                            value={newManualOb.bruttoRsd}
+                                            onChange={e => setNewManualOb({ ...newManualOb, bruttoRsd: Number(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div className="filter-group">
+                                        <label style={{ color: 'var(--fil-accent)', fontWeight: '800', fontSize: '11px', marginBottom: '8px' }}>DOSIJE / CIS KOD (Opciono)</label>
+                                        <input
+                                            type="text" className="fil-input" style={{ width: '100%', background: 'rgba(255,255,255,0.03)', height: '45px' }}
+                                            placeholder="Npr. CIS-2026-88"
+                                            value={newManualOb.cisCode}
+                                            onChange={e => setNewManualOb({ ...newManualOb, cisCode: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div style={{
+                                        background: 'rgba(255,179,0,0.08)',
+                                        padding: '15px',
+                                        borderRadius: '16px',
+                                        border: '1px solid rgba(255,179,0,0.15)',
+                                        color: '#ffb300',
+                                        fontSize: '12px',
+                                        display: 'flex',
+                                        gap: '12px'
+                                    }}>
+                                        <AlertTriangle size={18} style={{ flexShrink: 0 }} />
+                                        <span>Ručni unos se koristi isključivo za troškove koji nisu direktno povučeni kroz automatske integracije.</span>
+                                    </div>
+
+                                    <button
+                                        className="btn-export"
+                                        style={{
+                                            background: 'var(--fil-accent)',
+                                            color: '#020b0e',
+                                            padding: '18px',
+                                            fontWeight: '900',
+                                            marginTop: '10px',
+                                            fontSize: '15px',
+                                            borderRadius: '16px',
+                                            border: 'none',
+                                            cursor: 'pointer'
+                                        }}
+                                        onClick={() => {
+                                            if (!newManualOb.supplier || !newManualOb.id) {
+                                                alert('Molimo unesite dobavljača i broj računa.');
+                                                return;
+                                            }
+                                            const transaction: Transaction = {
+                                                id: newManualOb.id || `TR-${Date.now()}`,
+                                                cisCode: newManualOb.cisCode || 'OPŠTI-TROŠAK',
+                                                reservationDate: new Date().toISOString().split('T')[0],
+                                                stayFrom: '', stayTo: '',
+                                                client: newManualOb.supplier || 'Dobavljač',
+                                                type: 'B2C-Legal',
+                                                supplier: newManualOb.supplier || 'Opšte',
+                                                destination: 'Business Operations',
+                                                country: 'SRB', agent: 'Sistem', office: 'Beograd',
+                                                currency: 'RSD',
+                                                bruttoRsd: newManualOb.bruttoRsd || 0,
+                                                netbRsd: newManualOb.bruttoRsd || 0,
+                                                marginRsd: 0, vatRsd: 0,
+                                                status: 'Debt', method: 'Transfer', bankMatched: false,
+                                                paidAmountRsd: 0, dueDate: ''
+                                            };
+                                            setData([transaction, ...data]);
+                                            setShowAddManualModal(false);
+                                            setNewManualOb({ cisCode: '', client: '', supplier: '', bruttoRsd: 0, currency: 'RSD', status: 'Debt' });
+                                            alert('Nova obaveza je uspešno evidentirana u KUR-u.');
+                                        }}
+                                    >
+                                        EVIDENTIRAJ RAČUN
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+
+                {/* DOCUMENT PREVIEW MODAL */}
+                {
+                    previewDoc && (
+                        <div className="fil-modal-overlay">
+                            <motion.div
+                                initial={{ opacity: 0, y: 100 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="fil-document-preview"
+                            >
+                                <div className="doc-preview-controls">
+                                    <div className="bold">PFR PREGLED DOKUMENTA: {previewDoc.id}</div>
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <button className="btn-action-small" onClick={() => window.print()}><Download size={16} /></button>
+                                        <button className="btn-action-small storno" onClick={() => setPreviewDoc(null)}><X size={16} /></button>
                                     </div>
                                 </div>
 
-                                <hr style={{ border: 'none', borderBottom: '1px solid #eee', margin: '20px 0' }} />
-
-                                {/* Parties */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-                                    <div className="bill-to">
-                                        <div className="fil-text-dim" style={{ fontSize: '10px', textTransform: 'uppercase' }}>Kupac / Primalac:</div>
-                                        <div className="bold" style={{ fontSize: '16px' }}>{previewDoc.client}</div>
-                                        <div style={{ fontSize: '12px' }}>{previewDoc.destination}</div>
-                                        <div style={{ fontSize: '12px' }}>PIB: {previewDoc.type === 'B2C-Legal' ? '102938475' : 'Kupac fizičko lice'}</div>
+                                <div className="official-document-paper">
+                                    {/* Header */}
+                                    <div className="doc-header">
+                                        <div className="agency-info">
+                                            <div className="bold" style={{ fontSize: '18px' }}>Prime Click To Travel d.o.o.</div>
+                                            <div style={{ fontSize: '12px' }}>Knez Mihailova 12, 11000 Beograd</div>
+                                            <div style={{ fontSize: '12px' }}>PIB: 102938475 | MB: 08293847</div>
+                                            <div style={{ fontSize: '12px' }}>JBKJS: 92837 | Žiro: 160-394857-22</div>
+                                        </div>
+                                        <div className="doc-meta">
+                                            <div className="bold cyan" style={{ fontSize: '20px' }}>FAKTURA br. {previewDoc.id.replace('TR-', '2026-F-')}</div>
+                                            <div style={{ fontSize: '12px' }}>Vreme prometa: {previewDoc.reservationDate}</div>
+                                            <div style={{ fontSize: '12px' }}>Mesto izdavanja: Beograd</div>
+                                        </div>
                                     </div>
-                                    <div className="doc-status-pfr">
-                                        <div style={{ border: '2px solid #3fb950', padding: '10px', borderRadius: '8px', color: '#3fb950', textAlign: 'center' }}>
-                                            <div className="bold">PROMET - PRODAJA</div>
-                                            <div style={{ fontSize: '10px' }}>PFR Vreme: 2026-03-02 14:22:10</div>
+
+                                    <hr style={{ border: 'none', borderBottom: '1px solid #eee', margin: '20px 0' }} />
+
+                                    {/* Parties */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
+                                        <div className="bill-to">
+                                            <div className="fil-text-dim" style={{ fontSize: '10px', textTransform: 'uppercase' }}>Kupac / Primalac:</div>
+                                            <div className="bold" style={{ fontSize: '16px' }}>{previewDoc.client}</div>
+                                            <div style={{ fontSize: '12px' }}>{previewDoc.destination}</div>
+                                            <div style={{ fontSize: '12px' }}>PIB: {previewDoc.type === 'B2C-Legal' ? '102938475' : 'Kupac fizičko lice'}</div>
+                                        </div>
+                                        <div className="doc-status-pfr">
+                                            <div style={{ border: '2px solid #3fb950', padding: '10px', borderRadius: '8px', color: '#3fb950', textAlign: 'center' }}>
+                                                <div className="bold">PROMET - PRODAJA</div>
+                                                <div style={{ fontSize: '10px' }}>PFR Vreme: 2026-03-02 14:22:10</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Items Table */}
+                                    <table className="doc-items-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Opis usluge</th>
+                                                <th style={{ textAlign: 'right' }}>Jed. cena</th>
+                                                <th style={{ textAlign: 'center' }}>Kol.</th>
+                                                <th style={{ textAlign: 'center' }}>PDV %</th>
+                                                <th style={{ textAlign: 'right' }}>Ukupno</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <strong>Turističko putovanje: {previewDoc.destination}</strong><br />
+                                                    <span style={{ fontSize: '11px' }}>Period: {previewDoc.stayFrom} - {previewDoc.stayTo}</span><br />
+                                                    <span style={{ fontSize: '11px' }}>Oslobođeno PDV-a po Članu 35 Zakona o PDV-u</span>
+                                                </td>
+                                                <td style={{ textAlign: 'right' }}>{previewDoc.bruttoRsd.toLocaleString()}</td>
+                                                <td style={{ textAlign: 'center' }}>1.00</td>
+                                                <td style={{ textAlign: 'center' }}>0.00%</td>
+                                                <td style={{ textAlign: 'right' }}>{previewDoc.bruttoRsd.toLocaleString()}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    {/* Totals Section */}
+                                    <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end' }}>
+                                        <div style={{ width: '300px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
+                                                <span>Osnovica:</span>
+                                                <span className="bold">{(previewDoc.bruttoRsd - previewDoc.vatRsd).toLocaleString()} RSD</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
+                                                <span>PDV (Čl. 35):</span>
+                                                <span className="bold">{previewDoc.vatRsd.toLocaleString()} RSD</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 0', borderTop: '2px solid #000', marginTop: '10px', fontSize: '18px' }}>
+                                                <span className="bold">UKUPNO ZA UPLATU:</span>
+                                                <span className="bold cyan">{previewDoc.bruttoRsd.toLocaleString()} RSD</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Footer / QR */}
+                                    <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                        <div style={{ fontSize: '10px', color: '#666' }}>
+                                            Dokument je validan bez pečata i potpisa.<br />
+                                            Obračun PDV-a na maržu turističke agencije urađen je u skladu sa Članom 35 Zakona o PDV-u.<br />
+                                            PFR BROJ: 928374-12345-2026<br />
+                                            PFR BROJAČ: 102/10
+                                        </div>
+                                        <div className="mock-qr-code" style={{ width: '80px', height: '80px', background: '#000', color: '#fff', padding: '5px', fontSize: '8px', textAlign: 'center' }}>
+                                            [ QR CODE ]<br />PFR VERIFIED
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Items Table */}
-                                <table className="doc-items-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Opis usluge</th>
-                                            <th style={{ textAlign: 'right' }}>Jed. cena</th>
-                                            <th style={{ textAlign: 'center' }}>Kol.</th>
-                                            <th style={{ textAlign: 'center' }}>PDV %</th>
-                                            <th style={{ textAlign: 'right' }}>Ukupno</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>
-                                                <strong>Turističko putovanje: {previewDoc.destination}</strong><br />
-                                                <span style={{ fontSize: '11px' }}>Period: {previewDoc.stayFrom} - {previewDoc.stayTo}</span><br />
-                                                <span style={{ fontSize: '11px' }}>Oslobođeno PDV-a po Članu 35 Zakona o PDV-u</span>
-                                            </td>
-                                            <td style={{ textAlign: 'right' }}>{previewDoc.bruttoRsd.toLocaleString()}</td>
-                                            <td style={{ textAlign: 'center' }}>1.00</td>
-                                            <td style={{ textAlign: 'center' }}>0.00%</td>
-                                            <td style={{ textAlign: 'right' }}>{previewDoc.bruttoRsd.toLocaleString()}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-
-                                {/* Totals Section */}
-                                <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end' }}>
-                                    <div style={{ width: '300px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
-                                            <span>Osnovica:</span>
-                                            <span className="bold">{(previewDoc.bruttoRsd - previewDoc.vatRsd).toLocaleString()} RSD</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
-                                            <span>PDV (Čl. 35):</span>
-                                            <span className="bold">{previewDoc.vatRsd.toLocaleString()} RSD</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 0', borderTop: '2px solid #000', marginTop: '10px', fontSize: '18px' }}>
-                                            <span className="bold">UKUPNO ZA UPLATU:</span>
-                                            <span className="bold cyan">{previewDoc.bruttoRsd.toLocaleString()} RSD</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Footer / QR */}
-                                <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                                    <div style={{ fontSize: '10px', color: '#666' }}>
-                                        Dokument je validan bez pečata i potpisa.<br />
-                                        Obračun PDV-a na maržu turističke agencije urađen je u skladu sa Članom 35 Zakona o PDV-u.<br />
-                                        PFR BROJ: 928374-12345-2026<br />
-                                        PFR BROJAČ: 102/10
-                                    </div>
-                                    <div className="mock-qr-code" style={{ width: '80px', height: '80px', background: '#000', color: '#fff', padding: '5px', fontSize: '8px', textAlign: 'center' }}>
-                                        [ QR CODE ]<br />PFR VERIFIED
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
+                            </motion.div>
+                        </div>
+                    )}
             </AnimatePresence>
         </div>
     );

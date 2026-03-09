@@ -902,7 +902,7 @@ function GlobalPulse() {
     const [aggMode, setAggMode] = useState<'subagent' | 'supplier' | 'branch' | 'clientType'>('subagent');
     const [viewMode, setViewMode] = useState<'feed' | 'agg'>('feed');
     const [statusFilter, setStatusFilter] = useState<'all' | 'Active' | 'Reservation' | 'Pending' | 'Cancelled'>('all');
-    const [productFilter, setProductFilter] = useState<string>('all');
+    const [productFilters, setProductFilters] = useState<string[]>(['all']);
     const [currentPage, setCurrentPage] = useState(1);
     const [daysFilter, setDaysFilter] = useState<number | string>(30);
     const itemsPerPage = 10;
@@ -913,17 +913,16 @@ function GlobalPulse() {
                 statusFilter === 'Reservation' ? (res.status === 'Confirmed' && res.payment === 0) :
                     res.status === statusFilter;
         const matchesDays = res.daysAgo < (typeof daysFilter === 'number' ? daysFilter : 30);
-        const matchesProduct = productFilter === 'all' ? true : res.productType === productFilter;
+        const matchesProduct = productFilters.includes('all') ? true : productFilters.includes(res.productType);
         return matchesStatus && matchesDays && matchesProduct;
     });
 
     const totalPages = Math.ceil(filteredReservations.length / itemsPerPage);
     const paginatedReservations = filteredReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-    // Reset to first page when filtering or mode changes
     useEffect(() => {
         setCurrentPage(1);
-    }, [statusFilter, daysFilter, aggMode, productFilter]);
+    }, [statusFilter, daysFilter, aggMode, productFilters]);
 
     const getStatusDisplay = (res: any) => {
         if (res.status === 'Cancelled') return { label: 'Storno', color: '#ef4444' };
@@ -1327,7 +1326,21 @@ function GlobalPulse() {
                     ].map(p => (
                         <button
                             key={p.id}
-                            onClick={() => setProductFilter(p.id === productFilter ? 'all' : p.id)}
+                            onClick={() => {
+                                if (p.id === 'all') {
+                                    setProductFilters(['all']);
+                                } else {
+                                    setProductFilters(prev => {
+                                        const withoutAll = prev.filter(f => f !== 'all');
+                                        if (withoutAll.includes(p.id)) {
+                                            const updated = withoutAll.filter(f => f !== p.id);
+                                            return updated.length === 0 ? ['all'] : updated;
+                                        } else {
+                                            return [...withoutAll, p.id];
+                                        }
+                                    });
+                                }
+                            }}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -1335,14 +1348,14 @@ function GlobalPulse() {
                                 padding: '12px 24px',
                                 borderRadius: '16px',
                                 border: 'none',
-                                background: productFilter === p.id ? 'var(--accent)' : (isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'),
-                                color: productFilter === p.id ? '#fff' : (isDark ? '#94a3b8' : '#64748b'),
+                                background: (p.id === 'all' && productFilters.includes('all')) || (p.id !== 'all' && productFilters.includes(p.id)) ? 'var(--accent)' : (isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'),
+                                color: (p.id === 'all' && productFilters.includes('all')) || (p.id !== 'all' && productFilters.includes(p.id)) ? '#fff' : (isDark ? '#94a3b8' : '#64748b'),
                                 fontSize: '14px',
                                 fontWeight: '800',
                                 cursor: 'pointer',
                                 whiteSpace: 'nowrap',
                                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                boxShadow: productFilter === p.id ? '0 8px 20px var(--accent-glow)' : 'none'
+                                boxShadow: ((p.id === 'all' && productFilters.includes('all')) || (p.id !== 'all' && productFilters.includes(p.id))) ? '0 8px 20px var(--accent-glow)' : 'none'
                             }}
                         >
                             {p.icon} {p.label}

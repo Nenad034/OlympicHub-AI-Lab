@@ -922,8 +922,17 @@ const SupplierFinance: React.FC = () => {
                                                 }}
                                             >
                                                 <option value="">Izaberi dobavljača...</option>
-                                                {allSuppliers.map(s => (
-                                                    <option key={s.id} value={s.name}>{s.name} ({s.country})</option>
+                                                {Array.from(new Set(allSuppliers.map(s => s.category || 'Ostalo'))).map(cat => (
+                                                    <optgroup key={cat} label={cat} style={{ background: 'var(--bg-main, #0f172a)' }}>
+                                                        {allSuppliers
+                                                            .filter(s => (s.category || 'Ostalo') === cat)
+                                                            .map(s => (
+                                                                <option key={s.id} value={s.name}>
+                                                                    {s.name} ({s.country || 'Global'})
+                                                                </option>
+                                                            ))
+                                                        }
+                                                    </optgroup>
                                                 ))}
                                             </select>
                                         </div>

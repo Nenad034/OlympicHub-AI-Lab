@@ -230,8 +230,8 @@ const Sidebar: React.FC = () => {
                             subItems={[
                                 { to: '/api-connections', label: 'API Connections', icon: SettingsIcon },
                                 { to: '/suppliers', label: 'Lista', icon: Users },
-                                { to: '/supplier-admin', label: 'Upravljanje', icon: Building2 },
-                                { to: '/pricing-intelligence', label: 'Pricing', icon: DollarSign }
+                                { to: '/suppliers?tab=matrix', label: 'Matrica Cene', icon: Building2 },
+                                { to: '/pricing-intelligence', label: 'Pricing Hub', icon: DollarSign }
                             ]}
                         />
 
