@@ -26,6 +26,7 @@ interface SupabaseClientInterface {
     from: (table: string) => any; // Supabase dynamic table types are complex, but we can structure the builder
     auth: any;
     functions: any;
+    rpc: (name: string, params?: any) => any;
 }
 
 const isConfigured = supabaseUrl &&
@@ -87,7 +88,8 @@ if (isConfigured) {
         },
         functions: {
             invoke: (name: string) => Promise.resolve({ data: null, error: { message: `Edge Function ${name} requires Supabase config` } })
-        }
+        },
+        rpc: (name: string) => Promise.resolve({ data: 0, error: { message: `RPC ${name} requires Supabase config` } })
     };
 }
 

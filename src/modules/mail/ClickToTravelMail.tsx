@@ -33,7 +33,9 @@ import {
     Sparkles,
     Wand2,
     Languages,
-    Sword
+    Sword,
+    AlertCircle,
+    MessageCircle
 } from 'lucide-react';
 import { useMailStore, useAuthStore } from '../../stores';
 import { useKatanaStore } from '../../stores/katanaStore';
@@ -64,6 +66,9 @@ export const ClickToTravelMail: React.FC = () => {
         receiveEmail
     } = useMailStore();
 
+    const { userName } = useAuthStore();
+    const guestUserId = 'user-' + userName.toLowerCase().replace(/\s/g, '-');
+
     const { addTask: addKatanaTask } = useKatanaStore();
 
     const { userLevel } = useAuthStore();
@@ -93,6 +98,12 @@ export const ClickToTravelMail: React.FC = () => {
     // AI Translation/Tone State
     const [isTranslating, setIsTranslating] = useState(false);
     const [translationTone, setTranslationTone] = useState<'formal' | 'informal' | 'friendly'>('formal');
+
+    // UI Updates for Collaboration
+    const [activeLocks, setActiveLocks] = useState<any[]>([]);
+    const [internalComments, setInternalComments] = useState<any[]>([]);
+    const [newComment, setNewComment] = useState('');
+    const [isPostingComment, setIsPostingComment] = useState(false);
 
     // Compose State
     const [composeTo, setComposeTo] = useState('');
@@ -139,6 +150,28 @@ export const ClickToTravelMail: React.FC = () => {
         }
     }, [isResizingSidebar, isResizingList, sidebarWidth]);
 
+    // Realtime Locks & Comments Sync
+    useEffect(() => {
+        if (!selectedEmailId) return;
+
+        const syncCollaborationData = async () => {
+            const { getEmailLocks, getEmailComments, updateEmailStatus } = await import('../../services/emailService');
+
+            // Get Locks
+            const locks = await getEmailLocks([selectedEmailId]);
+            setActiveLocks(locks);
+
+            // Get Comments
+            const comments = await getEmailComments(selectedEmailId);
+            setInternalComments(comments);
+        };
+
+        syncCollaborationData();
+        const interval = setInterval(syncCollaborationData, 10000); // Poll every 10s for demo
+
+        return () => clearInterval(interval);
+    }, [selectedEmailId]);
+
     useEffect(() => {
         if (isResizingSidebar || isResizingList) {
             window.addEventListener('mousemove', resize);
@@ -179,11 +212,19 @@ export const ClickToTravelMail: React.FC = () => {
         setViewMode('compose');
     };
 
-    const handleReply = (email: any) => {
-        setComposeTo(email.senderEmail);
-        setComposeSubject(`Re: ${email.subject}`);
-        setComposeBody(`\n\n--- Originalna poruka ---\nOd: ${email.sender}\nPoslato: ${email.time}\n\n${email.body}`);
-        setViewMode('compose');
+    const handleReply = async (email: any) => {
+        const { lockEmail } = await import('../../services/emailService');
+
+        // Attempt to lock
+        const result = await lockEmail(email.id, guestUserId, userName);
+        if (result.success) {
+            setComposeTo(email.senderEmail);
+            setComposeSubject(`Re: ${email.subject}`);
+            setComposeBody(`\n\n--- Originalna poruka ---\nOd: ${email.sender}\nPoslato: ${email.time}\n\n${email.body}`);
+            setViewMode('compose');
+        } else {
+            alert(`UPOZORENJE:\nNalog je već zaključao ${result.lock?.userName}. \nOni verovatno već pišu odgovor.`);
+        }
     };
 
     const handleForward = (email: any) => {
@@ -228,6 +269,11 @@ export const ClickToTravelMail: React.FC = () => {
 
                 if (result.success) {
                     alert('✅ Poruka je uspešno poslata!');
+                    const { updateEmailStatus, unlockEmail } = await import('../../services/emailService');
+                    if (selectedEmailId) {
+                        await updateEmailStatus(selectedEmailId, 'replied', new Date().toISOString());
+                        await unlockEmail(selectedEmailId);
+                    }
                 } else {
                     // Logic for Demo Mode: if sent to self, mock arrival in Inbox after 2 seconds
                     if (composeTo.toLowerCase() === activeAccount.email.toLowerCase()) {
@@ -850,6 +896,14 @@ export const ClickToTravelMail: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="view-content">
+                                    <div className="view-collaboration-notif">
+                                        {activeLocks.length > 0 && activeLocks[0].userId !== guestUserId && (
+                                            <div className="lock-warning">
+                                                <AlertCircle size={14} />
+                                                <span>PAŽNJA: <b>{activeLocks[0].userName}</b> trenutno piše odgovor na ovaj mejl.</span>
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="view-meta-badges">
                                         {isMasterView && (
                                             <span className="master-acc-tag" style={{ background: accounts.find(a => a.id === selectedEmail.accountId)?.color + '22', color: accounts.find(a => a.id === selectedEmail.accountId)?.color }}>
@@ -940,6 +994,51 @@ export const ClickToTravelMail: React.FC = () => {
                                             </div>
                                         </div>
                                     )}
+
+                                    {/* Internal Chat / Comments Section */}
+                                    <div className="mail-internal-chat">
+                                        <div className="chat-header">
+                                            <MessageCircle size={16} />
+                                            <span>Interni komentari ({internalComments.length})</span>
+                                        </div>
+                                        <div className="chat-messages">
+                                            {internalComments.map(comment => (
+                                                <div key={comment.id} className={`chat-bubble ${comment.userId === guestUserId ? 'own' : ''}`}>
+                                                    <div className="bubble-meta">
+                                                        <b>{comment.userName}</b> • {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                    <div className="bubble-text">{comment.commentText}</div>
+                                                </div>
+                                            ))}
+                                            {internalComments.length === 0 && <p className="no-comments">Nema internih komentara za ovu poruku.</p>}
+                                        </div>
+                                        <div className="chat-input-area">
+                                            <input
+                                                type="text"
+                                                placeholder="Ostavi interni komentar kolegama..."
+                                                value={newComment}
+                                                onChange={(e) => setNewComment(e.target.value)}
+                                                onKeyDown={async (e) => {
+                                                    if (e.key === 'Enter' && newComment.trim()) {
+                                                        const { addEmailComment } = await import('../../services/emailService');
+                                                        setIsPostingComment(true);
+                                                        const res = await addEmailComment(selectedEmailId!, guestUserId, userName, newComment);
+                                                        if (res.success) {
+                                                            setInternalComments([...internalComments, res.comment]);
+                                                            setNewComment('');
+                                                        }
+                                                        setIsPostingComment(false);
+                                                    }
+                                                }}
+                                            />
+                                            <button
+                                                className="send-comment-btn"
+                                                disabled={!newComment.trim() || isPostingComment}
+                                            >
+                                                <Send size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </>
                         ) : (

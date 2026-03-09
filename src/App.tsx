@@ -12,6 +12,7 @@ import { useThemeStore, useAppStore } from './stores';
 import SentinelPopup from './components/common/SentinelPopup';
 import { SolvexNotificationHub } from './components/SolvexNotificationHub';
 import { SolvexSyncWorker } from './components/SolvexSyncWorker';
+import { CommunicationGuard } from './components/layout/CommunicationGuard';
 
 // Context
 import { useConfig } from './context/ConfigContext';
@@ -105,6 +106,9 @@ const App: React.FC = () => {
           {/* Solvex Status Sync & Notifications */}
           <SolvexSyncWorker />
           <SolvexNotificationHub />
+
+          {/* Communication Collision & SLA Guard */}
+          <CommunicationGuard />
         </>
       )}
     </>
