@@ -39,7 +39,6 @@ import {
 } from 'lucide-react';
 import { useThemeStore, useAppStore, useAuthStore } from '../stores';
 import { translations } from '../translations';
-import DailyWisdom from '../components/DailyWisdom';
 import { ClickToTravelLogo } from '../components/icons/ClickToTravelLogo';
 import {
     LayoutGrid,
@@ -711,58 +710,6 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
                                 </div>
                             )}
 
-                            {/* Quick Information Section */}
-                            {!forceShowAll && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.4 }}
-                                    style={{
-                                        maxWidth: '1400px',
-                                        margin: '0 auto 40px',
-                                        width: '100%',
-                                        padding: '0 20px'
-                                    }}
-                                >
-                                    <div style={{
-                                        background: 'var(--bg-card)',
-                                        borderRadius: '24px',
-                                        padding: '24px',
-                                        border: '1px solid var(--border)',
-                                        display: 'grid',
-                                        gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
-                                        gap: '20px',
-                                        boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
-                                    }}>
-                                        {quickInfo.map((info, idx) => (
-                                            <div key={idx} style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '16px',
-                                                padding: '16px',
-                                                background: 'var(--bg-main)',
-                                                borderRadius: '16px',
-                                                borderLeft: `4px solid ${info.color}`,
-                                                boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                                            }}>
-                                                <div style={{
-                                                    color: info.color,
-                                                    background: `${info.color}15`,
-                                                    padding: '10px',
-                                                    borderRadius: '12px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}>{info.icon}</div>
-                                                <div>
-                                                    <div style={{ fontSize: '10px', opacity: 0.6, fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)' }}>{info.label}</div>
-                                                    <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>{info.value}</div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </motion.div>
-                            )}
 
                             {!forceShowAll && <div style={{ width: '100%', height: '1px', background: 'var(--border)', margin: '20px 0', opacity: 0.3 }}></div>}
 
@@ -1504,200 +1451,243 @@ function GlobalPulse() {
 
                 {viewMode === 'feed' ? (
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        {/* Table Header Row */}
                         <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            background: 'rgba(0, 0, 0, 0.2)',
-                            borderBottom: '1px solid var(--border)',
-                            borderTop: '1px solid var(--border)',
+                            marginTop: '32px',
+                            background: isDark ? 'var(--bg-card)' : '#fff',
+                            borderRadius: '32px',
+                            border: '1px solid var(--border)',
+                            overflow: 'hidden',
+                            boxShadow: '0 20px 60px -10px rgba(0,0,0,0.5)'
                         }}>
-                            <div style={{ padding: '12px 15px', width: '130px', fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase', borderRight: '1px solid var(--border)' }}>ID / Vreme</div>
-                            <div style={{ padding: '12px 15px', flex: 1, fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase', borderRight: '1px solid var(--border)' }}>Kupac / Detalji</div>
-                            <div style={{ padding: '12px 15px', width: '100px', fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase', borderRight: '1px solid var(--border)' }}>Vrsta</div>
-                            <div style={{ padding: '12px 15px', flex: 1, fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase', borderRight: '1px solid var(--border)' }}>Vrsta Kupca</div>
-                            <div style={{ padding: '12px 15px', flex: 1, fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase', borderRight: '1px solid var(--border)' }}>Dobavljač</div>
-                            <div style={{ padding: '12px 15px', flex: 1, fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase', borderRight: '1px solid var(--border)' }}>Poslovnica</div>
-                            <div style={{ padding: '12px 15px', width: '120px', textAlign: 'right', fontSize: '11px', fontWeight: '800', opacity: 0.5, textTransform: 'uppercase' }}>Iznos / Status</div>
+                            {/* Premium Table Header */}
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                background: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
+                                borderBottom: '2px solid var(--border)',
+                                borderRadius: '32px 32px 0 0'
+                            }}>
+                                <div style={{ padding: '24px', width: '140px', fontSize: '11px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>ID / Vreme</div>
+                                <div style={{ padding: '24px', flex: 2, fontSize: '11px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Putnik & Aranžman</div>
+                                <div style={{ padding: '24px', width: '120px', fontSize: '11px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Vrsta</div>
+                                <div style={{ padding: '24px', flex: 1.5, fontSize: '11px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Partner / Kanal</div>
+                                <div style={{ padding: '24px', flex: 1, fontSize: '11px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Dobavljač</div>
+                                <div style={{ padding: '24px', width: '150px', textAlign: 'right', fontSize: '11px', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Iznos & Status</div>
+                            </div>
+
+                            <div style={{ background: 'transparent' }}>
+                                {paginatedReservations.map((res, idx) => {
+                                    const statusInfo = getStatusDisplay(res);
+                                    return (
+                                        <motion.div
+                                            key={res.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: idx * 0.02 }}
+                                            className="pulse-row"
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                borderBottom: '1px solid var(--border-subtle)',
+                                                background: idx % 2 === 0 ? 'transparent' : (isDark ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.01)'),
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                                            }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = isDark ? 'var(--accent-glow)' : 'rgba(0,0,0,0.02)'; }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = idx % 2 === 0 ? 'transparent' : (isDark ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.01)'); }}
+                                            onClick={() => navigate(`/reservation-architect-v5?id=${res.id}`)}
+                                        >
+                                            {/* ID / Time */}
+                                            <div style={{ padding: '24px', width: '140px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <div style={{
+                                                    fontWeight: '900',
+                                                    background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                                                    color: 'var(--accent)',
+                                                    fontSize: '12px',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '8px',
+                                                    textAlign: 'center',
+                                                    width: 'fit-content',
+                                                    border: '1px solid var(--border)'
+                                                }}>
+                                                    #{res.id}
+                                                </div>
+                                                <div style={{ fontSize: '11px', fontWeight: '700', opacity: 0.5, letterSpacing: '0.5px' }}>{res.time}</div>
+                                            </div>
+
+                                            {/* Item & Details */}
+                                            <div style={{ padding: '24px', flex: 2, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <div style={{ fontWeight: 800, fontSize: '16px', color: 'var(--text-main)', letterSpacing: '-0.3px' }}>{res.customer}</div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                                    <Building size={12} style={{ color: 'var(--accent)' }} />
+                                                    <span style={{ opacity: 0.8 }}>{res.hotel}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 800, color: 'var(--text-secondary)', opacity: 0.6 }}>
+                                                        <Globe size={10} /> {res.country}
+                                                    </div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 800, color: 'var(--accent)' }}>
+                                                        <Clock size={10} /> {new Date((res as any).checkIn).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit' })}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Product Type */}
+                                            <div style={{ padding: '24px', width: '120px' }}>
+                                                <div style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    padding: '6px 12px',
+                                                    borderRadius: '10px',
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    border: '1px solid var(--border)',
+                                                    fontSize: '10px',
+                                                    fontWeight: 900,
+                                                    color: 'var(--text-primary)',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.5px'
+                                                }}>
+                                                    {res.productType}
+                                                </div>
+                                            </div>
+
+                                            {/* Channel / Subagent */}
+                                            <div style={{ padding: '24px', flex: 1.5, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <div style={{ fontWeight: '800', fontSize: '14px', color: 'var(--text-primary)' }}>
+                                                    {res.subagent || 'Direktna Prodaja'}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '9px',
+                                                    fontWeight: 900,
+                                                    color: res.subagent ? '#3b82f6' : 'var(--text-secondary)',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '1px',
+                                                    opacity: 0.7
+                                                }}>
+                                                    {res.subagent ? 'Partner Agency' : 'Internal Sale'}
+                                                </div>
+                                            </div>
+
+                                            {/* Supplier */}
+                                            <div style={{ padding: '24px', flex: 1 }}>
+                                                <div style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    padding: '6px 14px',
+                                                    borderRadius: '12px',
+                                                    fontSize: '11px',
+                                                    fontWeight: 900,
+                                                    background: 'rgba(16, 185, 129, 0.08)',
+                                                    color: '#10b981',
+                                                    border: '1px solid rgba(16, 185, 129, 0.2)'
+                                                }}>
+                                                    <Zap size={12} fill="currentColor" />
+                                                    {res.supplier.toUpperCase()}
+                                                </div>
+                                            </div>
+
+                                            {/* Amount & Status */}
+                                            <div style={{ padding: '24px', width: '150px', textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <div style={{ fontWeight: '900', fontSize: '18px', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>
+                                                    {res.amount.toLocaleString()} <span style={{ fontSize: '14px', opacity: 0.6 }}>€</span>
+                                                </div>
+                                                <div style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '6px',
+                                                    padding: '4px 12px',
+                                                    borderRadius: '8px',
+                                                    fontSize: '10px',
+                                                    fontWeight: 900,
+                                                    background: `${statusInfo.color}15`,
+                                                    color: statusInfo.color,
+                                                    border: `1px solid ${statusInfo.color}30`,
+                                                    alignSelf: 'flex-end',
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    {res.status === 'Confirmed' ? <CheckCircle2 size={12} /> : <Clock size={12} />}
+                                                    {statusInfo.label}
+                                                </div>
+                                            </div>
+
+                                            {/* Quick Actions */}
+                                            <div style={{ paddingRight: '24px' }}>
+                                                <button
+                                                    className="btn-icon circle-btn"
+                                                    style={{
+                                                        width: '36px',
+                                                        height: '36px',
+                                                        background: 'rgba(59, 130, 246, 0.1)',
+                                                        color: '#3b82f6',
+                                                        border: '1px solid rgba(59, 130, 246, 0.2)',
+                                                        borderRadius: '10px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                >
+                                                    <ArrowUpRight size={18} />
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
                         </div>
 
-                        {paginatedReservations.map((res, idx) => (
-                            <motion.div
-                                key={res.id}
-                                initial={{ opacity: 0, x: -15 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: idx * 0.03 }}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    borderBottom: '1px solid var(--border)',
-                                    transition: 'all 0.2s'
-                                }}
-                                className="pulse-row"
-                            >
-                                <div style={{ padding: '12px 15px', width: '130px', borderRight: '1px solid var(--border)', alignSelf: 'stretch', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <a
-                                        href={`/reservation-architect?id=${res.id}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{
-                                            fontWeight: '900',
-                                            background: getStatusDisplay(res).color,
-                                            color: 'white',
-                                            fontSize: '13px',
-                                            padding: '4px 8px',
-                                            borderRadius: '6px',
-                                            textAlign: 'center',
-                                            width: '80px',
-                                            marginBottom: '4px',
-                                            boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
-                                            textDecoration: 'none',
-                                            display: 'block'
-                                        }}
-                                    >
-                                        {res.id}
-                                    </a>
-                                    <div style={{ fontSize: '11px', opacity: 0.5 }}>{res.time}</div>
-                                </div>
-
-                                <div style={{ padding: '12px 15px', flex: 1, borderRight: '1px solid var(--border)', alignSelf: 'stretch', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <div style={{ fontWeight: '700', color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline', fontSize: '15px' }}>{res.customer}</div>
-                                    <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        <div style={{ fontWeight: '800', fontSize: '12px', color: 'var(--text-primary)', opacity: 0.9 }}>
-                                            {(res as any).type === 'Flight' ? `Itinerer: ${res.hotel}` : (res as any).type === 'Package' ? `Putovanje: ${res.hotel}` : `Hotel: ${res.hotel}`}
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <Globe size={10} /> {res.country}, {res.destination}
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--accent)', fontWeight: '700' }}>
-                                            <Clock size={10} /> Boravak: {new Date((res as any).checkIn).toLocaleDateString('sr-Latn-RS')} - {new Date((res as any).checkOut).toLocaleDateString('sr-Latn-RS')}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div style={{ padding: '12px 15px', width: '100px', borderRight: '1px solid var(--border)', alignSelf: 'stretch', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <div style={{
-                                        padding: '4px 10px',
-                                        borderRadius: '6px',
-                                        background: 'rgba(255, 255, 255, 0.05)',
-                                        color: 'var(--text-primary)',
-                                        fontSize: '10px',
-                                        fontWeight: '800',
-                                        textTransform: 'uppercase',
-                                        width: 'fit-content'
-                                    }}>
-                                        {res.productType}
-                                    </div>
-                                </div>
-
-                                <div style={{ padding: '12px 15px', flex: 1, borderRight: '1px solid var(--border)', alignSelf: 'stretch', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                        <div style={{ fontWeight: '800', fontSize: '14px', color: 'var(--text-primary)' }}>
-                                            {res.subagent ? res.subagent : (res.clientType === 'B2B' ? 'Agencijski Klijent' : 'Direktni Putnik')}
-                                        </div>
-                                        <div style={{
-                                            display: 'inline-flex',
-                                            padding: '4px 10px',
-                                            borderRadius: '6px',
-                                            background: 'rgba(0, 0, 0, 0.05)',
-                                            border: '1px solid rgba(0, 0, 0, 0.05)',
-                                            color: 'var(--text-secondary)',
-                                            fontSize: '10px',
-                                            fontWeight: '800',
-                                            width: '90px'
-                                        }}>
-                                            {res.subagent ? 'SUBAGENT' : res.clientType}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div style={{ padding: '12px 15px', flex: 1, borderRight: '1px solid var(--border)', alignSelf: 'stretch', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <div style={{ fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <Globe size={14} style={{ color: '#10b981' }} /> {res.supplier}
-                                    </div>
-                                </div>
-
-                                <div style={{ padding: '12px 15px', flex: 1, borderRight: '1px solid var(--border)', alignSelf: 'stretch', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <div style={{ fontWeight: '600' }}>{res.branch}</div>
-                                </div>
-
-                                <div style={{ padding: '12px 15px', width: '120px', textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <div style={{ fontWeight: '900', fontSize: '18px', color: 'var(--text-primary)' }}>{res.amount.toLocaleString()} €</div>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', marginTop: '4px' }}>
-                                        {res.status === 'Confirmed' ? <CheckCircle2 size={12} color={getStatusDisplay(res).color} /> : res.status === 'Pending' ? <Clock size={12} color="#f59e0b" /> : <XCircle size={12} color="#ef4444" />}
-                                        <span style={{ fontSize: '10px', fontWeight: '800', color: getStatusDisplay(res).color, textTransform: 'uppercase' }}>{getStatusDisplay(res).label}</span>
-                                    </div>
-                                </div>
-
-                                <div style={{ width: '40px', display: 'flex', justifyContent: 'flex-end' }}>
-                                    <button
-                                        onClick={() => navigate(`/reservation-architect?id=${res.id}`)}
-                                        style={{
-                                            width: '36px',
-                                            height: '36px',
-                                            borderRadius: '10px',
-                                            border: 'none',
-                                            background: 'rgba(59, 130, 246, 0.1)',
-                                            color: 'var(--accent)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        <ArrowUpRight size={18} />
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ))}
                         {/* Pagination Controls */}
                         <div style={{
                             display: 'flex',
                             justifyContent: 'center',
                             alignItems: 'center',
-                            padding: '20px 0',
+                            padding: '24px 0',
                             gap: '15px'
                         }}>
                             <button
                                 disabled={currentPage === 1}
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 style={{
-                                    background: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    color: 'white',
-                                    borderRadius: '8px',
-                                    width: '32px',
-                                    height: '32px',
+                                    background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                                    border: '1px solid var(--border)',
+                                    color: isDark ? 'white' : 'var(--text-primary)',
+                                    borderRadius: '10px',
+                                    width: '40px',
+                                    height: '40px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                                    opacity: currentPage === 1 ? 0.3 : 1
+                                    opacity: currentPage === 1 ? 0.3 : 1,
+                                    transition: 'all 0.2s'
                                 }}
                             >
-                                <ChevronLeft size={16} />
+                                <ChevronLeft size={18} />
                             </button>
-                            <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-secondary)' }}>
-                                Strana <span style={{ color: 'var(--text-primary)' }}>{currentPage}</span> od <span style={{ color: 'var(--text-primary)' }}>{totalPages || 1}</span>
+                            <div style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-secondary)', background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)', padding: '8px 16px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                                Strana <span style={{ color: 'var(--accent)' }}>{currentPage}</span> od <span style={{ color: 'var(--text-primary)' }}>{totalPages || 1}</span>
                             </div>
                             <button
                                 disabled={currentPage >= totalPages}
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 style={{
-                                    background: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    color: 'white',
-                                    borderRadius: '8px',
-                                    width: '32px',
-                                    height: '32px',
+                                    background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                                    border: '1px solid var(--border)',
+                                    color: isDark ? 'white' : 'var(--text-primary)',
+                                    borderRadius: '10px',
+                                    width: '40px',
+                                    height: '40px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer',
-                                    opacity: currentPage >= totalPages ? 0.3 : 1
+                                    opacity: currentPage >= totalPages ? 0.3 : 1,
+                                    transition: 'all 0.2s'
                                 }}
                             >
-                                <ChevronRight size={16} />
+                                <ChevronRight size={18} />
                             </button>
                         </div>
                     </div>
@@ -1708,7 +1698,7 @@ function GlobalPulse() {
                             display: 'flex',
                             alignItems: 'center',
                             padding: '12px 30px',
-                            background: 'rgba(255, 255, 255, 0.03)',
+                            background: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0,0,0,0.03)',
                             borderBottom: '1px solid var(--border)',
                             gap: '30px',
                         }}>
@@ -1730,7 +1720,7 @@ function GlobalPulse() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     padding: '16px 30px',
-                                    borderBottom: '2px solid #ddd', // Visible light grey line
+                                    borderBottom: '2px solid #ddd',
                                     gap: '30px',
                                     background: 'rgba(255, 255, 255, 0.01)',
                                     transition: 'all 0.2s'
@@ -1764,9 +1754,9 @@ function GlobalPulse() {
                                     <button style={{
                                         padding: '10px 20px',
                                         borderRadius: '12px',
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        background: 'rgba(255,255,255,0.05)',
-                                        color: 'white',
+                                        border: '1px solid var(--border)',
+                                        background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                                        color: 'var(--text-primary)',
                                         fontSize: '12px',
                                         fontWeight: '800',
                                         cursor: 'pointer',
@@ -1783,38 +1773,37 @@ function GlobalPulse() {
 
             {/* Footer / Smart Command Suggestion */}
             <div style={{
-                padding: '20px 40px',
-                background: 'rgba(0,0,0,0.1)',
+                padding: '24px 40px',
+                background: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.05)',
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center'
+                alignItems: 'center',
+                borderTop: '1px solid var(--border)'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    <Monitor size={16} />
+                    <Monitor size={18} style={{ color: 'var(--accent)' }} />
                     <span>Napredni pregled dostupan u posebnom tabu <strong>Command Center</strong></span>
                 </div>
                 <button
                     onClick={() => navigate('/command-center')}
                     style={{
-                        padding: '10px 24px',
-                        borderRadius: '14px',
-                        background: 'white',
-                        color: 'black',
+                        padding: '12px 28px',
+                        borderRadius: '16px',
+                        background: 'var(--accent)',
+                        color: 'white',
                         border: 'none',
                         fontWeight: '800',
-                        fontSize: '13px',
+                        fontSize: '14px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px'
+                        gap: '10px',
+                        boxShadow: '0 8px 16px var(--accent-glow)'
                     }}
                 >
-                    Otvori Command Center <ArrowRight size={16} />
+                    Otvori Command Center <ArrowRight size={18} />
                 </button>
             </div>
-
-            {/* Daily Wisdom included here to scroll with content */}
-            <DailyWisdom />
         </div>
     );
 };

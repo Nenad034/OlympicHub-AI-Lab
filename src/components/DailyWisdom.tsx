@@ -97,97 +97,76 @@ const DailyWisdom: React.FC = () => {
     if (isMobileApp) return null;
 
     return (
-        <div className="daily-wisdom-container" style={{
-            width: '100%',
-            padding: '40px 20px',
-            marginTop: '20px'
-        }}>
-            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="wisdom-card"
-                    style={{
-                        pointerEvents: 'auto',
-                        width: 'calc(100% - 60px)',
-                        maxWidth: '1400px',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        backdropFilter: 'blur(15px)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '14px',
-                        padding: '10px 30px',
-                        boxShadow: '0 10px 30px rgba(142, 36, 172, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.05)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '20px',
-                        minHeight: '48px',
-                        textAlign: 'center',
-                        borderBottom: '1.5px solid #8e24ac' // Matching the purple in screenshot
-                    }}
-                >
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        flexWrap: 'wrap',
-                        justifyContent: 'center'
-                    }}>
-                        <div style={{
-                            background: 'var(--accent-glow)',
-                            width: '24px',
-                            height: '24px',
-                            minWidth: '24px',
-                            borderRadius: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <Sparkles size={12} color="var(--accent)" />
-                        </div>
-
-                        <span style={{
-                            fontSize: '10px',
-                            fontWeight: '800',
-                            letterSpacing: '1px',
-                            textTransform: 'uppercase',
-                            color: 'var(--accent)',
-                            opacity: 0.9,
-                            whiteSpace: 'nowrap'
-                        }}>
-                            Misao Dana:
-                        </span>
-
-                        <p style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            color: 'var(--text-primary)',
-                            fontFamily: "'Outfit', sans-serif",
-                            margin: 0,
-                            lineHeight: '1.4'
-                        }}>
-                            "{todayWisdom.text}"
-                        </p>
-
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            opacity: 0.8,
-                            paddingLeft: '10px',
-                            borderLeft: '1px solid rgba(255,255,255,0.1)'
-                        }}>
-                            <span style={{ fontSize: '12px', fontWeight: '800', color: 'var(--accent)', whiteSpace: 'nowrap' }}>
-                                {todayWisdom.author}
-                            </span>
-                            <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontWeight: 500, whiteSpace: 'nowrap' }}>
-                                — {todayWisdom.role}
-                            </span>
-                        </div>
-                    </div>
-                </motion.div>
+        <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '0 20px',
+                height: '100%',
+                cursor: 'default',
+                userSelect: 'none',
+                maxWidth: '600px',
+                overflow: 'hidden'
+            }}
+        >
+            <div style={{
+                background: 'var(--accent-glow)',
+                width: '18px',
+                height: '18px',
+                minWidth: '18px',
+                borderRadius: '5px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+            }}>
+                <Sparkles size={9} color="var(--accent)" />
             </div>
-        </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                <span style={{
+                    fontSize: '9px',
+                    fontWeight: '900',
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
+                    color: 'var(--accent)',
+                    whiteSpace: 'nowrap',
+                    opacity: 0.8
+                }}>
+                    Misao Dana:
+                </span>
+
+                <span style={{
+                    fontSize: '11px',
+                    fontWeight: '500',
+                    color: 'var(--text-primary)',
+                    fontFamily: "'Outfit', sans-serif",
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    opacity: 0.9
+                }}>
+                    "{todayWisdom.text}"
+                </span>
+
+                <span style={{
+                    fontSize: '10px',
+                    fontWeight: '800',
+                    color: 'var(--accent)',
+                    whiteSpace: 'nowrap',
+                    paddingLeft: '6px',
+                    borderLeft: '1px solid rgba(255,255,255,0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                }}>
+                    {todayWisdom.author}
+                </span>
+            </div>
+        </motion.div>
     );
 };
 
