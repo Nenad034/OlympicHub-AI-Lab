@@ -109,13 +109,13 @@ const FinancialIntelligenceHub: React.FC = () => {
     const location = useLocation();
 
     // --- STATE ---
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'kir' | 'kur' | 'tax' | 'cashier' | 'bank' | 'settings' | 'payments'>(
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'kir' | 'kur' | 'tax' | 'cashier' | 'bank' | 'settings' | 'payments' | 'bordero'>(
         (new URLSearchParams(window.location.search).get('tab') as any) || 'kir'
     );
 
     useEffect(() => {
         const tab = new URLSearchParams(location.search).get('tab');
-        if (tab && ['dashboard', 'kir', 'kur', 'tax', 'cashier', 'bank', 'settings', 'payments'].includes(tab)) {
+        if (tab && ['dashboard', 'kir', 'kur', 'tax', 'cashier', 'bank', 'settings', 'payments', 'bordero'].includes(tab)) {
             setActiveTab(tab as any);
         }
     }, [location.search]);
@@ -696,6 +696,90 @@ const FinancialIntelligenceHub: React.FC = () => {
                 );
             case 'payments':
                 return <SupplierFinance />;
+            case 'bordero':
+                return (
+                    <div className="fil-ledger-container animate-fade-in">
+                        <div className="fil-table-header glass" style={{ padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <FileText size={22} className="cyan" />
+                                <h3 className="bold">Bordero Provizija (Subagenti) - Obračunski Period</h3>
+                            </div>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <select className="fil-select">
+                                    <option>Mart 2026</option>
+                                    <option>Februar 2026</option>
+                                    <option>Januar 2026</option>
+                                </select>
+                                <button className="btn-export" style={{ background: 'var(--fil-accent)', color: '#020b0e', fontWeight: 800 }}>Zatvori Period & Generiši</button>
+                            </div>
+                        </div>
+
+                        <div className="fil-stats-row" style={{ marginBottom: '20px', marginTop: '10px' }}>
+                            <div className="stat-card glass">
+                                <span className="stat-label">Ukupan Promet B2B</span>
+                                <span className="stat-value">12,450,000 RSD</span>
+                            </div>
+                            <div className="stat-card glass">
+                                <span className="stat-label">Ukupna Provizija</span>
+                                <span className="stat-value gold">1,120,500 RSD</span>
+                            </div>
+                            <div className="stat-card glass">
+                                <span className="stat-label">Isplaćeno</span>
+                                <span className="stat-value cyan">850,000 RSD</span>
+                            </div>
+                            <div className="stat-card glass">
+                                <span className="stat-label">Preostalo za Isplatu</span>
+                                <span className="stat-value" style={{ color: '#ff4d4d' }}>270,500 RSD</span>
+                            </div>
+                        </div>
+
+                        <div className="fil-table-wrapper">
+                            <table className="fil-table">
+                                <thead>
+                                    <tr>
+                                        <th>Subagent</th>
+                                        <th>Grad</th>
+                                        <th>Broj Rezervacija</th>
+                                        <th>Ukupan Promet (RSD)</th>
+                                        <th>Provizija (%)</th>
+                                        <th>Iznos Provizije (RSD)</th>
+                                        <th>Status</th>
+                                        <th style={{ textAlign: 'right' }}>Akcije</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {[
+                                        { name: 'Travel Pro DOO', city: 'Beograd', count: 12, revenue: 1250000, rate: 10, amount: 125000, status: 'Obračunato' },
+                                        { name: 'Globe Trotters', city: 'Novi Sad', count: 8, revenue: 840000, rate: 8, amount: 67200, status: 'Isplaćeno' },
+                                        { name: 'Olimpic Travel SRB', city: 'Beograd', count: 15, revenue: 2100000, rate: 12, amount: 252000, status: 'Obračunato' },
+                                        { name: 'Sabra Travel', city: 'Novi Sad', count: 6, revenue: 540000, rate: 10, amount: 54000, status: 'Delimično' },
+                                    ].map((b, i) => (
+                                        <tr key={i}>
+                                            <td className="bold">{b.name}</td>
+                                            <td className="fil-text-dim">{b.city}</td>
+                                            <td className="bold" style={{ textAlign: 'center' }}>{b.count}</td>
+                                            <td className="bold">{b.revenue.toLocaleString()}</td>
+                                            <td className="cyan">{b.rate}%</td>
+                                            <td className="gold bold">{b.amount.toLocaleString()}</td>
+                                            <td>
+                                                <span className={`status-badge status-${b.status === 'Isplaćeno' ? 'paid' : (b.status === 'Delimično' ? 'pending' : 'debt')}`}>
+                                                    {b.status.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <div style={{ display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
+                                                    <button className="btn-action-small" title="Detalji"><Eye size={14} /></button>
+                                                    <button className="btn-action-small" title="Preuzmi PDF"><Download size={14} /></button>
+                                                    <button className="btn-action-small" title="Označi kao isplaćeno" style={{ color: '#10b981' }}><CheckCircle2 size={14} /></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                );
             default:
                 return <div>Nepoznata sekcija</div>;
         }
@@ -900,6 +984,12 @@ const FinancialIntelligenceHub: React.FC = () => {
                             onClick={() => setActiveTab('settings')}
                         >
                             <RefreshCw size={18} /> API Config
+                        </button>
+                        <button
+                            className={`btn-export ${activeTab === 'bordero' ? 'cyan' : ''}`}
+                            onClick={() => setActiveTab('bordero')}
+                        >
+                            <FileText size={18} /> Bordero Provizija
                         </button>
                     </div>
                 </div>

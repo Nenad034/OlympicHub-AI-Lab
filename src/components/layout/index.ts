@@ -1,3 +1,5 @@
 export { default as Sidebar } from './Sidebar';
 export { default as TopBar } from './TopBar';
 export { default as HorizontalNav } from './HorizontalNav';
+export { default as SystemFooter } from './SystemFooter';
+export { PinnedNotesRenderer } from './PinnedNotesRenderer';

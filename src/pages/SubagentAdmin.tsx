@@ -90,6 +90,7 @@ interface Subagent {
         totalCommission: number;
         balance: number;
         outstanding: number;
+        creditLimit: number;
     };
     createdAt: string;
     lastActivity: string;
@@ -146,7 +147,8 @@ const MOCK_SUBAGENTS: Subagent[] = [
             totalRevenue: 125000,
             totalCommission: 12500,
             balance: 8500,
-            outstanding: 4000
+            outstanding: 4000,
+            creditLimit: 15000
         },
         createdAt: '2025-01-15',
         lastActivity: '2026-01-09'
@@ -184,7 +186,8 @@ const MOCK_SUBAGENTS: Subagent[] = [
             totalRevenue: 89000,
             totalCommission: 7120,
             balance: 5200,
-            outstanding: 1920
+            outstanding: 1920,
+            creditLimit: 10000
         },
         createdAt: '2025-03-22',
         lastActivity: '2026-01-10'
@@ -530,7 +533,8 @@ const SubagentAdmin: React.FC = () => {
                 totalRevenue: 0,
                 totalCommission: 0,
                 balance: 0,
-                outstanding: 0
+                outstanding: 0,
+                creditLimit: 0
             },
             createdAt: new Date().toISOString().split('T')[0],
             lastActivity: new Date().toISOString().split('T')[0]
@@ -1415,6 +1419,30 @@ const SubagentAdmin: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div className="detail-section">
+                                        <h3>Finansijski Podaci i Limiti</h3>
+                                        <div className="input-grid">
+                                            <div className="input-field">
+                                                <label>Kreditni Limit (EUR)</label>
+                                                <div className="composite-input">
+                                                    <input
+                                                        type="number"
+                                                        value={editData?.financials.creditLimit}
+                                                        onChange={e => setEditData(prev => prev ? {
+                                                            ...prev,
+                                                            financials: { ...prev.financials, creditLimit: Number(e.target.value) }
+                                                        } : null)}
+                                                    />
+                                                    <span className="unit">€</span>
+                                                </div>
+                                            </div>
+                                            <div className="input-field">
+                                                <label>Trenutni Dug (Eur)</label>
+                                                <input type="number" disabled value={editData?.financials.outstanding} className="disabled-input" />
+                                            </div>
+                                        </div>
+                                    </div>
                                     {/* Multiple contacts */}
                                     <div className="detail-section">
                                         <div className="section-header-add">
@@ -1447,7 +1475,56 @@ const SubagentAdmin: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="detail-view">
-                                    <p>Pregled podataka subagenta...</p>
+                                    <div className="detail-section">
+                                        <h3>Finansijski Status</h3>
+                                        <div className="financial-overview-card">
+                                            <div className="fin-main-stats">
+                                                <div className="fin-stat">
+                                                    <span className="label">Ukupan Promet</span>
+                                                    <span className="value">{selectedSubagent.financials.totalRevenue.toLocaleString()} €</span>
+                                                </div>
+                                                <div className="fin-stat">
+                                                    <span className="label">Zarađena Provizija</span>
+                                                    <span className="value gold">{selectedSubagent.financials.totalCommission.toLocaleString()} €</span>
+                                                </div>
+                                                <div className="fin-stat">
+                                                    <span className="label">Balans Nalog</span>
+                                                    <span className="value cyan">{selectedSubagent.financials.balance.toLocaleString()} €</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="credit-limit-section">
+                                                <div className="limit-header">
+                                                    <span>Iskorišćenost Kreditnog Limita</span>
+                                                    <span className="limit-values">
+                                                        <strong>{selectedSubagent.financials.outstanding.toLocaleString()} €</strong> / {selectedSubagent.financials.creditLimit.toLocaleString()} €
+                                                    </span>
+                                                </div>
+                                                <div className="limit-progress-bg">
+                                                    <div
+                                                        className="limit-progress-bar"
+                                                        style={{
+                                                            width: `${Math.min(100, (selectedSubagent.financials.outstanding / selectedSubagent.financials.creditLimit) * 100)}%`,
+                                                            backgroundColor: (selectedSubagent.financials.outstanding / selectedSubagent.financials.creditLimit) > 0.9 ? '#ef4444' : (selectedSubagent.financials.outstanding / selectedSubagent.financials.creditLimit) > 0.7 ? '#f59e0b' : '#10b981'
+                                                        }}
+                                                    ></div>
+                                                </div>
+                                                <p className="limit-status-text">
+                                                    Preostalo za rezervisanje: <strong>{(selectedSubagent.financials.creditLimit - selectedSubagent.financials.outstanding).toLocaleString()} €</strong>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="detail-section">
+                                        <h3>Kontakt Informacije</h3>
+                                        <div className="info-grid">
+                                            <div className="info-item"><strong>Fiksni:</strong> {selectedSubagent.phoneFixed}</div>
+                                            <div className="info-item"><strong>Mobilni:</strong> {selectedSubagent.phoneMobile}</div>
+                                            <div className="info-item"><strong>Email:</strong> {selectedSubagent.email}</div>
+                                            <div className="info-item"><strong>Adresa:</strong> {selectedSubagent.address}, {selectedSubagent.city}</div>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>

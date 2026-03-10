@@ -128,6 +128,37 @@ export interface ActivityLog {
     type: 'info' | 'warning' | 'success' | 'danger';
 }
 
+// SMART MANIFEST - Faza 1: Subagent i Finansijski modeli
+export type SubagentCommissionModel = 'UPFRONT' | 'END_OF_MONTH';
+
+export interface PurchaseItem {
+    id: string;
+    supplierId: string;
+    supplierName: string;
+    description: string;
+    costAmount: number; // Nabavna (Neto) cena obaveze
+    currency: string;
+    dueDate: string; // Do kada agencija mora da plati dobavljaču
+    paymentStatus: 'pending' | 'partially_paid' | 'paid';
+}
+
+export interface SalesItem {
+    id: string;
+    description: string;
+    salesAmount: number; // Prodajna (Bruto/Neto) cena prema klijentu/subagentu
+    currency: string;
+}
+
+export interface FinalInvoice {
+    id: string;
+    invoiceNumber: string;
+    issueDate: string;
+    totalAmount: number;
+    vatAmount: number;
+    isFiscalized: boolean;
+    fiscalReceiptNumber?: string;
+}
+
 export interface Dossier {
     id: string;
     cisCode: string;
@@ -152,6 +183,17 @@ export interface Dossier {
         currency: string;
         installments: Installment[];
         payments: PaymentRecord[];
+
+        // NOVO: Podaci o subagentu (Opciono da ne lomi stari kod)
+        subagentId?: string;
+        subagentCommissionModel?: SubagentCommissionModel;
+
+        // NOVO: Odvojene tabele Nabavne i Prodajne cene
+        purchaseItems?: PurchaseItem[];
+        salesItems?: SalesItem[];
+
+        // NOVO: Konačni računi vezani za ovaj dosije
+        finalInvoices?: FinalInvoice[];
     };
     insurance: {
         guaranteePolicy: string;

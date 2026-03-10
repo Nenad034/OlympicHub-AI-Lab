@@ -41,7 +41,9 @@ export const useReservationDossier = (resId: string | null) => {
         finance: {
             currency: 'EUR',
             installments: [],
-            payments: [] as PaymentRecord[]
+            payments: [] as PaymentRecord[],
+            purchaseItems: [],
+            salesItems: []
         },
         insurance: {
             guaranteePolicy: 'Triglav Osiguranje br. 990000123',

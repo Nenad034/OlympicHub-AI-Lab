@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Wallet, CreditCard, DollarSign, History, Trash2, Plus,
     ChevronRight, Receipt, Printer, ShieldCheck, TrendingUp, AlertCircle, FileText,
-    ArrowUpRight, ArrowDownLeft, CheckCircle2, Clock, Ban
+    ArrowUpRight, ArrowDownLeft, CheckCircle2, Clock, Ban, Building2, Scale
 } from 'lucide-react';
 import type { Dossier, PaymentRecord } from '../../types/reservationArchitect';
 import { formatDate } from '../../utils/dateUtils';
@@ -18,11 +18,14 @@ interface FinanceTabProps {
     };
     onAddPayment: () => void;
     onRemovePayment: (id: string) => void;
+    updateDossier?: (updates: Partial<Dossier>) => void;
 }
 
 export const FinanceTabV5: React.FC<FinanceTabProps> = ({
-    dossier, financialStats, onAddPayment, onRemovePayment
+    dossier, financialStats, onAddPayment, onRemovePayment, updateDossier
 }) => {
+    const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+    const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
     const getPaymentIcon = (method: string) => {
         switch (method) {
@@ -47,6 +50,12 @@ export const FinanceTabV5: React.FC<FinanceTabProps> = ({
             </div>
         );
     };
+
+    // Calc ROI
+    const totalPurchaseCost = dossier.finance.purchaseItems?.reduce((acc, pi) => acc + pi.costAmount, 0) || 0;
+    const totalSalesValue = dossier.finance.salesItems?.reduce((acc, si) => acc + si.salesAmount, 0) || financialStats.totalBrutto; // Fallback to totalBrutto
+    const profit = totalSalesValue - totalPurchaseCost;
+    const roiPercentage = totalSalesValue > 0 ? (profit / totalSalesValue) * 100 : 0;
 
     return (
         <div className="v5-finance">
@@ -76,13 +85,43 @@ export const FinanceTabV5: React.FC<FinanceTabProps> = ({
                 </div>
             </div>
 
+            {/* SMART MANIFEST: Subagent Commission Model Selector */}
+            {dossier.customerType === 'B2B-Subagent' && (
+                <div className="v5-card" style={{ padding: '24px', marginBottom: '24px', borderLeft: '4px solid var(--accent-cyan)', background: 'linear-gradient(90deg, rgba(0, 229, 255, 0.05) 0%, transparent 100%)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 900, color: 'var(--accent-cyan)', letterSpacing: '1px' }}>B2B SUBAGENTSKI MODEL NAPLATE</h3>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', maxWidth: '600px' }}>
+                                Izaberite način na koji ovaj subagent reguliše proviziju za trenutni dosije.
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                                className={`v5-btn ${dossier.finance.subagentCommissionModel === 'UPFRONT' ? 'v5-btn-primary' : 'v5-btn-secondary'}`}
+                                onClick={() => updateDossier && updateDossier({ finance: { ...dossier.finance, subagentCommissionModel: 'UPFRONT' } })}
+                                style={{ padding: '0 24px', height: '40px', fontSize: '11px', fontWeight: 900 }}
+                            >
+                                PROVIZIJA ODMAH (UPFRONT)
+                            </button>
+                            <button
+                                className={`v5-btn ${dossier.finance.subagentCommissionModel === 'END_OF_MONTH' ? 'v5-btn-primary' : 'v5-btn-secondary'}`}
+                                onClick={() => updateDossier && updateDossier({ finance: { ...dossier.finance, subagentCommissionModel: 'END_OF_MONTH' } })}
+                                style={{ padding: '0 24px', height: '40px', fontSize: '11px', fontWeight: 900 }}
+                            >
+                                KRAJ MESECA (E.O.M)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Financial Dashboard Metrics */}
             <div className="v5-metrics" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
                 {[
-                    { label: 'UKUPNA BRUTO VREDNOST', val: financialStats.totalBrutto, icon: ShieldCheck, color: 'var(--text-primary)' },
-                    { label: 'REALIZOVANE UPLATE', val: financialStats.totalPaid, icon: ArrowDownLeft, color: '#10b981' },
-                    { label: 'PREOSTALO ZA NAPLATU', val: financialStats.balance, icon: AlertCircle, color: financialStats.balance > 0 ? '#ef4444' : '#10b981' },
-                    { label: 'PLANIRANE RATE', val: dossier.finance.installments.length, suffix: ' RATE', icon: Clock, color: 'var(--accent-cyan)' }
+                    { label: 'PLANIRANI PROMET', val: totalSalesValue, icon: ShieldCheck, color: 'var(--text-primary)' },
+                    { label: 'NABAVNA CENA (COST)', val: totalPurchaseCost, icon: Building2, color: '#ffb300' },
+                    { label: 'ROI / PROFIT MARGINA', val: `${roiPercentage.toFixed(1)}%`, icon: TrendingUp, color: roiPercentage > 15 ? '#10b981' : roiPercentage > 0 ? '#f59e0b' : '#ef4444', suffix: ` (${profit.toLocaleString()} ${dossier.finance.currency})` },
+                    { label: 'REALIZOVANE UPLATE', val: financialStats.totalPaid, icon: ArrowDownLeft, color: '#10b981' }
                 ].map((m, i) => (
                     <div key={i} className="v5-card" style={{ padding: '24px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
@@ -96,6 +135,123 @@ export const FinanceTabV5: React.FC<FinanceTabProps> = ({
                         </div>
                     </div>
                 ))}
+            </div>
+
+            <div style={{ marginTop: '48px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+                {/* PRODAJA / SALES ITEMS */}
+                <div className="v5-card" style={{ padding: '24px', background: 'rgba(16,185,129,0.02)', border: '1px solid rgba(16,185,129,0.1)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <TrendingUp size={20} style={{ color: '#10b981' }} />
+                            <h3 style={{ margin: 0, fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-primary)' }}>PRODAJA / SALES</h3>
+                        </div>
+                        <button
+                            className="v5-btn v5-btn-secondary"
+                            style={{ height: '32px', padding: '0 12px', fontSize: '10px', color: '#10b981', borderColor: 'rgba(16,185,129,0.2)' }}
+                            onClick={() => {
+                                if (updateDossier) {
+                                    // Smart autofill from trip items
+                                    const newSales = dossier.tripItems.map(item => ({
+                                        id: `SI-${Math.random().toString(36).substr(2, 9)}`,
+                                        description: item.subject,
+                                        salesAmount: item.bruttoPrice,
+                                        currency: item.currency
+                                    }));
+                                    updateDossier({ finance: { ...dossier.finance, salesItems: [...(dossier.finance.salesItems || []), ...newSales] } });
+                                }
+                            }}
+                        >
+                            <Plus size={14} /> AUTO-FILL
+                        </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {!dossier.finance.salesItems || dossier.finance.salesItems.length === 0 ? (
+                            <div style={{ color: 'var(--text-secondary)', fontSize: '11px', textAlign: 'center', padding: '20px' }}>Kliknite Auto-fill za preuzimanje iz plana puta.</div>
+                        ) : (
+                            dossier.finance.salesItems.map(si => (
+                                <div key={si.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>{si.description}</div>
+                                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#10b981' }}>{si.salesAmount.toLocaleString()} {si.currency}</div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                {/* DOBAVLJAČI / PURCHASE ITEMS */}
+                <div className="v5-card" style={{ padding: '24px', background: 'rgba(255,179,0,0.02)', border: '1px solid rgba(255,179,0,0.1)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <Building2 size={20} style={{ color: '#ffb300' }} />
+                            <h3 style={{ margin: 0, fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-primary)' }}>NABAVKA / COST</h3>
+                        </div>
+                        <button
+                            className="v5-btn v5-btn-secondary"
+                            style={{ height: '32px', padding: '0 12px', fontSize: '10px', color: '#ffb300', borderColor: 'rgba(255,179,0,0.2)' }}
+                            onClick={() => setIsPurchaseModalOpen(true)}
+                        >
+                            <Plus size={14} /> DODAJ
+                        </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {!dossier.finance.purchaseItems || dossier.finance.purchaseItems.length === 0 ? (
+                            <div style={{ color: 'var(--text-secondary)', fontSize: '11px', textAlign: 'center', padding: '20px' }}>Trenutno nema ulaznih faktura.</div>
+                        ) : (
+                            dossier.finance.purchaseItems.map(pi => (
+                                <div key={pi.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                                    <div>
+                                        <div style={{ fontSize: '12px', fontWeight: 700 }}>{pi.supplierName}</div>
+                                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Val: {formatDate(pi.dueDate)}</div>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontSize: '12px', fontWeight: 900, color: '#ffb300' }}>{pi.costAmount.toLocaleString()} {pi.currency}</div>
+                                        <div style={{ fontSize: '9px', fontWeight: 900, color: pi.paymentStatus === 'paid' ? '#10b981' : '#ef4444' }}>
+                                            {pi.paymentStatus === 'paid' ? 'PLAĆENO' : 'DUG'}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                {/* KONAČNI RAČUNI / FINAL INVOICES */}
+                <div className="v5-card" style={{ padding: '24px', background: 'rgba(0, 229, 255, 0.02)', border: '1px solid rgba(0, 229, 255, 0.1)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <Scale size={20} style={{ color: 'var(--accent-cyan)' }} />
+                            <h3 style={{ margin: 0, fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-primary)' }}>DOKUMENTI / KIR</h3>
+                        </div>
+                        <button
+                            className="v5-btn v5-btn-secondary"
+                            style={{ height: '32px', padding: '0 12px', fontSize: '10px', color: 'var(--accent-cyan)', borderColor: 'rgba(0, 229, 255, 0.2)' }}
+                            onClick={() => setIsInvoiceModalOpen(true)}
+                        >
+                            <Plus size={14} /> NOVI
+                        </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {!dossier.finance.finalInvoices || dossier.finance.finalInvoices.length === 0 ? (
+                            <div style={{ color: 'var(--text-secondary)', fontSize: '11px', textAlign: 'center', padding: '20px' }}>Nema izdatih računa.</div>
+                        ) : (
+                            dossier.finance.finalInvoices.map(fi => (
+                                <div key={fi.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                                    <div>
+                                        <div style={{ fontSize: '12px', fontWeight: 700 }}>RN: {fi.invoiceNumber}</div>
+                                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{formatDate(fi.issueDate)}</div>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontSize: '12px', fontWeight: 900 }}>{fi.totalAmount.toLocaleString()} RSD</div>
+                                        {fi.isFiscalized && <div style={{ fontSize: '9px', color: '#10b981', fontWeight: 900 }}>FISKALIZOVAN</div>}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
             </div>
 
             <div style={{ marginTop: '48px' }}>
@@ -169,6 +325,68 @@ export const FinanceTabV5: React.FC<FinanceTabProps> = ({
                     </AnimatePresence>
                 </div>
             </div>
+
+            {/* Smart Manifest - Modali za Finansijske Operacije */}
+            <AnimatePresence>
+                {isPurchaseModalOpen && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="v5-card" style={{ width: '400px', padding: '32px', textAlign: 'center', border: '1px solid rgba(255,179,0,0.3)' }}>
+                            <Building2 size={40} style={{ margin: '0 auto 20px auto', color: '#ffb300' }} />
+                            <h2 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '8px', color: '#ffb300' }}>ULAZNI RAČUN DOBAVLJAČA</h2>
+                            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '32px' }}>Sistem će generisati test zaduženje ka eksternom dobavljaču za ovaj rezervacioni ciklus.</p>
+
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button className="v5-btn v5-btn-secondary" style={{ flex: 1 }} onClick={() => setIsPurchaseModalOpen(false)}>ODUSTANI</button>
+                                <button className="v5-btn v5-btn-primary" style={{ flex: 2, background: 'rgba(255,179,0,0.1)', color: '#ffb300', border: '1px solid rgba(255,179,0,0.3)' }} onClick={() => {
+                                    if (updateDossier) {
+                                        updateDossier({
+                                            finance: {
+                                                ...dossier.finance,
+                                                purchaseItems: [...(dossier.finance.purchaseItems || []), {
+                                                    id: `PI-${Date.now()}`, supplierId: 'S-1', supplierName: 'Test Hotel Group A.D.',
+                                                    description: 'Usluga Smeštaja', costAmount: 1250, currency: 'EUR',
+                                                    dueDate: '2026-05-15', paymentStatus: 'pending'
+                                                }]
+                                            }
+                                        });
+                                    }
+                                    setIsPurchaseModalOpen(false);
+                                }}>GENERIŠI ZADUŽENJE</button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+
+                {isInvoiceModalOpen && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="v5-card" style={{ width: '400px', padding: '32px', textAlign: 'center', border: '1px solid rgba(0, 229, 255, 0.3)' }}>
+                            <Scale size={40} style={{ margin: '0 auto 20px auto', color: 'var(--accent-cyan)' }} />
+                            <h2 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '8px', color: 'var(--accent-cyan)' }}>FISKALNI MODEL / KIR</h2>
+                            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '32px' }}>Generisanje zvaničnog konačnog računa po članu 35 sa integracijom za SEF/ESIR.</p>
+
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button className="v5-btn v5-btn-secondary" style={{ flex: 1 }} onClick={() => setIsInvoiceModalOpen(false)}>ODUSTANI</button>
+                                <button className="v5-btn v5-btn-primary" style={{ flex: 2 }} onClick={() => {
+                                    if (updateDossier) {
+                                        updateDossier({
+                                            finance: {
+                                                ...dossier.finance,
+                                                finalInvoices: [...(dossier.finance.finalInvoices || []), {
+                                                    id: `FI-${Date.now()}`, invoiceNumber: `2026/RN-${Math.floor(Math.random() * 1000)}`,
+                                                    issueDate: new Date().toISOString(), totalAmount: financialStats.totalBrutto,
+                                                    vatAmount: financialStats.totalBrutto * 0.1, isFiscalized: true,
+                                                    fiscalReceiptNumber: `PFR-${Math.floor(Math.random() * 99999)}`
+                                                }]
+                                            }
+                                        });
+                                    }
+                                    setIsInvoiceModalOpen(false);
+                                }}>FISKALIZUJ I ZATVORI</button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

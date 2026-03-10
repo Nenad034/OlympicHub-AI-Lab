@@ -40,6 +40,7 @@ import {
 import { useThemeStore, useAppStore, useAuthStore } from '../stores';
 import { translations } from '../translations';
 import DailyWisdom from '../components/DailyWisdom';
+import { ClickToTravelLogo } from '../components/icons/ClickToTravelLogo';
 import {
     LayoutGrid,
     List,
@@ -53,7 +54,9 @@ import {
     Clock,
     Monitor,
     ChevronLeft,
-    Ship
+    ChevronDown,
+    Ship,
+    GripVertical
 } from 'lucide-react';
 
 const MOCK_LIVE_RESERVATIONS = [
@@ -141,6 +144,8 @@ const apps: AppConfig[] = [
     { id: 'main-hub', name: 'Dashboard Central', desc: 'Glavni kontrolni panel sa pregledom osnovnih KPI i brzom navigacijom.', icon: <Database size={24} />, category: 'system', color: 'var(--gradient-blue)', minLevel: 1, path: '/' },
     { id: 'my-reservations', name: 'Moje Rezervacije', desc: 'Pregled svih vaših aktivnih i arhiviranih rezervacija sa statusima plaćanja.', icon: <ClipboardList size={24} />, category: 'sales', color: 'var(--gradient-green)', badge: 'B2B', minLevel: 1, path: '/my-reservations' },
     { id: 'b2b-portal', name: 'B2B Partner Portal', desc: 'Vaša glavna baza za upravljanje prodajom, subagentima i dokumentacijom.', icon: <Building2 size={24} />, category: 'sales', color: 'var(--gradient-purple)', badge: 'HUB', minLevel: 1, path: '/b2b-portal' },
+    { id: 'public-booking', name: 'Javni Booking', desc: 'Sistem za B2C rezervacije sa integrisanim Live-Yield mehanizmom upozorenja.', icon: <Globe size={24} />, category: 'sales', color: 'var(--gradient-blue)', badge: 'B2C', minLevel: 1, path: '/public-booking' },
+    { id: 'smart-marketing', name: 'Smart AI Marketing', desc: 'Neuralni generator marketing sadržaja, newsletter sistem i trigeri prema personama.', icon: <Brain size={24} />, category: 'marketing', color: 'var(--gradient-purple)', badge: 'AI', minLevel: 1, path: '/smart-marketing' },
     { id: 'destination-prime-explorer', name: 'Destination Prime Explorer', desc: 'Napredni sistem za istraživanje destinacija i POI tačaka.', icon: <Compass size={24} />, category: 'production', color: 'var(--gradient-blue)', badge: 'NEW', minLevel: 1, path: '/destination-prime-explorer' },
     { id: 'operational-reports', name: 'Operativni Izveštaji', desc: 'Centralni hub za upravljanje kapacitetima, rooming listama i PAX statistikom.', icon: <Activity size={24} />, category: 'production', color: 'var(--gradient-orange)', badge: 'Premium', minLevel: 3, path: '/operational-reports' }
 ];
@@ -168,6 +173,11 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
 
     const [showFilters, setShowFilters] = useState(forceShowAll || false);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [showGlobalPulse, setShowGlobalPulse] = useState(() => localStorage.getItem('show-global-pulse') === 'true');
+
+    useEffect(() => {
+        localStorage.setItem('show-global-pulse', showGlobalPulse.toString());
+    }, [showGlobalPulse]);
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -229,24 +239,45 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
         localStorage.setItem('hub-apps-order', JSON.stringify(userApps.map(a => a.id)));
     }, [userApps]);
 
-    // Force sync app properties and new apps into user preference
-    useEffect(() => {
+    // Unified Reorder handler that works even with filtered/split lists
+    const handleReorder = (newOrder: AppConfig[]) => {
+        // If we are reordering a subset, we need to merge it back into userApps
         setUserApps(prev => {
-            // Update properties of existing apps from the master list
-            const updated = prev.map(userApp => {
-                const masterApp = apps.find(a => a.id === userApp.id);
-                return masterApp ? { ...userApp, ...masterApp } : userApp;
+            const updated = [...prev];
+            // Replace the items that were in the newOrder with their new positions
+            newOrder.forEach((item, index) => {
+                const globalIndex = updated.findIndex(a => a.id === item.id);
+                // This is a simplified approach, better to just use the ordered IDs
+                return item;
             });
 
-            // Find apps in master list that are missing in the user order
-            const missingIds = apps.filter(a => !updated.some(ua => ua.id === a.id));
-
-            if (missingIds.length > 0) {
-                return [...updated, ...missingIds];
-            }
-            return updated;
+            // Actually, the simplest way is to just use the new list if it's the full list
+            // or map the IDs if it's a subset.
+            // For now, let's assume setUserApps is called with the full intended order if possible.
+            return newOrder;
         });
-    }, []);
+    };
+
+    // Correct way to handle subset reordering:
+    const handleSubsetReorder = (subsetInNewOrder: AppConfig[]) => {
+        setUserApps(prev => {
+            const otherApps = prev.filter(app => !subsetInNewOrder.some(s => s.id === app.id));
+            // This is tricky because we want to keep the relative positions of other apps
+            // Best approach: update the global order by looking at which IDs moved where
+
+            const newTotalOrder = [...prev];
+            // Map subset back into their original "slots" but in the new order
+            const slots = prev
+                .map((app, idx) => subsetInNewOrder.some(s => s.id === app.id) ? idx : -1)
+                .filter(idx => idx !== -1);
+
+            subsetInNewOrder.forEach((app, i) => {
+                newTotalOrder[slots[i]] = app;
+            });
+
+            return newTotalOrder;
+        });
+    };
 
     const filteredApps = userApps.filter(app => {
         const matchesSearch = app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -267,7 +298,7 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
         ? ['smart-search', 'reservations', 'my-reservations', 'b2b-portal']
         : ['reservations', 'smart-search', 'subagent-admin'];
 
-    const ROW2_IDS: string[] = []; // Hide second row as per user request
+    const ROW2_IDS: string[] = ['public-booking', 'smart-marketing', 'supplier-finance'];
 
     // Quick Info Data
     const staffInfo = [
@@ -322,25 +353,114 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    marginBottom: '20px',
+                    marginBottom: '40px',
                     textAlign: 'center',
-                    marginTop: forceShowAll ? '40px' : '0'
+                    marginTop: forceShowAll ? '40px' : '20px'
                 }}>
-                    <h1 style={{
-                        fontSize: forceShowAll ? '36px' : '28px',
-                        fontWeight: '900',
-                        margin: 0,
-                        background: 'linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        textTransform: 'uppercase',
-                        letterSpacing: '2px'
-                    }}>
-                        {forceShowAll ? 'Svi Moduli Sistema' : t.dashboard}
-                    </h1>
-                    <p style={{ opacity: 0.6, fontSize: '14px', marginTop: '8px', maxWidth: '600px', lineHeight: '1.6' }}>
-                        {forceShowAll ? 'Pregled svih dostupnih alata, analitičkih modula i sistemskih servisa u clicktotravelcloud ekosistemu.' : 'Dobrodošli nazad u clicktotravelcloud'}
-                    </p>
+                    {!forceShowAll ? (
+                        <>
+                            {/* Logo card – crops PNG internal whitespace using overflow:hidden */}
+                            <div style={{
+                                background: '#ffffff',
+                                borderRadius: '20px',
+                                width: '380px',
+                                height: '100px',
+                                overflow: 'hidden',
+                                position: 'relative',
+                                boxShadow: '0 20px 60px rgba(0,0,0,0.25), 0 4px 16px rgba(0,0,0,0.10)',
+                                marginBottom: '28px'
+                            }}>
+                                <img
+                                    src="/clicktotravel.png"
+                                    alt="ClickToTravel"
+                                    style={{
+                                        position: 'absolute',
+                                        height: '360px',
+                                        width: 'auto',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        display: 'block'
+                                    }}
+                                />
+                            </div>
+                            <h1 style={{
+                                fontSize: '28px',
+                                fontWeight: '900',
+                                margin: '15px 0 0 0',
+                                color: 'var(--text-primary)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '4px',
+                                opacity: 0.8
+                            }}>
+                                Dobrodošli
+                            </h1>
+                        </>
+                    ) : (
+                        <>
+                            <h1 style={{
+                                fontSize: '36px',
+                                fontWeight: '900',
+                                margin: 0,
+                                background: 'linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                textTransform: 'uppercase',
+                                letterSpacing: '2px'
+                            }}>
+                                Svi Moduli Sistema
+                            </h1>
+                            <p style={{ opacity: 0.6, fontSize: '14px', marginTop: '8px', maxWidth: '600px', lineHeight: '1.6' }}>
+                                Pregled svih dostupnih alata, analitičkih modula i sistemskih servisa u clicktotravelcloud ekosistemu.
+                            </p>
+                        </>
+                    )}
+
+                    {isStaff && !forceShowAll && (
+                        <button
+                            onClick={() => setShowGlobalPulse(!showGlobalPulse)}
+                            style={{
+                                marginTop: '20px',
+                                padding: '10px 24px',
+                                borderRadius: '100px',
+                                border: '1.5px solid',
+                                borderColor: showGlobalPulse ? 'var(--accent)' : 'var(--border)',
+                                background: showGlobalPulse ? 'var(--accent-glow)' : 'transparent',
+                                color: showGlobalPulse ? 'var(--accent)' : 'var(--text-secondary)',
+                                fontSize: '13px',
+                                fontWeight: '800',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                boxShadow: showGlobalPulse ? '0 10px 20px var(--accent-glow)' : 'none'
+                            }}
+                        >
+                            <Activity size={18} />
+                            {showGlobalPulse ? 'PRIKAŽI MANJE' : 'PRIKAŽI GLOBAL PULSE'}
+                            <div style={{
+                                width: '32px',
+                                height: '16px',
+                                background: showGlobalPulse ? 'var(--accent)' : 'var(--border)',
+                                borderRadius: '10px',
+                                position: 'relative',
+                                marginLeft: '5px',
+                                transition: '0.3s'
+                            }}>
+                                <div style={{
+                                    width: '12px',
+                                    height: '12px',
+                                    background: 'white',
+                                    borderRadius: '50%',
+                                    position: 'absolute',
+                                    top: '2px',
+                                    left: showGlobalPulse ? '18px' : '2px',
+                                    transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                }} />
+                            </div>
+                        </button>
+                    )}
                 </div>
 
                 {/* Dashboard Application Search - Only in Catalog View */}
@@ -646,6 +766,54 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
 
                             {!forceShowAll && <div style={{ width: '100%', height: '1px', background: 'var(--border)', margin: '20px 0', opacity: 0.3 }}></div>}
 
+                            {/* Row 2: B2C, Smart Marketing & Finance */}
+                            {!forceShowAll && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        marginBottom: '40px'
+                                    }}
+                                >
+                                    <div className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`} style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: viewMode === 'list' ? '1fr' : 'repeat(3, 1fr)',
+                                        maxWidth: '1400px',
+                                        margin: '0 auto',
+                                        width: '100%',
+                                        gap: '24px'
+                                    }}>
+                                        {row2Apps.map((app: AppConfig, idx: number) => (
+                                            <motion.div
+                                                key={app.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.1 }}
+                                                className={`module-card ${viewMode === 'list' ? 'list-item' : ''}`}
+                                                onClick={() => handleAppClick(app)}
+                                                style={{
+                                                    background: 'rgba(255, 255, 255, 0.02)',
+                                                    padding: viewMode === 'list' ? '20px' : '24px'
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                                                    <div className="card-icon" style={{ background: app.color, width: '56px', height: '56px' }}>
+                                                        {app.icon}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="card-title" style={{ margin: 0, fontSize: '18px' }}>{app.name}</h3>
+                                                        <p className="card-desc" style={{ margin: '4px 0 0', fontSize: '12px', opacity: 0.7 }}>{app.desc.substring(0, 60)}...</p>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+
 
 
                             {(showFilters || forceShowAll) && (
@@ -654,51 +822,7 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.4 }}
                                 >
-                                    {/* Row 2: Payments & Finance - Also hide on forced view if it's redundant */}
-                                    {!forceShowAll && (
-                                        <div style={{
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            marginBottom: '40px'
-                                        }}>
-                                            <div className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`} style={{
-                                                display: 'grid',
-                                                gridTemplateColumns: viewMode === 'list' ? '1fr' : 'repeat(3, 1fr)',
-                                                maxWidth: '1400px',
-                                                margin: '0 auto',
-                                                width: '100%',
-                                                gap: '24px'
-                                            }}>
-                                                {row2Apps.map((app: AppConfig, idx: number) => (
-                                                    <motion.div
-                                                        key={app.id}
-                                                        initial={{ opacity: 0, y: 20 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        transition={{ delay: idx * 0.1 }}
-                                                        className={`module-card ${viewMode === 'list' ? 'list-item' : ''}`}
-                                                        onClick={() => handleAppClick(app)}
-                                                        style={{
-                                                            background: 'rgba(255, 255, 255, 0.02)',
-                                                            padding: viewMode === 'list' ? '20px' : '24px'
-                                                        }}
-                                                    >
-                                                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                                                            <div className="card-icon" style={{ background: app.color, width: '56px', height: '56px' }}>
-                                                                {app.icon}
-                                                            </div>
-                                                            <div>
-                                                                <h3 className="card-title" style={{ margin: 0, fontSize: '18px' }}>{app.name}</h3>
-                                                                <p className="card-desc" style={{ margin: '4px 0 0', fontSize: '12px', opacity: 0.7 }}>{app.desc.substring(0, 60)}...</p>
-                                                            </div>
-                                                        </div>
-                                                    </motion.div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
                                     {!forceShowAll && <div style={{ width: '100%', height: '1px', background: 'var(--border)', marginBottom: '40px', opacity: 0.5 }}></div>}
-
                                     {/* Category Filters & View Toggle */}
                                     <div style={{
                                         display: 'flex',
@@ -790,8 +914,8 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
                                     {/* Other Apps Section - Only visible in Catalog/Modules view */}
                                     {forceShowAll && (
                                         <Reorder.Group
-                                            values={userApps}
-                                            onReorder={setUserApps}
+                                            values={filteredOtherApps}
+                                            onReorder={handleSubsetReorder}
                                             className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`}
                                             style={{ listStyle: 'none', padding: 0 }}
                                         >
@@ -803,14 +927,28 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
                                                     animate={{ opacity: 1, y: 0 }}
                                                     transition={{ delay: idx * 0.05 }}
                                                     className={`module-card draggable ${viewMode === 'list' ? 'list-item' : ''}`}
-                                                    onClick={() => handleAppClick(app)}
-                                                    style={{ cursor: 'grab', position: 'relative' }}
+                                                    onClick={() => !isMobile && handleAppClick(app)}
+                                                    style={{ cursor: 'default', position: 'relative', userSelect: 'none' }}
                                                     whileDrag={{
-                                                        scale: 1.05,
+                                                        scale: 1.02,
                                                         boxShadow: "0 25px 50px rgba(0,0,0,0.4)",
                                                         zIndex: 50,
                                                     }}
                                                 >
+                                                    <div className="drag-handle-module" style={{
+                                                        position: 'absolute',
+                                                        top: '12px',
+                                                        left: '12px',
+                                                        opacity: 0.3,
+                                                        cursor: 'grab',
+                                                        zIndex: 10,
+                                                        display: 'flex',
+                                                        padding: '4px',
+                                                        borderRadius: '4px',
+                                                        background: 'rgba(255,255,255,0.1)'
+                                                    }}>
+                                                        <GripVertical size={16} />
+                                                    </div>
                                                     <div style={{
                                                         display: 'flex',
                                                         justifyContent: 'space-between',
@@ -869,11 +1007,12 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
 
                             {/* GLOBAL PULSE: LIVE RESERVATIONS MODULE */}
                             {
-                                isStaff && !forceShowAll && (
+                                isStaff && !forceShowAll && showGlobalPulse && (
                                     <motion.div
-                                        initial={{ opacity: 0, y: 40 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.6 }}
+                                        initial={{ opacity: 0, scale: 0.95, y: 40 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, y: 40 }}
+                                        transition={{ duration: 0.5, ease: "easeOut" }}
                                         style={{
                                             maxWidth: '1850px', // Wider container (+10%)
                                             margin: '60px auto 100px',

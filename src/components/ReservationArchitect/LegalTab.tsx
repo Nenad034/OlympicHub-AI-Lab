@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Scale, Shield, ShieldCheck, ShieldAlert, FileText, Info, Clock, CheckCircle2, History, Terminal } from 'lucide-react';
+import { Scale, Shield, ShieldCheck, ShieldAlert, FileText, Info, Clock, CheckCircle2, History, Terminal, ExternalLink } from 'lucide-react';
 import type { Dossier } from '../../types/reservationArchitect';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -122,6 +122,29 @@ export const LegalTab: React.FC<LegalTabProps> = ({ dossier, setDossier }) => {
                             <input className="v4-input" value={dossier.insurance.insurerEmail} onChange={(e) => handleInsuranceChange('insurerEmail', e.target.value)} />
                         </div>
                     </div>
+                </div>
+
+                {/* General Terms & Conditions Link */}
+                <div className="v4-table-card" style={{ padding: '24px', gridColumn: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderLeft: '4px solid var(--accent-cyan)' }}>
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                        <div style={{ padding: '10px', background: 'rgba(0, 229, 255, 0.1)', borderRadius: '8px' }}>
+                            <Scale size={20} className="cyan-text" />
+                        </div>
+                        <div>
+                            <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '0.5px' }}>OPŠTI USLOVI PUTOVANJA TURISTIČKE AGENCIJE</h4>
+                            <div className="v4-text-dim" style={{ fontSize: '11px', marginTop: '6px', lineHeight: 1.4 }}>Zvanični dokument o opštim uslovima koji se primenjuju na ovaj turistički aranžman. Obavezno za uručenje putniku.</div>
+                        </div>
+                    </div>
+                    <a
+                        href="/opsti-uslovi.pdf"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="v4-action-btn primary"
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', padding: '10px 20px' }}
+                    >
+                        <ExternalLink size={16} />
+                        OTVORI DOKUMENT
+                    </a>
                 </div>
             </div>
         </div>

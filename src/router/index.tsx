@@ -2,7 +2,7 @@ import React from 'react';
 import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
 
 // Layout Components
-import { Sidebar, TopBar, HorizontalNav } from '../components/layout';
+import { Sidebar, TopBar, HorizontalNav, SystemFooter, PinnedNotesRenderer } from '../components/layout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GeometricBrain } from '../components/icons/GeometricBrain';
 import GeneralAIChat from '../components/GeneralAIChat';
@@ -93,13 +93,14 @@ const OperationalReports = React.lazy(() => import('../modules/production/Operat
 
 const FinancialIntelligenceHub = React.lazy(() => import('../pages/FinancialIntelligenceHub'));
 const DestinationPrimeExplorer = React.lazy(() => import('../pages/DestinationPrimeExplorer'));
-
+const SmartMarketingHub = React.lazy(() => import('../pages/SmartMarketingHub'));
 
 const B2BPortal = React.lazy(() => import('../pages/B2BPortal'));
 const B2BPromoManager = React.lazy(() => import('../pages/B2BPromoManager'));
 const B2BFinance = React.lazy(() => import('../pages/B2BFinance'));
 const CommandCenter = React.lazy(() => import('../pages/CommandCenter'));
 const SharedReport = React.lazy(() => import('../pages/SharedReport'));
+const PublicBookingPortal = React.lazy(() => import('../pages/PublicBookingPortal'));
 
 
 // Stores
@@ -221,43 +222,13 @@ const GlobalUIWrapper: React.FC = () => {
     return (
         <>
             <Outlet />
+            <PinnedNotesRenderer />
 
             {/* Global Footer */}
-            <footer className="system-footer">
-                Powered By Prime Click
-            </footer>
+            <SystemFooter />
 
             {/* Persistent AI Assistant */}
             <AnimatePresence>
-                {!isChatOpen && (
-                    <motion.button
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        whileHover={{ scale: 1.1, translateY: -5 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => setChatOpen(true)}
-                        style={{
-                            position: 'fixed',
-                            bottom: '72px', // Moved up to clear footer and wisdom
-                            right: '32px',
-                            width: '64px',
-                            height: '64px',
-                            borderRadius: '22px',
-                            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            boxShadow: '0 12px 36px rgba(37, 99, 235, 0.5)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            zIndex: 9999,
-                            backdropFilter: 'blur(10px)'
-                        }}
-                    >
-                        <GeometricBrain size={34} color="#FFD700" />
-                    </motion.button>
-                )}
             </AnimatePresence>
 
             <GeneralAIChat
@@ -350,6 +321,14 @@ export const router = createBrowserRouter([
                 element: (
                     <React.Suspense fallback={<LoadingFallback />}>
                         <SharedReport />
+                    </React.Suspense>
+                ),
+            },
+            {
+                path: '/public-booking',
+                element: (
+                    <React.Suspense fallback={<LoadingFallback />}>
+                        <PublicBookingPortal />
                     </React.Suspense>
                 ),
             },
@@ -632,6 +611,10 @@ export const router = createBrowserRouter([
                     {
                         path: 'destination-prime-explorer',
                         element: <DestinationPrimeExplorer />,
+                    },
+                    {
+                        path: 'smart-marketing',
+                        element: <SmartMarketingHub />,
                     },
                     {
                         path: 'my-reservations',

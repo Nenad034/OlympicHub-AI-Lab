@@ -199,7 +199,7 @@ const ReservationArchitectV5: React.FC = () => {
                             <PassengersTabV5 dossier={dossier} setDossier={setDossier} addLog={addLog} />
                         )}
                         {activeSection === 'finance' && (
-                            <FinanceTabV5 dossier={dossier} financialStats={financialStats} onAddPayment={handleAddPaymentClick} onRemovePayment={handleRemovePayment} />
+                            <FinanceTabV5 dossier={dossier} updateDossier={updateDossier} financialStats={financialStats} onAddPayment={handleAddPaymentClick} onRemovePayment={handleRemovePayment} />
                         )}
                         {activeSection === 'notes' && <NotesTab dossier={dossier} setDossier={setDossier} addLog={addLog} />}
                         {activeSection === 'legal' && <LegalTab dossier={dossier} setDossier={setDossier} />}

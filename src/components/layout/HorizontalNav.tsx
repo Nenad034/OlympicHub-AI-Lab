@@ -38,10 +38,14 @@ import {
     Monitor,
     Globe,
     LayoutTemplate,
-    ChevronDown
+    ChevronDown,
+    Brain,
+    GripVertical
 } from 'lucide-react';
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { ClickToTravelLogo } from '../icons/ClickToTravelLogo';
+import { PrimeChatIcon } from '../../icons/PrimeChatIcon';
 import { useThemeStore, useAppStore, useAuthStore } from '../../stores';
 import { translations } from '../../translations';
 import './HorizontalNav.css';
@@ -62,6 +66,7 @@ interface NavItemDef {
 const HorizontalNav: React.FC = () => {
     const { theme, cycleTheme, lang, setLang, isPrism, togglePrism, navMode, toggleNavMode } = useThemeStore();
     const { userLevel, impersonatedSubagent, userName, logout } = useAuthStore();
+    const { setChatOpen } = useAppStore();
     const t = translations[lang];
     const navigate = useNavigate();
     const location = useLocation();
@@ -69,7 +74,7 @@ const HorizontalNav: React.FC = () => {
     const isStaff = userLevel >= 6 && !impersonatedSubagent;
     const isB2BView = userLevel < 6 || !!impersonatedSubagent;
 
-    const staffNavItems: NavItemDef[] = [
+    const staffNavItems: NavItemDef[] = React.useMemo(() => [
         { to: '/', icon: LayoutDashboard, label: t.dashboard },
         {
             to: '/reservations',
@@ -157,12 +162,28 @@ const HorizontalNav: React.FC = () => {
                 { to: '/activity-log', label: 'Dnevnik Aktivnosti', icon: ClipboardList }
             ]
         },
-    ];
+    ], [t]);
 
     const b2bItems = [
         { to: '/smart-search', icon: Sparkles, label: 'Smart Search ✨' },
         { to: '/my-reservations', icon: ClipboardList, label: 'Moje Rezervacije' }
     ];
+
+    const [staffNavOrder, setStaffNavOrder] = React.useState<NavItemDef[]>(() => {
+        const saved = localStorage.getItem('horizontal_nav_order');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                // Merge with actual definitions to get latest labels/icons but keep order
+                return parsed.map((p: any) => staffNavItems.find(i => i.to === p.to) || staffNavItems.find(i => i.to === '/')).filter(Boolean);
+            } catch (e) { return staffNavItems; }
+        }
+        return staffNavItems;
+    });
+
+    React.useEffect(() => {
+        localStorage.setItem('horizontal_nav_order', JSON.stringify(staffNavOrder.map(i => ({ to: i.to }))));
+    }, [staffNavOrder]);
 
     const [openMenu, setOpenMenu] = React.useState<string | null>(null);
     const [menuPos, setMenuPos] = React.useState<{ top: number; left: number }>({ top: 0, left: 0 });
@@ -186,41 +207,76 @@ const HorizontalNav: React.FC = () => {
     const navItemClass = (isActive: boolean) => `h-nav-item ${isActive ? 'active' : ''}`;
 
     return (
-        <div className="horizontal-nav" style={{ height: '100px', padding: '0 24px', position: 'relative' }}>
-            <Link to="/" style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: '32px' }}>
-                <ClickToTravelLogo height={180} />
-            </Link>
+        <div className="horizontal-nav" style={{ height: '70px', padding: '0 24px', position: 'relative' }}>
+            {/* Logo removed from Horizontal Nav as requested */}
 
             <div className="nav-horizontal-items" style={{ flex: 1, overflow: 'visible' }}>
                 {(userLevel >= 3 || isStaff) && (
-                    <div className="h-group-items" style={{ gap: '4px' }}>
-                        {staffNavItems.map((item) => (
-                            <div
+                    <Reorder.Group
+                        axis="x"
+                        values={staffNavOrder}
+                        onReorder={setStaffNavOrder}
+                        className="h-group-items"
+                        style={{ gap: '4px', display: 'flex', listStyle: 'none', padding: 0, margin: 0 }}
+                    >
+                        {staffNavOrder.map((item) => (
+                            <Reorder.Item
                                 key={item.to}
-                                ref={el => { itemRefs.current[item.to] = el; }}
-                                onMouseEnter={() => item.subItems && handleMouseEnter(item.to)}
-                                onMouseLeave={handleMouseLeave}
-                                className="h-nav-item-wrapper"
-                                style={{ position: 'relative' }}
+                                value={item}
+                                dragListener={true}
+                                style={{ position: 'relative', userSelect: 'none' }}
                             >
-                                <NavLink
-                                    to={item.to}
-                                    className={({ isActive }) => navItemClass(isActive || (openMenu === item.to))}
-                                    onClick={(e) => {
-                                        if (item.subItems) e.preventDefault();
-                                        navigate(item.to);
-                                    }}
+                                <div
+                                    ref={el => { itemRefs.current[item.to] = el; }}
+                                    onMouseEnter={() => item.subItems && handleMouseEnter(item.to)}
+                                    onMouseLeave={handleMouseLeave}
+                                    className="h-nav-item-wrapper"
+                                    style={{ display: 'flex', alignItems: 'center' }}
                                 >
-                                    <item.icon size={18} />
-                                    <span>{item.label}</span>
-                                    {item.subItems && <ChevronDown size={12} style={{ opacity: 0.5, marginLeft: '4px' }} />}
-                                </NavLink>
-                            </div>
+                                    <div className="drag-handle" style={{ opacity: 0.2, cursor: 'grab', padding: '0 4px' }}>
+                                        <GripVertical size={12} />
+                                    </div>
+                                    <NavLink
+                                        to={item.to}
+                                        className={({ isActive }) => navItemClass(isActive || (openMenu === item.to))}
+                                        onClick={(e) => {
+                                            if (item.subItems) e.preventDefault();
+                                        }}
+                                    >
+                                        <item.icon size={18} />
+                                        <span>{item.label}</span>
+                                        {item.subItems && <ChevronDown size={12} style={{ opacity: 0.5, marginLeft: '4px' }} />}
+                                    </NavLink>
+                                </div>
+                            </Reorder.Item>
                         ))}
                         <NavLink to="/mail" className={({ isActive }) => navItemClass(isActive)} style={{ color: '#FFD700', marginLeft: '12px' }}>
                             <Mail size={18} /> <span>Prime Mail</span>
                         </NavLink>
-                    </div>
+
+                        <button
+                            onClick={() => setChatOpen(true)}
+                            className="h-nav-item"
+                            style={{
+                                color: '#800020', // Tamno bordo / Burgundy
+                                marginLeft: '8px',
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 16px',
+                                borderRadius: '12px',
+                                fontWeight: 800,
+                                fontSize: '13px',
+                                fontFamily: 'inherit'
+                            }}
+                            title="Prime Chat"
+                        >
+                            <PrimeChatIcon size={18} /> <span>Prime Chat</span>
+                        </button>
+                    </Reorder.Group>
                 )}
 
                 {isB2BView && !isStaff && (
