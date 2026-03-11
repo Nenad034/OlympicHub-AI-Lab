@@ -317,6 +317,81 @@ class MultiKeyAIService {
     }
 
     /**
+     * Generate embeddings with automatic failover
+     */
+    async embedContent(
+        content: string,
+        model: string = 'gemini-embedding-001'
+    ): Promise<number[]> {
+        // --- DEVELOPMENT BYPASS ---
+        if (import.meta.env.VITE_AI_DEV_MODE === 'true') {
+            console.log(`⚡ [MULTI-KEY] EMBED DEV MODE: Returning mock vector.`);
+            return Array.from({ length: 768 }, () => Math.random() * 2 - 1);
+        }
+
+        // Try each available key
+        let lastError: Error | null = null;
+        const maxAttempts = Math.max(this.apiKeys.length, 1);
+
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            const apiKey = this.getNextKey();
+            if (!apiKey) {
+                throw new Error('No available API keys or proxy');
+            }
+
+            try {
+                const startTime = Date.now();
+
+                const vector = await aiRateLimiter.queueRequest(async () => {
+                    if (apiKey.isProxy) {
+                        console.log(`📡 [MULTI-KEY] Routing Embedding through Supabase Proxy...`);
+                        const { data, error } = await supabase.functions.invoke('gemini-proxy', {
+                            body: {
+                                prompt: content,
+                                taskType: 'EMBEDDING',
+                                model: model
+                            }
+                        });
+
+                        if (error) throw new Error(`Proxy Error: ${error.message}`);
+                        if (!data?.embedding) throw new Error('No embedding from proxy');
+                        return data.embedding;
+                    } else {
+                        const genAI = new GoogleGenerativeAI(apiKey.key);
+                        const embedModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
+                        const result = await embedModel.embedContent(content);
+                        let values = result.embedding.values;
+                        // Matryoshka slicing: Keep only first 768 dimensions for compatibility
+                        if (values.length > 768) {
+                            values = values.slice(0, 768);
+                        }
+                        return values;
+                    }
+                });
+
+                // Success!
+                const tokens = Math.ceil(content.length / 4);
+                const durationMs = Date.now() - startTime;
+
+                aiUsageService.recordUsage('gemini-embedding', tokens);
+                ActivityLogger.logAPICall('Gemini-Embedding', model, durationMs, true);
+
+                console.log(`✅ [MULTI-KEY] Embedding success with ${apiKey.name}`);
+                return vector;
+
+            } catch (error: any) {
+                lastError = error;
+                console.error(`❌ [MULTI-KEY] Embedding failed with ${apiKey.name}:`, error.message);
+                this.markKeyFailed(apiKey.name);
+                continue;
+            }
+        }
+
+        throw lastError || new Error('All API keys failed for embedding');
+    }
+
+
+    /**
      * Simple numeric hash for prompt deduplication
      */
     private getSimpleHash(str: string): string {

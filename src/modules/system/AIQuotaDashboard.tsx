@@ -6,7 +6,7 @@ import { aiCache } from '../../services/aiCache';
 import { multiKeyAI } from '../../services/multiKeyAI';
 
 interface QuotaData {
-    provider: 'Google Gemini' | 'OpenAI' | 'Claude';
+    provider: 'Google Gemini' | 'Gemini Embedding' | 'OpenAI' | 'Claude';
     icon: string;
     color: string;
     dailyLimit: number;
@@ -16,6 +16,7 @@ interface QuotaData {
     avgPerRequest: number;
     lastReset: string;
     nextReset: string;
+    isRequestBased?: boolean;
 }
 
 export default function AIQuotaDashboard() {
@@ -37,6 +38,19 @@ export default function AIQuotaDashboard() {
             avgPerRequest: 0,
             lastReset: new Date().toISOString(),
             nextReset: new Date(new Date().setHours(24, 0, 0, 0)).toISOString()
+        },
+        {
+            provider: 'Gemini Embedding',
+            icon: '🧬',
+            color: '#00e5ff',
+            dailyLimit: 1000,
+            dailyUsed: 0,
+            weeklyUsed: 0,
+            monthlyUsed: 0,
+            avgPerRequest: 0,
+            lastReset: new Date().toISOString(),
+            nextReset: new Date(new Date().setHours(24, 0, 0, 0)).toISOString(),
+            isRequestBased: true
         },
         {
             provider: 'OpenAI',
@@ -80,6 +94,7 @@ export default function AIQuotaDashboard() {
     useEffect(() => {
         const loadQuotaData = () => {
             const geminiData = localStorage.getItem('ai_quota_gemini');
+            const geminiEmbedData = localStorage.getItem('ai_quota_gemini_embed');
             const openaiData = localStorage.getItem('ai_quota_openai');
             const claudeData = localStorage.getItem('ai_quota_claude');
 
@@ -92,6 +107,8 @@ export default function AIQuotaDashboard() {
                 let savedData = null;
                 if (provider.provider === 'Google Gemini' && geminiData) {
                     savedData = JSON.parse(geminiData);
+                } else if (provider.provider === 'Gemini Embedding' && geminiEmbedData) {
+                    savedData = JSON.parse(geminiEmbedData);
                 } else if (provider.provider === 'OpenAI' && openaiData) {
                     savedData = JSON.parse(openaiData);
                 } else if (provider.provider === 'Claude' && claudeData) {
@@ -450,7 +467,7 @@ export default function AIQuotaDashboard() {
                             {/* Daily Usage Bar */}
                             <div style={{ marginBottom: '20px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>Daily Usage</span>
+                                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>{provider.isRequestBased ? 'Daily Requests' : 'Daily Usage'}</span>
                                     <span style={{ fontSize: '12px', fontWeight: 600 }}>
                                         {formatNumber(provider.dailyUsed)} / {formatNumber(provider.dailyLimit)}
                                     </span>
@@ -508,10 +525,10 @@ export default function AIQuotaDashboard() {
                                 alignItems: 'center'
                             }}>
                                 <div style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <DollarSign size={12} /> Avg per request
+                                    <DollarSign size={12} /> {provider.isRequestBased ? 'Avg chars' : 'Avg per request'}
                                 </div>
                                 <div style={{ fontSize: '13px', fontWeight: 700, color: provider.color }}>
-                                    ~{provider.avgPerRequest > 0 ? formatNumber(provider.avgPerRequest) : '0'} tokens
+                                    ~{provider.avgPerRequest > 0 ? formatNumber(provider.avgPerRequest) : '0'} {provider.isRequestBased ? 'chars' : 'tokens'}
                                 </div>
                             </div>
 
@@ -721,8 +738,9 @@ export default function AIQuotaDashboard() {
                 <div style={{ fontWeight: 700, color: '#3b82f6', marginBottom: '8px' }}>ℹ️ How Quota Tracking Works</div>
                 <ul style={{ margin: 0, paddingLeft: '20px' }}>
                     <li>Tokens are counted automatically when you use AI Chat</li>
+                    <li><strong>Gemini Embedding</strong> limit is based on 1000 requests per day (Free Tier)</li>
                     <li>Daily limits reset at midnight (local time)</li>
-                    <li>Free tier limits: Gemini (1M), OpenAI (500K), Claude (750K)</li>
+                    <li>Free tier limits: Gemini (1M tokens), OpenAI (500K tokens), Claude (750K tokens)</li>
                     <li>Data is stored locally in your browser</li>
                 </ul>
             </div>

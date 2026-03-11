@@ -4,7 +4,7 @@
  */
 
 interface QuotaAlert {
-    provider: 'gemini' | 'openai' | 'claude';
+    provider: 'gemini' | 'gemini-embedding' | 'openai' | 'claude';
     percentage: number;
     used: number;
     limit: number;
@@ -119,7 +119,7 @@ class AIQuotaNotificationService {
      */
     private formatAlertMessage(alert: QuotaAlert): string {
         const emoji = alert.severity === 'critical' ? '🚨' : alert.severity === 'warning' ? '⚠️' : 'ℹ️';
-        const providerName = alert.provider === 'gemini' ? 'Google Gemini' : alert.provider === 'openai' ? 'OpenAI' : 'Claude';
+        const providerName = alert.provider === 'gemini' ? 'Google Gemini' : alert.provider === 'gemini-embedding' ? 'Gemini Embedding' : alert.provider === 'openai' ? 'OpenAI' : 'Claude';
 
         return `${emoji} *AI Quota Alert*\n\n` +
             `*Provider:* ${providerName}\n` +
@@ -140,7 +140,7 @@ class AIQuotaNotificationService {
     /**
      * Check quota and send alerts if needed
      */
-    async checkAndAlert(provider: 'gemini' | 'openai' | 'claude', used: number, limit: number) {
+    async checkAndAlert(provider: 'gemini' | 'gemini-embedding' | 'openai' | 'claude', used: number, limit: number) {
         const percentage = (used / limit) * 100;
 
         // Determine severity

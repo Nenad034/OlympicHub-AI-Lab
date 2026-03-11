@@ -35,6 +35,7 @@ import './SmartSearchStylesFix.css';
 import './SmartSearchGridFix.css';
 import './SmartSearchLightMode.css';
 import { searchCacheService } from '../services/searchCacheService';
+import { aiUsageService } from '../services/aiUsageService';
 import '../archive/pages/GlobalHubSearch.css';
 import './SmartSearchHistory.css';
 import { SearchHistorySidebar } from './SmartSearch/components/SearchHistorySidebar';
@@ -307,7 +308,7 @@ const SmartSearch: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
 
     // MODE SWITCH
-    const [searchMode, setSearchMode] = useState<'classic' | 'narrative' | 'immersive' | 'immersive-v2' | 'immersive-map'>(() => {
+    const [searchMode, setSearchMode] = useState<'classic' | 'narrative' | 'immersive' | 'immersive-v2' | 'immersive-map' | 'semantic'>(() => {
         const isMobileApp = document.body.classList.contains('mobile-view');
         if (isMobileApp) return 'immersive';
         const saved = localStorage.getItem('preferredSearchMode');
@@ -384,6 +385,8 @@ const SmartSearch: React.FC = () => {
     const [nationality, setNationality] = useState('RS');
     const [budgetType, setBudgetType] = useState<'total' | 'person' | 'room'>('person');
     const [showModes, setShowModes] = useState(true);
+    const [semanticQuery, setSemanticQuery] = useState('');
+    const [isSemanticSearching, setIsSemanticSearching] = useState(false);
 
     // API Providers State
     const [apiConnectionsEnabled, setApiConnectionsEnabled] = useState(true);
@@ -877,6 +880,22 @@ const SmartSearch: React.FC = () => {
         }
     };
 
+    const getPriceWithMargin = (price: number) => Number((price * 1.15).toFixed(2));
+
+    const getFinalDisplayPrice = (hotel: SmartSearchResult) => {
+        let total = 0;
+        if (hotel.allocationResults && Object.keys(hotel.allocationResults).length > 0) {
+            Object.values(hotel.allocationResults).forEach((rooms: any) => {
+                if (!rooms || rooms.length === 0) return;
+                const minPrice = Math.min(...rooms.map((r: any) => r.price));
+                total += isSubagent ? getPriceWithMargin(minPrice) : Number(minPrice);
+            });
+        } else {
+            total = isSubagent ? getPriceWithMargin(hotel.price) : Number(hotel.price);
+        }
+        return total;
+    };
+
     const handleSearch = async (overrideParams?: {
         checkIn?: string,
         checkOut?: string,
@@ -888,7 +907,7 @@ const SmartSearch: React.FC = () => {
         budgetTo?: string,
         budgetType?: 'total' | 'person' | 'room',
         searchType?: string,
-        searchMode?: 'classic' | 'narrative' | 'immersive' | 'immersive-v2' | 'immersive-map'
+        searchMode?: 'classic' | 'narrative' | 'immersive' | 'immersive-v2' | 'immersive-map' | 'semantic'
     }) => {
         const activeSearchType = overrideParams?.searchType || activeTab;
         const activeSearchMode = overrideParams?.searchMode || searchMode;
@@ -901,6 +920,35 @@ const SmartSearch: React.FC = () => {
         const activeBudgetType = overrideParams?.budgetType || budgetType;
         const activeBudgetFrom = overrideParams?.budgetFrom !== undefined ? overrideParams.budgetFrom : budgetFrom;
         const activeBudgetTo = overrideParams?.budgetTo !== undefined ? overrideParams.budgetTo : budgetTo;
+
+        if (activeSearchMode === 'semantic') {
+            setIsSearching(true);
+            setSearchError(null);
+            setSearchPerformed(false);
+            
+            try {
+                const { semanticSearchService: sSearch } = await import('../services/semanticSearchService');
+                const semanticResults = await sSearch.searchHotels({ 
+                    query: semanticQuery || 'Bilo koji hotel',
+                    limit: 20
+                });
+                
+                setSearchResults(semanticResults);
+                setSearchPerformed(true);
+                setIsSearching(false);
+                setIsCachedResults(false);
+                return; // COMPLETELY EXIT for semantic search
+            } catch (err: any) {
+                console.error('Semantic search failed:', err);
+                let msg = err.message || 'Greška pri AI pretrazi';
+                if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('too many requests')) {
+                    msg = 'Dnevni limit za AI pretragu je dostignut (1000/dan). Molimo pokušajte ponovo sutra ili kontaktirajte podršku.';
+                }
+                setSearchError(msg);
+                setIsSearching(false);
+                return;
+            }
+        }
 
         if (activeDestinations.length === 0) {
             setSearchError('Molimo odaberite najmanje jednu destinaciju');
@@ -1042,6 +1090,7 @@ const SmartSearch: React.FC = () => {
                     return;
                 }
             }
+        }
 
             // FINAL PROCESSING (Update state and cache)
             setSearchResults(resultsToDisplay);
@@ -1062,8 +1111,7 @@ const SmartSearch: React.FC = () => {
             } else if (!overrideParams && !searchError) {
                 setSearchError('Nažalost, nema slobodnih mesta za izabrane parametre. Pokušajte sa drugim datumima ili destinacijom.');
             }
-        }
-
+        
         // SAVE TO HISTORY (Reached for both cache hits and fresh searches)
         const historyItem: SearchHistoryItem = {
             id: Math.random().toString(36).substring(2, 9),
@@ -1207,21 +1255,6 @@ const SmartSearch: React.FC = () => {
         }
     };
 
-    const getPriceWithMargin = (price: number) => Number((price * 1.15).toFixed(2));
-
-    const getFinalDisplayPrice = (hotel: SmartSearchResult) => {
-        let total = 0;
-        if (hotel.allocationResults && Object.keys(hotel.allocationResults).length > 0) {
-            Object.values(hotel.allocationResults).forEach((rooms: any) => {
-                if (!rooms || rooms.length === 0) return;
-                const minPrice = Math.min(...rooms.map((r: any) => r.price));
-                total += isSubagent ? getPriceWithMargin(minPrice) : Number(minPrice);
-            });
-        } else {
-            total = isSubagent ? getPriceWithMargin(hotel.price) : Number(hotel.price);
-        }
-        return total;
-    };
 
     const filteredResults = searchResults.filter(hotel => {
         // console.log('[SmartSearch] Checking hotel provider:', hotel.provider);
@@ -1664,6 +1697,19 @@ const SmartSearch: React.FC = () => {
                         >
                             <Globe size={16} /> Geo Explorer (Map)
                         </button>
+                        <button
+                            className={`mode-switch-btn ${searchMode === 'semantic' ? 'active' : ''}`}
+                            onClick={() => { setSearchMode('semantic'); setSearchPerformed(false); }}
+                            style={{
+                                padding: '12px 24px', borderRadius: '10px', border: 'none', fontSize: '14px', fontWeight: 700,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.3s',
+                                background: searchMode === 'semantic' ? '#00e5ff' : 'rgba(15, 23, 42, 0.5)',
+                                color: searchMode === 'semantic' ? '#fff' : '#94a3b8',
+                                flex: 1
+                            }}
+                        >
+                            <Sparkles size={16} /> Semantic AI
+                        </button>
                     </div>
                 </div>
             )}
@@ -1867,6 +1913,89 @@ const SmartSearch: React.FC = () => {
                                                 <Loader2 className="spin-slow" size={40} color="#8E24AC" />
                                             </div>
                                         )}
+                                    </div>
+                                )}
+
+                                {searchMode === 'semantic' && (
+                                    <div className="semantic-mode-container" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: '800px', margin: '0 auto' }}>
+                                        <div className="ai-search-header" style={{ textAlign: 'center', marginBottom: '3rem' }}>
+                                            <div className="ai-icon-large" style={{ 
+                                                width: '100px', height: '100px', borderRadius: '50%', background: 'linear-gradient(135deg, #00e5ff, #006064)', 
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem', margin: '0 auto',
+                                                boxShadow: '0 0 30px rgba(0, 229, 255, 0.4)', border: '4px solid rgba(255,255,255,0.1)' 
+                                            }}>
+                                                <Sparkles size={48} color="white" />
+                                            </div>
+                                            <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '0.5rem', background: 'linear-gradient(to right, #fff, #00e5ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                                                Gemini Semantic Search
+                                            </h2>
+                                            <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto' }}>
+                                                Opišite hotel kakav želite svojim rečima. Naš AI će razumeti vašu želju i pronaći najbolje mečeve u bazi.
+                                            </p>
+                                            
+                                            {/* Quota Indicator */}
+                                            {(() => {
+                                                const usage = aiUsageService.getUsage('gemini-embedding');
+                                                const remaining = Math.max(0, 1000 - usage.dailyUsed);
+                                                return (
+                                                    <div style={{ 
+                                                        marginTop: '1rem', padding: '6px 12px', borderRadius: '20px', 
+                                                        background: 'rgba(0, 229, 255, 0.05)', border: '1px solid rgba(0, 229, 255, 0.1)',
+                                                        fontSize: '0.8rem', color: remaining < 50 ? '#ef4444' : '#00e5ff', display: 'flex', alignItems: 'center', gap: '6px'
+                                                    }}>
+                                                        <Zap size={12} />
+                                                        <span>Dostupno još <strong>{remaining}</strong> AI pretraga za danas</span>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+
+                                        <div className="ai-search-box-wrapper" style={{ width: '100%', position: 'relative' }}>
+                                            <textarea 
+                                                placeholder="Npr. 'Tražim miran porodični hotel sa puno zelenila u Grčkoj, blizu plaže, idealno sa vodenim parkom za decu...'"
+                                                value={semanticQuery}
+                                                onChange={(e) => setSemanticQuery(e.target.value)}
+                                                style={{
+                                                    width: '100%', minHeight: '150px', padding: '24px', borderRadius: '24px', background: 'rgba(255,255,255,0.03)',
+                                                    border: '1px solid var(--border)', color: 'white', fontSize: '1.2rem', outline: 'none', transition: 'all 0.3s',
+                                                    resize: 'none', boxShadow: 'inset 0 4px 10px rgba(0,0,0,0.2)', marginBottom: '20px'
+                                                }}
+                                                onFocus={e => e.currentTarget.style.borderColor = '#00e5ff'}
+                                                onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                                            />
+                                            <button 
+                                                onClick={() => handleSearch()}
+                                                disabled={isSearching || !semanticQuery.trim()}
+                                                style={{
+                                                    width: '100%', height: '60px', borderRadius: '16px', background: 'linear-gradient(135deg, #00e5ff, #00b0ff)',
+                                                    border: 'none', color: '#0f172a', fontSize: '1.2rem', fontWeight: 900, cursor: 'pointer',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', transition: 'all 0.3s',
+                                                    opacity: (!semanticQuery.trim() || isSearching) ? 0.5 : 1,
+                                                    boxShadow: '0 10px 20px rgba(0, 229, 255, 0.3)'
+                                                }}
+                                            >
+                                                {isSearching ? <Loader2 className="spin-slow" /> : <Search size={24} />}
+                                                POKRENI AI PRETRAGU
+                                            </button>
+                                        </div>
+
+                                        <div className="ai-hints" style={{ marginTop: '2rem', display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
+                                            {['Luksuzan hotel sa spa centrom', 'Hotel u šumi na planini', 'Moderan gradski hotel sa bazenom na krovu', 'Tradicionalna kamena kuća blizu mora'].map(hint => (
+                                                <button 
+                                                    key={hint}
+                                                    onClick={() => setSemanticQuery(hint)}
+                                                    style={{
+                                                        padding: '8px 16px', borderRadius: '20px', background: 'rgba(255,255,255,0.05)',
+                                                        border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)', fontSize: '0.85rem',
+                                                        cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}
+                                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(0, 229, 255, 0.1)'}
+                                                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                                                >
+                                                    {hint}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
 
@@ -2225,7 +2354,7 @@ const SmartSearch: React.FC = () => {
                                         <div className="action-row-container" style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', marginTop: '30px' }}>
                                             <button className="btn-search-main" onClick={() => handleSearch()} disabled={isSearching} style={{ flex: '2', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', borderRadius: '40px', background: 'var(--accent)', border: 'none', color: 'white', cursor: 'pointer' }}>
                                                 <div style={{ opacity: isSearching ? 0.2 : 1, transition: 'all 0.3s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                                                    <ClickToTravelLogo height={42} iconOnly={true} forceOutline={true} />
+                                                    <ClickToTravelLogo height={42} />
                                                 </div>
                                                 {isSearching && (
                                                     <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

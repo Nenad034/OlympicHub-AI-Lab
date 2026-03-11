@@ -17,12 +17,14 @@ export interface UsageData {
 class AIUsageService {
     private readonly providerKeys = {
         'gemini': 'ai_quota_gemini',
+        'gemini-embedding': 'ai_quota_gemini_embed',
         'openai': 'ai_quota_openai',
         'claude': 'ai_quota_claude'
     };
 
     private readonly limits = {
         'gemini': 1000000,
+        'gemini-embedding': 1000, // 1000 requests per day for free tier
         'openai': 500000,
         'claude': 750000
     };
@@ -30,7 +32,7 @@ class AIUsageService {
     /**
      * Record token usage for a provider
      */
-    recordUsage(provider: 'gemini' | 'openai' | 'claude', tokens: number) {
+    recordUsage(provider: 'gemini' | 'gemini-embedding' | 'openai' | 'claude', tokens: number) {
         const key = this.providerKeys[provider];
         const saved = localStorage.getItem(key);
 
@@ -52,11 +54,19 @@ class AIUsageService {
         }
 
         // Update stats
-        data.dailyUsed += tokens;
-        data.weeklyUsed += tokens;
-        data.monthlyUsed += tokens;
+        if (provider === 'gemini-embedding') {
+            data.dailyUsed += 1; // Track requests
+            data.weeklyUsed += 1;
+            data.monthlyUsed += 1;
+        } else {
+            data.dailyUsed += tokens; // Track tokens
+            data.weeklyUsed += tokens;
+            data.monthlyUsed += tokens;
+        }
+        
         data.totalCalls += 1;
-        data.avgPerRequest = Math.round(data.dailyUsed / data.totalCalls);
+        // For embeddings, avgPerRequest becomes average characters
+        data.avgPerRequest = Math.round((provider === 'gemini-embedding' ? tokens * 4 : data.dailyUsed) / data.totalCalls);
 
         localStorage.setItem(key, JSON.stringify(data));
         console.group(`📊 [AI USAGE] ${provider.toUpperCase()}`);
@@ -72,7 +82,7 @@ class AIUsageService {
     /**
      * Get current usage for a provider
      */
-    getUsage(provider: 'gemini' | 'openai' | 'claude'): UsageData {
+    getUsage(provider: 'gemini' | 'gemini-embedding' | 'openai' | 'claude'): UsageData {
         const key = this.providerKeys[provider];
         const saved = localStorage.getItem(key);
         return saved ? JSON.parse(saved) : {

@@ -20,7 +20,7 @@ export interface RoomAllocation {
 }
 
 export type TabId = 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'ski';
-export type SearchMode = 'classic' | 'narrative' | 'immersive' | 'immersive-v2' | 'immersive-map';
+export type SearchMode = 'classic' | 'narrative' | 'immersive' | 'immersive-v2' | 'immersive-map' | 'semantic';
 export type ViewMode = 'grid' | 'list' | 'notepad';
 export type SortBy = 'smart' | 'price_low' | 'price_high';
 export type BudgetType = 'total' | 'person' | 'room';

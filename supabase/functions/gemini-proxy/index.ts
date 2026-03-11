@@ -17,6 +17,7 @@ interface GeminiRequest {
     maxTokens?: number;
     temperature?: number;
     context?: string;
+    taskType?: 'GENERATE' | 'EMBEDDING';
 }
 
 serve(async (req: Request) => {
@@ -36,7 +37,7 @@ serve(async (req: Request) => {
 
         // Get request body
         const body: GeminiRequest = await req.json();
-        const { prompt, model = "gemini-1.5-flash", maxTokens = 2048, temperature = 0.7, context } = body;
+        const { prompt, model = "gemini-1.5-flash", maxTokens = 2048, temperature = 0.7, context, taskType = 'GENERATE' } = body;
 
         if (!prompt) {
             return new Response(
@@ -45,6 +46,40 @@ serve(async (req: Request) => {
             );
         }
 
+        // --- EMBEDDING TASK ---
+        if (taskType === 'EMBEDDING') {
+            const embeddingModel = model.includes('embedding') ? model : 'text-embedding-004';
+            const embedResponse = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${embeddingModel}:embedContent?key=${GEMINI_API_KEY}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        content: { parts: [{ text: prompt }] }
+                    })
+                }
+            );
+
+            if (!embedResponse.ok) {
+                const errorData = await embedResponse.text();
+                return new Response(
+                    JSON.stringify({ error: "Gemini Embedding API error", details: errorData }),
+                    { status: embedResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+            }
+
+            const embedData = await embedResponse.json();
+            return new Response(
+                JSON.stringify({
+                    success: true,
+                    embedding: embedData.embedding.values,
+                    model: embeddingModel
+                }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
+
+        // --- GENERATE CONTENT TASK ---
         // Prepare the full prompt with context if provided
         const fullPrompt = context
             ? `Context: ${context}\n\nUser: ${prompt}`
@@ -104,3 +139,4 @@ serve(async (req: Request) => {
         );
     }
 });
+
