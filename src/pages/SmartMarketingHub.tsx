@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
     Brain, Target, Users, Mail, MessageSquare, Zap,
     TrendingUp, FileText, Gift, Send, PlayCircle, Settings, Search, UserPlus, Cpu, Database,
-    ChevronRight, ChevronDown, Folder, Plus, Filter, MessageCircle, Paperclip, Calendar, Clock, Trash2, Edit2, AlertCircle, Sparkles, Minus
+    ChevronRight, ChevronDown, Folder, Plus, Filter, MessageCircle, Paperclip, Calendar, Clock, Trash2, Edit2, AlertCircle, Sparkles, Minus, MapPin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -42,6 +42,15 @@ const PrimeIcon = ({ size = 32, color = 'var(--accent-cyan)' }) => (
         <rect x="11" y="11" width="2" height="2" fill="white" opacity="0.9" />
     </svg>
 );
+
+const PLATFORMS_MAP: Record<string, string> = {
+    ig: 'Instagram',
+    fb: 'Facebook',
+    tt: 'TikTok',
+    wa: 'WhatsApp',
+    gm: 'Google Maps',
+    email: 'Newsletter'
+};
 
 const TRIGGERS = [
     { id: 1, name: 'Grčka - Kasni Kapaciteti', audience: 'Porodice (Prošle Sezone)', condition: 'Popunjenost > 85%', status: 'active' },
@@ -286,14 +295,17 @@ export default function SmartMarketingHub() {
                 const clientName = targetClient?.name || 'Vašim klijentima';
                 const newText = `Specijalna ponuda za ${clientName}!\n\nSa zadovoljstvom Vam predstavljamo ekskluzivni aranžman za ${hotelName}.${discount ? ` Samo za Vašu agenciju odobravamo dodatnih ${discount} popusta u narednih 7 dana.` : ''}\n\nOva ponuda je kreirana na osnovu naše dugogodišnje saradnje i poverenja.`;
                 
+                const platformType = input.includes('social') ? 'instagram' : 
+                                     (input.includes('map') || input.includes('pin')) ? 'gm' : 'email';
+
                 const newCampaign = {
                     id: 'q-' + Date.now(),
-                    type: input.includes('social') || input.includes('mrež') ? 'social' : 'newsletter',
+                    type: (input.includes('social') || input.includes('mrež') || input.includes('map')) ? 'social' : 'newsletter',
                     title: targetHotel ? targetHotel.name + ' Kampanja' : 'Nova Kampanja',
                     audience: targetClient ? targetClient.name : 'Ciljna grupa',
                     scheduledTime: '2026-03-15T10:00:00',
                     status: 'planned',
-                    platform: input.includes('social') ? 'instagram' : 'email',
+                    platform: platformType,
                     content: newText
                 };
                 setMarketingQueue(prev => [...prev, newCampaign]);
@@ -649,7 +661,8 @@ export default function SmartMarketingHub() {
                                                 { id: 'grid-2', label: 'Split (2)', icon: Database },
                                                 { id: 'grid-4', label: 'Grid (4)', icon: Database },
                                                 { id: 'grid-9', label: 'Grid (9)', icon: Database },
-                                                { id: 'reels', label: 'Reels/Shorts', icon: PlayCircle }
+                                                { id: 'reels', label: 'Reels/Shorts', icon: PlayCircle },
+                                                { id: 'gm-post', label: 'Maps Post', icon: MapPin }
                                             ].map(layout => (
                                                 <button 
                                                     key={layout.id}
@@ -869,7 +882,8 @@ export default function SmartMarketingHub() {
                                             { id: 'ig', icon: '📸', color: '#E1306C' },
                                             { id: 'fb', icon: '👥', color: '#1877F2' },
                                             { id: 'tt', icon: '🎵', color: '#000000' },
-                                            { id: 'wa', icon: '🟢', color: '#25D366' }
+                                            { id: 'wa', icon: '🟢', color: '#25D366' },
+                                            { id: 'gm', icon: '📍', color: '#4285F4' }
                                         ].map(platform => (
                                             <div key={platform.id} onClick={() => setSelectedPlatform(platform.id)} style={{ aspectRatio: '1/1', borderRadius: '12px', border: '1px solid', borderColor: selectedPlatform === platform.id ? platform.color : 'var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', cursor: 'pointer', background: selectedPlatform === platform.id ? `${platform.color}15` : 'transparent' }}>{platform.icon}</div>
                                         ))}
@@ -891,8 +905,13 @@ export default function SmartMarketingHub() {
                                     </div>
                                     <div style={{ padding: '16px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--accent-cyan)' }}></div>
-                                            <div style={{ fontSize: '12px', fontWeight: 900, color: 'white' }}>PrimeClick Travel</div>
+                                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: selectedPlatform === 'gm' ? '#4285F4' : 'var(--accent-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                {selectedPlatform === 'gm' ? <MapPin size={16} color="white" /> : null}
+                                            </div>
+                                            <div>
+                                                <div style={{ fontSize: '12px', fontWeight: 900, color: 'white' }}>{selectedPlatform === 'gm' ? 'Google Business Profile' : 'PrimeClick Travel'}</div>
+                                                {selectedPlatform === 'gm' && <div style={{ fontSize: '8px', color: 'var(--text-secondary)' }}>Objava na mapi</div>}
+                                            </div>
                                         </div>
                                         <div style={{ width: '100%', aspectRatio: '1/1', background: `url(${selectedImage}) center/cover`, borderRadius: '8px', marginBottom: '16px' }}></div>
                                         <div style={{ fontSize: '12px', color: 'white', opacity: 0.9, lineHeight: 1.6, height: '180px' }}>
@@ -933,7 +952,7 @@ export default function SmartMarketingHub() {
                                             const newCampaign = {
                                                 id: 'q-' + Date.now(),
                                                 type: 'social',
-                                                title: 'Social Post: ' + selectedPlatform.toUpperCase(),
+                                                title: (PLATFORMS_MAP[selectedPlatform] || 'Social') + ' Objava',
                                                 audience: 'Svi pratioci',
                                                 scheduledTime: new Date().toISOString().split('T')[0] + 'T18:00:00',
                                                 status: 'planned',
@@ -1300,11 +1319,14 @@ export default function SmartMarketingHub() {
                                                 <div style={{ 
                                                     width: '56px', height: '56px', 
                                                     borderRadius: '16px', 
-                                                    background: item.type === 'newsletter' ? 'rgba(0,172,193,0.1)' : 'rgba(125,42,232,0.1)',
-                                                    color: item.type === 'newsletter' ? '#00acc1' : '#7d2ae8',
+                                                    background: item.platform === 'email' ? 'rgba(0,172,193,0.1)' : 
+                                                               item.platform === 'gm' ? 'rgba(66,133,244,0.1)' : 'rgba(125,42,232,0.1)',
+                                                    color: item.platform === 'email' ? '#00acc1' : 
+                                                           item.platform === 'gm' ? '#4285F4' : '#7d2ae8',
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                                                 }}>
-                                                    {item.type === 'newsletter' ? <Mail size={24} /> : <Send size={24} />}
+                                                    {item.platform === 'email' ? <Mail size={24} /> : 
+                                                     item.platform === 'gm' ? <MapPin size={24} /> : <Send size={24} />}
                                                 </div>
                                                 
                                                 <div style={{ flex: 1 }}>
