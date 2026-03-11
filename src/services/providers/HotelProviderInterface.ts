@@ -137,6 +137,15 @@ export interface HotelSearchResult {
 
     /** Longitude for map display */
     longitude?: number;
+
+    /** Contact information (optional) */
+    contactInfo?: {
+        phone?: string;
+        email?: string;
+        website?: string;
+        fax?: string;
+        emergencyContact?: string;
+    };
 }
 
 /**

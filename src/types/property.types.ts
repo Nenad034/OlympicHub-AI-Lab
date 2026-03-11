@@ -4,12 +4,25 @@ export interface PropertyIdentifiers {
     internalId: string; // UUID
     legalEntityId?: string;
     pmsId?: string;
+    providerId?: string; // ID from external provider (Solvex, Filos, etc.)
+    providerName?: string;
     channelMappings?: {
         expediaId?: string;
         bookingComId?: string;
         googleHotelId?: string;
         gdsCode?: string;
+        solvexId?: string;
+        filosId?: string;
+        openGreeceId?: string;
     };
+}
+
+export interface ContactInfo {
+    phone?: string;
+    email?: string;
+    website?: string;
+    fax?: string;
+    emergencyContact?: string;
 }
 
 export interface Address {
@@ -216,6 +229,7 @@ export interface Property {
     chainId?: string; // Lanac Hotela
     brandId?: string; // Brand Hotela
     address: Address;
+    contactInfo?: ContactInfo;
     geoCoordinates?: GeoCoordinates;
     content: PropertyContent[];
     images: PropertyImage[];
@@ -232,6 +246,8 @@ export interface Property {
         paymentPolicy?: string;
     };
     isActive: boolean;
+    status?: 'NEW' | 'ACTIVE' | 'PENDING' | 'ARCHIVED';
+    contractEndDate?: string;
     createdAt: Date;
     updatedAt: Date;
     aiPromptHistory?: AIPromptHistory[];

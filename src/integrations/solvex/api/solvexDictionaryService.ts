@@ -498,8 +498,8 @@ export async function getHotelFullContent(hotelId: number): Promise<SolvexApiRes
                         description = firstMatch.description;
                     }
                 }
-            } catch (e) {
-                console.warn(`[Solvex Content] Search discovery failed for ${hotelId}`);
+            } catch (err) {
+                console.warn(`[Solvex Content] Search discovery failed for ${hotelId}`, err);
             }
         }
 
@@ -534,6 +534,123 @@ export async function getHotelFullContent(hotelId: number): Promise<SolvexApiRes
     }
 }
 
+/**
+ * Get accommodation types (rooms) for a hotel
+ */
+export async function getHotelRoomTypes(hotelId: number): Promise<SolvexApiResponse<any[]>> {
+    try {
+        const auth = await connect();
+        if (!auth.success || !auth.data) {
+            return { success: false, error: auth.error };
+        }
+
+        console.log(`[Solvex Rooms] Fetching room types for hotel ${hotelId}...`);
+
+        // We use GetRoomDescriptions as it usually contains the list of available room types/categories
+        const result = await makeSoapRequest<any>('GetRoomDescriptions', {
+            'guid': auth.data,
+            'hotelKey': hotelId
+        });
+
+        const roomTypes: any[] = [];
+        const seenKeys = new Set<string>();
+
+        const extractRooms = (obj: any) => {
+            if (!obj || typeof obj !== 'object') return;
+
+            if (Array.isArray(obj)) {
+                obj.forEach(item => extractRooms(item));
+                return;
+            }
+
+            // Look for patterns that resemble room definitions
+            // Solvex often returns RtKey/RcKey/AcKey triplets
+            // Look for patterns that resemble room definitions
+            // Solvex often returns RtKey/RcKey/AcKey triplets or RoomType
+            const rtId = obj.RtKey || obj.RoomTypeKey || obj.RoomTypeID || obj.id;
+            const rcId = obj.RcKey || obj.RoomCategoryKey || obj.RoomCategoryID || '0';
+            const acId = obj.AcKey || obj.AccommodationKey || obj.AccommodationID || '0';
+            const rtName = obj.RtName || obj.RoomTypeName || obj.Name || obj.DisplayName;
+            
+            if (rtId && rtName) {
+                const key = `${rtId}-${rcId}-${acId}`;
+                if (!seenKeys.has(key)) {
+                    seenKeys.add(key);
+                    roomTypes.push({
+                        roomTypeId: String(rtId),
+                        roomCategoryId: String(rcId),
+                        accommodationId: String(acId),
+                        name: String(rtName),
+                        categoryName: String(obj.RcName || obj.RoomCategoryName || obj.CategoryName || ''),
+                        accommodationName: String(obj.AcName || obj.AccommodationName || obj.AccommodationName || ''),
+                        description: String(obj.Description || obj.Text || ''),
+                        capacity: parseInt(obj.Places || obj.Pax || obj.Capacity || '2'),
+                        extraCapacity: parseInt(obj.ExPlaces || obj.ExtraPlaces || '0')
+                    });
+                }
+            }
+
+            for (const k in obj) {
+                if (typeof obj[k] === 'object') extractRooms(obj[k]);
+            }
+        };
+
+        extractRooms(result);
+
+        // If no rooms found in descriptions, try a "dry search" to discovery what's bookable
+        if (roomTypes.length === 0) {
+            console.log(`[Solvex Rooms] No rooms in descriptions for ${hotelId}, trying discovery search...`);
+            const { searchHotels } = await import('./solvexSearchService');
+            const now = new Date();
+            const dateFrom = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const dateTo = new Date(now.getTime() + 67 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+            const searchRes = await searchHotels({
+                dateFrom,
+                dateTo,
+                hotelId: hotelId,
+                adults: 2,
+                rooms: 1
+            });
+
+            if (searchRes.success && searchRes.data) {
+                searchRes.data.forEach(item => {
+                    const r = item.room;
+                    const rt = r.roomType;
+                    const rc = r.roomCategory;
+                    const ac = r.roomAccommodation;
+                    
+                    const key = `${rt.id}-${rc.id}-${ac.id}`;
+                    if (!seenKeys.has(key)) {
+                        seenKeys.add(key);
+                        roomTypes.push({
+                            roomTypeId: String(rt.id),
+                            roomCategoryId: String(rc.id),
+                            accommodationId: String(ac.id),
+                            name: rt.name,
+                            categoryName: rc.name,
+                            accommodationName: ac.name,
+                            capacity: ac.adultMainPlaces || rt.places || 2,
+                            extraCapacity: rt.exPlaces || 0
+                        });
+                    }
+                });
+            }
+        }
+
+        return {
+            success: true,
+            data: roomTypes
+        };
+    } catch (error) {
+        console.error('[Solvex Rooms] getHotelRoomTypes failed:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to fetch room types'
+        };
+    }
+}
+
 export default {
     searchDestinations,
     getCountries,
@@ -541,5 +658,6 @@ export default {
     getRegions,
     getHotels,
     getDetailedHotels,
-    getHotelFullContent
+    getHotelFullContent,
+    getHotelRoomTypes
 };

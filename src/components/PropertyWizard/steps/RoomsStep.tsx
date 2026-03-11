@@ -1,12 +1,73 @@
 import React, { useState } from 'react';
-import { Plus, Bed, Trash2, Grid, List, X, Save, Copy, Maximize, Eye } from 'lucide-react';
+import { Plus, Bed, Trash2, Grid, List, X, Save, Copy, Maximize, Eye, Download, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { StepProps } from '../types';
 import type { RoomType, BeddingConfiguration } from '../../../types/property.types';
+import { getHotelRoomTypes } from '../../../integrations/solvex/api/solvexDictionaryService';
 
 const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
     const [editingRoom, setEditingRoom] = useState<number | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [isPulling, setIsPulling] = useState(false);
+
+    const pullFromSolvex = async () => {
+        const solvexId = String(data.id || '').replace('solvex_', '');
+        if (!solvexId || isNaN(parseInt(solvexId))) {
+            alert('Ovaj objekat nema validan Solvex ID.');
+            return;
+        }
+
+        setIsPulling(true);
+        try {
+            const res = await getHotelRoomTypes(parseInt(solvexId));
+            if (res.success && res.data) {
+                const newRooms: RoomType[] = res.data.map((r: any) => ({
+                    roomTypeId: `solvex_${r.roomTypeId}_${r.roomCategoryId}_${r.accommodationId}`,
+                    code: r.roomTypeId,
+                    nameInternal: `${r.name} ${r.categoryName} (${r.accommodationName})`,
+                    category: (r.categoryName.toLowerCase().includes('suite') ? 'Suite' : 
+                               r.categoryName.toLowerCase().includes('apartment') ? 'Apartment' : 'Room'),
+                    standardOccupancy: r.capacity || 2,
+                    maxAdults: r.capacity || 2,
+                    maxChildren: r.extraCapacity || 0,
+                    maxOccupancy: (r.capacity || 2) + (r.extraCapacity || 0),
+                    minOccupancy: 1,
+                    osnovniKreveti: r.capacity || 2,
+                    pomocniKreveti: r.extraCapacity || 0,
+                    allowChildSharingBed: false,
+                    childSharingVariants: [],
+                    allowAdultsOnExtraBeds: true,
+                    allowInfantSharingBed: false,
+                    babyCotAvailable: false,
+                    isNonSmoking: true,
+                    isAccessible: false,
+                    petsAllowed: false,
+                    bathroomCount: 1,
+                    bathroomType: 'Private',
+                    beddingConfigurations: [],
+                    bedSetupVariants: [{ id: Math.random().toString(36).substr(2, 5), basic: r.capacity || 2, extra: r.extraCapacity || 0 }],
+                    amenities: [],
+                    images: [],
+                    allowedOccupancyVariants: []
+                }));
+
+                // Deduplicate or append? User probably wants to see them.
+                // Let's merge them by avoiding exact duplicates
+                const existingCodes = (data.roomTypes || []).map(rt => rt.code);
+                const uniqueNewRooms = newRooms.filter(nr => !existingCodes.includes(nr.code));
+
+                onChange({ roomTypes: [...(data.roomTypes || []), ...uniqueNewRooms] });
+                alert(`Uspešno povučeno ${uniqueNewRooms.length} novih tipova smeštaja.`);
+            } else {
+                alert('Greška pri povlačenju podataka: ' + (res.error || 'Nepoznata greška'));
+            }
+        } catch (error) {
+            console.error('Pull from Solvex failed:', error);
+            alert('Došlo je do greške pri komunikaciji sa API-jem.');
+        } finally {
+            setIsPulling(false);
+        }
+    };
 
     const addRoom = () => {
         const newRoom: RoomType = {
@@ -402,6 +463,17 @@ const RoomsStep: React.FC<StepProps> = ({ data, onChange }) => {
                                 <List size={16} /> Lista
                             </button>
                         </div>
+                        {data.id?.toString().startsWith('solvex_') && (
+                            <button 
+                                className="btn-secondary" 
+                                onClick={pullFromSolvex} 
+                                disabled={isPulling}
+                                style={{ borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }}
+                            >
+                                {isPulling ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+                                <span style={{ marginLeft: '8px' }}>Povuci iz Solvex-a</span>
+                            </button>
+                        )}
                         <button className="btn-primary" onClick={addRoom} style={{ borderRadius: '12px' }}><Plus size={20} style={{ marginRight: '8px' }} /> Nova Soba</button>
                     </div>
                 </div>
