@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Search, Star, Zap, HelpCircle, XCircle, LayoutGrid, List as ListIcon,
-    AlignLeft, Sparkles, RefreshCw, Filter, ChevronDown, X
+    AlignLeft, Sparkles, RefreshCw, Filter, ChevronDown, X, ShieldCheck
 } from 'lucide-react';
 
 interface FilterSidebarProps {
@@ -16,6 +16,8 @@ interface FilterSidebarProps {
     setViewMode: (mode: 'grid' | 'list' | 'notepad') => void;
     selectedMealPlans: string[];
     toggleMealPlanFilter: (mp: string) => void;
+    onlyRefundable: boolean;
+    setOnlyRefundable: (v: boolean) => void;
     searchResults?: any[];
 }
 
@@ -116,6 +118,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     setViewMode,
     selectedMealPlans,
     toggleMealPlanFilter,
+    onlyRefundable,
+    setOnlyRefundable,
     searchResults
 }) => {
     const [expanded, setExpanded] = useState(false);
@@ -291,10 +295,31 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                                     whiteSpace: 'nowrap',
                                 }}
                             >
-                                {item.icon} {item.label}
                             </button>
                         );
                     })}
+                </div>
+
+                {/* ── REFUNDABLE FILTER ── */}
+                <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                    <button
+                        onClick={() => setOnlyRefundable(!onlyRefundable)}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            padding: '6px 14px',
+                            background: onlyRefundable ? 'rgba(76, 217, 100, 0.2)' : 'rgba(255,255,255,0.04)',
+                            border: onlyRefundable ? '1px solid rgba(76, 217, 100, 0.5)' : '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: '16px',
+                            color: onlyRefundable ? '#4cd964' : 'rgba(255,255,255,0.5)',
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s',
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
+                        <ShieldCheck size={14} /> REFUNDABILNO
+                    </button>
                 </div>
 
                 {/* Spacer */}

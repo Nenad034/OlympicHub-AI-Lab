@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { ClickToTravelLogo } from '../components/icons/ClickToTravelLogo';
 import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -55,6 +56,8 @@ import SmartMapExplorer from './SmartSearch/components/SmartMapExplorer';
 import type { BasicInfoData } from '../types/packageSearch.types';
 import type { HotelRoom } from '../types/hotel';
 import type { Destination, SearchHistoryItem, RoomAllocation, SearchMode, TabId, BudgetType } from './SmartSearch/types';
+import { getRoomCancelStatus, normalizeMealPlan, formatPrice, getMealPlanDisplayName, isStatusOnRequest, cleanRoomName } from './SmartSearch/helpers';
+import { renderAvailabilityStatus, renderCancellationBadge, renderMealPlanBadge } from './SmartSearch/renderHelpers';
 
 /**
  * Constants for filtering
@@ -105,148 +108,8 @@ const NATIONALITY_OPTIONS = [
 // Local helpers removed, using central ones from ./SmartSearch/helpers.ts
 
 /**
- * Get full meal plan display name in Serbian
+ * UI Components
  */
-const formatPrice = (price: number) => {
-    return price.toLocaleString('sr-RS', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
-};
-
-// Local helpers removed, using central ones from ./SmartSearch/helpers.ts
-import { normalizeMealPlan, getMealPlanDisplayName } from './SmartSearch/helpers';
-
-const renderAvailabilityStatus = (status: string | undefined) => {
-    if (!status) return null;
-    const s = status.toLowerCase();
-
-    let Icon = RefreshCw;
-    let label = 'NA UPIT';
-    let className = 'status-on-request';
-
-    if (s === 'available' || s === 'slobodno' || s === 'instant') {
-        Icon = Zap;
-        label = 'ODMAH DOSTUPNO';
-        className = 'status-available';
-    } else if (s === 'unavailable' || s === 'rasprodato' || s === 'stop_sale') {
-        Icon = XCircle;
-        label = 'RASPRODATO';
-        className = 'status-sold-out';
-    }
-
-    return (
-        <div className={`availability-status-v6 ${className}`}>
-            <Icon size={10} />
-            <span>{label}</span>
-        </div>
-    );
-};
-
-export const getRoomCancelStatus = (room: HotelRoom | any) => {
-    if (room?.tariff?.id === 1993) return 'non-refundable';
-
-    // Solvex often populates cancellationPolicyRequestParams with keys needed to fetch actual policy.
-    // We only treat it as a potential penalty if it has actual deadline data.
-    const params = room.cancellationPolicyRequestParams;
-    if (params && (params.CancellationDate || params.DaysBeforeCheckIn)) {
-        const cancelDate = params.CancellationDate;
-        if (cancelDate && new Date(cancelDate) > new Date()) return 'free';
-        if (params.DaysBeforeCheckIn) return 'free';
-        return 'penalty';
-    }
-
-    // Default to free for standard tariffs without explicit penalty information
-    return 'free';
-};
-
-const renderCancellationBadge = (room: HotelRoom | any, onBadgeClick: (r: any) => void) => {
-    const status = getRoomCancelStatus(room);
-
-    let icon = <Info size={12} className="cancellation-icon" />;
-    let text = "Uslovi (Timeline)";
-    let className = "cancellation-info";
-    let title = "Kliknite za detaljan timeline otkazivanja";
-
-    if (status === 'non-refundable') {
-        icon = <AlertTriangle size={12} className="cancellation-icon" />;
-        text = "Nepovratno (Timeline)";
-        className = "cancellation-non-refundable";
-        title = "Ova soba je nepovratna. Kliknite za detalje.";
-    } else if (status === 'free') {
-        icon = <ShieldCheck size={12} className="cancellation-icon" />;
-        text = "Besplatan otkaz (Timeline)";
-        className = "cancellation-params free";
-        title = "Besplatno otkazivanje moguće. Kliknite za datume.";
-    } else if (status === 'penalty') {
-        icon = <AlertTriangle size={12} className="cancellation-icon" />;
-        text = "Penali (Timeline)";
-        className = "cancellation-params penalty";
-        title = "Otkazivanje uz penale. Kliknite za iznose.";
-    }
-
-    return (
-        <div
-            className={`cancellation-badge-v2 ${className}`}
-            onClick={(e) => { e.stopPropagation(); onBadgeClick(room); }}
-            title={title}
-            style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '4px 10px',
-                borderRadius: '6px',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap',
-                border: '1px solid rgba(255,255,255,0.1)'
-            }}
-        >
-            {icon}
-            <span>{text}</span>
-        </div>
-    );
-};
-
-const isStatusOnRequest = (status: string | undefined) => {
-    if (!status) return true;
-    const s = status.toLowerCase();
-    if (s === 'available' || s === 'slobodno' || s === 'instant') return false;
-    if (s === 'unavailable' || s === 'rasprodato' || s === 'stop_sale') return false;
-    return true; /* anything else is on request */
-};
-
-const renderMealPlanBadge = (mp: string, isLedger: boolean = false) => {
-    const name = getMealPlanDisplayName(mp);
-    const code = normalizeMealPlan(mp);
-    let Icon = UtensilsCrossed;
-    if (code === 'BB') Icon = Coffee;
-    if (code === 'HB') Icon = UtensilsCrossed;
-    if (code === 'AI' || code === 'UAI') Icon = Sparkles;
-    if (code === 'RO') Icon = Building2;
-
-    return (
-        <div className={isLedger ? "meal-plan-ledger-display" : "meal-plan-badge-v2"}>
-            <Icon size={isLedger ? 14 : 12} />
-            <span>{name}</span>
-        </div>
-    );
-};
-
-/**
- * Strips redundant destination info from room names
- */
-const cleanRoomName = (name: string): string => {
-    if (!name) return '';
-    return name
-        .replace(/\s*\(\s*Dest:[^)]*\)/gi, '') // Remove (Dest: ...)
-        .replace(/\s*Dest:[^)]*/gi, '')       // Remove Dest: ... without parens
-        .replace(/\s*\(\s*(Golden Sands|Sunny Beach|Nessebar|Albena|Bansko|Borovets|Pamporovo|Burgas|Varna|Sofia|Sozopol|Primorsko|St\.Vlas|Obzor)\s*\)/gi, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-};
 
 
 
@@ -584,6 +447,7 @@ const SmartSearch: React.FC = () => {
     const [budgetTo, setBudgetTo] = useState<string>('');
     const [selectedCancelPolicy, setSelectedCancelPolicy] = useState<string>('all');
     const [visibleCount, setVisibleCount] = useState<number>(20);
+    const [onlyRefundable, setOnlyRefundable] = useState(false);
     const [showMapExplorer, setShowMapExplorer] = useState(false);
 
     const tabId = useRef(Math.random().toString(36).substring(2, 11));
@@ -896,6 +760,54 @@ const SmartSearch: React.FC = () => {
         return total;
     };
 
+    const findAlternativeDates = async () => {
+        if (selectedDestinations.length === 0 || !checkIn || !checkOut || isSearchingSuggestions) return;
+        
+        setIsSearchingSuggestions(true);
+        const nightsCount = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
+        const alternateDates = [-3, -2, -1, 1, 2, 3];
+        const timeline: Record<string, { available: boolean, price?: number }> = {};
+        
+        // Mark current as unavailable since we reached this state
+        timeline[checkIn] = { available: false };
+
+        try {
+            await Promise.all(alternateDates.map(async (offset) => {
+                const newStart = new Date(checkIn);
+                newStart.setDate(newStart.getDate() + offset);
+                
+                // Don't search in the past
+                if (newStart < new Date()) return;
+                
+                const isoStart = newStart.toISOString().split('T')[0];
+                const newEnd = new Date(newStart);
+                newEnd.setDate(newEnd.getDate() + nightsCount);
+                const isoEnd = newEnd.toISOString().split('T')[0];
+
+                const results = await performSmartSearch({
+                    searchType: activeTab as any,
+                    destinations: selectedDestinations,
+                    checkIn: isoStart,
+                    checkOut: isoEnd,
+                    rooms: roomAllocations.filter(r => r.adults > 0),
+                    mealPlan: mealPlan,
+                    nationality: nationality
+                });
+
+                timeline[isoStart] = { 
+                    available: results.length > 0,
+                    price: results.length > 0 ? Math.min(...results.map(r => r.price)) : undefined
+                };
+            }));
+            
+            setAvailabilityTimeline(timeline);
+        } catch (e) {
+            console.error('Failed to find alternative dates:', e);
+        } finally {
+            setIsSearchingSuggestions(false);
+        }
+    };
+
     const handleSearch = async (overrideParams?: {
         checkIn?: string,
         checkOut?: string,
@@ -1024,6 +936,7 @@ const SmartSearch: React.FC = () => {
             setIsSearching(true);
             setSearchError(null);
             setSmartSuggestions(null);
+            setAvailabilityTimeline({});
             setSelectedArrivalDate(activeCheckIn);
 
             // CHECK IF PREFETCH IS IN FLIGHT
@@ -1128,7 +1041,8 @@ const SmartSearch: React.FC = () => {
                 searchMode: activeSearchMode,
                 budgetFrom: activeBudgetFrom,
                 budgetTo: activeBudgetTo,
-                flexibleDays
+                flexibleDays,
+                onlyRefundable
             },
             resultsSummary: {
                 count: resultsToDisplay.length,
@@ -1169,6 +1083,7 @@ const SmartSearch: React.FC = () => {
         setBudgetFrom(query.budgetFrom || '');
         setBudgetTo(query.budgetTo || '');
         setFlexibleDays(query.flexibleDays || 0);
+        setOnlyRefundable(query.onlyRefundable || false);
 
         setShowHistorySidebar(false);
 
@@ -1305,6 +1220,19 @@ const SmartSearch: React.FC = () => {
             if (selectedAvailability.includes('on_request') && requestMatches) isMatched = true;
 
             if (!isMatched) return false;
+        }
+
+        if (onlyRefundable) {
+            // Check if ANY room in the hotel is non-refundable. 
+            // We only show hotels that have AT LEAST ONE refundable option, 
+            // or perhaps we should filter the rooms inside the card?
+            // The user requested: "biraju samo slobodne sobe i koje nisu non refundable"
+            // So we filter hotels that have refundable rooms.
+            const hasRefundable = hotel.rooms?.some(r => getRoomCancelStatus(r) !== 'non-refundable') || 
+                                 (hotel.allocationResults && Object.values(hotel.allocationResults).some((rooms: any) => 
+                                     rooms.some((r: any) => getRoomCancelStatus(r) !== 'non-refundable')
+                                 ));
+            if (!hasRefundable) return false;
         }
 
         const totalPrice = getFinalDisplayPrice(hotel);
@@ -1582,7 +1510,7 @@ const SmartSearch: React.FC = () => {
                                 <div style={{
                                     position: 'absolute', top: -2, right: -2, width: '8px', height: '8px',
                                     background: '#10b981', borderRadius: '50%', border: '2px solid var(--bg-card)'
-                                }} />
+                                }}></div>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                                 <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.5px' }}>FINANCIAL SHIELD</span>
@@ -1780,6 +1708,8 @@ const SmartSearch: React.FC = () => {
                                     setViewMode={setViewMode}
                                     selectedMealPlans={selectedMealPlans}
                                     toggleMealPlanFilter={toggleMealPlanFilter}
+                                    onlyRefundable={onlyRefundable}
+                                    setOnlyRefundable={setOnlyRefundable}
                                     searchResults={searchResults}
                                 />
 
@@ -1875,13 +1805,103 @@ const SmartSearch: React.FC = () => {
                                                 setSelectedTimelineRoom={setSelectedTimelineRoom}
                                                 selectedRoomsMap={selectedRoomsMap}
                                                 selectionPendingHotelId={selectionPendingHotelId}
+                                                onlyRefundable={onlyRefundable}
                                             />
                                         ))
                                     ) : (
-                                        <div className="no-results-state" style={{ textAlign: 'center', padding: '100px 40px', background: 'var(--bg-card)', borderRadius: '30px', gridColumn: '1/-1' }}>
-                                            <Compass size={48} style={{ marginBottom: '20px', opacity: 0.5 }} />
-                                            <h3>Nema rezultata koji odgovaraju filterima.</h3>
-                                            <p style={{ color: 'var(--text-secondary)' }}>Pokušajte da ublažite kriterijume ili potražite drugu destinaciju.</p>
+                                        <div className="no-results-state" style={{ textAlign: 'center', padding: '60px 40px', background: 'var(--bg-card)', borderRadius: '30px', gridColumn: '1/-1', border: '1px solid var(--border)' }}>
+                                            <Compass size={48} style={{ marginBottom: '20px', opacity: 0.5, color: 'var(--accent)' }} />
+                                            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '10px' }}>Nema slobodnih soba za ove datume</h3>
+                                            <p style={{ color: 'var(--text-secondary)', marginBottom: '30px' }}>Nažalost, hotel/destinacija koju tražite je popunjena ili nema rezultata za izabrani termin.</p>
+                                            
+                                            <div style={{ maxWidth: '600px', margin: '0 auto', background: 'rgba(255,255,255,0.03)', padding: '24px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
+                                                    <CalendarDays size={18} color="var(--accent)" />
+                                                    <span style={{ fontWeight: 600 }}>PROVERITE ALTERNATIVNE DANE (±3 dana)</span>
+                                                </div>
+
+                                                {isSearchingSuggestions ? (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '20px' }}>
+                                                        <Loader2 className="animate-spin" size={32} color="var(--accent)" />
+                                                        <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Skeniranje slobodnih termina...</span>
+                                                    </div>
+                                                ) : Object.keys(availabilityTimeline).length > 0 ? (
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
+                                                        {[-3, -2, -1, 0, 1, 2, 3].map(offset => {
+                                                            const d = new Date(checkIn);
+                                                            d.setDate(d.getDate() + offset);
+                                                            const iso = d.toISOString().split('T')[0];
+                                                            const info = availabilityTimeline[iso];
+                                                            const isOriginal = offset === 0;
+
+                                                            return (
+                                                                <button
+                                                                    key={offset}
+                                                                    onClick={() => {
+                                                                        if (info?.available) {
+                                                                            const nextStart = new Date(iso);
+                                                                            const nextEnd = new Date(nextStart);
+                                                                            nextEnd.setDate(nextEnd.getDate() + nights);
+                                                                            handleSearch({ 
+                                                                                checkIn: iso, 
+                                                                                checkOut: nextEnd.toISOString().split('T')[0] 
+                                                                            });
+                                                                        }
+                                                                    }}
+                                                                    disabled={!info?.available || isOriginal}
+                                                                    style={{
+                                                                        padding: '12px 6px',
+                                                                        borderRadius: '12px',
+                                                                        background: isOriginal ? 'rgba(255,255,255,0.1)' : (info?.available ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.05)'),
+                                                                        border: `1px solid ${isOriginal ? 'var(--border)' : (info?.available ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.2)')}`,
+                                                                        cursor: info?.available ? 'pointer' : 'default',
+                                                                        opacity: d < new Date() ? 0.3 : 1,
+                                                                        transition: 'all 0.2s',
+                                                                        display: 'flex',
+                                                                        flexDirection: 'column',
+                                                                        alignItems: 'center',
+                                                                        gap: '4px'
+                                                                    }}
+                                                                >
+                                                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                                                                        {d.toLocaleDateString('sr-RS', { weekday: 'short' })}
+                                                                    </span>
+                                                                    <span style={{ fontSize: '1rem', fontWeight: 800 }}>
+                                                                        {d.getDate()}
+                                                                    </span>
+                                                                    {info?.available && (
+                                                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></div>
+                                                                    )}
+                                                                    {isOriginal && (
+                                                                        <span style={{ fontSize: '0.6rem', color: '#ef4444' }}>TIK</span>
+                                                                    )}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <button 
+                                                        onClick={findAlternativeDates}
+                                                        className="btn-primary"
+                                                        style={{ width: '100%', padding: '14px', borderRadius: '16px' }}
+                                                    >
+                                                        POTRAŽI ALTERNATIVNE TERMINE
+                                                    </button>
+                                                )}
+                                                
+                                                {Object.keys(availabilityTimeline).some(k => availabilityTimeline[k].available) && (
+                                                    <p style={{ marginTop: '15px', fontSize: '0.8rem', color: '#10b981' }}>
+                                                        ✨ Pronađeni su slobodni termini u blizini vašeg datuma! Kliknite na dan sa zelenom tačkom.
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <button 
+                                                onClick={() => { setCheckIn(''); setCheckOut(''); setSearchPerformed(false); }}
+                                                style={{ marginTop: '30px', background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', textDecoration: 'underline' }}
+                                            >
+                                                Povratak na izmenu pretrage
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -2549,7 +2569,7 @@ const SmartSearch: React.FC = () => {
                     />
                 )
             }
-        </div >
+        </div>
     );
 };
 

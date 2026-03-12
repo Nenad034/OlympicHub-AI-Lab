@@ -33,12 +33,13 @@ interface HotelCardProps {
     setSelectedTimelineRoom?: (room: any) => void;
     selectedRoomsMap?: Record<number, any>;
     selectionPendingHotelId?: string;
+    onlyRefundable?: boolean;
 }
 
 export const HotelCard: React.FC<HotelCardProps> = ({
     hotel, isSubagent, onOpenDetails, onReserve, viewMode, checkIn, checkOut, nights,
     roomAllocations = [], roomFilters = {}, setRoomFilters, selectedCancelPolicy = 'all',
-    setSelectedTimelineRoom, selectedRoomsMap = {}, selectionPendingHotelId
+    setSelectedTimelineRoom, selectedRoomsMap = {}, selectionPendingHotelId, onlyRefundable = false
 }) => {
     // Pricing helper
     const getFinalPrice = (val: number) => isSubagent ? getPriceWithMargin(val) : Number(val);
@@ -82,6 +83,10 @@ export const HotelCard: React.FC<HotelCardProps> = ({
                             const status = getRoomCancelStatus(r);
                             if (selectedCancelPolicy === 'non-refundable' && status !== 'non-refundable') return false;
                             if (selectedCancelPolicy === 'free' && status !== 'free') return false;
+                        }
+
+                        if (onlyRefundable) {
+                            if (getRoomCancelStatus(r) === 'non-refundable') return false;
                         }
 
                         if (!currentTextFilter) return true;

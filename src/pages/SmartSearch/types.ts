@@ -41,6 +41,7 @@ export interface SearchHistoryItem {
         budgetFrom?: string;
         budgetTo?: string;
         flexibleDays?: number;
+        onlyRefundable?: boolean;
     };
     resultsSummary?: {
         count: number;
