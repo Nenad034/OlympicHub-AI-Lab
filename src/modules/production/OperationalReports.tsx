@@ -2147,25 +2147,27 @@ const OperationalReports: React.FC = () => {
                                                                         </div>
                                                                     </td>
                                                                     <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)', verticalAlign: 'top' }}>
-                                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                                                            <div className="room-badge" style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 900, width: 'fit-content' }}>{res.roomType}</div>
-                                                                            <div style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '2px 8px', borderRadius: '6px', fontSize: '8px', fontWeight: 900, letterSpacing: '0.4px', width: 'fit-content', border: '1px solid rgba(59, 130, 246, 0.2)' }}>ALL INCLUSIVE</div>
+                                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', width: '100%' }}>
+                                                                            <div className="room-badge" style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 900, width: '100%', textAlign: 'center', boxSizing: 'border-box' }}>{res.roomType}</div>
+                                                                            <div style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '2px 8px', borderRadius: '6px', fontSize: '8px', fontWeight: 900, letterSpacing: '0.4px', width: '100%', textAlign: 'center', border: '1px solid rgba(59, 130, 246, 0.2)', boxSizing: 'border-box' }}>ALL INCLUSIVE</div>
                                                                         </div>
                                                                     </td>
                                                                     <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)', verticalAlign: 'top' }}>
                                                                         <div style={{
-                                                                            display: 'inline-flex',
+                                                                            display: 'flex',
                                                                             alignItems: 'center',
                                                                             gap: '6px',
                                                                             background: 'var(--bg-main)',
                                                                             padding: '3px 10px',
                                                                             borderRadius: '6px',
                                                                             border: '1px solid var(--border)',
-                                                                            marginTop: '1px'
+                                                                            marginTop: '1px',
+                                                                            width: '100%',
+                                                                            boxSizing: 'border-box'
                                                                         }}>
                                                                             <User size={14} color="var(--text-secondary)" style={{ minWidth: '14px' }} />
                                                                             <strong style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap', fontSize: '13px', fontWeight: 950 }}>1. {res.customer}</strong>
-                                                                            <div style={{ display: 'flex', gap: '3px', alignItems: 'center', marginLeft: '4px' }}>
+                                                                            <div style={{ display: 'flex', gap: '3px', alignItems: 'center', marginLeft: 'auto' }}>
                                                                                 <span style={{ fontSize: '9px', background: 'rgba(59, 130, 246, 0.1)', padding: '1px 5px', borderRadius: '4px', color: '#3b82f6', fontWeight: 900, border: '1px solid rgba(59, 130, 246, 0.2)', whiteSpace: 'nowrap' }}>{res.adults} {rt.adl}</span>
                                                                                 {res.children > 0 && (
                                                                                     <span style={{ fontSize: '9px', background: 'rgba(249, 115, 22, 0.1)', padding: '1px 5px', borderRadius: '4px', color: '#fb923c', fontWeight: 900, border: '1px solid rgba(249, 115, 22, 0.1)', whiteSpace: 'nowrap' }}>
@@ -2177,7 +2179,7 @@ const OperationalReports: React.FC = () => {
                                                                     </td>
                                                                     <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)', verticalAlign: 'top' }}>
                                                                         <div style={{ marginTop: '2px' }}>
-                                                                            <code style={{ background: 'var(--bg-main)', padding: '1px 6px', borderRadius: '4px', color: 'var(--text-primary)', border: '1px solid var(--border)', fontWeight: 900, fontSize: '11px' }}>{paxArray[0].passport}</code>
+                                                                            <code style={{ background: 'var(--bg-main)', padding: '1px 6px', borderRadius: '4px', color: 'var(--text-primary)', border: '1px solid var(--border)', fontWeight: 900, fontSize: '11px', display: 'block', width: '100%', textAlign: 'center', boxSizing: 'border-box' }}>{paxArray[0].passport}</code>
                                                                         </div>
                                                                     </td>
                                                                     <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)', verticalAlign: 'top' }}>
@@ -2194,7 +2196,13 @@ const OperationalReports: React.FC = () => {
                                                                                 <td style={{ padding: '4px 12px', borderLeft: '1px solid var(--border)' }}></td>
                                                                                 <td style={{ padding: '4px 12px', borderLeft: '1px solid var(--border)' }}></td>
                                                                                 <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)' }}>
-                                                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                                                    <div style={{ 
+                                                                                        display: 'flex', 
+                                                                                        alignItems: 'center', 
+                                                                                        justifyContent: 'space-between',
+                                                                                        width: '100%',
+                                                                                        padding: '2px 0'
+                                                                                    }}>
                                                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                                                             {pax.type === 'baby' ? <Baby size={13} color="#4ade80" /> : pax.type === 'child' ? <Baby size={13} color="#fb923c" /> : <User size={13} color="var(--text-secondary)" />}
                                                                                             <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '12px' }}>{pIdx + 2}. {pax.name}</span>
@@ -2205,7 +2213,7 @@ const OperationalReports: React.FC = () => {
                                                                                     </div>
                                                                                 </td>
                                                                                 <td style={{ padding: '6px 12px', borderLeft: '1px solid var(--border)' }}>
-                                                                                    <code style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '11px' }}>{pax.passport}</code>
+                                                                                    <code style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '11px', display: 'block', width: '100%', textAlign: 'center', boxSizing: 'border-box' }}>{pax.passport}</code>
                                                                                 </td>
                                                                                 <td style={{ padding: '4px 12px', borderLeft: '1px solid var(--border)' }}></td>
                                                                             </tr>
