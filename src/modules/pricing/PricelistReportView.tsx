@@ -54,6 +54,7 @@ interface PricelistReportViewProps {
     supplements?: Supplement[];
     notes?: string[];
     kidsInfo?: string;
+    onItemClick?: (id: string) => void;
 }
 
 const PricelistReportView: React.FC<PricelistReportViewProps> = ({ 
@@ -72,7 +73,8 @@ const PricelistReportView: React.FC<PricelistReportViewProps> = ({
         'Prijava (Check-in) od 14:00h, Odjava (Check-out) do 10:00h.'
     ],
     kidsInfo = 'Deca do 12 god: 50%',
-    priceDisplay = 'all'
+    priceDisplay = 'all',
+    onItemClick
 }) => {
     const [selectedLinkType, setSelectedLinkType] = useState<'bruto' | 'neto' | 'all'>('bruto');
     const [showLinkModal, setShowLinkModal] = useState(false);
@@ -243,7 +245,13 @@ const PricelistReportView: React.FC<PricelistReportViewProps> = ({
                         <tbody>
                             {items.map((item, idx) => (
                                 <React.Fragment key={item.id}>
-                                    <tr style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#fff' : '#fcfdfe', cursor: 'pointer' }} onClick={() => toggleRow(item.id)}>
+                                    <tr 
+                                        style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#fff' : '#fcfdfe', cursor: 'pointer' }} 
+                                        onClick={() => {
+                                            toggleRow(item.id);
+                                            if (onItemClick) onItemClick(item.hotelId || item.id);
+                                        }}
+                                    >
                                         <td style={{ ...tdStyle, textAlign: 'center' }}>
                                             {expandedRows.has(item.id) ? <Minus size={16} color="#3b82f6" /> : <Plus size={16} color="#3b82f6" />}
                                         </td>

@@ -33,7 +33,11 @@ interface PricelistItem {
     pricelistTitle?: string;
 }
 
-const PricelistItemsList: React.FC<{ items: PricelistItem[], isLoading?: boolean }> = ({ items, isLoading }) => {
+const PricelistItemsList: React.FC<{ 
+    items: PricelistItem[], 
+    isLoading?: boolean,
+    onItemClick?: (item: PricelistItem) => void 
+}> = ({ items, isLoading, onItemClick }) => {
     const [roomFilter, setRoomFilter] = React.useState('all');
     const [serviceFilter, setServiceFilter] = React.useState('all');
     const [dateFilter, setDateFilter] = React.useState('');
@@ -152,6 +156,7 @@ const PricelistItemsList: React.FC<{ items: PricelistItem[], isLoading?: boolean
                                 position: 'relative',
                                 overflow: 'hidden'
                             }}
+                            onClick={() => onItemClick?.(item)}
                             whileHover={{
                                 backgroundColor: 'rgba(255, 255, 255, 0.06)',
                                 borderColor: 'var(--accent)',

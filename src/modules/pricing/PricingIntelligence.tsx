@@ -33,9 +33,10 @@ import {
     Hotel,
     X,
     X as XIcon,
-    ArrowLeft
+    ArrowLeft,
+    Move
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import './PricingModule.styles.css';
 import { useThemeStore } from '../../stores';
@@ -227,38 +228,47 @@ export interface PricingIntelligenceProps {
     isPublic?: boolean;
 }
 
+const DEFAULT_TABS = [
+    {id: 'teacher', label: 'Teacher'},
+    {id: 'items', label: 'Pregled Cena'},
+    {id: 'simulator', label: 'Simulator'},
+    {id: 'manual', label: 'Ručni Unos'},
+    {id: 'bulk', label: 'Grupna Izmena'},
+    {id: 'agent', label: 'AI Agent'},
+    {id: 'supplements', label: 'Doplate / Popusti'},
+    {id: 'offers', label: 'Specijalne Ponude'},
+    {id: 'taxes', label: 'Takse'},
+    {id: 'notes', label: 'Napomene'},
+    {id: 'report', label: 'Izveštaj'}
+];
+
 const PricingIntelligence: React.FC<PricingIntelligenceProps> = ({ isPublic = false }) => {
     const { theme } = useThemeStore();
     const location = useLocation();
     
+    // States first
+    const [tabs, setTabs] = useState(() => {
+        const saved = localStorage.getItem('pricing-tabs-order');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                const existingIds = new Set(parsed.map((t: any) => t.id));
+                const missing = DEFAULT_TABS.filter(t => !existingIds.has(t.id));
+                return [...parsed, ...missing];
+            } catch (e) {
+                return DEFAULT_TABS;
+            }
+        }
+        return DEFAULT_TABS;
+    });
+    const [isReordering, setIsReordering] = useState(false);
     const [viewMode, setViewMode] = useState<'code' | 'standard'>('standard');
     const [priceDisplay, setPriceDisplay] = useState<'neto' | 'bruto' | 'all'>('all');
     const [showAiMapper, setShowAiMapper] = useState(false);
-    const [activeTab, setActiveTab] = useState<'teacher' | 'agent' | 'manual' | 'simulator' | 'items' | 'bulk' | 'report' | 'supplements' | 'notes' | 'offers' | 'taxes'>(isPublic ? 'report' : 'teacher');
-
-    // Load constraints from URL if public
-    useEffect(() => {
-        if (isPublic) {
-            setActiveTab('report');
-            setViewMode('standard');
-            
-            const params = new URLSearchParams(location.search);
-            const entity = params.get('entity');
-            const tags = params.get('tags');
-            const view = params.get('view') as 'neto' | 'bruto' | 'all';
-            
-            if (entity) setSearchQuery(entity);
-            if (tags) setSearchTags(tags.split(',').filter(Boolean));
-            if (view) setPriceDisplay(view);
-            else setPriceDisplay('bruto'); // Default public to bruto
-        }
-    }, [isPublic, location.search]);
-    
-    // New date filter states
+    const [activeTab, setActiveTab] = useState<string>(isPublic ? 'report' : 'teacher');
     const [bookingDates, setBookingDates] = useState<{from: string, to: string}>({from: '', to: ''});
     const [stayDates, setStayDates] = useState<{from: string, to: string}>({from: '', to: ''});
     const [activePicker, setActivePicker] = useState<'booking' | 'stay' | null>(null);
-    
     const [messages, setMessages] = useState([
         { role: 'ai', content: 'Pozdrav! Ja sam vaš Revenue AI asistent. Možete mi davati komande za optimizaciju cena.' }
     ]);
@@ -267,7 +277,6 @@ const PricingIntelligence: React.FC<PricingIntelligenceProps> = ({ isPublic = fa
     const [isExecutingCommand, setIsExecutingCommand] = useState(false);
     const [pricelists, setPricelists] = useState<any[]>([...SOLVEX_MOCK_DATA, ...MEETING_POINT_MOCK_DATA, ...VESPERA_MOCK_DATA]);
     const [isLoading, setIsLoading] = useState(false);
-
     const [productState, setProductState] = useState({ service: '', prefix: '', type: '', view: '', name: '' });
     const [pricePeriods, setPricePeriods] = useState<any[]>([]);
     const [supplementsState, setSupplementsState] = useState<any[]>([
@@ -279,17 +288,14 @@ const PricingIntelligence: React.FC<PricingIntelligenceProps> = ({ isPublic = fa
         'Cene su izražene po osobi po noćenju.',
         'Deca do 3.99 godina borave besplatno.'
     ]);
-
     const [specialOffers, setSpecialOffers] = useState<any[]>([
         { name: 'Early Booking', details: '15% popusta za uplate do 31.12.', type: 'EB' },
         { name: '7=6 Gratis dani', details: 'Boravite 7 noći, platite 6 (u junu)', type: 'FreeDay' }
     ]);
-
     const [taxState, setTaxState] = useState<any[]>([
         { name: 'Sojourn Tax adults', price: '1.50 € / dan', type: 'Daily' },
         { name: 'Sojourn Tax children (12-18)', price: '0.75 € / dan', type: 'Daily' }
     ]);
-
     const [pricelistId, setPricelistId] = useState<string | null>(null);
     const [pricelistTitle, setPricelistTitle] = useState('Novi Cenovnik');
     const [savedPricelists, setSavedPricelists] = useState<Pricelist[]>([]);
@@ -301,13 +307,87 @@ const PricingIntelligence: React.FC<PricingIntelligenceProps> = ({ isPublic = fa
     const [searchQuery, setSearchQuery] = useState('');
     const [searchTags, setSearchTags] = useState<string[]>([]);
     const [showPredictive, setShowPredictive] = useState(false);
-    
-    // Profit Management States
     const [marginPercent, setMarginPercent] = useState('15');
     const [marginAmount, setMarginAmount] = useState('0');
     const [marginRooms, setMarginRooms] = useState<string[]>([]);
     const [marginBookingRange, setMarginBookingRange] = useState({ from: '', to: '' });
     const [marginStayRange, setMarginStayRange] = useState({ from: '', to: '' });
+    const [pricelistSearchQuery, setPricelistSearchQuery] = useState('');
+
+    // Functions
+    const loadItemToDev = (item: any) => {
+        setPricelistId(item.id);
+        const title = item.title || 'Cenovnik';
+        const hotelName = item.hotelName || item.hotelId || '';
+        setPricelistTitle(title);
+        
+        setProductState({
+            service: item.service || 'HB',
+            prefix: '',
+            type: item.roomType || '',
+            view: '',
+            name: hotelName
+        });
+
+        // Load all periods for this hotel and room type combination
+        const relatedPeriods = pricelists
+            .filter(p => (p.hotelName === hotelName || p.hotelId === item.hotelId) && p.roomType === item.roomType)
+            .map((p, idx) => ({
+                id: p.id || String(idx),
+                dateFrom: p.dateFrom,
+                dateTo: p.dateTo,
+                netPrice: p.netPrice,
+                brutoPrice: p.brutoPrice,
+                status: p.status || 'active'
+            }));
+
+        if (relatedPeriods.length > 0) {
+            setPricePeriods(relatedPeriods);
+        } else if (item.dateFrom && item.dateTo) {
+            setPricePeriods([{
+                id: '1',
+                dateFrom: item.dateFrom,
+                dateTo: item.dateTo,
+                netPrice: item.netPrice,
+                brutoPrice: item.brutoPrice,
+                status: 'active'
+            }]);
+        }
+    };
+
+    // Effects
+    useEffect(() => {
+        localStorage.setItem('pricing-tabs-order', JSON.stringify(tabs));
+    }, [tabs]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        
+        if (isPublic) {
+            setActiveTab('report');
+            setViewMode('standard');
+            
+            const entity = params.get('entity');
+            const tags = params.get('tags');
+            const view = params.get('view') as 'neto' | 'bruto' | 'all';
+            
+            if (entity) setSearchQuery(entity);
+            if (tags) setSearchTags(tags.split(',').filter(Boolean));
+            if (view) setPriceDisplay(view);
+            else setPriceDisplay('bruto');
+        }
+
+        if (params.get('mode') === 'dev') {
+            setViewMode('code');
+            const id = params.get('id');
+            if (id) {
+                const item = pricelists.find(p => p.id === id);
+                if (item) {
+                    loadItemToDev(item);
+                }
+            }
+        }
+    }, [isPublic, location.search, pricelists]);
 
     const PREDICTIVE_HINTS = [
         { label: 'Hrvatska', type: 'country' },
@@ -434,7 +514,7 @@ const PricingIntelligence: React.FC<PricingIntelligenceProps> = ({ isPublic = fa
         }
     };
 
-    const renderStandardUI = () => {
+    function renderStandardUI() {
         if (isPublic) {
             return (
                 <div className="no-scrollbar" style={{ padding: '0px', width: '100%', display: 'flex', flexDirection: 'column', flex: 1, minHeight: '100vh' }}>
@@ -496,7 +576,25 @@ const PricingIntelligence: React.FC<PricingIntelligenceProps> = ({ isPublic = fa
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                            <button onClick={() => setViewMode('code')} style={{ ...styles.button, background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}>
+                            <button 
+                                onClick={() => setIsReordering(!isReordering)} 
+                                style={{ 
+                                    ...styles.button, 
+                                    background: isReordering ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.05)', 
+                                    color: isReordering ? '#000' : 'var(--text-secondary)',
+                                    borderColor: isReordering ? 'var(--accent-cyan)' : 'var(--glass-border)'
+                                }}
+                                title="Reorganizuj tabove"
+                            >
+                                <Move size={16} /> {isReordering ? 'Završi' : 'Pomeri Tabove'}
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    if (selectedItem) loadItemToDev(selectedItem);
+                                    setViewMode('code');
+                                }} 
+                                style={{ ...styles.button, background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
+                            >
                                 <Code size={16} /> Dev Mode
                             </button>
                             <button style={{ ...styles.button, background: 'var(--accent-cyan)', color: '#000' }}>
@@ -523,107 +621,146 @@ const PricingIntelligence: React.FC<PricingIntelligenceProps> = ({ isPublic = fa
                         </div>
                     </div>
 
-                    {/* Tabs row inside sticky block */}
                     <div style={{ 
-                        display: 'flex', 
-                        gap: '20px', 
-                        overflowX: 'auto', 
-                        paddingBottom: '2px',
                         marginTop: '10px'
                     }}>
-                        {[
-                            {id: 'teacher', label: 'Teacher'},
-                            {id: 'items', label: 'Pregled Cena'},
-                            {id: 'simulator', label: 'Simulator'},
-                            {id: 'manual', label: 'Ručni Unos'},
-                            {id: 'bulk', label: 'Grupna Izmena'},
-                            {id: 'agent', label: 'AI Agent'},
-                            {id: 'supplements', label: 'Doplate / Popusti'},
-                            {id: 'offers', label: 'Specijalne Ponude'},
-                            {id: 'taxes', label: 'Takse'},
-                            {id: 'notes', label: 'Napomene'},
-                            {id: 'report', label: 'Izveštaj'}
-                        ].map(tab => (
-                            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} style={{ padding: '12px 20px', border: 'none', background: 'transparent', color: activeTab === tab.id ? 'var(--accent-cyan)' : 'var(--text-secondary)', fontSize: '13px', fontWeight: 800, cursor: 'pointer', borderBottom: activeTab === tab.id ? '3px solid var(--accent-cyan)' : '3px solid transparent', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-                                {tab.label}
-                            </button>
-                        ))}
+                        <Reorder.Group 
+                            axis="x" 
+                            values={tabs} 
+                            onReorder={setTabs}
+                            style={{ 
+                                display: 'flex', 
+                                gap: '10px', 
+                                overflowX: 'auto', 
+                                paddingBottom: '5px',
+                                listStyle: 'none',
+                                padding: 0,
+                                margin: 0
+                            }}
+                            className="no-scrollbar"
+                        >
+                            {tabs.map(tab => (
+                                <Reorder.Item 
+                                    key={tab.id} 
+                                    value={tab}
+                                    dragListener={isReordering}
+                                    style={{ flexShrink: 0 }}
+                                >
+                                    <button 
+                                        onClick={() => !isReordering && setActiveTab(tab.id)} 
+                                        style={{ 
+                                            padding: '12px 20px', 
+                                            border: 'none', 
+                                            background: 'transparent', 
+                                            color: activeTab === tab.id ? 'var(--accent-cyan)' : 'var(--text-secondary)', 
+                                            fontSize: '13px', 
+                                            fontWeight: 800, 
+                                            cursor: isReordering ? 'grab' : 'pointer', 
+                                            borderBottom: activeTab === tab.id ? '3px solid var(--accent-cyan)' : '3px solid transparent', 
+                                            textTransform: 'uppercase', 
+                                            whiteSpace: 'nowrap',
+                                            transition: 'all 0.2s',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            opacity: isReordering ? 0.8 : 1
+                                        }}
+                                    >
+                                        {isReordering && <Move size={12} style={{ opacity: 0.5 }} />}
+                                        {tab.label}
+                                    </button>
+                                </Reorder.Item>
+                            ))}
+                        </Reorder.Group>
                     </div>
                 </div>
 
-                {/* Main Search Bar Expanded */}
-                <div style={{ background: 'var(--bg-card)', borderRadius: '20px', padding: '15px', border: '1px solid var(--glass-border)', backdropFilter: 'blur(20px)', display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '30px', marginBottom: '30px' }}>
-                    
-                    {/* Top Row: Smart Search + Modes */}
-                    <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', flex: 1, alignItems: 'center', gap: '15px', background: 'rgba(0,0,0,0.3)', padding: '15px 25px', borderRadius: '18px', border: '1px solid var(--accent-cyan)' }}>
-                            <Search size={24} color="var(--accent-cyan)" />
-                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', flex: 1 }}>
-                                {searchTags.map(tag => (
-                                    <span key={tag} style={{ background: 'var(--petrol-500)', color: '#fff', padding: '5px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid var(--accent-cyan)' }}>
-                                        {tag}
-                                        <XIcon size={14} style={{ cursor: 'pointer' }} onClick={() => setSearchTags(searchTags.filter(t => t !== tag))} />
-                                    </span>
-                                ))}
+                {/* Main Search Bar Expanded - ONLY for Pregled Cena */}
+                {activeTab === 'items' && (
+                    <div style={{ background: 'var(--bg-card)', borderRadius: '20px', padding: '15px', border: '1px solid var(--glass-border)', backdropFilter: 'blur(20px)', display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '30px', marginBottom: '30px' }}>
+                        
+                        {/* Top Row: Smart Search + Modes */}
+                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', flex: 1, alignItems: 'center', gap: '15px', background: 'rgba(0,0,0,0.3)', padding: '15px 25px', borderRadius: '18px', border: '1px solid var(--accent-cyan)' }}>
+                                <Search size={24} color="var(--accent-cyan)" />
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', flex: 1 }}>
+                                    {searchTags.map(tag => (
+                                        <span key={tag} style={{ background: 'var(--petrol-500)', color: '#fff', padding: '5px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid var(--accent-cyan)' }}>
+                                            {tag}
+                                            <XIcon size={14} style={{ cursor: 'pointer' }} onClick={() => setSearchTags(searchTags.filter(t => t !== tag))} />
+                                        </span>
+                                    ))}
+                                    <input 
+                                        placeholder="Pretraži Državu, Destinaciju, Hotel..." 
+                                        value={searchQuery}
+                                        onChange={(e) => {setSearchQuery(e.target.value); setShowPredictive(true);}}
+                                        style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '18px', outline: 'none', flex: 1, minWidth: '400px', fontWeight: 600 }} 
+                                    />
+                                </div>
+                            </div>
+
+                            {/* New Dedicated Pricelist Name Field */}
+                            <div style={{ display: 'flex', flex: 0.6, alignItems: 'center', gap: '15px', background: 'rgba(0,0,0,0.3)', padding: '15px 25px', borderRadius: '18px', border: '1px solid var(--accent-gold)' }}>
+                                <FileText size={20} color="var(--accent-gold)" />
                                 <input 
-                                    placeholder="Pretraži Državu, Destinaciju, Hotel..." 
-                                    value={searchQuery}
-                                    onChange={(e) => {setSearchQuery(e.target.value); setShowPredictive(true);}}
-                                    style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '18px', outline: 'none', flex: 1, minWidth: '400px', fontWeight: 600 }} 
+                                    placeholder="Naziv cenovnika..." 
+                                    value={pricelistSearchQuery}
+                                    onChange={(e) => setPricelistSearchQuery(e.target.value)}
+                                    style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '18px', outline: 'none', flex: 1, fontWeight: 600 }} 
                                 />
                             </div>
-                        </div>
 
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            {['per_person_day', 'per_person_period', 'per_room_day', 'per_room_period'].map(mode => (
-                                <button key={mode} onClick={() => setCalcMode(mode)} style={{ padding: '10px 15px', borderRadius: '12px', border: calcMode === mode ? '1px solid var(--accent-cyan)' : '1px solid var(--glass-border)', background: calcMode === mode ? 'rgba(0, 229, 255, 0.1)' : 'transparent', color: calcMode === mode ? 'var(--accent-cyan)' : 'var(--text-secondary)', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>
-                                    {mode.replace(/_/g, ' ').toUpperCase()}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Bottom Row: Date Filters */}
-                    <div style={{ display: 'flex', gap: '15px' }}>
-                        <div style={{ flex: 1, display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '10px 20px', borderRadius: '15px', border: '1px solid var(--glass-border)' }}>
-                            <Calendar size={18} color="var(--accent-cyan)" />
-                            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginRight: '10px' }}>REZERVACIJE OD/DO:</div>
-                            <div 
-                                onClick={() => setActivePicker('booking')}
-                                style={{ flex: 1, cursor: 'pointer', fontSize: '14px', fontWeight: 800, color: bookingDates.from ? '#fff' : 'var(--text-dim)' }}
-                            >
-                                {bookingDates.from ? `${bookingDates.from.split('-').reverse().join('/')} - ${bookingDates.to.split('-').reverse().join('/')}` : 'Svi Datumi'}
-                            </div>
-                            {bookingDates.from && <X size={14} onClick={() => setBookingDates({from: '', to: ''})} style={{ cursor: 'pointer' }} />}
-                        </div>
-
-                        <div style={{ flex: 1, display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '10px 20px', borderRadius: '15px', border: '1px solid var(--glass-border)' }}>
-                            <Calendar size={18} color="var(--accent-cyan)" />
-                            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginRight: '10px' }}>BORAVCI OD/DO:</div>
-                            <div 
-                                onClick={() => setActivePicker('stay')}
-                                style={{ flex: 1, cursor: 'pointer', fontSize: '14px', fontWeight: 800, color: stayDates.from ? '#fff' : 'var(--text-dim)' }}
-                            >
-                                {stayDates.from ? `${stayDates.from.split('-').reverse().join('/')} - ${stayDates.to.split('-').reverse().join('/')}` : 'Svi Datumi'}
-                            </div>
-                            {stayDates.from && <X size={14} onClick={() => setStayDates({from: '', to: ''})} style={{ cursor: 'pointer' }} />}
-                        </div>
-                    </div>
-
-                    {/* Predictive Search Results */}
-                    <AnimatePresence>
-                        {showPredictive && searchQuery && (
-                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ position: 'absolute', top: '100px', left: '25px', right: '350px', background: 'var(--bg-dark)', borderRadius: '15px', marginTop: '10px', zIndex: 100, border: '1px solid var(--glass-border)', padding: '10px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
-                                {PREDICTIVE_HINTS.filter(h => h.label.toLowerCase().includes(searchQuery.toLowerCase())).map(hint => (
-                                    <div key={hint.label} onClick={() => { setSearchTags([...new Set([...searchTags, hint.label])]); setSearchQuery(''); setShowPredictive(false); }} style={{ padding: '12px 15px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                        {hint.type === 'country' && <Globe size={16} color="var(--accent-cyan)" />}
-                                        <span style={{ fontWeight: 600 }}>{hint.label}</span>
-                                    </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                {['per_person_day', 'per_person_period', 'per_room_day', 'per_room_period'].map(mode => (
+                                    <button key={mode} onClick={() => setCalcMode(mode)} style={{ padding: '10px 15px', borderRadius: '12px', border: calcMode === mode ? '1px solid var(--accent-cyan)' : '1px solid var(--glass-border)', background: calcMode === mode ? 'rgba(0, 229, 255, 0.1)' : 'transparent', color: calcMode === mode ? 'var(--accent-cyan)' : 'var(--text-secondary)', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>
+                                        {mode.replace(/_/g, ' ').toUpperCase()}
+                                    </button>
                                 ))}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
+                            </div>
+                        </div>
+
+                        {/* Bottom Row: Date Filters */}
+                        <div style={{ display: 'flex', gap: '15px' }}>
+                            <div style={{ flex: 1, display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '10px 20px', borderRadius: '15px', border: '1px solid var(--glass-border)' }}>
+                                <Calendar size={18} color="var(--accent-cyan)" />
+                                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginRight: '10px' }}>REZERVACIJE OD/DO:</div>
+                                <div 
+                                    onClick={() => setActivePicker('booking')}
+                                    style={{ flex: 1, cursor: 'pointer', fontSize: '14px', fontWeight: 800, color: bookingDates.from ? '#fff' : 'var(--text-dim)' }}
+                                >
+                                    {bookingDates.from ? `${bookingDates.from.split('-').reverse().join('/')} - ${bookingDates.to.split('-').reverse().join('/')}` : 'Svi Datumi'}
+                                </div>
+                                {bookingDates.from && <X size={14} onClick={() => setBookingDates({from: '', to: ''})} style={{ cursor: 'pointer' }} />}
+                            </div>
+
+                            <div style={{ flex: 1, display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '10px 20px', borderRadius: '15px', border: '1px solid var(--glass-border)' }}>
+                                <Calendar size={18} color="var(--accent-cyan)" />
+                                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginRight: '10px' }}>BORAVCI OD/DO:</div>
+                                <div 
+                                    onClick={() => setActivePicker('stay')}
+                                    style={{ flex: 1, cursor: 'pointer', fontSize: '14px', fontWeight: 800, color: stayDates.from ? '#fff' : 'var(--text-dim)' }}
+                                >
+                                    {stayDates.from ? `${stayDates.from.split('-').reverse().join('/')} - ${stayDates.to.split('-').reverse().join('/')}` : 'Svi Datumi'}
+                                </div>
+                                {stayDates.from && <X size={14} onClick={() => setStayDates({from: '', to: ''})} style={{ cursor: 'pointer' }} />}
+                            </div>
+                        </div>
+
+                        {/* Predictive Search Results */}
+                        <AnimatePresence>
+                            {showPredictive && searchQuery && (
+                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ position: 'absolute', top: '100px', left: '25px', right: '350px', background: 'var(--bg-dark)', borderRadius: '15px', marginTop: '10px', zIndex: 100, border: '1px solid var(--glass-border)', padding: '10px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
+                                    {PREDICTIVE_HINTS.filter(h => h.label.toLowerCase().includes(searchQuery.toLowerCase())).map(hint => (
+                                        <div key={hint.label} onClick={() => { setSearchTags([...new Set([...searchTags, hint.label])]); setSearchQuery(''); setShowPredictive(false); }} style={{ padding: '12px 15px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                            {hint.type === 'country' && <Globe size={16} color="var(--accent-cyan)" />}
+                                            <span style={{ fontWeight: 600 }}>{hint.label}</span>
+                                        </div>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                )}
 
                 {/* Modern Calendar Modal for Search Bar */}
                 {activePicker && (
@@ -638,13 +775,12 @@ const PricingIntelligence: React.FC<PricingIntelligenceProps> = ({ isPublic = fa
                     />
                 )}
 
-
                 {renderTabContent()}
             </div>
         );
-    };
+    }
 
-    const renderTabContent = () => {
+    function renderTabContent() {
         return (
             <>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -827,7 +963,10 @@ const PricingIntelligence: React.FC<PricingIntelligenceProps> = ({ isPublic = fa
                                     })} 
                                 activeCalcMode={calcMode}
                                 priceDisplay={priceDisplay}
-                                onItemClick={(item) => setSelectedItem(selectedItem?.id === item.id ? null : item)}
+                                onItemClick={(item) => {
+                                    setSelectedItem(selectedItem?.id === item.id ? null : item);
+                                    if (item) loadItemToDev(item);
+                                }}
                             />
                         </>
                     )}
@@ -1001,6 +1140,7 @@ const PricingIntelligence: React.FC<PricingIntelligenceProps> = ({ isPublic = fa
                                     
                                     const matchesTags = tags.length === 0 || tags.some(tag => hotelStr.includes(tag) || locStr.includes(tag));
                                     const matchesQuery = !searchStr || hotelStr.includes(searchStr) || locStr.includes(searchStr) || (title || "").toLowerCase().includes(searchStr);
+                                    const matchesPricelist = !pricelistSearchQuery || (title || "").toLowerCase().includes(pricelistSearchQuery.toLowerCase());
                                     
                                     // Date filters
                                     let matchesBooking = true;
@@ -1018,7 +1158,7 @@ const PricingIntelligence: React.FC<PricingIntelligenceProps> = ({ isPublic = fa
                                                       (p.dateFrom <= stayDates.from && p.dateTo >= stayDates.to);
                                     }
                                     
-                                    return matchesTags && matchesQuery && matchesBooking && matchesStay;
+                                    return matchesTags && matchesQuery && matchesPricelist && matchesBooking && matchesStay;
                                 })
                                 .map(p => {
                                     const title = p.title || "";
@@ -1047,23 +1187,41 @@ const PricingIntelligence: React.FC<PricingIntelligenceProps> = ({ isPublic = fa
                                         marginPercent: Math.round(((p.brutoPrice - p.netPrice) / p.netPrice) * 100),
                                         grossPrice: p.brutoPrice,
                                         status: 'Aktivna',
-                                        specificSupplements: specs
+                                        specificSupplements: specs,
+                                        hotelId: p.id
                                     };
                                 })} 
                             supplements={supplementsState}
                             notes={notesState}
                             priceDisplay={priceDisplay}
                             kidsInfo="2-6.99 god: 50%, 7-11.99 god: 30%"
+                            onItemClick={(id) => {
+                                const item = pricelists.find(p => p.id === id);
+                                if (item) {
+                                    setSelectedItem(item);
+                                    loadItemToDev(item);
+                                }
+                            }}
                         />
                     )}
                 </div>
 
                 <AnimatePresence>
-                    {selectedItem && <PriceInspector item={selectedItem} onClose={() => setSelectedItem(null)} />}
+                    {selectedItem && (
+                        <PriceInspector 
+                            item={selectedItem} 
+                            onClose={() => setSelectedItem(null)} 
+                            onOpenDev={() => setViewMode('code')}
+                            onOpenDevNewTab={(id: string) => {
+                                const url = `${window.location.origin}${window.location.pathname}?mode=dev&id=${id}`;
+                                window.open(url, '_blank');
+                            }}
+                        />
+                    )}
                 </AnimatePresence>
             </>
         );
-    };
+    }
 
     return (
         <div className={`pricing-module no-scrollbar ${isDarkMode ? 'navy-theme' : ''}`} style={{ 
@@ -1075,29 +1233,26 @@ const PricingIntelligence: React.FC<PricingIntelligenceProps> = ({ isPublic = fa
             flexDirection: 'column' 
         }}>
             {viewMode === 'code' ? (
-                <div style={{ padding: '40px' }}>
-                    <button onClick={() => setViewMode('standard')} style={{ ...styles.button, background: 'var(--accent-cyan)', color: '#000', marginBottom: '20px' }}>Povratak na UI</button>
-                    <PricingCodeView 
-                        pricelistTitle={pricelistTitle} 
-                        pricelistId={pricelistId} 
-                        productState={productState as any} 
-                        pricePeriods={pricePeriods as any} 
-                        supplements={supplementsState as any} 
-                        validationIssues={[]} 
-                        saveSuccess={saveSuccess} 
-                        isSaving={isSaving} 
-                        isDarkMode={isDarkMode} 
-                        onTitleChange={setPricelistTitle} 
-                        onDarkModeToggle={() => setIsDarkMode(!isDarkMode)} 
-                        onLoadPricelist={() => setShowLoadModal(true)} 
-                        onExportJSON={() => {}} 
-                        onSaveDraft={() => {}} 
-                        onActivate={() => {}} 
-                        onProductChange={() => {}} 
-                        onPeriodsChange={() => {}} 
-                        onSupplementsChange={() => {}} 
-                    />
-                </div>
+                <PricingCodeView 
+                    pricelistTitle={pricelistTitle} 
+                    pricelistId={pricelistId} 
+                    productState={productState as any} 
+                    pricePeriods={pricePeriods as any} 
+                    supplements={supplementsState as any} 
+                    validationIssues={[]} 
+                    saveSuccess={saveSuccess} 
+                    isSaving={isSaving} 
+                    isDarkMode={isDarkMode} 
+                    onTitleChange={setPricelistTitle} 
+                    onDarkModeToggle={() => setIsDarkMode(!isDarkMode)} 
+                    onLoadPricelist={() => setShowLoadModal(true)} 
+                    onExportJSON={() => {}} 
+                    onSaveDraft={() => {}} 
+                    onActivate={() => setViewMode('standard')} 
+                    onProductChange={(p: any) => setProductState(p)} 
+                    onPeriodsChange={setPricePeriods} 
+                    onSupplementsChange={setSupplementsState} 
+                />
             ) : renderStandardUI()}
         </div>
     );
