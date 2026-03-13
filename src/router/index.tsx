@@ -317,6 +317,14 @@ export const router = createBrowserRouter([
                 ),
             },
             {
+                path: '/public-pricing',
+                element: (
+                    <React.Suspense fallback={<LoadingFallback />}>
+                        <PricingIntelligence isPublic={true} />
+                    </React.Suspense>
+                ),
+            },
+            {
                 path: '/share/report/:reportId',
                 element: (
                     <React.Suspense fallback={<LoadingFallback />}>

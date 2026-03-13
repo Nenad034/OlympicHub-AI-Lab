@@ -23,6 +23,8 @@ interface PricelistItem {
     dateTo: string;
     netPrice: number;
     brutoPrice: number;
+    marginAmount?: number;
+    marginPercent?: number;
     occupancy: {
         adults: number;
         children: number;
@@ -142,7 +144,7 @@ const PricelistItemsList: React.FC<{ items: PricelistItem[], isLoading?: boolean
                                 border: '1px solid var(--glass-border)',
                                 padding: '16px 24px',
                                 display: 'grid',
-                                gridTemplateColumns: '60px 1fr 180px 140px',
+                                gridTemplateColumns: '60px 1fr 140px 140px 140px',
                                 alignItems: 'center',
                                 gap: '24px',
                                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -157,62 +159,78 @@ const PricelistItemsList: React.FC<{ items: PricelistItem[], isLoading?: boolean
                                 boxShadow: '0 12px 24px rgba(0,0,0,0.2)'
                             }}
                         >
-                            {/* Icon */}
                             <div style={{
-                                width: '50px',
-                                height: '50px',
+                                width: '40px',
+                                height: '40px',
                                 background: 'var(--bg-sidebar)',
-                                borderRadius: '12px',
+                                borderRadius: '10px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 color: item.status === 'active' ? '#10b981' : 'var(--accent)',
                                 border: '1px solid var(--border)'
                             }}>
-                                <Tag size={22} />
+                                <Tag size={18} />
                             </div>
 
                             {/* Info */}
                             <div>
                                 {item.pricelistTitle && (
-                                    <div style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: 800, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                    <div style={{ fontSize: '9px', color: 'var(--accent)', fontWeight: 800, marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                         #{item.pricelistTitle}
                                     </div>
                                 )}
-                                <h4 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)' }}>{item.roomType}</h4>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '6px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <Calendar size={14} color="var(--accent)" />
+                                <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>{item.roomType}</h4>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px', color: 'var(--text-secondary)', fontSize: '11px' }}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <Calendar size={12} color="var(--accent)" />
                                         {item.dateFrom} — {item.dateTo}
                                     </span>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <Users size={14} color="var(--accent)" />
-                                        {item.occupancy.adults}+{item.occupancy.children}
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <Users size={12} color="var(--accent)" />
+                                        {item.occupancy.adults}+{item.occupancy.children} 
+                                        {item.occupancy.children > 0 && <span style={{ opacity: 0.7, fontSize: '10px' }}>(2-12 god)</span>}
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Price */}
+                            {/* Net Price */}
                             <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px', fontWeight: 600 }}>Cena po danu</div>
-                                <div style={{ fontSize: '22px', fontWeight: 900, color: '#10b981' }}>
-                                    {item.brutoPrice.toFixed(2)} €
+                                <div style={{ fontSize: '9px', color: 'var(--text-secondary)', marginBottom: '1px', fontWeight: 600 }}>NETO</div>
+                                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                    {item.netPrice.toFixed(2)} €
                                 </div>
-                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px', opacity: 0.7 }}>
-                                    Neto: {item.netPrice.toFixed(2)} €
+                            </div>
+
+                            {/* Margin (Zarada) */}
+                            <div style={{ textAlign: 'right', background: 'rgba(59, 130, 246, 0.05)', padding: '6px 10px', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                                <div style={{ fontSize: '9px', color: 'var(--accent)', marginBottom: '1px', fontWeight: 800 }}>ZARADA</div>
+                                <div style={{ fontSize: '14px', fontWeight: 900, color: 'var(--accent)' }}>
+                                    +{item.marginAmount?.toFixed(2) || (item.brutoPrice - item.netPrice).toFixed(2)} €
+                                </div>
+                                <div style={{ fontSize: '9px', color: 'var(--text-secondary)', opacity: 0.8 }}>
+                                    {item.marginPercent?.toFixed(1) || (((item.brutoPrice - item.netPrice) / item.netPrice) * 100).toFixed(1)}%
+                                </div>
+                            </div>
+
+                            {/* Gross Price */}
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '9px', color: 'var(--text-secondary)', marginBottom: '1px', fontWeight: 600 }}>BRUTO (Klijent)</div>
+                                <div style={{ fontSize: '18px', fontWeight: 900, color: '#10b981' }}>
+                                    {item.brutoPrice.toFixed(2)} €
                                 </div>
                             </div>
 
                             {/* Quick Actions */}
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
                                 <motion.button
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
                                     title="Izmeni"
                                     style={{
-                                        width: '38px',
-                                        height: '38px',
-                                        borderRadius: '10px',
+                                        width: '32px',
+                                        height: '32px',
+                                        borderRadius: '8px',
                                         border: '1px solid var(--border)',
                                         background: 'rgba(255,255,255,0.03)',
                                         color: 'var(--text-secondary)',
@@ -222,16 +240,16 @@ const PricelistItemsList: React.FC<{ items: PricelistItem[], isLoading?: boolean
                                         justifyContent: 'center'
                                     }}
                                 >
-                                    <Edit3 size={18} />
+                                    <Edit3 size={15} />
                                 </motion.button>
                                 <motion.button
                                     whileHover={{ scale: 1.1, color: '#ef4444', borderColor: '#ef4444' }}
                                     whileTap={{ scale: 0.9 }}
                                     title="Obriši"
                                     style={{
-                                        width: '38px',
-                                        height: '38px',
-                                        borderRadius: '10px',
+                                        width: '32px',
+                                        height: '32px',
+                                        borderRadius: '8px',
                                         border: '1px solid var(--border)',
                                         background: 'rgba(239, 68, 68, 0.05)',
                                         color: 'var(--text-secondary)',
@@ -241,7 +259,7 @@ const PricelistItemsList: React.FC<{ items: PricelistItem[], isLoading?: boolean
                                         justifyContent: 'center'
                                     }}
                                 >
-                                    <Trash2 size={18} />
+                                    <Trash2 size={15} />
                                 </motion.button>
                             </div>
                         </motion.div>

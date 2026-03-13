@@ -70,5 +70,16 @@ export const pricingService = {
             .eq('id', id);
 
         if (error) throw error;
+    },
+
+    async updatePricePeriod(id: string, updates: Partial<PricePeriod>) {
+        const { data, error } = await supabase
+            .from('price_periods')
+            .update(updates)
+            .eq('id', id)
+            .select();
+
+        if (error) throw error;
+        return data;
     }
 };
