@@ -31,10 +31,13 @@ const STICKY_SCROLLBAR_CSS = `
 const PinnedNoteItem: React.FC<{ pinned: { id: string; x: number; y: number } }> = ({ pinned }) => {
     const { unpinNote, updatePosition } = useNotesStore();
     const [note, setNote] = useState<AgentNote | null>(null);
+    const [localTitle, setLocalTitle] = useState('');
+    const [localContent, setLocalContent] = useState('');
     const [pos, setPos] = useState({ x: pinned.x, y: pinned.y });
     const isDragging = useRef(false);
     const startMouse = useRef({ x: 0, y: 0 });
     const startPos = useRef({ x: pinned.x, y: pinned.y });
+    const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         const syncNote = () => {
@@ -43,13 +46,22 @@ const PinnedNoteItem: React.FC<{ pinned: { id: string; x: number; y: number } }>
                 try {
                     const allNotes = JSON.parse(saved) as AgentNote[];
                     const found = allNotes.find(n => n.id === pinned.id);
-                    setNote(found || null);
+                    if (found) {
+                        setNote(found);
+                        // Only sync local state if not currently typing
+                        if (!saveTimeout.current) {
+                            setLocalTitle(found.title);
+                            setLocalContent(found.content);
+                        }
+                    } else {
+                        setNote(null);
+                    }
                 } catch { }
             }
         };
         syncNote();
-        const interval = setInterval(syncNote, 1500);
-        return () => clearInterval(interval);
+        // Removed interval polling, we'll rely on local updates and storage events if needed
+        // but for now local state is king for performance
     }, [pinned.id]);
 
     // Drag on the amber header only
@@ -87,17 +99,21 @@ const PinnedNoteItem: React.FC<{ pinned: { id: string; x: number; y: number } }>
     }, [pinned.id, updatePosition]);
 
     const updateNoteInStorage = (updates: Partial<AgentNote>) => {
-        const saved = localStorage.getItem('prime-agent-notes');
-        if (saved) {
-            try {
-                const allNotes = JSON.parse(saved) as AgentNote[];
-                const updatedNotes = allNotes.map(n =>
-                    n.id === pinned.id ? { ...n, ...updates, updatedAt: new Date().toISOString() } : n
-                );
-                localStorage.setItem('prime-agent-notes', JSON.stringify(updatedNotes));
-                // Trigger an update for the local state if needed, though the interval/storage listener should catch it
-            } catch { }
-        }
+        if (saveTimeout.current) clearTimeout(saveTimeout.current);
+        
+        saveTimeout.current = setTimeout(() => {
+            const saved = localStorage.getItem('prime-agent-notes');
+            if (saved) {
+                try {
+                    const allNotes = JSON.parse(saved) as AgentNote[];
+                    const updatedNotes = allNotes.map(n =>
+                        n.id === pinned.id ? { ...n, ...updates, updatedAt: new Date().toISOString() } : n
+                    );
+                    localStorage.setItem('prime-agent-notes', JSON.stringify(updatedNotes));
+                    saveTimeout.current = null;
+                } catch { }
+            }
+        }, 800);
     };
 
     if (!note) return null;
@@ -130,27 +146,40 @@ const PinnedNoteItem: React.FC<{ pinned: { id: string; x: number; y: number } }>
                 style={{
                     flexShrink: 0,
                     background: '#F9A825',
-                    height: '34px',
+                    height: '42px',
                     borderRadius: '8px 8px 0 0',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    padding: '0 10px',
+                    padding: '0 12px',
                     cursor: 'grab'
                 }}
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flex: 1 }}>
-                    <FileText size={11} style={{ opacity: 0.6, color: '#1a0a00' }} />
+                <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '10px', 
+                    flex: 1,
+                    background: '#fff',
+                    borderRadius: '20px',
+                    padding: '4px 12px',
+                    height: '30px',
+                    marginRight: '8px'
+                }}>
+                    <FileText size={14} style={{ opacity: 0.8, color: '#800020' }} />
                     <input
-                        value={note.title}
-                        onChange={(e) => updateNoteInStorage({ title: e.target.value })}
+                        value={localTitle}
+                        onChange={(e) => {
+                            setLocalTitle(e.target.value);
+                            updateNoteInStorage({ title: e.target.value });
+                        }}
                         placeholder="Naslov..."
                         onMouseDown={e => e.stopPropagation()}
                         style={{
                             background: 'transparent',
                             border: 'none',
                             outline: 'none',
-                            fontSize: '11px',
+                            fontSize: '12px',
                             fontWeight: '900',
                             textTransform: 'uppercase',
                             color: '#1a0a00',
@@ -159,14 +188,14 @@ const PinnedNoteItem: React.FC<{ pinned: { id: string; x: number; y: number } }>
                         }}
                     />
                 </div>
-                <div style={{ display: 'flex', gap: '2px', marginLeft: '8px' }}>
+                <div style={{ display: 'flex', gap: '6px' }}>
                     <button onClick={() => unpinNote(pinned.id)} title="Unpin"
-                        style={{ background: 'transparent', border: 'none', color: '#1a0a00', cursor: 'pointer', padding: '3px', opacity: 0.7 }}>
-                        <PinOff size={13} />
+                        style={{ background: 'transparent', border: 'none', color: '#800020', cursor: 'pointer', padding: '4px' }}>
+                        <PinOff size={16} />
                     </button>
                     <button onClick={() => unpinNote(pinned.id)} title="Close"
-                        style={{ background: 'transparent', border: 'none', color: '#1a0a00', cursor: 'pointer', padding: '3px', opacity: 0.7 }}>
-                        <X size={13} />
+                        style={{ background: 'transparent', border: 'none', color: '#800020', cursor: 'pointer', padding: '4px' }}>
+                        <X size={18} />
                     </button>
                 </div>
             </div>
@@ -183,8 +212,11 @@ const PinnedNoteItem: React.FC<{ pinned: { id: string; x: number; y: number } }>
                   and a formatted div when not focused.
                 */}
                 <textarea
-                    value={note.content}
-                    onChange={(e) => updateNoteInStorage({ content: e.target.value })}
+                    value={localContent}
+                    onChange={(e) => {
+                        setLocalContent(e.target.value);
+                        updateNoteInStorage({ content: e.target.value });
+                    }}
                     placeholder="Unesite belešku..."
                     onMouseDown={e => e.stopPropagation()}
                     style={{
@@ -195,11 +227,11 @@ const PinnedNoteItem: React.FC<{ pinned: { id: string; x: number; y: number } }>
                         outline: 'none',
                         resize: 'none',
                         padding: '12px',
-                        fontSize: '13px',
+                        fontSize: '14px',
                         lineHeight: '1.6',
                         color: '#0d2137',
-                        fontFamily: "'Segoe UI', sans-serif",
-                        fontWeight: '500',
+                        fontFamily: "'Inter', sans-serif",
+                        fontWeight: '600',
                         display: 'block'
                     }}
                 />

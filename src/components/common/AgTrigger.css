@@ -1,0 +1,117 @@
+.ag-core-trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 16px 4px 6px;
+  border-radius: 50px;
+  cursor: pointer;
+  height: 44px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  color: white;
+}
+
+.ag-core-trigger:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+.ag-core-trigger.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.3);
+}
+
+.ag-orbit-container {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ag-core-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(4px);
+  z-index: 1;
+}
+
+.ag-core-inner {
+  position: relative;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ag-icon {
+  color: #fff;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
+  position: relative;
+  z-index: 3;
+}
+
+.ag-net-node {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #60a5fa;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #60a5fa;
+  z-index: 4;
+}
+
+.ag-net-node.n1 { top: 6px; right: 6px; }
+.ag-net-node.n2 { bottom: 8px; left: 5px; }
+.ag-net-node.n3 { top: 18px; left: 8px; }
+
+.ag-label {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: linear-gradient(to right, #fff, #93c5fd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Cosmic background shimmer for the label */
+.ag-core-trigger::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 45%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 55%
+  );
+  transform: rotate(45deg);
+  animation: ag-shimmer 6s infinite linear;
+  pointer-events: none;
+}
+
+@keyframes ag-shimmer {
+  0% { transform: translate(-30%, -30%) rotate(45deg); }
+  100% { transform: translate(30%, 30%) rotate(45deg); }
+}

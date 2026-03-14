@@ -135,9 +135,114 @@ const WeatherTool: React.FC<{ isDark: boolean; cities: string[] }> = ({ isDark, 
     </div>
 );
 
-const CalculatorTool: React.FC<{ isDark: boolean }> = () => <div style={{ textAlign: 'center', padding: '20px', opacity: 0.5 }}>Calculator Content...</div>;
-const CurrencyTool: React.FC<{ isDark: boolean }> = () => <div style={{ textAlign: 'center', padding: '20px', opacity: 0.5 }}>Currency Converter...</div>;
-const UnitsTool: React.FC<{ isDark: boolean }> = () => <div style={{ textAlign: 'center', padding: '20px', opacity: 0.5 }}>Unit Converter...</div>;
+const CalculatorTool: React.FC<{ isDark: boolean }> = ({ isDark }) => {
+    const [expr, setExpr] = useState('');
+    const [res, setRes] = useState('0');
+    
+    const calculate = () => {
+        try {
+            // Basic eval replacement for simple math
+            // eslint-disable-next-line no-eval
+            const result = eval(expr.replace(/[^-+*/0-9.]/g, ''));
+            setRes(String(result));
+        } catch {
+            setRes('Error');
+        }
+    };
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <input 
+                value={expr} 
+                onChange={e => setExpr(e.target.value)}
+                placeholder="2 + 2 * 5..."
+                onKeyDown={e => e.key === 'Enter' && calculate()}
+                style={{ width: '100%', background: isDark ? 'rgba(0,0,0,0.2)' : '#f1f5f9', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px', color: 'inherit' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent)' }}>= {res}</span>
+                <button onClick={calculate} style={{ padding: '6px 12px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '800' }}>Izračunaj</button>
+            </div>
+        </div>
+    );
+};
+
+const CurrencyTool: React.FC<{ isDark: boolean }> = ({ isDark }) => {
+    const [amount, setAmount] = useState('100');
+    const [from, setFrom] = useState('EUR');
+    const [to, setTo] = useState('RSD');
+    
+    const result = useMemo(() => {
+        const amt = parseFloat(amount) || 0;
+        return currencyManager.convert(amt, from, to).toFixed(2);
+    }, [amount, from, to]);
+
+    const currentRate = currencyManager.getAgencyRate('EUR').toFixed(2);
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ fontSize: '10px', opacity: 0.6, textAlign: 'center' }}>
+                Trenutni kurs: 1 EUR = {currentRate} RSD
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input 
+                    type="number" 
+                    value={amount} 
+                    onChange={e => setAmount(e.target.value)}
+                    style={{ flex: 1, background: isDark ? 'rgba(0,0,0,0.2)' : '#f1f5f9', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px', color: 'inherit' }}
+                />
+                <select value={from} onChange={e => setFrom(e.target.value)} style={{ background: isDark ? 'rgba(0,0,0,0.2)' : '#f1f5f9', border: '1px solid var(--border)', borderRadius: '8px', padding: '6px', color: 'inherit' }}>
+                    <option>EUR</option>
+                    <option>USD</option>
+                    <option>RSD</option>
+                </select>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <ArrowLeftRight size={14} style={{ opacity: 0.5 }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(59,130,246,0.1)', padding: '12px', borderRadius: '10px' }}>
+                <span style={{ fontWeight: '800', fontSize: '16px', color: 'var(--accent)' }}>{result}</span>
+                <select value={to} onChange={e => setTo(e.target.value)} style={{ background: 'transparent', border: 'none', fontWeight: '900', color: 'inherit', textAlign: 'right' }}>
+                    <option>RSD</option>
+                    <option>EUR</option>
+                    <option>USD</option>
+                </select>
+            </div>
+        </div>
+    );
+};
+
+const UnitsTool: React.FC<{ isDark: boolean }> = ({ isDark }) => {
+    const [val, setVal] = useState('1');
+    const [type, setType] = useState('ft-m');
+    
+    const res = useMemo(() => {
+        const n = parseFloat(val) || 0;
+        if (type === 'ft-m') return (n * 0.3048).toFixed(2) + ' m';
+        if (type === 'm-ft') return (n / 0.3048).toFixed(2) + ' ft';
+        if (type === 'f-c') return ((n - 32) * 5/9).toFixed(1) + ' °C';
+        return n;
+    }, [val, type]);
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <select value={type} onChange={e => setType(e.target.value)} style={{ width: '100%', background: isDark ? 'rgba(0,0,0,0.2)' : '#f1f5f9', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px', color: 'inherit' }}>
+                <option value="ft-m">Feet (ft) → Meters (m)</option>
+                <option value="m-ft">Meters (m) → Feet (ft)</option>
+                <option value="f-c">Fahrenheit (°F) → Celsius (°C)</option>
+            </select>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <input 
+                    type="number" 
+                    value={val} 
+                    onChange={e => setVal(e.target.value)}
+                    style={{ flex: 1, background: isDark ? 'rgba(0,0,0,0.2)' : '#f1f5f9', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px', color: 'inherit' }}
+                />
+                <span style={{ fontWeight: 900, fontSize: '14px', color: 'var(--accent)' }}>= {res}</span>
+            </div>
+        </div>
+    );
+};
 const NotesTool: React.FC<{ isDark: boolean }> = ({ isDark }) => {
     const { pinnedNoteIds, pinNote, unpinNote } = useNotesStore();
     const [notes, setNotes] = useState<AgentNote[]>([]);
@@ -225,13 +330,36 @@ const NotesTool: React.FC<{ isDark: boolean }> = ({ isDark }) => {
                                     border: '1px solid rgba(255,255,255,0.05)'
                                 }}
                             >
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontWeight: '700', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                        {note.title || 'Bez naslova'}
-                                    </div>
-                                    <div style={{ fontSize: '10px', opacity: 0.5 }}>
-                                        {new Date(note.updatedAt).toLocaleDateString()}
-                                    </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 0 }}>
+                                    <input 
+                                        value={note.title}
+                                        onChange={(e) => {
+                                            const newTitle = e.target.value;
+                                            const updated = notes.map(n => n.id === note.id ? { ...n, title: newTitle, updatedAt: new Date().toISOString() } : n);
+                                            setNotes(updated);
+                                            localStorage.setItem('prime-agent-notes', JSON.stringify(updated));
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                        style={{ background: 'transparent', border: 'none', color: 'inherit', fontWeight: '700', fontSize: '12px', width: '100%', outline: 'none' }}
+                                        placeholder="Naslov beleške..."
+                                    />
+                                    <textarea 
+                                        value={note.content}
+                                        onChange={(e) => {
+                                            const newContent = e.target.value;
+                                            const updated = notes.map(n => n.id === note.id ? { ...n, content: newContent, updatedAt: new Date().toISOString() } : n);
+                                            setNotes(updated);
+                                            localStorage.setItem('prime-agent-notes', JSON.stringify(updated));
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                        style={{ 
+                                            background: 'rgba(0,0,0,0.1)', border: 'none', color: 'inherit', 
+                                            fontSize: '11px', width: '100%', outline: 'none', 
+                                            resize: 'none', borderRadius: '4px', padding: '4px',
+                                            minHeight: '40px'
+                                        }}
+                                        placeholder="Sadržaj..."
+                                    />
                                 </div>
                                 <div style={{ display: 'flex', gap: '4px' }}>
                                     <button
@@ -281,12 +409,12 @@ export const SystemFooter: React.FC = () => {
     const [weatherCities] = useState<string[]>(['Belgrade', 'London', 'Dubai']);
 
     const utilityIcons = [
-        { id: 'weather', icon: <Cloud size={16} />, label: 'Weather', color: '#3b82f6' },
-        { id: 'calc', icon: <Calculator size={16} />, label: 'Calculator', color: '#10b981' },
-        { id: 'currency', icon: <RefreshCcw size={16} />, label: 'Currency', color: '#f59e0b' },
-        { id: 'units', icon: <ArrowLeftRight size={16} />, label: 'Convert', color: '#8b5cf6' },
-        { id: 'notes', icon: <StickyNote size={14} />, label: 'Sticky Notes', color: '#eab308' },
-        { id: 'notepad', icon: <Edit3 size={16} />, label: 'Expert Notepad', color: '#22c55e' }
+        { id: 'weather', icon: <Cloud size={16} />, label: 'Weather', color: '#800020' },
+        { id: 'calc', icon: <Calculator size={16} />, label: 'Calculator', color: '#800020' },
+        { id: 'currency', icon: <RefreshCcw size={16} />, label: 'Currency', color: '#800020' },
+        { id: 'units', icon: <ArrowLeftRight size={16} />, label: 'Convert', color: '#800020' },
+        { id: 'notes', icon: <StickyNote size={14} />, label: 'Sticky Notes', color: '#800020' },
+        { id: 'notepad', icon: <Edit3 size={16} />, label: 'Expert Notepad', color: '#800020' }
 
     ];
 
@@ -296,10 +424,10 @@ export const SystemFooter: React.FC = () => {
             bottom: 0,
             left: 0,
             right: 0,
-            height: '42px',
-            background: isDark ? 'rgba(10, 10, 18, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-            backdropFilter: 'blur(12px)',
-            borderTop: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+            height: '54px',
+            background: isDark ? 'rgba(10, 10, 18, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            borderTop: isDark ? '2px solid rgba(59, 130, 246, 0.2)' : '2px solid rgba(59, 130, 246, 0.1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -387,7 +515,7 @@ export const SystemFooter: React.FC = () => {
             </div>
 
             {/* Middle: Daily Wisdom */}
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div style={{ flex: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
                 <DailyWisdom />
             </div>
 

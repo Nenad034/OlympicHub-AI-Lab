@@ -13,6 +13,7 @@ import SentinelPopup from './components/common/SentinelPopup';
 import { SolvexNotificationHub } from './components/SolvexNotificationHub';
 import { SolvexSyncWorker } from './components/SolvexSyncWorker';
 import { CommunicationGuard } from './components/layout/CommunicationGuard';
+import { AgPanel } from './components/common/AgPanel';
 
 // Context
 import { useConfig } from './context/ConfigContext';
@@ -109,6 +110,9 @@ const App: React.FC = () => {
 
           {/* Communication Collision & SLA Guard */}
           <CommunicationGuard />
+
+          {/* Antigravity AI Control Center */}
+          <AgPanel />
         </>
       )}
     </>

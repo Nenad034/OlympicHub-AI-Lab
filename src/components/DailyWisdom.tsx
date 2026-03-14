@@ -108,7 +108,7 @@ const DailyWisdom: React.FC = () => {
                 height: '100%',
                 cursor: 'default',
                 userSelect: 'none',
-                maxWidth: '600px',
+                maxWidth: '960px',
                 overflow: 'hidden'
             }}
         >
@@ -144,10 +144,15 @@ const DailyWisdom: React.FC = () => {
                     fontWeight: '500',
                     color: 'var(--text-primary)',
                     fontFamily: "'Outfit', sans-serif",
-                    whiteSpace: 'nowrap',
+                    whiteSpace: 'normal',
+                    lineHeight: '1.2',
+                    maxHeight: '32px',
                     overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    opacity: 0.9
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    opacity: 0.9,
+                    flex: 1
                 }}>
                     "{todayWisdom.text}"
                 </span>

@@ -46,6 +46,7 @@ import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { ClickToTravelLogo } from '../icons/ClickToTravelLogo';
 import { PrimeChatIcon } from '../../icons/PrimeChatIcon';
+import { AgTrigger } from '../common/AgTrigger';
 import { useThemeStore, useAppStore, useAuthStore } from '../../stores';
 import { translations } from '../../translations';
 import './HorizontalNav.css';
@@ -66,7 +67,7 @@ interface NavItemDef {
 const HorizontalNav: React.FC = () => {
     const { theme, cycleTheme, lang, setLang, isPrism, togglePrism, navMode, toggleNavMode } = useThemeStore();
     const { userLevel, impersonatedSubagent, userName, logout } = useAuthStore();
-    const { setChatOpen } = useAppStore();
+    const { setChatOpen, isAgOpen, setAgOpen } = useAppStore();
     const t = translations[lang];
     const navigate = useNavigate();
     const location = useLocation();
@@ -344,6 +345,11 @@ const HorizontalNav: React.FC = () => {
 
             {/* Right Zone */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '32px', flexShrink: 0 }}>
+                <AgTrigger 
+                    onClick={() => setAgOpen(!isAgOpen)} 
+                    active={isAgOpen} 
+                />
+
                 {/* Control Pill */}
                 <div style={{
                     display: 'flex',
@@ -359,20 +365,22 @@ const HorizontalNav: React.FC = () => {
                         <LayoutTemplate size={18} />
                     </button>
                     <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', height: '16px', margin: '0 8px' }} />
-                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.25)', padding: '3px', borderRadius: '10px', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', background: theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.25)', padding: '3px', borderRadius: '10px', alignItems: 'center' }}>
                         <button onClick={() => setLang('sr')} style={{
                             padding: '4px 10px', border: 'none',
-                            background: lang === 'sr' ? 'rgba(59,130,246,0.15)' : 'transparent',
+                            background: lang === 'sr' ? (theme === 'light' ? 'var(--accent)' : 'rgba(59,130,246,0.3)') : 'transparent',
                             borderRadius: '8px',
-                            color: lang === 'sr' ? '#bb9af7' : 'var(--text-secondary)',
-                            cursor: 'pointer', fontSize: '11px', fontWeight: 800
+                            color: lang === 'sr' ? (theme === 'light' ? '#fff' : '#fff') : (theme === 'light' ? '#1e3a8a' : 'var(--text-secondary)'),
+                            cursor: 'pointer', fontSize: '11px', fontWeight: 950,
+                            transition: 'all 0.2s'
                         }}>SRB</button>
                         <button onClick={() => setLang('en')} style={{
                             padding: '4px 10px', border: 'none',
-                            background: lang === 'en' ? 'rgba(59,130,246,0.15)' : 'transparent',
+                            background: lang === 'en' ? (theme === 'light' ? 'var(--accent)' : 'rgba(59,130,246,0.3)') : 'transparent',
                             borderRadius: '8px',
-                            color: lang === 'en' ? '#bb9af7' : 'var(--text-secondary)',
-                            cursor: 'pointer', fontSize: '11px', fontWeight: 800
+                            color: lang === 'en' ? (theme === 'light' ? '#fff' : '#fff') : (theme === 'light' ? '#1e3a8a' : 'var(--text-secondary)'),
+                            cursor: 'pointer', fontSize: '11px', fontWeight: 950,
+                            transition: 'all 0.2s'
                         }}>ENG</button>
                     </div>
                     <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', height: '16px', margin: '0 8px' }} />

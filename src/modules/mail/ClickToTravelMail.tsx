@@ -35,7 +35,8 @@ import {
     Languages,
     Sword,
     AlertCircle,
-    MessageCircle
+    MessageCircle,
+    Square
 } from 'lucide-react';
 import { useMailStore, useAuthStore } from '../../stores';
 import { useKatanaStore } from '../../stores/katanaStore';
@@ -63,11 +64,13 @@ export const ClickToTravelMail: React.FC = () => {
         updateEmail,
         setEmails,
         addAccount,
-        receiveEmail
+        receiveEmail,
+        draftToCompose,
+        setDraftToCompose
     } = useMailStore();
 
-    const { userName } = useAuthStore();
-    const guestUserId = 'user-' + userName.toLowerCase().replace(/\s/g, '-');
+    const { userName = 'Guest' } = useAuthStore();
+    const guestUserId = 'user-' + (userName || 'Guest').toLowerCase().replace(/\s/g, '-');
 
     const { addTask: addKatanaTask } = useKatanaStore();
 
@@ -109,6 +112,17 @@ export const ClickToTravelMail: React.FC = () => {
     const [composeTo, setComposeTo] = useState('');
     const [composeSubject, setComposeSubject] = useState('');
     const [composeBody, setComposeBody] = useState('');
+    const [composeColor, setComposeColor] = useState('#0f172a');
+    const editorRef = useRef<HTMLDivElement>(null);
+
+    const PASTEL_COLORS = [
+        { name: 'Mata', color: '#B5EAD7' },
+        { name: 'Nebo', color: '#C7CEEA' },
+        { name: 'Breskva', color: '#FFDAC1' },
+        { name: 'Limun', color: '#FFFFD8' },
+        { name: 'Laguna', color: '#E2F0CB' },
+        { name: 'Ruža', color: '#FFB7B2' }
+    ];
 
     // Layout State (Resizable Panels)
     const containerRef = useRef<HTMLDivElement>(null);
@@ -135,6 +149,33 @@ export const ClickToTravelMail: React.FC = () => {
         setIsResizingSidebar(false);
         setIsResizingList(false);
     }, []);
+
+    // Auto-migrate to Olympic Pro-Wide V10 (Natural Panoramic Look)
+    useEffect(() => {
+        const OLYMPIC_V10_TAG = '<!-- Olympic V10 -->';
+        if (activeAccount && activeAccount.signature && !activeAccount.signature.includes(OLYMPIC_V10_TAG)) {
+            const cleanName = activeAccount.name.split(' - ')[0];
+            const proSig = `
+<div style="font-family: Arial, Helvetica, sans-serif; color: #000; line-height: 1.25; margin-top: 20px;">
+    ${OLYMPIC_V10_TAG}
+    <div style="margin-bottom: 12px;">Srdačan pozdrav,</div>
+    
+    <div style="font-weight: bold; font-size: 16px; margin-bottom: 2px;">${cleanName}</div>
+    <div style="font-style: italic; margin-bottom: 1px;">Olympic Travel, Srbija</div>
+    <div style="font-style: italic; margin-bottom: 8px;">Kragujevac 34000, Karađorđeva 20</div>
+    
+    <div style="margin-bottom: 1px;">Tel: +381 (0) 34 617 0078</div>
+    <div style="margin-bottom: 1px;">Mob: +381 65 988 5013</div>
+    <div style="margin-bottom: 1px;">Email: <a href="mailto:nenad.tomic@olympic.rs" style="color: #0000FF; text-decoration: underline;">nenad.tomic@olympic.rs</a></div>
+    <div style="margin-bottom: 12px;">Web: <a href="http://www.olympic.rs" style="color: #0000FF; text-decoration: underline;">www.olympic.rs</a></div>
+    
+    <div style="width: 350px; height: 85px; overflow: hidden; margin-top: 5px; border: none;">
+        <img src="/clicktotravel.png" alt="Olympic Logo" style="width: 500px; height: 350px; margin-top: -125px; margin-left: -60px; display: block; border: none;" />
+    </div>
+</div>`;
+            setSignature(activeAccount.id, proSig.trim());
+        }
+    }, [activeAccount, setSignature]);
 
     const resize = useCallback((e: MouseEvent) => {
         if (!containerRef.current) return;
@@ -209,6 +250,7 @@ export const ClickToTravelMail: React.FC = () => {
         setComposeTo('');
         setComposeSubject('');
         setComposeBody('');
+        setComposeColor('#0f172a'); // Reset to Dark Navy
         setViewMode('compose');
     };
 
@@ -221,6 +263,7 @@ export const ClickToTravelMail: React.FC = () => {
             setComposeTo(email.senderEmail);
             setComposeSubject(`Re: ${email.subject}`);
             setComposeBody(`\n\n--- Originalna poruka ---\nOd: ${email.sender}\nPoslato: ${email.time}\n\n${email.body}`);
+            setComposeColor('#065f46'); // Dark Green for Reply
             setViewMode('compose');
         } else {
             alert(`UPOZORENJE:\nNalog je već zaključao ${result.lock?.userName}. \nOni verovatno već pišu odgovor.`);
@@ -240,12 +283,20 @@ export const ClickToTravelMail: React.FC = () => {
         setIsSending(true);
 
         try {
+            const signature = activeAccount.signature || '';
+            let finalBody = composeBody;
+            
+            // Append signature only if not already present in HTML form
+            if (signature && !composeBody.includes('PrimeClickTravel')) {
+                finalBody = `${composeBody}<br><br><div style="border-top: 1px solid #ddd; padding-top: 20px; margin-top: 20px;">${signature}</div>`;
+            }
+
             // Try to send real email via SMTP
             const result = await sendEmailViaSmtp({
                 from: activeAccount.email,
                 to: composeTo,
                 subject: composeSubject || '(Bez naslova)',
-                body: composeBody,
+                body: finalBody,
                 accountId: selectedAccountId
             });
 
@@ -262,7 +313,7 @@ export const ClickToTravelMail: React.FC = () => {
                     accountId: selectedAccountId,
                     to: composeTo,
                     subject: composeSubject || '(Bez naslova)',
-                    body: composeBody,
+                    body: `${composeBody}\n\n---\n${activeAccount.signature}`,
                     sender: activeAccount.name,
                     senderEmail: activeAccount.email
                 });
@@ -374,7 +425,17 @@ export const ClickToTravelMail: React.FC = () => {
 
     useEffect(() => {
         loadEmails();
-    }, [selectedAccountId]);
+        
+        // Handle external compose request (e.g. from Notepad)
+        if (draftToCompose) {
+            setComposeTo(draftToCompose.to || '');
+            setComposeSubject(draftToCompose.subject);
+            setComposeBody(draftToCompose.body);
+            setViewMode('compose');
+            // Clear draft after reading so it doesn't re-open on every mount
+            setDraftToCompose(null);
+        }
+    }, [selectedAccountId, draftToCompose, setDraftToCompose]);
 
     const handleOpenSettings = () => {
         setShowConfigModal(true);
@@ -440,6 +501,31 @@ export const ClickToTravelMail: React.FC = () => {
         } finally {
             setIsFetching(false);
         }
+    };
+
+    const handleGenerateProSignature = () => {
+        const cleanName = activeAccount.name.split(' - ')[0];
+        const OLYMPIC_V10_TAG = '<!-- Olympic V10 -->';
+        const proSig = `
+<div style="font-family: Arial, Helvetica, sans-serif; color: #000; line-height: 1.25; margin-top: 20px;">
+    ${OLYMPIC_V10_TAG}
+    <div style="margin-bottom: 12px;">Srdačan pozdrav,</div>
+    
+    <div style="font-weight: bold; font-size: 16px; margin-bottom: 2px;">${cleanName}</div>
+    <div style="font-style: italic; margin-bottom: 1px;">Olympic Travel, Srbija</div>
+    <div style="font-style: italic; margin-bottom: 8px;">Kragujevac 34000, Karađorđeva 20</div>
+    
+    <div style="margin-bottom: 1px;">Tel: +381 (0) 34 617 0078</div>
+    <div style="margin-bottom: 1px;">Mob: +381 65 988 5013</div>
+    <div style="margin-bottom: 1px;">Email: <a href="mailto:nenad.tomic@olympic.rs" style="color: #0000FF; text-decoration: underline;">nenad.tomic@olympic.rs</a></div>
+    <div style="margin-bottom: 12px;">Web: <a href="http://www.olympic.rs" style="color: #0000FF; text-decoration: underline;">www.olympic.rs</a></div>
+    
+    <div style="width: 350px; height: 85px; overflow: hidden; margin-top: 5px; border: none;">
+        <img src="/clicktotravel.png" alt="Olympic Logo" style="width: 500px; height: 350px; margin-top: -125px; margin-left: -60px; display: block; border: none;" />
+    </div>
+</div>`;
+        setSignatureEdit(proSig.trim());
+        notify('system', 'success', 'Olympic Signature', 'Potpis je generisan sa prirodnim, panoramnim izgledom logoa.');
     };
 
     const handleSaveSignature = () => {
@@ -572,6 +658,22 @@ export const ClickToTravelMail: React.FC = () => {
         } finally {
             setIsTranslating(false);
         }
+    };
+
+    const handleInsertBlock = (color: string) => {
+        if (!editorRef.current) return;
+        
+        // Ensure the editor is focused
+        editorRef.current.focus();
+        
+        const blockHtml = `
+            <div style="background-color: ${color}; padding: 20px; border-radius: 12px; margin: 15px 0; border: 1px solid rgba(0,0,0,0.1); color: #333; font-family: sans-serif; cursor: default;">
+                Kucajte tekst unutar bloka...
+            </div>
+            <p><br></p>
+        `;
+        
+        document.execCommand('insertHTML', false, blockHtml);
     };
 
     const handleSendToKatana = async (email: any) => {
@@ -1155,19 +1257,41 @@ export const ClickToTravelMail: React.FC = () => {
                             <button><LinkIcon size={14} /></button>
                             <button><Smile size={14} /></button>
                         </div>
+                        <div className="toolbar-section">
+                            {PASTEL_COLORS.map(c => (
+                                <button 
+                                    key={c.color} 
+                                    onClick={() => handleInsertBlock(c.color)}
+                                    title={`Ubaci ${c.name} blok`}
+                                    style={{ padding: '4px' }}
+                                >
+                                    <Square size={16} fill={c.color} color={c.color} />
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="compose-editor-area">
                         <div className="outlook-editor-inner">
-                            <textarea
-                                className="outlook-textarea"
-                                placeholder="Poštovani,..."
-                                value={composeBody}
-                                onChange={(e) => setComposeBody(e.target.value)}
-                            ></textarea>
+                            <div
+                                ref={editorRef}
+                                className="outlook-textarea visual-editor"
+                                contentEditable
+                                suppressContentEditableWarning
+                                onInput={(e) => setComposeBody(e.currentTarget.innerHTML)}
+                                dangerouslySetInnerHTML={{ __html: composeBody }}
+                                style={{
+                                    outline: 'none',
+                                    padding: '30px',
+                                    color: composeColor,
+                                    fontSize: '15px'
+                                }}
+                            />
                             <div className="editor-signature">
-                                <div className="signature-divider"></div>
-                                <pre>{activeAccount.signature}</pre>
+                                <div
+                                    dangerouslySetInnerHTML={{ __html: activeAccount.signature || '' }}
+                                    style={{ color: 'inherit' }}
+                                />
                             </div>
                         </div>
                     </div>
@@ -1194,8 +1318,9 @@ export const ClickToTravelMail: React.FC = () => {
                                 onChange={(e) => setSignatureEdit(e.target.value)}
                                 placeholder="Unesite vaš potpis..."
                             ></textarea>
-                            <div className="settings-actions">
-                                <button className="save-btn" onClick={handleSaveSignature}>Sačuvaj Potpis</button>
+                            <div className="settings-actions" style={{ gap: '15px' }}>
+                                <button className="save-btn" onClick={handleSaveSignature} style={{ background: 'var(--mail-accent)', color: 'white' }}>Sačuvaj Potpis</button>
+                                <button className="gen-btn" onClick={handleGenerateProSignature} style={{ background: '#3fb950', color: 'white' }}>Generiši Pro Potpis</button>
                                 <button className="cancel-btn" onClick={() => setViewMode('list')}>Otkaži</button>
                             </div>
                         </div>

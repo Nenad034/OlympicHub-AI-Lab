@@ -415,51 +415,7 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
                         </>
                     )}
 
-                    {isStaff && !forceShowAll && (
-                        <button
-                            onClick={() => setShowGlobalPulse(!showGlobalPulse)}
-                            style={{
-                                marginTop: '20px',
-                                padding: '10px 24px',
-                                borderRadius: '100px',
-                                border: '1.5px solid',
-                                borderColor: showGlobalPulse ? 'var(--accent)' : 'var(--border)',
-                                background: showGlobalPulse ? 'var(--accent-glow)' : 'transparent',
-                                color: showGlobalPulse ? 'var(--accent)' : 'var(--text-secondary)',
-                                fontSize: '13px',
-                                fontWeight: '800',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px',
-                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                boxShadow: showGlobalPulse ? '0 10px 20px var(--accent-glow)' : 'none'
-                            }}
-                        >
-                            <Activity size={18} />
-                            {showGlobalPulse ? 'PRIKAŽI MANJE' : 'PRIKAŽI GLOBAL PULSE'}
-                            <div style={{
-                                width: '32px',
-                                height: '16px',
-                                background: showGlobalPulse ? 'var(--accent)' : 'var(--border)',
-                                borderRadius: '10px',
-                                position: 'relative',
-                                marginLeft: '5px',
-                                transition: '0.3s'
-                            }}>
-                                <div style={{
-                                    width: '12px',
-                                    height: '12px',
-                                    background: 'white',
-                                    borderRadius: '50%',
-                                    position: 'absolute',
-                                    top: '2px',
-                                    left: showGlobalPulse ? '18px' : '2px',
-                                    transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                                }} />
-                            </div>
-                        </button>
-                    )}
+
                 </div>
 
                 {/* Dashboard Application Search - Only in Catalog View */}
@@ -759,6 +715,87 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
                                         ))}
                                     </div>
                                 </motion.div>
+                            )}
+
+
+                            {/* Global Pulse Toggle Icon - Moved and Redesigned as 'M' icon */}
+                            {isStaff && !forceShowAll && (
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    padding: '20px 0 40px',
+                                    width: '100%'
+                                }}>
+                                    <motion.button
+                                        onClick={() => setShowGlobalPulse(!showGlobalPulse)}
+                                        whileHover={{ scale: 1.05, boxShadow: '0 0 40px var(--accent-glow)' }}
+                                        whileTap={{ scale: 0.95 }}
+                                        style={{
+                                            position: 'relative',
+                                            width: '72px',
+                                            height: '72px',
+                                            borderRadius: '24px',
+                                            background: showGlobalPulse ? 'linear-gradient(135deg, var(--accent) 0%, #a855f7 100%)' : 'rgba(255,255,255,0.03)',
+                                            border: `1.5px solid ${showGlobalPulse ? 'var(--accent)' : 'rgba(255,255,255,0.1)'}`,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            boxShadow: showGlobalPulse ? '0 15px 35px var(--accent-glow)' : '0 10px 20px rgba(0,0,0,0.1)',
+                                            zIndex: 10
+                                        }}
+                                        title={showGlobalPulse ? 'Sakrij Global Pulse' : 'Prikaži Global Pulse (Monitoring)'}
+                                    >
+                                        <Zap 
+                                            size={32} 
+                                            fill={showGlobalPulse ? "currentColor" : "none"}
+                                            style={{
+                                                color: showGlobalPulse ? '#fff' : 'var(--text-secondary)',
+                                                filter: showGlobalPulse ? 'drop-shadow(0 0 8px rgba(255,255,255,0.5))' : 'none',
+                                                transition: 'all 0.4s ease'
+                                            }} 
+                                        />
+                                        
+                                        {showGlobalPulse ? (
+                                            <motion.div
+                                                animate={{ 
+                                                    scale: [1, 1.4, 1],
+                                                    opacity: [1, 0, 1]
+                                                }}
+                                                transition={{ repeat: Infinity, duration: 1.5 }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: '12px',
+                                                    right: '12px',
+                                                    width: '10px',
+                                                    height: '10px',
+                                                    borderRadius: '50%',
+                                                    background: '#10b981',
+                                                    boxShadow: '0 0 15px #10b981'
+                                                }}
+                                            />
+                                        ) : (
+                                            <Activity size={14} style={{ position: 'absolute', bottom: '12px', right: '12px', opacity: 0.4, color: 'var(--text-secondary)' }} />
+                                        )}
+                                        
+                                        {/* Subtle background glow when active */}
+                                        {showGlobalPulse && (
+                                            <motion.div
+                                                layoutId="glow"
+                                                className="pulse-glow"
+                                                style={{
+                                                    position: 'absolute',
+                                                    width: '120%',
+                                                    height: '120%',
+                                                    background: 'radial-gradient(circle, var(--accent-glow) 0%, transparent 70%)',
+                                                    zIndex: -1,
+                                                    opacity: 0.5
+                                                }}
+                                            />
+                                        )}
+                                    </motion.button>
+                                </div>
                             )}
 
 

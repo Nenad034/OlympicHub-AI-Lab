@@ -7,6 +7,12 @@ export interface MailAccount {
     name: string;
     color: string;
     signature?: string;
+    title?: string;
+    phoneOffice?: string;
+    phoneMobile?: string;
+    web?: string;
+    companyName?: string;
+    logoUrl?: string;
 }
 
 export interface Email {
@@ -30,6 +36,7 @@ interface MailState {
     accounts: MailAccount[];
     emails: Email[];
     selectedAccountId: string;
+    draftToCompose: { subject: string; body: string; to?: string } | null;
 
     // Actions
     sendEmail: (data: { accountId: string, to: string, subject: string, body: string, sender: string, senderEmail: string }) => void;
@@ -43,12 +50,68 @@ interface MailState {
     updateAccount: (id: string, updates: Partial<MailAccount>) => void;
     removeAccount: (id: string) => void;
     receiveEmail: (data: { accountId: string, from: string, fromEmail: string, subject: string, body: string }) => void;
+    setDraftToCompose: (draft: { subject: string; body: string; to?: string } | null) => void;
 }
 
+const defaultSignature = (name: string, title: string, email: string) => `
+<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; line-height: 1.5; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 25px;">
+    <div style="font-weight: 800; font-size: 18px; color: #0f172a; margin-bottom: 2px;">${name}</div>
+    <div style="font-weight: 600; font-size: 13px; color: #475569; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 0.5px;">${title}</div>
+    
+    <table cellpadding="0" cellspacing="0" style="font-size: 13px; color: #475569; border: none;">
+        <tr>
+            <td style="padding: 2px 0;">☎️ <span style="margin-left: 8px;"><b>T:</b> +381 11 311 0 311</span></td>
+        </tr>
+        <tr>
+            <td style="padding: 2px 0;">📱 <span style="margin-left: 8px;"><b>M:</b> +381 64 111 2233</span></td>
+        </tr>
+        <tr>
+            <td style="padding: 2px 0;">✉️ <span style="margin-left: 8px;"><b>E:</b> ${email}</span></td>
+        </tr>
+        <tr>
+            <td style="padding: 2px 0;">🌐 <span style="margin-left: 8px;"><b>W:</b> www.olympic.rs</span></td>
+        </tr>
+    </table>
+    
+    <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #f1f5f9;">
+        <img src="/clicktotravel.png" alt="PrimeClick Logo" style="height: 60px; width: auto; display: block;" />
+        <div style="margin-top: 10px; font-weight: 800; color: #0f172a; font-size: 15px; letter-spacing: -0.3px;">PrimeClickTravel</div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Premium Travel Management System</div>
+    </div>
+</div>
+`;
+
 const initialAccounts: MailAccount[] = [
-    { id: 'acc1', email: 'nenad.tomic1403@gmail.com', name: 'Nenad Tomić - Gmail', color: '#ea4335', signature: 'Srdačan pozdrav,\nNenad Tomić' },
-    { id: 'acc2', email: 'nenad.tomic@olympic.rs', name: 'Nenad Tomić - Olympic', color: '#3fb950', signature: 'Srdačan pozdrav,\nNenad Tomić\nOlympic Travel' },
-    { id: 'acc3', email: 'info@olympic.rs', name: 'Olympic Info', color: '#3b82f6', signature: 'Olympic Travel Team\nwww.olympic.rs' }
+    { 
+        id: 'acc1', 
+        email: 'nenad.tomic1403@gmail.com', 
+        name: 'Nenad Tomić', 
+        color: '#ea4335',
+        title: 'Direktor',
+        companyName: 'PrimeClickTravel',
+        phoneOffice: '+381 11 311 0 311',
+        phoneMobile: '+381 64 111 2233',
+        web: 'www.olympic.rs',
+        signature: defaultSignature('Nenad Tomić', 'Direktor', 'nenad.tomic1403@gmail.com')
+    },
+    { 
+        id: 'acc2', 
+        email: 'nenad.tomic@olympic.rs', 
+        name: 'Nenad Tomić', 
+        color: '#3fb950',
+        title: 'Direktor',
+        companyName: 'Olympic Travel',
+        signature: defaultSignature('Nenad Tomić', 'Direktor', 'nenad.tomic@olympic.rs')
+    },
+    { 
+        id: 'acc3', 
+        email: 'info@olympic.rs', 
+        name: 'Olympic Info', 
+        color: '#3b82f6',
+        title: 'Customer Support',
+        companyName: 'Olympic Travel',
+        signature: defaultSignature('Olympic Travel Team', 'Podrška Korisnicima', 'info@olympic.rs')
+    }
 ];
 
 const initialEmails: Email[] = [
@@ -422,6 +485,7 @@ export const useMailStore = create<MailState>()(
             accounts: initialAccounts,
             emails: initialEmails,
             selectedAccountId: 'acc1',
+            draftToCompose: null,
 
             sendEmail: (data: { accountId: string, to: string, subject: string, body: string, sender: string, senderEmail: string }) => set((state: MailState) => {
                 const newEmail: Email = {
@@ -516,6 +580,8 @@ export const useMailStore = create<MailState>()(
                 };
                 return { emails: [newEmail, ...state.emails] };
             }),
+
+            setDraftToCompose: (draft) => set({ draftToCompose: draft }),
         }),
         {
             name: 'olympic-mail-storage',

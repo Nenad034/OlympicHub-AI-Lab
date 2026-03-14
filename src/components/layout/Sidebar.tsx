@@ -41,7 +41,7 @@ import { useThemeStore, useAppStore, useAuthStore } from '../../stores';
 import { translations } from '../../translations';
 
 const Sidebar: React.FC = () => {
-    const { theme, cycleTheme, lang, isPrism, togglePrism, isSidebarCollapsed, toggleSidebar, toggleNavMode } = useThemeStore();
+    const { theme, cycleTheme, lang, setLang, isPrism, togglePrism, isSidebarCollapsed, toggleSidebar, toggleNavMode } = useThemeStore();
     const { userLevel, impersonatedSubagent, userName, logout } = useAuthStore();
     const { setChatOpen } = useAppStore();
     const location = useLocation();
@@ -404,9 +404,24 @@ const Sidebar: React.FC = () => {
                             <button onClick={toggleNavMode} title="Horizontalni Menu" style={{ flex: 1, background: 'transparent', border: 'none', padding: '6px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                                 <LayoutTemplate size={16} />
                             </button>
-                            <button onClick={() => useThemeStore.getState().setLang(lang === 'sr' ? 'en' : 'sr')} style={{ flex: 1.5, background: 'transparent', border: 'none', padding: '6px', cursor: 'pointer' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--text-primary)' }}>{lang.toUpperCase()}</span>
-                            </button>
+                            <div style={{ display: 'flex', background: theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.25)', padding: '3px', borderRadius: '10px', alignItems: 'center', flex: 1.5 }}>
+                                <button onClick={() => setLang('sr')} style={{
+                                    flex: 1, padding: '4px 0', border: 'none',
+                                    background: lang === 'sr' ? (theme === 'light' ? 'var(--accent)' : 'rgba(59,130,246,0.3)') : 'transparent',
+                                    borderRadius: '8px',
+                                    color: lang === 'sr' ? '#fff' : (theme === 'light' ? '#1e3a8a' : 'var(--text-secondary)'),
+                                    cursor: 'pointer', fontSize: '10px', fontWeight: 950,
+                                    transition: 'all 0.2s'
+                                }}>SRB</button>
+                                <button onClick={() => setLang('en')} style={{
+                                    flex: 1, padding: '4px 0', border: 'none',
+                                    background: lang === 'en' ? (theme === 'light' ? 'var(--accent)' : 'rgba(59,130,246,0.3)') : 'transparent',
+                                    borderRadius: '8px',
+                                    color: lang === 'en' ? '#fff' : (theme === 'light' ? '#1e3a8a' : 'var(--text-secondary)'),
+                                    cursor: 'pointer', fontSize: '10px', fontWeight: 950,
+                                    transition: 'all 0.2s'
+                                }}>ENG</button>
+                            </div>
                             <button onClick={cycleTheme} style={{ flex: 1, background: 'transparent', border: 'none', padding: '6px', cursor: 'pointer' }}>
                                 {theme === 'navy' ? <Moon size={15} color="var(--accent)" /> : <Sun size={15} color="#eab308" />}
                             </button>

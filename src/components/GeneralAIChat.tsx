@@ -144,7 +144,14 @@ export default function GeneralAIChat({ isOpen, onOpen, onClose, lang, context =
             setMessages([{ role: 'ai', text: welcome }]);
             setTimeout(() => speak(welcome), 500);
         }
-    }, [isOpen, lang, context, messages.length, speak, activePersona]);
+
+        // Handle initial message (pre-filled content from share)
+        if (isOpen && chatContext.initialMessage) {
+            setInput(chatContext.initialMessage);
+            // Optional: Auto-trigger send if desired, but usually better to let user review
+            setChatContext({ ...chatContext, initialMessage: undefined });
+        }
+    }, [isOpen, lang, context, messages.length, speak, activePersona, chatContext, setChatContext]);
 
     const [activeLang, setActiveLang] = useState<'sr' | 'en' | 'ru' | 'it' | 'de' | 'fr' | 'es'>(lang);
 

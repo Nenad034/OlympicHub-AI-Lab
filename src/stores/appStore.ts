@@ -21,9 +21,11 @@ interface AppState {
     };
     searchQuery: string;
     showMapExplorer: boolean;
+    isAgOpen: boolean;
 
     setAppStatus: (status: AppStatus) => void;
     setChatOpen: (open: boolean) => void;
+    setAgOpen: (open: boolean) => void;
     setMilicaChatOpen: (open: boolean) => void;
     setChatContext: (context: AppState['chatContext']) => void;
     toggleChat: () => void;
@@ -40,10 +42,12 @@ export const useAppStore = create<AppState>()(
             chatContext: { type: 'general' },
             searchQuery: '',
             showMapExplorer: false,
+            isAgOpen: false,
 
             setAppStatus: (status: AppStatus) => set({ appStatus: status }),
 
             setChatOpen: (open: boolean) => set({ isChatOpen: open }),
+            setAgOpen: (open: boolean) => set({ isAgOpen: open }),
             setMilicaChatOpen: (open: boolean) => set({ isMilicaChatOpen: open }),
             setChatContext: (context) => set({ chatContext: context }),
             toggleChat: () => set((state) => ({ isChatOpen: !state.isChatOpen })),
@@ -56,7 +60,8 @@ export const useAppStore = create<AppState>()(
             partialize: (state) => ({
                 // Only persist chat state, not search
                 isChatOpen: state.isChatOpen,
-                isMilicaChatOpen: state.isMilicaChatOpen
+                isMilicaChatOpen: state.isMilicaChatOpen,
+                isAgOpen: state.isAgOpen
             }),
         }
     )

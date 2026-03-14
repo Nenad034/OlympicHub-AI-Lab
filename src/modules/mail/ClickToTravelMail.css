@@ -986,30 +986,45 @@
 .compose-editor-area {
     flex: 1;
     background: rgba(255, 255, 255, 0.02);
-    padding: 24px;
+    padding: 10px; /* Reduced padding for smaller screens */
     overflow-y: auto;
     display: flex;
     justify-content: center;
 }
 
+@media (min-width: 768px) {
+    .compose-editor-area {
+        padding: 24px;
+    }
+}
+
 .outlook-editor-inner {
     width: 100%;
-    max-width: 800px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+    max-width: 850px; /* Slightly wider for better desktop view */
+    background: #ffffff;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    border-radius: 4px;
+    margin: 0 auto;
 }
 
 .outlook-textarea {
-    flex: 1;
     background: transparent;
     border: none;
     color: var(--mail-text-primary);
     font-size: 15px;
-    line-height: 1.7;
-    resize: none;
+    line-height: 1.6;
     outline: none;
     font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 400px;
+}
+
+.outlook-textarea img {
+    max-width: 100% !important;
+    height: auto !important;
+    display: block;
+    margin: 15px auto; /* Centered images */
+    border-radius: 8px;
 }
 
 .outlook-textarea::placeholder {
@@ -1018,8 +1033,33 @@
 }
 
 .editor-signature {
-    margin-top: auto;
-    padding-top: 24px;
+    margin-top: 20px;
+    padding: 20px;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Ensure images in signature (like logo) are responsive and visible */
+.editor-signature img {
+    max-width: 180px;
+    height: auto;
+    display: block;
+    margin-top: 10px;
+}
+
+/* Specific styling for the HTML signature container */
+.editor-signature > div {
+    max-width: 100%;
+    overflow: hidden;
+    word-wrap: break-word;
+}
+
+.visual-editor {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+    min-height: 400px;
+    border-radius: 4px 4px 0 0;
+    width: 100%;
 }
 
 .signature-divider {
@@ -1582,3 +1622,68 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* ============================================
+   LIGHT MODE OVERRIDES
+   ============================================ */
+[data-theme='light'] .mail-module-container {
+    --mail-bg: #f8fafc;
+    --mail-panel-bg: #ffffff;
+    --mail-sidebar-bg: #f1f5f9;
+    --mail-text-primary: #1e293b;
+    --mail-text-secondary: #64748b;
+    --mail-border: #e2e8f0;
+    --mail-hover: #f1f5f9;
+}
+
+[data-theme='light'] .outlook-textarea {
+    color: #1e293b !important;
+    background: #ffffff !important;
+}
+
+[data-theme='light'] .compose-fields-outlook input,
+[data-theme='light'] .compose-fields-outlook select {
+    color: #1e293b !important;
+    border-color: #cbd5e1 !important;
+    background: #f8fafc !important;
+}
+
+[data-theme='light'] .field-label {
+    color: #64748b !important;
+}
+
+[data-theme='light'] .compose-top-bar,
+[data-theme='light'] .compose-toolbar-main,
+[data-theme='light'] .rich-text-toolbar {
+    background: #f8fafc !important;
+    border-bottom-color: #e2e8f0 !important;
+}
+
+[data-theme='light'] .compose-title {
+    color: #1e293b !important;
+}
+
+[data-theme='light'] .rich-text-toolbar button {
+    color: #64748b;
+}
+
+[data-theme='light'] .rich-text-toolbar button:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+[data-theme='light'] .email-item.active {
+    background: #eff6ff;
+}
+
+[data-theme='light'] .email-item.unread {
+    background: #fdfdfd;
+}
+
+[data-theme='light'] .content-subject {
+    color: #0f172a;
+}
+
+[data-theme='light'] .view-header {
+    background: #ffffff;
+}

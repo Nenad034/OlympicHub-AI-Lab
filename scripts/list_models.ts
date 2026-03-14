@@ -1,20 +1,19 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+const geminiKey = process.env.VITE_GEMINI_API_KEY || '';
+const genAI = new GoogleGenerativeAI(geminiKey);
+
 async function list() {
-  const key = "AIzaSyB-CiOvVFh5529ynyOLRGbPR8V4OeSwnkI";
-  const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
-  
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.models) {
-      const embedModels = data.models.filter(m => m.supportedGenerationMethods.includes("embedContent"));
-      console.log("Supported Embedding Models:");
-      embedModels.forEach(m => console.log(`- ${m.name}`));
-    } else {
-      console.log("No models found:", JSON.stringify(data, null, 2));
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        console.log(JSON.stringify(data, null, 2));
+    } catch (e) {
+        console.error(e);
     }
-  } catch (err) {
-    console.error("Fetch Error:", err);
-  }
 }
 
 list();
