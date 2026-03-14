@@ -25,10 +25,12 @@ export interface SmartSearchParams {
     }>;
     checkIn: string;
     checkOut: string;
-    rooms: RoomAllocation[];
+    roomConfig: RoomAllocation[];
     mealPlan?: string;
+    stars?: string[];
     currency?: string;
     nationality?: string;
+    flexibility?: number;
     enabledProviders?: Record<string, boolean>;
     abortSignal?: AbortSignal;
 }
@@ -111,7 +113,7 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
     try {
         // STEP 1: Identify unique room configurations to minimize API calls
         const uniqueConfigs = new Map<string, { adults: number, children: number, ages: number[], indices: number[] }>();
-        params.rooms.forEach((room, idx) => {
+        params.roomConfig.forEach((room: RoomAllocation, idx: number) => {
             const key = `${room.adults}-${room.children}-${[...room.childrenAges].sort().join(',')}`;
             if (!uniqueConfigs.has(key)) {
                 uniqueConfigs.set(key, { ...room, ages: room.childrenAges, indices: [idx] });

@@ -1,7 +1,7 @@
 .horizontal-nav {
     display: flex;
     align-items: center;
-    padding: 0 32px;
+    padding: 0 16px;
     height: 120px;
     background: var(--bg-sidebar);
     backdrop-filter: blur(20px);
@@ -86,13 +86,13 @@
 .h-nav-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
+    gap: 6px;
+    padding: 6px 10px;
     border-radius: 8px;
     color: var(--text-secondary);
     text-decoration: none;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 650;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
 }

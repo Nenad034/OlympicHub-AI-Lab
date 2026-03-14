@@ -1,5 +1,5 @@
 import React from 'react';
-import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 // Layout Components
 import { Sidebar, TopBar, HorizontalNav, SystemFooter, PinnedNotesRenderer } from '../components/layout';
@@ -53,6 +53,7 @@ const OrsTest = React.lazy(() => import('../pages/OrsTest'));
 const MarsTest = React.lazy(() => import('../pages/MarsTest'));
 const SoftZoneDashboard = React.lazy(() => import('../components/SoftZoneDashboard'));
 const SmartSearch = React.lazy(() => import('../pages/SmartSearch'));
+const SmartSearchV2 = React.lazy(() => import('../pages/SmartSearchV2'));
 const ReservationArchitect = React.lazy(() => import('../pages/ReservationArchitect'));
 const ReservationArchitectV5 = React.lazy(() => import('../pages/ReservationArchitectV5'));
 const ReservationsDashboard = React.lazy(() => import('../pages/ReservationsDashboard'));
@@ -89,6 +90,7 @@ const SkiTest = React.lazy(() => import('../pages/SkiTest'));
 const SkiResortDetail = React.lazy(() => import('../pages/SkiResortDetail'));
 const TrafficsTest = React.lazy(() => import('../pages/TrafficsTest'));
 const OperationalReports = React.lazy(() => import('../modules/production/OperationalReports.tsx'));
+const PimDashboard = React.lazy(() => import('../modules/pim/PimDashboard'));
 
 
 const FinancialIntelligenceHub = React.lazy(() => import('../pages/FinancialIntelligenceHub'));
@@ -105,8 +107,9 @@ const PublicBookingPortal = React.lazy(() => import('../pages/PublicBookingPorta
 
 // Stores
 import { useThemeStore, useAuthStore, useAppStore } from '../stores';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import DailyWisdom from '../components/DailyWisdom';
+import { AgPanel } from '../components/common/AgPanel';
+import { AgPrimePanel } from '../components/common/AgPrimePanel';
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -214,6 +217,7 @@ const OrchestratorPage: React.FC = () => {
 const GlobalUIWrapper: React.FC = () => {
     const { isChatOpen, setChatOpen } = useAppStore();
     const { lang } = useThemeStore();
+    const { userLevel } = useAuthStore();
     const location = useLocation();
 
     // Wisdom is only shown on exactly / path (Dashboard)
@@ -240,6 +244,9 @@ const GlobalUIWrapper: React.FC = () => {
                 context="Dashboard"
                 analysisData={[]}
             />
+
+            {/* Antigravity AI Control Center - Needs to be inside Router for useLocation() */}
+            {userLevel === 6 ? <AgPrimePanel /> : <AgPanel />}
         </>
     );
 };
@@ -617,6 +624,10 @@ export const router = createBrowserRouter([
                         element: <SmartSearch />,
                     },
                     {
+                        path: 'smart-search-v2',
+                        element: <SmartSearchV2 />,
+                    },
+                    {
                         path: 'destination-prime-explorer',
                         element: <DestinationPrimeExplorer />,
                     },
@@ -886,6 +897,16 @@ export const router = createBrowserRouter([
                     {
                         path: 'demo/docs',
                         element: <DocumentPreviewDemo />,
+                    },
+                    {
+                        path: 'pim',
+                        element: (
+                            <ProtectedRoute minLevel={6}>
+                                <React.Suspense fallback={<LoadingFallback />}>
+                                    <PimDashboard />
+                                </React.Suspense>
+                            </ProtectedRoute>
+                        ),
                     },
                     {
                         path: '*',

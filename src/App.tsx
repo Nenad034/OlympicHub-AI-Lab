@@ -111,8 +111,6 @@ const App: React.FC = () => {
           {/* Communication Collision & SLA Guard */}
           <CommunicationGuard />
 
-          {/* Antigravity AI Control Center */}
-          <AgPanel />
         </>
       )}
     </>

@@ -138,30 +138,92 @@ const WeatherTool: React.FC<{ isDark: boolean; cities: string[] }> = ({ isDark, 
 const CalculatorTool: React.FC<{ isDark: boolean }> = ({ isDark }) => {
     const [expr, setExpr] = useState('');
     const [res, setRes] = useState('0');
+    const [mode, setMode] = useState<'sequential' | 'scientific'>('sequential');
     
-    const calculate = () => {
+    const calculate = (val: string = expr) => {
+        if (!val.trim()) {
+            setRes('0');
+            return;
+        }
         try {
-            // Basic eval replacement for simple math
-            // eslint-disable-next-line no-eval
-            const result = eval(expr.replace(/[^-+*/0-9.]/g, ''));
-            setRes(String(result));
+            let processed = val.replace(/,/g, '.');
+            processed = processed.replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
+            
+            if (mode === 'scientific') {
+                // eslint-disable-next-line no-eval
+                const result = eval(processed.replace(/[^-+*/0-9.()]/g, ''));
+                setRes(Number.isInteger(result) ? String(result) : result.toFixed(2).replace(/\.?0+$/, ''));
+            } else {
+                // SEQUENTIAL LOGIC (Left-to-Right)
+                // Tokenize expression
+                const tokens = processed.match(/(\d+(?:\.\d+)?|[+\-*/])/g);
+                if (!tokens) return;
+
+                let currentResult = parseFloat(tokens[0]);
+                for (let i = 1; i < tokens.length; i += 2) {
+                    const operator = tokens[i];
+                    const nextValue = parseFloat(tokens[i + 1]);
+                    
+                    if (isNaN(nextValue)) break;
+
+                    switch (operator) {
+                        case '+': currentResult += nextValue; break;
+                        case '-': currentResult -= nextValue; break;
+                        case '*': currentResult *= nextValue; break;
+                        case '/': currentResult /= nextValue; break;
+                    }
+                }
+                setRes(Number.isInteger(currentResult) ? String(currentResult) : currentResult.toFixed(2).replace(/\.?0+$/, ''));
+            }
         } catch {
             setRes('Error');
         }
     };
 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            calculate();
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [expr, mode]);
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <input 
-                value={expr} 
-                onChange={e => setExpr(e.target.value)}
-                placeholder="2 + 2 * 5..."
-                onKeyDown={e => e.key === 'Enter' && calculate()}
-                style={{ width: '100%', background: isDark ? 'rgba(0,0,0,0.2)' : '#f1f5f9', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px', color: 'inherit' }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent)' }}>= {res}</span>
-                <button onClick={calculate} style={{ padding: '6px 12px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '800' }}>Izračunaj</button>
+            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.1)', borderRadius: '8px', padding: '2px' }}>
+                <button 
+                    onClick={() => setMode('sequential')}
+                    style={{ flex: 1, padding: '4px', border: 'none', background: mode === 'sequential' ? 'var(--accent)' : 'transparent', color: mode === 'sequential' ? 'white' : 'inherit', borderRadius: '6px', fontSize: '10px', cursor: 'pointer', fontWeight: '800' }}
+                >
+                    BIZNIS (Redosled)
+                </button>
+                <button 
+                    onClick={() => setMode('scientific')}
+                    style={{ flex: 1, padding: '4px', border: 'none', background: mode === 'scientific' ? 'var(--accent)' : 'transparent', color: mode === 'scientific' ? 'white' : 'inherit', borderRadius: '6px', fontSize: '10px', cursor: 'pointer', fontWeight: '800' }}
+                >
+                    MATEMATIČKI
+                </button>
+            </div>
+            <div style={{ position: 'relative' }}>
+                <input 
+                    value={expr} 
+                    onChange={e => setExpr(e.target.value)}
+                    placeholder="200/2*3-10+56/8"
+                    autoFocus
+                    style={{ 
+                        width: '100%', 
+                        background: isDark ? 'rgba(0,0,0,0.2)' : '#f1f5f9', 
+                        border: '1px solid var(--border)', 
+                        borderRadius: '12px', 
+                        padding: '12px', 
+                        fontSize: '14px',
+                        color: 'inherit',
+                        outline: 'none'
+                    }}
+                />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
+                <span style={{ fontSize: '22px', fontWeight: '900', color: 'var(--accent)' }}>= {res}</span>
+                <button onClick={() => calculate()} style={{ padding: '8px 16px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '800' }}>Izračunaj</button>
             </div>
         </div>
     );

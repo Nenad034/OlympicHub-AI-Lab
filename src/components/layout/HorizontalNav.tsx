@@ -40,7 +40,8 @@ import {
     LayoutTemplate,
     ChevronDown,
     Brain,
-    GripVertical
+    GripVertical,
+    Layers
 } from 'lucide-react';
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
@@ -159,7 +160,7 @@ const HorizontalNav: React.FC = () => {
             icon: SettingsIcon,
             label: t.settings,
             subItems: [
-                { to: '/settings', label: 'Globalne', icon: SettingsIcon },
+                { to: '/settings?tab=overview', label: 'Globalne Postavke', icon: Layers },
                 { to: '/activity-log', label: 'Dnevnik Aktivnosti', icon: ClipboardList }
             ]
         },
@@ -207,8 +208,12 @@ const HorizontalNav: React.FC = () => {
 
     const navItemClass = (isActive: boolean) => `h-nav-item ${isActive ? 'active' : ''}`;
 
+    React.useEffect(() => {
+        if (isPrism) togglePrism();
+    }, []);
+
     return (
-        <div className="horizontal-nav" style={{ height: '70px', padding: '0 24px', position: 'relative' }}>
+        <div className="horizontal-nav" style={{ height: '70px', padding: '0 12px', position: 'relative' }}>
             {/* Logo removed from Horizontal Nav as requested */}
 
             <div className="nav-horizontal-items" style={{ flex: 1, overflow: 'visible' }}>
@@ -255,28 +260,44 @@ const HorizontalNav: React.FC = () => {
                             <Mail size={18} /> <span>Prime Mail</span>
                         </NavLink>
 
-                        <button
-                            onClick={() => setChatOpen(true)}
-                            className="h-nav-item"
-                            style={{
-                                color: '#800020', // Tamno bordo / Burgundy
-                                marginLeft: '8px',
-                                background: 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                padding: '8px 16px',
-                                borderRadius: '12px',
-                                fontWeight: 800,
-                                fontSize: '13px',
-                                fontFamily: 'inherit'
-                            }}
-                            title="Prime Chat"
-                        >
-                            <PrimeChatIcon size={18} /> <span>Prime Chat</span>
-                        </button>
+                        {userLevel === 6 && !impersonatedSubagent ? (
+                            <div style={{ display: 'flex', gap: '8px', marginLeft: '12px', alignItems: 'center' }}>
+                                <div 
+                                    onClick={() => setAgOpen(true)}
+                                    style={{
+                                        background: '#720917', // Dark Burgundy
+                                        color: 'white',                                    padding: '4px 8px',
+                                    borderRadius: '6px',
+                                    fontSize: '10px',
+                                    fontWeight: 800,
+                                    letterSpacing: '0.5px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                AGPRIME
+                            </div>
+                            <Link to="/pim" style={{ textDecoration: 'none' }}>
+                                <div style={{
+                                    background: '#0a1d37', // Dark Navy
+                                    color: 'white',
+                                    padding: '4px 8px',
+                                    borderRadius: '6px',
+                                    fontSize: '10px',
+                                    fontWeight: 800,
+                                    letterSpacing: '0.5px'
+                                }}>
+                                    PIM
+                                </div>
+                            </Link>
+                        </div>
+                    ) : (
+                        <div style={{ marginLeft: '4px' }}>
+                                <AgTrigger 
+                                    onClick={() => setAgOpen(!isAgOpen)} 
+                                    active={isAgOpen} 
+                                />
+                            </div>
+                        )}
                     </Reorder.Group>
                 )}
 
@@ -344,11 +365,8 @@ const HorizontalNav: React.FC = () => {
             )}
 
             {/* Right Zone */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '32px', flexShrink: 0 }}>
-                <AgTrigger 
-                    onClick={() => setAgOpen(!isAgOpen)} 
-                    active={isAgOpen} 
-                />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '12px', flexShrink: 0 }}>
+                {/* Standard AgTrigger removed from right zone as it's now in the flow or hidden */}
 
                 {/* Control Pill */}
                 <div style={{
@@ -356,10 +374,10 @@ const HorizontalNav: React.FC = () => {
                     alignItems: 'center',
                     gap: '4px',
                     background: 'rgba(255,255,255,0.03)',
-                    padding: '4px 12px',
+                    padding: '4px 8px',
                     borderRadius: '50px',
                     border: '1px solid rgba(255,255,255,0.08)',
-                    height: '44px'
+                    height: '38px'
                 }}>
                     <button onClick={toggleNavMode} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '6px', display: 'flex' }}>
                         <LayoutTemplate size={18} />
@@ -387,21 +405,23 @@ const HorizontalNav: React.FC = () => {
                     <button onClick={cycleTheme} style={{ background: 'transparent', border: 'none', color: '#bb9af7', cursor: 'pointer', padding: '6px', display: 'flex' }}>
                         {theme === 'navy' ? <Moon size={18} /> : <Sun size={18} color="#eab308" />}
                     </button>
+                    {/* Prism mode hidden as requested
                     <button onClick={togglePrism} style={{ background: 'transparent', border: 'none', color: isPrism ? '#3b82f6' : 'var(--text-secondary)', cursor: 'pointer', padding: '6px', display: 'flex' }}>
                         <Sparkles size={18} />
                     </button>
+                    */}
                 </div>
 
                 {/* User Pill */}
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '12px',
-                    padding: '4px 16px 4px 6px',
+                    gap: '8px',
+                    padding: '4px 10px 4px 6px',
                     background: 'rgba(255,255,255,0.03)',
                     border: '1px solid rgba(255,255,255,0.08)',
                     borderRadius: '50px',
-                    height: '44px'
+                    height: '38px'
                 }}>
                     <div className="avatar" style={{
                         width: '32px', height: '32px',
@@ -411,7 +431,7 @@ const HorizontalNav: React.FC = () => {
                         color: 'white', fontWeight: 800, fontSize: '14px',
                         boxShadow: '0 0 15px rgba(59,130,246,0.2)'
                     }}>
-                        {userName.charAt(0)}
+                        {userName?.charAt(0) || 'U'}
                     </div>
                     <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.2px' }}>{userName}</span>
                     <button

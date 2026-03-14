@@ -170,7 +170,7 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
         return (saved as 'grid' | 'list') || 'grid';
     });
 
-    const [showFilters, setShowFilters] = useState(forceShowAll || false);
+
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [showGlobalPulse, setShowGlobalPulse] = useState(() => localStorage.getItem('show-global-pulse') === 'true');
 
@@ -323,6 +323,7 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
     const otherApps = userApps.filter(app => !ROW1_IDS.includes(app.id) && !ROW2_IDS.includes(app.id) && userLevel >= app.minLevel);
 
     const filteredOtherApps = otherApps.filter(app => {
+        if (!forceShowAll && app.category === 'ai') return false;
         if (activeCategory === 'all') return true;
         if (activeCategory === 'system') return ['system', 'marketing', 'communication'].includes(app.category);
         return app.category === activeCategory;
@@ -332,7 +333,7 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
         { id: 'all', label: 'Sve', icon: <Database size={14} /> },
         { id: 'production', label: 'Produkcija', icon: <Package size={14} /> },
         { id: 'sales', label: 'Prodaja', icon: <Sparkles size={14} /> },
-        { id: 'ai', label: 'AI Agenti', icon: <Brain size={14} /> },
+        ...(forceShowAll ? [{ id: 'ai', label: 'AI Agenti', icon: <Brain size={14} /> }] : []),
         { id: 'system', label: 'Sistem', icon: <Cpu size={14} /> }
     ];
 
@@ -800,13 +801,12 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
 
 
 
-                            {(showFilters || forceShowAll) && (
+                            {forceShowAll && (
                                 <motion.div
-                                    initial={forceShowAll ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                                    initial={{ opacity: 0, y: 30 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.4 }}
                                 >
-                                    {!forceShowAll && <div style={{ width: '100%', height: '1px', background: 'var(--border)', marginBottom: '40px', opacity: 0.5 }}></div>}
                                     {/* Category Filters & View Toggle */}
                                     <div style={{
                                         display: 'flex',
