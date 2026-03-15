@@ -108,7 +108,7 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
 
     const [budgetFrom, setBudgetFrom] = useState(basicInfo?.budgetFrom?.toString() || '');
     const [budgetTo, setBudgetTo] = useState(basicInfo?.budgetTo?.toString() || '');
-    const [budgetType, setBudgetType] = useState<'person' | 'total'>('person');
+    const [budgetType, setBudgetType] = useState<'person' | 'total' | 'room'>('person');
     const [nationality, setNationality] = useState(basicInfo?.nationality || 'RS');
     const [showNationalityPicker, setShowNationalityPicker] = useState<number | null>(null);
 
@@ -497,7 +497,7 @@ const Step1_BasicInfo: React.FC<Step1Props> = ({ basicInfo, onUpdate, onNext }) 
 
             {/* Search Button */}
             <button onClick={onNext} style={{ width: '100%', height: '80px', background: 'var(--ss-gradient)', border: 'none', borderRadius: '12px', color: 'white', fontSize: '1.2rem', fontWeight: 'bold', fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ClickToTravelLogo height={60} iconOnly={true} iconScale={2.2} />
+                <ClickToTravelLogo height={60} />
             </button>
 
             {activeCalendar !== null && createPortal(

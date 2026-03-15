@@ -52,7 +52,8 @@ export class AmadeusProvider implements FlightProvider {
     }
 
     isConfigured(): boolean {
-        // Since we are proxying, the configuration is on the backend
-        return true;
+        const apiKey = import.meta.env.VITE_AMADEUS_API_KEY;
+        const apiSecret = import.meta.env.VITE_AMADEUS_API_SECRET;
+        return !!(apiKey && apiSecret && apiKey !== 'proxy_auth');
     }
 }

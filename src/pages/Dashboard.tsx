@@ -84,6 +84,7 @@ interface AppConfig {
 
 const apps: AppConfig[] = [
     { id: 'smart-search', name: 'Smart Search', desc: 'Inteligentna pretraga i preporuka smeštaja sa AI asistencijom i analizom tržišta.', icon: <Sparkles size={24} />, category: 'sales', color: 'var(--gradient-blue)', badge: 'AI', minLevel: 1, path: '/smart-search' },
+    { id: 'modern-search', name: 'Modern Search', desc: 'Airbnb-style AI-first pretraga sa integrisanim concierge sistemom i dinamičkim paketima.', icon: <Sparkles size={24} />, category: 'sales', color: 'linear-gradient(135deg, #1A2B3C 0%, #8E24AC 100%)', badge: 'PRIME', minLevel: 1, path: '/modern-search' },
 
     { id: 'reservations', name: 'Rezervacije', desc: 'Centralni pregled i upravljanje svim rezervacijama.', icon: <FileText size={24} />, category: 'sales', color: 'var(--gradient-blue)', badge: 'Novo', minLevel: 1, path: '/reservations' },
     { id: 'financial-hub', name: 'Financial Intelligence', desc: 'Sveobuhvatni finansijski hub, KIR, KUR, Član 35 i blagajna sa AI analitikom.', icon: <PieChart size={24} />, category: 'finance', color: 'var(--gradient-purple)', badge: 'FIL', minLevel: 6, path: '/financial-hub' },
@@ -294,8 +295,8 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
     };
 
     const ROW1_IDS = isB2BView
-        ? ['smart-search', 'reservations', 'my-reservations', 'b2b-portal']
-        : ['reservations', 'smart-search', 'subagent-admin'];
+        ? ['modern-search', 'smart-search', 'reservations', 'my-reservations', 'b2b-portal']
+        : ['modern-search', 'reservations', 'smart-search', 'subagent-admin'];
 
     const ROW2_IDS: string[] = ['public-booking', 'smart-marketing', 'supplier-finance'];
 

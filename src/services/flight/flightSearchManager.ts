@@ -38,93 +38,91 @@ class FlightSearchManager {
             travelClass: (params.cabinClass?.toUpperCase() || 'ECONOMY') as any
         };
 
-        // 2. Try the unified provider manager
-        const manager = await import('../providers/FlightProviderManager').then(m => m.getFlightProviderManager());
-        const providerOffers = await manager.searchAll(genericParams);
+        // 2. Try the unified provider manager if any providers exist
+        try {
+            const manager = await import('../providers/FlightProviderManager').then(m => m.getFlightProviderManager());
+            const providerOffers = await manager.searchAll(genericParams);
 
-        if (providerOffers.length > 0) {
-            // Transform generic offers back to UnifiedFlightOffer for UI compatibility
-            providerOffers.forEach(o => {
-                const providerId: any = o.providerName.toLowerCase();
-
-                results.push({
-                    id: o.id,
-                    provider: providerId as any,
-                    price: {
-                        total: o.price,
-                        currency: o.currency,
-                        base: o.price * 0.8,
-                        taxes: o.price * 0.2
-                    },
-                    slices: o.itineraries.map(it => ({
-                        duration: it.duration ? 120 : 0, // Simplified duration
-                        departure: it.segments[0].departure.at,
-                        arrival: it.segments[it.segments.length - 1].arrival.at,
-                        stops: it.segments.length - 1,
-                        origin: {
-                            iataCode: it.segments[0].departure.iataCode,
-                            city: it.segments[0].departure.iataCode,
-                            name: 'Airport Name',
-                            country: 'Country',
-                            terminal: it.segments[0].departure.terminal
+            if (providerOffers && providerOffers.length > 0) {
+                // Transform generic offers back to UnifiedFlightOffer for UI compatibility
+                providerOffers.forEach(o => {
+                    const providerId: any = o.providerName.toLowerCase();
+                    results.push({
+                        id: o.id,
+                        provider: providerId as any,
+                        price: {
+                            total: o.price,
+                            currency: o.currency,
+                            base: o.price * 0.8,
+                            taxes: o.price * 0.2
                         },
-                        destination: {
-                            iataCode: it.segments[it.segments.length - 1].arrival.iataCode,
-                            city: it.segments[it.segments.length - 1].arrival.iataCode,
-                            name: 'Airport Name',
-                            country: 'Country',
-                            terminal: it.segments[it.segments.length - 1].arrival.terminal
-                        },
-                        segments: it.segments.map((seg: any) => ({
-                            id: seg.id,
-                            carrierCode: seg.carrierCode,
-                            carrierName: seg.carrierCode,
-                            flightNumber: seg.number,
-                            aircraft: seg.aircraft?.code || 'N/A',
-                            duration: 0,
-                            departure: seg.departure.at,
-                            arrival: seg.arrival.at,
+                        slices: o.itineraries.map(it => ({
+                            duration: it.duration || 120, 
+                            departure: it.segments[0].departure.at,
+                            arrival: it.segments[it.segments.length - 1].arrival.at,
+                            stops: it.segments.length - 1,
                             origin: {
-                                iataCode: seg.departure.iataCode,
-                                city: seg.departure.iataCode,
+                                iataCode: it.segments[0].departure.iataCode,
+                                city: it.segments[0].departure.iataCode,
                                 name: 'Airport Name',
-                                country: 'Country'
+                                country: 'Country',
+                                terminal: it.segments[0].departure.terminal
                             },
                             destination: {
-                                iataCode: seg.arrival.iataCode,
-                                city: seg.arrival.iataCode,
+                                iataCode: it.segments[it.segments.length - 1].arrival.iataCode,
+                                city: it.segments[it.segments.length - 1].arrival.iataCode,
                                 name: 'Airport Name',
-                                country: 'Country'
-                            }
-                        }))
-                    })),
-                    validatingAirlineCodes: o.validatingAirlineCodes,
-                    bookingToken: `token-${o.id}`,
-                    validUntil: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-                    cabinClass: params.cabinClass || 'economy',
-                    originalData: o
+                                country: 'Country',
+                                terminal: it.segments[it.segments.length - 1].arrival.terminal
+                            },
+                            segments: it.segments.map((seg: any) => ({
+                                id: seg.id,
+                                carrierCode: seg.carrierCode,
+                                carrierName: seg.carrierCode,
+                                flightNumber: seg.number,
+                                aircraft: seg.aircraft?.code || 'N/A',
+                                duration: seg.duration || 0,
+                                departure: seg.departure.at,
+                                arrival: seg.arrival.at,
+                                origin: {
+                                    iataCode: seg.departure.iataCode,
+                                    city: seg.departure.iataCode,
+                                    name: 'Airport Name',
+                                    country: 'Country'
+                                },
+                                destination: {
+                                    iataCode: seg.arrival.iataCode,
+                                    city: seg.arrival.iataCode,
+                                    name: 'Airport Name',
+                                    country: 'Country'
+                                }
+                            }))
+                        })),
+                        validatingAirlineCodes: o.validatingAirlineCodes,
+                        bookingToken: `token-${o.id}`,
+                        validUntil: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+                        cabinClass: params.cabinClass || 'economy',
+                        originalData: o
+                    });
                 });
-            });
 
-            // Aggregate counts by provider
-            const countsByProvider = providerOffers.reduce((acc, offer) => {
-                const name = offer.providerName.toLowerCase();
-                acc[name] = (acc[name] || 0) + 1;
-                return acc;
-            }, {} as Record<string, number>);
+                // Aggregate statuses
+                const counts = results.reduce((acc, r) => {
+                    acc[r.provider] = (acc[r.provider] || 0) + 1;
+                    return acc;
+                }, {} as Record<string, number>);
 
-            Object.entries(countsByProvider).forEach(([name, count]) => {
-                providerStatuses.push({
-                    provider: name as any,
-                    status: 'complete',
-                    resultCount: count
+                Object.entries(counts).forEach(([prov, count]) => {
+                    providerStatuses.push({ provider: prov as any, status: 'complete', resultCount: count });
                 });
-            });
+            }
+        } catch (err) {
+            console.warn('⚠️ Provider search failed, continuing to mock fallback:', err);
         }
 
-        // 3. Fallback to mock if no results found
+        // 3. Always ensure some results are shown (using mock if no live results)
         if (results.length === 0) {
-            console.log('ℹ️ No live results, falling back to mock service');
+            console.log('ℹ️ No live results found, returning mock data for preview');
             try {
                 const mockResponse = await flightMockService.searchFlights(params);
                 results.push(...mockResponse.offers);
@@ -134,8 +132,11 @@ class FlightSearchManager {
                     resultCount: mockResponse.offers.length
                 });
             } catch (mockError) {
-                console.error('❌ Mock fallback failed:', mockError);
+                console.error('❌ Final fallback failed:', mockError);
             }
+        } else {
+            // Optional: Mix in some mock results so it looks denser during development
+            console.log(`✅ Live search returned ${results.length} offers`);
         }
 
         const searchTime = Date.now() - startTime;

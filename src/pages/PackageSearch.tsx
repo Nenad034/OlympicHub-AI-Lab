@@ -3,11 +3,9 @@ import { ClickToTravelLogo } from '../components/icons/ClickToTravelLogo';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     MapPin, Calendar, Users, Plane, Hotel,
-    Car, Ticket, Map, ChevronLeft, ChevronRight,
-    Save, Check, Sparkles
+    ChevronLeft, ChevronRight, Check
 } from 'lucide-react';
 import type {
-    PackageSearchState,
     WizardStep,
     BasicInfoData,
     FlightSelectionData,
@@ -26,10 +24,9 @@ import Step3_HotelSelection from '../components/packages/Steps/Step3_HotelSelect
 import Step4_TransferSelection from '../components/packages/Steps/Step4_TransferSelection';
 import Step5_ExtrasSelection from '../components/packages/Steps/Step5_ExtrasSelection';
 import Step6_ReviewConfirm from '../components/packages/Steps/Step6_ReviewConfirm';
-import { dynamicPackageService } from '../services/dynamicPackageService';
 import { useThemeStore } from '../stores';
 
-const WIZARD_STEPS: WizardStep[] = [
+export const WIZARD_STEPS: WizardStep[] = [
     { id: 1, name: 'basic-info', title: 'Destinacije', description: 'Plan i putnici', isComplete: false, isActive: true },
     { id: 2, name: 'flights', title: 'Letovi', description: 'Avio karte', isComplete: false, isActive: false },
     { id: 3, name: 'hotels', title: 'Hoteli', description: 'Smeštaj', isComplete: false, isActive: false },
@@ -43,13 +40,23 @@ interface PackageSearchProps {
     initialCheckIn?: string;
     initialCheckOut?: string;
     initialTravelers?: { adults: number; children: number; childrenAges: number[] }[];
+    onPriceUpdate?: (price: number) => void;
+    onStepUpdate?: (step: number) => void;
+    hideHeader?: boolean;
+    hideFooter?: boolean;
+    compactMode?: boolean;
 }
 
 const PackageSearch: React.FC<PackageSearchProps> = ({
-    initialDestinations,
-    initialCheckIn,
-    initialCheckOut,
-    initialTravelers
+    initialDestinations = [],
+    initialCheckIn = '',
+    initialCheckOut = '',
+    initialTravelers = [],
+    onPriceUpdate,
+    onStepUpdate,
+    hideHeader = false,
+    hideFooter = false,
+    compactMode = false
 }) => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -63,7 +70,6 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
     const [selectedHotels, setSelectedHotels] = useState<HotelSelectionData[]>([]);
     const [selectedTransfers, setSelectedTransfers] = useState<TransferSelectionData[]>([]);
     const [selectedExtras, setSelectedExtras] = useState<ExtraSelectionData[]>([]);
-    const [isAIMode, setIsAIMode] = useState<boolean>(false);
 
     // Initial Data Effect
     useEffect(() => {
@@ -85,7 +91,7 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
                 checkIn: initialCheckIn || '',
                 checkOut: initialCheckOut || '',
                 nights: 0,
-                travelers: initialTravelers ? initialTravelers[index] : { adults: 2, children: 0, childrenAges: [] }
+                travelers: initialTravelers.length > index ? initialTravelers[index] : { adults: 2, children: 0, childrenAges: [] }
             }));
             setBasicInfo({
                 destinations: mappedDestinations,
@@ -96,20 +102,27 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
                 totalDays: 0
             });
         }
-    }, [initialDestinations, initialCheckIn, initialCheckOut]);
+    }, [initialDestinations, initialCheckIn, initialCheckOut, initialTravelers]);
 
     const totalPrice = (selectedFlights?.totalPrice || 0) +
         (selectedHotels || []).filter(Boolean).reduce((s, h) => s + (h?.totalPrice || 0), 0) +
         (selectedTransfers || []).filter(Boolean).reduce((s, t) => s + (t?.totalPrice || 0), 0) +
         (selectedExtras || []).filter(Boolean).reduce((s, e) => s + (e?.totalPrice || 0), 0);
 
+    useEffect(() => {
+        if (onPriceUpdate) onPriceUpdate(totalPrice);
+    }, [totalPrice, onPriceUpdate]);
+
+    useEffect(() => {
+        if (onStepUpdate) onStepUpdate(currentStep);
+    }, [currentStep, onStepUpdate]);
+
     const goNext = () => {
         if (currentStep < 6) {
             setSteps(prev => prev.map(s => s.id === currentStep ? { ...s, isComplete: true } : s));
             const nextStep = currentStep + 1;
             setCurrentStep(nextStep);
-
-            // Update URL
+            
             setSearchParams(prev => {
                 const newParams = new URLSearchParams(prev);
                 newParams.set('step', String(nextStep));
@@ -122,8 +135,7 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
         if (currentStep > 1) {
             const prevStep = currentStep - 1;
             setCurrentStep(prevStep);
-
-            // Update URL
+            
             setSearchParams(prev => {
                 const newParams = new URLSearchParams(prev);
                 newParams.set('step', String(prevStep));
@@ -144,142 +156,63 @@ const PackageSearch: React.FC<PackageSearchProps> = ({
         }
     };
 
-    const { theme } = useThemeStore();
-
     return (
-        <div className="package-search-page">
-            {/* 1. PREMIUM HEADER REMOVED */}
-            {/* <div className="search-header"> ... </div> */}
-
-            {/* 2. PROGRESS STEPS (SMART STYLE) */}
-            <div className="wizard-progress ss-glass-bar">
-                <div className="progress-steps-ss">
-                    {steps.map((step) => (
-                        <a
-                            href={`/smart-search?tab=package&step=${step.id}`}
-                            key={step.id}
-                            className={`p-step-ss ${currentStep === step.id ? 'active' : ''} ${step.isComplete ? 'complete' : ''}`}
-                            style={{ textDecoration: 'none', cursor: 'pointer', display: 'flex' }}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setCurrentStep(step.id);
-                                setSearchParams(prev => {
-                                    const newParams = new URLSearchParams(prev);
-                                    newParams.set('step', String(step.id));
-                                    return newParams;
-                                });
-                            }}
-                        >
-                            <div className="s-num-ss">{step.isComplete ? <Check size={14} /> : step.id}</div>
-                            <div className="s-info-ss">
-                                <div className="s-title-ss">{step.title}</div>
-                                <div className="s-desc-ss">{step.description}</div>
+        <div className={`package-search-page ${compactMode ? 'compact' : ''}`}>
+            {!hideHeader && !compactMode && (
+                <div className="wizard-progress ss-glass-bar">
+                    <div className="progress-steps-ss">
+                        {steps.map((step) => (
+                            <div
+                                key={step.id}
+                                className={`p-step-ss ${currentStep === step.id ? 'active' : ''} ${step.isComplete ? 'complete' : ''}`}
+                                onClick={() => step.id < currentStep && setCurrentStep(step.id)}
+                            >
+                                <div className="s-num-ss">{step.isComplete ? <Check size={14} /> : step.id}</div>
+                                <div className="s-content-ss">
+                                    <div className="s-title-ss">{step.title}</div>
+                                    <div className="s-desc-ss">{step.description}</div>
+                                </div>
                             </div>
-                        </a>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
 
-            {/* 3. MAIN AREA */}
-            <div className="search-content py-8">
-                {renderStep()}
-            </div>
-
-            {/* 4. FLOATING FOOTER NAV */}
-            <div id="floating-wizard-nav" className="wizard-navigation ss-floating-nav">
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
-                    <button
-                        className="nav-btn secondary ss-glow-muted"
-                        style={{
-                            minWidth: '180px',
-                            height: '56px',
-                            fontSize: '12px',
-                            fontWeight: 900,
-                            background: 'var(--bg-input)',
-                            border: 'var(--border-thin)',
-                            color: 'var(--text-secondary)'
-                        }}
-                        onClick={goBack}
-                        disabled={currentStep === 1}
-                    >
-                        <ChevronLeft size={20} /> NAZAD
-                    </button>
+            <main className={`wizard-content ${compactMode ? 'no-padding' : ''}`}>
+                <div className={`search-content ${compactMode ? 'py-2' : 'py-8'}`}>
+                    {renderStep()}
                 </div>
+            </main>
 
-                <div className="total-display-middle" style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'var(--accent-glow)',
-                    borderRadius: '12px',
-                    padding: '0 20px',
-                    margin: '0 10px',
-                    height: '56px',
-                    border: 'var(--border-thin)'
-                }}>
-                    <div style={{
-                        fontSize: '9px',
-                        fontWeight: 900,
-                        color: 'var(--text-secondary)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '1px',
-                        lineHeight: 1,
-                        marginBottom: '2px'
-                    }}>Trenutni Total</div>
-                    <div style={{
-                        fontSize: '1.5rem',
-                        fontWeight: 900,
-                        color: 'var(--text-primary)',
-                        letterSpacing: '-1px',
-                        lineHeight: 1
-                    }}>{totalPrice.toFixed(2)}€</div>
-                </div>
+            {!hideFooter && !compactMode && (
+                <div id="floating-wizard-nav" className="ss-floating-nav">
+                    {currentStep > 1 ? (
+                        <button className="nav-btn secondary" onClick={goBack}>
+                            <ChevronLeft size={18} /> NAZAD
+                        </button>
+                    ) : (
+                        <div />
+                    )}
 
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                    <div className="nav-center-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div className="total-label" style={{ fontSize: 9, opacity: 0.7 }}>UKUPNA CENA PAKETA</div>
+                        <div className="total-val" style={{ fontSize: 20, fontWeight: 900 }}>€ {totalPrice.toFixed(2)}</div>
+                    </div>
+
                     {currentStep < 6 ? (
-                        <button
-                            className="nav-btn primary"
-                            style={{
-                                minWidth: '240px',
-                                height: '56px',
-                                fontSize: '13px',
-                                fontWeight: 900,
-                                background: 'var(--accent)',
-                                border: 'none',
-                                color: 'white',
-                                boxShadow: '0 10px 25px var(--accent-glow)'
-                            }}
-                            onClick={goNext}
-                        >
-                            SLEDEĆI KORAK <ChevronRight size={20} />
+                        <button className="nav-btn primary" onClick={goNext}>
+                            SLEDEĆI KORAK <ChevronRight size={18} />
                         </button>
                     ) : (
                         <button
-                            className="nav-btn primary animate-pulse-slow"
-                            style={{
-                                minWidth: '240px',
-                                height: '56px',
-                                fontSize: '15px',
-                                fontWeight: '900',
-                                fontStyle: 'italic',
-                                textTransform: 'uppercase',
-                                letterSpacing: '2px',
-                                background: 'var(--accent)',
-                                boxShadow: '0 10px 30px var(--accent-glow)',
-                                border: 'none',
-                                color: 'white'
-                            }}
+                            className="nav-btn primary success"
                             onClick={() => navigate('/packages/created')}
                         >
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                                <ClickToTravelLogo height={28} iconOnly={true} />
-                            </div>
+                            <ClickToTravelLogo height={28} />
                         </button>
                     )}
                 </div>
-            </div>
+            )}
         </div>
     );
 };

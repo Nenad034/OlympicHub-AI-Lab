@@ -54,6 +54,7 @@ const MarsTest = React.lazy(() => import('../pages/MarsTest'));
 const SoftZoneDashboard = React.lazy(() => import('../components/SoftZoneDashboard'));
 const SmartSearch = React.lazy(() => import('../pages/SmartSearch'));
 const SmartSearchV2 = React.lazy(() => import('../pages/SmartSearchV2'));
+const SmartSearchV3 = React.lazy(() => import('../pages/SmartSearchV3'));
 const ReservationArchitect = React.lazy(() => import('../pages/ReservationArchitect'));
 const ReservationArchitectV5 = React.lazy(() => import('../pages/ReservationArchitectV5'));
 const ReservationsDashboard = React.lazy(() => import('../pages/ReservationsDashboard'));
@@ -91,6 +92,7 @@ const SkiResortDetail = React.lazy(() => import('../pages/SkiResortDetail'));
 const TrafficsTest = React.lazy(() => import('../pages/TrafficsTest'));
 const OperationalReports = React.lazy(() => import('../modules/production/OperationalReports.tsx'));
 const PimDashboard = React.lazy(() => import('../modules/pim/PimDashboard'));
+const ModernSearch = React.lazy(() => import('../modules/search/ModernSearch'));
 
 
 const FinancialIntelligenceHub = React.lazy(() => import('../pages/FinancialIntelligenceHub'));
@@ -626,6 +628,14 @@ export const router = createBrowserRouter([
                     {
                         path: 'smart-search-v2',
                         element: <SmartSearchV2 />,
+                    },
+                    {
+                        path: 'smart-search-v3',
+                        element: <SmartSearchV3 />,
+                    },
+                    {
+                        path: 'modern-search',
+                        element: <ModernSearch />,
                     },
                     {
                         path: 'destination-prime-explorer',
