@@ -55,6 +55,7 @@ const SoftZoneDashboard = React.lazy(() => import('../components/SoftZoneDashboa
 const SmartSearch = React.lazy(() => import('../pages/SmartSearch'));
 const SmartSearchV2 = React.lazy(() => import('../pages/SmartSearchV2'));
 const SmartSearchV3 = React.lazy(() => import('../pages/SmartSearchV3'));
+const SmartSearchV4 = React.lazy(() => import('../pages/SmartSearchV4'));
 const ReservationArchitect = React.lazy(() => import('../pages/ReservationArchitect'));
 const ReservationArchitectV5 = React.lazy(() => import('../pages/ReservationArchitectV5'));
 const ReservationsDashboard = React.lazy(() => import('../pages/ReservationsDashboard'));
@@ -632,6 +633,10 @@ export const router = createBrowserRouter([
                     {
                         path: 'smart-search-v3',
                         element: <SmartSearchV3 />,
+                    },
+                    {
+                        path: 'smart-search-v4',
+                        element: <SmartSearchV4 />,
                     },
                     {
                         path: 'modern-search',
