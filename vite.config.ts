@@ -88,6 +88,25 @@ export default defineConfig({
             console.log('🇪🇺 Proxying ORS API request:', req.url);
           });
         }
+      },
+      // Proxy for OpenClaw Gateway (Besplatni AI most)
+      '/api/openclaw': {
+        target: 'http://127.0.0.1:18791',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api\/openclaw/, ''),
+      },
+      // Proxy for Google Gemini as Secure Backup
+      '/api/ai/google': {
+        target: 'https://generativelanguage.googleapis.com',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api\/ai\/google/, ''),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (_proxyReq, req) => {
+            console.log('🌟 Google Backup Tunnel Active:', req.url);
+          });
+        }
       }
     }
   }

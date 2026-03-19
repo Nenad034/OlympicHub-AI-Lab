@@ -10,9 +10,13 @@ import {
     AlertTriangle,
     Zap,
     Send,
-    GripVertical
+    GripVertical,
+    RotateCcw,
+    Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useOpenClaw } from '../../../hooks/useOpenClaw';
+
 
 /**
  * =============================================================================
@@ -39,9 +43,60 @@ export const InventoryAIAgent: React.FC<InventoryAIAgentProps> = ({ onAction, da
     const [position, setPosition] = useState({ x: window.innerWidth - 450, y: window.innerHeight - 600 });
     const [size, setSize] = useState({ width: 380, height: 500 });
     const [query, setQuery] = useState('');
+    const [pendingAction, setPendingAction] = useState<{ action: string, params: any, description: string } | null>(null);
+    const [confirmationStep, setConfirmationStep] = useState(0); // 0: Idle, 1: First confirm, 2: Final confirm
     const [messages, setMessages] = useState<Array<{ role: 'ai' | 'user'; text: string; action?: any }>>([
         { role: 'ai', text: 'Zdravo! Ja sam vaš Inventory AI kopilot. Kako mogu da pomognem sa allotmanima?' }
     ]);
+
+    // Use OpenClaw Bridge
+    const { sendMessage, isThinking: isAiThinking } = useOpenClaw();
+    
+    // Function to restart / clear chat
+    const startNewChat = useCallback(() => {
+        setMessages([
+            { role: 'ai', text: 'Novi razgovor započet! Kako Vam mogu pomoći u ovoj novoj sesiji?' }
+        ]);
+        setPendingAction(null);
+        setConfirmationStep(0);
+        setQuery('');
+    }, []);
+
+
+    // Initial analysis effect
+    useEffect(() => {
+        if (isOpen && data?.capacities) {
+            const capacities = data.capacities as any[];
+            let stopCount = 0;
+            let freeCount = 0;
+            const criticalHotels: string[] = [];
+
+            capacities.forEach(cap => {
+                const records = Object.values(cap.records) as any[];
+                const hasStop = records.some(r => r.totalSold >= r.totalAll);
+                const hasFree = records.some(r => (r.totalAll - r.totalSold) > 5);
+
+                if (hasStop) {
+                    stopCount++;
+                    if (criticalHotels.length < 3) criticalHotels.push(cap.hotelName);
+                }
+                if (hasFree) freeCount++;
+            });
+
+            const insightText = `Analizirao sam sistem. Trenutno vidim ${stopCount} objekata sa "Stop Sale" terminima (npr. ${criticalHotels.join(', ')}) i ${freeCount} objekata sa visokom dostupnošću. Da li želite da filtriramo kritične objekte?`;
+            
+            // For the initial suggestion
+            if (messages.length === 1 && !pendingAction) {
+                setMessages(prev => [...prev, { role: 'ai', text: insightText }]);
+                setPendingAction({ 
+                    action: 'FILTER_STOP', 
+                    params: {}, 
+                    description: 'filtriranje objekata sa Stop Sale statusom' 
+                });
+                setConfirmationStep(1);
+            }
+        }
+    }, [isOpen, data, messages.length, pendingAction]);
 
     // Resizing State
     const [isResizing, setIsResizing] = useState<string | null>(null);
@@ -135,23 +190,34 @@ export const InventoryAIAgent: React.FC<InventoryAIAgentProps> = ({ onAction, da
 
         let dateFound = false;
 
+        const isShortCommand = text.split(' ').length <= 2;
+
         // Pattern 1: Month keyword (e.g., "za jun", "u avgustu")
         for (const [monthKey, monthIdx] of Object.entries(monthsMap)) {
-            if (text.includes(monthKey)) {
-                const year = 2026; // Default to 2026 as per mockup
-                const startDate = new Date(year, monthIdx, 1);
-                const endDate = new Date(year, monthIdx + 1, 0);
-                
-                onAction('FILTER_DATE_RANGE', { 
-                    from: startDate.toISOString().split('T')[0], 
-                    to: endDate.toISOString().split('T')[0] 
-                });
-                
-                setMessages(prev => [...prev, { 
-                    role: 'ai', 
-                    text: `Jasno. Postavljam period boravka za ceo ${monthKey.charAt(0).toUpperCase() + monthKey.slice(1)} ${year}.` 
-                }]);
-                dateFound = true;
+            // Check for month keyword with word boundaries to avoid matching "juna", "julu" etc. as just "jun"
+            const monthRegex = new RegExp(`\\b${monthKey}\\b`, 'i');
+            if (monthRegex.test(text)) {
+                if (isShortCommand) {
+                    const year = 2026; 
+                    const startDate = new Date(year, monthIdx, 1);
+                    const endDate = new Date(year, monthIdx + 1, 0);
+                    
+                    setPendingAction({ 
+                        action: 'FILTER_DATE_RANGE', 
+                        params: { 
+                            from: startDate.toISOString().split('T')[0], 
+                            to: endDate.toISOString().split('T')[0] 
+                        }, 
+                        description: `promenu perioda boravka na ceo ${monthKey.charAt(0).toUpperCase() + monthKey.slice(1)}` 
+                    });
+                    
+                    setMessages(prev => [...prev, { 
+                        role: 'ai', 
+                        text: `Pripremio sam promenu perioda boravka za ceo ${monthKey.charAt(0).toUpperCase() + monthKey.slice(1)}. Da li da primenim ovaj filter?` 
+                    }]);
+                    setConfirmationStep(1);
+                    dateFound = true;
+                }
                 break;
             }
         }
@@ -167,8 +233,13 @@ export const InventoryAIAgent: React.FC<InventoryAIAgentProps> = ({ onAction, da
                     if (monthName.startsWith(monthKey)) {
                         const from = new Date(2026, monthIdx, day).toISOString().split('T')[0];
                         const to = '2026-08-31'; // Default until end of season
-                        onAction('FILTER_DATE_RANGE', { from, to });
-                        setMessages(prev => [...prev, { role: 'ai', text: `U redu. Filtriram prodaju počevši od ${day}. ${monthKey}...` }]);
+                        setPendingAction({ 
+                            action: 'FILTER_DATE_RANGE', 
+                            params: { from, to }, 
+                            description: `postavljanje početka prodaje od ${day}. ${monthKey}` 
+                        });
+                        setMessages(prev => [...prev, { role: 'ai', text: `Pripremio sam filtriranje prodaje od ${day}. ${monthKey}. Da li želite da izvršim promenu?` }]);
+                        setConfirmationStep(1);
                         dateFound = true;
                         break;
                     }
@@ -176,7 +247,28 @@ export const InventoryAIAgent: React.FC<InventoryAIAgentProps> = ({ onAction, da
             }
         }
 
-        if (dateFound) {
+        if (dateFound && text.split(' ').length <= 2) {
+            setQuery('');
+            return;
+        }
+
+        if (text === 'da' || text === 'prikazi' || text === 'prikaži' || text === 'yes') {
+            if (pendingAction) {
+                onAction(pendingAction.action, pendingAction.params);
+                setMessages(prev => [...prev, { role: 'ai', text: `U redu. Izvršio sam ${pendingAction.description}.` }]);
+                setPendingAction(null);
+                setConfirmationStep(0);
+            } else {
+                setMessages(prev => [...prev, { role: 'ai', text: 'Nemam nijednu komandu na čekanju. Kako mogu da pomognem?' }]);
+            }
+            setQuery('');
+            return;
+        }
+
+        if (text === 'ne' || text === 'no' || text === 'poništi' || text === 'otkaži') {
+            setMessages(prev => [...prev, { role: 'ai', text: 'Otkazano. Šta želite da uradimo sledeće?' }]);
+            setPendingAction(null);
+            setConfirmationStep(0);
             setQuery('');
             return;
         }
@@ -184,31 +276,34 @@ export const InventoryAIAgent: React.FC<InventoryAIAgentProps> = ({ onAction, da
         // Standard command checks
         if (text.includes('stop') || text.includes('zatvori')) {
             const hotelName = text.replace(/stop|zatvori|prodaju|za/g, '').trim();
-            onAction('FILTER_STOP', { hotel: hotelName });
+            setPendingAction({ action: 'FILTER_STOP', params: { hotel: hotelName }, description: `filtriranje Stop Sale statusa za: ${hotelName || 'kritične objekte'}` });
             setMessages(prev => [...prev, { 
                 role: 'ai', 
-                text: `Razumem. Filtriram hotele za "Stop Sale" akciju. Vidim da želite da zatvorite prodaju za: ${hotelName || 'kritične objekte'}.` 
+                text: `Razumeo sam. Pripremio sam akciju: ${hotelName || 'kritične objekte'} Stop Sale filter. Da li da nastavim sa pripremom promene?` 
             }]);
+            setConfirmationStep(1);
         } 
         else if (text.includes('slobodn') || text.includes('free') || text.includes('kapacitet')) {
-            onAction('FILTER_FREE', {});
-            setMessages(prev => [...prev, { role: 'ai', text: 'Prikazujem slobodne kapacitete za odabrani period.' }]);
+            setPendingAction({ action: 'FILTER_FREE', params: {}, description: 'prikaz slobodnih kapaciteta' });
+            setMessages(prev => [...prev, { role: 'ai', text: 'Želite da prikažem slobodne kapacitete? Potvrdite sa "da".' }]);
+            setConfirmationStep(1);
         }
         else if (text.includes('osvez') || text.includes('refresh') || text.includes('reset')) {
-            onAction('RESET_FILTERS', {});
-            setMessages(prev => [...prev, { role: 'ai', text: 'Resetovao sam sve filtere na početno stanje.' }]);
+            setPendingAction({ action: 'RESET_FILTERS', params: {}, description: 'resetovanje svih filtera' });
+            setMessages(prev => [...prev, { role: 'ai', text: 'Da li želite da resetujem sve filtere na početno stanje?' }]);
+            setConfirmationStep(1);
         }
         else {
-            setMessages(prev => [...prev, { 
-                role: 'ai', 
-                text: 'Prepoznao sam vaš upit. Lokalni motor pretražuje inventar za vas...',
-                action: () => onAction('SEARCH', { query: input })
-            }]);
-            onAction('SEARCH', { query: input });
+            // --- FALLBACK TO REAL AI (OPENCLAW) ---
+            (async () => {
+                const response = await sendMessage(input, `Trenutni podaci o kapacitetima: ${JSON.stringify(data?.capacities?.slice(0, 5))}`);
+                setMessages(prev => [...prev, { role: 'ai', text: response.content }]);
+            })();
         }
         
         setQuery('');
     };
+
 
     return (
         <>
@@ -249,6 +344,7 @@ export const InventoryAIAgent: React.FC<InventoryAIAgentProps> = ({ onAction, da
                                 <span>Inventory Specialist (v5)</span>
                             </div>
                             <div className="header-actions">
+                                <button onClick={startNewChat} title="Novi razgovor"><RotateCcw size={14}/></button>
                                 <button onClick={() => setPosition({ x: 20, y: 20 })} title="Snap to corner"><Maximize2 size={14}/></button>
                                 <button onClick={() => setIsOpen(false)}><X size={16}/></button>
                             </div>
@@ -304,84 +400,137 @@ export const InventoryAIAgent: React.FC<InventoryAIAgentProps> = ({ onAction, da
 
                 .agent-window {
                     position: fixed;
-                    background: rgba(15, 23, 42, 0.95);
+                    background: rgba(255, 255, 255, 0.95);
                     backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 16px;
+                    border: 1px solid rgba(0, 0, 0, 0.1);
+                    border-radius: 20px;
                     display: flex;
                     flex-direction: column;
                     overflow: visible;
-                    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+                    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
                     z-index: 1001;
                 }
 
                 .neon-border {
-                    box-shadow: 0 0 1px rgba(16, 185, 129, 0.5),
-                                0 0 5px rgba(16, 185, 129, 0.3);
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
                 }
 
                 .agent-header {
-                    padding: 12px 16px;
-                    background: rgba(255,255,255,0.03);
-                    border-bottom: 1px solid rgba(255,255,255,0.05);
+                    padding: 14px 18px;
+                    background: rgba(255, 255, 255, 0.5);
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                     cursor: grab;
                     user-select: none;
+                    border-top-left-radius: 20px;
+                    border-top-right-radius: 20px;
                 }
                 .agent-header:active { cursor: grabbing; }
 
-                .header-info { display: flex; align-items: center; gap: 8px; font-weight: 500; font-size: 13px; color: #10b981; }
+                .header-info { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; color: #065f46; }
                 .zap-icon { color: #f59e0b; }
+
+                .header-actions {
+                    display: flex;
+                    gap: 8px;
+                }
+
+                .header-actions button {
+                    background: rgba(0, 0, 0, 0.03);
+                    border: 1px solid rgba(0, 0, 0, 0.05);
+                    color: #475569;
+                    padding: 6px;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .header-actions button:hover {
+                    background: rgba(0, 0, 0, 0.08);
+                    color: #0f172a;
+                }
 
                 .agent-content {
                     flex: 1;
                     overflow-y: auto;
-                    padding: 16px;
+                    padding: 18px;
                     display: flex;
                     flex-direction: column;
-                    gap: 12px;
+                    gap: 14px;
                 }
 
                 .msg-bubble { 
                     max-width: 85%; 
-                    padding: 10px 14px; 
-                    border-radius: 12px; 
-                    font-size: 13px; 
+                    padding: 12px 14px; 
+                    border-radius: 16px; 
+                    font-size: 14px; 
                     line-height: 1.5; 
+                    font-weight: 500;
                 }
-                .msg-bubble.ai { background: rgba(255,255,255,0.05); color: #e2e8f0; align-self: flex-start; border-bottom-left-radius: 2px; }
-                .msg-bubble.user { background: #10b981; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+                .msg-bubble.ai { 
+                    background: #f1f5f9; 
+                    color: #1e293b; 
+                    align-self: flex-start; 
+                    border-bottom-left-radius: 4px; 
+                    border: 1px solid rgba(0,0,0,0.02);
+                }
+                .msg-bubble.user { 
+                    background: #10b981; 
+                    color: white; 
+                    align-self: flex-end; 
+                    border-bottom-right-radius: 4px; 
+                    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+                }
 
                 .agent-input-container {
-                    padding: 16px;
+                    padding: 18px;
                     display: flex;
-                    gap: 10px;
-                    border-top: 1px solid rgba(255,255,255,0.05);
+                    gap: 12px;
+                    border-top: 1px solid rgba(0, 0, 0, 0.05);
+                    background: rgba(255, 255, 255, 0.5);
+                    border-bottom-left-radius: 20px;
+                    border-bottom-right-radius: 20px;
                 }
 
                 .agent-input-container input {
                     flex: 1;
-                    background: rgba(0,0,0,0.2);
-                    border: 1px solid rgba(255,255,255,0.1);
-                    border-radius: 8px;
-                    padding: 8px 12px;
-                    color: white;
-                    font-size: 13px;
+                    background: white;
+                    border: 1px solid rgba(0, 0, 0, 0.15);
+                    border-radius: 12px;
+                    padding: 10px 14px;
+                    color: #0f172a;
+                    font-size: 14px;
+                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+                    transition: all 0.2s;
+                }
+
+                .agent-input-container input:focus {
+                    outline: none;
+                    border-color: #10b981;
+                    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+                }
+
+                .agent-input-container input::placeholder {
+                    color: #64748b;
+                    opacity: 0.8;
                 }
 
                 .agent-input-container button {
                     background: #10b981;
                     color: white;
                     border: none;
-                    width: 38px;
-                    height: 38px;
-                    border-radius: 8px;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 10px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     cursor: pointer;
+                    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
                 }
 
                 /* Resizers */
@@ -399,8 +548,8 @@ export const InventoryAIAgent: React.FC<InventoryAIAgentProps> = ({ onAction, da
                 .drag-handle-visual {
                     position: absolute;
                     left: 2px;
-                    top: 15px;
-                    color: rgba(255,255,255,0.2);
+                    top: 18px;
+                    color: rgba(0, 0, 0, 0.15);
                 }
             `}</style>
         </>

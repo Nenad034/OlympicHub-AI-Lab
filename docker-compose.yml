@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  openclaw:
+    image: ghcr.io/openclaw/openclaw:main
+    environment:
+      - HOME=/home/node
+      - TERM=xterm-256color
+      - TZ=UTC
+      - OPENCLAW_GATEWAY_CONTROL_UI_DANGEROUSLY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK=true
+      - OPENCLAW_CONFIG_PATH=/home/node/.openclaw/openclaw.json
+      - OPENCLAW_STATE_DIR=/home/node/.openclaw
+      - OPENROUTER_API_KEY=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
+      - OPENCLAW_GATEWAY_TOKEN=olympic-hub-secret-token-2026
+      - OPENCLAW_MODELS_PROXY_PORT=18790
+      - OPENCLAW_BIND_ADDR=0.0.0.0
+      - OPENAI_API_KEY=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
+      - OPENAI_BASE_URL=https://openrouter.ai/api/v1
+      - OPENCLAW_MODELS_PROXY_ALLOW_UNCONFIGURED_PROVIDERS=true
+    env_file:
+      - ./external-tools/openclaw/.env
+    # Volumes su ponovo ukljuceni (config i workspace)
+    volumes:
+      - ./:/home/node/.openclaw/workspace
+      - ./external-tools/openclaw/openclaw_config:/home/node/.openclaw
+    ports:
+      - "18789:18789"
+      - "18790:18790"
+    command: ["node", "openclaw.mjs", "gateway", "--bind", "lan", "--allow-unconfigured"]
+    restart: always

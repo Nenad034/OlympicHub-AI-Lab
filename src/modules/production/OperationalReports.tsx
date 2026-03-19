@@ -331,6 +331,7 @@ const OperationalReports: React.FC = () => {
     const [agentSearchQuery, setAgentSearchQuery] = useState('');
     const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>(MOCK_SUBAGENTS.map(a => a.id));
     const [reportCurrentPage, setReportCurrentPage] = useState(1);
+    const [capacityFilter, setCapacityFilter] = useState<'ALL' | 'STOP' | 'FREE'>('ALL');
     const agentsPerPage = 20;
 
     const countries = useMemo(() => ['Sve', ...new Set(MOCK_SUBAGENTS.map(a => a.country))], []);
@@ -430,7 +431,14 @@ const OperationalReports: React.FC = () => {
             const matchesCat = selectedCategories.length === 0 || selectedCategories.includes(hotel?.category || '');
             const matchesSearch = cap.hotelName.toLowerCase().includes(hotelFilter.toLowerCase());
 
-            return matchesDest && matchesCat && matchesSearch;
+            let matchesCapacity = true;
+            if (capacityFilter === 'STOP') {
+                matchesCapacity = Object.values(cap.records).some(r => r.totalSold >= r.totalAll);
+            } else if (capacityFilter === 'FREE') {
+                matchesCapacity = Object.values(cap.records).some(r => (r.totalAll - r.totalSold) > 5);
+            }
+
+            return matchesDest && matchesCat && matchesSearch && matchesCapacity;
         });
 
         const groups: Record<string, { hotel: any, rooms: RoomCapacity[] }> = {};
@@ -745,21 +753,22 @@ const OperationalReports: React.FC = () => {
 
             case 'FILTER_STOP':
                 setActiveTab('inventory');
+                setCapacityFilter('STOP');
                 if (params.hotel) {
                     setHotelFilter(params.hotel);
                 } else {
-                    // Show dates with critical inventory
                     setSelectedDate(new Date('2026-06-01'));
                 }
                 break;
             case 'FILTER_FREE':
                 setActiveTab('inventory');
-                // Could implement more logic here
+                setCapacityFilter('FREE');
                 break;
             case 'RESET_FILTERS':
                 setHotelFilter('');
                 setSelectedDestinations([]);
                 setSelectedCategories([]);
+                setCapacityFilter('ALL');
                 break;
             case 'SEARCH':
                 setSearchTerm(params.query);
@@ -3249,201 +3258,6 @@ const OperationalReports: React.FC = () => {
                                             <><Clock className="animate-spin" size={18} /> Slanje u toku...</>
                                         ) : reportSentAt ? (
                                             <><CheckCircle2 size={18} /> Uspešno poslato!</>
-                                        ) : (
-                                            <><Send size={18} /> Pošalji odabranima</>
-                                        )}
-                                    </button>
-                                </div>
-                            </motion.div>
-                        </div>
-                    )
-                }
-            </AnimatePresence >
-            {/* AUDIT LOGS MODAL */}
-            <AnimatePresence>
-                {
-                    showLogsModal && (
-                        <div className="modal-overlay" onClick={() => setShowLogsModal(false)}>
-                            <motion.div
-                                drag
-                                dragMomentum={false}
-                                className="visual-report-modal"
-                                style={{
-                                    width: '98%',
-                                    maxWidth: '1600px',
-                                    height: 'auto',
-                                    minHeight: '300px',
-                                    maxHeight: '72vh',
-                                    display: 'flex',
-                                    flexDirection: 'column'
-                                }}
-                                onClick={e => e.stopPropagation()}
-                                initial={{ scale: 0.9, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.9, opacity: 0 }}
-                            >
-                                <div className="report-modal-header drag-handle">
-                                    <div className="report-title-section">
-                                        <div className="report-icon-box" style={{ background: '#64748b' }}>
-                                            <HistoryIcon size={24} />
-                                        </div>
-                                        <div>
-                                            <h3>Audit Trail - Istorija Izmena Kapaciteta</h3>
-                                            <p className="report-subtitle">Evidencija svih operacija, ko je izvršio promenu i šta je tačno urađeno.</p>
-                                        </div>
-                                    </div>
-                                    <button className="report-close-btn" onClick={() => setShowLogsModal(false)}><X size={20} /></button>
-                                </div>
-
-                                <div className="report-body" style={{ background: '#fff', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                                    <div style={{ overflow: 'auto', width: '100%', padding: '0' }}>
-                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-                                            <thead>
-                                                <tr style={{ textAlign: 'left', background: '#f8fafc', borderBottom: '2px solid #cbd5e1', position: 'sticky', top: 0, zIndex: 10 }}>
-                                                    <th style={{ padding: '20px' }}>Datum i Vreme</th>
-                                                    <th style={{ padding: '20px' }}>Korisnik</th>
-                                                    <th style={{ padding: '20px' }}>Akcija</th>
-                                                    <th style={{ padding: '20px' }}>Hotel</th>
-                                                    <th style={{ padding: '20px' }}>Tip Sobe</th>
-                                                    <th style={{ padding: '20px' }}>Opis Promene</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {capacityLogs.map((log, index) => (
-                                                    <tr key={log.id} style={{ borderBottom: '1px solid #f1f5f9', background: index % 2 === 0 ? '#fff' : '#faffff' }}>
-                                                        <td style={{ padding: '18px 20px', whiteSpace: 'nowrap', color: '#64748b' }}>{log.timestamp}</td>
-                                                        <td style={{ padding: '18px 20px' }}><strong>{log.user}</strong></td>
-                                                        <td style={{ padding: '18px 20px' }}>
-                                                            <span style={{
-                                                                padding: '5px 10px',
-                                                                borderRadius: '8px',
-                                                                background: log.action === 'Prebrisano' ? '#fee2e2' : '#f0f9ff',
-                                                                color: log.action === 'Prebrisano' ? '#dc2626' : '#0284c7',
-                                                                fontSize: '11px',
-                                                                fontWeight: 900,
-                                                                textTransform: 'uppercase'
-                                                            }}>
-                                                                {log.action}
-                                                            </span>
-                                                        </td>
-                                                        <td style={{ padding: '18px 20px' }}>{log.hotel}</td>
-                                                        <td style={{ padding: '18px 20px', color: '#475569', fontStyle: 'italic' }}>{log.room}</td>
-                                                        <td style={{ padding: '18px 20px' }}>
-                                                            <code style={{ background: '#7c3aed', color: 'white', padding: '6px 12px', borderRadius: '8px', fontWeight: 800 }}>{log.change}</code>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        </div>
-                    )
-                }
-
-                {
-                    showPublicLinkModal && (
-                        <div className="modal-overlay" onClick={() => setShowPublicLinkModal(null)}>
-                            <motion.div
-                                initial={{ scale: 0.9, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.9, opacity: 0 }}
-                                className="visual-report-modal"
-                                style={{ maxWidth: '500px', width: '90%', padding: '30px' }}
-                                onClick={e => e.stopPropagation()}
-                            >
-                                <div style={{ textAlign: 'center' }}>
-                                    <div className="op-icon-badge" style={{ margin: '0 auto 20px', width: '60px', height: '60px' }}>
-                                        <ExternalLink size={30} color="var(--accent)" />
-                                    </div>
-                                    <h3 style={{ margin: '0 0 10px', fontSize: '20px', fontWeight: 800 }}>Javni Link Generisan</h3>
-                                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '25px' }}>
-                                        Ovaj link omogućava direktan pristup izveštaju samo za entitet: <strong>{showPublicLinkModal}</strong>.
-                                    </p>
-
-                                    <div style={{
-                                        background: '#f8fafc',
-                                        padding: '15px',
-                                        borderRadius: '12px',
-                                        border: '1px solid #e2e8f0',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '10px',
-                                        marginBottom: '25px'
-                                    }}>
-                                        <a
-                                            href={`/public-inventory?reportView=true&entity=${encodeURIComponent(showPublicLinkModal || '')}&type=analytics&tags=${activeTags.join(',')}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{ flex: 1, fontSize: '12px', color: 'var(--accent)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 700 }}
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            https://prime-click.travel/report/public/{showPublicLinkModal?.toLowerCase().replace(/ /g, '-')}/{Date.now()}
-                                        </a>
-                                        <button
-                                            className="btn-icon"
-                                            title="Copy to clipboard"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                const url = `${window.location.origin}/public-inventory?reportView=true&entity=${encodeURIComponent(showPublicLinkModal || '')}&type=analytics&tags=${activeTags.join(',')}`;
-                                                navigator.clipboard.writeText(url);
-                                                alert('Link kopiran u clipboard!');
-                                            }}
-                                        >
-                                            <Copy size={16} />
-                                        </button>
-                                    </div>
-
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                        <button className="op-btn-secondary" onClick={() => setShowPublicLinkModal(null)}>Zatvori</button>
-                                        <button className="btn-create-cap" style={{ background: '#10b981' }}>
-                                            <Send size={16} /> Pošalji na Email
-                                        </button>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        </div>
-                    )
-                }
-            </AnimatePresence >
-
-            {
-                showBookingCal && (
-                    <ModernCalendar
-                        startDate={bookingFrom}
-                        endDate={bookingTo}
-                        onChange={(start, end) => {
-                            setBookingFrom(start || '2026-01-01');
-                            setBookingTo(end || '2026-12-31');
-                        }}
-                        onClose={() => setShowBookingCal(false)}
-                        allowPast={true}
-                    />
-                )
-            }
-
-            {
-                showStayCal && (
-                    <ModernCalendar
-                        startDate={stayFrom}
-                        endDate={stayTo}
-```
-                                    </div>
-
-                                    <button
-                                        disabled={isSendingReport || selectedAgentIds.length === 0}
-                                        className={`send-bulk-btn ${reportSentAt ? 'success' : ''}`}
-                                        onClick={async () => {
-                                            setIsSendingReport(true);
-                                            await new Promise(r => setTimeout(r, 2000));
-                                            setIsSendingReport(false);
-                                            setReportSentAt(new Date().toLocaleTimeString('sr-Latn-RS'));
-                                        }}
-                                    >
-                                        {isSendingReport ? (
-                                            <><Clock className="animate-spin" size={18} /> Slanje u toku...</>
-                                        ) : reportSentAt ? (
                                         ) : (
                                             <><Send size={18} /> Pošalji odabranima</>
                                         )}

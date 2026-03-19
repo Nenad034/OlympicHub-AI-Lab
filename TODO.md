@@ -15,3 +15,5 @@
 - [ ] Refaktorisanje: Izdvojiti sekciju ''Stavke Rezervacije'' (Trip Items) iz ReservationArchitect.tsx u posebnu komponentu (npr. TripItemsTab.tsx). Ovo je prvi zadatak za sutra!
 - [ ] **Technical Check**: Proveriti šta sve treba da se uradi na Google Console u vezi reCAPTCHA integracije.
 
+## AI & Security
+- [ ] **Global AI Double Confirmation**: Implementirati obavezan "Human-in-the-loop" sistem sa dvostrukom potvrdom za sve AI agente u aplikaciji (kao što je urađeno u Inventory modulu). Svaka akcija mora proći kroz dva nivoa potvrde pre izvršenja.

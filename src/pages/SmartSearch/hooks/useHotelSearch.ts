@@ -1,29 +1,48 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { performSmartSearch, type SmartSearchResult } from '../../../services/smartSearchService';
-import type { Destination, RoomAllocation, SearchQuery } from '../../../types/hotel';
+import type { Destination, SearchQuery } from '../../../types/hotel';
 
 interface UseHotelSearchProps {
     onSearchComplete?: (results: SmartSearchResult[], key: string) => void;
 }
 
 export function useHotelSearch({ onSearchComplete }: UseHotelSearchProps = {}) {
-    const [isSearching, setIsSearching] = useState(false);
-    const [searchResults, setSearchResults] = useState<SmartSearchResult[]>([]);
-    const [searchPerformed, setSearchPerformed] = useState(false);
-    const [searchError, setSearchError] = useState<string | null>(null);
+    const [searchState, setSearchState] = useState({
+        isSearching: false,
+        rawSearchResults: [] as SmartSearchResult[],
+        searchPerformed: false,
+        searchError: null as string | null,
+        lastQuery: null as SearchQuery | null,
+    });
+
+    // searchResults is derived directly from useMemo
+    const searchResults = useMemo(() => {
+        const { rawSearchResults, lastQuery } = searchState;
+
+        if (!lastQuery?.budgetFrom && !lastQuery?.budgetTo) {
+            return rawSearchResults;
+        }
+
+        const bFrom = lastQuery.budgetFrom || 0;
+        const bTo = lastQuery.budgetTo || 9999999;
+
+        return rawSearchResults.filter(r => {
+            const totalTravelers = lastQuery.rooms.reduce((acc, room) => acc + room.adults + room.children, 0);
+            const cmpValue = lastQuery.budgetType === 'total' ? r.price : r.price / totalTravelers;
+            return cmpValue >= bFrom && cmpValue <= bTo;
+        });
+    }, [searchState.rawSearchResults, searchState.lastQuery]);
 
     const handleSearch = useCallback(async (query: SearchQuery) => {
         if (!query.destinations || query.destinations.length === 0) {
-            setSearchError('Molimo izaberite destinaciju.');
+            setSearchState(s => ({ ...s, searchError: 'Molimo izaberite destinaciju.' }));
             return;
         }
 
-        setIsSearching(true);
-        setSearchError(null);
-        setSearchResults([]);
+        setSearchState(s => ({ ...s, isSearching: true, searchError: null }));
 
         try {
-            const results = await performSmartSearch({
+            const rawResults = await performSmartSearch({
                 searchType: 'hotel',
                 destinations: query.destinations.map(d => ({
                     id: d.id,
@@ -40,46 +59,54 @@ export function useHotelSearch({ onSearchComplete }: UseHotelSearchProps = {}) {
                     childrenAges: r.childrenAges
                 })),
                 nationality: query.nationality || 'RS',
-                mealPlan: query.mealPlan || 'all'
+                mealPlan: query.mealPlan || 'all',
+                budgetFrom: query.budgetFrom,
+                budgetTo: query.budgetTo,
+                budgetType: query.budgetType,
             });
 
-            // Handle budget filtering if set
-            let filteredResults = results;
+            // Synchronous filtering calculation for immediate onSearchComplete callback compatibility
+            let filteredResultsForCallback = rawResults;
             if (query.budgetFrom || query.budgetTo) {
                 const bFrom = query.budgetFrom || 0;
                 const bTo = query.budgetTo || 9999999;
 
-                filteredResults = results.filter(r => {
+                filteredResultsForCallback = rawResults.filter(r => {
                     const totalTravelers = query.rooms.reduce((acc, room) => acc + room.adults + room.children, 0);
                     const cmpValue = query.budgetType === 'total' ? r.price : r.price / totalTravelers;
                     return cmpValue >= bFrom && cmpValue <= bTo;
                 });
             }
-
-            setSearchResults(filteredResults);
-            setSearchPerformed(true);
+            
+            setSearchState(s => ({
+                ...s,
+                rawSearchResults: rawResults,
+                searchPerformed: true,
+                lastQuery: query,
+            }));
 
             const searchKey = `${query.destinations.map(d => d.id).join('-')}-${query.checkIn}-${query.checkOut}`;
             if (onSearchComplete) {
-                onSearchComplete(filteredResults, searchKey);
+                onSearchComplete(filteredResultsForCallback, searchKey);
             }
 
-            return filteredResults;
+            return rawResults;
 
         } catch (error: any) {
             console.error('SmartSearch Error:', error);
-            setSearchError(error.message || 'Došlo je do greške prilikom pretrage hotela.');
+            setSearchState(s => ({ ...s, searchError: error.message || 'Došlo je do greške prilikom pretrage hotela.' }));
             return [];
         } finally {
-            setIsSearching(false);
+            // Fix 1: Ensure isSearching is false on all exit paths
+            setSearchState(s => ({ ...s, isSearching: false }));
         }
     }, [onSearchComplete]);
 
     return {
-        isSearching,
-        searchResults,
-        searchPerformed,
-        searchError,
+        isSearching: searchState.isSearching,
+        searchResults: searchResults, // Fix 2: Directly from useMemo
+        searchPerformed: searchState.searchPerformed,
+        searchError: searchState.searchError,
         handleSearch
     };
 }
