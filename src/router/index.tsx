@@ -56,6 +56,7 @@ const SmartSearch = React.lazy(() => import('../pages/SmartSearch'));
 const SmartSearchV2 = React.lazy(() => import('../pages/SmartSearchV2'));
 const SmartSearchV3 = React.lazy(() => import('../pages/SmartSearchV3'));
 const SmartSearchV4 = React.lazy(() => import('../pages/SmartSearchV4'));
+const SmartSearchV5 = React.lazy(() => import('../pages/SmartSearchV5'));
 const ReservationArchitect = React.lazy(() => import('../pages/ReservationArchitect'));
 const ReservationArchitectV5 = React.lazy(() => import('../pages/ReservationArchitectV5'));
 const ReservationsDashboard = React.lazy(() => import('../pages/ReservationsDashboard'));
@@ -433,6 +434,16 @@ export const router = createBrowserRouter([
                     <AuthGuard>
                         <React.Suspense fallback={<LoadingFallback />}>
                             <ReservationArchitectV5 />
+                        </React.Suspense>
+                    </AuthGuard>
+                )
+            },
+            {
+                path: '/smart-search-v5',
+                element: (
+                    <AuthGuard>
+                        <React.Suspense fallback={<LoadingFallback />}>
+                            <SmartSearchV5 />
                         </React.Suspense>
                     </AuthGuard>
                 )

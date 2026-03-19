@@ -1,0 +1,613 @@
+/* 
+  SmartSearchV5.css — FULL-WIDTH DASHBOARD ARCHITECTURE
+  Architecture: Fixed Window, Internal Scroll
+  Layout: Full Screen (Left: Hub | Right: Fixed Sidebar)
+*/
+
+.ssv5-wrapper {
+  --v5-sidebar-w: 420px;
+  --v5-header-h: 70px;
+  
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 110px);
+  width: 100%;
+  background: var(--ssv4-bg-gradient);
+  background-attachment: fixed;
+  font-family: 'Outfit', sans-serif;
+  color: var(--ssv4-text-prm);
+  overflow: hidden; 
+}
+
+/* ── FULL SCREEN LAYOUT ── */
+.ssv5-layout {
+  display: grid;
+  grid-template-columns: 1fr var(--v5-sidebar-w);
+  width: 100%;
+  height: calc(100vh - 110px);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ── SEARCH HUB (CENTER) ── */
+.ssv5-hub {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 60px; /* Reduced top padding from 40px to 20px */
+  gap: 20px; /* Reduced gap from 32px to 20px */
+  overflow-y: auto;
+  height: 100%;
+  scrollbar-width: none;
+}
+
+.ssv5-hub::-webkit-scrollbar {
+  display: none; /* Hide scrollbar Chrome/Safari */
+}
+
+/* ── TABS ── */
+.ssv5-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  background: var(--ssv4-tab-bg);
+  padding: 8px;
+  border-radius: 24px;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--ssv4-card-border);
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.ssv5-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 18px;
+  border: none;
+  background: transparent;
+  color: var(--ssv4-text-sec);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.ssv5-tab-btn:hover {
+  background: rgba(var(--ssv4-primary-rgb), 0.1);
+  color: var(--ssv4-primary);
+}
+
+.ssv5-tab-btn.active {
+  background: var(--ssv4-primary);
+  color: white;
+  box-shadow: 0 4px 15px rgba(var(--ssv4-primary-rgb), 0.3);
+}
+
+/* ── SEARCH PANEL ── */
+.ssv5-panel {
+  background: var(--ssv4-card-bg);
+  backdrop-filter: blur(25px);
+  border: 1px solid var(--ssv4-card-border);
+  border-radius: 32px;
+  padding: 24px;
+  box-shadow: var(--ssv4-shadow);
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  width: 100%;
+  max-width: 1400px; /* Still capped for readability but wider */
+  margin: 0 auto;
+}
+
+.ssv5-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  flex: 1;
+}
+
+/* ── INPUTS (V5 GLASS) ── */
+.v5-field {
+  position: relative;
+  background: var(--ssv4-input-bg);
+  border: 1px solid var(--ssv4-card-border);
+  border-radius: 20px;
+  height: 70px;
+  padding: 26px 16px 8px 48px;
+  transition: all 0.2s;
+}
+
+.v5-field label {
+  position: absolute;
+  top: 10px;
+  left: 48px;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--ssv4-text-mut);
+}
+
+.v5-field .v5-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ssv4-primary);
+  opacity: 0.7;
+}
+
+.v5-field input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ssv4-text-prm);
+  outline: none;
+}
+
+/* ── POPOVERS (DATE & PAX) ── */
+.v5-popover {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  z-index: 1000;
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  padding: 24px;
+  min-width: 320px;
+  backdrop-filter: blur(20px);
+}
+
+.pax-popover {
+  width: 300px;
+  right: 0;
+  left: auto;
+}
+
+.pax-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pax-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255,255,255,0.05);
+  padding: 4px 8px;
+  border-radius: 100px;
+}
+
+.pax-ctrl button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pax-ctrl button:hover {
+  background: var(--ssv4-primary);
+  border-color: var(--ssv4-primary);
+}
+
+.pax-ctrl span {
+  font-weight: 800;
+  color: white;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* ── NEO-SEARCH CALENDAR OVERLAY ── */
+.neosearch-calendar {
+  width: 400px;
+  background: #111827;
+  border-radius: 24px;
+  padding: 24px;
+}
+
+.neo-cal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.neo-cal-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.neo-cal-header button {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.neo-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.neo-dow {
+  font-size: 10px;
+  font-weight: 800;
+  opacity: 0.5;
+  padding-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.neo-day {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.neo-day:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.neo-day.active {
+  background: var(--ssv4-primary);
+  color: white;
+  font-weight: 800;
+}
+
+.neo-day.range {
+  background: rgba(var(--ssv4-primary-rgb), 0.15);
+  color: var(--ssv4-primary);
+}
+
+.neo-cal-flex {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.neo-cal-flex button {
+  padding: 6px 12px;
+  border-radius: 100px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.neo-cal-flex button.active {
+  background: var(--ssv4-primary);
+  border-color: var(--ssv4-primary);
+}
+
+/* ── NEO-SEARCH ROOMS SECTION ── */
+.neosearch-pax {
+  width: 340px;
+  padding: 24px;
+}
+
+.neo-room-section {
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.neo-room-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.neo-room-head h5 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ssv4-primary);
+}
+
+.neo-room-head button {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.neo-age-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.age-item label {
+  font-size: 10px;
+  opacity: 0.5;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.age-item select {
+  width: 100%;
+  height: 38px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: white;
+  padding: 0 8px;
+  outline: none;
+}
+
+.neo-add-room {
+  width: 100%;
+  height: 44px;
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,0.2);
+  border-radius: 12px;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.neo-add-room:hover {
+  border-color: var(--ssv4-primary);
+  color: var(--ssv4-primary);
+}
+
+/* ── SEARCH BUTTON ── */
+.v5-search-btn {
+  background: var(--ssv4-primary);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 0 32px;
+  height: 70px;
+  font-weight: 950;
+  font-size: 14px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(var(--ssv4-primary-rgb), 0.2);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ── SIDEBAR (DOCKED TO FAR RIGHT) ── */
+.ssv5-sidebar {
+  height: 100vh;
+  width: var(--v5-sidebar-w);
+  background: var(--ssv4-card-bg);
+  backdrop-filter: blur(40px);
+  border-left: 1px solid var(--ssv4-card-border);
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.05);
+  z-index: 100;
+}
+
+.v5-cart-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.v5-cart-header h2 {
+  font-size: 18px;
+  font-weight: 900;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.v5-cart-items {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-right: 4px;
+}
+
+/* Small scrollbar for items */
+.v5-cart-items::-webkit-scrollbar {
+  width: 4px;
+}
+.v5-cart-items::-webkit-scrollbar-thumb {
+  background: var(--ssv4-card-border);
+  border-radius: 10px;
+}
+
+.v5-item-card {
+  background: var(--ssv4-input-bg);
+  border-radius: 20px;
+  padding: 16px;
+  border: 1px solid var(--ssv4-card-border);
+}
+
+/* ── SIDEBAR FOOTER (LIFTED) ── */
+.v5-cart-footer {
+  margin-top: auto;
+  padding-top: 20px;
+  padding-bottom: 20px; /* Added padding to lift from the very bottom */
+  border-top: 1px solid var(--ssv4-card-border);
+  background: var(--ssv4-card-bg);
+}
+
+.v5-total-box {
+  margin-bottom: 20px;
+}
+
+.v5-total-box label {
+  font-size: 10px;
+  font-weight: 800;
+  opacity: 0.5;
+  letter-spacing: 1px;
+}
+
+.v5-total-box .price {
+  font-size: 32px; /* Slightly smaller to fit better */
+  font-weight: 950;
+  color: var(--ssv4-primary);
+  letter-spacing: -1.5px;
+  margin-top: 4px;
+}
+
+.v5-book-btn {
+  width: 100%;
+  height: 54px; /* Slightly shorter */
+  background: var(--ssv4-primary);
+  color: white;
+  border: none;
+  border-radius: 18px;
+  font-weight: 900;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* ── RESULTS SECTION ── */
+.ssv5-results-section {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-bottom: 100px;
+}
+
+.results-container {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── RESULTS LAYOUT (SIDEBAR + GRID) ── */
+.v5-results-layout {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.v5-results-sidebar {
+  flex: 0 0 320px; /* Fixed width for filters */
+  position: relative; /* Sticky is handled in the component */
+}
+
+.v5-results-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── RESULTS GRID MODES ── */
+.results-grid.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.results-grid.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.results-grid.notepad {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── BADGES ── */
+.v5-badge {
+  background: rgba(var(--ssv4-primary-rgb), 0.1);
+  color: var(--ssv4-primary);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  border: 1px solid rgba(var(--ssv4-primary-rgb), 0.2);
+}
+
+/* ── EMPTY & SEARCHING ── */
+.empty-results {
+  text-align: center;
+  padding: 100px 0;
+  color: var(--ssv4-text-mut);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  opacity: 0.5;
+}
+
+.empty-results p {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.searching-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 0;
+  gap: 20px;
+  color: var(--ssv4-text-sec);
+}
+
+.searching-container .spinning {
+  animation: spin 2s linear infinite;
+  color: var(--ssv4-primary);
+  width: 48px;
+  height: 48px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── AUTOCOMPLETE SUGGESTIONS ── */
+.neosearch-suggestions {
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  border: 1px solid var(--ssv4-card-border) !important;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.neosearch-suggestions div:last-child {
+  border-bottom: none !important;
+}

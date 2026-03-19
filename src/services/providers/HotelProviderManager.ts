@@ -45,6 +45,7 @@ import { TCTProvider } from '../../integrations/tct/TCTProvider';
 import { FilosProvider } from '../../integrations/filos/FilosProvider';
 import { MtsGlobeProvider } from '../../integrations/mtsglobe/MtsGlobeProvider';
 import { TravelgateProvider } from '../../integrations/travelgate/TravelgateProvider';
+import { SanTsgProvider } from '../../integrations/santsg/SanTsgProvider';
 import { searchHistory } from '../../utils/searchHistory';
 
 
@@ -154,6 +155,19 @@ export class HotelProviderManager {
             }
         } catch (error) {
             console.error('❌ Failed to register Travelgate provider:', error);
+        }
+
+        // Register SAN TSG provider (TourVisio REST API)
+        try {
+            const santsgProvider = new SanTsgProvider();
+            if (santsgProvider.isConfigured()) {
+                this.registerProvider(santsgProvider);
+                console.log('✅ SAN TSG (TourVisio) provider registered');
+            } else {
+                console.warn('⚠️ SAN TSG provider not configured (missing VITE_SANTSG_AGENCY_CODE)');
+            }
+        } catch (error) {
+            console.error('❌ Failed to register SAN TSG provider:', error);
         }
     }
 

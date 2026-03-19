@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Search, Star, Zap, HelpCircle, XCircle, LayoutGrid, List as ListIcon,
-    AlignLeft, Sparkles, RefreshCw, Filter, ChevronDown, X, ShieldCheck
+    AlignLeft, Sparkles, RefreshCw, Filter, ChevronDown, X, ShieldCheck, Clock
 } from 'lucide-react';
 
 interface FilterSidebarProps {
@@ -19,6 +19,19 @@ interface FilterSidebarProps {
     onlyRefundable: boolean;
     setOnlyRefundable: (v: boolean) => void;
     searchResults?: any[];
+    // NEW FOR FLIGHTS
+    activeTab?: string;
+    selectedAirlines?: string[];
+    toggleAirlineFilter?: (a: string) => void;
+    maxStops?: number | null;
+    setMaxStops?: (v: number | null) => void;
+    timeFilters?: {
+        outboundDepartureFrom: string;
+        outboundDepartureTo: string;
+        inboundDepartureFrom: string;
+        inboundDepartureTo: string;
+    };
+    setTimeFilters?: (v: any) => void;
 }
 
 const generateShortCode = (code: string, label: string): string => {
@@ -120,9 +133,43 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     toggleMealPlanFilter,
     onlyRefundable,
     setOnlyRefundable,
-    searchResults
+    searchResults,
+    // NEW FOR FLIGHTS
+    activeTab = 'Stays',
+    selectedAirlines = [],
+    toggleAirlineFilter,
+    maxStops,
+    setMaxStops,
+    timeFilters,
+    setTimeFilters
 }) => {
     const [expanded, setExpanded] = useState(false);
+
+    const isFlightOnly = activeTab === 'Flights' || activeTab === 'letovi';
+    const isPackage = activeTab === 'Packages' || activeTab === 'dinamika';
+    const showFlightFilters = isFlightOnly || isPackage;
+
+    const uniqueAirlines = React.useMemo(() => {
+        if (!searchResults || !showFlightFilters) return [];
+        const airlines = new Set<string>();
+        searchResults.forEach(r => {
+            if (r.type === 'flight' || r.type === 'package') {
+                if (r.data?.slices) {
+                    r.data.slices.forEach((s: any) => {
+                        s.segments.forEach((seg: any) => {
+                            if (seg.carrierName) airlines.add(seg.carrierName);
+                        });
+                    });
+                } else if (r.data?.outbound?.segments) {
+                    // Alternative data structure
+                    r.data.outbound.segments.forEach((s: any) => {
+                        if (s.airline_name) airlines.add(s.airline_name);
+                    });
+                }
+            }
+        });
+        return Array.from(airlines).sort();
+    }, [searchResults, showFlightFilters]);
 
     const dynamicMealPlans = React.useMemo(() => {
         return [
@@ -137,299 +184,255 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         ];
     }, []);
 
-    const hasActiveFilters =
-        hotelNameFilter.length > 0 ||
-        selectedStars.length > 0 ||
-        selectedAvailability.length > 0 ||
-        (selectedMealPlans.length > 0 && !selectedMealPlans.includes('all'));
-
     return (
         <div style={{
             position: 'sticky',
-            top: 0,
-            zIndex: 1000,
-            background: 'linear-gradient(135deg, rgba(26, 43, 60, 0.97) 0%, rgba(15, 23, 42, 0.97) 100%)',
+            top: '20px',
+            zIndex: 100,
+            background: 'var(--ssv4-card-bg)',
             backdropFilter: 'blur(30px)',
-            WebkitBackdropFilter: 'blur(30px)',
-            borderBottom: '1px solid rgba(142, 36, 172, 0.2)',
-            borderRadius: '0 0 20px 20px',
-            margin: '0 -2rem 1.5rem -2rem',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-            overflow: 'hidden',
+            border: '1px solid var(--ssv4-card-border)',
+            borderRadius: '24px',
+            padding: '24px',
+            boxShadow: 'var(--ssv4-shadow)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '24px',
+            width: '100%',
+            color: 'var(--ssv4-text-main)',
         }}>
-            {/* ── MAIN TOOLBAR ROW ── */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center', // Centering content
-                gap: '40px', // More space between sections
-                padding: '10px 24px',
-                flexWrap: 'nowrap',
-            }}>
-
-                {/* Reset Button */}
+            {/* Header & Reset */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, letterSpacing: '-0.5px' }}>Filteri</h3>
                 <button
                     onClick={onResetSearch}
                     style={{
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        padding: '10px 28px', // Increased width
-                        background: 'rgba(142,36,172,0.15)',
-                        border: '1px solid rgba(142,36,172,0.4)',
-                        borderRadius: '24px',
-                        color: '#ce93d8',
-                        fontSize: '0.8rem',
-                        fontWeight: 900,
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        padding: '6px 12px',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        borderRadius: '12px',
+                        color: '#ef4444',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
                         cursor: 'pointer',
                         transition: 'all 0.2s',
-                        whiteSpace: 'nowrap',
-                        flexShrink: 0,
-                        boxShadow: '0 0 15px rgba(142,36,172,0.1)'
-                    }}
-                    onMouseEnter={e => {
-                        (e.currentTarget as HTMLElement).style.background = 'rgba(142,36,172,0.3)';
-                        (e.currentTarget as HTMLElement).style.transform = 'scale(1.05)';
-                    }}
-                    onMouseLeave={e => {
-                        (e.currentTarget as HTMLElement).style.background = 'rgba(142,36,172,0.15)';
-                        (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
                     }}
                 >
-                    <RefreshCw size={14} /> NOVA PRETRAGA
+                    <RefreshCw size={12} /> Resetuj
                 </button>
+            </div>
 
-                {/* Search Input */}
-                <div style={{ position: 'relative', flex: '0 0 260px' }}>
-                    <Search size={14} style={{
-                        position: 'absolute', left: '12px', top: '50%',
-                        transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)',
-                        pointerEvents: 'none'
-                    }} />
+            {/* Name Search */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>
+                    {showFlightFilters ? 'Pretraga ruta' : 'Ime hotela'}
+                </label>
+                <div style={{ position: 'relative' }}>
+                    <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
                     <input
                         type="text"
-                        placeholder="Pretraži hotele..."
+                        placeholder="Upišite ovde..."
                         value={hotelNameFilter}
-                        onChange={(e) => setHotelNameFilter(e.target.value)}
+                        onChange={e => setHotelNameFilter(e.target.value)}
                         style={{
-                            width: '100%',
-                            paddingLeft: '38px',
-                            paddingRight: hotelNameFilter ? '32px' : '12px',
-                            height: '38px',
-                            background: 'rgba(255,255,255,0.05)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: '20px',
-                            color: 'white',
-                            fontSize: '0.82rem',
-                            outline: 'none',
-                            transition: 'all 0.2s',
-                            boxSizing: 'border-box',
+                            width: '100%', padding: '10px 10px 10px 34px',
+                            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '12px', color: 'white', fontSize: '0.8rem', fontWeight: 700, outline: 'none'
                         }}
-                        onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(142,36,172,0.5)'; (e.target as HTMLInputElement).style.background = 'rgba(255,255,255,0.08)'; }}
-                        onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,255,255,0.1)'; (e.target as HTMLInputElement).style.background = 'rgba(255,255,255,0.05)'; }}
                     />
-                    {hotelNameFilter && (
-                        <button onClick={() => setHotelNameFilter('')} style={{
-                            position: 'absolute', right: '10px', top: '50%',
-                            transform: 'translateY(-50%)', background: 'none',
-                            border: 'none', color: 'rgba(255,255,255,0.4)',
-                            cursor: 'pointer', padding: '0', lineHeight: 1
-                        }}>
-                            <X size={12} />
-                        </button>
-                    )}
-                </div>
-
-                {/* ── STARS ── */}
-                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
-                    {STAR_OPTIONS.map(opt => {
-                        const active = selectedStars.includes(opt.value);
-                        return (
-                            <button
-                                key={opt.value}
-                                onClick={() => toggleStarFilter(opt.value)}
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: '3px',
-                                    padding: '6px 11px',
-                                    background: active ? 'rgba(142,36,172,0.3)' : 'rgba(255,255,255,0.04)',
-                                    border: active ? '1px solid rgba(142,36,172,0.6)' : '1px solid rgba(255,255,255,0.08)',
-                                    borderRadius: '16px',
-                                    color: active ? '#ce93d8' : 'rgba(255,255,255,0.5)',
-                                    fontSize: '0.72rem',
-                                    fontWeight: 800,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.15s',
-                                    whiteSpace: 'nowrap',
-                                }}
-                            >
-                                {opt.value !== '0' ? (
-                                    <><Star size={9} fill={active ? '#ce93d8' : 'transparent'} /> {opt.label}</>
-                                ) : opt.label}
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* ── AVAILABILITY ── */}
-                <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                    {[
-                        { value: 'available', label: 'DOSTUPNO', icon: <Zap size={10} />, color: '#4cd964' },
-                        { value: 'on_request', label: 'NA UPIT', icon: <HelpCircle size={10} />, color: '#f59e0b' },
-                        { value: 'unavailable', label: 'STOP SALE', icon: <XCircle size={10} />, color: '#ef4444' },
-                    ].map(item => {
-                        const active = selectedAvailability.includes(item.value);
-                        return (
-                            <button
-                                key={item.value}
-                                onClick={() => toggleAvailabilityFilter(item.value)}
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: '4px',
-                                    padding: '6px 12px',
-                                    background: active ? `${item.color}22` : 'rgba(255,255,255,0.04)',
-                                    border: active ? `1px solid ${item.color}66` : '1px solid rgba(255,255,255,0.08)',
-                                    borderRadius: '16px',
-                                    color: active ? item.color : 'rgba(255,255,255,0.5)',
-                                    fontSize: '0.68rem',
-                                    fontWeight: 800,
-                                    letterSpacing: '0.4px',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.15s',
-                                    whiteSpace: 'nowrap',
-                                }}
-                            >
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* ── REFUNDABLE FILTER ── */}
-                <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                    <button
-                        onClick={() => setOnlyRefundable(!onlyRefundable)}
-                        style={{
-                            display: 'flex', alignItems: 'center', gap: '8px',
-                            padding: '6px 14px',
-                            background: onlyRefundable ? 'rgba(76, 217, 100, 0.2)' : 'rgba(255,255,255,0.04)',
-                            border: onlyRefundable ? '1px solid rgba(76, 217, 100, 0.5)' : '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: '16px',
-                            color: onlyRefundable ? '#4cd964' : 'rgba(255,255,255,0.5)',
-                            fontSize: '0.68rem',
-                            fontWeight: 800,
-                            cursor: 'pointer',
-                            transition: 'all 0.15s',
-                            whiteSpace: 'nowrap',
-                        }}
-                    >
-                        <ShieldCheck size={14} /> REFUNDABILNO
-                    </button>
-                </div>
-
-                {/* Spacer */}
-                <div style={{ flex: 1 }} />
-
-                {/* Meal Plan toggle */}
-                <button
-                    onClick={() => setExpanded(v => !v)}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: '6px',
-                        padding: '8px 14px',
-                        background: hasActiveFilters && (!selectedMealPlans.includes('all') && selectedMealPlans.length > 0)
-                            ? 'rgba(142,36,172,0.2)' : 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '16px',
-                        color: 'rgba(255,255,255,0.6)',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        flexShrink: 0,
-                    }}
-                >
-                    <Filter size={13} />
-                    USLUGE
-                    <ChevronDown size={12} style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-                </button>
-
-                {/* ── VIEW MODE ── */}
-                <div style={{
-                    display: 'flex',
-                    background: 'rgba(0,0,0,0.3)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '20px',
-                    padding: '3px',
-                    gap: '2px',
-                    flexShrink: 0,
-                }}>
-                    {[
-                        { mode: 'notepad' as const, icon: <AlignLeft size={15} />, label: 'Lista' },
-                        { mode: 'grid' as const, icon: <LayoutGrid size={15} />, label: 'Mreža' },
-                        { mode: 'list' as const, icon: <ListIcon size={15} />, label: 'Red' },
-                    ].map(item => (
-                        <button
-                            key={item.mode}
-                            onClick={() => setViewMode(item.mode)}
-                            title={item.label}
-                            style={{
-                                width: '34px', height: '30px',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                background: viewMode === item.mode
-                                    ? 'linear-gradient(135deg, #8E24AC, #6A1B9A)'
-                                    : 'transparent',
-                                border: 'none',
-                                borderRadius: '16px',
-                                color: viewMode === item.mode ? 'white' : 'rgba(255,255,255,0.4)',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                boxShadow: viewMode === item.mode ? '0 2px 10px rgba(142,36,172,0.4)' : 'none',
-                            }}
-                        >
-                            {item.icon}
-                        </button>
-                    ))}
                 </div>
             </div>
 
-            {/* ── MEAL PLANS ROW (collapsible) ── */}
-            <div style={{
-                maxHeight: expanded ? '60px' : '0',
-                overflow: 'hidden',
-                transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}>
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'center', // Centering 2nd row
-                    gap: '10px',
-                    padding: '0 24px 12px 24px',
-                    borderTop: '1px solid rgba(255,255,255,0.05)',
-                    paddingTop: '10px',
-                    flexWrap: 'nowrap',
-                    overflowX: 'auto',
-                }}>
-                    <Sparkles size={14} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '8px' }} />
-                    {dynamicMealPlans.map(mp => {
-                        const active = selectedMealPlans.includes(mp.value) ||
-                            (mp.value === 'all' && selectedMealPlans.length === 0);
-                        return (
-                            <button
-                                key={mp.value}
-                                onClick={() => toggleMealPlanFilter(mp.value)}
-                                style={{
-                                    padding: '5px 14px',
-                                    background: active ? 'rgba(142,36,172,0.25)' : 'rgba(255,255,255,0.04)',
-                                    border: active ? '1px solid rgba(142,36,172,0.5)' : '1px solid rgba(255,255,255,0.08)',
-                                    borderRadius: '16px',
-                                    color: active ? '#ce93d8' : 'rgba(255,255,255,0.5)',
-                                    fontSize: '0.72rem',
-                                    fontWeight: 800,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.15s',
-                                    whiteSpace: 'nowrap',
-                                    flexShrink: 0,
-                                }}
-                            >
-                                {mp.label}
-                            </button>
-                        );
-                    })}
-                </div>
+            {/* CONDITIONAL FILTERS */}
+            {!showFlightFilters ? (
+                <>
+                    {/* Stars */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Kategorija</label>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {STAR_OPTIONS.map(opt => {
+                                const active = selectedStars.includes(opt.value);
+                                return (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => toggleStarFilter(opt.value)}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px',
+                                            background: active ? 'rgba(142,36,172,0.2)' : 'rgba(255,255,255,0.03)',
+                                            border: active ? '1px solid var(--ssv4-primary)' : '1px solid rgba(255,255,255,0.1)',
+                                            borderRadius: '12px', color: active ? '#ce93d8' : 'rgba(255,255,255,0.6)',
+                                            fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer'
+                                        }}
+                                    >
+                                        {opt.value !== '0' && <Star size={10} fill={active ? '#ce93d8' : 'transparent'} />} {opt.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Meal Plans */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Usluga</label>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {dynamicMealPlans.map(mp => {
+                                const active = selectedMealPlans.includes(mp.value) || (mp.value === 'all' && selectedMealPlans.length === 0);
+                                return (
+                                    <button
+                                        key={mp.value}
+                                        onClick={() => toggleMealPlanFilter(mp.value)}
+                                        style={{
+                                            padding: '6px 12px',
+                                            background: active ? 'rgba(76, 217, 100, 0.15)' : 'rgba(255,255,255,0.03)',
+                                            border: active ? '1px solid var(--accent)' : '1px solid rgba(255,255,255,0.1)',
+                                            borderRadius: '12px', color: active ? 'var(--accent)' : 'rgba(255,255,255,0.6)',
+                                            fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer'
+                                        }}
+                                    >
+                                        {mp.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Availability */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Dostupnost</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {[
+                                { value: 'available', label: 'DOSTUPNO ODMAH', icon: <Zap size={12} />, color: '#4cd964' },
+                                { value: 'on_request', label: 'NA UPIT', icon: <HelpCircle size={12} />, color: '#f59e0b' },
+                                { value: 'unavailable', label: 'STOP SALE', icon: <XCircle size={12} />, color: '#ef4444' },
+                            ].map(item => {
+                                const active = selectedAvailability.includes(item.value);
+                                return (
+                                    <button
+                                        key={item.value}
+                                        onClick={() => toggleAvailabilityFilter(item.value)}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px',
+                                            padding: '8px 12px', width: '100%',
+                                            background: active ? `${item.color}15` : 'rgba(255,255,255,0.03)',
+                                            border: active ? `1px solid ${item.color}55` : '1px solid rgba(255,255,255,0.1)',
+                                            borderRadius: '12px', color: active ? item.color : 'rgba(255,255,255,0.6)',
+                                            fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer'
+                                        }}
+                                    >
+                                        {item.icon} {item.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <>
+                    {/* Max Stops */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Presedanja</label>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                            {[
+                                { value: 0, label: 'Direktan' },
+                                { value: 1, label: 'Max 1' },
+                                { value: 2, label: 'Max 2' }
+                            ].map(opt => {
+                                const active = maxStops === opt.value;
+                                return (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => setMaxStops && setMaxStops(opt.value)}
+                                        style={{
+                                            flex: 1, padding: '8px',
+                                            background: active ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255,255,255,0.03)',
+                                            border: active ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.1)',
+                                            borderRadius: '12px', color: active ? '#60a5fa' : 'rgba(255,255,255,0.6)',
+                                            fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer'
+                                        }}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Airlines */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Avio Kompanije</label>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {uniqueAirlines.length > 0 ? (
+                                uniqueAirlines.map(airline => {
+                                    const active = selectedAirlines.includes(airline);
+                                    return (
+                                        <button
+                                            key={airline}
+                                            onClick={() => toggleAirlineFilter && toggleAirlineFilter(airline)}
+                                            style={{
+                                                padding: '6px 12px',
+                                                background: active ? 'rgba(142,36,172,0.2)' : 'rgba(255,255,255,0.03)',
+                                                border: active ? '1px solid var(--ssv4-primary)' : '1px solid rgba(255,255,255,0.1)',
+                                                borderRadius: '12px', color: active ? '#ce93d8' : 'rgba(255,255,255,0.6)',
+                                                fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer'
+                                            }}
+                                        >
+                                            {airline}
+                                        </button>
+                                    );
+                                })
+                            ) : (
+                                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>Učitavanje...</span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Flight Times */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Vreme Polaska</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {[
+                                { label: 'Jutro (00-12h)', from: '00:00', to: '12:00' },
+                                { label: 'Popodne (12-18h)', from: '12:00', to: '18:00' },
+                                { label: 'Veče (18-24h)', from: '18:00', to: '24:00' }
+                            ].map((t, idx) => {
+                                const active = timeFilters?.outboundDepartureFrom === t.from && timeFilters?.outboundDepartureTo === t.to;
+                                return (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setTimeFilters && setTimeFilters({ ...timeFilters, outboundDepartureFrom: t.from, outboundDepartureTo: t.to })}
+                                        style={{
+                                            padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '8px',
+                                            background: active ? 'rgba(234, 179, 8, 0.15)' : 'rgba(255,255,255,0.03)',
+                                            border: active ? '1px solid #eab308' : '1px solid rgba(255,255,255,0.1)',
+                                            borderRadius: '12px', color: active ? '#fde047' : 'rgba(255,255,255,0.6)',
+                                            fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', textAlign: 'left'
+                                        }}
+                                    >
+                                        <Clock size={12} /> {t.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Extra Options (Refundable) */}
+            <div style={{ marginTop: '10px' }}>
+                <button
+                    onClick={() => setOnlyRefundable(!onlyRefundable)}
+                    style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                        padding: '10px', width: '100%',
+                        background: onlyRefundable ? 'rgba(76, 217, 100, 0.15)' : 'rgba(255,255,255,0.03)',
+                        border: onlyRefundable ? '1px solid var(--accent)' : '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '12px', color: onlyRefundable ? 'var(--accent)' : 'rgba(255,255,255,0.6)',
+                        fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer'
+                    }}
+                >
+                    <ShieldCheck size={14} /> Samo Refundabilno
+                </button>
             </div>
         </div>
     );

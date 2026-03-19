@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Plug, Database, Globe, Plane, CheckCircle, XCircle,
     AlertTriangle, Settings, Activity, ArrowRight, Shield,
-    LayoutGrid, List, Info, ExternalLink, CreditCard, Link, Ticket, Mountain
+    LayoutGrid, List, Info, ExternalLink, CreditCard, Link, Ticket, Mountain, Search
 } from 'lucide-react';
 import RateLimitMonitor from '../components/RateLimitMonitor';
 import AIWatchdogDashboard from '../components/watchdog/AIWatchdogDashboard';
@@ -18,9 +18,9 @@ interface APIConnection {
     name: string;
     provider: string;
     description: string;
-    iconName: 'database' | 'globe' | 'plane' | 'credit-card' | 'link' | 'ticket' | 'mountain';
+    iconName: 'database' | 'globe' | 'plane' | 'credit-card' | 'link' | 'ticket' | 'mountain' | 'shield';
     status: 'active' | 'inactive' | 'error' | 'testing';
-    category: 'flights' | 'supplier' | 'systems' | 'payments' | 'mapping' | 'ski';
+    category: 'flights' | 'supplier' | 'systems' | 'payments' | 'mapping' | 'ski' | 'insurance';
     color: string;
     testPath: string;
     features: string[];
@@ -318,17 +318,50 @@ const APIConnectionsHub: React.FC = () => {
             features: ['GET /hotels Search', 'GET /hotels/top', 'Hotel Static Content', 'IBE Deep Links', 'GIATA Integration', 'Multi-language'],
             dataQualityScore: 88,
             avgLatency: 700
+        },
+        {
+            id: 'santsg',
+            name: 'SAN TSG (TourVisio)',
+            provider: 'SAN Tourism Software Group',
+            description: 'Turoperatorski sistem za čartere, grupna putovanja i dinamičko paketiranje — kompletan inventar turskog i globalnog tržišta sa podrškom za itenerere.',
+            iconName: 'globe' as const,
+            status: 'testing' as const,
+            category: 'supplier' as const,
+            color: '#14b8a6',
+            testPath: '/santsg-test',
+            features: ['Charter Management', 'Dynamic Packaging', 'Group Tours', 'Itinerary Sync', 'REST JSON API', 'Payment Gateway Integration'],
+            dataQualityScore: 94,
+            avgLatency: 520
+        },
+        {
+            id: 'uos',
+            name: 'UOS (Udruženje Osiguravača)',
+            provider: 'UOS / Triglav RS',
+            description: 'Putno zdravstveno osiguranje — automatizovano izdavanje polisa, provera država i valuta, direktna integracija sa Portalom za turističke agencije.',
+            iconName: 'shield' as const,
+            status: 'active' as const,
+            category: 'insurance' as const,
+            color: '#1e40af',
+            testPath: '/uos-test',
+            features: ['Policy Issuing', 'Country Codebook', 'Currency Sync', 'Travel Contract Registration', 'Bearer Auth', 'B2B Portal Integration'],
+            dataQualityScore: 92,
+            avgLatency: 280
         }
     ], []);
 
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [filterCategory, setFilterCategory] = useState<'all' | 'flights' | 'supplier' | 'systems' | 'payments' | 'mapping' | 'ski'>('all');
+    const [filterCategory, setFilterCategory] = useState<'all' | 'flights' | 'supplier' | 'systems' | 'payments' | 'mapping' | 'ski' | 'insurance'>('all');
+    const [hubSearch, setHubSearch] = useState('');
 
-    // Filtered connections based on category
+    // Filtered connections based on category and search
     const filteredConnections = useMemo(() => {
-        if (filterCategory === 'all') return connections;
-        return connections.filter(c => c.category === filterCategory);
-    }, [connections, filterCategory]);
+        return connections.filter(c => {
+            const matchesCategory = filterCategory === 'all' || c.category === filterCategory;
+            const matchesSearch = c.name.toLowerCase().includes(hubSearch.toLowerCase()) || 
+                                 c.provider.toLowerCase().includes(hubSearch.toLowerCase());
+            return matchesCategory && matchesSearch;
+        });
+    }, [connections, filterCategory, hubSearch]);
 
     const renderIcon = (name: string, size: number = 32) => {
         switch (name) {
@@ -339,6 +372,7 @@ const APIConnectionsHub: React.FC = () => {
             case 'link': return <Link size={size} />;
             case 'ticket': return <Ticket size={size} />;
             case 'mountain': return <Mountain size={size} />;
+            case 'shield': return <Shield size={size} />;
             default: return <Plug size={size} />;
         }
     };
@@ -451,6 +485,7 @@ const APIConnectionsHub: React.FC = () => {
                                 { id: 'all', label: 'Sve', icon: <Database size={14} /> },
                                 { id: 'flights', label: 'Letovi', icon: <Plane size={14} /> },
                                 { id: 'supplier', label: 'Dobavljači', icon: <Globe size={14} /> },
+                                { id: 'insurance', label: 'Osiguranje', icon: <Shield size={14} /> },
                                 { id: 'systems', label: 'Sistemi', icon: <Settings size={14} /> },
                                 { id: 'payments', label: 'Plaćanja', icon: <CreditCard size={14} /> },
                                 { id: 'mapping', label: 'Mapping', icon: <Link size={14} /> },
@@ -490,6 +525,34 @@ const APIConnectionsHub: React.FC = () => {
 
             </div>
 
+
+            {/* Search and Filters Context */}
+            {selectedTab === 'overview' && (
+                <div style={{ marginBottom: '24px', display: 'flex', gap: '16px' }}>
+                    <div style={{ position: 'relative', flex: 1 }}>
+                        <Search 
+                            size={18} 
+                            style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}
+                        />
+                        <input 
+                            type="text"
+                            placeholder="Pretraži po nazivu ili provajderu..."
+                            value={hubSearch}
+                            onChange={(e) => setHubSearch(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '12px 16px 12px 48px',
+                                background: 'var(--bg-card)',
+                                border: '1px solid var(--border)',
+                                borderRadius: '12px',
+                                color: 'var(--text-primary)',
+                                fontSize: '14px',
+                                outline: 'none'
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Content */}
             {selectedTab === 'overview' && (

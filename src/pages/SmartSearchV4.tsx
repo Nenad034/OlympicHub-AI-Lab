@@ -424,21 +424,18 @@ export const SmartSearchV4: React.FC = () => {
       key="hotel-search"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      className="ssv4-search-panel"
     >
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: `repeat(3, 1fr) 180px`,
-          gap: '8px',
-          alignItems: 'center',
-          background: 'rgba(255,255,255,0.8)',
-          padding: '8px',
-          borderRadius: '16px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+          gap: '12px',
+          alignItems: 'center'
         }}
       >
         {renderFieldsForTab()}
-        <button className="btn-primary" style={{ height: '64px', borderRadius: '12px' }}>
+        <button className="btn-primary">
           PRETRAŽI
         </button>
       </div>
@@ -450,22 +447,18 @@ export const SmartSearchV4: React.FC = () => {
       key="neotravel-search"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      className="ssv4-search-panel"
     >
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${TABS_V4.find(t => t.id === activeTab)?.fields?.length || 3}, 1fr) 180px`,
-          gap: '8px',
-          alignItems: 'flex-end',
-          background: 'rgba(255,255,255,0.8)',
-          padding: '8px',
-          borderRadius: '16px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-          alignContent: 'center'
+          gap: '12px',
+          alignItems: 'center'
         }}
       >
         {renderFieldsForTab()}
-        <button className="btn-primary" style={{ height: '64px', borderRadius: '12px' }}>
+        <button className="btn-primary">
           PRETRAŽI
         </button>
       </div>
@@ -477,7 +470,7 @@ export const SmartSearchV4: React.FC = () => {
       key="flight-search"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="ssv4-search-container"
+      className="ssv4-search-panel"
     >
       <div className="ssv4-trip-pills">
         {[
@@ -571,32 +564,19 @@ export const SmartSearchV4: React.FC = () => {
                   layout
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="glass-card service-selection-card"
-                  style={{ padding: '12px 24px' }}
+                  className="ssv4-glass-card"
+                  onClick={() => handleServiceSelect({ id: res.id, type: 'Accommodation', name: res.name, price: res.price, icon: <Building2 /> })}
                 >
-                  <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '10px',
-                        background: 'rgba(128,0,32,0.05)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      {/* Icon here */}
+                  <div className="ssv4-card-content">
+                    <div className="ssv4-card-icon">
+                      {res.type === 'hotel' ? <Building2 size={28} /> : <Plane size={28} />}
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <h4 style={{ fontSize: '15px', fontWeight: '800', margin: 0 }}>{res.name}</h4>
+                    <div className="ssv4-card-info">
+                      <h4 style={{ margin: 0 }}>{res.name}</h4>
                       <div className="ai-summary">{res.mealPlan || 'Odličan izbor'}</div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-                      <div style={{ fontSize: '20px', fontWeight: '900' }}>€{res.price}</div>
-                      <button className="btn-primary" onClick={() => handleServiceSelect({ id: res.id, type: 'Accommodation', name: res.name, price: res.price, icon: <Building2 /> })}>
-                        IZABERI
-                      </button>
+                      <div className="ssv4-card-price">€{res.price}</div>
                     </div>
                   </div>
                 </motion.div>

@@ -1,0 +1,23 @@
+{
+  "signals": {
+    "weather_heat_wave": "Detektovan ekstremni toplotni talas (40°C+).",
+    "weather_heat_wave_suggestion": "Sugerisati klijentu 'Early Morning' izlete i obezbediti dodatno putno osiguranje.",
+    "sentiment_negative": "Klijent pokazuje znake nestrpljenja ili nezadovoljstva.",
+    "sentiment_negative_suggestion": "Prioritetno rešavanje. Direktor treba da dodeli ovaj dosije višem agentu.",
+    "logistics_no_transfer": "Dosije nema rezervisan transfer do hotela.",
+    "logistics_no_transfer_suggestion": "Ponuditi 'Guardian Angel' transfer uz 10% popusta za lojalne klijente."
+  },
+  "finance": {
+    "margin_report": "Obračun PDV-a na maržu (Član 35)",
+    "sell_price": "Prodajna Cena",
+    "net_price": "Nabavna Cena",
+    "gross_margin": "Bruto Marža",
+    "vat_amount": "PDV Obaveza",
+    "net_profit": "Neto Profit"
+  },
+  "operations": {
+    "rooming_list": "Rooming Lista",
+    "passenger_manifest": "Manifest Putnika",
+    "tbd": "Biće definisano"
+  }
+}

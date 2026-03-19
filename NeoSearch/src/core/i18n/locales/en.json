@@ -1,0 +1,23 @@
+{
+  "signals": {
+    "weather_heat_wave": "Extreme heat wave detected (40°C+).",
+    "weather_heat_wave_suggestion": "Suggest 'Early Morning' excursions and provide additional travel insurance.",
+    "sentiment_negative": "Client is showing signs of impatience or dissatisfaction.",
+    "sentiment_negative_suggestion": "Priority resolution. Director should assign this dossier to a senior agent.",
+    "logistics_no_transfer": "Dossier has no transfer booked to the hotel.",
+    "logistics_no_transfer_suggestion": "Offer 'Guardian Angel' transfer with a 10% discount for loyal clients."
+  },
+  "finance": {
+    "margin_report": "Margin VAT Calculation (Article 35)",
+    "sell_price": "Selling Price",
+    "net_price": "Net Price",
+    "gross_margin": "Gross Margin",
+    "vat_amount": "VAT Liability",
+    "net_profit": "Net Profit"
+  },
+  "operations": {
+    "rooming_list": "Rooming List",
+    "passenger_manifest": "Passenger Manifest",
+    "tbd": "To Be Defined"
+  }
+}
