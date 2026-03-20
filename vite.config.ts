@@ -91,7 +91,7 @@ export default defineConfig({
       },
       // Proxy for OpenClaw Gateway (Besplatni AI most)
       '/api/openclaw': {
-        target: 'http://127.0.0.1:18791',
+        target: 'http://127.0.0.1:18790',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api\/openclaw/, ''),

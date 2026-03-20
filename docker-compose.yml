@@ -26,5 +26,5 @@ services:
     ports:
       - "18789:18789"
       - "18790:18790"
-    command: ["node", "openclaw.mjs", "gateway", "--bind", "lan", "--allow-unconfigured"]
+    command: node openclaw.mjs gateway run --bind lan --allow-unconfigured --port 18789
     restart: always

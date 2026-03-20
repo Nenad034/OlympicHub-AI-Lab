@@ -72,6 +72,34 @@ const ReservationArchitect: React.FC = () => {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [paymentDraft, setPaymentDraft] = useState<PaymentRecord | null>(null);
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+    const [showProfit, setShowProfit] = useState(false);
+    const [secretBuffer, setSecretBuffer] = useState('');
+
+    // Easter Egg for Secret Profit View
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // CRITICAL: Ignore if typing in any input/textarea
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
+                return;
+            }
+
+            const char = e.key.toLowerCase();
+            if (/[a-z]/.test(char)) {
+                setSecretBuffer(prev => {
+                    const next = (prev + char).slice(-10); 
+                    if (next.includes('profit')) {
+                        setShowProfit(current => !current);
+                        addLog('Sistem', `Secret Profit View: ${!showProfit ? 'Omogućen' : 'Onemogućen'}`, 'info');
+                        return '';
+                    }
+                    return next;
+                });
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showProfit, addLog]);
 
     // 3. Handlers
     const handleClose = () => {
@@ -168,13 +196,13 @@ const ReservationArchitect: React.FC = () => {
         { id: 'documents', label: 'DOKUMENTI', icon: <FileText size={18} /> },
         { id: 'notes', label: 'BELEŠKE', icon: <Info size={18} /> },
         { id: 'legal', label: 'LEGAL / REKL.', icon: <ShieldCheck size={18} /> },
-        { id: 'rep', label: 'DESTINACIJA', icon: <MapPin size={18} /> },
+        { id: 'rep', label: 'PREDSTAVNICI', icon: <MapPin size={18} /> },
         { id: 'logs', label: 'AUDIT', icon: <History size={18} /> },
         { id: 'settings', label: 'PODEŠAVANJA', icon: <Settings size={18} /> }
     ];
 
     return (
-        <div className="v4-architect-container v4-scroll-area">
+        <div className="v4-architect-container v4-scroll-area" style={{ paddingBottom: '300px' }}>
             {/* Header Area following Accommodations Detail style */}
             <div className="v4-header">
                 <div className="v4-header-id">
@@ -187,13 +215,6 @@ const ReservationArchitect: React.FC = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-                    <div className="v4-metric-info" style={{ textAlign: 'right' }}>
-                        <label>PREOSTALO ZA NAPLATU</label>
-                        <div className={`value ${financialStats.balance > 0 ? 'danger' : 'success'}`} style={{ fontSize: '24px', fontWeight: 900 }}>
-                            {financialStats.balance.toLocaleString()} {dossier.finance.currency}
-                        </div>
-                    </div>
-
                     <button
                         onClick={handleClose}
                         style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
@@ -248,13 +269,14 @@ const ReservationArchitect: React.FC = () => {
                         )}
                         {activeSection === 'notes' && <NotesTab dossier={dossier} setDossier={setDossier} addLog={addLog} />}
                         {activeSection === 'legal' && <LegalTab dossier={dossier} setDossier={setDossier} />}
-                        {activeSection === 'rep' && <RepTab dossier={dossier} />}
+                        {activeSection === 'rep' && <RepTab dossier={dossier} setDossier={setDossier} addLog={addLog} />}
                         {activeSection === 'communication' && <CommunicationTab dossier={dossier} addLog={addLog} addCommunication={addCommunication} onOpenEmailModal={() => setIsEmailModalOpen(true)} />}
                         {activeSection === 'documents' && <DocumentsView dossier={dossier} onGenerate={handleGenerateDoc} onPrint={handlePrint} onSend={handleSendDoc} />}
                         {activeSection === 'logs' && <LogsView dossier={dossier} />}
-                        {activeSection === 'settings' && <SettingsView dossier={dossier} setDossier={setDossier} />}
+                        {activeSection === 'settings' && <SettingsView dossier={dossier} setDossier={setDossier} addLog={addLog} />}
                     </motion.main>
                 </AnimatePresence>
+                <div style={{ height: '240px' }}></div> {/* Spacer to clear the footer */}
             </div>
 
             {/* Modals */}

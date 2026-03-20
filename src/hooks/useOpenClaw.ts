@@ -1,8 +1,13 @@
 import { useState, useCallback } from 'react';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // OpenClaw Configuration (using Vite Proxy to bypass CORS)
 const GATEWAY_URL = '/api/openclaw'; 
-const GATEWAY_TOKEN = 'olympic-hub-secret-token-2026'; // Token koji smo definisali u docker-compose.yml
+const GATEWAY_TOKEN = 'olympic-hub-secret-token-2026'; 
+
+// Init Gemini SDK for Backup
+const genAI = new GoogleGenerativeAI('AIzaSyC_vYi80SghECEYmmKA3CCY4wuhWZrKXRU');
+const geminiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 export interface OpenClawMessage {
   role: 'user' | 'assistant';
@@ -22,14 +27,15 @@ export const useOpenClaw = () => {
   const sendMessage = useCallback(async (
     message: string, 
     context: string = '', 
-    model: string = 'google/gemini-1.5-flash-latest'
+    model: string = 'google/gemini-2.0-flash'
   ): Promise<OpenClawResponse> => {
     try {
       setIsThinking(true);
       setError(null);
 
-      // --- 1. TRY FREE OPENCLAW (DOCKER) VIA PROXY (PORT 18791) ---
+      // --- 1. TRY FREE OPENCLAW (DOCKER) VIA PROXY (PORT 18790) ---
       try {
+        console.log('🦞 Calling OpenClaw local gateway (18790)...');
         const response = await fetch(`${GATEWAY_URL}/v1/chat/completions`, {
           method: 'POST',
           headers: {
@@ -49,6 +55,7 @@ export const useOpenClaw = () => {
         if (response.ok) {
           const data = await response.json();
           const content = data.choices?.[0]?.message?.content || 'Prazan odgovor od OpenClaw-a.';
+          console.log('✅ OpenClaw Response obtained.');
           return { content, isFallback: false };
         } else {
            const errText = await response.text();
@@ -58,27 +65,12 @@ export const useOpenClaw = () => {
         console.warn('⚠️ OpenClaw Bridge not reachable (make sure Docker is running):', e);
       }
 
-      // --- 2. GOOGLE GEMINI BACKUP (VIA SECURE VITE TUNNEL /api/ai/google) ---
-      console.log('🔄 Calling Google Gemini Backup for:', message);
-      const GOOGLE_KEY = 'AIzaSyB-CiOvVFh5529ynyOLRGbPR8V4OeSwnkI';
-      const geminiRes = await fetch(`/api/ai/google/v1/models/gemini-1.5-flash:generateContent?key=${GOOGLE_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ 
-            parts: [{ text: `Odgovori stručno i tečno na srpskom jeziku kao stručnjak za inventar u turizmu.\nKontekst podataka: ${context}\n\nKorisnik pita: ${message}` }] 
-          }]
-        })
-      });
-      
-      const geminiData = await geminiRes.json();
-      
-      if (!geminiRes.ok) {
-        console.error('❌ Google Gemini API Error:', geminiData);
-        throw new Error(`Google API Error: ${geminiRes.status}`);
-      }
-
-      const content = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'AI tunel nije vratio tekstualni odgovor.';
+      // --- 2. GOOGLE GEMINI BACKUP (VIA OFFICIAL SDK) ---
+      console.log('🔄 OpenClaw failed or skipped, calling Gemini SDK Backup...');
+      const prompt = `Odgovori stručno i tečno na srpskom jeziku kao stručnjak za inventar u turizmu.\nKontekst podataka: ${context}\n\nKorisnik pita: ${message}`;
+      const result = await geminiModel.generateContent(prompt);
+      const response = await result.response;
+      const content = response.text();
       
       return { content, isFallback: true };
 

@@ -28,7 +28,7 @@
 .fil-hub-container {
     width: 100%;
     min-height: 100vh;
-    padding: 0;
+    padding: 0 40px; 
     padding-top: 20px;
     background-color: var(--fil-bg);
     color: var(--fil-text);
@@ -43,10 +43,11 @@
     flex: 1;
     padding: 0px;
     width: 100%;
-    margin: 0;
+    max-width: 100%; 
+    margin: 0 auto 30px auto; 
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 14px; 
 }
 
 /* Header & Ticker */
@@ -90,9 +91,9 @@
 .fil-filters-panel {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 25px;
+    gap: 20px;
     background: var(--fil-card);
-    padding: 30px;
+    padding: 15px 30px; 
     border-radius: 20px;
     border: 1px solid var(--fil-border);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
@@ -236,7 +237,7 @@
 }
 
 .fil-table td {
-    padding: 14px 16px;
+    padding: 8px 16px; 
     border-bottom: 1px solid var(--fil-border);
     vertical-align: middle;
 }
@@ -397,9 +398,9 @@
 .fil-tabs {
     display: flex;
     width: 100%;
-    gap: 12px;
+    gap: 8px;
     background: var(--fil-bg);
-    padding: 8px;
+    padding: 6px;
     border-radius: 18px;
 }
 
@@ -410,9 +411,9 @@
 .fil-actions {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
     background: var(--fil-card);
-    padding: 20px 30px;
+    padding: 12px 25px; 
     border-radius: 20px;
     border: 1px solid var(--fil-border);
     width: 100%;
@@ -563,7 +564,7 @@
 
 .stat-card {
     background: var(--fil-card);
-    padding: 24px;
+    padding: 16px 24px; 
     border-radius: 24px;
     border: 1px solid var(--fil-border);
     display: flex;
@@ -775,6 +776,75 @@
 
 .cyan {
     color: var(--fil-accent);
+}
+
+/* --- ENHANCED NAVIGATION TABS --- */
+.fil-tabs {
+    display: flex;
+    width: 100%;
+    background: rgba(13, 25, 38, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.15); /* Stronger border */
+    border-radius: 14px;
+    padding: 8px;
+    gap: 8px;
+    margin-bottom: 5px;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.tab-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    color: var(--fil-text-dim);
+    font-size: 14px; /* Larger font */
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+.tab-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--fil-text);
+    transform: translateY(-1px);
+}
+
+.tab-item.active {
+    background: linear-gradient(180deg, rgba(0, 229, 255, 0.15), rgba(0, 229, 255, 0.05));
+    color: var(--fil-accent);
+    border: 1px solid var(--fil-accent);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+    text-shadow: 0 0 8px var(--fil-accent-glow);
+}
+
+.tab-item svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Enhanced Actions Bar framing */
+.fil-actions {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    margin-bottom: 5px;
+    width: 100% !important;
+    padding: 10px 20px;
+}
+
+.fil-main-wrapper {
+    gap: 10px !important;
+}
+
+.fil-table td {
+    padding: 6px 16px !important;
 }
 
 .bold {

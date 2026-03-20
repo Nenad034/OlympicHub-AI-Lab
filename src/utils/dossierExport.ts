@@ -1,12 +1,13 @@
 import { getTranslation } from './translations';
 import type { Language } from './translations';
 import { formatDate } from './dateUtils';
+import { getEffectiveMealPlan } from './mealPlanUtils';
 
 /**
  * Generates a premium HTML document suitable for A4 printing.
  * Types supported: 'SUMMARY' | 'PROFORMA' | 'CONTRACT' | 'VOUCHER'
  */
-export const generatePremiumDocument = (dossier: any, type: 'SUMMARY' | 'PROFORMA' | 'CONTRACT' | 'VOUCHER', lang: Language = 'Srpski') => {
+export const generatePremiumDocument = (dossier: any, type: 'SUMMARY' | 'PROFORMA' | 'CONTRACT' | 'VOUCHER' | 'paxList', lang: Language = 'Srpski') => {
     const t = getTranslation(lang);
     const { booker, passengers, tripItems, resCode, cisCode, finance, notes } = dossier;
     const totalBrutto = tripItems.reduce((sum: number, item: any) => sum + (item.bruttoPrice || 0), 0);
@@ -18,6 +19,7 @@ export const generatePremiumDocument = (dossier: any, type: 'SUMMARY' | 'PROFORM
             case 'PROFORMA': return lang === 'Srpski' ? 'PROFAKTURA / PREDRAČUN' : 'PROFORMA INVOICE';
             case 'CONTRACT': return lang === 'Srpski' ? 'UGOVOR O PUTOVANJU' : 'TRAVEL CONTRACT';
             case 'VOUCHER': return lang === 'Srpski' ? 'PUTNI VAUČER (VOUCHER)' : 'TRAVEL VOUCHER';
+            case 'paxList': return lang === 'Srpski' ? 'LISTA PUTNIKA / ROOMING LISTA' : 'PASSENGER LIST / ROOMING LIST';
             default: return 'DOKUMENT';
         }
     };
@@ -303,7 +305,7 @@ export const generatePremiumDocument = (dossier: any, type: 'SUMMARY' | 'PROFORM
                                 ${item.details ? `<p style="margin-top:5px; font-style:italic;">${item.details}</p>` : ''}
                             </td>
                             <td>${formatDate(item.checkIn)} - ${formatDate(item.checkOut)}</td>
-                            <td>${item.mealPlan || '-'}</td>
+                            <td>${getEffectiveMealPlan(item.mealPlan)}</td>
                         </tr>
                     `).join('')}
                 </tbody>

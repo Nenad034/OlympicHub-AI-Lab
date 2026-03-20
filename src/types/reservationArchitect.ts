@@ -2,7 +2,8 @@ import type { Language as TransLanguage } from '../utils/translations';
 export type Language = TransLanguage;
 
 export type TripType = 'Smestaj' | 'Avio karte' | 'Dinamicki paket' | 'Putovanja' | 'Transfer' | 'Čarter' | 'Bus' | 'Krstarenje';
-export type CustomerType = 'B2C-Individual' | 'B2C-Legal' | 'B2B-Subagent';
+export type CustomerType = 'B2C-Direct' | 'B2C-Web' | 'B2B-Subagent' | 'B2B-Corporate';
+export type BookingSource = 'Phone' | 'Email' | 'Walk-in' | 'WhatsApp/Viber' | 'Website' | 'Internal Portal' | 'External Portal';
 export type ResStatus = 'Active' | 'Reservation' | 'Canceled' | 'Offer' | 'Request' | 'Processing' | 'Zatvoreno';
 
 export interface Passenger {
@@ -165,6 +166,9 @@ export interface Dossier {
     resCode: string | null;
     status: ResStatus;
     customerType: CustomerType;
+    bookingSource: BookingSource;
+    isTaxExempt: boolean; 
+    subagentId?: string; 
     clientReference: string;
     booker: {
         fullName: string;
