@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olympic Hub V5.2 - Interactive Navigator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #03080c;
+            --panel: rgba(13, 25, 38, 0.7);
+            --accent-blue: #00d2ff;
+            --accent-gold: #ffb300;
+            --accent-green: #00ff88;
+            --accent-purple: #bf5af2;
+            --text: #e2e8f0;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .stars-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, #0a192f 0%, #03080c 100%);
+            z-index: -1;
+        }
+
+        .header {
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #fff 0%, #00d2ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--accent-blue);
+            font-family: 'JetBrains+Mono';
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .quadrant-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px;
+            position: relative;
+        }
+
+        .module-node {
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 40px;
+            position: relative;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            overflow: hidden;
+        }
+
+        .module-node:hover {
+            border-color: rgba(255,255,255,0.4);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 20px rgba(0, 210, 255, 0.2);
+        }
+
+        .node-tag {
+            font-family: 'JetBrains+Mono';
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .node-title {
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .node-title svg {
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+
+        .module-node:hover .node-title svg {
+            opacity: 1;
+            transform: translateX(5px);
+            color: white;
+        }
+
+        .node-desc {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+
+        .action-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .module-node:hover .action-btn {
+            background: white;
+            color: black;
+        }
+
+        /* --- THE LOGIC FLOW (Arrows) --- */
+        .center-hub {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px; height: 80px;
+            background: var(--bg);
+            border: 2px solid var(--glass-border);
+            border-radius: 50%;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.2);
+        }
+
+        .center-hub svg { color: var(--accent-blue); animation: spin 20s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .search-node { border-left: 4px solid var(--accent-blue); }
+        .search-node .node-tag { background: rgba(0, 210, 255, 0.2); color: var(--accent-blue); }
+        
+        .architect-node { border-left: 4px solid var(--accent-gold); }
+        .architect-node .node-tag { background: rgba(255, 179, 0, 0.2); color: var(--accent-gold); }
+
+        .finance-node { border-left: 4px solid var(--accent-green); }
+        .finance-node .node-tag { background: rgba(0, 255, 136, 0.2); color: var(--accent-green); }
+
+        .reports-node { border-left: 4px solid var(--accent-purple); }
+        .reports-node .node-tag { background: rgba(191, 90, 242, 0.2); color: var(--accent-purple); }
+
+        .pulse { animation: pulse-animation 2s infinite; }
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0px rgba(0, 210, 255, 0.4); }
+            100% { box-shadow: 0 0 0 20px rgba(0, 210, 255, 0); }
+        }
+
+        .hint {
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.5;
+            margin-top: 20px;
+            font-family: 'JetBrains+Mono';
+        }
+    </style>
+</head>
+<body>
+    <div class="stars-bg"></div>
+
+    <header class="header">
+        <h1>OLYMPIC HUB V5.2</h1>
+        <p>Interactive System Architecture & Navigator</p>
+    </header>
+
+    <div class="quadrant-container">
+        <div class="center-hub pulse">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        </div>
+
+        <!-- 1. SMART SEARCH V5 (The Entrance) -->
+        <a href="/smart-search-v5" class="module-node search-node">
+            <div class="node-tag">ENTRY LAYER</div>
+            <div class="node-title">
+                <span>Smart Search V5</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </div>
+            <p class="node-desc">AI-powered search engine. Translates intent into actionable Dossier payloads. Supports NeoTravel integration.</p>
+            <div class="action-btn">POKRENI PRETRAGU</div>
+        </a>
+
+        <!-- 2. RESERVATION ARCHITECT (The Core) -->
+        <a href="/reservations" class="module-node architect-node">
+            <div class="node-tag">CENTRAL HUB</div>
+            <div class="node-title">
+                <span>Reservation Architect</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </div>
+            <p class="node-desc">Full Dossier management system. Edit passengers, trip items, logs and communication history in one place.</p>
+            <div class="action-btn">UPRAVLJAJ REZERVACIJAMA</div>
+        </a>
+
+        <!-- 3. FINANCIAL INTELLIGENCE (Control) -->
+        <a href="/financial-hub" class="module-node finance-node">
+            <div class="node-tag">COMPLIANCE LAYER</div>
+            <div class="node-title">
+                <span>Financial Hub</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </div>
+            <p class="node-desc">Manage Ledger (KIR/KUR), VAT Article 35, and Bank liquidations. Integrated with SEF/Pantheon/Minimax.</p>
+            <div class="action-btn">OTVORI FINANSIJE</div>
+        </a>
+
+        <!-- 4. OPERATIONAL REPORTS (Output) -->
+        <a href="/operational-reports" class="module-node reports-node">
+            <div class="node-tag">REPORTING LAYER</div>
+            <div class="node-title">
+                <span>Operational Reports</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </div>
+            <p class="node-desc">Data extraction for hotels, transport, and representatives. Rooming lists and arrival/departure boards.</p>
+            <div class="action-btn">POGLEDAJ IZVEŠTAJE</div>
+        </a>
+    </div>
+
+    <div class="hint">KLIKNITE NA MODUL DA BISTE DIREKTNO PRISTUPILI FUNKCIONALNOSTI</div>
+</body>
+</html>

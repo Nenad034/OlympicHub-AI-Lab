@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olympic Hub V7 - Digitalni Mozak Rezervacija</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #fdfdfd;
+            --neural-blue: #0062ff;
+            --neural-gold: #f59e0b;
+            --neural-green: #10b981;
+            --neural-purple: #8b5cf6;
+            --central-chip: #0f172a;
+            --text-main: #0f172a;
+            --text-dim: #64748b;
+            --line-color: #e2e8f0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* --- BACKGROUND RADIANCE --- */
+        .bg-glow {
+            position: fixed;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 800px; height: 800px;
+            background: radial-gradient(circle, rgba(0,98,255,0.03) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .neural-net-container {
+            width: 100vw; height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+
+        /* --- CENTRAL CHIP (Rezervacija / Dossier) --- */
+        .central-chip {
+            width: 180px; height: 180px;
+            background: var(--central-chip);
+            border-radius: 40px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; z-index: 100;
+            box-shadow: 0 0 50px rgba(15, 23, 42, 0.4), 0 0 20px rgba(0, 98, 255, 0.2);
+            border: 4px solid #334155;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .central-chip:hover { transform: scale(1.05); }
+
+        .chip-icon {
+            width: 50px; height: 50px; background: rgba(255,255,255,0.1);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .chip-label { font-weight: 900; font-size: 1rem; letter-spacing: 1px; text-transform: uppercase; text-align: center; }
+
+        /* --- NODES (The Satellites) --- */
+        .neural-node {
+            position: absolute;
+            background: white; border: 1px solid #e2e8f0; border-radius: 20px;
+            padding: 15px 25px; display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            transition: all 0.4s; z-index: 50;
+            cursor: pointer;
+        }
+
+        .neural-node:hover { transform: translateY(-5px); border-color: var(--node-color); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+
+        .node-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--node-color); box-shadow: 0 0 10px var(--node-color); }
+        .node-name { font-weight: 800; font-size: 0.95rem; }
+
+        /* Positions */
+        #node-search { top: 15%; left: 15%; --node-color: var(--neural-blue); }
+        #node-finance { top: 15%; right: 15%; --node-color: var(--neural-green); }
+        #node-reports { bottom: 15%; right: 15%; --node-color: var(--neural-purple); }
+        #node-suppliers { bottom: 15%; left: 15%; --node-color: var(--neural-gold); }
+
+        /* --- SYNAPSES (SVG Connected Lines) --- */
+        .synapse-svg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none;
+        }
+
+        .synapse-line {
+            fill: none; stroke: var(--line-color); stroke-width: 2;
+            stroke-dasharray: 5,5;
+        }
+
+        .synapse-active {
+            stroke-width: 4; stroke-dasharray: 0; filter: drop-shadow(0 0 5px var(--glow-color));
+            transition: 0.6s; stroke: var(--glow-color);
+        }
+
+        /* Impulse Animation */
+        .impulse {
+            fill: var(--glow-color); visibility: hidden;
+        }
+
+        /* --- SENTINEL HUD --- */
+        .sentinel-v7 {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 80%; max-width: 900px;
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
+            border-radius: 30px; border: 1px solid #e2e8f0;
+            padding: 25px 40px; display: flex; align-items: center; gap: 40px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.05);
+            z-index: 200;
+        }
+
+        .ai-status {
+            display: flex; flex-direction: column; flex: 1;
+        }
+        .ai-status h4 { font-weight: 900; color: var(--neural-blue); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px; }
+        .ai-status p { font-size: 1rem; font-weight: 500; }
+
+        .btn-neural {
+            background: var(--central-chip); color: white; border: none;
+            padding: 15px 35px; border-radius: 15px; font-weight: 900;
+            font-family: 'Outfit'; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-neural:hover { background: var(--neural-blue); transform: translateY(-3px); }
+
+        .circuit-pattern {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://www.transparenttextures.com/patterns/pinstriped-suit.png');
+            opacity: 0.05; z-index: 0; pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="circuit-pattern"></div>
+
+    <div class="neural-net-container">
+        <svg class="synapse-svg" id="neural-svg">
+            <path id="path-search" class="synapse-line" d="M 350 200 Q 500 250 600 400" />
+            <path id="path-finance" class="synapse-line" d="M 1150 200 Q 1000 250 900 400" />
+            <path id="path-reports" class="synapse-line" d="M 1150 750 Q 1000 700 900 550" />
+            <path id="path-suppliers" class="synapse-line" d="M 350 750 Q 500 700 600 550" />
+
+            <circle id="impulse-node" r="6" class="impulse" />
+        </svg>
+
+        <!-- CENTRAL CHIP -->
+        <div class="central-chip" onclick="pulseCore()">
+            <div class="chip-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            </div>
+            <div class="chip-label">Rezervacija<br>(Centralni Čip)</div>
+        </div>
+
+        <!-- SATELLITE NODES -->
+        <div class="neural-node" id="node-search">
+            <div class="node-dot"></div>
+            <div class="node-name">Smart Search V5</div>
+        </div>
+
+        <div class="neural-node" id="node-finance">
+            <div class="node-dot"></div>
+            <div class="node-name">Financial Intelligence</div>
+        </div>
+
+        <div class="neural-node" id="node-reports">
+            <div class="node-dot"></div>
+            <div class="node-name">Operational Reports</div>
+        </div>
+
+        <div class="neural-node" id="node-suppliers">
+            <div class="node-dot"></div>
+            <div class="node-name">Spoljni Provajderi</div>
+        </div>
+    </div>
+
+    <!-- SENTINEL HUD -->
+    <div class="sentinel-v7">
+        <div style="background: var(--neural-blue); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+        </div>
+        <div class="ai-status">
+            <h4>Analitika Digitalnog Mozga</h4>
+            <p id="sentinel-text">Sistem u stanju mirovanja. Čekam inicijalni impuls za obradu podataka...</p>
+        </div>
+        <button class="btn-neural" onclick="runNeuralFlow()">Aktiviraj Sinapsu</button>
+    </div>
+
+    <script>
+        async function runNeuralFlow() {
+            const sentinel = document.getElementById('sentinel-text');
+            const impulse = document.getElementById('impulse-node');
+            const paths = {
+                search: { path: document.getElementById('path-search'), color: 'var(--neural-blue)', text: 'ULAZ: Podaci iz pretrage ulaze u centralni procesor rezultata.' },
+                finance: { path: document.getElementById('path-finance'), color: 'var(--neural-green)', text: 'FINANSIJE: Centralni čip šalje instrukciju za knjiženje Ledger-a.' },
+                reports: { path: document.getElementById('path-reports'), color: 'var(--neural-purple)', text: 'OPERATIVA: Generisanje manifesta za hotel i predstavnike je završeno.' },
+                suppliers: { path: document.getElementById('path-suppliers'), color: 'var(--neural-gold)', text: 'EKSTERNA VEZA: Solvex API je potvrdio rezervaciju na svom nivou.' }
+            };
+
+            // SEARCH FLOW
+            await animateSynapse('search', paths.search, impulse, sentinel);
+            // SUPPLIER FLOW
+            await animateSynapse('suppliers', paths.suppliers, impulse, sentinel);
+            // FINANCE FLOW
+            await animateSynapse('finance', paths.finance, impulse, sentinel);
+            // REPORTS FLOW
+            await animateSynapse('reports', paths.reports, impulse, sentinel);
+
+            sentinel.innerText = "PROCES ZAVRŠEN: Digitalni mozak je uspešno sinhronizovao sve sinapse.";
+            impulse.style.visibility = "hidden";
+            resetLines();
+        }
+
+        function animateSynapse(key, config, dot, textEl) {
+            return new Promise(resolve => {
+                const path = config.path;
+                document.documentElement.style.setProperty('--glow-color', config.color);
+                path.classList.add('synapse-active');
+                textEl.innerText = config.text;
+                dot.style.visibility = "visible";
+
+                const length = path.getTotalLength();
+                let start = null;
+                const duration = 2000;
+
+                function step(timestamp) {
+                    if (!start) start = timestamp;
+                    const progress = timestamp - start;
+                    const percent = Math.min(progress / duration, 1);
+                    const point = path.getPointAtLength(percent * length);
+                    dot.setAttribute('cx', point.x);
+                    dot.setAttribute('cy', point.y);
+
+                    if (progress < duration) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        resolve();
+                    }
+                }
+                window.requestAnimationFrame(step);
+            });
+        }
+
+        function resetLines() {
+            document.querySelectorAll('.synapse-line').forEach(p => p.classList.remove('synapse-active'));
+        }
+
+        function pulseCore() {
+            const chip = document.querySelector('.central-chip');
+            chip.style.transform = "scale(1.2)";
+            setTimeout(() => chip.style.transform = "scale(1)", 200);
+            document.getElementById('sentinel-text').innerText = "CENTRALNI ČIP: Ručna stimulacija jezgra. Svi podsistemi su online.";
+        }
+    </script>
+</body>
+</html>

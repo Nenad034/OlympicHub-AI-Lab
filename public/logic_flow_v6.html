@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olympic Hub V6 - Kolorni Tokovi Mreže</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --panel: #ffffff;
+            --accent-blue: #0062ff;
+            --accent-gold: #fbbf24;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+            --accent-red: #ef4444;
+            --text-main: #0f172a;
+            --text-dim: #94a3b8;
+            --border: #f1f5f9;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* --- BACKGROUND MESH --- */
+        .bg-mesh {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
+            background-size: 60px 60px;
+            z-index: -1;
+        }
+
+        .network-viewport {
+            width: 100vw; height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+
+        /* --- NODES --- */
+        .logical-node {
+            background: var(--panel);
+            border: 2px solid #f1f5f9;
+            border-radius: 24px;
+            padding: 25px;
+            width: 320px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+            position: absolute;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .logical-node:hover {
+            transform: scale(1.05);
+            border-color: var(--branch-color, var(--accent-blue));
+            box-shadow: 0 30px 60px rgba(0,0,0,0.08);
+        }
+
+        /* Node Expanded Details (Organi) */
+        .organ-box {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #e2e8f0;
+            animation: fadeIn 0.3s;
+        }
+
+        .logical-node.expanded .organ-box { display: block; }
+        
+        .internal-organ {
+            font-family: 'JetBrains+Mono';
+            font-size: 0.7rem;
+            background: #f8fafc;
+            padding: 6px 10px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            border-left: 3px solid var(--branch-color);
+        }
+
+        .node-header { display: flex; align-items: center; gap: 15px; }
+        .node-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; }
+
+        /* --- CONNECTORS (Visible Colors) --- */
+        .svg-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; pointer-events: none;
+        }
+
+        .flow-path {
+            fill: none;
+            stroke: #e2e8f0;
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: stroke 0.6s, stroke-width 0.6s;
+        }
+
+        /* Boje tokova */
+        .path-active-blue { stroke: var(--accent-blue); stroke-width: 6; filter: drop-shadow(0 0 10px rgba(0, 98, 255, 0.4)); }
+        .path-active-gold { stroke: var(--accent-gold); stroke-width: 6; filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.4)); }
+        .path-active-green { stroke: var(--accent-green); stroke-width: 6; filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.4)); }
+        .path-active-purple { stroke: var(--accent-purple); stroke-width: 6; filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.4)); }
+
+        /* Animirani paket podataka (Loptica) */
+        .data-packet {
+            fill: var(--packet-color, var(--accent-blue));
+            visibility: hidden;
+        }
+
+        /* --- POSITIONS --- */
+        #node-search { top: 15%; left: 8%; --branch-color: var(--accent-blue); }
+        #node-architect { top: 40%; left: 40%; --branch-color: var(--accent-gold); }
+        #node-finance { top: 15%; left: 72%; --branch-color: var(--accent-green); }
+        #node-reports { top: 68%; left: 72%; --branch-color: var(--accent-purple); }
+        #node-providers { top: 68%; left: 8%; --branch-color: #475569; }
+
+        /* --- SENTINEL --- */
+        .sentinel-hub {
+            position: fixed; bottom: 30px; left: 30px; right: 30px;
+            background: white; border: 1px solid #e2e8f0; border-radius: 24px;
+            padding: 25px; display: flex; align-items: center; gap: 30px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.08);
+            z-index: 1000;
+        }
+
+        .btn-run {
+            background: var(--accent-blue); color: white; border: none;
+            padding: 16px 32px; border-radius: 14px; font-weight: 900;
+            cursor: pointer; font-family: 'Outfit'; font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        .btn-run:hover { transform: scale(1.05); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .hint-text {
+            font-size: 0.8rem; color: var(--text-dim); text-align: center;
+            margin-top: 15px; font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh"></div>
+
+    <div class="network-viewport">
+        <svg class="svg-overlay" id="main-svg">
+            <path id="path-1" class="flow-path" d="M 370 200 L 530 400" /> <!-- Search to Architect -->
+            <path id="path-2" class="flow-path" d="M 850 430 L 1100 230" /> <!-- Architect to Finance -->
+            <path id="path-3" class="flow-path" d="M 850 480 L 1100 700" /> <!-- Architect to Reports -->
+            <path id="path-4" class="flow-path" d="M 370 700 L 530 460" /> <!-- Providers to Architect -->
+
+            <!-- Paket podataka -->
+            <circle id="packet" r="8" class="data-packet" />
+        </svg>
+
+        <!-- SEARCH -->
+        <div class="logical-node" id="node-search" onclick="toggleNode(this)">
+            <div class="node-header">
+                <div class="node-icon" style="background: var(--accent-blue);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
+                <div>
+                    <h3 class="node-name">Pretraga V5</h3>
+                    <p style="font-size: 0.7rem; color: var(--text-dim);">IZVOR PODATAKA</p>
+                </div>
+            </div>
+            <div class="organ-box">
+                <div class="internal-organ">NeoTravel AI Proxy</div>
+                <div class="internal-organ">Vite Session Handler</div>
+                <div class="internal-organ">Availability Cache</div>
+            </div>
+        </div>
+
+        <!-- ARCHITECT -->
+        <div class="logical-node" id="node-architect" onclick="toggleNode(this)">
+            <div class="node-header">
+                <div class="node-icon" style="background: var(--accent-gold);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg></div>
+                <div>
+                    <h3 class="node-name">Architect Hub</h3>
+                    <p style="font-size: 0.7rem; color: var(--text-dim);">OPERATIVNO JEZGRO</p>
+                </div>
+            </div>
+            <div class="organ-box">
+                <div class="internal-organ">useReservationDossier.ts</div>
+                <div class="internal-organ">Pax Manager</div>
+                <div class="internal-organ">Communication Logs</div>
+            </div>
+        </div>
+
+        <!-- FINANCE -->
+        <div class="logical-node" id="node-finance" onclick="toggleNode(this)">
+            <div class="node-header">
+                <div class="node-icon" style="background: var(--accent-green);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+                <div>
+                    <h3 class="node-name">Financial Hub</h3>
+                    <p style="font-size: 0.7rem; color: var(--text-dim);">KNJIGOVODSTVO & P&L</p>
+                </div>
+            </div>
+            <div class="organ-box">
+                <div class="internal-organ">KIR/KUR Ledger</div>
+                <div class="internal-organ">Tax Article 35</div>
+                <div class="internal-organ">Minimax / Pantheon Export</div>
+            </div>
+        </div>
+
+        <!-- REPORTS -->
+        <div class="logical-node" id="node-reports" onclick="toggleNode(this)">
+            <div class="node-header">
+                <div class="node-icon" style="background: var(--accent-purple);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></div>
+                <div>
+                    <h3 class="node-name">Izveštaji</h3>
+                    <p style="font-size: 0.7rem; color: var(--text-dim);">OPERATIVNI MANIFETST</p>
+                </div>
+            </div>
+            <div class="organ-box">
+                <div class="internal-organ">Rooming List Generator</div>
+                <div class="internal-organ">Flight Dispatch Board</div>
+            </div>
+        </div>
+
+        <!-- PROVIDERS -->
+        <div class="logical-node" id="node-providers" onclick="toggleNode(this)">
+            <div class="node-header">
+                <div class="node-icon" style="background: #475569;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></div>
+                <div>
+                    <h3 class="node-name">Provajderi</h3>
+                    <p style="font-size: 0.7rem; color: var(--text-dim);">SPOLJNI SERVISI</p>
+                </div>
+            </div>
+            <div class="organ-box">
+                <div class="internal-organ">Solvex SOAP Client</div>
+                <div class="internal-organ">Amadeus Kyte Adapter</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SENTINEL AI BOARD -->
+    <div class="sentinel-hub">
+        <div style="background: var(--accent-blue); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 12L2.7 7.3"></path></svg>
+        </div>
+        <div style="flex: 1;">
+            <h4 style="color: var(--accent-blue); font-weight: 900; margin-bottom: 5px;">SENTINEL AI - NADZOR TOKOVA</h4>
+            <p id="sentinel-text" style="font-weight: 500; font-size: 0.95rem;">Sistem je spreman. Kliknite na bilo koji modul da vidite unutrašnjost mreže.</p>
+        </div>
+        <button class="btn-run" onclick="animateComplexFlow()">POKRENI KOMPLETAN TOK</button>
+    </div>
+
+    <script>
+        function toggleNode(el) {
+            // Zatvori ostale
+            document.querySelectorAll('.logical-node').forEach(n => {
+                if(n !== el) n.classList.remove('expanded');
+            });
+            // Toggle
+            el.classList.toggle('expanded');
+            
+            const name = el.querySelector('.node-name').innerText;
+            const sentinelText = document.getElementById('sentinel-text');
+            
+            if(el.classList.contains('expanded')) {
+                sentinelText.innerText = `Otvoren uvid u unutrašnje organe modula: ${name}. Sada vidite ključne fajlove i funkcije.`;
+            } else {
+                sentinelText.innerText = `Uvid u modul ${name} je zatvoren. Čekam novu komandu.`;
+            }
+        }
+
+        async function animateComplexFlow() {
+            const sentinel = document.getElementById('sentinel-text');
+            const packet = document.getElementById('packet');
+            const paths = [
+                document.getElementById('path-1'),
+                document.getElementById('path-2'),
+                document.getElementById('path-3')
+            ];
+
+            // Reset paths
+            paths.forEach(p => p.className.baseVal = "flow-path");
+            packet.style.visibility = "visible";
+
+            // STEP 1: SEARCH -> ARCHITECT
+            sentinel.innerText = "KREIRANJE REZERVACIJE: Podaci putuju iz Pretrage u Architect. Formira se Dossier Payload...";
+            paths[0].classList.add('path-active-blue');
+            await movePacket(packet, paths[0], 'var(--accent-blue)');
+
+            // STEP 2: ARCHITECT -> FINANCE
+            sentinel.innerText = "FINANSIJSKI IMPULS: Architect šalje podatke o ceni u Finansijski Hub. Knjiženje u KIR tabelu...";
+            paths[1].classList.add('path-active-gold');
+            await movePacket(packet, paths[1], 'var(--accent-gold)');
+
+            // STEP 3: ARCHITECT -> REPORTS
+            sentinel.innerText = "OPERATIVNA AKTIVACIJA: Podaci o putniku odlaze u Operativne izveštaje. Rooming lista je osvežena.";
+            paths[2].classList.add('path-active-purple');
+            await movePacket(packet, paths[2], 'var(--accent-purple)');
+
+            sentinel.innerText = "SIMULACIJA ZAVRŠENA: Svi kolor-tokovi su mapirani i potvrđeni.";
+            packet.style.visibility = "hidden";
+        }
+
+        function movePacket(dot, path, color) {
+            return new Promise(resolve => {
+                const length = path.getTotalLength();
+                let start = null;
+                const duration = 1500;
+                document.documentElement.style.setProperty('--packet-color', color);
+
+                function step(timestamp) {
+                    if (!start) start = timestamp;
+                    const progress = timestamp - start;
+                    const percent = Math.min(progress / duration, 1);
+                    const point = path.getPointAtLength(percent * length);
+                    dot.setAttribute('cx', point.x);
+                    dot.setAttribute('cy', point.y);
+
+                    if (progress < duration) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        resolve();
+                    }
+                }
+                window.requestAnimationFrame(step);
+            });
+        }
+    </script>
+</body>
+</html>
