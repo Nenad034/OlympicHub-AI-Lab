@@ -412,43 +412,6 @@ export const router = createBrowserRouter([
                 )
             },
             {
-                path: '/reservation-architect',
-                element: (
-                    <AuthGuard>
-                        <React.Suspense fallback={<LoadingFallback />}>
-                            <ReservationArchitect />
-                        </React.Suspense>
-                    </AuthGuard>
-                ),
-                errorElement: (
-                    <div style={{ padding: '20px', color: 'white', background: '#1a1a2e', height: '100vh' }}>
-                        <h1>Greška u učitavanju forme za rezervaciju</h1>
-                        <p>Molimo osvežite stranicu ili kontaktirajte podršku.</p>
-                        <button onClick={() => window.location.reload()}>Osveži</button>
-                    </div>
-                )
-            },
-            {
-                path: '/reservation-architect-v5',
-                element: (
-                    <AuthGuard>
-                        <React.Suspense fallback={<LoadingFallback />}>
-                            <ReservationArchitectV5 />
-                        </React.Suspense>
-                    </AuthGuard>
-                )
-            },
-            {
-                path: '/smart-search-v5',
-                element: (
-                    <AuthGuard>
-                        <React.Suspense fallback={<LoadingFallback />}>
-                            <SmartSearchV5 />
-                        </React.Suspense>
-                    </AuthGuard>
-                )
-            },
-            {
                 path: '/',
                 element: (
                     <AuthGuard>
@@ -456,6 +419,18 @@ export const router = createBrowserRouter([
                     </AuthGuard>
                 ),
                 children: [
+                    {
+                        path: 'reservation-architect',
+                        element: <ReservationArchitect />,
+                    },
+                    {
+                        path: 'reservation-architect-v5',
+                        element: <ReservationArchitectV5 />,
+                    },
+                    {
+                        path: 'smart-search-v5',
+                        element: <SmartSearchV5 />,
+                    },
                     {
                         path: 'operational-reports',
                         element: (

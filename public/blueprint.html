@@ -312,25 +312,11 @@ sequenceDiagram
                 <div class="mermaid-container">
                     <div class="mermaid">
 erDiagram
-    RESERVATIONS ||--o{ TRAVELERS : "includes"
-    RESERVATIONS ||--|| HOTELS : "books"
-    RESERVATIONS ||--o{ PAYMENTS : "monitors"
-    RESERVATIONS {
-        uuid id
-        string folder_id
-        decimal amount
-        string status
-    }
-    TRAVELERS {
-        uuid id
-        string name
-        string passport
-    }
-    PAYMENTS {
-        uuid id
-        decimal val
-        boolean is_conf
-    }
+    RESERVATIONS ||--o{ TRAVELERS : includes
+    RESERVATIONS ||--|| HOTELS : books
+    RESERVATIONS ||--o{ PAYMENTS : billing
+    SUBAGENTS ||--o{ RESERVATIONS : manages
+    HOTELS ||--o{ ROOMS : content
                     </div>
                 </div>
             </div>
