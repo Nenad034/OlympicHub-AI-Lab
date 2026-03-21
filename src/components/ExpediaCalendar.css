@@ -1,0 +1,229 @@
+/* ExpediaCalendar.css — Pixel-perfect replica of Expedia UI */
+
+.expedia-calendar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+  animation: exp-fade-in 0.2s ease;
+}
+
+.expedia-calendar-popup {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 840px;
+  overflow: hidden;
+  position: relative;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  user-select: none;
+}
+
+/* ──── Tabs ──── */
+.exp-cal-tabs {
+  display: flex;
+  height: 48px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.exp-cal-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a2b3c;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+
+.exp-cal-tab.active {
+  color: #005eb8;
+  border-bottom-color: #005eb8;
+}
+
+.exp-cal-tab:hover:not(.active) {
+  background: #f8fafc;
+}
+
+/* ──── Months Container ──── */
+.exp-months-wrap {
+  display: flex;
+  padding: 32px;
+  gap: 40px;
+  position: relative;
+}
+
+.exp-month {
+  flex: 1;
+}
+
+.exp-month-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1a2b3c;
+  margin-bottom: 24px;
+  height: 32px;
+}
+
+/* ──── Grid ──── */
+.exp-grid-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 8px;
+}
+
+.exp-weekday {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  padding: 4px 0;
+}
+
+.exp-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.exp-day {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a2b3c;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.exp-day:hover:not(.disabled):not(.selected) {
+  background: #f1f5f9;
+}
+
+.exp-day.disabled {
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.exp-day.selected {
+  background: #005eb8 !important;
+  color: #ffffff !important;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.exp-day.in-range {
+  background: rgba(0, 94, 184, 0.08);
+  border-radius: 0;
+}
+
+.exp-day.range-start {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.exp-day.range-end {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* ──── Navigation ──── */
+.exp-nav-btn {
+  position: absolute;
+  top: 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #005eb8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.exp-nav-btn:hover {
+  background: #f1f5f9;
+  border-color: #005eb8;
+}
+
+.exp-nav-btn.prev { left: 32px; }
+.exp-nav-btn.next { right: 32px; }
+
+/* ──── Footer ──── */
+.exp-cal-footer {
+  padding: 16px 32px 24px 32px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.exp-pills-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.exp-pill {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #1a2b3c;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.exp-pill:hover {
+  border-color: #005eb8;
+  background: #f8fafc;
+}
+
+.exp-pill.active {
+  background: #f1f7fe;
+  border-color: #1a2b3c;
+  color: #1a2b3c;
+  box-shadow: inset 0 0 0 1px #1a2b3c;
+}
+
+.exp-close-x {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.exp-close-x:hover {
+  background: #f1f5f9;
+}
+
+@keyframes exp-fade-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}

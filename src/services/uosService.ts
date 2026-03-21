@@ -5,7 +5,7 @@
  * Based on documentation and .NET demo provided in the "Osiguranje api" folder.
  */
 
-const UOS_API_BASE_URL = process.env.REACT_APP_UOS_API_URL || 'https://testapi.udruzenje-osiguravaca-srbije.com/api/';
+const UOS_API_BASE_URL = import.meta.env.VITE_UOS_API_URL || 'https://testapi.udruzenje-osiguravaca-srbije.com/api/';
 
 export interface UOSCredentials {
   username: string;

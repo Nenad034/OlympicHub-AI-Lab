@@ -74,7 +74,7 @@ export class ErrorBoundary extends Component<Props, State> {
                     >
                         <RefreshCw size={14} /> Pokušaj ponovo
                     </button>
-                    {process.env.NODE_ENV === 'development' && this.state.error && (
+                    {import.meta.env.DEV && this.state.error && (
                         <pre style={{
                             marginTop: '1rem',
                             padding: '1rem',

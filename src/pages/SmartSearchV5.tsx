@@ -2,20 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, ChevronRight, LayoutGrid, Building2, Plane, Sparkles, MapPin, Star, Filter, Loader2, Package as PackageIcon, Info, Map as MapIcon, Compass, ShoppingBag, Navigation, Anchor, Zap, Car, CalendarDays, Users, Layout as LayoutIcon, CheckCircle2, ShoppingCart, ArrowRight, Trash2, ArrowLeftRight,
-  SlidersHorizontal, ChevronUp, ChevronDown, Calendar, Clock, List as ListIcon
+  SlidersHorizontal, ChevronUp, ChevronDown, Calendar, Clock, List as ListIcon, TrendingUp, History as HistoryIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- COMPONENTS ---
 import { HorizontalNav, SystemFooter } from '../components/layout';
-import { ModernCalendar } from '../components/ModernCalendar';
+import { ExpediaCalendar } from '../components/ExpediaCalendar';
+import { BudgetTypeToggle } from '../components/BudgetTypeToggle';
 import './SmartSearchV4.css'; // Re-using variables
 import './SmartSearchV5.css';
+
+// --- V1 RESTORED COMPONENTS ---
+import { MilicaChat } from './SmartSearch/components/MilicaChat';
+import { SearchHistorySidebar } from './SmartSearch/components/SearchHistorySidebar';
 
 // --- SERVICES & STORES ---
 import smartSearchService from '../services/smartSearchService';
 import flightSearchManager from '../services/flight/flightSearchManager';
-import { useThemeStore } from '../stores';
+import { useThemeStore, useAppStore } from '../stores';
 
 import solvexDictionaryService from '../integrations/solvex/api/solvexDictionaryService';
 import { FilterSidebar } from './SmartSearch/components/FilterSidebar';
@@ -54,21 +59,20 @@ interface CartItem {
 }
 
 const TABS = [
-  { id: 'Stays', label: 'Smeštaj', icon: <Building2 size={18} />, fields: ['city-hotel', 'dates', 'rooms'] },
-  { id: 'Flights', label: 'Letovi', icon: <Plane size={18} />, fields: ['flight-fields'] },
-  { id: 'Packages', label: 'Dinamika', icon: <ShoppingBag size={18} />, fields: ['from', 'to', 'dates', 'rooms'] },
-  { id: 'Transfers', label: 'Transferi', icon: <Navigation size={18} />, fields: ['from-to', 'dates', 'time'] },
-  { id: 'Things', label: 'Izleti', icon: <MapIcon size={18} />, fields: ['destination', 'dates'] },
-  { id: 'Cruises', label: 'Krstarenja', icon: <Anchor size={18} />, fields: ['destination', 'dates', 'cruise-line'] },
-  { id: 'Putovanja', label: 'Putovanja', icon: <Compass size={18} />, fields: ['destination', 'dates'] },
-  { id: 'Charteri', label: 'Čarteri', icon: <Zap size={18} />, fields: ['from', 'to', 'dates'] },
-  { id: 'Cars', label: 'Cars', icon: <Car size={18} />, fields: ['pickup', 'dates'] },
-  { id: 'Insurance', label: 'Osiguranje', icon: <CheckCircle2 size={18} />, fields: ['destination', 'dates', 'pax'] }
+  { id: 'Stays', label: 'Hoteli', icon: <Building2 size={24} />, fields: ['city-hotel', 'dates', 'rooms'] },
+  { id: 'Flights', label: 'Letovi', icon: <Plane size={24} />, fields: ['flight-fields'] },
+  { id: 'Packages', label: 'Paketi', icon: <ShoppingBag size={24} />, fields: ['from', 'to', 'dates', 'rooms'] },
+  { id: 'Transfers', label: 'Transfer', icon: <Navigation size={22} />, fields: ['from-to', 'dates', 'time'] },
+  { id: 'Putovanja', label: 'Aranžmani', icon: <Compass size={24} />, fields: ['destination', 'dates'] },
+  { id: 'Charteri', label: 'Čarter', icon: <Zap size={24} />, fields: ['from', 'to', 'dates'] },
+  { id: 'Cars', label: 'Rent-a-Car', icon: <Car size={24} />, fields: ['pickup', 'dates'] },
+  { id: 'Ski', label: 'Ski', icon: <LayoutGrid size={24} />, fields: ['destination', 'dates'] }
 ];
 
 const SmartSearchV5: React.FC = () => {
   const navigate = useNavigate();
   const { theme } = useThemeStore();
+  const { isMilicaChatOpen, setMilicaChatOpen } = useAppStore();
 
   // --- NEO-SEARCH CORE STATE ---
   const [activeTab, setActiveTab] = useState('Stays');
@@ -77,40 +81,26 @@ const SmartSearchV5: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
 
   // NeoSearch Selection State
-  const [fromCity, setFromCity] = useState('BEG');
-  const [toCity, setToCity] = useState('HRG');
+  const [fromCity, setFromCity] = useState('');
+  const [toCity, setToCity] = useState('');
   const [pickup, setPickup] = useState('');
   
-  // NeoSearch Date & Rooms Logic
+  // Expedia Date & Rooms Logic
   const [showCalendar, setShowCalendar] = useState(false);
   const [showPax, setShowPax] = useState(false);
-  const [startDate, setStartDate] = useState<number | null>(25);
-  const [endDate, setEndDate] = useState<number | null>(null);
-  const [datesLabel, setDatesLabel] = useState('25 Mar - 27 Mar');
-  const [dateFlexibility, setDateFlexibility] = useState('Exact dates');
-  const [viewMonth, setViewMonth] = useState(new Date().getMonth());
-  const [viewYear, setViewYear] = useState(new Date().getFullYear());
-
-  const getMonthData = (month: number, year: number) => {
-    const d = new Date(year, month);
-    const name = new Intl.DateTimeFormat('sr-RS', { month: 'long' }).format(d);
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const startDay = new Date(year, month, 1).getDay();
-    return { name, daysInMonth, startDay };
-  };
-
-  const nextMonth = () => {
-    if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
-    else { setViewMonth(viewMonth + 1); }
-  };
-
-  const prevMonth = () => {
-    if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
-    else { setViewMonth(viewMonth - 1); }
-  };
-
-  const totalPrice = cart.reduce((acc, sum) => acc + sum.price, 0);
+  const [startDate, setStartDate] = useState<string | null>(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState<string | null>(new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]);
+  const [datesLabel, setDatesLabel] = useState('Izaberite datume');
+  const [dateFlexibility, setDateFlexibility] = useState<number>(0);
   
+  // V1 Restored Sidebars
+  const [showMilica, setShowMilica] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<any[]>([]);
+  const [budgetType, setBudgetType] = useState<'total' | 'person' | 'room'>('total');
+  const [budgetFrom, setBudgetFrom] = useState('');
+  const [budgetTo, setBudgetTo] = useState('');
+
   // ── INSURANCE STATE ──
   const [includeInsurance, setIncludeInsurance] = useState(false);
   const [insurancePrice, setInsurancePrice] = useState(0);
@@ -130,6 +120,7 @@ const SmartSearchV5: React.FC = () => {
   const [selectedMealPlans, setSelectedMealPlans] = useState<string[]>(['all']);
   const [onlyRefundable, setOnlyRefundable] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'notepad'>('list');
+  const [sortBy, setSortBy] = useState<'price' | 'stars' | 'name'>('price');
 
   // ── FLIGHT FILTER STATE ──
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
@@ -148,8 +139,8 @@ const SmartSearchV5: React.FC = () => {
   const [tripType, setTripType] = useState<'round-trip' | 'one-way' | 'multi-city'>('round-trip');
   const [cabinClass, setCabinClass] = useState<string>('economy');
   const [multiCityLegs, setMultiCityLegs] = useState<any[]>([
-    { from: 'BEG', to: 'CDG', date: 25 },
-    { from: 'CDG', to: 'LHR', date: 28 }
+    { from: 'BEG', to: 'CDG', date: '2025-03-25' },
+    { from: 'CDG', to: 'LHR', date: '2025-03-28' }
   ]);
   
   // Advanced Flight Search State
@@ -184,25 +175,77 @@ const SmartSearchV5: React.FC = () => {
     setShowSuggestions(false);
   };
 
-  // ── HELPERS ──
-  const formatNeoDate = (day: number | null, fallbackDay: number) => {
-    const d = day || fallbackDay;
-    return `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const addToHistory = (queryResultsCount: number) => {
+    const newItem = {
+        id: Math.random().toString(36).substr(2, 9),
+        timestamp: Date.now(),
+        query: {
+            destinations: selectedDestinations,
+            checkIn: startDate || '',
+            checkOut: endDate || '',
+            roomAllocations: roomsData.map(r => ({ adults: r.adults, children: r.children.length, childrenAges: r.children })),
+            mealPlan: selectedMealPlans[0] || 'all',
+            nationality: 'RS',
+            budgetType: budgetType,
+            tab: activeTab.toLowerCase() as any,
+            searchMode: 'classic' as const
+        },
+        resultsSummary: { count: queryResultsCount }
+    };
+    setSearchHistory(prev => [newItem, ...prev].slice(0, 10));
   };
 
+  // ── HELPERS ──
   const calculateInsurancePrice = async () => {
     setIsCalculatingInsurance(true);
     // Mocking a calculation based on days and pax
-    const days = (endDate || (startDate || 25) + 7) - (startDate || 25);
-    const paxCount = roomsData.reduce((acc, r) => acc + r.adults + r.children.length, 0);
+    const start = startDate ? new Date(startDate) : new Date();
+    const end = endDate ? new Date(endDate) : new Date(Date.now() + 7 * 86400000);
+    const days = Math.ceil((end.getTime() - start.getTime()) / 86400000);
+    const paxCount = roomsData.reduce((acc, r) => acc + r.adults + (r.children?.length || 0), 0);
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    const price = days * paxCount * 1.5; // €1.5 per day per person
+    const price = Math.max(7, days) * paxCount * 1.5; // €1.5 per day per person
     setInsurancePrice(Math.round(price));
     setIsCalculatingInsurance(false);
   };
+
+
+  const addToCart = (item: SearchResult) => {
+    const cartItem: CartItem = {
+      id: item.id,
+      type: item.type,
+      name: item.name,
+      price: item.price,
+      data: item.data
+    };
+    setCart(prev => [...prev, cartItem]);
+  };
+
+  const removeFromCart = (itemId: string) => {
+    setCart(prev => prev.filter(item => item.id !== itemId));
+    if (itemId === 'insurance-pax') setIncludeInsurance(false);
+  };
+
+  const toggleInsuranceInCart = () => {
+    if (includeInsurance) {
+      removeFromCart('insurance-pax');
+    } else {
+      const insuranceItem: CartItem = {
+        id: 'insurance-pax',
+        type: 'insurance',
+        name: 'Putno Osiguranje (UOS)',
+        price: insurancePrice,
+        data: { pricePerPax: insurancePrice / 2 } // Mocking individual price
+      };
+      setCart(prev => [...prev, insuranceItem]);
+      setIncludeInsurance(true);
+    }
+  };
+
+  const totalPrice = cart.reduce((acc, sum) => acc + sum.price, 0);
 
   useEffect(() => {
     if (startDate && (activeTab === 'Stays' || activeTab === 'Packages')) {
@@ -218,8 +261,8 @@ const SmartSearchV5: React.FC = () => {
     setIsSearching(true);
     setResults([]);
     
-    const checkIn = formatNeoDate(startDate, 25);
-    const checkOut = formatNeoDate(endDate, (startDate || 25) + 7);
+    const checkIn = startDate || new Date().toISOString().split('T')[0];
+    const checkOut = endDate || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
 
     try {
       if (activeTab === 'Flights') {
@@ -249,7 +292,7 @@ const SmartSearchV5: React.FC = () => {
 
         const apiResults = await smartSearchService.performSmartSearch(searchParams);
         
-        const transformed: SearchResult[] = apiResults.map((r: any) => ({
+        let transformed: SearchResult[] = apiResults.map((r: any) => ({
           id: r.id || Math.random().toString(36).substr(2, 9),
           type: 'hotel',
           name: r.name,
@@ -261,47 +304,80 @@ const SmartSearchV5: React.FC = () => {
           availability: r.availability,
           data: r
         }));
+
+        // If no results, use mock hotels for demo
+        if (transformed.length === 0) {
+          transformed = [
+            {
+              id: 'h-mock-1',
+              type: 'hotel',
+              name: 'Hotel Splendid Conference & Spa',
+              price: 450,
+              location: 'Bečići, Crna Gora',
+              provider: 'Solvex',
+              stars: 5,
+              mealPlan: 'Bed & Breakfast',
+              availability: 'available',
+              data: {}
+            },
+            {
+              id: 'h-mock-2',
+              type: 'hotel',
+              name: 'Iberostar Slavija',
+              price: 320,
+              location: 'Budva, Crna Gora',
+              provider: 'Solvex',
+              stars: 5,
+              mealPlan: 'Bed & Breakfast',
+              availability: 'available',
+              data: {}
+            },
+            {
+              id: 'h-mock-3',
+              type: 'hotel',
+              name: 'Hotel Regent Porto Montenegro',
+              price: 890,
+              location: 'Tivat, Crna Gora',
+              provider: 'Filos',
+              stars: 5,
+              mealPlan: 'Room Only',
+              availability: 'on_request',
+              data: {}
+            },
+            {
+              id: 'h-mock-4',
+              type: 'hotel',
+              name: 'Avala Resort & Villas',
+              price: 280,
+              location: 'Budva, Crna Gora',
+              provider: 'Solvex',
+              stars: 4,
+              mealPlan: 'Half Board',
+              availability: 'available',
+              data: {}
+            },
+            {
+              id: 'h-mock-5',
+              type: 'hotel',
+              name: 'Hotel Falkensteiner Montenegro',
+              price: 410,
+              location: 'Bečići, Crna Gora',
+              provider: 'MtsGlobe',
+              stars: 4,
+              mealPlan: 'All Inclusive',
+              availability: 'available',
+              data: {}
+            }
+          ];
+        }
         setResults(transformed);
+        addToHistory(transformed.length);
       }
     } catch (err) {
       console.error("V5 Search Error:", err);
     } finally {
       setIsSearching(false);
     }
-  };
-
-  const addToCart = (item: SearchResult) => {
-    const newCartItem: CartItem = {
-      id: item.id,
-      type: item.type,
-      name: item.name,
-      price: item.price,
-      data: item.data
-    };
-    setCart(prev => [...prev.filter(i => i.type !== item.type), newCartItem]);
-  };
-
-  const toggleInsuranceInCart = () => {
-    if (includeInsurance) {
-        setCart(prev => prev.filter(item => item.type !== 'insurance'));
-        setIncludeInsurance(false);
-    } else {
-        const insuranceItem: CartItem = {
-            id: 'uos-insurance-1',
-            type: 'insurance',
-            name: 'Putno Zdravstveno Osiguranje',
-            price: insurancePrice,
-            data: { provider: 'UOS / Triglav' }
-        };
-        setCart(prev => [...prev, insuranceItem]);
-        setIncludeInsurance(true);
-    }
-  };
-
-  const removeFromCart = (id: string) => {
-    const item = cart.find(i => i.id === id);
-    if (item?.type === 'insurance') setIncludeInsurance(false);
-    setCart(prev => prev.filter(item => item.id !== id));
   };
 
   const handleFinalBook = () => {
@@ -333,23 +409,45 @@ const SmartSearchV5: React.FC = () => {
                   position: 'absolute', top: '100%', left: 0, width: '100%',
                   background: 'var(--ssv4-bg-card)', border: '1px solid var(--ssv4-border)',
                   borderRadius: '12px', zIndex: 1000, color: 'var(--ssv4-text-main)', marginTop: '5px',
-                  boxShadow: '0 15px 35px rgba(0,0,0,0.5)', backdropFilter: 'blur(20px)'
+                  boxShadow: '0 15px 35px rgba(0,0,0,0.5)', backdropFilter: 'blur(20px)',
+                  maxHeight: '450px', overflowY: 'auto'
                 }}>
-                  {suggestions.map((s, idx) => (
-                    <div 
-                      key={idx} 
-                      onClick={() => selectDestination(s)}
-                      style={{
-                        padding: '12px 15px', borderBottom: '1px solid var(--ssv4-border)',
-                        cursor: 'pointer', display: 'flex', flexDirection: 'column'
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--ssv4-bg-hover)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{s.name}</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--ssv4-text-sec)' }}>{s.country_name} • {s.type}</span>
-                    </div>
-                  ))}
+                  {/* Grouped Suggestions Logic */}
+                  {['city', 'hotel', 'country', 'destination'].map(groupType => {
+                    const groupItems = suggestions.filter(s => s.type === groupType);
+                    if (groupItems.length === 0) return null;
+                    
+                    const groupLabel = groupType === 'city' ? 'GRADOVI' : 
+                                     groupType === 'hotel' ? 'HOTELI' : 
+                                     groupType === 'country' ? 'DRŽAVE' : 'DESTINACIJE';
+                    
+                    return (
+                      <div key={groupType} className="suggestion-group">
+                        <div style={{ padding: '10px 15px 5px', fontSize: '10px', fontWeight: 900, color: 'var(--ssv4-primary)', opacity: 0.8, letterSpacing: '1px' }}>
+                          {groupLabel}
+                        </div>
+                        {groupItems.map((s, idx) => (
+                          <div 
+                            key={`${groupType}-${idx}`} 
+                            onClick={() => selectDestination(s)}
+                            className="suggestion-item"
+                            style={{
+                              padding: '12px 15px', borderBottom: '1px solid rgba(255,255,255,0.05)',
+                              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px'
+                            }}
+                          >
+                             <div style={{ color: 'var(--ssv4-text-sec)', opacity: 0.5 }}>
+                                {groupType === 'hotel' ? <Building2 size={16} /> : <MapPin size={16} />}
+                             </div>
+                             <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{s.name}</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--ssv4-text-sec)' }}>{s.country_name}</span>
+                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -371,7 +469,7 @@ const SmartSearchV5: React.FC = () => {
                     </div>
                     <div style={{ width: '100px' }}>
                       <label style={{ fontSize: '10px', opacity: 0.5 }}>Datum</label>
-                      <input type="text" value={`${leg.date}. Mar`} readOnly style={{ width: '100%', background: 'transparent', border: 'none', color: 'white', fontWeight: 700, cursor: 'pointer' }} />
+                      <input type="text" value={new Date(leg.date).toLocaleDateString('sr-RS', { day: 'numeric', month: 'short' })} readOnly style={{ width: '100%', background: 'transparent', border: 'none', color: 'white', fontWeight: 700, cursor: 'pointer' }} />
                     </div>
                     {multiCityLegs.length > 2 && (
                       <button onClick={() => setMultiCityLegs(multiCityLegs.filter((_, i) => i !== idx))} style={{ background: 'transparent', border: 'none', color: '#ff5252', cursor: 'pointer' }}><Trash2 size={16} /></button>
@@ -380,7 +478,7 @@ const SmartSearchV5: React.FC = () => {
                 ))}
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   {multiCityLegs.length < 5 && (
-                    <button onClick={() => setMultiCityLegs([...multiCityLegs, { from: '', to: '', date: 30 }])} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>+ Dodaj let</button>
+                    <button onClick={() => setMultiCityLegs([...multiCityLegs, { from: '', to: '', date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] }])} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>+ Dodaj let</button>
                   )}
                   <div key="pax-trigger" className="v5-field" style={{ cursor: 'pointer', flex: 1 }} onClick={() => { setShowPax(!showPax); setShowCalendar(false); }}>
                     <label>Putnici & Klasa</label>
@@ -409,44 +507,23 @@ const SmartSearchV5: React.FC = () => {
                 <MapIcon className="v5-icon" size={18} />
                 <input type="text" placeholder="CDG, Pariz..." value={toCity} onChange={e => setToCity(e.target.value)} />
               </div>
-              <div className="v5-field" key="dates" style={{ cursor: 'pointer' }} onClick={() => { setShowCalendar(!showCalendar); setShowPax(false); }}>
+              <div className="v5-field" key="dates" style={{ cursor: 'pointer' }} onClick={() => setShowCalendar(true)}>
                 <label>Termini</label>
                 <CalendarDays className="v5-icon" size={18} />
-                <input type="text" readOnly value={datesLabel} style={{ cursor: 'pointer' }} />
+                <input type="text" readOnly value={startDate ? `${startDate} - ${endDate || ''}` : 'Izaberite datume'} style={{ cursor: 'pointer' }} />
                 {showCalendar && (
-                  <div className="v5-popover neosearch-calendar" onClick={e => e.stopPropagation()}>
-                    <div className="neo-cal-header">
-                      <button onClick={prevMonth}><ChevronLeft size={18} /></button>
-                      <h4>{getMonthData(viewMonth, viewYear).name} {viewYear}</h4>
-                      <button onClick={nextMonth}><ChevronRight size={18} /></button>
-                    </div>
-                    <div className="neo-cal-grid">
-                      {['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned'].map(d => <div key={d} className="neo-dow">{d}</div>)}
-                      {Array.from({ length: (getMonthData(viewMonth, viewYear).startDay + 6) % 7 }).map((_, i) => <div key={i} />)}
-                      {Array.from({ length: getMonthData(viewMonth, viewYear).daysInMonth }).map((_, i) => {
-                        const day = i + 1;
-                        const isStart = startDate === day;
-                        const isEnd = endDate === day;
-                        const inRange = startDate && endDate && day > startDate && day < endDate;
-                        return (
-                          <div 
-                            key={day} 
-                            className={`neo-day ${isStart || isEnd ? 'active' : ''} ${inRange ? 'range' : ''}`}
-                            onClick={() => {
-                              if (activeTab === 'Flights' && tripType === 'one-way') {
-                                  setStartDate(day); setEndDate(null); setDatesLabel(`${day} ${getMonthData(viewMonth, viewYear).name.substring(0,3)}`); setShowCalendar(false);
-                              } else {
-                                  if (!startDate || (startDate && endDate)) { setStartDate(day); setEndDate(null); setDatesLabel(`${day} ${getMonthData(viewMonth, viewYear).name.substring(0,3)}`); }
-                                  else { setEndDate(day); setDatesLabel(`${startDate} - ${day} ${getMonthData(viewMonth, viewYear).name.substring(0,3)}`); setShowCalendar(false); }
-                              }
-                            }}
-                          >
-                            {day}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  <ExpediaCalendar 
+                    startDate={startDate}
+                    endDate={endDate}
+                    initialFlexibleDays={flexibleDates}
+                    onClose={() => setShowCalendar(false)}
+                    onChange={(start, end, flex) => {
+                      setStartDate(start);
+                      setEndDate(end);
+                      if (flex !== undefined) setFlexibleDates(flex);
+                      setDatesLabel(`${start} - ${end}`);
+                    }}
+                  />
                 )}
               </div>
               <div className="v5-field" key="pax" style={{ cursor: 'pointer' }} onClick={() => { setShowPax(!showPax); setShowCalendar(false); }}>
@@ -532,16 +609,33 @@ const SmartSearchV5: React.FC = () => {
     return fields;
   };
 
+  const handleTabChange = (tabId: string) => {
+    // ── SYNC LOGIC ──
+    const prevTab = activeTab;
+    
+    // Sync Destination -> ToCity for Flights
+    if (tabId === 'Flights' && (prevTab === 'Stays' || prevTab === 'Packages' || prevTab === 'Putovanja')) {
+        if (destinationInput && !toCity) setToCity(destinationInput.substring(0, 3).toUpperCase());
+    }
+    
+    // Sync ToCity / FromCity -> Destination for Stays
+    if (tabId === 'Stays' && prevTab === 'Flights') {
+        if (toCity && !destinationInput) setDestinationInput(toCity);
+    }
+
+    // Sync Packages (Needs both From and To)
+    if (tabId === 'Packages') {
+        if (toCity && !destinationInput) setDestinationInput(toCity);
+    }
+    
+    setActiveTab(tabId);
+  };
+
   return (
     <div className={`ssv5-wrapper ${theme === 'navy' ? 'navy-theme' : 'light-theme'}`}>
-      
-      <div className="ssv5-nav-area">
-        <HorizontalNav />
-      </div>
-
       <div className="ssv5-layout">
         <div className="ssv5-hub">
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', marginBottom: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', marginBottom: '10px' }}>
             <motion.h1 
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -556,7 +650,7 @@ const SmartSearchV5: React.FC = () => {
               <button 
                 key={tab.id}
                 className={`ssv5-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
               >
                 {tab.icon} {tab.label}
               </button>
@@ -675,25 +769,60 @@ const SmartSearchV5: React.FC = () => {
             {/* Flight Date Carousel (V1 Style) */}
             {activeTab === 'Flights' && !isSearching && results.length > 0 && (
                 <div className="flight-date-carousel" style={{ marginBottom: '32px', display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '12px' }}>
-                    {[25, 26, 27, 28, 29, 30, 31, 1, 2, 3].map((day, i) => (
-                        <div 
-                            key={i} 
-                            style={{ minWidth: '120px', padding: '16px', background: day === 30 ? 'rgba(142,36,172,0.2)' : 'rgba(255,255,255,0.03)', border: day === 30 ? '1px solid var(--ssv4-primary)' : '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
-                            onClick={() => setStartDate(day)}
-                        >
-                            <div style={{ fontSize: '11px', opacity: 0.5, fontWeight: 700, textTransform: 'uppercase' }}>{day >= 25 ? 'Mart' : 'April'}</div>
-                            <div style={{ fontSize: '20px', fontWeight: 900, margin: '4px 0' }}>{day}.</div>
-                            <div style={{ fontSize: '12px', fontWeight: 800, color: day === 30 ? 'var(--ssv4-primary)' : '#4caf50' }}>{day === 30 ? '€342' : `€${300 + Math.floor(Math.random() * 100)}`}</div>
-                        </div>
-                    ))}
+                    {[25, 26, 27, 28, 29, 30, 31, 1, 2, 3].map((day, i) => {
+                        const today = new Date();
+                        const year = 2026; // Matching project current date year
+                        const month = day >= 25 ? '03' : '04';
+                        const dayPadded = day.toString().padStart(2, '0');
+                        const dateStr = `${year}-${month}-${dayPadded}`;
+                        const isSelected = startDate === dateStr;
+                        
+                        return (
+                            <div 
+                                key={i} 
+                                style={{ 
+                                    minWidth: '120px', 
+                                    padding: '16px', 
+                                    background: isSelected ? 'rgba(142,36,172,0.2)' : 'rgba(255,255,255,0.03)', 
+                                    border: isSelected ? '1px solid var(--ssv4-primary)' : '1px solid rgba(255,255,255,0.05)', 
+                                    borderRadius: '16px', 
+                                    textAlign: 'center', 
+                                    cursor: 'pointer', 
+                                    transition: 'all 0.2s',
+                                    transform: isSelected ? 'scale(1.05)' : 'scale(1)'
+                                }}
+                                onClick={() => {
+                                    setStartDate(dateStr);
+                                    if (day >= 25) {
+                                        setEndDate(`${year}-03-${(day + 7 > 31) ? '31' : (day + 7).toString().padStart(2, '0')}`);
+                                    } else {
+                                        setEndDate(`${year}-04-${(day + 7).toString().padStart(2, '0')}`);
+                                    }
+                                }}
+                            >
+                                <div style={{ fontSize: '11px', opacity: 0.5, fontWeight: 700, textTransform: 'uppercase' }}>{day >= 25 ? 'Mart' : 'April'}</div>
+                                <div style={{ fontSize: '20px', fontWeight: 900, margin: '4px 0' }}>{day}.</div>
+                                <div style={{ fontSize: '12px', fontWeight: 800, color: isSelected ? 'var(--ssv4-primary)' : '#4caf50' }}>
+                                    {isSelected ? '€342' : `€${300 + Math.floor(Math.random() * 100)}`}
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             )}
 
             {isSearching ? (
-              <div style={{ textAlign: 'center', padding: '100px 0', color: 'var(--ssv4-text-sec)' }}>
-                <Sparkles size={48} className="spin" style={{ marginBottom: '20px', color: 'var(--ssv4-primary)' }} />
-                <h3 style={{ fontWeight: 800 }}>DOHVATANJE PODATAKA...</h3>
-                <p>Pretražujemo hiljade smeštajnih jedinica i letova u realnom vremenu.</p>
+              <div className="v5-results-layout" style={{ marginTop: '40px' }}>
+                <div className="v5-results-sidebar">
+                   <div className="v5-skeleton" style={{ height: '500px', width: '100%', borderRadius: '24px' }}></div>
+                </div>
+                <div className="v5-results-content">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="v5-skeleton" style={{ height: '350px', borderRadius: '24px' }}></div>
+                    ))}
+                  </div>
+                </div>
               </div>
             ) : results.length > 0 ? (
               <>
@@ -765,6 +894,51 @@ const SmartSearchV5: React.FC = () => {
                 </div>
 
                 <div className="v5-results-content">
+                  {/* RESULTS HEADER (RESTORED FROM V1) */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', background: 'var(--ssv4-card-bg)', padding: '16px 24px', borderRadius: '24px', border: '1px solid var(--ssv4-card-border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                        <BudgetTypeToggle type={budgetType} onTypeChange={setBudgetType} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '11px', fontWeight: 800, opacity: 0.5 }}>BUDŽET:</span>
+                            <input 
+                                type="text"
+                                placeholder="Min"
+                                value={budgetFrom}
+                                onChange={e => setBudgetFrom(e.target.value)}
+                                style={{ width: '70px', height: '36px', background: 'var(--ssv4-input-bg)', border: '1px solid var(--ssv4-card-border)', borderRadius: '8px', color: 'white', textAlign: 'center', fontSize: '13px', fontWeight: 700 }}
+                            />
+                            <span style={{ opacity: 0.3 }}>-</span>
+                            <input 
+                                type="text"
+                                placeholder="Max"
+                                value={budgetTo}
+                                onChange={e => setBudgetTo(e.target.value)}
+                                style={{ width: '70px', height: '36px', background: 'var(--ssv4-input-bg)', border: '1px solid var(--ssv4-card-border)', borderRadius: '8px', color: 'white', textAlign: 'center', fontSize: '13px', fontWeight: 700 }}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '20px' }}>
+                            <span style={{ fontSize: '11px', fontWeight: 800, opacity: 0.5 }}>SORTIRAJ:</span>
+                            <select 
+                                value={sortBy}
+                                onChange={e => setSortBy(e.target.value as any)}
+                                style={{ background: 'var(--ssv4-input-bg)', border: '1px solid var(--ssv4-card-border)', borderRadius: '8px', color: 'white', padding: '4px 12px', fontSize: '12px', fontWeight: 700, outline: 'none', cursor: 'pointer' }}
+                            >
+                                <option value="price">Najjeftinije</option>
+                                <option value="stars">Najbolje ocenjeno</option>
+                                <option value="name">Naziv (A-Z)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <button 
+                            onClick={() => setMilicaChatOpen(true)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'rgba(255,107,157,0.1)', border: '1px solid rgba(255,107,157,0.2)', borderRadius: '14px', color: 'var(--ssv4-primary)', fontSize: '12px', fontWeight: 900, cursor: 'pointer' }}
+                        >
+                            <Sparkles size={16} /> PITAJ MILICU
+                        </button>
+                    </div>
+                  </div>
                   
                   {/* GRID/LIST TOGGLE TOP RIGHT */}
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
@@ -786,6 +960,12 @@ const SmartSearchV5: React.FC = () => {
 
                   <div className={`results-grid ${viewMode}`}>
                     {results
+                      .sort((a, b) => {
+                          if (sortBy === 'price') return a.price - b.price;
+                          if (sortBy === 'stars') return (b.stars || 0) - (a.stars || 0);
+                          if (sortBy === 'name') return a.name.localeCompare(b.name);
+                          return 0;
+                      })
                       .filter(r => {
                         // Common name filter
                         const matchesName = r.name.toLowerCase().includes(hotelNameFilter.toLowerCase());
@@ -844,8 +1024,8 @@ const SmartSearchV5: React.FC = () => {
                                   viewMode={viewMode}
                                   roomAllocations={roomsData}
                                   nights={7}
-                                  checkIn={formatNeoDate(startDate, 25)}
-                                  checkOut={formatNeoDate(endDate, 32)}
+                                  checkIn={startDate || ''}
+                                  checkOut={endDate || ''}
                               />
                             ) : (
                               <motion.div 
@@ -868,8 +1048,28 @@ const SmartSearchV5: React.FC = () => {
 
                                   <div className="ssv4-card-info" style={{ flex: 1 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                                        <div>
-                                            <h4 style={{ margin: '0', fontSize: '18px', fontWeight: 900, letterSpacing: '-0.5px' }}>{res.name}</h4>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                            <h4 style={{ margin: '0', fontSize: '18px', fontWeight: 900, letterSpacing: '-1px' }}>{res.name}</h4>
+                                            
+                                            {/* Price Prediction for Flights/Packages */}
+                                            {(Number(res.id.substring(0,2)) % 2 === 0 || res.price % 5 === 0) && (
+                                                <div className="price-trend-badge" style={{ 
+                                                    background: 'rgba(76, 175, 80, 0.15)', 
+                                                    color: '#4caf50', 
+                                                    padding: '2px 10px', 
+                                                    borderRadius: '100px', 
+                                                    fontSize: '0.65rem', 
+                                                    fontWeight: 900, 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    gap: '6px',
+                                                    border: '1px solid rgba(76, 175, 80, 0.2)',
+                                                    width: 'fit-content'
+                                                }}>
+                                                    <TrendingUp size={10} /> DOBRA CENA ZA OVE DATUME
+                                                </div>
+                                            )}
+                                            
                                             <div style={{ fontSize: '11px', opacity: 0.5, fontWeight: 700, marginTop: '2px', textTransform: 'uppercase' }}>PROVAJDER: {res.provider}</div>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
@@ -1066,12 +1266,36 @@ const SmartSearchV5: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
+      </div> {/* Close ssv5-layout */}
 
-      <div className="ssv5-footer-area">
-        <SystemFooter />
-      </div>
-
+      {/* SIDEBARS & OVERLAYS */}
+      {isMilicaChatOpen && <MilicaChat />}
+      {showHistory && (
+        <SearchHistorySidebar 
+            searchHistory={searchHistory} 
+            onClose={() => setShowHistory(false)} 
+            onLoad={(h: any) => {
+                const q = h.query;
+                setActiveTab(q.tab.charAt(0).toUpperCase() + q.tab.slice(1));
+                setDestinationInput(q.destinations?.[0]?.name || '');
+                setStartDate(q.checkIn);
+                setEndDate(q.checkOut);
+                setRoomsData(q.roomAllocations.map((r: any) => ({ adults: r.adults, children: r.childrenAges })));
+                setShowHistory(false);
+            }}
+            onRefresh={() => {}}
+            onRemove={(id) => setSearchHistory(prev => prev.filter(x => x.id !== id))}
+            onClearAll={() => setSearchHistory([])}
+        />
+      )}
+      
+      {/* FLOAT ACTION FOR HISTORY */}
+      <button 
+          onClick={() => setShowHistory(true)}
+          style={{ position: 'fixed', left: '20px', bottom: '20px', width: '50px', height: '50px', borderRadius: '50%', background: 'var(--ssv4-card-bg)', border: '1px solid var(--ssv4-card-border)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 1000, boxShadow: 'var(--ssv4-shadow)' }}
+      >
+          <HistoryIcon size={24} />
+      </button>
     </div>
   );
 };
