@@ -1,20 +1,28 @@
 import React, { useState } from 'react';
 import type { TourResult } from '../../types';
 import { useSearchStore } from '../../stores/useSearchStore';
+import { Plane, Bed, Utensils, Users, Info, MapPin } from 'lucide-react';
 
 const formatPrice = (n: number, currency = 'EUR') =>
     new Intl.NumberFormat('de-DE', { style: 'currency', currency, minimumFractionDigits: 0 }).format(n);
 
-const IncludedFeature: React.FC<{ ok: boolean; label: string; icon: string }> = ({ ok, label, icon }) => (
+const IncludedFeature: React.FC<{ ok: boolean; label: string; icon: React.ReactNode }> = ({ ok, label, icon }) => (
     ok ? (
-        <span title={label} style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: '28px', height: '28px', borderRadius: '50%',
-            background: 'var(--v6-bg-main)', border: '1px solid var(--v6-border)',
-            fontSize: '14px',
+        <div title={label} style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '11px',
+            color: 'var(--text-muted)',
+            fontWeight: 600,
+            background: 'var(--bg-app)',
+            padding: '4px 8px',
+            borderRadius: '6px',
+            border: '1px solid var(--border-color)'
         }}>
-            {icon}
-        </span>
+            <span className="icon-luxury" style={{ display: 'flex' }}>{icon}</span>
+            <span>{label}</span>
+        </div>
     ) : null
 );
 
@@ -46,142 +54,145 @@ export const TourCard: React.FC<TourCardProps> = ({ tour, index = 0 }) => {
     };
 
     return (
-        <div style={{
-            background: 'var(--v6-bg-card)',
-            border: `1.5px solid ${tour.isPrime ? 'var(--v6-color-prime)' : 'var(--v6-border)'}`,
-            borderRadius: 'var(--v6-radius-lg)',
-            overflow: 'hidden',
-            boxShadow: tour.isPrime ? '0 4px 16px rgba(180,83,9,0.1)' : 'var(--v6-shadow-sm)',
-            animation: 'v6-fade-in 0.3s ease forwards',
-            animationDelay: `${index * 0.05}s`, opacity: 0,
-        }}>
-            {tour.isPrime && (
-                <div style={{ padding: '6px 16px', background: 'linear-gradient(135deg, var(--v6-color-prime), #f59e0b)', color: '#fff', fontSize: '11px', fontWeight: 800, letterSpacing: '0.05em' }}>
-                    🏆 PRIME — Garantovan polazak & PrimeClick organizacija
-                </div>
-            )}
-
-            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                {/* ── IMAGE ── */}
-                <div style={{ width: '220px', minHeight: '180px', position: 'relative', flexShrink: 0 }}>
-                    <img src={tour.image} alt={tour.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 800 }}>
-                        {tour.durationDays} dana / {tour.durationNights} noći
-                    </div>
-                </div>
-
-                {/* ── INFO SREDINA ── */}
-                <div style={{ flex: 1, padding: '16px', minWidth: '280px', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                            <div style={{ fontSize: '11px', color: 'var(--v6-text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em', marginBottom: '4px' }}>
-                                {tour.categoryLabel} · {tour.destinationName}
-                            </div>
-                            <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--v6-text-primary)', marginBottom: '6px', lineHeight: 1.2 }}>
-                                {tour.name}
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--v6-text-muted)', marginBottom: '12px' }}>
-                                <span>{tour.supplierLogo}</span>
-                                <span>{tour.supplierName}</span>
-                                {tour.rating && (
-                                    <>
-                                        <span>·</span>
-                                        <span style={{ color: '#f59e0b' }}>★</span>
-                                        <span style={{ fontWeight: 700, color: 'var(--v6-text-primary)' }}>{tour.rating}</span>
-                                        <span>({tour.reviewCount})</span>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style={{ fontSize: '13px', color: 'var(--v6-text-secondary)', lineHeight: 1.5, marginBottom: '14px', flex: 1 }}>
-                        {tour.itinerarySummary}
-                    </div>
-
-                    {/* INCLUDED ICONS */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                        <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--v6-text-muted)' }}>UKLJUČENO:</div>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                            <IncludedFeature ok={tour.included.flights}   icon="✈️" label="Avio prevoz uključen" />
-                            <IncludedFeature ok={tour.transportType === 'bus'} icon="🚌" label="Autobuski prevoz uključen" />
-                            <IncludedFeature ok={tour.included.hotels}    icon="🛏️" label="Smeštaj uključen" />
-                            <IncludedFeature ok={tour.included.transfers} icon="🚕" label="Transferi uključeni" />
-                            <IncludedFeature ok={tour.included.meals}     icon="🍽️" label="Obroci po programu" />
-                            <IncludedFeature ok={tour.included.guide}     icon="🗣️" label="Vodič na srpskom" />
-                        </div>
-                        {tour.itineraryDetails.length > 0 && (
-                            <button onClick={() => setShowItin(!showItin)}
-                                style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--v6-accent)', fontSize: '12px', fontWeight: 700, cursor: 'pointer', outline: 'none' }}>
-                                {showItin ? 'Zatvori program' : 'Vidi program po danima ↓'}
-                            </button>
-                        )}
-                    </div>
+        <article
+            className="search-result-card v6-fade-in-up"
+            style={{ animationDelay: `${index * 0.07}s` }}
+        >
+            {/* ── COL 1: IMAGE & BADGES ── */}
+            <div className="card-image-section">
+                <img src={tour.image} alt={tour.name} />
+                
+                {/* Duration Badge */}
+                <div style={{ 
+                    position: 'absolute', 
+                    top: '12px', 
+                    left: '12px', 
+                    background: 'rgba(26, 35, 78, 0.85)', 
+                    backdropFilter: 'blur(8px)',
+                    color: '#fff', 
+                    padding: '6px 12px', 
+                    borderRadius: '10px', 
+                    fontSize: '11px', 
+                    fontWeight: 800,
+                    boxShadow: 'var(--shadow-sm)',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                    {tour.durationDays} DANA / {tour.durationNights} NOĆI
                 </div>
 
-                {/* ── CENA I DATUMI ── */}
-                <div style={{ width: '200px', padding: '16px', borderLeft: '1px solid var(--v6-border)', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', flexShrink: 0, background: 'var(--v6-bg-section)' }}>
-                    <div style={{ width: '100%' }}>
-                        <div style={{ fontSize: '11px', color: 'var(--v6-text-muted)', fontWeight: 600, marginBottom: '6px' }}>Polasci:</div>
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '16px' }}>
-                            {tour.departureDates.slice(0, 3).map(d => (
-                                <span key={d} style={{ fontSize: '11px', padding: '2px 6px', background: 'var(--v6-bg-main)', border: '1px solid var(--v6-border)', borderRadius: '4px', color: 'var(--v6-text-secondary)' }}>
-                                    {new Date(d).toLocaleDateString('sr')}
-                                </span>
-                            ))}
-                            {tour.departureDates.length > 3 && <span style={{ fontSize: '11px', color: 'var(--v6-text-muted)' }}>+{tour.departureDates.length - 3}</span>}
-                        </div>
-                    </div>
-
-                    <div style={{ textAlign: 'right', width: '100%' }}>
-                        <div style={{ fontSize: '12px', color: 'var(--v6-text-muted)' }}>Ukupno za {tour.includedPax} os.</div>
-                        <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--v6-text-primary)', lineHeight: 1.1 }}>
-                            {formatPrice(tour.totalPrice, tour.currency)}
-                        </div>
-                        <div style={{ fontSize: '12px', color: 'var(--v6-color-instant-text)', marginTop: '4px', marginBottom: '12px' }}>
-                            {formatPrice(tour.pricePerPerson, tour.currency)} / os.
-                        </div>
-
-                        <button onClick={handleAdd}
-                            style={{
-                                width: '100%', padding: '10px 0', borderRadius: 'var(--v6-radius-md)',
-                                background: booked ? 'var(--v6-color-instant)' : 'var(--v6-accent)',
-                                color: booked ? '#fff' : 'var(--v6-accent-text)', border: 'none',
-                                fontSize: '13px', fontWeight: 800, cursor: 'pointer', fontFamily: 'var(--v6-font)',
-                                transition: 'all 0.2s',
-                            }}>
-                            {booked ? '✓ Rezervisano' : 'Odaberi termin →'}
-                        </button>
-                    </div>
+                {/* Status Badges */}
+                <div style={{ position: 'absolute', bottom: '12px', left: '12px', display: 'flex', gap: '6px' }}>
+                    {tour.isPrime && <span className="badge-luxury">🏆 PRIME</span>}
+                    <span className="badge-luxury" style={{ background: 'var(--brand-accent)', color: '#fff' }}>
+                        {tour.categoryLabel}
+                    </span>
                 </div>
             </div>
 
-            {/* ── ITINERARY DROPDOWN ── */}
-            {showItin && tour.itineraryDetails.length > 0 && (
-                <div style={{ borderTop: '1px solid var(--v6-border)', background: 'var(--v6-bg-section)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', animation: 'v6-slide-down 0.2s ease forwards' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--v6-text-primary)' }}>PLAN PUTOVANJA PO DANIMA</div>
-                    {tour.itineraryDetails.map(day => (
-                        <div key={day.dayNumber} style={{ display: 'flex', gap: '12px' }}>
-                            <div style={{ width: '40px', flexShrink: 0, textAlign: 'center', fontWeight: 800, fontSize: '11px', color: 'var(--v6-accent)', background: 'rgba(99,102,241,0.1)', height: '24px', lineHeight: '24px', borderRadius: '4px' }}>
-                                D{day.dayNumber}
-                            </div>
-                            <div>
-                                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--v6-text-primary)', marginBottom: '2px' }}>
-                                    {day.title}
-                                    {day.mealsIncluded && day.mealsIncluded.length > 0 && (
-                                        <span style={{ fontSize: '10px', color: 'var(--v6-color-prime)', marginLeft: '8px', border: '1px solid var(--v6-color-prime-alpha)', padding: '1px 4px', borderRadius: '4px' }}>
-                                            {day.mealsIncluded.join(', ')}
-                                        </span>
-                                    )}
-                                </div>
-                                <div style={{ fontSize: '12px', color: 'var(--v6-text-secondary)', lineHeight: 1.4 }}>
-                                    {day.description}
-                                </div>
-                            </div>
+            {/* ── COL 2: TOUR INFO ── */}
+            <div className="card-info-section" style={{ padding: '20px 24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                        <MapPin size={14} className="icon-luxury" />
+                        {tour.destinationName}
+                    </div>
+                    {tour.rating && (
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(245,158,11,0.1)', color: '#d97706', padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800 }}>
+                            ⭐ {tour.rating} <span style={{ opacity: 0.7, fontWeight: 600 }}>({tour.reviewCount})</span>
                         </div>
-                    ))}
+                    )}
+                </div>
+
+                <h3 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-main)', marginBottom: '8px', lineHeight: 1.2 }}>
+                    {tour.name}
+                </h3>
+
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '16px' }}>
+                    {tour.itinerarySummary}
+                </p>
+
+                {/* Included Features */}
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: 'auto' }}>
+                    <IncludedFeature ok={tour.included.flights}   icon={<Plane size={12} />} label="Avio" />
+                    <IncludedFeature ok={tour.included.hotels}    icon={<Bed size={12} />} label="Smeštaj" />
+                    <IncludedFeature ok={tour.included.meals}     icon={<Utensils size={12} />} label="Obroci" />
+                    <IncludedFeature ok={tour.included.guide}     icon={<Users size={12} />} label="Vodič" />
+                </div>
+            </div>
+
+            {/* ── COL 3: PRICE & ACTION ── */}
+            <div className="price-section">
+                <div className="price-label">Ukupno za {tour.includedPax} os.</div>
+                <div className="price-amount">
+                    {formatPrice(tour.totalPrice, tour.currency)}
+                </div>
+                <div className="badge-luxury" style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--brand-accent)' }}>
+                    {formatPrice(tour.pricePerPerson, tour.currency)} po osobi
+                </div>
+
+                <div style={{ width: '100%', marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <button
+                        className="v6-card-cta-btn"
+                        onClick={handleAdd}
+                        style={{ width: '100%', padding: '12px', borderRadius: '12px' }}
+                    >
+                        {booked ? '✓ Odabrano' : 'Rezerviši paket'}
+                    </button>
+                    
+                    <button 
+                        className="counter-btn-luxury" 
+                        onClick={() => setShowItin(!showItin)}
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '12px', fontWeight: 700 }}
+                    >
+                        <Info size={16} />
+                        {showItin ? 'Zatvori program' : 'Vidi plan puta'}
+                    </button>
+                </div>
+            </div>
+
+            {/* ITINERARY DROPDOWN */}
+            {showItin && tour.itineraryDetails.length > 0 && (
+                <div style={{ 
+                    gridColumn: '1 / span 3', 
+                    padding: '24px', 
+                    background: 'var(--bg-app)', 
+                    borderTop: '1px solid var(--border-color)',
+                    animation: 'v6FadeInUp 0.3s ease'
+                }}>
+                    <h4 style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--brand-accent)', marginBottom: '16px', letterSpacing: '0.05em' }}>
+                        PLAN PUTOVANJA PO DANIMA
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {tour.itineraryDetails.map(day => (
+                            <div key={day.dayNumber} style={{ display: 'flex', gap: '16px' }}>
+                                <div style={{ 
+                                    width: '36px', height: '36px', flexShrink: 0, 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontWeight: 900, fontSize: '12px', color: 'var(--brand-accent)', 
+                                    background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '10px' 
+                                }}>
+                                    {day.dayNumber}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-main)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        {day.title}
+                                        {day.mealsIncluded && day.mealsIncluded.length > 0 && (
+                                            <span style={{ fontSize: '10px', color: 'var(--brand-accent)', background: 'rgba(26,35,78,0.05)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                                                🍴 {day.mealsIncluded.join(', ')}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
+                                        {day.description}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
-        </div>
+        </article>
     );
 };
+
+export default TourCard;

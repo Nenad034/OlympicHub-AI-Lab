@@ -104,12 +104,12 @@ export const HotelCard: React.FC<HotelCardProps> = ({ hotel, index, onViewOption
 
     return (
         <article
-            className={`v6-hotel-card v6-fade-in-up ${delayClass}`}
+            className={`search-result-card v6-fade-in-up ${delayClass}`}
             aria-label={`Hotel: ${hotel.name}`}
             data-testid={`hotel-card-${hotel.id}`}
         >
-            {/* ── SLIKA ────────────────────────────────────── */}
-            <div className="v6-card-image-wrap">
+            {/* ── COL 1: IMAGE ────────────────────────────────────── */}
+            <div className="card-image-section">
                 {hotel.images.length > 0 && !imgError ? (
                     <img
                         src={hotel.images[0]}
@@ -123,145 +123,115 @@ export const HotelCard: React.FC<HotelCardProps> = ({ hotel, index, onViewOption
 
                 {/* PRIME badge */}
                 {hotel.isPrime && (
-                    <span className="v6-badge-prime" aria-label="Prime ponuda">
-                        🏆 PRIME
-                    </span>
+                    <div style={{ position: 'absolute', top: '12px', left: '12px' }}>
+                        <span className="badge-luxury">🏆 PRIME</span>
+                    </div>
                 )}
 
                 {/* Status badge */}
-                <StatusBadge status={hotel.status} />
+                <div style={{ position: 'absolute', bottom: '12px', left: '12px' }}>
+                     <StatusBadge status={hotel.status} />
+                </div>
             </div>
 
-            {/* ── SADRŽAJ ──────────────────────────────────── */}
-            <div className="v6-card-body">
-                {/* Stars */}
-                <Stars count={hotel.stars} />
+            {/* ── COL 2: INFO ──────────────────────────────────── */}
+            <div className="card-info-section">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                        <Stars count={hotel.stars} />
+                        <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-main)', margin: '4px 0 8px 0' }}>{hotel.name}</h3>
+                        
+                        <p style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>
+                            <span style={{ color: 'var(--brand-accent)' }}>📍</span>
+                            <span>{hotel.location.city}{hotel.location.country ? `, ${hotel.location.country}` : ''}</span>
+                        </p>
+                    </div>
+                </div>
 
-                {/* Naziv */}
-                <h3 className="v6-card-name">{hotel.name}</h3>
-
-                {/* Lokacija */}
-                <p className="v6-card-location">
-                    <span aria-hidden="true">📍</span>
-                    <span>{hotel.location.city}{hotel.location.country ? `, ${hotel.location.country}` : ''}</span>
-                </p>
-
-                {/* Ocena gostiju (ako postoji) */}
+                {/* Ocena gostiju */}
                 {hotel.rating && (
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontSize: 'var(--v6-fs-xs)',
-                        color: 'var(--v6-text-secondary)',
-                    }}>
-                        <span style={{
-                            background: '#059669',
-                            color: 'white',
-                            borderRadius: '6px',
-                            padding: '2px 7px',
-                            fontWeight: 700,
-                            fontSize: '13px',
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: 'auto' }}>
+                        <div style={{ 
+                            background: 'var(--brand-accent)', 
+                            color: 'white', 
+                            borderRadius: '8px', 
+                            padding: '4px 10px', 
+                            fontWeight: 800, 
+                            fontSize: '15px' 
                         }}>
                             {hotel.rating.toFixed(1)}
-                        </span>
-                        <span>Ocena gostiju</span>
-                        {hotel.ratingCount && (
-                            <span style={{ color: 'var(--v6-text-muted)' }}>
-                                ({hotel.ratingCount.toLocaleString('de-DE')} recenzija)
-                            </span>
-                        )}
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-main)' }}>Odlična ocena</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                {hotel.ratingCount?.toLocaleString('de-DE')} recenzija gostiju
+                            </div>
+                        </div>
                     </div>
                 )}
 
-                {/* ── CENA SEKCIJA ──────────────────────────── */}
-                <div className="v6-card-price-section">
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'baseline',
-                        gap: '6px',
-                        flexWrap: 'wrap',
-                    }}>
-                        <span style={{
-                            fontSize: '12px',
-                            color: 'var(--v6-text-muted)',
-                            fontWeight: 600,
-                            textTransform: 'uppercase' as const,
-                            letterSpacing: '0.05em',
-                        }}>
-                            Ukupno
-                        </span>
-                        <span className="v6-card-price-total">
-                            {formatPrice(hotel.lowestTotalPrice, hotel.currency)}
-                        </span>
+                {/* Sadržaj / Features */}
+                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                    <div className="badge-luxury" style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '10px', padding: '4px 8px' }}>
+                         Besplatan WiFi
                     </div>
-                    <p className="v6-card-price-breakdown">
-                        {getPriceBreakdown()}
-                    </p>
+                    {hotel.lowestMealPlanLabel && (
+                        <div className="badge-luxury" style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '10px', padding: '4px 8px' }}>
+                            {hotel.lowestMealPlanLabel}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* ── COL 3: PRICE ─────────────────────────────── */}
+            <div className="price-section">
+                <div className="price-label">Ukupna cena</div>
+                <div className="price-amount">
+                    {formatPrice(hotel.lowestTotalPrice, hotel.currency)}
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                    {getPriceBreakdown()}
                 </div>
 
-                {/* ── CTA RUBLIC ─────────────────────────────── */}
-                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                <div style={{ width: '100%', marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <button
                         className="v6-card-cta-btn"
                         onClick={() => onViewOptions(hotel)}
-                        aria-label={`Pogledaj opcije za ${hotel.name}`}
-                        id={`v6-view-options-${hotel.id}`}
-                        style={{ flex: 1.5 }}
+                        style={{ width: '100%', padding: '12px', borderRadius: '12px' }}
                     >
-                        Pogledaj opcije →
+                        Rezerviši odmah
                     </button>
                     
-                    <button
-                        onClick={() => {
-                            useSearchStore.getState().saveOffer({
-                                id: `htl-${hotel.id}-${Date.now()}`,
-                                type: 'hotel',
-                                label: hotel.name,
-                                description: getPriceBreakdown(),
-                                totalPrice: hotel.lowestTotalPrice,
-                                currency: hotel.currency,
-                                timestamp: Date.now(),
-                                data: { hotelId: hotel.id, checkIn, checkOut, roomAllocations },
-                                hasPriceDropAlert: false
-                            });
-                            alert('Hotel sačuvan u ponude!');
-                        }}
-                        style={{
-                            width: '44px',
-                            height: '44px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            background: 'var(--v6-bg-section)',
-                            border: '1.5px solid var(--v6-border)',
-                            borderRadius: '12px',
-                            cursor: 'pointer',
-                            fontSize: '18px'
-                        }}
-                        title="Sačuvaj ponudu"
-                    >
-                        💾
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        <button
+                            className="counter-btn-luxury"
+                            onClick={() => {
+                                useSearchStore.getState().saveOffer({
+                                    id: `htl-${hotel.id}-${Date.now()}`,
+                                    type: 'hotel',
+                                    label: hotel.name,
+                                    description: getPriceBreakdown(),
+                                    totalPrice: hotel.lowestTotalPrice,
+                                    currency: hotel.currency,
+                                    timestamp: Date.now(),
+                                    data: { hotelId: hotel.id, checkIn, checkOut, roomAllocations },
+                                    hasPriceDropAlert: false
+                                });
+                                alert('Hotel sačuvan u ponude!');
+                            }}
+                            title="Sačuvaj"
+                        >
+                            💾
+                        </button>
 
-                    <button
-                        onClick={() => alert('Share opcije: Facebook, Instagram, Viber...')}
-                        style={{
-                            width: '44px',
-                            height: '44px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            background: 'var(--v6-bg-section)',
-                            border: '1.5px solid var(--v6-border)',
-                            borderRadius: '12px',
-                            cursor: 'pointer',
-                            fontSize: '18px'
-                        }}
-                        title="Podeli ponudu"
-                    >
-                        🔗
-                    </button>
+                        <button
+                            className="counter-btn-luxury"
+                            onClick={() => alert('Link kopiran!')}
+                            title="Podeli"
+                        >
+                            🔗
+                        </button>
+                    </div>
                 </div>
             </div>
         </article>

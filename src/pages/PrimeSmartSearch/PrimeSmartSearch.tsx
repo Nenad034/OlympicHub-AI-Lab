@@ -106,16 +106,71 @@ const TabForm: React.FC<{ activeTab: string }> = ({ activeTab }) => {
 // ─────────────────────────────────────────────────────────────
 // EMPTY STATES
 // ─────────────────────────────────────────────────────────────
-const InitialState: React.FC = () => (
-    <div className="v6-empty-state v6-fade-in">
-        <div className="v6-empty-state-icon">🔍</div>
-        <div className="v6-empty-title">Unesite parametre pretrage</div>
-        <div className="v6-empty-subtitle">
-            Izaberite destinaciju, datume i broj putnika, zatim kliknite <strong>Pretraži</strong>.
-            Sistem će pretražiti sve izvore i prikazati ukupne cene za Vašu grupu.
+const TopOffers: React.FC<{ activeTab: string }> = ({ activeTab }) => {
+    // Helper to pick top 3 items
+    const topHotels = MOCK_HOTEL_RESULTS.slice(0, 3);
+    const topFlights = MOCK_FLIGHT_RESULTS.slice(0, 3);
+    const topTours = MOCK_TOUR_RESULTS.slice(0, 3);
+
+    const renderOfferHeader = (title: string, subtitle: string, badgeText?: string) => (
+        <div className="v6-offer-section-header">
+            <div className="v6-offer-title-group">
+                <h2>{title}</h2>
+                <p>{subtitle}</p>
+            </div>
+            {badgeText && (
+                <div className="badge-luxury">
+                    <span>✨</span> {badgeText}
+                </div>
+            )}
         </div>
-    </div>
-);
+    );
+
+    return (
+        <div className="v6-top-offers-dashboard v6-fade-in">
+            {activeTab === 'hotel' && (
+                <div className="v6-fade-in-up">
+                    {renderOfferHeader("Najtraženiji hoteli", "Istražite najpopularnije destinacije po specijalnim cenama", "Preporuka")}
+                    <div className="search-results-container">
+                        {topHotels.map((hotel, idx) => (
+                            <HotelCard key={hotel.id} hotel={hotel} index={idx} onViewOptions={() => {}} />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'flight' && (
+                <div className="v6-fade-in-up">
+                    {renderOfferHeader("Najpovoljniji letovi", "Putujte svetom sa najpouzdanijim avio kompanijama", "Best Value")}
+                    <div className="search-results-container">
+                        {topFlights.map((flight, idx) => (
+                            <FlightCard key={flight.id} flight={flight} index={idx} paxTotal={1} onBook={() => {}} />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'package' && (
+                <div className="v6-fade-in-up">
+                    {renderOfferHeader("Trendi Paketi", "Kompletna letovanja i gradske ture uz maksimalnu uštedu", "Prime Selection")}
+                    <div className="search-results-container">
+                        {topTours.map((tour, idx) => (
+                            <TourCard key={tour.id} tour={tour} index={idx} />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {(activeTab !== 'hotel' && activeTab !== 'flight' && activeTab !== 'package') && (
+                <div className="v6-empty-state">
+                    <div className="v6-empty-state-icon">✨</div>
+                    <div className="v6-empty-title">Otkrijte nove horizonte</div>
+                    <div className="v6-empty-subtitle">Pretražite našu bazu za najbolje cene čartera, rent-a-car i transfer usluga.</div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const NoResults: React.FC = () => (
     <div className="v6-empty-state v6-fade-in">
@@ -234,7 +289,7 @@ export const PrimeSmartSearch: React.FC = () => {
 
     return (
         <div
-            className={`v6-prime-hub ${theme === 'navy' ? 'v6-dark' : ''}`}
+            className={`v6-prime-hub v6-cockpit-layout ${theme === 'navy' ? 'v6-dark' : ''}`}
             role="main"
             aria-label="PrimeSmartSearch V6"
             data-testid="prime-smart-search-v6"
@@ -247,10 +302,11 @@ export const PrimeSmartSearch: React.FC = () => {
             </header>
 
             {/* ═══════════════════════════════════════════════
-                FORMA ZONA
+                FORMA ZONA (Prikazuje se samo ako ima sadržaja)
             ═══════════════════════════════════════════════ */}
-            <section
-                className="v6-form-zone"
+            {activeTab !== 'package' && (
+                <section
+                    className="v6-form-zone"
                 id={`v6-panel-${activeTab}`}
                 role="tabpanel"
                 aria-labelledby={`v6-tab-${activeTab}`}
@@ -399,7 +455,8 @@ export const PrimeSmartSearch: React.FC = () => {
                         </button>
                     </div>
                 )}
-            </section>
+                </section>
+            )}
 
 
 
@@ -444,19 +501,22 @@ export const PrimeSmartSearch: React.FC = () => {
             >
                 {/* ══ PACKAGE WIZARD — Zauzima celu results zonu ══ */}
                 {activeTab === 'package' && (
-                    <div style={{ background: 'var(--v6-bg-card)', borderRadius: 'var(--v6-radius-lg)', border: '1.5px solid var(--v6-border)', overflow: 'hidden' }}>
-                        <PackageWizard onComplete={handlePackageComplete} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+                        <div style={{ background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', border: '1.5px solid var(--border-color)', overflow: 'hidden', boxShadow: 'var(--shadow-md)' }}>
+                            <PackageWizard onComplete={handlePackageComplete} />
+                        </div>
+                        {!searchPerformed && !isSearching && <TopOffers activeTab="package" />}
                     </div>
                 )}
 
                 {/* ══ HOTEL + FLIGHT rezultati ══ */}
                 {activeTab !== 'package' && isSearching && <SkeletonGrid />}
-                {activeTab !== 'package' && !isSearching && !searchPerformed && <InitialState />}
+                {activeTab !== 'package' && !isSearching && !searchPerformed && <TopOffers activeTab={activeTab} />}
 
                 {/* Hotel rezultati */}
                 {activeTab === 'hotel' && !isSearching && searchPerformed && results.length === 0 && <NoResults />}
                 {activeTab === 'hotel' && !isSearching && searchPerformed && results.length > 0 && (
-                    <div className="v6-results-grid" role="list" aria-label={`${results.length} hotela pronađeno`}>
+                    <div className="search-results-container" role="list">
                         {results.map((hotel, idx) => (
                             <div key={hotel.id} role="listitem">
                                 <HotelCard hotel={hotel} index={idx} onViewOptions={handleViewOptions} />
@@ -468,13 +528,10 @@ export const PrimeSmartSearch: React.FC = () => {
                 {/* Flight rezultati */}
                 {activeTab === 'flight' && !isSearching && searchPerformed && flightResults.length === 0 && <NoResults />}
                 {activeTab === 'flight' && !isSearching && searchPerformed && flightResults.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '900px', margin: '0 auto', width: '100%' }} role="list" aria-label={`${flightResults.length} letova pronađeno`}>
-                        <div style={{ padding: '12px 16px', background: 'var(--v6-bg-section)', borderRadius: 'var(--v6-radius-md)', border: '1px solid var(--v6-border)', fontSize: 'var(--v6-fs-xs)', color: 'var(--v6-text-muted)', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-                            <span>✈️ <strong style={{ color: 'var(--v6-text-primary)' }}>{flightResults.length} letova</strong> pronađeno</span>
-                            <span style={{ color: 'var(--v6-border)' }}>|</span>
-                            <span>Cene uključuju sve takse · Sortiranje: Preporučeno</span>
-                            <span style={{ color: 'var(--v6-border)' }}>|</span>
-                            <span style={{ color: 'var(--v6-color-instant-text)', fontWeight: 600 }}>⚡ {flightResults.filter(f => f.outbound.status === 'instant').length} odmah potvrđeno</span>
+                    <div className="search-results-container" role="list">
+                        <div style={{ padding: '16px 20px', background: 'var(--bg-app)', borderRadius: '16px', border: '1px solid var(--border-color)', fontSize: '12px', color: 'var(--text-muted)', display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '4px' }}>
+                            <span style={{ color: 'var(--brand-accent)' }}>✈️</span>
+                            <span><strong>{flightResults.length} letova</strong> pronađeno · Cene uključuju sve takse · Sortirano po preporuci</span>
                         </div>
                         {flightResults.map((flight, idx) => (
                             <div key={flight.id} role="listitem">

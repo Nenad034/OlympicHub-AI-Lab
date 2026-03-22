@@ -10,137 +10,198 @@
    CSS VARIJABLE — DESIGN TOKENS
    ───────────────────────────────────────────────────────────── */
 .v6-prime-hub {
-    /* Semantičke Boje (Semafor Logika) */
-    --v6-color-instant:       #1e293b;  /* ⚡ Teget — Potvrđeno/Glavno */
-    --v6-color-instant-bg:    #f1f5f9;
-    --v6-color-instant-text:  #1e293b;
-    --v6-color-on-request:    #64748b;  /* ❓ Sivo — Na Upit */
-    --v6-color-on-request-bg: #f8fafc;
-    --v6-color-on-request-text: #475569;
-    --v6-color-prime:         #2563eb;  /* ⚡ Blue Electric — Dinamički Paketi */
-    --v6-color-prime-bg: rgba(37, 99, 235, 0.08);
+    /* MASTER DESIGN SYSTEM: Quiet Luxury / Modern Minimalist */
+    
+    /* LIGHT MODE */
+    --bg-app: #F8FAFC;
+    --bg-surface: #FFFFFF;
+    --bg-input: #FFFFFF;
+    
+    --text-main: #1A234E;        /* Navy */
+    --text-muted: #64748B;
+    
+    --brand-primary: #1A234E;    /* Navy */
+    --brand-accent: #9D4EDD;     /* Magenta/Purple */
+    --brand-accent-light: #F5F3FF;
+    
+    --border-color: #E2E8F0;
+    --icon-stroke: #1A234E;
+    
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
 
-    /* Pastel Service Colors */
-    --v6-color-flight: #3b82f6;      /* Blue */
-    --v6-color-flight-bg: #eff6ff;
-    --v6-color-hotel: #8b5cf6;       /* Violet */
-    --v6-color-hotel-bg: #f5f3ff;
-    --v6-color-transfer: #10b981;    /* Emerald */
-    --v6-color-transfer-bg: #ecfdf5;
-    --v6-color-extra: #f59e0b;       /* Amber */
-    --v6-color-extra-bg: #fffbeb;
-    --v6-color-summary: #0f172a;     /* Navy */
-    --v6-color-summary-bg: #f8fafc;
-
-    /* Statusi */
-    /* Light Mode Paleta */
-    --v6-bg-main:             #f0f2f5;
-    --v6-bg-card:             #ffffff;
-    --v6-bg-card-hover:       #f8fafc;
-    --v6-bg-section:          #f8fafc;
-    --v6-text-primary:        #0f172a;
-    --v6-text-secondary:      #475569;
-    --v6-text-muted:          #94a3b8;
-    --v6-border:              #e2e8f0;
-    --v6-border-focus:        #0f172a;
-    --v6-accent:              #0f172a;   /* Dugmad, aktivan tab */
+    /* Mapping to existing V6 variables for backward compatibility and quick update */
+    --v6-bg-main:             var(--bg-app);
+    --v6-bg-card:             var(--bg-surface);
+    --v6-bg-card-hover:       var(--brand-accent-light);
+    --v6-bg-section:          var(--bg-app);
+    --v6-text-primary:        var(--text-main);
+    --v6-text-secondary:      var(--text-muted);
+    --v6-text-muted:          var(--text-muted);
+    --v6-border:              var(--border-color);
+    --v6-border-focus:        var(--brand-accent);
+    --v6-accent:              var(--brand-accent);
     --v6-accent-text:         #ffffff;
-    --v6-shadow-sm:           0 1px 3px rgba(0, 0, 0, 0.08);
-    --v6-shadow-md:           0 4px 16px rgba(0, 0, 0, 0.10);
-    --v6-shadow-lg:           0 8px 32px rgba(0, 0, 0, 0.12);
+    
+    --v6-navy:                var(--brand-primary);
+
+    /* Font & Radius from V6 */
+    --v6-font:                'Inter', -apple-system, sans-serif;
     --v6-radius-sm:           8px;
     --v6-radius-md:           12px;
     --v6-radius-lg:           16px;
     --v6-radius-xl:           24px;
-    --v6-font:                'Inter', -apple-system, sans-serif;
-
-    /* Font sizes — nikad manje od 14px */
-    --v6-fs-xs:   14px;
-    --v6-fs-sm:   15px;
-    --v6-fs-md:   16px;
-    --v6-fs-lg:   18px;
-    --v6-fs-xl:   22px;
-    --v6-fs-2xl:  28px;
-    --v6-fs-3xl:  36px;
-
-    /* Navy Design Tokens */
-    --v6-navy: #1e293b;
-    --v6-navy-light: rgba(30, 41, 59, 0.1);
 }
 
 /* Dark Mode Override */
 .v6-prime-hub.v6-dark {
-    --v6-bg-main:             #0b1629;
-    --v6-bg-card:             #1b2a4e;
-    --v6-bg-card-hover:       #243559;
-    --v6-bg-section:          #142038;
-    --v6-text-primary:        #e2e8f0;
-    --v6-text-secondary:      #94a3b8;
-    --v6-text-muted:          #64748b;
-    --v6-border:              #2d4a8a;
-    --v6-border-focus:        #63b3ed;
-    --v6-accent:              #2d4a8a;
+    /* DARK MODE - Midnight Luxury */
+    --bg-app: #0B0E14;
+    --bg-surface: #1A233A;
+    --bg-input: #111827;
+    
+    --text-main: #F1F5F9;
+    --text-muted: #94A3B8;
+    
+    --brand-primary: #C084FC;
+    --brand-accent: #9D4EDD;
+    --brand-accent-light: rgba(157, 78, 221, 0.15);
+    
+    --border-color: #334155;
+    --icon-stroke: #F1F5F9;
+    
+    --icon-glow: drop-shadow(0 0 5px rgba(157, 78, 221, 0.4));
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+
+    /* Mapping to existing V6 variables */
+    --v6-bg-main:             var(--bg-app);
+    --v6-bg-card:             var(--bg-surface);
+    --v6-bg-card-hover:       #2D3748;
+    --v6-bg-section:          var(--bg-input);
+    --v6-text-primary:        var(--text-main);
+    --v6-text-secondary:      var(--text-muted);
+    --v6-text-muted:          var(--text-muted);
+    --v6-border:              var(--border-color);
+    --v6-border-focus:        var(--brand-accent);
+    --v6-accent:              var(--brand-accent);
     --v6-accent-text:         #ffffff;
-    --v6-shadow-sm:           0 1px 3px rgba(0, 0, 0, 0.3);
-    --v6-shadow-md:           0 4px 16px rgba(0, 0, 0, 0.4);
-    --v6-shadow-lg:           0 8px 32px rgba(0, 0, 0, 0.5);
-    --v6-color-instant-bg:    rgba(5, 150, 105, 0.15);
-    --v6-color-instant-text:  #34d399;
-    --v6-color-on-request-bg: rgba(217, 119, 6, 0.15);
-    --v6-color-on-request-text: #fbbf24;
+    
+    --v6-navy:                #1A233A;
+}
+
+/* Dark Mode Overrides for Stack Cards Typography */
+.v6-prime-hub.v6-dark .v6-stack-card-price,
+.v6-prime-hub.v6-dark .v6-stack-card-label {
+    color: #ffffff;
+}
+
+.v6-prime-hub.v6-dark .v6-stack-card-details {
+    color: #94a3b8;
+}
+
+.v6-prime-hub.v6-dark .v6-stack-card {
+    border-color: #334155 !important;
+}
+
+.v6-prime-hub.v6-dark .v6-edit-btn-mini {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #334155;
+}
+
+.v6-prime-hub.v6-dark .v6-edit-btn-mini:hover {
+    background: #1e293b;
+    border-color: #ffffff;
 }
 
 /* ─────────────────────────────────────────────────────────────
    1. IMMERSIVE COCKPIT LAYOUT (95% viewport)
    ───────────────────────────────────────────────────────────── */
+/* PRIMENA NA ELEMENTE — MASTER DESIGN SYSTEM */
+
 .v6-prime-hub {
-    font-family: var(--v6-font);
-    width: 95vw;
-    min-height: 95vh;
-    margin: 1.5vh auto 2.5vh;
-    background: var(--v6-bg-main);
-    border-radius: var(--v6-radius-xl);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: var(--v6-shadow-lg);
-    position: relative;
-    color: var(--v6-text-primary);
-    -webkit-font-smoothing: antialiased;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  transition: all 0.3s ease;
+  font-family: var(--v6-font);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Portal Wrapper (za Portal van DOM stabla) */
-.v6-portal-wrapper {
-    position: fixed;
-    z-index: 10000;
-    pointer-events: none; /* Propagira klikove na dete */
+.v6-cockpit-layout {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
 }
 
-.v6-portal-wrapper * {
-    pointer-events: auto; /* Dete ponovo prima klikove */
+.card, .module, .v6-form-zone {
+  background-color: var(--bg-surface) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--shadow-md) !important;
 }
 
-/* Header zona — Sticky */
-.v6-header-zone {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: var(--v6-bg-main);
-    border-bottom: 1px solid var(--v6-border);
-    padding: 16px 24px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-}
-
-/* Results zona — Skrolujuća, nezavisna */
 .v6-results-zone {
-    flex: 1;
-    overflow-y: auto;
-    padding: 24px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--v6-border) transparent;
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px var(--v6-side-padding);
+  background: var(--bg-app);
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   TOP OFFERS DASHBOARD
+   ───────────────────────────────────────────────────────────── */
+.v6-top-offers-dashboard {
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.v6-offer-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+}
+
+.v6-offer-title-group h2 {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--text-main);
+  margin: 0;
+  letter-spacing: -0.03em;
+}
+
+.v6-offer-title-group p {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.v6-offer-badge-luxury {
+  background: var(--brand-accent-light);
+  color: var(--brand-accent);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 
 .v6-results-zone::-webkit-scrollbar {
     width: 6px;
@@ -310,7 +371,8 @@
     width: 100%;
     margin-bottom: 24px;
     background: var(--v6-bg-section);
-    border: 1.5px solid #1e293b !important; /* FIXED NAVY BORDER ON WRAPPER */
+    border: 1.8px solid #1A234E !important; /* FIXED OFFICIAL NAVY BORDER */
+
     border-radius: var(--v6-radius-lg);
     transition: all 0.2s ease;
 }
@@ -384,21 +446,36 @@
 .v6-search-controls-row .v6-field-input,
 .v6-search-controls-row select,
 .v6-search-controls-row .v6-multi-select-trigger,
-.v6-search-controls-row .multi-select-trigger, /* Globalna klasa bez v6- prefiksa */
+.v6-search-controls-row .multi-select-trigger,
+.v6-search-controls-row .multi-select-container .multi-select-trigger,
 .v6-search-controls-row .v6-occupancy-trigger,
-.v6-budget-container {
+.v6-budget-container,
+.field-container {
+
     padding-left: 44px !important;
-    height: 52px !important; /* STRICT HEIGHT FOR ALL */
+    height: 52px !important;
     border-radius: var(--v6-radius-md);
-    background: var(--v6-bg-section);
-    /* Deblji, jasniji teget okvir */
-    border: 1.8px solid #1e293b !important; 
+    background: var(--v6-bg-section) !important;
+    border: 1.8px solid #1e293b !important;
+    color: var(--v6-text-primary) !important;
     font-weight: 600;
     transition: all 0.2s ease;
     width: 100%;
     box-sizing: border-box;
     display: flex;
     align-items: center;
+}
+
+.v6-dark .v6-search-controls-row .v6-field-input,
+.v6-dark .v6-search-controls-row select,
+.v6-dark .v6-search-controls-row .v6-multi-select-trigger,
+.v6-dark .v6-search-controls-row .multi-select-trigger,
+.v6-dark .v6-search-controls-row .multi-select-container .multi-select-trigger,
+.v6-dark .v6-search-controls-row .v6-occupancy-trigger,
+.v6-dark .v6-budget-container,
+.v6-dark .field-container {
+
+    border: 1.8px solid var(--v6-border) !important;
 }
 
 .v6-field-icon-faint {
@@ -435,8 +512,12 @@
 }
 
 .v6-field-icon-faint svg {
-    stroke: #1e293b !important; /* GARANTOVANO TEGET IKONE U CELOM MODULU */
+    stroke: #1e293b !important;
     stroke-width: 2.5;
+}
+
+.v6-dark .v6-field-icon-faint svg {
+    stroke: var(--v6-text-primary) !important;
 }
 
 .v6-budget-container input::-webkit-outer-spin-button,
@@ -487,7 +568,14 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.v6-type-extra .v6-stack-card-icon { color: var(--v6-color-extra); }
+.v6-stack-card-icon svg {
+    stroke: var(--v6-navy) !important;
+}
+
+.v6-type-extra .v6-stack-card-icon svg { 
+    stroke: var(--v6-color-extra) !important; 
+}
+
 
 .v6-stack-card-price {
     font-size: 16px;    /* Smanjeno sa 18px da bi stalo */
@@ -517,26 +605,42 @@
     color: var(--v6-navy);
     border: 1px solid var(--v6-border);
 }
+/* MODERN UI DUGMAD (Injected from Master Design) */
 .v6-search-btn-advanced {
-    height: 52px;
-    padding: 0 32px;
-    background: var(--v6-accent);
-    color: var(--v6-accent-text);
-    border: none;
-    border-radius: var(--v6-radius-md);
-    font-weight: 800;
-    font-size: 16px;
+    background: linear-gradient(135deg, #7B2CBF, #9D4EDD) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    height: 52px;
 }
 
 .v6-search-btn-advanced:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--v6-shadow-md);
-    opacity: 0.9;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(157, 78, 221, 0.4) !important;
+    opacity: 1 !important;
+}
+
+/* SKRIVENI LUKSUZ IKONE */
+.icon-luxury, .v6-field-icon-faint svg {
+  stroke: var(--icon-stroke) !important;
+  stroke-width: 1.5px !important;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  transition: all 0.3s ease;
+}
+
+.v6-dark .icon-luxury, .v6-dark .v6-field-icon-faint svg {
+  filter: var(--icon-glow);
+}
+
+.icon-luxury:hover, .v6-field-icon-faint svg:hover {
+  stroke: var(--brand-accent) !important;
+  filter: drop-shadow(0 0 8px var(--brand-accent));
 }
 
 /* Autocomplete Dropdown - Advanced */
@@ -660,7 +764,8 @@
     width: 100%;
     height: 48px;
     padding: 0 14px;
-    border: 1.5px solid var(--v6-border);
+    border: 1.8px solid #1A234E !important;
+
     border-radius: var(--v6-radius-md);
     background: var(--v6-bg-main);
     color: var(--v6-text-primary);
@@ -686,7 +791,8 @@
 .v6-occupancy-trigger {
     height: 48px;
     padding: 0 14px;
-    border: 1.5px solid var(--v6-border);
+    border: 1.8px solid #1A234E !important;
+
     border-radius: var(--v6-radius-md);
     background: var(--v6-bg-main);
     color: var(--v6-text-primary);
@@ -1221,3 +1327,308 @@
         grid-template-columns: repeat(5, 1fr);
     }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   11. DOPUNA ZA UNUTRAŠNJOST POLJA I DROPDOWN MODELE
+   ───────────────────────────────────────────────────────────── */
+
+/* Stil za kontejner polja (npr. gde piše "Beograd" ili "2 odrasla") */
+.input-wrapper, .field-container {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-input);
+  border: 1.8px solid #1e293b !important;
+
+.v6-dark .input-wrapper, .v6-dark .field-container {
+
+
+    border: 1.8px solid var(--v6-border) !important;
+}
+
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  min-height: 56px;
+  width: 100%;
+}
+
+.input-wrapper:hover, .field-container:hover {
+  border-color: var(--brand-accent);
+}
+
+/* DROPDOWN MODUL (Ono što se otvori ispod polja) */
+.v6-luxury-popover, .v6-prime-hub.v6-luxury-popover, .dropdown-module, .popover {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  width: 100%;
+  min-width: 360px;
+  background-color: var(--bg-surface) !important;
+  border: 1.5px solid var(--border-color);
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+  z-index: 1000;
+  padding: 24px !important; /* Forces breathing room */
+  animation: v6FadeInUp 0.2s ease-out;
+  overflow: visible;
+}
+
+/* Elementi unutar dropdown-a (npr. redovi za Soba 1, Odrasli...) */
+.dropdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dropdown-row:last-child {
+  border-bottom: none;
+}
+
+/* Kontrole unutar dropdown-a (+ i - dugmad) */
+.counter-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-input);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.counter-btn:hover {
+  background-color: var(--brand-accent-light);
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
+}
+
+.counter-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Animacija za luksuzan ulazak */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════
+   REZULTATI PRETRAGE (Luxury Results System)
+   ═══════════════════════════════════════════════ */
+
+.search-results-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px 0;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Pojedinačna kartica (Hotel, Let, Paket) */
+.search-result-card {
+  display: grid;
+  grid-template-columns: 280px 1fr 220px; /* Slika | Info | Cena-Akcija */
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 20px; /* Luksuznije, veće zaobljenje */
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+[data-theme='dark'] .search-result-card,
+.v6-dark .search-result-card {
+  background-color: #1A233A; /* Midnight Surface */
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.search-result-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--brand-accent);
+}
+
+/* Sekcija sa slikom */
+.card-image-section {
+  position: relative;
+  width: 280px;
+  height: 100%;
+  background-color: var(--bg-app);
+  overflow: hidden;
+}
+
+.card-image-section img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.search-result-card:hover .card-image-section img {
+  transform: scale(1.05);
+}
+
+/* Centralna sekcija sa informacijama */
+.card-info-section {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0; /* Za elipsu teksta */
+}
+
+/* Desna sekcija sa cenom i akcijom */
+.price-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  background-color: var(--bg-app); /* Blagi kontrast */
+  border-left: 1px solid var(--border-color);
+  text-align: center;
+  gap: 12px;
+}
+
+[data-theme='dark'] .price-section,
+.v6-dark .price-section {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.price-amount {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.price-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+}
+
+/* Bedževi */
+.badge-luxury {
+  background-color: var(--brand-accent-light);
+  color: var(--brand-accent);
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(157, 78, 221, 0.1);
+}
+
+[data-theme='dark'] .badge-luxury,
+.v6-dark .badge-luxury {
+  background-color: rgba(157, 78, 221, 0.15);
+  color: #D8B4FE;
+}
+
+/* Luksuzne ikone u rezultatima */
+.icon-luxury {
+  stroke-width: 1.5;
+  color: var(--brand-accent);
+}
+
+[data-theme='dark'] .icon-luxury,
+.v6-dark .icon-luxury {
+  filter: drop-shadow(0 0 2px rgba(157, 78, 221, 0.4));
+}
+
+/* Pagination / Counter Button Style */
+.counter-btn-luxury {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 700;
+}
+
+.counter-btn-luxury:hover {
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
+  background: var(--brand-accent-light);
+}
+
+/* Override da slike ne budu invertovane */
+[data-theme='dark'] .search-result-card img,
+.v6-dark .search-result-card img {
+  filter: none !important;
+}
+
+/* Dodatni spacing za "Top Offers" dashboard */
+.v6-top-offers-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+}
+
+.v6-offer-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 16px;
+}
+
+.v6-offer-title-group h2 {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.v6-offer-title-group p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 4px 0 0 0;
+}
+
+/* LUXURY DROPDOWNS & POPOVERS */
+.v6-luxury-popover { background: var(--bg-surface) !important; border: 1.5px solid var(--border-color) !important; border-radius: 20px !important; padding: 24px !important; box-shadow: var(--shadow-md) !important; animation: v6FadeInUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28) !important; overflow: hidden !important; position: absolute !important; z-index: 10001 !important; min-width: 320px !important; }
+.v6-dark .v6-luxury-popover { background: var(--bg-surface) !important; border-color: var(--border-color) !important; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6) !important; }
+.dropdown-row { display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 14px 16px !important; background: var(--bg-app) !important; border: 1px solid var(--border-color) !important; border-radius: 14px !important; margin-bottom: 8px !important; transition: var(--transition-smooth) !important; width: 100% !important; gap: 12px !important; }
+.dropdown-row:hover { border-color: var(--brand-accent) !important; }
+.counter-btn-luxury { padding: 10px 18px; border-radius: 10px; border: 1.5px solid var(--border-color); background: var(--bg-surface); color: var(--text-main); font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
+.v6-card-cta-btn { background: linear-gradient(135deg, var(--brand-primary), #2D3748); color: #fff; border: none; font-weight: 800; font-size: 14px; cursor: pointer; transition: all 0.3s ease; box-shadow: var(--shadow-sm); }
+.v6-card-cta-btn:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(0,0,0,0.15); background: linear-gradient(135deg, var(--brand-accent), #7B2CBF); }
+
+/* SEARCH RESULTS CARDS - QUIET LUXURY */
+.search-results-container { display: flex; flex-direction: column; gap: 20px; padding: 24px 0; }
+.search-result-card { display: grid; grid-template-columns: 280px 1fr 200px; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 20px; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: var(--shadow-sm); }
+.search-result-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--brand-accent); }
+.price-section { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; background-color: var(--bg-app); border-left: 1px solid var(--border-color); text-align: center; }
+.v6-dark .price-section { background-color: rgba(255,255,255,0.03); }
+.card-image-section { position: relative; height: 100%; min-height: 200px; overflow: hidden; }
+.card-image-section img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+.search-result-card:hover .card-image-section img { transform: scale(1.05); }
+.card-info-section { padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+.badge-luxury { background: var(--brand-accent-light); color: var(--brand-accent); padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; width: fit-content; }

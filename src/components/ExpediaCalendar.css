@@ -6,32 +6,35 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.8); /* Zatamnjeno sa 0.4 na 0.8 */
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  backdrop-filter: blur(2px);
-  animation: exp-fade-in 0.2s ease;
+  z-index: 10000; /* Povećan z-index da bude iznad svega */
+  backdrop-filter: blur(8px); /* Povećan blur sa 2px na 8px */
 }
 
 .expedia-calendar-popup {
-  background: #ffffff;
+  background: var(--v6-bg-card);
+  background-color: var(--bg-surface, #ffffff); /* Fallback na čvrstu boju */
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border: 1.5px solid var(--v6-border);
+  box-shadow: var(--v6-shadow-lg);
   width: 100%;
   max-width: 840px;
   overflow: hidden;
   position: relative;
-  font-family: 'Outfit', 'Inter', sans-serif;
+  font-family: var(--v6-font);
   user-select: none;
+  color: var(--v6-text-primary);
 }
 
 /* ──── Tabs ──── */
 .exp-cal-tabs {
   display: flex;
   height: 48px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--v6-border);
+  background: var(--v6-bg-section);
 }
 
 .exp-cal-tab {
@@ -41,19 +44,20 @@
   justify-content: center;
   font-size: 14px;
   font-weight: 600;
-  color: #1a2b3c;
+  color: var(--v6-text-secondary);
   cursor: pointer;
   transition: all 0.2s;
   border-bottom: 2px solid transparent;
 }
 
 .exp-cal-tab.active {
-  color: #005eb8;
-  border-bottom-color: #005eb8;
+  color: var(--v6-accent);
+  border-bottom-color: var(--v6-accent);
+  background: var(--v6-bg-card);
 }
 
 .exp-cal-tab:hover:not(.active) {
-  background: #f8fafc;
+  background: var(--v6-bg-card-hover);
 }
 
 /* ──── Months Container ──── */
@@ -74,7 +78,7 @@
   justify-content: center;
   font-size: 16px;
   font-weight: 800;
-  color: #1a2b3c;
+  color: var(--v6-text-primary);
   margin-bottom: 24px;
   height: 32px;
 }
@@ -90,7 +94,7 @@
   text-align: center;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--v6-text-muted);
   padding: 4px 0;
 }
 
@@ -106,8 +110,8 @@
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  font-weight: 600;
-  color: #1a2b3c;
+  font-weight: 700; /* Povećano sa 600 za bolju čitljivost */
+  color: var(--v6-text-primary);
   cursor: pointer;
   border-radius: 50%;
   transition: all 0.15s;
@@ -115,7 +119,7 @@
 }
 
 .exp-day:hover:not(.disabled):not(.selected) {
-  background: #f1f5f9;
+  background: var(--v6-bg-section);
 }
 
 .exp-day.disabled {
@@ -124,14 +128,14 @@
 }
 
 .exp-day.selected {
-  background: #005eb8 !important;
-  color: #ffffff !important;
+  background: var(--v6-accent) !important;
+  color: var(--v6-accent-text) !important;
   border-radius: 50%;
   z-index: 2;
 }
 
 .exp-day.in-range {
-  background: rgba(0, 94, 184, 0.08);
+  background: var(--brand-accent-light);
   border-radius: 0;
 }
 
@@ -152,9 +156,9 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #005eb8;
+  border: 1px solid var(--v6-border);
+  background: var(--v6-bg-card);
+  color: var(--v6-text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -164,8 +168,8 @@
 }
 
 .exp-nav-btn:hover {
-  background: #f1f5f9;
-  border-color: #005eb8;
+  background: var(--v6-bg-card-hover);
+  border-color: var(--v6-accent);
 }
 
 .exp-nav-btn.prev { left: 32px; }
@@ -174,7 +178,8 @@
 /* ──── Footer ──── */
 .exp-cal-footer {
   padding: 16px 32px 24px 32px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--v6-border);
+  background: var(--v6-bg-section);
 }
 
 .exp-pills-row {
@@ -186,9 +191,9 @@
 .exp-pill {
   padding: 8px 16px;
   border-radius: 20px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #1a2b3c;
+  border: 1px solid var(--v6-border);
+  background: var(--v6-bg-card);
+  color: var(--v6-text-primary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -196,15 +201,14 @@
 }
 
 .exp-pill:hover {
-  border-color: #005eb8;
-  background: #f8fafc;
+  border-color: var(--v6-accent);
+  background: var(--v6-bg-card-hover);
 }
 
 .exp-pill.active {
-  background: #f1f7fe;
-  border-color: #1a2b3c;
-  color: #1a2b3c;
-  box-shadow: inset 0 0 0 1px #1a2b3c;
+  background: var(--v6-bg-section);
+  border-color: var(--v6-accent);
+  color: var(--v6-accent);
 }
 
 .exp-close-x {
@@ -220,7 +224,7 @@
 }
 
 .exp-close-x:hover {
-  background: #f1f5f9;
+  background: var(--v6-bg-card-hover);
 }
 
 @keyframes exp-fade-in {

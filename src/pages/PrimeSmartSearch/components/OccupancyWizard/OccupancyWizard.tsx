@@ -10,21 +10,10 @@ const styles: Record<string, React.CSSProperties> = {
         position: 'fixed',
         inset: 0,
         zIndex: 10000,
-        background: 'transparent', // Bez zatamnjenja cele strane
+        background: 'transparent',
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'flex-start',
-    },
-    panel: {
-        background: 'var(--v6-bg-card, #ffffff)', // Fallback na solidnu belu
-        border: '1.5px solid var(--v6-border, #e2e8f0)', // Naglašenije
-        borderRadius: 'var(--v6-radius-lg, 16px)',
-        padding: '24px', // Više disanja
-        width: '420px',
-        maxWidth: '95vw',
-        maxHeight: '80vh',
-        overflowY: 'auto',
-        boxShadow: 'var(--v6-shadow-lg, 0 10px 40px rgba(0,0,0,0.15))',
     },
     panelTitle: {
         fontSize: 'var(--v6-fs-md)',
@@ -40,7 +29,7 @@ const styles: Record<string, React.CSSProperties> = {
         borderRadius: 'var(--v6-radius-md)',
         padding: '14px',
         marginBottom: '12px',
-        background: 'var(--v6-bg-section)',
+        background: 'var(--v6-bg-main)',
     },
     roomHeader: {
         display: 'flex',
@@ -62,12 +51,6 @@ const styles: Record<string, React.CSSProperties> = {
         cursor: 'pointer',
         padding: '3px 8px',
     },
-    counterRow: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: '10px',
-    },
     counterLabel: {
         fontSize: 'var(--v6-fs-xs)',
         color: 'var(--v6-text-primary)',
@@ -77,26 +60,6 @@ const styles: Record<string, React.CSSProperties> = {
         fontSize: '12px',
         color: 'var(--v6-text-muted)',
         display: 'block',
-    },
-    counterControls: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-    },
-    counterBtn: {
-        width: '32px',
-        height: '32px',
-        borderRadius: '50%',
-        border: '1.5px solid var(--v6-border)',
-        background: 'var(--v6-bg-card)',
-        color: 'var(--v6-text-primary)',
-        fontSize: '18px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontWeight: 600,
-        transition: 'border-color 0.2s',
     },
     counterValue: {
         fontSize: 'var(--v6-fs-md)',
@@ -141,9 +104,9 @@ const styles: Record<string, React.CSSProperties> = {
     addRoomBtn: {
         width: '100%',
         padding: '12px',
-        border: '1.5px dashed var(--v6-border)',
+        border: '1.5px solid var(--v6-border)',
         borderRadius: 'var(--v6-radius-md)',
-        background: 'transparent',
+        background: 'var(--v6-bg-card)',
         color: 'var(--v6-text-secondary)',
         fontSize: 'var(--v6-fs-xs)',
         fontWeight: 600,
@@ -171,8 +134,8 @@ const styles: Record<string, React.CSSProperties> = {
     applyBtn: {
         width: '100%',
         padding: '13px',
-        background: 'var(--v6-accent)',
-        color: 'var(--v6-accent-text)',
+        background: '#1A234E', // Navy blue background from master design
+        color: '#FFFFFF',      // Explicit white text
         border: 'none',
         borderRadius: 'var(--v6-radius-md)',
         fontSize: 'var(--v6-fs-sm)',
@@ -195,24 +158,26 @@ interface CounterProps {
 }
 
 const Counter: React.FC<CounterProps> = ({ label, sublabel, value, min = 0, max = 10, onChange }) => (
-    <div style={styles.counterRow}>
+    <div className="dropdown-row">
         <div>
             <span style={styles.counterLabel}>{label}</span>
             {sublabel && <span style={styles.counterSub}>{sublabel}</span>}
         </div>
-        <div style={styles.counterControls}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
-                style={styles.counterBtn}
+                className="counter-btn"
                 onClick={() => onChange(Math.max(min, value - 1))}
                 disabled={value <= min}
                 aria-label={`Smanji ${label}`}
+                type="button"
             >−</button>
             <span style={styles.counterValue}>{value}</span>
             <button
-                style={styles.counterBtn}
+                className="counter-btn"
                 onClick={() => onChange(Math.min(max, value + 1))}
                 disabled={value >= max}
                 aria-label={`Povećaj ${label}`}
+                type="button"
             >+</button>
         </div>
     </div>
@@ -227,7 +192,9 @@ interface OccupancyWizardProps {
 
 export const OccupancyWizard: React.FC<OccupancyWizardProps> = ({ triggerRef }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [isDark, setIsDark] = useState(false);
     const [panelPos, setPanelPos] = useState({ top: 0, left: 0 });
+    const localTriggerRef = useRef<HTMLButtonElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
 
     const {
@@ -240,21 +207,21 @@ export const OccupancyWizard: React.FC<OccupancyWizardProps> = ({ triggerRef }) 
 
     const pax = calcPaxSummary(roomAllocations, checkIn, checkOut);
 
-    // Postavi poziciju panela ispod trigger dugmeta
     const openWizard = (e: React.MouseEvent<HTMLButtonElement>) => {
         const rect = e.currentTarget.getBoundingClientRect();
         setPanelPos({
-            top: rect.bottom + 6, // Približeno (samo 6px ofseta umesto 8 + scroll)
+            top: rect.bottom + 6,
             left: rect.left,
         });
+        setIsDark(!!e.currentTarget.closest('.v6-dark'));
         setIsOpen(true);
     };
 
-    // Zatvori klik izvan panela
     useEffect(() => {
         if (!isOpen) return;
         const handler = (e: MouseEvent) => {
-            if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+            if (panelRef.current && !panelRef.current.contains(e.target as Node) && 
+                localTriggerRef.current && !localTriggerRef.current.contains(e.target as Node)) {
                 setIsOpen(false);
             }
         };
@@ -262,78 +229,67 @@ export const OccupancyWizard: React.FC<OccupancyWizardProps> = ({ triggerRef }) 
         return () => document.removeEventListener('mousedown', handler);
     }, [isOpen]);
 
-    // Trigger button label
     const getTriggerLabel = () => {
-        const rooms = roomAllocations.length;
-        const adults = pax.totalAdults;
-        const children = pax.totalChildren;
-        
-        let label = `${adults} odr.`;
-        if (children > 0) label += ` · ${children} dece`;
-        label += ` · ${rooms} s.`;
+        const label = `${pax.totalAdults} odr, ${pax.totalChildren} deca`;
+        if (roomAllocations.length > 1) return `${label} (${roomAllocations.length} sobe)`;
         return label;
     };
 
-    // Ukupan summary tekst
     const getSummaryText = () => {
-        const parts: string[] = [];
-        parts.push(`${pax.totalAdults} odraslih`);
-        if (pax.totalChildren > 0) {
-            const agesStr = pax.childrenAges.map(a => `${a} god`).join(', ');
-            parts.push(`${pax.totalChildren} dece (${agesStr})`);
-        }
-        parts.push(`${roomAllocations.length} ${roomAllocations.length === 1 ? 'soba' : 'sobe'}`);
-        return parts.join(' · ');
+        return `${pax.totalAdults} Odraslih, ${pax.totalChildren} Dece u ${roomAllocations.length} Soba`;
     };
 
     return (
         <>
-            {/* TRIGGER DUGME */}
+            {/* TRIGGER BUTTON */}
             <button
-                className="v6-occupancy-trigger"
+                ref={localTriggerRef}
                 onClick={openWizard}
-                type="button"
+                className="v6-occupancy-trigger field-container"
+                style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '12px' }}
+                aria-haspopup="true"
                 aria-expanded={isOpen}
-                aria-haspopup="dialog"
+                type="button"
             >
-                <span>👤</span>
-                <span style={{ flex: 1, textAlign: 'left' }}>{getTriggerLabel()}</span>
+                <div style={{ color: 'var(--brand-accent)', display: 'flex', alignItems: 'center' }}>👤</div>
+                <span style={{ flex: 1, textAlign: 'left', fontWeight: 700, color: 'var(--text-main)' }}>{getTriggerLabel()}</span>
                 <span style={{ opacity: 0.5 }}>▾</span>
             </button>
 
             {/* PANEL (PORTAL - Izvan DOM stabla komponente) */}
             {isOpen && createPortal(
-                <div className="v6-prime-hub v6-portal-wrapper">
-                    <div
+                <div className={`v6-prime-hub ${isDark ? 'v6-dark' : ''}`} style={{ position: 'fixed', inset: 0, zIndex: 10000, pointerEvents: 'none', background: 'transparent' }}>
+                    <div 
+                        ref={panelRef}
+                        className="v6-portal-panel v6-luxury-popover"
                         style={{
-                            ...styles.overlay,
-                            background: 'transparent',
-                            backdropFilter: 'none', 
+                            position: 'fixed',
+                            top: panelPos.top + 8,
+                            left: Math.max(10, Math.min(panelPos.left, window.innerWidth - 440)),
+                            pointerEvents: 'auto',
+                            width: '420px',
+                            maxWidth: '95vw',
+                            maxHeight: '80vh',
+                            overflowY: 'auto',
+                            zIndex: 10001
                         }}
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label="Putnici i sobe"
                     >
-                        <div
-                            ref={panelRef}
-                            style={{
-                                ...styles.panel,
-                                position: 'fixed',
-                                top: panelPos.top + 8, // Mali odmak da se vidi polje iznad
-                                left: Math.max(10, Math.min(panelPos.left, window.innerWidth - 440)),
-                            }}
-                        >
                         {/* Header */}
                         <div style={styles.panelTitle}>
-                            <span>🏨 Putnici & Sobe</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{ background: 'var(--brand-accent-light)', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <span style={{ color: 'var(--brand-accent)', fontSize: '16px' }}>🏨</span>
+                                </div>
+                                <span style={{ fontSize: '18px', fontWeight: 800 }}>Putnici & Sobe</span>
+                            </div>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--v6-text-muted)' }}
+                                style={{ background: 'var(--bg-app)', border: 'none', cursor: 'pointer', color: 'var(--text-main)', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
                                 aria-label="Zatvori"
+                                type="button"
                             >✕</button>
                         </div>
 
-                        {/* ... rest of the content (skipped for speed, will use same logic) ... */}
                         {roomAllocations.map((room, idx) => (
                             <div key={idx} style={styles.roomCard}>
                                 <div style={styles.roomHeader}>
@@ -343,6 +299,7 @@ export const OccupancyWizard: React.FC<OccupancyWizardProps> = ({ triggerRef }) 
                                             style={styles.removeBtn}
                                             onClick={() => removeRoom(idx)}
                                             aria-label={`Ukloni Sobu ${idx + 1}`}
+                                            type="button"
                                         >
                                             ✕ Ukloni sobu
                                         </button>
@@ -393,21 +350,36 @@ export const OccupancyWizard: React.FC<OccupancyWizardProps> = ({ triggerRef }) 
                         ))}
                         {roomAllocations.length < 6 && (
                             <button style={styles.addRoomBtn} onClick={addRoom} type="button">
-                                <span>＋</span>
+                                <span style={{ color: '#CBD5E1' }}>＋</span>
                                 <span>Dodaj još jednu sobu</span>
                             </button>
                         )}
                         <div style={styles.footer}>
-                            <p style={styles.summaryLine}>📋 {getSummaryText()}</p>
-                            <button style={styles.applyBtn} onClick={() => setIsOpen(false)} type="button">Potvrdi izbor</button>
+                            <button 
+                                style={{ 
+                                    width: '100%', 
+                                    padding: '16px', 
+                                    background: 'linear-gradient(135deg, #7B2CBF, #9D4EDD)', 
+                                    color: 'white', 
+                                    border: 'none', 
+                                    borderRadius: '14px', 
+                                    fontSize: '16px', 
+                                    fontWeight: 800, 
+                                    cursor: 'pointer', 
+                                    boxShadow: '0 4px 15px rgba(157, 78, 221, 0.4)'
+                                }} 
+                                onClick={() => setIsOpen(false)} 
+                                type="button"
+                            >
+                                Potvrdi
+                            </button>
                         </div>
                     </div>
-                </div>
-            </div>,
-            document.body
-        )}
-    </>
-);
+                </div>,
+                document.body
+            )}
+        </>
+    );
 };
 
 export default OccupancyWizard;

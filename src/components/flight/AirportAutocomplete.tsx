@@ -84,12 +84,21 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
 
     return (
         <div className="v6-ctrl-box" ref={wrapperRef} style={{ position: 'relative', flex: 1 }}>
-            <div className="v6-input-v6-styled" style={{ cursor: 'text' }}>
+            <div className="v6-input-v6-styled" style={{ cursor: 'text', height: '52px' }}>
                 <div className="v6-inner-icon">{icon}</div>
                 <input
                     type="text"
-                    className="v6-select-v6" // Using same class for consistent font but it's an input
-                    style={{ border: 'none', background: 'transparent', width: '100%', outline: 'none', padding: 0 }}
+                    className="v6-field-input-clean"
+                    style={{ 
+                        border: 'none', 
+                        background: 'transparent', 
+                        width: '100%', 
+                        outline: 'none', 
+                        padding: 0,
+                        color: 'var(--text-main)',
+                        fontWeight: 700,
+                        fontSize: '15px'
+                    }}
                     value={inputValue}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
@@ -109,27 +118,35 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
             </div>
 
             {isOpen && suggestions.length > 0 && (
-                <div style={{
-                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1100,
-                    background: 'white', border: '2px solid #1e293b', borderRadius: '12px',
-                    marginTop: '4px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', overflow: 'hidden'
-                }}>
+                <div 
+                    className={`v6-prime-hub ${document.body.classList.contains('v6-dark') ? 'v6-dark' : ''}`}
+                    style={{
+                        position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, zIndex: 1100,
+                        background: 'var(--bg-surface)', border: '1.5px solid var(--border-color)', borderRadius: '16px',
+                        boxShadow: 'var(--shadow-md)', overflow: 'hidden',
+                        animation: 'v6-pop-in 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28)'
+                    }}
+                >
+                    <div style={{ padding: '10px 16px', fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-color)' }}>
+                        Pronađeni aerodromi
+                    </div>
                     {suggestions.map((s, idx) => (
                         <div 
                             key={s.code}
                             onClick={() => handleSelect(s)}
                             onMouseEnter={() => setSelectedIndex(idx)}
                             style={{
-                                padding: '12px 16px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9',
-                                background: idx === selectedIndex ? '#f8fafc' : 'transparent',
-                                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                                padding: '14px 16px', cursor: 'pointer', borderBottom: idx === suggestions.length - 1 ? 'none' : '1px solid var(--border-color)',
+                                background: idx === selectedIndex ? 'var(--bg-app)' : 'transparent',
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                transition: 'all 0.2s ease'
                             }}
                         >
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ fontWeight: 800, color: '#1e293b', fontSize: '14px' }}>{s.city}</span>
-                                <span style={{ fontSize: '12px', color: '#64748b' }}>{s.name}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <span style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '14px' }}>{s.city}</span>
+                                <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>{s.name}</span>
                             </div>
-                            <span style={{ fontWeight: 900, color: '#1e293b', background: '#f1f5f9', padding: '4px 8px', borderRadius: '6px', fontSize: '12px' }}>{s.code}</span>
+                            <span style={{ fontWeight: 900, color: 'var(--text-main)', background: 'var(--bg-app)', border: '1px solid var(--border-color)', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', letterSpacing: '0.05em' }}>{s.code}</span>
                         </div>
                     ))}
                 </div>

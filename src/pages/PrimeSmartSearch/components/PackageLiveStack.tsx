@@ -131,14 +131,14 @@ export const PackageLiveStack: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px' }}>
                 <div style={{
                     padding: '8px 16px',
-                    background: 'var(--v6-color-prime)',
+                    background: '#1A234E', /* Fiksna tamna teget za vidljivost belog teksta */
                     borderRadius: 'var(--v6-radius-md)',
                     color: '#fff',
                     fontSize: '11px',
                     fontWeight: 800,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
+                    boxShadow: '0 4px 12px rgba(26, 35, 78, 0.25)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px'
@@ -166,7 +166,7 @@ export const PackageLiveStack: React.FC = () => {
                         <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--v6-text-muted)', textTransform: 'uppercase', marginTop: '10px', textAlign: 'center' }}>Inspiracija za Vas</div>
                         {mockPackages.map(pkg => (
                             <div key={pkg.id} style={{
-                                padding: '12px', background: 'var(--v6-bg-card)', border: '1.5px solid var(--v6-border)',
+                                padding: '12px', background: '#FFFFFF', border: '1.8px solid #1A234E',
                                 borderRadius: '14px', cursor: 'pointer', transition: 'all 0.2s',
                                 display: 'flex', alignItems: 'center', gap: '12px',
                                 boxShadow: 'var(--v6-shadow-sm)'
@@ -284,12 +284,12 @@ export const PackageLiveStack: React.FC = () => {
                                 style={{
                                     flex: 1,
                                     padding: '10px',
-                                    background: 'var(--v6-bg-section)',
-                                    border: '1.5px solid var(--v6-border)',
+                                    background: 'var(--v6-navy)',
+                                    border: '1.8px solid #1A234E',
                                     borderRadius: 'var(--v6-radius-md)',
                                     fontSize: '11px',
                                     fontWeight: 700,
-                                    color: 'var(--v6-text-primary)',
+                                    color: '#ffffff',
                                     cursor: 'pointer',
                                     transition: 'all 0.2s',
                                     display: 'flex',
@@ -305,12 +305,12 @@ export const PackageLiveStack: React.FC = () => {
                                 style={{
                                     flex: 1,
                                     padding: '10px',
-                                    background: 'var(--v6-bg-section)',
-                                    border: '1.5px solid var(--v6-border)',
+                                    background: 'var(--v6-navy)',
+                                    border: '1.8px solid #1A234E',
                                     borderRadius: 'var(--v6-radius-md)',
                                     fontSize: '11px',
                                     fontWeight: 700,
-                                    color: 'var(--v6-text-primary)',
+                                    color: '#ffffff',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',

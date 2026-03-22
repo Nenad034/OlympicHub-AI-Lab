@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
+import { useThemeStore } from '../stores';
 import './ExpediaCalendar.css';
 
 interface ExpediaCalendarProps {
@@ -24,6 +25,7 @@ export const ExpediaCalendar: React.FC<ExpediaCalendarProps> = ({
     const [selEnd, setSelEnd] = useState<Date | null>(endDate ? new Date(endDate) : null);
     const [activeTab, setActiveTab] = useState<'exact' | 'flexible'>('exact');
     const [flexibleDays, setFlexibleDays] = useState(initialFlexibleDays);
+    const { theme } = useThemeStore();
 
     const monthNames = ["Januar", "Februar", "Mart", "April", "Maj", "Jun", "Jul", "Avgust", "Septembar", "Oktobar", "Novembar", "Decembar"];
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -117,7 +119,7 @@ export const ExpediaCalendar: React.FC<ExpediaCalendarProps> = ({
 
     return createPortal(
         <div className="expedia-calendar-overlay" onClick={onClose}>
-            <div className="expedia-calendar-popup" onClick={e => e.stopPropagation()}>
+            <div className={`v6-prime-hub ${theme === 'navy' ? 'v6-dark' : ''} expedia-calendar-popup`} onClick={e => e.stopPropagation()}>
                 <button className="exp-close-x" onClick={onClose}><X size={20} /></button>
                 
                 <div className="exp-cal-tabs">

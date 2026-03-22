@@ -139,13 +139,18 @@ export const HotelSearchForm: React.FC = () => {
     const [showCalendar, setShowCalendar] = useState(false);
     const [showNationalityPicker, setShowNationalityPicker] = useState(false);
     const [showAutocomplete, setShowAutocomplete] = useState(false);
+    const [nationalitySearch, setNationalitySearch] = useState('');
 
-    // Mock podaci za autocomplete (Faza 4 će ovo puniti iz API-ja)
     const autocompleteResults = [
         { id: '1', name: 'Grčka', type: 'country', sub: 'Država' },
         { id: '2', name: 'Atina', type: 'city', sub: 'Grčka' },
         { id: '3', name: 'Hotel Grande Bretagne', type: 'hotel', sub: 'Atina, Grčka' },
     ].filter(item => item.name.toLowerCase().includes(destInput.toLowerCase()));
+
+    // Filtrirane nacionalnosti za search
+    const filteredNationalities = NATIONALITY_OPTIONS.filter(n =>
+        n.label.toLowerCase().includes(nationalitySearch.toLowerCase())
+    );
 
     // ── Destinacija logika ───────────────────────────────────
     const handleSelectOption = (item: any) => {
@@ -221,7 +226,7 @@ export const HotelSearchForm: React.FC = () => {
                     <div className="v6-hero-input-wrapper">
                         {/* ... rest of the destination logic remains same ... */}
                     <div className="v6-hero-icon-faint">
-                        <Search size={28} color="var(--v6-accent)" />
+                        <Search className="icon-luxury" size={28} />
                     </div>
                     
                     {/* Tags for destination if any */}
@@ -231,7 +236,7 @@ export const HotelSearchForm: React.FC = () => {
                     }}>
                         {destinations.map(d => (
                             <span key={d.id} style={{
-                                padding: '6px 14px', background: 'var(--v6-accent)', color: 'white',
+                                padding: '6px 14px', background: 'var(--v6-accent)', color: 'var(--v6-accent-text)',
                                 borderRadius: '12px', fontSize: '14px', fontWeight: 700, pointerEvents: 'auto',
                                 display: 'flex', alignItems: 'center', gap: '6px'
                             }}>
@@ -287,7 +292,7 @@ export const HotelSearchForm: React.FC = () => {
                 
                 {/* DATES - Equal Width */}
                 <div className="v6-field-icon-wrapper v6-ctrl-box" onClick={() => setShowCalendar(true)}>
-                    <div className="v6-field-icon-faint"><Calendar size={20} /></div>
+                    <div className="v6-field-icon-faint"><Calendar className="icon-luxury" size={20} /></div>
                     <div className="v6-field-input" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {checkIn ? (
                             <>
@@ -301,7 +306,7 @@ export const HotelSearchForm: React.FC = () => {
 
                 {/* OCCUPANCY - Equal Width */}
                 <div className="v6-field-icon-wrapper v6-ctrl-box">
-                    <div className="v6-field-icon-faint"><Users size={20} /></div>
+                    <div className="v6-field-icon-faint"><Users className="icon-luxury" size={20} /></div>
                     <div style={{ width: '100%' }}>
                         <OccupancyWizard />
                     </div>
@@ -309,7 +314,7 @@ export const HotelSearchForm: React.FC = () => {
 
                 {/* MEAL PLANS */}
                 <div className="v6-field-icon-wrapper v6-ctrl-box">
-                    <div className="v6-field-icon-faint"><UtensilsCrossed size={18} /></div>
+                    <div className="v6-field-icon-faint"><UtensilsCrossed className="icon-luxury" size={18} /></div>
                     <div style={{ width: '100%' }}>
                         <MultiSelectDropdown 
                             options={MEAL_PLAN_OPTIONS}
@@ -323,9 +328,9 @@ export const HotelSearchForm: React.FC = () => {
 
                 {/* BUDGET */}
                 <div className="v6-field-icon-wrapper v6-budget-container">
-                    <div className="v6-field-icon-faint"><DollarSign size={20} /></div>
+                    <div className="v6-field-icon-faint"><DollarSign className="icon-luxury" size={20} /></div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap', color: 'var(--v6-navy)' }}>Ukupni budžet do</span>
+                        <span style={{ fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap', color: 'var(--v6-text-muted)' }}>Ukupni budžet do</span>
                         <input 
                             placeholder="" 
                             className="v6-field-input-clean" 
@@ -348,38 +353,69 @@ export const HotelSearchForm: React.FC = () => {
                 </div>
 
                 {/* NATIONALITY */}
-                <div className="v6-field-icon-wrapper" onClick={() => setShowNationalityPicker(!showNationalityPicker)}>
-                    <div className="v6-field-icon-faint"><Globe size={20} /></div>
-                    <div className="v6-field-input" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}>
-                        <span>{nationality === 'RS' ? '' : NATIONALITY_OPTIONS.find(n => n.value === nationality)?.label}</span>
-                        <ChevronDown size={14} style={{ opacity: 0.4 }} />
+                <div className="v6-field-icon-wrapper v6-ctrl-box" style={{ position: 'relative' }}>
+                    <div className="v6-field-icon-faint"><Globe className="icon-luxury" size={20} /></div>
+                    <div className="v6-field-input" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', paddingRight: '12px' }}>
+                        <input 
+                            type="text"
+                            placeholder="Zemlja / Passport"
+                            value={showNationalityPicker ? nationalitySearch : (nationality === 'RS' ? 'Srbija' : NATIONALITY_OPTIONS.find(n => n.value === nationality)?.label)}
+                            onChange={(e) => {
+                                setNationalitySearch(e.target.value);
+                                if (!showNationalityPicker) setShowNationalityPicker(true);
+                            }}
+                            onFocus={() => {
+                                setShowNationalityPicker(true);
+                                setNationalitySearch('');
+                            }}
+                            className="v6-field-input-clean"
+                            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontWeight: 600 }}
+                        />
+                        <ChevronDown 
+                            size={14} 
+                            style={{ opacity: 0.4, cursor: 'pointer' }} 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowNationalityPicker(!showNationalityPicker);
+                            }}
+                        />
                         
                         {showNationalityPicker && (
                             <div style={{ 
-                                position: 'absolute', bottom: '105%', left: 0, right: 0, zIndex: 1100, 
+                                position: 'absolute', top: '105%', left: 0, right: 0, zIndex: 1100, 
                                 background: 'var(--v6-bg-card)', border: '1px solid var(--v6-border)', 
-                                borderRadius: '12px', padding: '8px', boxShadow: 'var(--v6-shadow-lg)', maxHeight: '300px', overflowY: 'auto'
+                                borderRadius: '12px', padding: '8px', boxShadow: 'var(--v6-shadow-lg)', maxHeight: '250px', overflowY: 'auto'
                             }}>
-                                {NATIONALITY_OPTIONS.map(n => (
+                                {filteredNationalities.map(n => (
                                     <div 
                                         key={n.value} 
-                                        onClick={(e) => { e.stopPropagation(); setNationality(n.value); setShowNationalityPicker(false); }}
+                                        onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            setNationality(n.value); 
+                                            setShowNationalityPicker(false);
+                                            setNationalitySearch('');
+                                        }}
                                         className="v6-autocomplete-item"
                                         style={{ padding: '8px 12px', fontSize: '14px' }}
                                     >
                                         {n.label}
                                     </div>
                                 ))}
+                                {filteredNationalities.length === 0 && (
+                                    <div style={{ padding: '12px', textAlign: 'center', color: 'var(--v6-text-muted)', fontSize: '12px' }}>
+                                        Nema rezultata
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* SEARCH BUTTON */}
-                <button type="submit" className="v6-search-btn-advanced" disabled={isSubmitting}>
+                <button type="submit" className="v6-search-btn-advanced btn-primary" disabled={isSubmitting}>
                     {isSubmitting ? '...' : (
                         <>
-                            <Search size={20} />
+                            <Search className="icon-luxury" size={20} stroke="white" />
                             Traži
                         </>
                     )}

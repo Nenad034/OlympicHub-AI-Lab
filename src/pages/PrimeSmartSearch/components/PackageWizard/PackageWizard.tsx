@@ -11,6 +11,7 @@ import { Search, MapPin, Calendar, Users, Send, Plane, Hotel, Bus, Ticket, Check
 import { ExpediaCalendar } from '../../../../components/ExpediaCalendar';
 import type { FlightSearchResult, HotelSearchResult, TransferOption, ActivityOption, FlightLeg } from '../../types';
 import { PackageLiveStack } from '../PackageLiveStack';
+import { FlightPaxWizard } from '../FlightSearchForm/FlightPaxWizard';
 
 // ─────────────────────────────────────────────────────────────
 // HELPERS
@@ -138,7 +139,7 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
     
     // Multi-Stop State
     const [isMultiStop, setIsMultiStop] = React.useState(false);
-    const [segments, setSegments] = React.useState([
+    const [segments, setSegments] = React.useState<any[]>([
         { 
             id: '1', 
             origin: 'Beograd (BEG)', 
@@ -206,42 +207,46 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
                     <button
                         onClick={resetPackageWizard}
                         style={{
-                            padding: '8px 16px',
-                            background: '#fff',
-                            border: '2px solid #ef4444',
+                            padding: '10px 18px',
+                            background: 'var(--v6-bg-card)',
+                            border: '1.8px solid #1A234E',
                             borderRadius: '12px',
-                            color: '#ef4444',
+                            color: 'var(--v6-text-primary)',
                             fontSize: '13px',
+                            fontFamily: 'var(--v6-font)',
                             fontWeight: 900,
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
-                            transition: 'all 0.2s'
+                            transition: 'all 0.2s',
+                            boxShadow: 'var(--v6-shadow-sm)'
                         }}
                     >
-                        🔄 NOVA PRETRAGA
+                        NOVA PRETRAGA
                     </button>
 
                     {/* Multi-Stop Toggle */}
                     <button 
                         onClick={() => setIsMultiStop(!isMultiStop)}
                         style={{
-                            padding: '8px 16px',
-                            background: isMultiStop ? 'var(--v6-navy)' : 'var(--v6-bg-card)',
-                            border: '2px solid var(--v6-navy)',
+                            padding: '10px 18px',
+                            background: isMultiStop ? 'var(--v6-accent)' : 'var(--v6-bg-card)',
+                            border: isMultiStop ? '1.8px solid var(--v6-accent)' : '1.8px solid #1A234E',
                             borderRadius: '12px',
-                            color: isMultiStop ? '#fff' : 'var(--v6-navy)',
+                            color: isMultiStop ? 'var(--v6-accent-text)' : 'var(--v6-text-primary)',
                             fontSize: '13px',
+                            fontFamily: 'var(--v6-font)',
                             fontWeight: 900,
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
-                            transition: 'all 0.2s'
+                            transition: 'all 0.2s',
+                            boxShadow: 'var(--v6-shadow-sm)'
                         }}
                     >
-                        {isMultiStop ? '🌐 Multi-Stop Aktivan' : '📍 Aktiviraj Multi-Stop'}
+                        {isMultiStop ? 'Multi-Stop Aktivan' : 'Aktiviraj Multi-Stop'}
                     </button>
                 </div>
 
@@ -249,7 +254,7 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
 
             {(searchMode as any) !== 'semantic' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <h3 style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 900, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h3 style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 900, color: 'var(--v6-text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <Search size={20} color="var(--v6-accent)" /> 
                         {isMultiStop ? 'Planiranje Vašeg Multi-Stop Putovanja' : 'Definišite parametre paketa'}
                     </h3>
@@ -258,10 +263,10 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
                         /* MULTI-STOP VIEW */
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {segments.map((seg, idx) => (
-                                <div key={seg.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', background: 'var(--v6-bg-card)', border: '2px solid #1e293b', borderRadius: '16px' }}>
+                                <div key={seg.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', background: 'var(--v6-bg-section)', border: '1.8px solid #1A234E', borderRadius: '16px' }}>
                                     <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '14px', fontWeight: 900, width: '28px', height: '28px', borderRadius: '50%', background: 'var(--v6-navy)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{idx + 1}</span>
-                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', padding: '4px 0' }}>
+                                        <span style={{ fontSize: '14px', fontWeight: 900, width: '28px', height: '28px', borderRadius: '50%', background: 'var(--v6-accent)', color: 'var(--v6-accent-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{idx + 1}</span>
+                                        <div className="field-container" style={{ flex: 1, height: '48px', padding: '0 12px' }}>
                                             <input 
                                                 value={seg.origin}
                                                 onChange={e => {
@@ -270,9 +275,9 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
                                                     setSegments(news);
                                                 }}
                                                 placeholder="Odakle?" 
-                                                style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontWeight: 700, fontSize: '15px' }}
+                                                style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontWeight: 800, fontSize: '15px', color: 'var(--text-main)' }}
                                             />
-                                            <span style={{ color: 'var(--v6-text-muted)' }}>→</span>
+                                            <span style={{ color: 'var(--text-muted)', margin: '0 8px' }}>→</span>
                                             <input 
                                                 value={seg.destination}
                                                 onChange={e => {
@@ -281,7 +286,7 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
                                                     setSegments(news);
                                                 }}
                                                 placeholder="Kuda?" 
-                                                style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontWeight: 700, fontSize: '15px' }}
+                                                style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontWeight: 800, fontSize: '15px', color: 'var(--text-main)' }}
                                             />
                                         </div>
                                         {idx > 0 && <button onClick={() => removeSegment(seg.id)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '18px', padding: '4px' }}>🗑️</button>}
@@ -332,32 +337,22 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
                                            )}
                                         </div>
 
-                                        {/* Segment Occupancy */}
-                                        <div style={{ flex: 1.2, display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: 'var(--v6-bg-section)', borderRadius: '10px', border: '1.5px solid var(--v6-border)' }}>
-                                           <Users size={14} color="var(--v6-accent)" />
-                                           <div style={{ flex: 1, fontSize: '13px' }}>
-                                              {/* Ovde koristimo uprošćeni prikaz za multi-stop radi preglednosti */}
-                                              <span style={{ fontWeight: 700 }}>{seg.occupancy[0].adults} odr.</span>
-                                              {seg.occupancy[0].children > 0 && <span style={{ fontWeight: 700 }}>, {seg.occupancy[0].children} d.</span>}
-                                           </div>
-                                           <div style={{ display: 'flex', gap: '4px' }}>
-                                              <button 
-                                                 onClick={() => {
-                                                    const news = [...segments];
-                                                    news[idx].occupancy[0].adults = Math.max(1, news[idx].occupancy[0].adults - 1);
-                                                    setSegments(news);
-                                                 }}
-                                                 style={{ width: '22px', height: '22px', borderRadius: '4px', border: '1px solid var(--v6-border)', background: '#fff', fontSize: '14px', cursor: 'pointer' }}
-                                              >−</button>
-                                              <button 
-                                                 onClick={() => {
-                                                    const news = [...segments];
-                                                    news[idx].occupancy[0].adults = Math.min(8, news[idx].occupancy[0].adults + 1);
-                                                    setSegments(news);
-                                                 }}
-                                                 style={{ width: '22px', height: '22px', borderRadius: '4px', border: '1px solid var(--v6-border)', background: '#fff', fontSize: '14px', cursor: 'pointer' }}
-                                              >+</button>
-                                           </div>
+                                        {/* Segment Occupancy - Using FlightPaxWizard for consistency */}
+                                        <div style={{ flex: 1.2 }}>
+                                           <FlightPaxWizard 
+                                              adults={seg.occupancy[0].adults}
+                                              children={seg.occupancy[0].children}
+                                              infants={(seg as any).infants || 0}
+                                              childAges={seg.occupancy[0].childrenAges}
+                                              onChange={(data) => {
+                                                 const news = [...segments];
+                                                 news[idx].occupancy[0].adults = data.adults;
+                                                 news[idx].occupancy[0].children = data.children;
+                                                 news[idx].occupancy[0].childrenAges = data.childAges;
+                                                 (news[idx] as any).infants = data.infants;
+                                                 setSegments(news);
+                                              }}
+                                           />
                                         </div>
                                     </div>
                                 </div>
@@ -370,35 +365,29 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
                         /* CLASSIC VIEW: Origin & Destination */
                         <div style={{ display: 'flex', gap: '12px' }}>
                             {/* Origin */}
-                            <div style={{ 
-                                flex: 1, height: '64px', background: 'var(--v6-bg-card)', border: '2px solid #1e293b', 
-                                borderRadius: '16px', display: 'flex', alignItems: 'center', padding: '0 16px'
-                            }}>
-                                <Send size={20} style={{ color: 'var(--v6-accent)', marginRight: '12px', transform: 'rotate(-45deg)' }} />
+                            <div className="field-container" style={{ flex: 1, padding: '0 16px', border: '1.8px solid #1A234E !important', borderRadius: '12px', background: '#FFFFFF' }}>
+                                <Send size={20} style={{ color: 'var(--brand-accent)', marginRight: '12px', transform: 'rotate(-45deg)' }} />
                                 <input 
                                     type="text"
                                     value={origin}
                                     onChange={e => setOrigin(e.target.value)}
                                     placeholder="Polazak iz..."
-                                    style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', color: 'var(--v6-text-primary)', fontSize: '16px', fontWeight: 800 }}
+                                    style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', color: 'var(--text-main)', fontSize: '16px', fontWeight: 800 }}
                                 />
                             </div>
 
                             {/* Destination */}
-                            <div style={{ 
-                                flex: 2, height: '64px', background: 'var(--v6-bg-card)', border: '2px solid #1e293b', 
-                                borderRadius: '16px', display: 'flex', alignItems: 'center', padding: '0 16px', position: 'relative'
-                            }}>
-                                <MapPin size={22} style={{ color: 'var(--v6-accent)', marginRight: '12px' }} />
+                            <div className="field-container" style={{ flex: 2, padding: '0 16px', position: 'relative', border: '1.8px solid #1A234E !important', borderRadius: '12px', background: '#FFFFFF' }}>
+                                <MapPin size={22} style={{ color: 'var(--brand-accent)', marginRight: '12px' }} />
                                 <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '6px', overflowX: 'auto', flex: 1 }}>
                                     {destinations.map(d => (
                                         <span key={d.id} style={{ 
-                                            padding: '6px 14px', background: 'var(--v6-accent)', color: 'white', 
+                                            padding: '6px 14px', background: 'var(--brand-accent)', color: '#fff', 
                                             borderRadius: '12px', fontSize: '13px', fontWeight: 800, whiteSpace: 'nowrap',
                                             display: 'flex', alignItems: 'center', gap: '6px'
                                         }}>
                                             {d.name}
-                                            <button onClick={() => removeDestination(d.id)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '14px', padding: 0 }}>✕</button>
+                                            <button onClick={() => removeDestination(d.id)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '14px', padding: 0 }}>✕</button>
                                         </span>
                                     ))}
                                     {destinations.length < 3 && (
@@ -410,7 +399,7 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
                                             placeholder={destinations.length === 0 ? "Kuda idete?" : ""}
                                             style={{ 
                                                 flex: 1, minWidth: '100px', border: 'none', outline: 'none', background: 'transparent', 
-                                                color: 'var(--v6-text-primary)', fontSize: '16px', fontWeight: 600
+                                                color: 'var(--text-main)', fontSize: '16px', fontWeight: 700
                                             }}
                                         />
                                     )}
@@ -424,13 +413,9 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
                         {!isMultiStop && (
                             <>
                                 {/* Dates Control Box */}
-                                <div style={{ 
-                                    flex: 1.5, height: '56px', background: 'var(--v6-bg-card)', border: '2px solid #1e293b', 
-                                    borderRadius: '14px', display: 'flex', alignItems: 'center', padding: '0 14px', gap: '10px',
-                                    cursor: 'pointer'
-                                }} onClick={() => setShowCalendar(true)}>
-                                    <Calendar size={18} />
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', fontSize: '14px', fontWeight: 700, color: 'var(--v6-text-primary)' }}>
+                                <div className="field-container" style={{ flex: 1.5, padding: '0 14px', gap: '10px', border: '1.8px solid #1A234E !important', borderRadius: '12px', background: '#FFFFFF' }} onClick={() => setShowCalendar(true)}>
+                                    <Calendar size={18} style={{ color: 'var(--brand-accent)' }} />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', fontSize: '14px', fontWeight: 700, color: 'var(--text-main)' }}>
                                         {checkIn ? (
                                             <>
                                                 <span>{new Date(checkIn).toLocaleDateString('sr-RS')}</span>
@@ -438,32 +423,28 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
                                                 <span>{checkOut ? new Date(checkOut).toLocaleDateString('sr-RS') : '...'}</span>
                                             </>
                                         ) : (
-                                            <span style={{ color: 'var(--v6-text-muted)', fontWeight: 500 }}>Izaberite datume</span>
+                                            <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Izaberite datume</span>
                                         )}
                                     </div>
                                     
                                     {showCalendar && (
-                                        <ExpediaCalendar 
-                                            startDate={checkIn}
-                                            endDate={checkOut}
-                                            onChange={(start, end) => {
-                                                setCheckIn(start);
-                                                setCheckOut(end);
-                                            }}
-                                            onClose={() => setShowCalendar(false)}
-                                        />
+                                        <div className="popover" style={{ zIndex: 1000, position: 'absolute', top: 'calc(100% + 8px)', left: 0 }}>
+                                            <ExpediaCalendar 
+                                                startDate={checkIn}
+                                                endDate={checkOut}
+                                                onChange={(start, end) => {
+                                                    setCheckIn(start);
+                                                    setCheckOut(end);
+                                                }}
+                                                onClose={() => setShowCalendar(false)}
+                                            />
+                                        </div>
                                     )}
                                 </div>
 
                                 {/* Occupancy Control Box */}
-                                <div style={{ 
-                                    flex: 1, height: '56px', background: 'var(--v6-bg-card)', border: '2px solid #1e293b', 
-                                    borderRadius: '14px', display: 'flex', alignItems: 'center', padding: '0 14px', gap: '10px', position: 'relative'
-                                }}>
-                                    <Users size={18} />
-                                    <div style={{ width: '100%' }}>
-                                        <OccupancyWizard />
-                                    </div>
+                                <div style={{ flex: 1 }}>
+                                    <OccupancyWizard />
                                 </div>
                             </>
                         )}
@@ -478,8 +459,8 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
                             style={{
                                 flex: 1,
                                 height: '56px',
-                                background: (canContinue || (searchMode as any) === 'semantic') ? 'var(--v6-navy)' : '#e2e8f0',
-                                color: (canContinue || (searchMode as any) === 'semantic') ? 'white' : '#94a3b8',
+                                background: (canContinue || (searchMode as any) === 'semantic') ? 'var(--v6-navy)' : 'var(--v6-border)',
+                                color: (canContinue || (searchMode as any) === 'semantic') ? '#ffffff' : 'var(--v6-text-muted)',
                                 border: 'none',
                                 borderRadius: '14px',
                                 fontSize: '15px',
@@ -1091,6 +1072,7 @@ export const PackageWizard: React.FC<PackageWizardProps> = ({ onComplete }) => {
                 gap: '20px',
                 padding: '20px',
                 alignItems: 'flex-start',
+                background: 'var(--v6-bg-main)',
             }}>
                 {/* Levi panel: aktivan korak */}
                 <div style={{ flex: 1, minWidth: 0 }} className="v6-fade-in" key={packageWizardStep}>
