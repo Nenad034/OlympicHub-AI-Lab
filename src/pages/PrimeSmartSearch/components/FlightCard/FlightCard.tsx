@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { FlightLeg, FlightSearchResult } from '../../types';
+import { useSearchStore } from '../../stores/useSearchStore';
+import { Plane, ChevronDown, ChevronUp, Briefcase, RefreshCcw, Info } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────
 // HELPERS
@@ -7,10 +9,32 @@ import type { FlightLeg, FlightSearchResult } from '../../types';
 const formatTime = (iso: string) =>
     new Date(iso).toLocaleTimeString('sr-Latn-RS', { hour: '2-digit', minute: '2-digit' });
 
+const formatDate = (iso: string) => 
+    new Date(iso).toLocaleDateString('sr-Latn-RS', { day: '2-digit', month: 'short' });
+
 const formatDuration = (mins: number) => {
     const h = Math.floor(mins / 60);
     const m = mins % 60;
     return m > 0 ? `${h}h ${m}m` : `${h}h`;
+};
+
+const getAirlineLogo = (airline: string) => {
+    // Fallback na logo sa CDN-a
+    const codeMap: Record<string, string> = {
+        'Air Serbia': 'JU',
+        'Lufthansa': 'LH',
+        'Turkish Airlines': 'TK',
+        'Emirates': 'EK',
+        'FlyDubai': 'FZ',
+        'Qatar Airways': 'QR',
+        'Austrian': 'OS',
+        'Swiss': 'LX',
+        'Aegean': 'A3',
+        'Wizz Air': 'W6',
+        'Ryanair': 'FR'
+    };
+    const code = codeMap[airline] || 'JU';
+    return `https://images.kiwi.com/airlines/64/${code}.png`;
 };
 
 const formatPrice = (n: number, currency = 'EUR') =>
@@ -44,22 +68,22 @@ const StatusBadge: React.FC<{ status: AvailabilityStatus }> = ({ status }) => (
 const FareBadge: React.FC<{ brand?: string }> = ({ brand }) => {
     if (!brand) return null;
     const colors: Record<string, { bg: string; color: string }> = {
-        'FLEX':    { bg: 'rgba(5,150,105,0.1)',  color: '#059669' },
-        'PLUS':    { bg: 'rgba(37,99,235,0.1)',  color: '#2563eb' },
-        'LITE':    { bg: 'rgba(245,158,11,0.1)', color: '#d97706' },
-        'BASIC':   { bg: 'rgba(100,116,139,0.1)', color: '#64748b' },
-        'ECONOMY': { bg: 'rgba(100,116,139,0.1)', color: '#64748b' },
+        'FLEX':    { bg: 'rgba(5,150,105,0.08)',  color: '#059669' },
+        'PLUS':    { bg: 'rgba(37,99,235,0.08)',  color: '#2563eb' },
+        'LITE':    { bg: 'rgba(245,158,11,0.08)', color: '#d97706' },
+        'BASIC':   { bg: 'rgba(100,116,139,0.08)', color: '#64748b' },
+        'ECONOMY': { bg: 'rgba(100,116,139,0.08)', color: '#64748b' },
     };
     const c = colors[brand] ?? colors['ECONOMY'];
     return (
         <span style={{
             padding: '2px 8px',
-            borderRadius: '4px',
+            borderRadius: '6px',
             fontSize: '10px',
             fontWeight: 800,
-            letterSpacing: '0.06em',
             background: c.bg,
             color: c.color,
+            border: `1px solid ${c.color}20`
         }}>{brand}</span>
     );
 };
@@ -75,104 +99,58 @@ interface LegViewProps {
 const LegView: React.FC<LegViewProps> = ({ leg, label }) => {
     const first = leg.segments[0];
     const last = leg.segments[leg.segments.length - 1];
+    const stops = leg.segments.length - 1;
 
     return (
-        <div style={{ flex: 1 }}>
-            {/* Label: Polazak / Povratak */}
-            <div style={{
-                fontSize: '10px',
-                fontWeight: 800,
-                textTransform: 'uppercase' as const,
-                letterSpacing: '0.08em',
-                color: 'var(--v6-text-muted)',
-                marginBottom: '8px',
-            }}>
-                {label}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '30px', flex: 1 }}>
+            {/* Polazak */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '130px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--v6-text-muted)', marginBottom: '2px' }}>
+                    {formatDate(first.departTime)}
+                </div>
+                <div style={{ fontSize: '18px', fontWeight: 950, color: 'var(--v6-text-primary)', lineHeight: 1 }}>
+                    {formatTime(first.departTime)}
+                </div>
+                <div style={{ fontSize: '12px', fontWeight: 900, color: 'var(--v6-navy)', marginTop: '4px', textAlign: 'right' }}>
+                    {first.originCity || 'Beograd'} ({first.origin})
+                </div>
+                <div style={{ fontSize: '9px', fontWeight: 600, color: 'var(--v6-text-muted)', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
+                    {first.originAirport || 'Aerodrom Nikola Tesla'}
+                </div>
             </div>
-
-            {/* Timeline: Polazak —[trajanje]—> Dolazak */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-            }}>
-                {/* Polazak */}
-                <div style={{ textAlign: 'center' as const, flexShrink: 0 }}>
-                    <div style={{ fontSize: 'var(--v6-fs-xl)', fontWeight: 900, color: 'var(--v6-text-primary)', lineHeight: 1 }}>
-                        {formatTime(first.departTime)}
-                    </div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--v6-accent)', marginTop: '2px' }}>
-                        {first.origin}
-                    </div>
+            
+            {/* Linija i Presedanje */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', flex: 1, maxWidth: '160px' }}>
+                <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--v6-text-muted)' }}>{formatDuration(leg.totalDuration)}</div>
+                <div style={{ width: '100%', height: '2px', background: 'var(--v6-border)', position: 'relative', margin: '6px 0' }}>
+                    <div style={{ position: 'absolute', top: '-3px', left: '0', width: '8px', height: '8px', borderRadius: '50%', border: '2px solid var(--v6-border)', background: '#fff' }} />
+                    <div style={{ position: 'absolute', top: '-3px', right: '0', width: '8px', height: '8px', borderRadius: '50%', border: '2px solid var(--v6-navy)', background: 'var(--v6-navy)' }} />
                 </div>
-
-                {/* Linija sa info */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '3px' }}>
-                    <div style={{ fontSize: '11px', color: 'var(--v6-text-muted)', fontWeight: 600 }}>
-                        {formatDuration(leg.totalDuration)}
-                    </div>
-                    {/* Linija */}
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        width: '100%',
-                        gap: '0',
-                    }}>
-                        <div style={{ height: '2px', flex: 1, background: 'var(--v6-border)' }} />
-                        {leg.stops > 0 && (
-                            <>
-                                <div style={{
-                                    width: '8px',
-                                    height: '8px',
-                                    borderRadius: '50%',
-                                    border: '2px solid var(--v6-color-on-request)',
-                                    background: 'var(--v6-bg-card)',
-                                    flexShrink: 0,
-                                }} />
-                                <div style={{ height: '2px', flex: 1, background: 'var(--v6-border)' }} />
-                            </>
-                        )}
-                        {leg.stops === 0 && (
-                            <span style={{ fontSize: '14px', flexShrink: 0 }}>✈️</span>
-                        )}
-                        <div style={{ height: '2px', flex: leg.stops === 0 ? 0 : 1, background: 'var(--v6-border)' }} />
-                    </div>
-                    {/* Presedanje info */}
-                    <div style={{ fontSize: '10px', color: leg.stops > 0 ? 'var(--v6-color-on-request-text)' : 'var(--v6-color-instant-text)', fontWeight: 600 }}>
-                        {leg.stops === 0
-                            ? 'Direktno ✓'
-                            : `${leg.stops} presedanje · ${leg.stopoverAirports.join(', ')} · čekanje ${formatDuration(leg.stopoverDuration ?? 0)}`
-                        }
-                    </div>
-                </div>
-
-                {/* Dolazak */}
-                <div style={{ textAlign: 'center' as const, flexShrink: 0 }}>
-                    <div style={{ fontSize: 'var(--v6-fs-xl)', fontWeight: 900, color: 'var(--v6-text-primary)', lineHeight: 1 }}>
-                        {formatTime(last.arriveTime)}
-                    </div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--v6-accent)', marginTop: '2px' }}>
-                        {last.destination}
-                    </div>
+                <div style={{ fontSize: '10px', fontWeight: 900, color: stops > 0 ? '#ef4444' : '#10b981', textTransform: 'uppercase', textAlign: 'center' }}>
+                    {stops === 0 ? 'DIREKTAN' : (
+                        <span style={{ lineHeight: 1.1, display: 'block' }}>
+                            {stops} PRESEDANJE ({leg.stopoverAirports?.[0] || '?'})
+                            <br />
+                            <span style={{ fontSize: '8px', opacity: 0.8 }}>+ {formatDuration(leg.stopoverDuration || 0)}</span>
+                        </span>
+                    )}
                 </div>
             </div>
 
-            {/* Broj leta + avion */}
-            <div style={{
-                marginTop: '6px',
-                fontSize: '11px',
-                color: 'var(--v6-text-muted)',
-                display: 'flex',
-                gap: '8px',
-                flexWrap: 'wrap' as const,
-            }}>
-                {leg.segments.map(s => (
-                    <span key={s.flightNo}>
-                        {s.flightNo}
-                        {s.aircraft && ` · ${s.aircraft}`}
-                        {s.operatedBy && ` · operisan od ${s.operatedBy}`}
-                    </span>
-                ))}
+            {/* Dolazak */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: '130px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--v6-text-muted)', marginBottom: '2px' }}>
+                    {formatDate(last.arriveTime)}
+                </div>
+                <div style={{ fontSize: '18px', fontWeight: 950, color: 'var(--v6-text-primary)', lineHeight: 1 }}>
+                    {formatTime(last.arriveTime)}
+                </div>
+                <div style={{ fontSize: '12px', fontWeight: 900, color: 'var(--v6-navy)', marginTop: '4px', textAlign: 'left' }}>
+                    {last.destinationCity || 'Pariz'} ({last.destination})
+                </div>
+                <div style={{ fontSize: '9px', fontWeight: 600, color: 'var(--v6-text-muted)', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
+                    {last.destinationAirport || 'Aerodrom Charles de Gaulle'}
+                </div>
             </div>
         </div>
     );
@@ -231,9 +209,12 @@ interface FlightCardProps {
     index: number;
     paxTotal: number;
     onBook: (flight: FlightSearchResult) => void;
+    customActionLabel?: string;
+    isCompact?: boolean;
 }
 
-export const FlightCard: React.FC<FlightCardProps> = ({ flight, index, paxTotal, onBook }) => {
+export const FlightCard: React.FC<FlightCardProps> = ({ flight, index, paxTotal, onBook, customActionLabel, isCompact }) => {
+    const [showDetails, setShowDetails] = useState(false);
     const pricePerPerson = Math.round(flight.totalPrice / Math.max(paxTotal, 1));
 
     return (
@@ -263,115 +244,197 @@ export const FlightCard: React.FC<FlightCardProps> = ({ flight, index, paxTotal,
             <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
-                padding: '12px 18px',
-                background: flight.isPrime ? 'linear-gradient(135deg, rgba(180,83,9,0.06), rgba(245,158,11,0.03))' : 'var(--v6-bg-section)',
+                gap: '12px',
+                padding: '10px 18px',
+                background: flight.isPrime ? 'linear-gradient(135deg, rgba(37,99,235,0.06), rgba(30,41,59,0.03))' : 'var(--v6-bg-section)',
                 borderBottom: '1px solid var(--v6-border)',
                 flexWrap: 'wrap' as const,
             }}>
-                <span style={{ fontSize: '20px' }}>{flight.airlineLogo}</span>
-                <span style={{
-                    fontSize: 'var(--v6-fs-sm)',
-                    fontWeight: 700,
-                    color: 'var(--v6-text-primary)',
-                }}>
-                    {flight.airline}
-                </span>
+                <img src={getAirlineLogo(flight.airline)} alt={flight.airline} style={{ height: '22px', width: 'auto', borderRadius: '4px' }} />
+                {!isCompact && <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--v6-text-primary)' }}>{flight.airline}</span>}
 
                 {flight.isPrime && (
-                    <span style={{
-                        padding: '2px 8px',
-                        background: 'linear-gradient(135deg, #b45309, #f59e0b)',
-                        color: '#ffffff',
-                        borderRadius: '999px',
-                        fontSize: '10px',
-                        fontWeight: 800,
-                        letterSpacing: '0.06em',
-                    }}>🏆 PRIME</span>
+                    <span style={{ padding: '1px 6px', background: 'linear-gradient(135deg, #b45309, #f59e0b)', color: '#fff', borderRadius: '999px', fontSize: '9px', fontWeight: 800 }}>🏆 PRIME</span>
                 )}
 
-                <FareBadge brand={flight.outbound.fareBrand} />
+                {!isCompact && <FareBadge brand={flight.outbound.fareBrand} />}
 
-                <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <StatusBadge status={flight.outbound.status} />
                 </div>
             </div>
 
-            {/* ── BODY: Polazak + Povratak letovi ──────── */}
-            <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column' as const, gap: '14px' }}>
+            {/* ── BODY: ULTRA COMPACT ──────── */}
+            <div style={{ padding: '12px 18px', display: 'flex', flexDirection: isCompact ? 'column' : 'row', alignItems: isCompact ? 'stretch' : 'center', gap: isCompact ? '15px' : '40px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <LegView leg={flight.outbound} label="Polazak" />
+                    </div>
+                    
+                    {flight.inbound && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', borderTop: '1px solid var(--v6-bg-section)', paddingTop: '8px' }}>
+                            <LegView leg={flight.inbound} label="Povratak" />
+                        </div>
+                    )}
+                </div>
 
-                {/* Polazak */}
-                <LegView leg={flight.outbound} label="✈ Polazak" />
-
-                {/* Povratak */}
-                {flight.inbound && (
-                    <>
-                        <div style={{ height: '1px', background: 'var(--v6-border)' }} />
-                        <LegView leg={flight.inbound} label="← Povratak" />
-                    </>
-                )}
-
-                {/* Prtljag info */}
-                <BaggageInfo leg={flight.outbound} />
+                {/* Cena desno uz letove za uštedu visine */}
+                <div style={{ 
+                    borderLeft: isCompact ? 'none' : '1.5px solid var(--v6-border)', 
+                    borderTop: isCompact ? '1.5px solid var(--v6-border)' : 'none',
+                    paddingLeft: isCompact ? '0' : '24px', 
+                    paddingTop: isCompact ? '12px' : '0',
+                    textAlign: isCompact ? 'center' : 'right', 
+                    minWidth: isCompact ? 'unset' : '150px' 
+                }}>
+                    <div style={{ fontSize: isCompact ? '20px' : '24px', fontWeight: 950, color: 'var(--v6-text-primary)', lineHeight: 1 }}>{formatPrice(flight.totalPrice)}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--v6-text-muted)', marginTop: '4px', fontWeight: 600 }}>Cena za {paxTotal} putnika</div>
+                    <div style={{
+                        marginTop: '6px',
+                        display: 'inline-block',
+                        padding: '2px 8px',
+                        background: 'rgba(37,99,235,0.08)',
+                        color: 'var(--v6-navy)',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: 900
+                    }}>
+                        {formatPrice(pricePerPerson)}/os
+                    </div>
+                </div>
             </div>
 
-            {/* ── FOOTER: Cena + Rezerviši ──────────────── */}
+            {/* ── EXPANDABLE DETAILS ──────── */}
+            {showDetails && (
+                <div style={{ padding: '0 18px 15px', borderTop: '1px dashed var(--v6-border)', background: 'var(--v6-bg-section)' }}>
+                    <div style={{ paddingTop: '15px', display: 'flex', gap: '30px' }}>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--v6-navy)', marginBottom: '8px', textTransform: 'uppercase' }}>Detalji Letova</div>
+                            {flight.outbound.segments.map(s => (
+                                <div key={s.flightNo} style={{ fontSize: '12px', color: 'var(--v6-text-secondary)', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>{s.flightNo} · {s.aircraft}</span>
+                                    {s.operatedBy && <span>operisan od {s.operatedBy}</span>}
+                                </div>
+                            ))}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--v6-navy)', marginBottom: '8px', textTransform: 'uppercase' }}>Prtljag i Uslovi</div>
+                            <BaggageInfo leg={flight.outbound} />
+                            <div style={{ marginTop: '8px', fontSize: '11px', color: flight.outbound.isRefundable ? '#10b981' : '#ef4444', fontWeight: 700 }}>
+                                {flight.outbound.isRefundable ? '✓ Povrat karata dostupan' : '✗ Karte nisu povratne'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── FOOTER: ACTIONS ──────────────── */}
             <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'flex-end',
                 gap: '12px',
-                padding: '14px 18px',
-                borderTop: '1px solid var(--v6-border)',
-                background: 'var(--v6-bg-section)',
-                flexWrap: 'wrap' as const,
+                padding: '10px 18px',
+                borderTop: '1px solid var(--v6-bg-section)',
+                background: 'rgba(30,41,59,0.02)',
             }}>
-                {/* Cena */}
-                <div>
-                    <div style={{
-                        fontSize: 'var(--v6-fs-2xl)',
-                        fontWeight: 900,
-                        color: 'var(--v6-text-primary)',
-                        lineHeight: 1,
-                    }}>
-                        {formatPrice(flight.totalPrice)}
-                    </div>
-                    <div style={{
-                        fontSize: '12px',
-                        color: 'var(--v6-text-muted)',
-                        marginTop: '3px',
-                    }}>
-                        Ukupno za {paxTotal} {paxTotal === 1 ? 'putnika' : 'putnika'}
-                        {' · '}≈ {formatPrice(pricePerPerson)}/os
-                    </div>
-                    <div style={{ fontSize: '11px', color: 'var(--v6-text-muted)', marginTop: '2px' }}>
-                        {flight.outbound.isRefundable
-                            ? '✓ Povrat karata dostupan'
-                            : '⚠ Karte nisu povratne'}
+                <div style={{ marginRight: 'auto', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div style={{ fontSize: '11px', color: flight.outbound.isRefundable ? '#10b981' : 'var(--v6-text-muted)', fontWeight: 800 }}>
+                        {flight.outbound.isRefundable ? '✓ Povrat karata dostupan' : '✗ Nerefundabilno'}
                     </div>
                 </div>
 
-                {/* CTA */}
-                <button
-                    onClick={() => onBook(flight)}
-                    id={`v6-fl-book-${flight.id}`}
-                    aria-label={`Odaberi ${flight.airline} let za ${formatPrice(flight.totalPrice)}`}
-                    style={{
-                        padding: '13px 24px',
-                        background: 'var(--v6-accent)',
-                        color: 'var(--v6-accent-text)',
-                        border: 'none',
-                        borderRadius: 'var(--v6-radius-md)',
-                        fontSize: 'var(--v6-fs-sm)',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        fontFamily: 'var(--v6-font)',
-                        transition: 'opacity 0.15s',
-                        whiteSpace: 'nowrap',
-                    }}
-                >
-                    Odaberi let →
-                </button>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <button
+                        onClick={() => setShowDetails(!showDetails)}
+                        style={{
+                            background: 'transparent',
+                            border: '1.5px solid var(--v6-border)',
+                            borderRadius: '12px',
+                            padding: '8px 16px',
+                            fontSize: '13px',
+                            fontWeight: 800,
+                            color: 'var(--v6-navy)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                        }}
+                    >
+                        {showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        {showDetails ? 'Sakrij detalje' : 'Detalji leta'}
+                    </button>
+
+                    <button
+                        onClick={() => onBook(flight)}
+                        id={`v6-fl-book-${flight.id}`}
+                        style={{
+                            padding: '10px 24px',
+                            background: 'var(--v6-navy)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontSize: '14px',
+                            fontWeight: 900,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: '0 4px 12px rgba(30,41,59,0.2)'
+                        }}
+                    >
+                        {customActionLabel || 'Odaberi let'}
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            useSearchStore.getState().saveOffer({
+                                id: `fl-${flight.id}-${Date.now()}`,
+                                type: 'flight',
+                                label: `Let: ${flight.airline}`,
+                                description: `${flight.outbound.segments[0].origin} → ${flight.outbound.segments[flight.outbound.segments.length-1].destination}`,
+                                totalPrice: flight.totalPrice,
+                                currency: flight.currency,
+                                timestamp: Date.now(),
+                                data: { flightId: flight.id },
+                                hasPriceDropAlert: false
+                            });
+                            alert('Let sačuvan u ponude!');
+                        }}
+                        style={{
+                            width: '44px',
+                            height: '44px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'var(--v6-bg-card)',
+                            border: '1.5px solid var(--v6-border)',
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            fontSize: '18px'
+                        }}
+                        title="Sačuvaj ponudu"
+                    >
+                        💾
+                    </button>
+
+                    <button
+                        onClick={() => alert('Share opcije: Viber, WhatsApp, Telegram, Email...')}
+                        style={{
+                            width: '44px',
+                            height: '44px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'var(--v6-bg-card)',
+                            border: '1.5px solid var(--v6-border)',
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            fontSize: '18px'
+                        }}
+                        title="Podeli ponudu"
+                    >
+                        🔗
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -242,6 +242,10 @@ export interface FlightSegment {
     flightNo: string;           // Npr. 'JU 322'
     aircraft?: string;
     operatedBy?: string;        // Za code-share
+    originCity?: string;        // Pun naziv grada polaska
+    originAirport?: string;     // Pun naziv aerodroma polaska
+    destinationCity?: string;   // Pun naziv grada dolaska
+    destinationAirport?: string;// Pun naziv aerodroma dolaska
 }
 
 /** Jedan pravac (može imati više segmenata ako ima presedanja) */
@@ -658,6 +662,8 @@ export interface SearchState {
     packageWizardStep: number;          // 1–6 (aktivni korak)
     packageWizardSelections: {
         flight?: FlightSearchResult;
+        outboundFlight?: FlightLeg;
+        returnFlight?: FlightLeg;
         hotelId?: string;
         roomId?: string;
         mealPlanCode?: string;
@@ -675,4 +681,72 @@ export interface SearchState {
 
     // Smart Concierge ponude
     conciergeOffers: ConciergeOffer[];
+
+    // ─────────────────────────────────────────────────────────────
+    // 16. SAVED OFFERS & ALERTS (NEW: Faza 6)
+    // ─────────────────────────────────────────────────────────────
+    savedOffers: SavedOffer[];
+    lastPriceChangeNotification?: PriceChangeNotification;
+}
+
+export interface SavedOffer {
+    id: string;
+    type: 'hotel' | 'flight' | 'package';
+    label: string;
+    description: string;
+    totalPrice: number;
+    currency: string;
+    timestamp: number;
+    // Data needed to recreate the offer or re-check price
+    data: any; 
+    hasPriceDropAlert: boolean;
+}
+
+export interface PriceChangeNotification {
+    offerId: string;
+    oldPrice: number;
+    newPrice: number;
+    currency: string;
+    isHigher: boolean;
+}
+// ─────────────────────────────────────────────────────────────
+// 17. DYNAMIC PACKAGE OPTIONS (NEW: Faza 6)
+// ─────────────────────────────────────────────────────────────
+export interface TransferOption {
+    id: string;
+    type: 'shared' | 'private' | 'luxury';
+    vehicle: string;
+    from: string;
+    to: string;
+    fromCode: string;           // Aerodrom IATA
+    toLabel: string;            // Naziv hotela / grada
+    durationMinutes: number;
+    distanceKm: number;
+    pricePerPerson: number;
+    totalPrice: number;         // Za sve putnike
+    currency: string;
+    maxPassengers: number;
+    includes: string[];         // ['A/C', 'Bespl. čekanje 60min', ...]
+    status: AvailabilityStatus;
+    isPrime: boolean;
+}
+
+export interface ActivityOption {
+    id: string;
+    category: 'tour' | 'sport' | 'culture' | 'food' | 'wellness' | 'insurance';
+    title: string;
+    description: string;
+    emoji: string;
+    durationHours: number;
+    departureTime?: string;
+    meetingPoint?: string;
+    includes: string[];
+    pricePerPerson: number;
+    totalPrice: number;          // Za sve putnike
+    currency: string;
+    status: AvailabilityStatus;
+    minParticipants?: number;
+    maxParticipants?: number;
+    isRefundable: boolean;
+    cancellationHours?: number;  // Besplatno otkazivanje do N sati pre
 }

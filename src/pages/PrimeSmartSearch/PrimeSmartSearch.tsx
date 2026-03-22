@@ -39,6 +39,7 @@ import {
     IconHotelV6, IconFlightV6, IconPackageV6, IconTransferV6, 
     IconActivityV6, IconCruiseV6, IconCharterV6, IconTourV6 
 } from './components/V6ModuleIcons';
+import { SavedOffersPanel } from './components/SavedOffersPanel';
 import type { HotelSearchResult, FlightSearchResult } from './types';
 import './styles/PrimeSmartSearch.css';
 
@@ -770,6 +771,9 @@ export const PrimeSmartSearch: React.FC = () => {
                 Aktivira se kada korisnik izabere hotel
             ═══════════════════════════════════════════════ */}
             <SmartConcierge activeHotelCity={conciergeCity} />
+
+            {/* SAVED OFFERS PANEL (Faza 6) */}
+            <SavedOffersPanel />
         </div>
     );
 };

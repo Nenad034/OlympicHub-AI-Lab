@@ -1,13 +1,16 @@
-import React, { useMemo } from 'react';
-import { useSearchStore, calcPaxSummary, calcBasketTotal } from '../../stores/useSearchStore';
+import React from 'react';
+import { useSearchStore, calcPaxSummary } from '../../stores/useSearchStore';
 import { SearchModeSelector } from '../SearchModeSelector';
 import { AIAssistantField } from '../AIAssistantField';
 import { MOCK_HOTEL_RESULTS, MOCK_ROOM_OPTIONS } from '../../data/mockResults';
 import { MOCK_FLIGHT_RESULTS } from '../../data/mockFlights';
 import { MOCK_TRANSFERS, MOCK_ACTIVITIES } from '../../data/mockPackageData';
 import { FlightCard } from '../FlightCard/FlightCard';
-import type { FlightSearchResult, HotelSearchResult } from '../../types';
-import type { TransferOption, ActivityOption } from '../../data/mockPackageData';
+import { OccupancyWizard } from '../OccupancyWizard/OccupancyWizard';
+import { Search, MapPin, Calendar, Users, Send, Plane, Hotel, Bus, Ticket, CheckCircle2, RotateCcw, Clock, ShieldCheck, Map, Activity, Utensils, Music, Heart, SlidersHorizontal } from 'lucide-react';
+import { ExpediaCalendar } from '../../../../components/ExpediaCalendar';
+import type { FlightSearchResult, HotelSearchResult, TransferOption, ActivityOption, FlightLeg } from '../../types';
+import { PackageLiveStack } from '../PackageLiveStack';
 
 // ─────────────────────────────────────────────────────────────
 // HELPERS
@@ -19,13 +22,22 @@ const formatPrice = (n: number, currency = 'EUR') =>
 // STEPPER (Progress Bar)
 // ─────────────────────────────────────────────────────────────
 const STEPS = [
-    { num: 1, label: 'Pretraga',    emoji: '🔍' },
-    { num: 2, label: 'Let',         emoji: '✈️' },
-    { num: 3, label: 'Hotel',       emoji: '🏨' },
-    { num: 4, label: 'Transfer',    emoji: '🚐' },
-    { num: 5, label: 'Ekstra',      emoji: '🎟️' },
-    { num: 6, label: 'Pregled',     emoji: '✅' },
+    { num: 1, label: 'Pretraga',    icon: <Search size={18} /> },
+    { num: 2, label: 'Let',         icon: <Plane size={18} />,    type: 'flight' },
+    { num: 3, label: 'Hotel',       icon: <Hotel size={18} />,    type: 'hotel' },
+    { num: 4, label: 'Transfer',    icon: <Bus size={18} />,      type: 'transfer' },
+    { num: 5, label: 'Ekstra',      icon: <Ticket size={18} />,   type: 'extra' },
+    { num: 6, label: 'Pregled',     icon: <CheckCircle2 size={18} />, type: 'summary' },
 ];
+
+const STEP_COLORS: Record<string, { bg: string, text: string, primary: string }> = {
+    'pretraga': { bg: 'var(--v6-bg-section)', text: 'var(--v6-text-muted)', primary: 'var(--v6-navy)' },
+    'flight':   { bg: 'var(--v6-color-flight-bg)',   text: 'var(--v6-color-flight)',   primary: 'var(--v6-color-flight)' },
+    'hotel':    { bg: 'var(--v6-color-hotel-bg)',    text: 'var(--v6-color-hotel)',    primary: 'var(--v6-color-hotel)' },
+    'transfer': { bg: 'var(--v6-color-transfer-bg)', text: 'var(--v6-color-transfer)', primary: 'var(--v6-color-transfer)' },
+    'extra':    { bg: 'var(--v6-color-extra-bg)',    text: 'var(--v6-color-extra)',    primary: 'var(--v6-color-extra)' },
+    'summary':  { bg: 'var(--v6-color-summary-bg)',  text: 'var(--v6-color-summary)',  primary: 'var(--v6-color-summary)' }
+};
 
 const Stepper: React.FC<{ currentStep: number; onStepClick: (n: number) => void; maxReached: number }> = ({ currentStep, onStepClick, maxReached }) => (
     <div style={{
@@ -33,7 +45,7 @@ const Stepper: React.FC<{ currentStep: number; onStepClick: (n: number) => void;
         alignItems: 'center',
         padding: '14px 24px',
         background: 'var(--v6-bg-card)',
-        borderBottom: '1px solid var(--v6-border)',
+        borderBottom: 'none', /* Uklonjen border kako bi se modul podigao */
         gap: '0',
         overflowX: 'auto',
     }}
@@ -44,6 +56,7 @@ const Stepper: React.FC<{ currentStep: number; onStepClick: (n: number) => void;
             const isActive    = step.num === currentStep;
             const isDone      = step.num < currentStep;
             const isReachable = step.num <= maxReached;
+            const colors      = STEP_COLORS[step.type || 'pretraga'];
 
             return (
                 <React.Fragment key={step.num}>
@@ -75,20 +88,20 @@ const Stepper: React.FC<{ currentStep: number; onStepClick: (n: number) => void;
                             fontSize: isDone ? '16px' : '18px',
                             fontWeight: 700,
                             background: isActive
-                                ? 'var(--v6-accent)'
+                                ? colors.primary
                                 : isDone
-                                    ? 'var(--v6-color-instant)'
+                                    ? colors.bg
                                     : 'var(--v6-bg-section)',
-                            border: `2px solid ${isActive ? 'var(--v6-accent)' : isDone ? 'var(--v6-color-instant)' : 'var(--v6-border)'}`,
-                            color: (isActive || isDone) ? '#ffffff' : 'var(--v6-text-muted)',
+                            border: `2px solid ${isActive ? colors.primary : isDone ? colors.primary : 'var(--v6-border)'}`,
+                            color: isActive ? '#ffffff' : isDone ? colors.text : 'var(--v6-text-muted)',
                             transition: 'all 0.2s',
                         }}>
-                            {isDone ? '✓' : step.emoji}
+                            {isDone ? <CheckCircle2 size={18} /> : step.icon}
                         </div>
                         <span style={{
                             fontSize: '10px',
                             fontWeight: isActive ? 700 : 500,
-                            color: isActive ? 'var(--v6-accent)' : isDone ? 'var(--v6-color-instant-text)' : 'var(--v6-text-muted)',
+                            color: isActive ? colors.primary : isDone ? colors.text : 'var(--v6-text-muted)',
                             whiteSpace: 'nowrap',
                         }}>
                             {step.label}
@@ -100,7 +113,7 @@ const Stepper: React.FC<{ currentStep: number; onStepClick: (n: number) => void;
                         <div style={{
                             flex: 1,
                             height: '2px',
-                            background: step.num < currentStep ? 'var(--v6-color-instant)' : 'var(--v6-border)',
+                            background: step.num < currentStep ? colors.primary : 'var(--v6-border)',
                             minWidth: '20px',
                             transition: 'background 0.3s',
                             marginBottom: '20px',
@@ -112,103 +125,63 @@ const Stepper: React.FC<{ currentStep: number; onStepClick: (n: number) => void;
     </div>
 );
 
-// ─────────────────────────────────────────────────────────────
-// PRICE BUILD-UP PANEL (sticky desno)
-// ─────────────────────────────────────────────────────────────
-const PriceBuildUp: React.FC<{
-    flight?: FlightSearchResult;
-    hotelName?: string;
-    hotelPrice?: number;
-    transferName?: string;
-    transferPrice?: number;
-    extras: ActivityOption[];
-    paxTotal: number;
-    nights: number;
-}> = ({ flight, hotelName, hotelPrice, transferName, transferPrice, extras, paxTotal, nights }) => {
-    const items: { label: string; price: number; icon: string }[] = [];
-
-    if (flight) items.push({ icon: '✈️', label: `Let: ${flight.airline}`, price: flight.totalPrice });
-    if (hotelName && hotelPrice) items.push({ icon: '🏨', label: `Hotel: ${hotelName}`, price: hotelPrice });
-    if (transferName && transferPrice) items.push({ icon: '🚐', label: `Transfer: ${transferName}`, price: transferPrice });
-    extras.forEach(e => items.push({ icon: e.emoji, label: e.title, price: e.totalPrice }));
-
-    const total = items.reduce((s, i) => s + i.price, 0);
-
-    return (
-        <div style={{
-            width: '260px',
-            flexShrink: 0,
-            background: 'var(--v6-bg-card)',
-            border: '1.5px solid var(--v6-border)',
-            borderRadius: 'var(--v6-radius-lg)',
-            overflow: 'hidden',
-            alignSelf: 'flex-start',
-            position: 'sticky',
-            top: '12px',
-        }}>
-            {/* Header */}
-            <div style={{
-                padding: '12px 16px',
-                background: 'var(--v6-bg-section)',
-                borderBottom: '1px solid var(--v6-border)',
-            }}>
-                <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--v6-text-muted)' }}>
-                    💰 Vaš Paket
-                </div>
-                <div style={{ fontSize: '12px', color: 'var(--v6-text-muted)', marginTop: '2px' }}>
-                    {paxTotal} {paxTotal === 1 ? 'putnik' : 'putnika'} · {nights} noćenja
-                </div>
-            </div>
-
-            {/* Stavke */}
-            <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '80px' }}>
-                {items.length === 0 ? (
-                    <div style={{ fontSize: '12px', color: 'var(--v6-text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '12px 0' }}>
-                        Ništa odabrano
-                    </div>
-                ) : (
-                    items.map((item, i) => (
-                        <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '12px' }}>
-                            <span style={{ flexShrink: 0 }}>{item.icon}</span>
-                            <span style={{ flex: 1, color: 'var(--v6-text-secondary)', lineHeight: 1.3 }}>{item.label}</span>
-                            <span style={{ fontWeight: 700, color: 'var(--v6-text-primary)', whiteSpace: 'nowrap' }}>
-                                {formatPrice(item.price)}
-                            </span>
-                        </div>
-                    ))
-                )}
-            </div>
-
-            {/* Total */}
-            <div style={{
-                padding: '12px 16px',
-                borderTop: '2px solid var(--v6-border)',
-                background: 'var(--v6-bg-section)',
-            }}>
-                <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--v6-text-muted)' }}>
-                    Ukupno
-                </div>
-                <div style={{ fontSize: '22px', fontWeight: 900, color: total > 0 ? 'var(--v6-color-instant-text)' : 'var(--v6-text-muted)', lineHeight: 1.1, marginTop: '2px' }}>
-                    {total > 0 ? formatPrice(total) : '—'}
-                </div>
-                {total > 0 && paxTotal > 1 && (
-                    <div style={{ fontSize: '11px', color: 'var(--v6-text-muted)', marginTop: '3px' }}>
-                        ≈ {formatPrice(Math.round(total / paxTotal))}/os
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
 
 // ─────────────────────────────────────────────────────────────
-// KORAK 1: Pretraga
+// KORAK 1: Pretraga (Redizajnirano V6)
 // ─────────────────────────────────────────────────────────────
 const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
-    const { destinations, checkIn, checkOut, roomAllocations, addDestination, removeDestination, setCheckIn, setCheckOut, searchMode } = useSearchStore();
+    const { 
+        destinations, checkIn, checkOut, roomAllocations, 
+        addDestination, removeDestination, setCheckIn, setCheckOut, searchMode,
+        resetPackageWizard
+    } = useSearchStore();
+    
+    // Multi-Stop State
+    const [isMultiStop, setIsMultiStop] = React.useState(false);
+    const [segments, setSegments] = React.useState([
+        { 
+            id: '1', 
+            origin: 'Beograd (BEG)', 
+            destination: '', 
+            date: '', 
+            occupancy: [{ adults: 2, children: 0, childrenAges: [] }] 
+        }
+    ]);
+    
+    // NEW: Origin state
+    const [origin, setOrigin] = React.useState('Beograd (BEG)');
     const [tagInput, setTagInput] = React.useState('');
+    const [showCalendar, setShowCalendar] = React.useState(false);
     const today = new Date().toISOString().split('T')[0];
-    const pax = calcPaxSummary(roomAllocations, checkIn, checkOut);
+
+    const addSegment = () => {
+        const lastSeg = segments[segments.length - 1];
+        const lastDest = lastSeg.destination;
+        const lastDate = lastSeg.date;
+        
+        // Predloži sutrašnji datum u odnosu na prethodni segment
+        let suggestedDate = '';
+        if (lastDate) {
+            const dateObj = new Date(lastDate);
+            dateObj.setDate(dateObj.getDate() + 1);
+            suggestedDate = dateObj.toISOString().split('T')[0];
+        }
+
+        setSegments([
+            ...segments, 
+            { 
+                id: Date.now().toString(), 
+                origin: lastDest || '', 
+                destination: '', 
+                date: suggestedDate,
+                occupancy: [...lastSeg.occupancy] // Kopiraj broj osoba iz prethodnog segmenta
+            }
+        ]);
+    };
+
+    const removeSegment = (id: string) => {
+        if (segments.length > 1) setSegments(segments.filter(s => s.id !== id));
+    };
 
     const handleAddTag = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && tagInput.trim()) {
@@ -222,98 +195,310 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
         }
     };
 
-    const canContinue = destinations.length > 0 && checkIn && checkOut && checkOut > checkIn;
+    const canContinue = isMultiStop 
+        ? segments.every(s => s.origin && s.destination && s.date)
+        : (destinations.length > 0 || tagInput.trim().length > 1) && !!origin && !!checkIn && !!checkOut;
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* 1. SELECTION MODES */}
-            <SearchModeSelector />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    {/* Reset Button (Nova Pretraga) */}
+                    <button
+                        onClick={resetPackageWizard}
+                        style={{
+                            padding: '8px 16px',
+                            background: '#fff',
+                            border: '2px solid #ef4444',
+                            borderRadius: '12px',
+                            color: '#ef4444',
+                            fontSize: '13px',
+                            fontWeight: 900,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        🔄 NOVA PRETRAGA
+                    </button>
 
-            {/* 2. AI ASSISTANT FIELD */}
-            {(searchMode === 'semantic' || searchMode === 'hybrid') && <AIAssistantField />}
+                    {/* Multi-Stop Toggle */}
+                    <button 
+                        onClick={() => setIsMultiStop(!isMultiStop)}
+                        style={{
+                            padding: '8px 16px',
+                            background: isMultiStop ? 'var(--v6-navy)' : 'var(--v6-bg-card)',
+                            border: '2px solid var(--v6-navy)',
+                            borderRadius: '12px',
+                            color: isMultiStop ? '#fff' : 'var(--v6-navy)',
+                            fontSize: '13px',
+                            fontWeight: 900,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        {isMultiStop ? '🌐 Multi-Stop Aktivan' : '📍 Aktiviraj Multi-Stop'}
+                    </button>
+                </div>
 
-            {/* 3. PACKAGE SEARCH FORM (Hidden in pure Semantic) */}
-            {searchMode !== 'semantic' && (
-                <>
-                    <div>
-                        <h3 style={{ margin: '0 0 16px', fontSize: 'var(--v6-fs-lg)', fontWeight: 800, color: 'var(--v6-text-primary)' }}>
-                            🔍 Definišite parametre paketa
-                        </h3>
+            {((searchMode as any) === 'semantic' || (searchMode as any) === 'hybrid') && <AIAssistantField />}
 
-                        {/* Destinacija */}
-                        <div style={{ marginBottom: '14px' }}>
-                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--v6-text-muted)', marginBottom: '6px' }}>
-                                Destinacija (max 3)
-                            </label>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', padding: '8px 12px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'var(--v6-bg-main)', minHeight: '46px', alignItems: 'center' }}>
-                                {destinations.map(d => (
-                                    <span key={d.id} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', background: 'var(--v6-accent)', color: 'var(--v6-accent-text)', borderRadius: '999px', fontSize: '13px', fontWeight: 600 }}>
-                                        {d.name}
-                                        <button onClick={() => removeDestination(d.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, fontSize: '12px', lineHeight: 1 }}>✕</button>
-                                    </span>
-                                ))}
-                                {destinations.length < 3 && (
-                                    <input
-                                        type="text"
-                                        value={tagInput}
-                                        onChange={e => setTagInput(e.target.value)}
-                                        onKeyDown={handleAddTag}
-                                        placeholder="Unesite destinaciju, pritisnite Enter..."
-                                        style={{ flex: 1, minWidth: '160px', border: 'none', outline: 'none', background: 'transparent', color: 'var(--v6-text-primary)', fontSize: 'var(--v6-fs-sm)', fontFamily: 'var(--v6-font)' }}
-                                    />
-                                )}
+            {(searchMode as any) !== 'semantic' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <h3 style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 900, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Search size={20} color="var(--v6-accent)" /> 
+                        {isMultiStop ? 'Planiranje Vašeg Multi-Stop Putovanja' : 'Definišite parametre paketa'}
+                    </h3>
+
+                    {isMultiStop ? (
+                        /* MULTI-STOP VIEW */
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {segments.map((seg, idx) => (
+                                <div key={seg.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', background: 'var(--v6-bg-card)', border: '2px solid #1e293b', borderRadius: '16px' }}>
+                                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '14px', fontWeight: 900, width: '28px', height: '28px', borderRadius: '50%', background: 'var(--v6-navy)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{idx + 1}</span>
+                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', padding: '4px 0' }}>
+                                            <input 
+                                                value={seg.origin}
+                                                onChange={e => {
+                                                    const news = [...segments];
+                                                    news[idx].origin = e.target.value;
+                                                    setSegments(news);
+                                                }}
+                                                placeholder="Odakle?" 
+                                                style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontWeight: 700, fontSize: '15px' }}
+                                            />
+                                            <span style={{ color: 'var(--v6-text-muted)' }}>→</span>
+                                            <input 
+                                                value={seg.destination}
+                                                onChange={e => {
+                                                    const news = [...segments];
+                                                    news[idx].destination = e.target.value;
+                                                    setSegments(news);
+                                                }}
+                                                placeholder="Kuda?" 
+                                                style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontWeight: 700, fontSize: '15px' }}
+                                            />
+                                        </div>
+                                        {idx > 0 && <button onClick={() => removeSegment(seg.id)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '18px', padding: '4px' }}>🗑️</button>}
+                                    </div>
+                                    
+                                    <div style={{ display: 'flex', gap: '12px', marginTop: '4px', borderTop: '1px solid var(--v6-border)', paddingTop: '12px' }}>
+                                        {/* Segment Date */}
+                                        <div style={{ flex: 1, position: 'relative' }}>
+                                           <div 
+                                              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: 'var(--v6-bg-section)', borderRadius: '10px', cursor: 'pointer', border: '1.5px solid var(--v6-border)' }}
+                                              onClick={() => {
+                                                 const news = [...segments];
+                                                 (news[idx] as any).showCal = !(news[idx] as any).showCal;
+                                                 setSegments(news);
+                                              }}
+                                           >
+                                              <Calendar size={14} color="var(--v6-accent)" />
+                                              <span style={{ fontSize: '13px', fontWeight: 700 }}>
+                                                 {seg.date ? new Date(seg.date).toLocaleDateString('sr-RS') : 'Izaberi datum'}
+                                              </span>
+                                           </div>
+                                           {(seg as any).showCal && (
+                                              <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, marginTop: '4px' }}>
+                                                 <ExpediaCalendar 
+                                                     startDate={seg.date}
+                                                     endDate={seg.date}
+                                                     onChange={(start) => {
+                                                         const news = [...segments];
+                                                         news[idx].date = start;
+                                                         (news[idx] as any).showCal = false;
+                                                         
+                                                         // Automatski predloži datum za sledeći segment ako postoji
+                                                         if (idx < segments.length - 1 && !news[idx + 1].date) {
+                                                            const nextDate = new Date(start);
+                                                            nextDate.setDate(nextDate.getDate() + 1);
+                                                            news[idx+1].date = nextDate.toISOString().split('T')[0];
+                                                         }
+                                                         
+                                                         setSegments(news);
+                                                     }}
+                                                     onClose={() => {
+                                                        const news = [...segments];
+                                                        (news[idx] as any).showCal = false;
+                                                        setSegments(news);
+                                                     }}
+                                                 />
+                                              </div>
+                                           )}
+                                        </div>
+
+                                        {/* Segment Occupancy */}
+                                        <div style={{ flex: 1.2, display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: 'var(--v6-bg-section)', borderRadius: '10px', border: '1.5px solid var(--v6-border)' }}>
+                                           <Users size={14} color="var(--v6-accent)" />
+                                           <div style={{ flex: 1, fontSize: '13px' }}>
+                                              {/* Ovde koristimo uprošćeni prikaz za multi-stop radi preglednosti */}
+                                              <span style={{ fontWeight: 700 }}>{seg.occupancy[0].adults} odr.</span>
+                                              {seg.occupancy[0].children > 0 && <span style={{ fontWeight: 700 }}>, {seg.occupancy[0].children} d.</span>}
+                                           </div>
+                                           <div style={{ display: 'flex', gap: '4px' }}>
+                                              <button 
+                                                 onClick={() => {
+                                                    const news = [...segments];
+                                                    news[idx].occupancy[0].adults = Math.max(1, news[idx].occupancy[0].adults - 1);
+                                                    setSegments(news);
+                                                 }}
+                                                 style={{ width: '22px', height: '22px', borderRadius: '4px', border: '1px solid var(--v6-border)', background: '#fff', fontSize: '14px', cursor: 'pointer' }}
+                                              >−</button>
+                                              <button 
+                                                 onClick={() => {
+                                                    const news = [...segments];
+                                                    news[idx].occupancy[0].adults = Math.min(8, news[idx].occupancy[0].adults + 1);
+                                                    setSegments(news);
+                                                 }}
+                                                 style={{ width: '22px', height: '22px', borderRadius: '4px', border: '1px solid var(--v6-border)', background: '#fff', fontSize: '14px', cursor: 'pointer' }}
+                                              >+</button>
+                                           </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            <button onClick={addSegment} style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', background: 'transparent', border: '2px dashed var(--v6-border)', borderRadius: '14px', fontSize: '14px', fontWeight: 800, cursor: 'pointer', color: 'var(--v6-text-muted)', transition: 'all 0.2s' }}>
+                               <span>+</span> Dodaj sledeću stanicu
+                            </button>
+                        </div>
+                    ) : (
+                        /* CLASSIC VIEW: Origin & Destination */
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            {/* Origin */}
+                            <div style={{ 
+                                flex: 1, height: '64px', background: 'var(--v6-bg-card)', border: '2px solid #1e293b', 
+                                borderRadius: '16px', display: 'flex', alignItems: 'center', padding: '0 16px'
+                            }}>
+                                <Send size={20} style={{ color: 'var(--v6-accent)', marginRight: '12px', transform: 'rotate(-45deg)' }} />
+                                <input 
+                                    type="text"
+                                    value={origin}
+                                    onChange={e => setOrigin(e.target.value)}
+                                    placeholder="Polazak iz..."
+                                    style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', color: 'var(--v6-text-primary)', fontSize: '16px', fontWeight: 800 }}
+                                />
+                            </div>
+
+                            {/* Destination */}
+                            <div style={{ 
+                                flex: 2, height: '64px', background: 'var(--v6-bg-card)', border: '2px solid #1e293b', 
+                                borderRadius: '16px', display: 'flex', alignItems: 'center', padding: '0 16px', position: 'relative'
+                            }}>
+                                <MapPin size={22} style={{ color: 'var(--v6-accent)', marginRight: '12px' }} />
+                                <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '6px', overflowX: 'auto', flex: 1 }}>
+                                    {destinations.map(d => (
+                                        <span key={d.id} style={{ 
+                                            padding: '6px 14px', background: 'var(--v6-accent)', color: 'white', 
+                                            borderRadius: '12px', fontSize: '13px', fontWeight: 800, whiteSpace: 'nowrap',
+                                            display: 'flex', alignItems: 'center', gap: '6px'
+                                        }}>
+                                            {d.name}
+                                            <button onClick={() => removeDestination(d.id)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '14px', padding: 0 }}>✕</button>
+                                        </span>
+                                    ))}
+                                    {destinations.length < 3 && (
+                                        <input
+                                            type="text"
+                                            value={tagInput}
+                                            onChange={e => setTagInput(e.target.value)}
+                                            onKeyDown={handleAddTag}
+                                            placeholder={destinations.length === 0 ? "Kuda idete?" : ""}
+                                            style={{ 
+                                                flex: 1, minWidth: '100px', border: 'none', outline: 'none', background: 'transparent', 
+                                                color: 'var(--v6-text-primary)', fontSize: '16px', fontWeight: 600
+                                            }}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </div>
+                    )}
 
-                        {/* Datumi */}
-                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                            <div style={{ flex: 1, minWidth: '150px' }}>
-                                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--v6-text-muted)', marginBottom: '6px' }}>
-                                    📅 Datum polaska
-                                </label>
-                                <input type="date" min={today} value={checkIn} onChange={e => setCheckIn(e.target.value)}
-                                    style={{ width: '100%', padding: '11px 14px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'var(--v6-bg-main)', color: 'var(--v6-text-primary)', fontSize: 'var(--v6-fs-sm)', fontFamily: 'var(--v6-font)', outline: 'none', boxSizing: 'border-box' }} />
-                            </div>
-                            <div style={{ flex: 1, minWidth: '150px' }}>
-                                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--v6-text-muted)', marginBottom: '6px' }}>
-                                    📅 Datum povratka
-                                </label>
-                                <input type="date" min={checkIn || today} value={checkOut} onChange={e => setCheckOut(e.target.value)}
-                                    style={{ width: '100%', padding: '11px 14px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'var(--v6-bg-main)', color: 'var(--v6-text-primary)', fontSize: 'var(--v6-fs-sm)', fontFamily: 'var(--v6-font)', outline: 'none', boxSizing: 'border-box' }} />
-                            </div>
-                        </div>
+                    {/* V6 CONTROLS ROW: Dates & Pax (Hidden in Multi-Stop as they are segment-specific) */}
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'nowrap' }}>
+                        {!isMultiStop && (
+                            <>
+                                {/* Dates Control Box */}
+                                <div style={{ 
+                                    flex: 1.5, height: '56px', background: 'var(--v6-bg-card)', border: '2px solid #1e293b', 
+                                    borderRadius: '14px', display: 'flex', alignItems: 'center', padding: '0 14px', gap: '10px',
+                                    cursor: 'pointer'
+                                }} onClick={() => setShowCalendar(true)}>
+                                    <Calendar size={18} />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', fontSize: '14px', fontWeight: 700, color: 'var(--v6-text-primary)' }}>
+                                        {checkIn ? (
+                                            <>
+                                                <span>{new Date(checkIn).toLocaleDateString('sr-RS')}</span>
+                                                <span style={{ opacity: 0.3 }}>-</span>
+                                                <span>{checkOut ? new Date(checkOut).toLocaleDateString('sr-RS') : '...'}</span>
+                                            </>
+                                        ) : (
+                                            <span style={{ color: 'var(--v6-text-muted)', fontWeight: 500 }}>Izaberite datume</span>
+                                        )}
+                                    </div>
+                                    
+                                    {showCalendar && (
+                                        <ExpediaCalendar 
+                                            startDate={checkIn}
+                                            endDate={checkOut}
+                                            onChange={(start, end) => {
+                                                setCheckIn(start);
+                                                setCheckOut(end);
+                                            }}
+                                            onClose={() => setShowCalendar(false)}
+                                        />
+                                    )}
+                                </div>
 
-                        {/* Sažetak pax */}
-                        {checkIn && checkOut && (
-                            <div style={{ marginTop: '12px', padding: '10px 14px', background: 'var(--v6-bg-section)', borderRadius: 'var(--v6-radius-md)', fontSize: '13px', color: 'var(--v6-text-secondary)' }}>
-                                👥 <strong style={{ color: 'var(--v6-text-primary)' }}>{pax.totalAdults} odr.</strong>
-                                {pax.totalChildren > 0 && ` + ${pax.totalChildren} dece`} ·
-                                🏨 <strong style={{ color: 'var(--v6-text-primary)' }}>{pax.totalRooms} soba{pax.totalRooms > 1 ? 'e' : ''}</strong> ·
-                                🌙 <strong style={{ color: 'var(--v6-text-primary)' }}>{pax.nights} noćenja</strong>
-                            </div>
+                                {/* Occupancy Control Box */}
+                                <div style={{ 
+                                    flex: 1, height: '56px', background: 'var(--v6-bg-card)', border: '2px solid #1e293b', 
+                                    borderRadius: '14px', display: 'flex', alignItems: 'center', padding: '0 14px', gap: '10px', position: 'relative'
+                                }}>
+                                    <Users size={18} />
+                                    <div style={{ width: '100%' }}>
+                                        <OccupancyWizard />
+                                    </div>
+                                </div>
+                            </>
                         )}
-                    </div>
-                </>
-            )}
 
-            <button
-                onClick={onNext}
-                disabled={!canContinue && searchMode !== 'semantic'}
-                style={{
-                    alignSelf: 'flex-end',
-                    padding: '12px 28px',
-                    background: (canContinue || searchMode === 'semantic') ? 'var(--v6-accent)' : 'var(--v6-border)',
-                    color: (canContinue || searchMode === 'semantic') ? 'var(--v6-accent-text)' : 'var(--v6-text-muted)',
-                    border: 'none',
-                    borderRadius: 'var(--v6-radius-md)',
-                    fontSize: 'var(--v6-fs-md)',
-                    fontWeight: 700,
-                    cursor: (canContinue || searchMode === 'semantic') ? 'pointer' : 'not-allowed',
-                    fontFamily: 'var(--v6-font)'
-                }}
-            >
-                {searchMode === 'semantic' ? 'Pokreni pametnu pretragu →' : 'Izaberi let →'}
-            </button>
+                        <button
+                            onClick={() => {
+                                if (canContinue || (searchMode as any) === 'semantic') {
+                                    onNext();
+                                }
+                            }}
+                            disabled={!canContinue && (searchMode as any) !== 'semantic'}
+                            style={{
+                                flex: 1,
+                                height: '56px',
+                                background: (canContinue || (searchMode as any) === 'semantic') ? 'var(--v6-navy)' : '#e2e8f0',
+                                color: (canContinue || (searchMode as any) === 'semantic') ? 'white' : '#94a3b8',
+                                border: 'none',
+                                borderRadius: '14px',
+                                fontSize: '15px',
+                                fontWeight: 900,
+                                cursor: (canContinue || (searchMode as any) === 'semantic') ? 'pointer' : 'not-allowed',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '10px',
+                                transition: 'all 0.2s',
+                                boxShadow: (canContinue || (searchMode as any) === 'semantic') ? '0 8px 20px rgba(30,41,59,0.2)' : 'none'
+                            }}
+                        >
+                            <span>Pretraži</span>
+                            <Send size={18} />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -322,46 +507,144 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
 // KORAK 2: Let
 // ─────────────────────────────────────────────────────────────
 const Step2Flights: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onNext, onBack }) => {
-    const { packageWizardSelections, setPackageWizardFlight, roomAllocations } = useSearchStore();
-    const pax = calcPaxSummary(roomAllocations, '', '');
+    const { 
+        packageWizardSelections, 
+        setPackageWizardOutboundFlight, 
+        setPackageWizardReturnFlight,
+        roomAllocations,
+        checkIn,
+        checkOut,
+        destinations
+    } = useSearchStore();
+
+    const pax = calcPaxSummary(roomAllocations, checkIn, checkOut);
     const paxTotal = pax.totalAdults + pax.totalChildren;
+
+    // Use internal state to track if we are picking outbound or return
+    // If outbound is not selected, phase = 'outbound'
+    // If outbound is selected, phase = 'return'
+    const phase = !packageWizardSelections.outboundFlight ? 'outbound' : 'return';
+
+    // Filter results for the current phase
+    // In a real app we'd fetch specific segments. For mock, we map MOCK_FLIGHT_RESULTS into outbound/inbound lists.
+    const outboundOptions = MOCK_FLIGHT_RESULTS.map(f => f.outbound);
+    const returnOptions = MOCK_FLIGHT_RESULTS.filter(f => !!f.inbound).map(f => f.inbound!);
+
+    const currentOptions = phase === 'outbound' ? outboundOptions : returnOptions;
+    const selectedLeg = phase === 'outbound' ? packageWizardSelections.outboundFlight : packageWizardSelections.returnFlight;
+
+    const handleSelect = (leg: FlightLeg) => {
+        if (phase === 'outbound') {
+            setPackageWizardOutboundFlight(leg);
+        } else {
+            setPackageWizardReturnFlight(leg);
+        }
+    };
+
+    const handleReset = () => {
+        setPackageWizardOutboundFlight(undefined);
+        setPackageWizardReturnFlight(undefined);
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <h3 style={{ margin: 0, fontSize: 'var(--v6-fs-lg)', fontWeight: 800, color: 'var(--v6-text-primary)' }}>
-                ✈️ Izaberi let
-            </h3>
-            <p style={{ margin: 0, fontSize: 'var(--v6-fs-xs)', color: 'var(--v6-text-muted)' }}>
-                Prikazani su dostupni letovi za izabrane termine. Cene su ukupne za sve putnike.
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 900 }}>
+                    {phase === 'outbound' ? '✈️ Korak 2a: Izaberite let u odlasku' : '✈️ Korak 2b: Izaberite povratni let'}
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--v6-text-muted)' }}>
+                    Prikazani su dostupni letovi za izabrane termine. Cene su po osobi.
+                  </p>
+                </div>
+                {packageWizardSelections.outboundFlight && (
+                    <button 
+                        onClick={handleReset}
+                        style={{ padding: '6px 12px', background: 'var(--v6-bg-section)', border: '1.5px solid var(--v6-border)', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                        <RotateCcw size={12} /> Resetuj izbor letova
+                    </button>
+                )}
+            </div>
 
-            {MOCK_FLIGHT_RESULTS.map((flight, idx) => {
-                const isSelected = packageWizardSelections.flight?.id === flight.id;
-                return (
-                    <div key={flight.id} style={{
-                        outline: isSelected ? `2.5px solid var(--v6-color-instant)` : '2.5px solid transparent',
-                        borderRadius: 'var(--v6-radius-lg)',
-                        transition: 'outline 0.2s',
-                    }}>
-                        <FlightCard
-                            flight={flight}
-                            index={idx}
-                            paxTotal={paxTotal}
-                            onBook={(f) => setPackageWizardFlight(f)}
-                        />
-                        {isSelected && (
-                            <div style={{ textAlign: 'center', padding: '8px', fontSize: '12px', fontWeight: 700, color: 'var(--v6-color-instant-text)', background: 'var(--v6-color-instant-bg)', borderRadius: '0 0 var(--v6-radius-lg) var(--v6-radius-lg)' }}>
-                                ✓ Ovaj let je izabran za vaš paket
-                            </div>
-                        )}
-                    </div>
-                );
-            })}
+            {/* Segment Progress Trace */}
+            <div style={{ display: 'flex', gap: '8px', padding: '12px', background: 'var(--v6-bg-section)', borderRadius: '14px', border: '1.5px solid var(--v6-border)' }}>
+                <div style={{ 
+                    flex: 1, padding: '8px', borderRadius: '10px', 
+                    background: phase === 'outbound' ? 'var(--v6-navy)' : 'var(--v6-bg-card)',
+                    color: phase === 'outbound' ? '#fff' : 'var(--v6-text-muted)',
+                    border: '1px solid ' + (phase === 'outbound' ? 'var(--v6-navy)' : 'var(--v6-border)'),
+                    textAlign: 'center', fontSize: '11px', fontWeight: 800
+                }}>
+                    1. ODLAZAK {packageWizardSelections.outboundFlight && '✓'}
+                </div>
+                <div style={{ 
+                    flex: 1, padding: '8px', borderRadius: '10px', 
+                    background: phase === 'return' ? 'var(--v6-navy)' : 'var(--v6-bg-card)',
+                    color: phase === 'return' ? '#fff' : 'var(--v6-text-muted)',
+                    border: '1px solid ' + (phase === 'return' ? 'var(--v6-navy)' : 'var(--v6-border)'),
+                    textAlign: 'center', fontSize: '11px', fontWeight: 800
+                }}>
+                    2. POVRATAK {packageWizardSelections.returnFlight && '✓'}
+                </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {currentOptions.map((leg, idx) => {
+                    const isSelected = selectedLeg?.id === leg.id;
+                    const flightForCard: any = {
+                        id: leg.id,
+                        airline: 'Air Serbia', // Simplification for mock
+                        airlineLogo: '🇷🇸',
+                        totalPrice: leg.price,
+                        currency: leg.currency,
+                        outbound: leg,
+                        isPrime: true
+                    };
+                    
+                    return (
+                        <div key={leg.id} style={{
+                            outline: isSelected ? `2.5px solid var(--v6-color-instant)` : '2.5px solid transparent',
+                            borderRadius: 'var(--v6-radius-lg)',
+                            transition: 'outline 0.2s',
+                        }}>
+                            <FlightCard
+                                flight={flightForCard}
+                                index={idx}
+                                paxTotal={paxTotal}
+                                onBook={() => handleSelect(leg)}
+                                customActionLabel={phase === 'outbound' ? 'Izaberi polazak' : 'Izaberi povratak'}
+                            />
+                        </div>
+                    );
+                })}
+            </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-                <button onClick={onBack} style={{ padding: '11px 20px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'transparent', color: 'var(--v6-text-secondary)', fontSize: 'var(--v6-fs-sm)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--v6-font)' }}>← Nazad</button>
-                <button onClick={onNext} disabled={!packageWizardSelections.flight}
-                    style={{ padding: '11px 24px', background: packageWizardSelections.flight ? 'var(--v6-accent)' : 'var(--v6-border)', color: packageWizardSelections.flight ? 'var(--v6-accent-text)' : 'var(--v6-text-muted)', border: 'none', borderRadius: 'var(--v6-radius-md)', fontSize: 'var(--v6-fs-sm)', fontWeight: 700, cursor: packageWizardSelections.flight ? 'pointer' : 'not-allowed', fontFamily: 'var(--v6-font)' }}>
+                <button 
+                    onClick={() => {
+                        if (phase === 'return') {
+                            setPackageWizardOutboundFlight(undefined);
+                        } else {
+                            onBack();
+                        }
+                    }} 
+                    style={{ padding: '11px 20px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'transparent', color: 'var(--v6-text-secondary)', fontSize: 'var(--v6-fs-sm)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--v6-font)' }}
+                >
+                    ← Nazad
+                </button>
+                <button 
+                    onClick={onNext} 
+                    disabled={!packageWizardSelections.outboundFlight || !packageWizardSelections.returnFlight}
+                    style={{ 
+                        padding: '11px 24px', 
+                        background: (packageWizardSelections.outboundFlight && packageWizardSelections.returnFlight) ? 'var(--v6-accent)' : 'var(--v6-border)', 
+                        color: (packageWizardSelections.outboundFlight && packageWizardSelections.returnFlight) ? 'var(--v6-accent-text)' : 'var(--v6-text-muted)', 
+                        border: 'none', borderRadius: 'var(--v6-radius-md)', fontSize: 'var(--v6-fs-sm)', fontWeight: 700, 
+                        cursor: (packageWizardSelections.outboundFlight && packageWizardSelections.returnFlight) ? 'pointer' : 'not-allowed', 
+                        fontFamily: 'var(--v6-font)' 
+                    }}
+                >
                     Izaberi hotel →
                 </button>
             </div>
@@ -384,6 +667,20 @@ const Step3Hotels: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onN
             <h3 style={{ margin: 0, fontSize: 'var(--v6-fs-lg)', fontWeight: 800, color: 'var(--v6-text-primary)' }}>
                 🏨 Izaberi hotel i sobu
             </h3>
+
+            {/* Filteri za hotele */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '12px', background: 'var(--v6-bg-section)', borderRadius: '14px', border: '1.5px solid var(--v6-border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                    <SlidersHorizontal size={16} color="var(--v6-accent)" />
+                    <span style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--v6-text-primary)' }}>Filteri smeštaja:</span>
+                </div>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                    <button style={{ padding: '6px 12px', background: 'var(--v6-navy)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>★5 & ★4</button>
+                    <button style={{ padding: '6px 12px', background: '#fff', border: '1px solid var(--v6-border)', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Bazen</button>
+                    <button style={{ padding: '6px 12px', background: '#fff', border: '1px solid var(--v6-border)', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Sve uključeno</button>
+                    <button style={{ padding: '6px 12px', background: '#fff', border: '1px solid var(--v6-border)', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Centar</button>
+                </div>
+            </div>
 
             {MOCK_HOTEL_RESULTS.map(hotel => {
                 const isHotelSelected = selected.hotelId === hotel.id;
@@ -438,11 +735,14 @@ const Step3Hotels: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onN
             })}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-                <button onClick={onBack} style={{ padding: '11px 20px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'transparent', color: 'var(--v6-text-secondary)', fontSize: 'var(--v6-fs-sm)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--v6-font)' }}>← Nazad</button>
-                <button onClick={onNext} disabled={!canContinue}
-                    style={{ padding: '11px 24px', background: canContinue ? 'var(--v6-accent)' : 'var(--v6-border)', color: canContinue ? 'var(--v6-accent-text)' : 'var(--v6-text-muted)', border: 'none', borderRadius: 'var(--v6-radius-md)', fontSize: 'var(--v6-fs-sm)', fontWeight: 700, cursor: canContinue ? 'pointer' : 'not-allowed', fontFamily: 'var(--v6-font)' }}>
-                    Izaberi transfer →
-                </button>
+                <button onClick={() => useSearchStore.getState().resetPackageWizard()} style={{ padding: '11px 20px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'transparent', color: 'var(--v6-text-muted)', fontSize: 'var(--v6-fs-xs)', fontWeight: 600, cursor: 'pointer' }}>🔄 Poništi</button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={onBack} style={{ padding: '11px 20px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'transparent', color: 'var(--v6-text-secondary)', fontSize: 'var(--v6-fs-sm)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--v6-font)' }}>← Nazad</button>
+                    <button onClick={onNext} disabled={!canContinue}
+                        style={{ padding: '11px 24px', background: canContinue ? 'var(--v6-accent)' : 'var(--v6-border)', color: canContinue ? 'var(--v6-accent-text)' : 'var(--v6-text-muted)', border: 'none', borderRadius: 'var(--v6-radius-md)', fontSize: 'var(--v6-fs-sm)', fontWeight: 700, cursor: canContinue ? 'pointer' : 'not-allowed', fontFamily: 'var(--v6-font)' }}>
+                        Izaberi transfer →
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -454,19 +754,34 @@ const Step3Hotels: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onN
 const Step4Transfer: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onNext, onBack }) => {
     const { packageWizardSelections, setPackageWizardTransfer } = useSearchStore();
 
-    const typeLabels: Record<TransferOption['type'], string> = {
-        shared: '🚌 Shuttle',
-        private: '🚐 Privatni',
-        luxury: '🚘 Luksuz',
+    const typeIcons: Record<TransferOption['type'], React.ReactNode> = {
+        shared: <Bus size={18} />,
+        private: <Bus size={18} />, // Generic bus for now, Lucide has 'Car' or 'Van' but we keep it simple
+        luxury: <Bus size={18} />, 
     };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <h3 style={{ margin: 0, fontSize: 'var(--v6-fs-lg)', fontWeight: 800, color: 'var(--v6-text-primary)' }}>
-                🚐 Izaberi transfer (opciono)
+            <h3 style={{ margin: 0, fontSize: 'var(--v6-fs-lg)', fontWeight: 800, color: 'var(--v6-text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Bus size={22} color="var(--v6-accent)" /> Izaberi povratni transfer (opciono)
             </h3>
+            
+            {/* Filteri za transfere */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '10px 12px', background: 'var(--v6-bg-section)', borderRadius: '14px', border: '1.5px solid var(--v6-border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                    <SlidersHorizontal size={14} color="var(--v6-accent)" />
+                    <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--v6-text-primary)' }}>Tip vozila:</span>
+                </div>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                    <button style={{ padding: '5px 10px', background: 'var(--v6-navy)', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>Svi</button>
+                    <button style={{ padding: '5px 10px', background: '#fff', border: '1px solid var(--v6-border)', borderRadius: '6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>Šatl Bus</button>
+                    <button style={{ padding: '5px 10px', background: '#fff', border: '1px solid var(--v6-border)', borderRadius: '6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>Privatni auto</button>
+                    <button style={{ padding: '5px 10px', background: '#fff', border: '1px solid var(--v6-border)', borderRadius: '6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>Luksuzna limuzina</button>
+                </div>
+            </div>
+
             <p style={{ margin: 0, fontSize: 'var(--v6-fs-xs)', color: 'var(--v6-text-muted)' }}>
-                Aerodrom → Hotel pri dolasku i Hotel → Aerodrom pri odlasku.
+                Uključuje prevoz: Aerodrom ↔ Hotel u oba pravca (Dolazak i Odlazak).
             </p>
 
             {MOCK_TRANSFERS.map(tr => {
@@ -515,19 +830,19 @@ const Step5Extras: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onN
     const { packageWizardSelections, togglePackageWizardExtra } = useSearchStore();
 
     const categories = [
-        { key: 'tour',      label: '🗺️ Izleti' },
-        { key: 'sport',     label: '⛷️ Sport & Avantura' },
-        { key: 'culture',   label: '🎭 Kultura' },
-        { key: 'food',      label: '🍷 Gastronomija' },
-        { key: 'wellness',  label: '💆 Wellness' },
-        { key: 'insurance', label: '🛡️ Osiguranje' },
+        { key: 'tour',      label: 'Izleti', icon: <Map size={16} /> },
+        { key: 'sport',     label: 'Sport & Avantura', icon: <Activity size={16} /> },
+        { key: 'culture',   label: 'Kultura', icon: <Music size={16} /> },
+        { key: 'food',      label: 'Gastronomija', icon: <Utensils size={16} /> },
+        { key: 'wellness',  label: 'Wellness', icon: <Heart size={16} /> },
+        { key: 'insurance', label: 'Osiguranje', icon: <ShieldCheck size={16} /> },
     ];
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div>
-                <h3 style={{ margin: '0 0 4px', fontSize: 'var(--v6-fs-lg)', fontWeight: 800, color: 'var(--v6-text-primary)' }}>
-                    🎟️ Dodaj aktivnosti i osiguranje
+                <h3 style={{ margin: '0 0 4px', fontSize: 'var(--v6-fs-lg)', fontWeight: 800, color: 'var(--v6-text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Ticket size={22} color="var(--v6-accent)" /> Dodaj aktivnosti i osiguranje
                 </h3>
                 <p style={{ margin: 0, fontSize: 'var(--v6-fs-xs)', color: 'var(--v6-text-muted)' }}>
                     Izaberite šta sve želite da dodate u paket. Sve je opciono.
@@ -539,14 +854,16 @@ const Step5Extras: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onN
                 if (items.length === 0) return null;
                 return (
                     <div key={cat.key}>
-                        <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--v6-text-muted)', marginBottom: '10px' }}>{cat.label}</div>
+                        <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--v6-text-muted)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {cat.icon} {cat.label}
+                        </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {items.map(act => {
                                 const isSelected = packageWizardSelections.extraIds.includes(act.id);
                                 return (
                                     <div key={act.id} onClick={() => togglePackageWizardExtra(act.id)}
                                         style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '12px 14px', border: `1.5px solid ${isSelected ? 'var(--v6-color-instant)' : 'var(--v6-border)'}`, borderRadius: 'var(--v6-radius-md)', background: isSelected ? 'var(--v6-color-instant-bg)' : 'var(--v6-bg-card)', cursor: 'pointer', transition: 'all 0.15s' }}>
-                                        <span style={{ fontSize: '24px', flexShrink: 0 }}>{act.emoji}</span>
+                                        <span style={{ flexShrink: 0, color: isSelected ? 'var(--v6-color-instant)' : 'var(--v6-text-muted)' }}>{cat.icon}</span>
                                         <div style={{ flex: 1 }}>
                                             <div style={{ fontSize: 'var(--v6-fs-sm)', fontWeight: 700, color: 'var(--v6-text-primary)' }}>{act.title}</div>
                                             <div style={{ fontSize: '12px', color: 'var(--v6-text-muted)', marginTop: '2px', lineHeight: 1.4 }}>{act.description}</div>
@@ -595,11 +912,11 @@ const Step6Summary: React.FC<{ onBack: () => void; onBook: (total: number) => vo
     const selectedTransfer = MOCK_TRANSFERS.find(t => t.id === packageWizardSelections.transferId);
     const selectedExtras = MOCK_ACTIVITIES.filter(a => packageWizardSelections.extraIds.includes(a.id));
 
-    const items: { emoji: string; label: string; detail: string; price: number }[] = [];
-    if (selectedFlight) items.push({ emoji: selectedFlight.airlineLogo, label: `Let: ${selectedFlight.airline}`, detail: `${selectedFlight.outbound.segments[0].origin} → ${selectedFlight.outbound.segments[selectedFlight.outbound.segments.length - 1].destination}${selectedFlight.inbound ? ' (povratni)' : ''}`, price: selectedFlight.totalPrice });
-    if (selectedHotel && selectedRoom && selectedMeal) items.push({ emoji: '🏨', label: selectedHotel.name, detail: `${selectedRoom.name} · ${selectedMeal.label} · ${pax.nights} noćenja`, price: selectedMeal.totalPrice });
-    if (selectedTransfer) items.push({ emoji: '🚐', label: selectedTransfer.vehicle, detail: `${selectedTransfer.from} ↔ Hotel`, price: selectedTransfer.totalPrice });
-    selectedExtras.forEach(e => items.push({ emoji: e.emoji, label: e.title, detail: e.description.slice(0, 60) + '...', price: e.totalPrice }));
+    const items: { icon: React.ReactNode; label: string; detail: string; price: number }[] = [];
+    if (selectedFlight) items.push({ icon: <Plane size={20} />, label: `Let: ${selectedFlight.airline}`, detail: `${selectedFlight.outbound.segments[0].origin} → ${selectedFlight.outbound.segments[selectedFlight.outbound.segments.length - 1].destination}${selectedFlight.inbound ? ' (povratni)' : ''}`, price: selectedFlight.totalPrice });
+    if (selectedHotel && selectedRoom && selectedMeal) items.push({ icon: <Hotel size={20} />, label: selectedHotel.name, detail: `${selectedRoom.name} · ${selectedMeal.label} · ${pax.nights} noćenja`, price: selectedMeal.totalPrice });
+    if (selectedTransfer) items.push({ icon: <Bus size={20} />, label: selectedTransfer.vehicle, detail: `${selectedTransfer.from} ↔ Hotel`, price: selectedTransfer.totalPrice });
+    selectedExtras.forEach(e => items.push({ icon: <Ticket size={20} />, label: e.title, detail: e.description.slice(0, 60) + '...', price: e.totalPrice }));
 
     const grandTotal = items.reduce((s, i) => s + i.price, 0);
 
@@ -607,22 +924,22 @@ const Step6Summary: React.FC<{ onBack: () => void; onBook: (total: number) => vo
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: 'var(--v6-fs-lg)', fontWeight: 800, color: 'var(--v6-text-primary)' }}>
-                ✅ Pregled vašeg paketa
+            <h3 style={{ margin: 0, fontSize: 'var(--v6-fs-lg)', fontWeight: 800, color: 'var(--v6-text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <CheckCircle2 size={24} color="var(--v6-color-instant)" /> Pregled vašeg paketa
             </h3>
 
             {/* PAX sažetak */}
-            <div style={{ padding: '12px 16px', background: 'var(--v6-bg-section)', borderRadius: 'var(--v6-radius-md)', border: '1px solid var(--v6-border)', fontSize: '13px', color: 'var(--v6-text-secondary)', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                <span>📅 <strong style={{ color: 'var(--v6-text-primary)' }}>{formatDate(checkIn)} — {formatDate(checkOut)}</strong></span>
-                <span>🌙 <strong style={{ color: 'var(--v6-text-primary)' }}>{pax.nights} noćenja</strong></span>
-                <span>👥 <strong style={{ color: 'var(--v6-text-primary)' }}>{pax.totalAdults} odr.{pax.totalChildren > 0 ? ` + ${pax.totalChildren} dece` : ''}</strong></span>
+            <div style={{ padding: '12px 16px', background: 'var(--v6-bg-section)', borderRadius: 'var(--v6-radius-md)', border: '1px solid var(--v6-border)', fontSize: '13px', color: 'var(--v6-text-secondary)', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Calendar size={14} /> <strong style={{ color: 'var(--v6-text-primary)' }}>{formatDate(checkIn)} — {formatDate(checkOut)}</strong></span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Clock size={14} /> <strong style={{ color: 'var(--v6-text-primary)' }}>{pax.nights} noćenja</strong></span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Users size={14} /> <strong style={{ color: 'var(--v6-text-primary)' }}>{pax.totalAdults} odr.{pax.totalChildren > 0 ? ` + ${pax.totalChildren} dece` : ''}</strong></span>
             </div>
 
             {/* Stavke */}
             <div style={{ border: '1px solid var(--v6-border)', borderRadius: 'var(--v6-radius-lg)', overflow: 'hidden' }}>
                 {items.map((item, i) => (
                     <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '14px 16px', borderBottom: i < items.length - 1 ? '1px solid var(--v6-border)' : 'none', background: 'var(--v6-bg-card)' }}>
-                        <span style={{ fontSize: '22px', flexShrink: 0 }}>{item.emoji}</span>
+                        <span style={{ color: 'var(--v6-text-muted)', flexShrink: 0 }}>{item.icon}</span>
                         <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 'var(--v6-fs-sm)', fontWeight: 700, color: 'var(--v6-text-primary)' }}>{item.label}</div>
                             <div style={{ fontSize: '12px', color: 'var(--v6-text-muted)', marginTop: '2px' }}>{item.detail}</div>
@@ -691,7 +1008,74 @@ export const PackageWizard: React.FC<PackageWizardProps> = ({ onComplete }) => {
             case 3: return <Step3Hotels  onNext={() => setPackageWizardStep(4)} onBack={() => setPackageWizardStep(2)} />;
             case 4: return <Step4Transfer onNext={() => setPackageWizardStep(5)} onBack={() => setPackageWizardStep(3)} />;
             case 5: return <Step5Extras  onNext={() => setPackageWizardStep(6)} onBack={() => setPackageWizardStep(4)} />;
-            case 6: return <Step6Summary  onBack={() => setPackageWizardStep(5)} onBook={onComplete} />;
+            case 6: return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div style={{ background: 'var(--v6-bg-section)', padding: '24px', borderRadius: 'var(--v6-radius-xl)', border: '1.5px solid var(--v6-border)', textAlign: 'center' }}>
+                        <span style={{ fontSize: '48px', marginBottom: '16px', display: 'block' }}>🎉</span>
+                        <h2 style={{ fontSize: '24px', fontWeight: 900, color: 'var(--v6-text-primary)', margin: '0 0 8px' }}>Vaš paket je spreman!</h2>
+                        <p style={{ color: 'var(--v6-text-muted)', fontSize: '14px', maxWidth: '400px', margin: '0 auto 24px' }}>
+                            Pregledajte sve segmente u desnom panelu. Možete ih izmeniti, sačuvati ponudu za kasnije ili odmah rezervisati.
+                        </p>
+                        
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                            <button 
+                                onClick={() => {
+                                    useSearchStore.getState().saveOffer({
+                                        id: `pkg-${Date.now()}`,
+                                        type: 'package',
+                                        label: `Komplet Aranžman (${pax.nights} noći)`,
+                                        description: `Hotel, Let, Transfer i Extras`,
+                                        totalPrice: 1250, // This would be calculated from real selection
+                                        currency: 'EUR',
+                                        timestamp: Date.now(),
+                                        data: { packageWizardSelections, roomAllocations, checkIn, checkOut },
+                                        hasPriceDropAlert: false
+                                    });
+                                    alert('Paket je sačuvan u Vaš folder!');
+                                }}
+                                style={{
+                                    padding: '12px 20px',
+                                    background: 'var(--v6-bg-card)',
+                                    border: '1.5px solid var(--v6-border)',
+                                    borderRadius: '12px',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}
+                            >
+                                💾 Sačuvaj Paket
+                            </button>
+                            <button 
+                                onClick={() => alert('Opcije za deljenje: Viber, WhatsApp, Telegram, Email...')}
+                                style={{
+                                    padding: '12px 20px',
+                                    background: 'var(--v6-bg-card)',
+                                    border: '1.5px solid var(--v6-border)',
+                                    borderRadius: '12px',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}
+                            >
+                                🔗 Podeli Ponudu
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <button onClick={() => setPackageWizardStep(5)} style={{ padding: '11px 20px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'transparent', color: 'var(--v6-text-secondary)', fontSize: 'var(--v6-fs-sm)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--v6-font)' }}>← Nazad</button>
+                        <button 
+                            onClick={() => onComplete(1250)}
+                            style={{ padding: '13px 32px', background: 'var(--v6-color-instant)', color: '#ffffff', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(5,150,105,0.2)' }}>
+                            🏁 Rezerviši Sve Odmah
+                        </button>
+                    </div>
+                </div>
+            );
             default: return null;
         }
     };
@@ -713,17 +1097,10 @@ export const PackageWizard: React.FC<PackageWizardProps> = ({ onComplete }) => {
                     {renderStep()}
                 </div>
 
-                {/* Desni panel: Price Build-Up */}
-                <PriceBuildUp
-                    flight={selectedFlight}
-                    hotelName={selectedHotel?.name}
-                    hotelPrice={selectedMeal?.totalPrice}
-                    transferName={selectedTransfer?.vehicle}
-                    transferPrice={selectedTransfer?.totalPrice}
-                    extras={selectedExtras}
-                    paxTotal={paxTotal}
-                    nights={pax.nights}
-                />
+                {/* Desni panel: LIVE STACK (Duplirana širina) */}
+                <div style={{ width: '540px', flexShrink: 0 }}>
+                    <PackageLiveStack />
+                </div>
             </div>
         </div>
     );

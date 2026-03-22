@@ -200,15 +200,69 @@ export const HotelCard: React.FC<HotelCardProps> = ({ hotel, index, onViewOption
                     </p>
                 </div>
 
-                {/* ── CTA DUGME ─────────────────────────────── */}
-                <button
-                    className="v6-card-cta-btn"
-                    onClick={() => onViewOptions(hotel)}
-                    aria-label={`Pogledaj opcije za ${hotel.name}`}
-                    id={`v6-view-options-${hotel.id}`}
-                >
-                    Pogledaj opcije →
-                </button>
+                {/* ── CTA RUBLIC ─────────────────────────────── */}
+                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                    <button
+                        className="v6-card-cta-btn"
+                        onClick={() => onViewOptions(hotel)}
+                        aria-label={`Pogledaj opcije za ${hotel.name}`}
+                        id={`v6-view-options-${hotel.id}`}
+                        style={{ flex: 1.5 }}
+                    >
+                        Pogledaj opcije →
+                    </button>
+                    
+                    <button
+                        onClick={() => {
+                            useSearchStore.getState().saveOffer({
+                                id: `htl-${hotel.id}-${Date.now()}`,
+                                type: 'hotel',
+                                label: hotel.name,
+                                description: getPriceBreakdown(),
+                                totalPrice: hotel.lowestTotalPrice,
+                                currency: hotel.currency,
+                                timestamp: Date.now(),
+                                data: { hotelId: hotel.id, checkIn, checkOut, roomAllocations },
+                                hasPriceDropAlert: false
+                            });
+                            alert('Hotel sačuvan u ponude!');
+                        }}
+                        style={{
+                            width: '44px',
+                            height: '44px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'var(--v6-bg-section)',
+                            border: '1.5px solid var(--v6-border)',
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            fontSize: '18px'
+                        }}
+                        title="Sačuvaj ponudu"
+                    >
+                        💾
+                    </button>
+
+                    <button
+                        onClick={() => alert('Share opcije: Facebook, Instagram, Viber...')}
+                        style={{
+                            width: '44px',
+                            height: '44px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'var(--v6-bg-section)',
+                            border: '1.5px solid var(--v6-border)',
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            fontSize: '18px'
+                        }}
+                        title="Podeli ponudu"
+                    >
+                        🔗
+                    </button>
+                </div>
             </div>
         </article>
     );

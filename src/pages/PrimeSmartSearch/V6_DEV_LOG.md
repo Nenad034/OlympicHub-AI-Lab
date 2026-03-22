@@ -645,6 +645,45 @@ interface CarVehicle { ... }           // Vozilo sa svim specifikacijama + polic
 | ✅ | Putovanja (Tours) | P2 |
 | ✅ | Izleti & Aktivnosti | P2 |
 | ✅ | Krstarenja | P2 |
+| ✅ | Package Live Stack & Alerts | P0 |
+
+## ═══════════════════════════════════════════════════════════
+## FAZA 6 — Package Wizard Enhancements & Live Stack
+### Datum: 2026-03-22 | Status: 🟢 U TOKU (Implemented)
+## ═══════════════════════════════════════════════════════════
+
+### Korak F6.1 — `PackageLiveStack.tsx` (Dinamička Korpa)
+**Fajl:** `src/pages/PrimeSmartSearch/components/PackageLiveStack.tsx`  
+**Šta je urađeno:**
+- Zamenjen stari `PriceBuildUp` sidebar sa modernim "Live Stack" sistemom kartica.
+- Svaki segment (Let, Hotel, Transfer, Extra) prikazuje se kao **zasebna kartica** u desnom panelu.
+- **Link "Izmeni"**: Svaka kartica omogućava brz povratak na specifičan korak wizard-a radi promene izbora.
+- Vizuelni stil: Glassmorphism, v6-slide-up animacije, ikone segmenta.
+- Integrisana dugmad za **"Sačuvaj Paket"** i **"Share"** na dnu stack-a.
+
+### Korak F6.2 — "Save Offer" & "Share" u Modulima
+**Fajlovi:** `HotelCard.tsx`, `FlightCard.tsx`  
+**Šta je urađeno:**
+- Dodata namenska dugmad (💾 Sačuvaj i 🔗 Podeli) na svaku karticu rezultata.
+- Omogućeno čuvanje individualnih ponuda u `savedOffers` state (Zustand).
+- Pripremljen UI za deljenje via social media (Viber, WhatsApp, Instagram...).
+
+### Korak F6.3 — `SavedOffersPanel.tsx` & Price Alerts
+**Fajl:** `src/pages/PrimeSmartSearch/components/SavedOffersPanel.tsx`  
+**Šta je urađeno:**
+- **Plutajući panel (Folder)**: Pojavljuje se u donjem desnom uglu kada korisnik ima sačuvane ponude.
+- **Real-time Price Check**: Dugme "Osveži cenu" koje pokreće `checkPriceChange` akciju.
+- **Price Drop Alerts**: Opcija "Obavesti me kada cena padne" (🔔) koja aktivira alarm.
+- **Price Change Notification**: Toast notifikacija (📈/📉) koja iskače pri detekciji promene cene.
+
+### Korak F6.4 — State Logic (`useSearchStore.ts`)
+**Šta je dodato:**
+- `savedOffers`: Niz `SavedOffer` objekata.
+- `lastPriceChangeNotification`: Trenutna notifikacija o promeni cene.
+- `saveOffer()`, `removeSavedOffer()`, `togglePriceDropAlert()` akcije.
+- `checkPriceChange()`: Asinhrona akcija koja simulira re-check cene i poredi staru sa novom.
+
+---
 
 ## 4. ŠTA JE SLEDEĆE? (Backlog & Roadmap)
 
@@ -689,6 +728,12 @@ interface CarVehicle { ... }           // Vozilo sa svim specifikacijama + polic
 | 2026-03-21 | `PackageBasket.tsx` | 🛒 Plutajući widget za brzi pregled paketa na dnu |
 | 2026-03-21 | `DynamicPackageCheckout.tsx` | 💳 Pravljenje završne stranice (Kase) pred rezervaciju |
 | 2026-03-21 | `PrimeSmartSearch.tsx` | SVI SEKTORI PRETRAGE USPEŠNO ZAVRŠENI ODOMAĆENI NA UI-U. |
+| 2026-03-22 | `types.ts` | Dodati `SavedOffer` i `PriceChangeNotification` tipovi |
+| 2026-03-22 | `useSearchStore.ts` | Dodata logika za čuvanje ponuda i proveru cena |
+| 2026-03-22 | `PackageLiveStack.tsx` | Kreirana dinamička korpa sa "Izmeni" linkovima |
+| 2026-03-22 | `HotelCard.tsx` / `FlightCard.tsx` | Dodata dugmad za Sačuvaj i Podeli |
+| 2026-03-22 | `SavedOffersPanel.tsx` | Kreiran panel za upravljanje sačuvanim ponudama i alarmima |
+| 2026-03-22 | `PrimeSmartSearch.tsx` | Integrisan `SavedOffersPanel` i Price Alerts |
 
 ---
 

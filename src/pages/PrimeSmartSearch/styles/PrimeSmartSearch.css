@@ -11,15 +11,28 @@
    ───────────────────────────────────────────────────────────── */
 .v6-prime-hub {
     /* Semantičke Boje (Semafor Logika) */
-    --v6-color-instant:       #059669;  /* ⚡ Zelena — Odmah potvrđeno */
-    --v6-color-instant-bg:    #d1fae5;
-    --v6-color-instant-text:  #065f46;
-    --v6-color-on-request:    #d97706;  /* ❓ Amber — Na Upit */
-    --v6-color-on-request-bg: #fef3c7;
-    --v6-color-on-request-text: #92400e;
-    --v6-color-prime:         #b45309;  /* 🏆 Zlatni — Prime Inventar */
-    --v6-color-prime-bg:      #fef9c3;
+    --v6-color-instant:       #1e293b;  /* ⚡ Teget — Potvrđeno/Glavno */
+    --v6-color-instant-bg:    #f1f5f9;
+    --v6-color-instant-text:  #1e293b;
+    --v6-color-on-request:    #64748b;  /* ❓ Sivo — Na Upit */
+    --v6-color-on-request-bg: #f8fafc;
+    --v6-color-on-request-text: #475569;
+    --v6-color-prime:         #2563eb;  /* ⚡ Blue Electric — Dinamički Paketi */
+    --v6-color-prime-bg: rgba(37, 99, 235, 0.08);
 
+    /* Pastel Service Colors */
+    --v6-color-flight: #3b82f6;      /* Blue */
+    --v6-color-flight-bg: #eff6ff;
+    --v6-color-hotel: #8b5cf6;       /* Violet */
+    --v6-color-hotel-bg: #f5f3ff;
+    --v6-color-transfer: #10b981;    /* Emerald */
+    --v6-color-transfer-bg: #ecfdf5;
+    --v6-color-extra: #f59e0b;       /* Amber */
+    --v6-color-extra-bg: #fffbeb;
+    --v6-color-summary: #0f172a;     /* Navy */
+    --v6-color-summary-bg: #f8fafc;
+
+    /* Statusi */
     /* Light Mode Paleta */
     --v6-bg-main:             #f0f2f5;
     --v6-bg-card:             #ffffff;
@@ -149,7 +162,7 @@
     scrollbar-width: none;
     padding: 10px 0;
     border-bottom: 1px solid var(--v6-border);
-    margin-bottom: 20px;
+    margin-bottom: 0px; /* Uklonjen margin kako bi se modul podigao */
 }
 
 .v6-tabs-bar::-webkit-scrollbar {
@@ -170,25 +183,62 @@
     min-width: 90px;
 }
 
+/* 📏 HORIZONTALNI INDIKATOR ISPOD IKONE ZA AKTIVAN MODUL */
+.v6-tab-btn-vertical::after {
+    content: '';
+    position: absolute;
+    bottom: -10px; /* Pozicija linije ispod labela ili ikone */
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 32px; /* Širina ikone */
+    height: 3px;
+    background: #1e293b;
+    border-radius: 99px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+}
+
+.v6-tab-btn-vertical.v6-tab-active::after {
+    transform: translateX(-50%) scaleX(1);
+    opacity: 1;
+}
+
 .v6-tab-icon-lucide-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s ease;
+    width: 52px;
+    height: 52px;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 🎨 BOJE IKONA (Stroke) */
+/* 🎨 BOJE IKONA I OKVIRA (Stroke & Border) */
 
-/* LIGHT MODE: Teget / Dark Blue linije ikona */
-.light-theme .v6-tab-icon-lucide-wrapper svg {
-    stroke: #1e293b !important; /* Elegantna duboka teget kao na profesionalnim UI */
+/* LIGHT MODE: Teget / Dark Blue linije ikona i okvira (Default) */
+.v6-prime-hub:not(.v6-dark) .v6-tab-icon-lucide-wrapper {
+    border-color: #1e293b;
+    background: white;
+}
+.v6-prime-hub:not(.v6-dark) .v6-tab-icon-lucide-wrapper svg {
+    stroke: #1e293b !important;
 }
 
-/* DARK MODE: Bela boja linija ikona */
-.dark-theme .v6-tab-icon-lucide-wrapper svg,
-.navy-theme .v6-tab-icon-lucide-wrapper svg,
-.v6-dark .v6-tab-icon-lucide-wrapper svg {
+/* DARK MODE: Bela boja linija ikona i okvira */
+.v6-prime-hub.v6-dark .v6-tab-icon-lucide-wrapper {
+    border-color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.05);
+}
+.v6-prime-hub.v6-dark .v6-tab-icon-lucide-wrapper svg {
     stroke: #FFFFFF !important;
+}
+
+/* AKTIVNO STANJE: Deblji okvir i naglašen modul */
+.v6-tab-btn-vertical.v6-tab-active .v6-tab-icon-lucide-wrapper {
+    border-width: 2.5px;
+    background: var(--v6-bg-section);
+    box-shadow: 0 4px 12px rgba(30, 41, 59, 0.1);
 }
 
 /* AKTIVNO STANJE: Naglašen tekst i indikator */
@@ -400,6 +450,73 @@
 }
 
 /* Dugme Pretraži */
+.v6-stack-card {
+    border: 1.5px solid var(--v6-border);
+    border-radius: var(--v6-radius-md); /* Malo manji radius za ultra-kompaktan izgled */
+    padding: 8px 14px;  /* Minimalni padding */
+    min-height: 64px;   /* Smanjeno za još 25% (sa 80px na 64px) */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;           /* Minimalna distanca izmedju redova */
+    box-shadow: var(--v6-shadow-sm);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Service-specific pastel backgrounds */
+.v6-stack-card.v6-type-flight { background: var(--v6-color-flight-bg); border-color: rgba(59, 130, 246, 0.2); }
+.v6-stack-card.v6-type-hotel { background: var(--v6-color-hotel-bg); border-color: rgba(139, 92, 246, 0.2); }
+.v6-stack-card.v6-type-transfer { background: var(--v6-color-transfer-bg); border-color: rgba(16, 185, 129, 0.2); }
+.v6-stack-card.v6-type-extra { background: var(--v6-color-extra-bg); border-color: rgba(245, 158, 11, 0.2); }
+
+.v6-stack-card:hover {
+    box-shadow: var(--v6-shadow-md);
+    transform: translateY(-2px);
+}
+
+.v6-stack-card-icon {
+    width: 32px;        /* Manja ikona za visinu 64px */
+    height: 32px;
+    border-radius: 8px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.v6-type-extra .v6-stack-card-icon { color: var(--v6-color-extra); }
+
+.v6-stack-card-price {
+    font-size: 16px;    /* Smanjeno sa 18px da bi stalo */
+    font-weight: 950;
+    color: var(--v6-navy);
+    letter-spacing: -0.01em;
+}
+
+.v6-stack-card-pax-info {
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--v6-text-muted);
+    text-transform: uppercase;
+}
+
+.v6-segment-badge {
+    position: absolute;
+    top: 6px;
+    right: 14px;
+    background: #fff;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 8px;
+    font-weight: 950;
+    text-transform: uppercase;
+    color: var(--v6-navy);
+    border: 1px solid var(--v6-border);
+}
 .v6-search-btn-advanced {
     height: 52px;
     padding: 0 32px;
@@ -791,11 +908,32 @@
     color: var(--v6-color-instant-text);
 }
 
-.v6-badge-status.v6-on-request {
-    background: var(--v6-color-on-request-bg);
-    color: var(--v6-color-on-request-text);
+.v6-stack-card-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
 }
 
+.v6-edit-btn-mini {
+    background: var(--v6-bg-section);
+    border: 1px solid var(--v6-border);
+    border-radius: 8px;
+    color: var(--v6-accent);
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.v6-edit-btn-mini:hover {
+    background: #fff;
+    border-color: var(--v6-accent);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+}
 /* Sadržaj kartice */
 .v6-card-body {
     padding: 16px;

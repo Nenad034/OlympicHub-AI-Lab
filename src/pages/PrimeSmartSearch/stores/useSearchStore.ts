@@ -8,6 +8,7 @@ import type {
     SearchFilters,
     HotelSearchResult,
     FlightSearchResult,
+    FlightLeg,
     FlightSearchParams,
     CharterSearchParams,
     CharterResult,
@@ -22,11 +23,15 @@ import type {
     CruiseSearchParams,
     CruiseResult,
     PackageBasketItem,
+    ConciergeOffer,
+    SavedOffer,
+    PriceChangeNotification,
+    TransferOption,
+    ActivityOption,
     SearchAlert,
     AlternativeDateSuggestion,
-    ConciergeOffer,
 } from '../types';
-import type { TransferOption, ActivityOption } from '../data/mockPackageData';
+import { MOCK_TRANSFERS, MOCK_ACTIVITIES } from '../data/mockPackageData';
 
 // ─────────────────────────────────────────────────────────────
 // ACTIONS (Store Methods)
@@ -77,6 +82,8 @@ interface SearchActions {
     // Package Wizard navigacija
     setPackageWizardStep: (step: number) => void;
     setPackageWizardFlight: (flight: FlightSearchResult | undefined) => void;
+    setPackageWizardOutboundFlight: (flight: FlightLeg | undefined) => void;
+    setPackageWizardReturnFlight: (flight: FlightLeg | undefined) => void;
     setPackageWizardHotel: (hotelId: string | undefined, roomId: string | undefined, mealPlanCode: string | undefined) => void;
     setPackageWizardTransfer: (transferId: string | undefined) => void;
     togglePackageWizardExtra: (extraId: string) => void;
@@ -122,6 +129,13 @@ interface SearchActions {
     // Smart Concierge
     setConciergeOffers: (offers: ConciergeOffer[]) => void;
     dismissConciergeOffer: (id: string) => void;
+
+    // Saved Offers & Price Drops (Faza 6)
+    saveOffer: (offer: SavedOffer) => void;
+    removeSavedOffer: (id: string) => void;
+    togglePriceDropAlert: (id: string) => void;
+    checkPriceChange: (id: string) => Promise<void>;
+    dismissPriceNotification: () => void;
 
     // Reset
     resetSearch: () => void;
@@ -179,7 +193,9 @@ const initialState: SearchState = {
     showPackageCheckout: false,
     alerts: [],
     alternativeDates: [],
-    conciergeOffers: []
+    conciergeOffers: [],
+    savedOffers: [],
+    lastPriceChangeNotification: undefined,
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -309,6 +325,12 @@ export const useSearchStore = create<SearchState & SearchActions>((set, get) => 
     setPackageWizardFlight: (flight) => set((state) => ({
         packageWizardSelections: { ...state.packageWizardSelections, flight }
     })),
+    setPackageWizardOutboundFlight: (outboundFlight) => set((state) => ({
+        packageWizardSelections: { ...state.packageWizardSelections, outboundFlight }
+    })),
+    setPackageWizardReturnFlight: (returnFlight) => set((state) => ({
+        packageWizardSelections: { ...state.packageWizardSelections, returnFlight }
+    })),
     setPackageWizardHotel: (hotelId, roomId, mealPlanCode) => set((state) => ({
         packageWizardSelections: { ...state.packageWizardSelections, hotelId, roomId, mealPlanCode }
     })),
@@ -324,7 +346,7 @@ export const useSearchStore = create<SearchState & SearchActions>((set, get) => 
     }),
     resetPackageWizard: () => set({
         packageWizardStep: 1,
-        packageWizardSelections: { extraIds: [] },
+        packageWizardSelections: { extraIds: [], flight: undefined, outboundFlight: undefined, returnFlight: undefined },
     }),
 
     // ── Package Basket ───────────────────────────────────────
@@ -354,6 +376,43 @@ export const useSearchStore = create<SearchState & SearchActions>((set, get) => 
     dismissConciergeOffer: (id) => set((state) => ({
         conciergeOffers: state.conciergeOffers.filter(o => o.id !== id)
     })),
+
+    // ── Saved Offers (Faza 6) ──────────────────────────────────
+    saveOffer: (offer) => set((state) => ({
+        savedOffers: [...state.savedOffers, offer]
+    })),
+    removeSavedOffer: (id) => set((state) => ({
+        savedOffers: state.savedOffers.filter(o => o.id !== id)
+    })),
+    togglePriceDropAlert: (id) => set((state) => ({
+        savedOffers: state.savedOffers.map(o => o.id === id ? { ...o, hasPriceDropAlert: !o.hasPriceDropAlert } : o)
+    })),
+    checkPriceChange: async (id) => {
+        const state = get();
+        const offer = state.savedOffers.find(o => o.id === id);
+        if (!offer) return;
+
+        // Mock price re-check logic
+        state.setIsSearching(true);
+        await new Promise(r => setTimeout(r, 1500));
+        
+        state.setIsSearching(false);
+        // Randomly change price for demo
+        const change = Math.floor(Math.random() * 100) - 40; // -40 to 60 EUR change
+        if (change !== 0) {
+            set({
+                lastPriceChangeNotification: {
+                    offerId: id,
+                    oldPrice: offer.totalPrice,
+                    newPrice: offer.totalPrice + change,
+                    currency: offer.currency,
+                    isHigher: change > 0
+                },
+                savedOffers: state.savedOffers.map(o => o.id === id ? { ...o, totalPrice: offer.totalPrice + change } : o)
+            });
+        }
+    },
+    dismissPriceNotification: () => set({ lastPriceChangeNotification: undefined }),
 
     // ── Reset ────────────────────────────────────────────────
     resetSearch: () => set(initialState)

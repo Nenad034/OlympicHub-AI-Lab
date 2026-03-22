@@ -268,9 +268,6 @@ export const OccupancyWizard: React.FC<OccupancyWizardProps> = ({ triggerRef }) 
         const adults = pax.totalAdults;
         const children = pax.totalChildren;
         
-        // SAKRIJ DEFAULT PODATKE: Ako je 1 soba, 2 odraslih, 0 dece
-        if (rooms === 1 && adults === 2 && children === 0) return '';
-
         let label = `${adults} odr.`;
         if (children > 0) label += ` · ${children} dece`;
         label += ` · ${rooms} s.`;

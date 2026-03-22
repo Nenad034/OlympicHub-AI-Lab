@@ -244,11 +244,26 @@ export const FlightSearchForm: React.FC = () => {
                                     <div className="v6-pill-group-v2">
                                         {[
                                             { id: 'any', label: 'Bilo kada', icon: <Clock size={16} /> },
-                                            { id: 'morning', label: 'Prepis', icon: <Clock size={16} /> },
+                                            { id: 'morning', label: 'Prepodne', icon: <Clock size={16} /> },
                                             { id: 'afternoon', label: 'Popodne', icon: <Clock size={16} /> },
                                             { id: 'evening', label: 'Uveče', icon: <Clock size={16} /> }
                                         ].map(t => (
                                             <button key={t.id} onClick={() => setOutboundTime(t.id)} className={outboundTime === t.id ? 'active' : ''}>
+                                                {t.icon} <span>{t.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="v6-filter-group-v2">
+                                    <label>Vreme dolaska</label>
+                                    <div className="v6-pill-group-v2">
+                                        {[
+                                            { id: 'any', label: 'Bilo kada', icon: <Clock size={16} /> },
+                                            { id: 'morning', label: 'Prepodne', icon: <Clock size={16} /> },
+                                            { id: 'afternoon', label: 'Popodne', icon: <Clock size={16} /> },
+                                            { id: 'evening', label: 'Uveče', icon: <Clock size={16} /> }
+                                        ].map(t => (
+                                            <button key={t.id} className="">
                                                 {t.icon} <span>{t.label}</span>
                                             </button>
                                         ))}
@@ -303,7 +318,7 @@ export const FlightSearchForm: React.FC = () => {
                     gap: 24px;
                     box-shadow: 0 10px 30px rgba(0,0,0,0.05);
                 }
-                .v6-filters-grid-v2 { display: grid; grid-template-columns: 1fr 1fr 0.8fr; gap: 32px; }
+                .v6-filters-grid-v2 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 32px; }
                 .v6-filter-group-v2 label { 
                     display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; 
                     color: #1e293b; opacity: 0.6; margin-bottom: 12px; letter-spacing: 0.5px;

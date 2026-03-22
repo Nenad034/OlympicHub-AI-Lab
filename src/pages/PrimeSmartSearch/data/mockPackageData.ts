@@ -1,29 +1,4 @@
-/**
- * Mock podaci za Dinamički Paket Wizard.
- * Faza Orchestrator: Zameniće ih pravi API pozivi po destinaciji.
- */
-
-// ─────────────────────────────────────────────────────────────
-// TRANSFERI
-// ─────────────────────────────────────────────────────────────
-export interface TransferOption {
-    id: string;
-    type: 'shared' | 'private' | 'luxury';
-    vehicle: string;
-    from: string;
-    to: string;
-    fromCode: string;           // Aerodrom IATA
-    toLabel: string;            // Naziv hotela / grada
-    durationMinutes: number;
-    distanceKm: number;
-    pricePerPerson: number;
-    totalPrice: number;         // Za sve putnike
-    currency: string;
-    maxPassengers: number;
-    includes: string[];         // ['A/C', 'Bespl. čekanje 60min', ...]
-    status: 'instant' | 'on-request';
-    isPrime: boolean;
-}
+import type { TransferOption, ActivityOption } from '../types';
 
 export const MOCK_TRANSFERS: TransferOption[] = [
     {
@@ -81,29 +56,6 @@ export const MOCK_TRANSFERS: TransferOption[] = [
         isPrime: true,
     },
 ];
-
-// ─────────────────────────────────────────────────────────────
-// AKTIVNOSTI & IZLETI
-// ─────────────────────────────────────────────────────────────
-export interface ActivityOption {
-    id: string;
-    category: 'tour' | 'sport' | 'culture' | 'food' | 'wellness' | 'insurance';
-    title: string;
-    description: string;
-    emoji: string;
-    durationHours: number;
-    departureTime?: string;
-    meetingPoint?: string;
-    includes: string[];
-    pricePerPerson: number;
-    totalPrice: number;          // Za sve putnike
-    currency: string;
-    status: 'instant' | 'on-request';
-    minParticipants?: number;
-    maxParticipants?: number;
-    isRefundable: boolean;
-    cancellationHours?: number;  // Besplatno otkazivanje do N sati pre
-}
 
 export const MOCK_ACTIVITIES: ActivityOption[] = [
     // ── Izleti ─────────────────────────────────────────────
