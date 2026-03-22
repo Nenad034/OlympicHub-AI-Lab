@@ -95,6 +95,8 @@ const TrafficsTest = React.lazy(() => import('../pages/TrafficsTest'));
 const OperationalReports = React.lazy(() => import('../modules/production/OperationalReports.tsx'));
 const PimDashboard = React.lazy(() => import('../modules/pim/PimDashboard'));
 const ModernSearch = React.lazy(() => import('../modules/search/ModernSearch'));
+const PrimeSmartSearch = React.lazy(() => import('../pages/PrimeSmartSearch/PrimeSmartSearch'));
+
 
 
 const FinancialIntelligenceHub = React.lazy(() => import('../pages/FinancialIntelligenceHub'));
@@ -628,6 +630,11 @@ export const router = createBrowserRouter([
                         path: 'modern-search',
                         element: <ModernSearch />,
                     },
+                    {
+                        path: 'prime-smart-search',
+                        element: <PrimeSmartSearch />,
+                    },
+
                     {
                         path: 'destination-prime-explorer',
                         element: <DestinationPrimeExplorer />,

@@ -84,6 +84,7 @@ interface AppConfig {
 
 const apps: AppConfig[] = [
     { id: 'smart-search', name: 'Smart Search', desc: 'Inteligentna pretraga i preporuka smeštaja sa AI asistencijom i analizom tržišta.', icon: <Sparkles size={24} />, category: 'sales', color: 'var(--gradient-blue)', badge: 'AI', minLevel: 1, path: '/smart-search' },
+    { id: 'prime-smart-search', name: 'Prime Smart Search V6', desc: 'Ultimativna integrisana pretraga za hotele, letove, pakete, transfere i krstarenja.', icon: <Sparkles size={24} />, category: 'sales', color: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', badge: 'V6', minLevel: 1, path: '/prime-smart-search' },
     { id: 'smart-search-v5', name: 'Smart Search V5', desc: 'Nova generacija pametne pretrage sa Solvex i Amadeus integracijom.', icon: <Zap size={24} />, category: 'sales', color: 'linear-gradient(135deg, #FF3D00 0%, #FF9100 100%)', badge: 'V5', minLevel: 1, path: '/smart-search-v5' },
     { id: 'modern-search', name: 'Modern Search', desc: 'Airbnb-style AI-first pretraga sa integrisanim concierge sistemom i dinamičkim paketima.', icon: <Sparkles size={24} />, category: 'sales', color: 'linear-gradient(135deg, #1A2B3C 0%, #8E24AC 100%)', badge: 'PRIME', minLevel: 1, path: '/modern-search' },
 
@@ -296,8 +297,8 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
     };
 
     const ROW1_IDS = isB2BView
-        ? ['modern-search', 'smart-search-v5', 'reservations', 'my-reservations', 'b2b-portal']
-        : ['modern-search', 'reservations', 'smart-search-v5', 'subagent-admin'];
+        ? ['prime-smart-search', 'modern-search', 'smart-search-v5', 'reservations', 'my-reservations', 'b2b-portal']
+        : ['prime-smart-search', 'modern-search', 'reservations', 'smart-search-v5', 'subagent-admin'];
 
     const ROW2_IDS: string[] = ['public-booking', 'smart-marketing', 'supplier-finance'];
 

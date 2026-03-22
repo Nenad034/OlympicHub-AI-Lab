@@ -11,9 +11,10 @@ interface MultiSelectDropdownProps {
     selected: string[];
     onChange: (selected: string[]) => void;
     placeholder: string;
+    displayType?: 'default' | 'codes';
 }
 
-export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ options, selected, onChange, placeholder }) => {
+export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ options, selected, onChange, placeholder, displayType = 'default' }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -61,10 +62,14 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ option
     };
 
     const getDisplayLabel = () => {
-        if (selected.includes('all') || selected.length === 0) return placeholder;
+        if (selected.includes('all') || selected.length === 0) return ''; // Vratiti prazno za default stanje
         if (selected.length === 1) {
             const opt = options.find(o => o.value === selected[0]);
-            return opt ? opt.label : placeholder;
+            if (displayType === 'codes') {
+                const parts = opt?.label.split(' - ');
+                return parts ? parts[0].trim() : opt?.value;
+            }
+            return opt ? opt.label : '';
         }
 
         // For multiple items, try to create a compact comma-separated list
@@ -75,16 +80,14 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ option
             return selectedOptions.map(o => o.value).sort().join(', ');
         }
 
-        // For meal plans, some labels might be long like "ND - Doručak", 
-        // let's try to extract the short code before '-' if present
-        if (placeholder.toLowerCase().includes('usluga')) {
+        if (displayType === 'codes' || placeholder.toLowerCase().includes('usluga')) {
             return selectedOptions.map(o => {
                 const parts = o.label.split(' - ');
                 return parts[0].trim();
             }).join(', ');
         }
 
-        return `${selected.length} odabrana`;
+        return `${selected.length} odabira`;
     };
 
     const filteredOptions = options.filter(o =>
@@ -107,7 +110,9 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ option
                     alignItems: 'center',
                     fontSize: '13px',
                     color: 'inherit',
-                    height: '42px',
+                    height: '100%',
+                    minHeight: 'inherit',
+                    boxSizing: 'border-box',
                     transition: 'all 0.2s'
                 }}
             >

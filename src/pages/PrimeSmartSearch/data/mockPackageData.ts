@@ -1,0 +1,275 @@
+/**
+ * Mock podaci za Dinamički Paket Wizard.
+ * Faza Orchestrator: Zameniće ih pravi API pozivi po destinaciji.
+ */
+
+// ─────────────────────────────────────────────────────────────
+// TRANSFERI
+// ─────────────────────────────────────────────────────────────
+export interface TransferOption {
+    id: string;
+    type: 'shared' | 'private' | 'luxury';
+    vehicle: string;
+    from: string;
+    to: string;
+    fromCode: string;           // Aerodrom IATA
+    toLabel: string;            // Naziv hotela / grada
+    durationMinutes: number;
+    distanceKm: number;
+    pricePerPerson: number;
+    totalPrice: number;         // Za sve putnike
+    currency: string;
+    maxPassengers: number;
+    includes: string[];         // ['A/C', 'Bespl. čekanje 60min', ...]
+    status: 'instant' | 'on-request';
+    isPrime: boolean;
+}
+
+export const MOCK_TRANSFERS: TransferOption[] = [
+    {
+        id: 'tr-001',
+        type: 'shared',
+        vehicle: '🚌 Shuttle Bus',
+        from: 'Tivat Aerodrom',
+        to: 'Vaš Hotel',
+        fromCode: 'TIV',
+        toLabel: 'Vaš Hotel na rivijeri',
+        durationMinutes: 30,
+        distanceKm: 22,
+        pricePerPerson: 12,
+        totalPrice: 24,         // 2 putnika
+        currency: 'EUR',
+        maxPassengers: 20,
+        includes: ['A/C', 'WiFi', 'Prtljag uključen'],
+        status: 'instant',
+        isPrime: false,
+    },
+    {
+        id: 'tr-002',
+        type: 'private',
+        vehicle: '🚐 Privatni Kombi',
+        from: 'Tivat Aerodrom',
+        to: 'Vaš Hotel',
+        fromCode: 'TIV',
+        toLabel: 'Hotel po izboru',
+        durationMinutes: 30,
+        distanceKm: 22,
+        pricePerPerson: 0,      // Fiksna cena, ne po osobi
+        totalPrice: 45,
+        currency: 'EUR',
+        maxPassengers: 8,
+        includes: ['A/C', 'Besplatno čekanje 60min', 'Prtljag', 'Voda u vozilu', 'Dečje sedište'],
+        status: 'instant',
+        isPrime: true,
+    },
+    {
+        id: 'tr-003',
+        type: 'luxury',
+        vehicle: '🚘 Mercedes E-Class / S-Class',
+        from: 'Tivat Aerodrom',
+        to: 'Vaš Hotel',
+        fromCode: 'TIV',
+        toLabel: 'Dostava na vrata hotela',
+        durationMinutes: 25,
+        distanceKm: 22,
+        pricePerPerson: 0,
+        totalPrice: 95,
+        currency: 'EUR',
+        maxPassengers: 3,
+        includes: ['A/C', 'Besplatno čekanje 90min', 'Ručni prtljag', 'Voda + Dobrodošlica', 'Punjač za telefon'],
+        status: 'instant',
+        isPrime: true,
+    },
+];
+
+// ─────────────────────────────────────────────────────────────
+// AKTIVNOSTI & IZLETI
+// ─────────────────────────────────────────────────────────────
+export interface ActivityOption {
+    id: string;
+    category: 'tour' | 'sport' | 'culture' | 'food' | 'wellness' | 'insurance';
+    title: string;
+    description: string;
+    emoji: string;
+    durationHours: number;
+    departureTime?: string;
+    meetingPoint?: string;
+    includes: string[];
+    pricePerPerson: number;
+    totalPrice: number;          // Za sve putnike
+    currency: string;
+    status: 'instant' | 'on-request';
+    minParticipants?: number;
+    maxParticipants?: number;
+    isRefundable: boolean;
+    cancellationHours?: number;  // Besplatno otkazivanje do N sati pre
+}
+
+export const MOCK_ACTIVITIES: ActivityOption[] = [
+    // ── Izleti ─────────────────────────────────────────────
+    {
+        id: 'act-001',
+        category: 'tour',
+        title: 'Kotor Stari Grad',
+        description: 'Vođena tura kroz Stari Grad Kotor — UNESCO zaštićeno nasleđe. Šetnja bedemima i pogled na Boku Kotorsku.',
+        emoji: '🏰',
+        durationHours: 4,
+        departureTime: '09:00',
+        meetingPoint: 'Recepcija hotela',
+        includes: ['Stručni vodič', 'Prevoz', 'Ulaz na bedeme'],
+        pricePerPerson: 28,
+        totalPrice: 56,
+        currency: 'EUR',
+        status: 'instant',
+        maxParticipants: 20,
+        isRefundable: true,
+        cancellationHours: 24,
+    },
+    {
+        id: 'act-002',
+        category: 'tour',
+        title: 'Sunset Boat Tour',
+        description: 'Krstarenje Budvanskom rivijerom uz zalazak sunca. Poseta Sveti Nikola ostrvu, kupanje i piće na brodu.',
+        emoji: '⛵',
+        durationHours: 3,
+        departureTime: '17:00',
+        meetingPoint: 'Budvanska marina',
+        includes: ['Kapetan + posada', 'Piće (2 pića)', 'Snorkeling oprema'],
+        pricePerPerson: 45,
+        totalPrice: 90,
+        currency: 'EUR',
+        status: 'instant',
+        maxParticipants: 12,
+        isRefundable: true,
+        cancellationHours: 48,
+    },
+    {
+        id: 'act-003',
+        category: 'tour',
+        title: 'Nacionalni Park Durmitor',
+        description: 'Celodevni izlet u NP Durmitor — Crno jezero, kanjon Tare (dublje od Grand Canyona), Žabljak.',
+        emoji: '🏔️',
+        durationHours: 12,
+        departureTime: '07:00',
+        meetingPoint: 'Recepcija hotela',
+        includes: ['Klimatizovani autobus', 'Stručni vodič', 'Ulaz u NP', 'Ručak u restoranu'],
+        pricePerPerson: 55,
+        totalPrice: 110,
+        currency: 'EUR',
+        status: 'instant',
+        maxParticipants: 40,
+        isRefundable: true,
+        cancellationHours: 48,
+    },
+    {
+        id: 'act-004',
+        category: 'sport',
+        title: 'Rafting Tara Canyon',
+        description: 'Rafting avantura u kanjonu reke Tare — najdubljem kanjonu u Evropi. Pogodno za početnike.',
+        emoji: '🚣',
+        durationHours: 6,
+        departureTime: '08:00',
+        meetingPoint: 'Žabljak',
+        includes: ['Oprema', 'Iskusni vodič', 'Osiguranje', 'Obrok'],
+        pricePerPerson: 65,
+        totalPrice: 130,
+        currency: 'EUR',
+        status: 'on-request',
+        minParticipants: 4,
+        maxParticipants: 16,
+        isRefundable: false,
+    },
+    {
+        id: 'act-005',
+        category: 'culture',
+        title: 'Dubrovnik — Grad iz Game of Thrones',
+        description: 'Izlet u Dubrovnik — "Crveni Kralj" iz GoT serije. Stari Grad, Gradske zidine, muzej GoT.',
+        emoji: '🎭',
+        durationHours: 10,
+        departureTime: '07:30',
+        meetingPoint: 'Recepcija hotela',
+        includes: ['Autobus', 'Vodič', 'Ulaz na zidine', 'Slobodno vreme'],
+        pricePerPerson: 48,
+        totalPrice: 96,
+        currency: 'EUR',
+        status: 'instant',
+        maxParticipants: 50,
+        isRefundable: true,
+        cancellationHours: 24,
+    },
+    {
+        id: 'act-006',
+        category: 'food',
+        title: 'Crnogorska Gastronomija',
+        description: 'Večera uz primorsku muziku — prioba grill restoran sa svežim morskim plodovima i lokalnim vinom.',
+        emoji: '🍷',
+        durationHours: 3,
+        departureTime: '20:00',
+        meetingPoint: 'Budvanska riva',
+        includes: ['3-course večera', '0.5l domaćeg vina', 'Muzika uživo'],
+        pricePerPerson: 38,
+        totalPrice: 76,
+        currency: 'EUR',
+        status: 'instant',
+        isRefundable: true,
+        cancellationHours: 12,
+    },
+    {
+        id: 'act-007',
+        category: 'wellness',
+        title: 'Spa & Wellness dan',
+        description: 'Celodevno korišćenje Spa centra u hotelu Splendid — bazen, sauna, hamam, masaža 60min.',
+        emoji: '💆',
+        durationHours: 8,
+        includes: ['Bazen', 'Sauna', 'Hamam', 'Masaža 60min', 'Peškir i šlape'],
+        pricePerPerson: 85,
+        totalPrice: 170,
+        currency: 'EUR',
+        status: 'instant',
+        isRefundable: true,
+        cancellationHours: 24,
+    },
+
+    // ── Osiguranje ─────────────────────────────────────────
+    {
+        id: 'ins-001',
+        category: 'insurance',
+        title: 'Putno Osiguranje — Standard',
+        description: 'Kompletno putno osiguranje za sve putnike: medicinska pomoć do 30,000€, otkazivanje putovanja, gubitak prtljaga.',
+        emoji: '🛡️',
+        durationHours: 0,
+        includes: [
+            'Medicinska pomoć do 30.000€',
+            'Repatrijacija',
+            'Odgođen let (>4h)',
+            'Gubitak prtljaga do 500€',
+            'Otkazivanje putovanja',
+        ],
+        pricePerPerson: 18,
+        totalPrice: 36,
+        currency: 'EUR',
+        status: 'instant',
+        isRefundable: false,
+    },
+    {
+        id: 'ins-002',
+        category: 'insurance',
+        title: 'Putno Osiguranje — Premium',
+        description: 'Premium osiguranje sa pokrićem za avanturističke sportove, rental car, i hitnu stomatologiju.',
+        emoji: '🛡️',
+        durationHours: 0,
+        includes: [
+            'Medicinska pomoć do 150.000€',
+            'Repatrijacija',
+            'Avanturistički sportovi',
+            'Hitna stomatologija',
+            'Rental Car zaštita',
+            'Otkazivanje bez razloga (CFAR)',
+        ],
+        pricePerPerson: 35,
+        totalPrice: 70,
+        currency: 'EUR',
+        status: 'instant',
+        isRefundable: false,
+    },
+];
