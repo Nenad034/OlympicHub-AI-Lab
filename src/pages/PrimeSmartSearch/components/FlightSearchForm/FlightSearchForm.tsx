@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchStore } from '../../stores/useSearchStore';
+import { SearchModeSelector } from '../SearchModeSelector';
+import { AIAssistantField } from '../AIAssistantField';
 import type { FlightSearchParams } from '../../types';
 
 // ─────────────────────────────────────────────────────────────
@@ -179,7 +181,15 @@ const AirportSelector: React.FC<AirportSelectorProps> = ({ id, label, value, onC
 // MAIN COMPONENT: FlightSearchForm
 // ─────────────────────────────────────────────────────────────
 export const FlightSearchForm: React.FC = () => {
-    const { addAlert, setFlightSearchParams, setIsSearching, setResults, setSearchPerformed } = useSearchStore();
+    const { 
+        addAlert, 
+        setFlightSearchParams, 
+        setIsSearching, 
+        setResults, 
+        setSearchPerformed,
+        searchMode,
+        semanticQuery 
+    } = useSearchStore();
 
     const [tripType, setTripType] = useState<'roundtrip' | 'oneway' | 'multicity'>('roundtrip');
     const [origin, setOrigin] = useState({ code: '', city: '' });
@@ -265,6 +275,15 @@ export const FlightSearchForm: React.FC = () => {
             flexDirection: 'column' as const,
             gap: '16px',
         }}>
+            {/* 1. SELECTION MODES */}
+            <SearchModeSelector />
+
+            {/* 2. AI ASSISTANT FIELD */}
+            {(searchMode === 'semantic' || searchMode === 'hybrid') && <AIAssistantField />}
+
+            {/* 3. FLIGHT FORM (Hidden in pure Semantic) */}
+            {searchMode !== 'semantic' && (
+                <>
             {/* ── Tip leta ──────────────────────────────── */}
             <div style={{ display: 'flex', gap: '6px' }}>
                 {([
@@ -548,6 +567,8 @@ export const FlightSearchForm: React.FC = () => {
                     ✈️ Pretraži letove
                 </button>
             </div>
+            </>
+            )}
         </div>
     );
 };

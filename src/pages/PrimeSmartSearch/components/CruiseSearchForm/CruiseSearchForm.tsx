@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchStore } from '../../stores/useSearchStore';
+import { SearchModeSelector } from '../SearchModeSelector';
+import { AIAssistantField } from '../AIAssistantField';
 import { MOCK_CRUISE_RESULTS, CRUISE_REGIONS, POPULAR_CRUISE_PORTS } from '../../data/mockCruises';
 import type { CruiseRegion } from '../../types';
 
@@ -38,7 +40,7 @@ const generateMonthOptions = () => {
 };
 
 export const CruiseSearchForm: React.FC = () => {
-    const { setCruiseResults, setIsSearching } = useSearchStore();
+    const { setCruiseResults, setIsSearching, searchMode } = useSearchStore();
 
     const [region, setRegion] = useState<CruiseRegion | 'all'>('all');
     const [port, setPort] = useState('');
@@ -67,6 +69,15 @@ export const CruiseSearchForm: React.FC = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* 1. SELECTION MODES */}
+            <SearchModeSelector />
+
+            {/* 2. AI ASSISTANT FIELD */}
+            {(searchMode === 'semantic' || searchMode === 'hybrid') && <AIAssistantField />}
+
+            {/* 3. CRUISE FORM (Hidden in pure Semantic) */}
+            {searchMode !== 'semantic' && (
+                <>
 
             {/* Popularne Luke */}
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -137,6 +148,8 @@ export const CruiseSearchForm: React.FC = () => {
                     {loading ? '🚢 Tražim brodove...' : '🚢 Pretraži Krstarenja'}
                 </button>
             </div>
+            </>
+            )}
         </div>
     );
 };

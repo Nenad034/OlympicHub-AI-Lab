@@ -6,6 +6,8 @@ import { ExpediaCalendar } from '../../../../components/ExpediaCalendar';
 import { BudgetTypeToggle } from '../../../../components/BudgetTypeToggle';
 import type { Destination, SearchAlert } from '../../types';
 import { Calendar, Globe, DollarSign, UtensilsCrossed, Users, Plus, Trash2, ChevronDown, MapPin, Sparkles, Search, Building2, Flag } from 'lucide-react';
+import { SearchModeSelector } from '../SearchModeSelector';
+import { AIAssistantField } from '../AIAssistantField';
 
 // ─────────────────────────────────────────────────────────────
 // KONSTANTE (Nacionalnost i Usluge)
@@ -126,13 +128,16 @@ export const HotelSearchForm: React.FC = () => {
         setSearchPerformed,
         addAlert,
         dismissAlert,
+        searchMode,
+        setSearchMode,
+        semanticQuery,
+        setSemanticQuery,
     } = useSearchStore();
 
     const [destInput, setDestInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showCalendar, setShowCalendar] = useState(false);
     const [showNationalityPicker, setShowNationalityPicker] = useState(false);
-    const [searchMode, setSearchMode] = useState<'classic' | 'semantic'>('classic');
     const [showAutocomplete, setShowAutocomplete] = useState(false);
 
     // Mock podaci za autocomplete (Faza 4 će ovo puniti iz API-ja)
@@ -204,30 +209,17 @@ export const HotelSearchForm: React.FC = () => {
     return (
         <form onSubmit={handleSearch} className="v6-search-form-advanced" noValidate>
             
-            {/* 1. SELECTION MODES (Classic / Semantic) */}
-            <div className="v6-search-modes">
-                <button 
-                    type="button"
-                    className={`v6-mode-tab ${searchMode === 'classic' ? 'v6-active' : ''}`}
-                    onClick={() => setSearchMode('classic')}
-                >
-                    Klasična pretraga
-                </button>
-                <button 
-                    type="button"
-                    className={`v6-mode-tab ${searchMode === 'semantic' ? 'v6-active' : ''}`}
-                    onClick={() => setSearchMode('semantic')}
-                >
-                    <div className="v6-ai-icon-frame">
-                        <Sparkles size={14} />
-                    </div>
-                    Semantička pretraga
-                </button>
-            </div>
+            {/* 1. SELECTION MODES */}
+            <SearchModeSelector />
 
-            {/* 2. HERO SEARCH (Full Width) */}
-            <div className="v6-search-primary-row">
-                <div className="v6-hero-input-wrapper">
+            {/* 2. AI ASSISTANT FIELD */}
+            {(searchMode === 'semantic' || searchMode === 'hybrid') && <AIAssistantField />}
+
+            {/* 3. HERO SEARCH (Standard Destinacija - Hidden in pure Semantic) */}
+            {searchMode !== 'semantic' && (
+                <div className="v6-search-primary-row">
+                    <div className="v6-hero-input-wrapper">
+                        {/* ... rest of the destination logic remains same ... */}
                     <div className="v6-hero-icon-faint">
                         <Search size={28} color="var(--v6-accent)" />
                     </div>
@@ -287,9 +279,11 @@ export const HotelSearchForm: React.FC = () => {
                     )}
                 </div>
             </div>
+            )}
 
-            {/* 3. CONTROLS ROW (Bottom) */}
-            <div className="v6-search-controls-row">
+            {/* 4. CONTROLS ROW (Bottom - Hidden in pure Semantic) */}
+            {searchMode !== 'semantic' && (
+                <div className="v6-search-controls-row">
                 
                 {/* DATES - Equal Width */}
                 <div className="v6-field-icon-wrapper v6-ctrl-box" onClick={() => setShowCalendar(true)}>
@@ -390,7 +384,8 @@ export const HotelSearchForm: React.FC = () => {
                         </>
                     )}
                 </button>
-            </div>
+                </div>
+            )}
 
             {/* EXPEDIA CALENDAR MODAL */}
             {showCalendar && (

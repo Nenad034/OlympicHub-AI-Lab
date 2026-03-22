@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchStore } from '../../stores/useSearchStore';
+import { SearchModeSelector } from '../SearchModeSelector';
+import { AIAssistantField } from '../AIAssistantField';
 import { MOCK_CHARTER_RESULTS } from '../../data/mockCharters';
 
 // ─────────────────────────────────────────────────────────────
@@ -106,7 +108,7 @@ const PaxCounter: React.FC<{
 // MAIN: CharterSearchForm
 // ─────────────────────────────────────────────────────────────
 export const CharterSearchForm: React.FC = () => {
-    const { setCharterResults, setIsSearching } = useSearchStore();
+    const { setCharterResults, setIsSearching, searchMode } = useSearchStore();
 
     // Forma state (lokalni — ne puni store dok ne klikne Pretraži)
     const [origin, setOrigin]       = useState('BEG');
@@ -179,6 +181,15 @@ export const CharterSearchForm: React.FC = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {/* 1. SELECTION MODES */}
+            <SearchModeSelector />
+
+            {/* 2. AI ASSISTANT FIELD */}
+            {(searchMode === 'semantic' || searchMode === 'hybrid') && <AIAssistantField />}
+
+            {/* 3. CHARTER FORM (Hidden in pure Semantic) */}
+            {searchMode !== 'semantic' && (
+                <>
             {/* Red 1: Polazak → Odredište → Mesec */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
                 {/* Polazak */}
@@ -314,6 +325,8 @@ export const CharterSearchForm: React.FC = () => {
                     </button>
                 </div>
             </div>
+            </>
+            )}
         </div>
     );
 };

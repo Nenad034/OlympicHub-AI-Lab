@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchStore } from '../../stores/useSearchStore';
+import { SearchModeSelector } from '../SearchModeSelector';
+import { AIAssistantField } from '../AIAssistantField';
 import { MOCK_CAR_RESULTS } from '../../data/mockCars';
 import type { CarVehicle } from '../../types';
 
@@ -52,7 +54,7 @@ const selectStyle: React.CSSProperties = {
 // MAIN
 // ─────────────────────────────────────────────────────────────
 export const CarSearchForm: React.FC = () => {
-    const { setCarResults, setIsSearching } = useSearchStore();
+    const { setCarResults, setIsSearching, searchMode } = useSearchStore();
 
     // Forma state
     const today = new Date().toISOString().split('T')[0];
@@ -115,6 +117,15 @@ export const CarSearchForm: React.FC = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {/* 1. SELECTION MODES */}
+            <SearchModeSelector />
+
+            {/* 2. AI ASSISTANT FIELD */}
+            {(searchMode === 'semantic' || searchMode === 'hybrid') && <AIAssistantField />}
+
+            {/* 3. CAR FORM (Hidden in pure Semantic) */}
+            {searchMode !== 'semantic' && (
+                <>
             {/* Red 1: Pickup Lokacija + Dropoff */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
                 {/* Pickup Lokacija */}
@@ -237,6 +248,8 @@ export const CarSearchForm: React.FC = () => {
                     </button>
                 </div>
             </div>
+            </>
+            )}
         </div>
     );
 };

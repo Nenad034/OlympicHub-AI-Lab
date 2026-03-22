@@ -35,6 +35,7 @@ interface SearchActions {
     // Tab & Mode
     setActiveTab: (tab: SearchTabType) => void;
     setSearchMode: (mode: SearchModeType) => void;
+    setSemanticQuery: (query: string) => void;
 
     // Destinacije
     addDestination: (dest: Destination) => void;
@@ -144,6 +145,7 @@ const defaultFilters: SearchFilters = {
 const initialState: SearchState = {
     activeTab: 'hotel',
     searchMode: 'classic',
+    semanticQuery: '', // AI Assistant raw input
     destinations: [],
     checkIn: '',
     checkOut: '',
@@ -212,6 +214,7 @@ export const useSearchStore = create<SearchState & SearchActions>((set, get) => 
     // ── Tab & Mode ──────────────────────────────────────────
     setActiveTab: (tab) => set({ activeTab: tab, results: [], searchPerformed: false, alerts: [], alternativeDates: [] }),
     setSearchMode: (mode) => set({ searchMode: mode }),
+    setSemanticQuery: (query) => set({ semanticQuery: query }),
 
     // ── Destinacije ─────────────────────────────────────────
     addDestination: (dest) => set((state) => ({

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchStore } from '../../stores/useSearchStore';
+import { SearchModeSelector } from '../SearchModeSelector';
+import { AIAssistantField } from '../AIAssistantField';
 import { MOCK_TRANSFER_RESULTS, TRANSFER_LOCATIONS, POPULAR_TRANSFER_ROUTES } from '../../data/mockTransfers';
 import type { TransferResult } from '../../types';
 
@@ -44,7 +46,7 @@ const inputStyle: React.CSSProperties = {
 // MAIN
 // ─────────────────────────────────────────────────────────────
 export const TransferSearchForm: React.FC = () => {
-    const { setTransferResults, setIsSearching } = useSearchStore();
+    const { setTransferResults, setIsSearching, searchMode } = useSearchStore();
 
     // State
     const [pickup,      setPickup]      = useState('TIV');
@@ -104,6 +106,15 @@ export const TransferSearchForm: React.FC = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {/* 1. SELECTION MODES */}
+            <SearchModeSelector />
+
+            {/* 2. AI ASSISTANT FIELD */}
+            {(searchMode === 'semantic' || searchMode === 'hybrid') && <AIAssistantField />}
+
+            {/* 3. TRANSFER FORM (Hidden in pure Semantic) */}
+            {searchMode !== 'semantic' && (
+                <>
             {/* Red 1: Tip transfera (one-way / round-trip) */}
             <div style={{ display: 'flex', gap: '8px' }}>
                 {(['one-way', 'round-trip'] as const).map(d => (
@@ -241,6 +252,8 @@ export const TransferSearchForm: React.FC = () => {
                 <div style={{ padding: '8px 14px', background: 'rgba(5,150,105,0.06)', border: '1px solid rgba(5,150,105,0.2)', borderRadius: 'var(--v6-radius-md)', fontSize: '12px', color: 'var(--v6-color-instant-text)' }}>
                     ✓ Vozač će pratiti let <strong>{flightNo}</strong> i sačekati ako kasni — bez dodatnih troškova.
                 </div>
+            )}
+            </>
             )}
         </div>
     );

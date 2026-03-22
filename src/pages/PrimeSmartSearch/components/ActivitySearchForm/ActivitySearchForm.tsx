@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchStore } from '../../stores/useSearchStore';
+import { SearchModeSelector } from '../SearchModeSelector';
+import { AIAssistantField } from '../AIAssistantField';
 import { MOCK_ACTIVITY_RESULTS, ACTIVITY_CATEGORIES, POPULAR_ACTIVITY_LOCATIONS } from '../../data/mockActivities';
 import type { ActivityResult, ActivityCategory } from '../../types';
 
@@ -25,7 +27,7 @@ const selectStyle: React.CSSProperties = {
 };
 
 export const ActivitySearchForm: React.FC = () => {
-    const { setActivityResults, setIsSearching } = useSearchStore();
+    const { setActivityResults, setIsSearching, searchMode } = useSearchStore();
 
     const [location, setLocation] = useState('');
     const [date, setDate] = useState(() => {
@@ -53,6 +55,15 @@ export const ActivitySearchForm: React.FC = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* 1. SELECTION MODES */}
+            <SearchModeSelector />
+
+            {/* 2. AI ASSISTANT FIELD */}
+            {(searchMode === 'semantic' || searchMode === 'hybrid') && <AIAssistantField />}
+
+            {/* 3. ACTIVITY FORM (Hidden in pure Semantic) */}
+            {searchMode !== 'semantic' && (
+                <>
 
             {/* Popular destinations for activities */}
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -119,6 +130,8 @@ export const ActivitySearchForm: React.FC = () => {
                     {loading ? '⏳ Učitavam...' : '🎟️ Pronađi aktivnosti'}
                 </button>
             </div>
+            </>
+            )}
         </div>
     );
 };

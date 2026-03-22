@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchStore } from '../../stores/useSearchStore';
+import { SearchModeSelector } from '../SearchModeSelector';
+import { AIAssistantField } from '../AIAssistantField';
 import { MOCK_TOUR_RESULTS, TOUR_CATEGORIES, POPULAR_TOUR_DESTINATIONS } from '../../data/mockTours';
 import type { TourResult, TourCategory } from '../../types';
 
@@ -25,7 +27,7 @@ const selectStyle: React.CSSProperties = {
 };
 
 export const TourSearchForm: React.FC = () => {
-    const { setTourResults, setIsSearching } = useSearchStore();
+    const { setTourResults, setIsSearching, searchMode } = useSearchStore();
 
     const [destination, setDestination] = useState('');
     const [month,       setMonth]       = useState('any');
@@ -66,6 +68,15 @@ export const TourSearchForm: React.FC = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* 1. SELECTION MODES */}
+            <SearchModeSelector />
+
+            {/* 2. AI ASSISTANT FIELD */}
+            {(searchMode === 'semantic' || searchMode === 'hybrid') && <AIAssistantField />}
+
+            {/* 3. TOUR FORM (Hidden in pure Semantic) */}
+            {searchMode !== 'semantic' && (
+                <>
 
             {/* Popular destinations */}
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -143,6 +154,8 @@ export const TourSearchForm: React.FC = () => {
                     {loading ? '⏳ Traženje...' : '🔍 Istraži putovanja'}
                 </button>
             </div>
+            </>
+            )}
         </div>
     );
 };

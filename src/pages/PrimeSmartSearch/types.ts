@@ -29,7 +29,8 @@ export type SearchModeType =
     | 'narrative'       // Milica AI (natural language)
     | 'immersive'       // Fullscreen immersive
     | 'immersive-map'   // Map Explorer
-    | 'semantic';       // AI Semantic Search
+    | 'semantic'        // AI Semantic Search
+    | 'hybrid';         // AI Semantic + Fields
 
 // ─────────────────────────────────────────────────────────────
 // 3. AVAILABILITY STATUS (Semafor Logika)
@@ -595,6 +596,7 @@ export interface SearchState {
     // Tab & Mode
     activeTab: SearchTabType;
     searchMode: SearchModeType;
+    semanticQuery: string; // NEW: AI Narrative raw text
 
     // Destinacije (max 3)
     destinations: Destination[];
@@ -655,8 +657,10 @@ export interface SearchState {
     packageBasket: PackageBasketItem[];
     packageWizardStep: number;          // 1–6 (aktivni korak)
     packageWizardSelections: {
-        flightId?: string;
+        flight?: FlightSearchResult;
         hotelId?: string;
+        roomId?: string;
+        mealPlanCode?: string;
         transferId?: string;
         extraIds: string[];
     };

@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import { useSearchStore, calcPaxSummary, calcBasketTotal } from '../../stores/useSearchStore';
+import { SearchModeSelector } from '../SearchModeSelector';
+import { AIAssistantField } from '../AIAssistantField';
 import { MOCK_HOTEL_RESULTS, MOCK_ROOM_OPTIONS } from '../../data/mockResults';
 import { MOCK_FLIGHT_RESULTS } from '../../data/mockFlights';
 import { MOCK_TRANSFERS, MOCK_ACTIVITIES } from '../../data/mockPackageData';
@@ -203,7 +205,7 @@ const PriceBuildUp: React.FC<{
 // KORAK 1: Pretraga
 // ─────────────────────────────────────────────────────────────
 const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
-    const { destinations, checkIn, checkOut, roomAllocations, addDestination, removeDestination, setCheckIn, setCheckOut } = useSearchStore();
+    const { destinations, checkIn, checkOut, roomAllocations, addDestination, removeDestination, setCheckIn, setCheckOut, searchMode } = useSearchStore();
     const [tagInput, setTagInput] = React.useState('');
     const today = new Date().toISOString().split('T')[0];
     const pax = calcPaxSummary(roomAllocations, checkIn, checkOut);
@@ -224,68 +226,93 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div>
-                <h3 style={{ margin: '0 0 16px', fontSize: 'var(--v6-fs-lg)', fontWeight: 800, color: 'var(--v6-text-primary)' }}>
-                    🔍 Definišite parametre paketa
-                </h3>
+            {/* 1. SELECTION MODES */}
+            <SearchModeSelector />
 
-                {/* Destinacija */}
-                <div style={{ marginBottom: '14px' }}>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--v6-text-muted)', marginBottom: '6px' }}>
-                        Destinacija (max 3)
-                    </label>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', padding: '8px 12px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'var(--v6-bg-main)', minHeight: '46px', alignItems: 'center' }}>
-                        {destinations.map(d => (
-                            <span key={d.id} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', background: 'var(--v6-accent)', color: 'var(--v6-accent-text)', borderRadius: '999px', fontSize: '13px', fontWeight: 600 }}>
-                                {d.name}
-                                <button onClick={() => removeDestination(d.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, fontSize: '12px', lineHeight: 1 }}>✕</button>
-                            </span>
-                        ))}
-                        {destinations.length < 3 && (
-                            <input
-                                type="text"
-                                value={tagInput}
-                                onChange={e => setTagInput(e.target.value)}
-                                onKeyDown={handleAddTag}
-                                placeholder="Unesite destinaciju, pritisnite Enter..."
-                                style={{ flex: 1, minWidth: '160px', border: 'none', outline: 'none', background: 'transparent', color: 'var(--v6-text-primary)', fontSize: 'var(--v6-fs-sm)', fontFamily: 'var(--v6-font)' }}
-                            />
+            {/* 2. AI ASSISTANT FIELD */}
+            {(searchMode === 'semantic' || searchMode === 'hybrid') && <AIAssistantField />}
+
+            {/* 3. PACKAGE SEARCH FORM (Hidden in pure Semantic) */}
+            {searchMode !== 'semantic' && (
+                <>
+                    <div>
+                        <h3 style={{ margin: '0 0 16px', fontSize: 'var(--v6-fs-lg)', fontWeight: 800, color: 'var(--v6-text-primary)' }}>
+                            🔍 Definišite parametre paketa
+                        </h3>
+
+                        {/* Destinacija */}
+                        <div style={{ marginBottom: '14px' }}>
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--v6-text-muted)', marginBottom: '6px' }}>
+                                Destinacija (max 3)
+                            </label>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', padding: '8px 12px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'var(--v6-bg-main)', minHeight: '46px', alignItems: 'center' }}>
+                                {destinations.map(d => (
+                                    <span key={d.id} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', background: 'var(--v6-accent)', color: 'var(--v6-accent-text)', borderRadius: '999px', fontSize: '13px', fontWeight: 600 }}>
+                                        {d.name}
+                                        <button onClick={() => removeDestination(d.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, fontSize: '12px', lineHeight: 1 }}>✕</button>
+                                    </span>
+                                ))}
+                                {destinations.length < 3 && (
+                                    <input
+                                        type="text"
+                                        value={tagInput}
+                                        onChange={e => setTagInput(e.target.value)}
+                                        onKeyDown={handleAddTag}
+                                        placeholder="Unesite destinaciju, pritisnite Enter..."
+                                        style={{ flex: 1, minWidth: '160px', border: 'none', outline: 'none', background: 'transparent', color: 'var(--v6-text-primary)', fontSize: 'var(--v6-fs-sm)', fontFamily: 'var(--v6-font)' }}
+                                    />
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Datumi */}
+                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                            <div style={{ flex: 1, minWidth: '150px' }}>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--v6-text-muted)', marginBottom: '6px' }}>
+                                    📅 Datum polaska
+                                </label>
+                                <input type="date" min={today} value={checkIn} onChange={e => setCheckIn(e.target.value)}
+                                    style={{ width: '100%', padding: '11px 14px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'var(--v6-bg-main)', color: 'var(--v6-text-primary)', fontSize: 'var(--v6-fs-sm)', fontFamily: 'var(--v6-font)', outline: 'none', boxSizing: 'border-box' }} />
+                            </div>
+                            <div style={{ flex: 1, minWidth: '150px' }}>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--v6-text-muted)', marginBottom: '6px' }}>
+                                    📅 Datum povratka
+                                </label>
+                                <input type="date" min={checkIn || today} value={checkOut} onChange={e => setCheckOut(e.target.value)}
+                                    style={{ width: '100%', padding: '11px 14px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'var(--v6-bg-main)', color: 'var(--v6-text-primary)', fontSize: 'var(--v6-fs-sm)', fontFamily: 'var(--v6-font)', outline: 'none', boxSizing: 'border-box' }} />
+                            </div>
+                        </div>
+
+                        {/* Sažetak pax */}
+                        {checkIn && checkOut && (
+                            <div style={{ marginTop: '12px', padding: '10px 14px', background: 'var(--v6-bg-section)', borderRadius: 'var(--v6-radius-md)', fontSize: '13px', color: 'var(--v6-text-secondary)' }}>
+                                👥 <strong style={{ color: 'var(--v6-text-primary)' }}>{pax.totalAdults} odr.</strong>
+                                {pax.totalChildren > 0 && ` + ${pax.totalChildren} dece`} ·
+                                🏨 <strong style={{ color: 'var(--v6-text-primary)' }}>{pax.totalRooms} soba{pax.totalRooms > 1 ? 'e' : ''}</strong> ·
+                                🌙 <strong style={{ color: 'var(--v6-text-primary)' }}>{pax.nights} noćenja</strong>
+                            </div>
                         )}
                     </div>
-                </div>
+                </>
+            )}
 
-                {/* Datumi */}
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, minWidth: '150px' }}>
-                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--v6-text-muted)', marginBottom: '6px' }}>
-                            📅 Datum polaska
-                        </label>
-                        <input type="date" min={today} value={checkIn} onChange={e => setCheckIn(e.target.value)}
-                            style={{ width: '100%', padding: '11px 14px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'var(--v6-bg-main)', color: 'var(--v6-text-primary)', fontSize: 'var(--v6-fs-sm)', fontFamily: 'var(--v6-font)', outline: 'none', boxSizing: 'border-box' }} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: '150px' }}>
-                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--v6-text-muted)', marginBottom: '6px' }}>
-                            📅 Datum povratka
-                        </label>
-                        <input type="date" min={checkIn || today} value={checkOut} onChange={e => setCheckOut(e.target.value)}
-                            style={{ width: '100%', padding: '11px 14px', border: '1.5px solid var(--v6-border)', borderRadius: 'var(--v6-radius-md)', background: 'var(--v6-bg-main)', color: 'var(--v6-text-primary)', fontSize: 'var(--v6-fs-sm)', fontFamily: 'var(--v6-font)', outline: 'none', boxSizing: 'border-box' }} />
-                    </div>
-                </div>
-
-                {/* Sažetak pax */}
-                {checkIn && checkOut && (
-                    <div style={{ marginTop: '12px', padding: '10px 14px', background: 'var(--v6-bg-section)', borderRadius: 'var(--v6-radius-md)', fontSize: '13px', color: 'var(--v6-text-secondary)' }}>
-                        👥 <strong style={{ color: 'var(--v6-text-primary)' }}>{pax.totalAdults} odr.</strong>
-                        {pax.totalChildren > 0 && ` + ${pax.totalChildren} dece`} ·
-                        🏨 <strong style={{ color: 'var(--v6-text-primary)' }}>{pax.totalRooms} soba{pax.totalRooms > 1 ? 'e' : ''}</strong> ·
-                        🌙 <strong style={{ color: 'var(--v6-text-primary)' }}>{pax.nights} noćenja</strong>
-                    </div>
-                )}
-            </div>
-
-            <button onClick={onNext} disabled={!canContinue}
-                style={{ alignSelf: 'flex-end', padding: '12px 28px', background: canContinue ? 'var(--v6-accent)' : 'var(--v6-border)', color: canContinue ? 'var(--v6-accent-text)' : 'var(--v6-text-muted)', border: 'none', borderRadius: 'var(--v6-radius-md)', fontSize: 'var(--v6-fs-md)', fontWeight: 700, cursor: canContinue ? 'pointer' : 'not-allowed', fontFamily: 'var(--v6-font)' }}>
-                Izaberi let →
+            <button
+                onClick={onNext}
+                disabled={!canContinue && searchMode !== 'semantic'}
+                style={{
+                    alignSelf: 'flex-end',
+                    padding: '12px 28px',
+                    background: (canContinue || searchMode === 'semantic') ? 'var(--v6-accent)' : 'var(--v6-border)',
+                    color: (canContinue || searchMode === 'semantic') ? 'var(--v6-accent-text)' : 'var(--v6-text-muted)',
+                    border: 'none',
+                    borderRadius: 'var(--v6-radius-md)',
+                    fontSize: 'var(--v6-fs-md)',
+                    fontWeight: 700,
+                    cursor: (canContinue || searchMode === 'semantic') ? 'pointer' : 'not-allowed',
+                    fontFamily: 'var(--v6-font)'
+                }}
+            >
+                {searchMode === 'semantic' ? 'Pokreni pametnu pretragu →' : 'Izaberi let →'}
             </button>
         </div>
     );
