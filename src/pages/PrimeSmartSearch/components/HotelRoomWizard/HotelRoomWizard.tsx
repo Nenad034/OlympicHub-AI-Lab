@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { HotelSearchResult, RoomOption, MealPlanOption } from '../../types';
 import { useSearchStore, calcPaxSummary } from '../../stores/useSearchStore';
-import { MOCK_ROOM_OPTIONS } from '../../data/mockResults';
+/* MOCK REMOVED */
 
 // ─────────────────────────────────────────────────────────────
 // FORMATIRANJE
@@ -237,7 +237,7 @@ export const HotelRoomWizard: React.FC<HotelRoomWizardProps> = ({ hotel, onClose
         mealCode: string,
         totalPrice: number
     ) => {
-        const room = MOCK_ROOM_OPTIONS.find(r => r.id === roomId);
+        const room = hotel.roomOptions?.find(r => r.id === roomId);
         const meal = room?.mealPlans.find(m => m.code === mealCode);
         if (!room || !meal) return;
 
@@ -431,7 +431,7 @@ export const HotelRoomWizard: React.FC<HotelRoomWizardProps> = ({ hotel, onClose
                             </div>
 
                             {/* Sobe za ovaj slot */}
-                            {MOCK_ROOM_OPTIONS.map(room => (
+                            {(hotel.roomOptions || []).map(room => (
                                 <RoomSection
                                     key={room.id}
                                     room={room}

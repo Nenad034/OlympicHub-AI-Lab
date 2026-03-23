@@ -9,7 +9,7 @@ Solvex (Master-Interlook) API omogućava pristup hotelskim podacima, rezervacija
 ### Test Environment
 - **Base URL:** `https://evaluation.solvex.bg/iservice/integrationservice.asmx`
 - **Login:** `sol611s`
-- **Password:** `En5AL535`
+- **Password:** `AqC384lF`
 - **Protocol:** SOAP
 
 ### Production Environment
@@ -27,7 +27,7 @@ Solvex (Master-Interlook) API omogućava pristup hotelskim podacima, rezervacija
 ```xml
 <Connect>
   <login>sol611s</login>
-  <password>En5AL535</password>
+  <password>AqC384lF</password>
 </Connect>
 ```
 
@@ -183,7 +183,7 @@ Potpuno funkcionalna politika otkazivanja sa:
 # Solvex API - Test Environment
 VITE_SOLVEX_API_URL=https://evaluation.solvex.bg/iservice/integrationservice.asmx
 VITE_SOLVEX_LOGIN=sol611s
-VITE_SOLVEX_PASSWORD=En5AL535
+VITE_SOLVEX_PASSWORD=AqC384lF
 
 # Production (TBD)
 # VITE_SOLVEX_PROD_URL=

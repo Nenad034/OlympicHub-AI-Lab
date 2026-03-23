@@ -12,6 +12,8 @@ import { ExpediaCalendar } from '../../../../components/ExpediaCalendar';
 import type { FlightSearchResult, HotelSearchResult, TransferOption, ActivityOption, FlightLeg } from '../../types';
 import { PackageLiveStack } from '../PackageLiveStack';
 import { FlightPaxWizard } from '../FlightSearchForm/FlightPaxWizard';
+import { MOCK_TOUR_RESULTS } from '../../data/mockTours';
+import { TourCard } from '../TourCard/TourCard';
 
 // ─────────────────────────────────────────────────────────────
 // HELPERS
@@ -637,8 +639,33 @@ const Step2Flights: React.FC<{ onNext: () => void; onBack: () => void }> = ({ on
 // KORAK 3: Hotel + Soba
 // ─────────────────────────────────────────────────────────────
 const Step3Hotels: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onNext, onBack }) => {
-    const { packageWizardSelections, setPackageWizardHotel } = useSearchStore();
+    const { 
+        packageWizardSelections, 
+        setPackageWizardHotel, 
+        results, 
+        filters 
+    } = useSearchStore();
     const [expandedHotel, setExpandedHotel] = React.useState<string | null>(null);
+
+    // Filter results for Step 3
+    const hotelSource = results.length > 0 ? results : MOCK_HOTEL_RESULTS;
+    const filteredHotels = React.useMemo(() => {
+        return hotelSource.filter(hotel => {
+            // Name filter
+            if (filters.hotelName && !hotel.name.toLowerCase().includes(filters.hotelName.toLowerCase())) {
+                return false;
+            }
+            // Star filter
+            if (filters.stars && !filters.stars.includes('all')) {
+                if (!filters.stars.includes(hotel.stars.toString())) return false;
+            }
+            // Availability
+            if (filters.availability && filters.availability.length > 0) {
+                if (!filters.availability.includes(hotel.status)) return false;
+            }
+            return true;
+        });
+    }, [hotelSource, filters]);
 
     const selected = packageWizardSelections;
     const canContinue = !!(selected.hotelId && selected.roomId && selected.mealPlanCode);
@@ -649,21 +676,12 @@ const Step3Hotels: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onN
                 🏨 Izaberi hotel i sobu
             </h3>
 
-            {/* Filteri za hotele */}
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '12px', background: 'var(--v6-bg-section)', borderRadius: '14px', border: '1.5px solid var(--v6-border)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                    <SlidersHorizontal size={16} color="var(--v6-accent)" />
-                    <span style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--v6-text-primary)' }}>Filteri smeštaja:</span>
-                </div>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                    <button style={{ padding: '6px 12px', background: 'var(--v6-navy)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>★5 & ★4</button>
-                    <button style={{ padding: '6px 12px', background: '#fff', border: '1px solid var(--v6-border)', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Bazen</button>
-                    <button style={{ padding: '6px 12px', background: '#fff', border: '1px solid var(--v6-border)', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Sve uključeno</button>
-                    <button style={{ padding: '6px 12px', background: '#fff', border: '1px solid var(--v6-border)', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Centar</button>
-                </div>
+            {/* Filter Summary */}
+            <div style={{ padding: '4px 8px', fontSize: '11px', color: 'var(--v6-text-muted)', fontWeight: 700 }}>
+                {filteredHotels.length} hotela odgovara vašim filterima
             </div>
 
-            {MOCK_HOTEL_RESULTS.map(hotel => {
+            {filteredHotels.map(hotel => {
                 const isHotelSelected = selected.hotelId === hotel.id;
                 const isExpanded = expandedHotel === hotel.id;
 
@@ -1062,28 +1080,82 @@ export const PackageWizard: React.FC<PackageWizardProps> = ({ onComplete }) => {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-            {/* Stepper */}
-            <Stepper currentStep={packageWizardStep} onStepClick={setPackageWizardStep} maxReached={maxReached} />
+        /* The main grid layout that unifies form, results, and sidebar */
+        <div className="v6-package-main-layout">
+            {/* ═ ROW 1: Stepper (Full Width 95%) ═ */}
+            <div style={{ gridColumn: '1 / span 2', marginBottom: '8px' }}>
+                <Stepper currentStep={packageWizardStep} onStepClick={setPackageWizardStep} maxReached={maxReached} />
+            </div>
 
-            {/* Body: Step Content + Price Build-Up */}
-            <div style={{
-                display: 'flex',
-                gap: '20px',
-                padding: '20px',
-                alignItems: 'flex-start',
-                background: 'var(--v6-bg-main)',
-            }}>
-                {/* Levi panel: aktivan korak */}
-                <div style={{ flex: 1, minWidth: 0 }} className="v6-fade-in" key={packageWizardStep}>
+            {/* ═ ROW 2: Search Form (Only Step 1 - Full Width 95%) ═ */}
+            {packageWizardStep === 1 && (
+                <div 
+                    className="v6-fade-in"
+                    style={{
+                        gridColumn: '1 / span 2',
+                        background: 'var(--bg-surface)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '24px',
+                        padding: '32px',
+                        boxShadow: 'var(--shadow-md)',
+                        marginBottom: '32px'
+                    }}
+                >
                     {renderStep()}
                 </div>
+            )}
 
-                {/* Desni panel: LIVE STACK (Duplirana širina) */}
-                <div style={{ width: '540px', flexShrink: 0 }}>
-                    <PackageLiveStack />
+            {/* ═ ROW 3: Selection Content (Steps 2+ - Left Column 75%) ═ */}
+            {(packageWizardStep > 1 || packageWizardStep === 1) && (
+                <div 
+                    className="v6-fade-in" 
+                    key={packageWizardStep}
+                    style={{
+                        gridColumn: '1',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '32px'
+                    }}
+                >
+                    {/* If Step 2+, show current selection process */}
+                    {packageWizardStep > 1 && (
+                        <div style={{
+                            background: 'var(--bg-surface)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '24px',
+                            padding: '32px',
+                            boxShadow: 'var(--shadow-md)'
+                        }}>
+                             {renderStep()}
+                        </div>
+                    )}
+
+                    {/* If Step 1, show Trendy Paketi (Results Sector) */}
+                    {packageWizardStep === 1 && (
+                        <div style={{ padding: '0 0' }}>
+                            <div className="v6-results-list-wrapper">
+                                {MOCK_TOUR_RESULTS.slice(0, 3).map((tour, idx) => (
+                                    <TourCard key={tour.id} tour={tour} index={idx} viewMode="list" />
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
-            </div>
+            )}
+
+            {/* ═ SIDEBAR: Persistent Floating Stack (Right Column 25%) ═ */}
+            {/* It will automatically find its place in the grid, starting from the first available Row 2 Col 2 or Row 3 Col 2 */}
+            <aside 
+                 className="v6-package-sidebar-sticky"
+                 style={{ 
+                    position: 'sticky', 
+                    top: '120px',
+                    gridColumn: '2',
+                    /* If we are in Step 1, grid will push this to next available row on the right */
+                 }}
+            >
+                <PackageLiveStack />
+            </aside>
         </div>
     );
 };

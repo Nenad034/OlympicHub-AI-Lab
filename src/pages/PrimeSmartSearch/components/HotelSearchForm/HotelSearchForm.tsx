@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useSearchStore } from '../../stores/useSearchStore';
+import { useSearchStore, calcPaxSummary } from '../../stores/useSearchStore';
 import { OccupancyWizard } from '../OccupancyWizard/OccupancyWizard';
 import { MultiSelectDropdown } from '../../../../components/MultiSelectDropdown';
 import { ExpediaCalendar } from '../../../../components/ExpediaCalendar';
@@ -8,6 +8,8 @@ import type { Destination, SearchAlert } from '../../types';
 import { Calendar, Globe, DollarSign, UtensilsCrossed, Users, Plus, Trash2, ChevronDown, MapPin, Sparkles, Search, Building2, Flag } from 'lucide-react';
 import { SearchModeSelector } from '../SearchModeSelector';
 import { AIAssistantField } from '../AIAssistantField';
+import { performSmartSearch } from '../../../../services/smartSearchService';
+import type { HotelSearchResult, AvailabilityStatus, ProviderId } from '../../types';
 
 // ─────────────────────────────────────────────────────────────
 // KONSTANTE (Nacionalnost i Usluge)
@@ -94,12 +96,7 @@ const validateSearch = (
     return alerts;
 };
 
-// ─────────────────────────────────────────────────────────────
-// MOCK: Simulacija pretrage (zameniće Orchestrator u Fazi 4)
-// ─────────────────────────────────────────────────────────────
-const mockSearch = async (): Promise<void> => {
-    return new Promise(resolve => setTimeout(resolve, 1800));
-};
+// Orchestrator (smartSearchService) handles the actual API calls.
 
 // ─────────────────────────────────────────────────────────────
 // HOTEL SEARCH FORM
@@ -142,9 +139,14 @@ export const HotelSearchForm: React.FC = () => {
     const [nationalitySearch, setNationalitySearch] = useState('');
 
     const autocompleteResults = [
-        { id: '1', name: 'Grčka', type: 'country', sub: 'Država' },
+        { id: 'solvex-9', name: 'Bansko', type: 'city', sub: 'Bugarska (Solvex)', provider: 'Solvex' },
+        { id: 'solvex-33', name: 'Zlatni Pjasci', type: 'city', sub: 'Bugarska (Solvex)', provider: 'Solvex' },
+        { id: 'solvex-68', name: 'Sunčev Breg', type: 'city', sub: 'Bugarska (Solvex)', provider: 'Solvex' },
+        { id: 'solvex-1', name: 'Nesebar', type: 'city', sub: 'Bugarska (Solvex)', provider: 'Solvex' },
+        { id: 'solvex-6', name: 'Borovets', type: 'city', sub: 'Bugarska (Solvex)', provider: 'Solvex' },
+        { id: 'solvex-10', name: 'Pamporovo', type: 'city', sub: 'Bugarska (Solvex)', provider: 'Solvex' },
         { id: '2', name: 'Atina', type: 'city', sub: 'Grčka' },
-        { id: '3', name: 'Hotel Grande Bretagne', type: 'hotel', sub: 'Atina, Grčka' },
+        { id: '3', name: 'Sani Beach', type: 'hotel', sub: 'Halkidiki, Grčka' },
     ].filter(item => item.name.toLowerCase().includes(destInput.toLowerCase()));
 
     // Filtrirane nacionalnosti za search
@@ -158,14 +160,38 @@ export const HotelSearchForm: React.FC = () => {
                          item.type === 'city' ? `${item.name} (${item.sub})` :
                          `${item.name} (${item.sub})`;
         
-        addDestination({
+        const newDestination = {
             id: `dest-${Date.now()}`,
             name: fullName,
             type: item.type,
             country: item.type === 'country' ? item.name : '',
-        });
+            provider: item.provider, // Ensure provider is passed if available
+        };
+
+        addDestination(newDestination);
         setDestInput('');
         setShowAutocomplete(false);
+
+        // --- PREFETCH LOGIC ---
+        // Ako već imamo datume, iniciramo "tihu" pretragu u pozadini
+        // Rezultati će se keširati u smartSearchService
+        if (checkIn && checkOut) {
+            console.log('[HotelSearchForm] Prefetching for:', newDestination.name);
+            performSmartSearch({
+                searchType: 'hotel',
+                destinations: [{
+                    id: newDestination.id,
+                    name: newDestination.name,
+                    type: newDestination.type as any,
+                    provider: newDestination.provider
+                }],
+                checkIn,
+                checkOut,
+                roomConfig: roomAllocations,
+                nationality: nationality,
+                enabledProviders: { solvex: true }
+            }).catch(err => console.warn('[Prefetch] Background prefetch failed (silent)', err));
+        }
     };
     const handleDestKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if ((e.key === 'Enter' || e.key === ',') && destInput.trim()) {
@@ -198,11 +224,108 @@ export const HotelSearchForm: React.FC = () => {
         // Pokreni pretragu
         setIsSubmitting(true);
         setIsSearching(true);
+        setSearchPerformed(true);
 
         try {
-            await mockSearch();
-            // Faza 4: Orchestrator će popuniti ove rezultate
-            setResults([]); // Prazno dok nema pravog Orchestratora
+            console.log('[HotelSearchForm] Starting live search for:', destinations.map(d => d.name));
+            
+            const apiResults = await performSmartSearch({
+                searchType: 'hotel',
+                destinations: destinations.map(d => ({
+                    id: d.id,
+                    name: d.name,
+                    type: d.type as any,
+                    provider: d.provider
+                })),
+                checkIn,
+                checkOut,
+                roomConfig: roomAllocations,
+                nationality: nationality,
+                enabledProviders: { solvex: true }
+            });
+
+            const paxSummary = calcPaxSummary(roomAllocations, checkIn, checkOut);
+
+            // Mapiraj API rezultate u V6 format
+            const mappedResults: HotelSearchResult[] = apiResults.map(r => {
+                const status: AvailabilityStatus = 
+                    r.availability === 'available' ? 'instant' : 
+                    (r.availability === 'on-request' || r.availability === 'on_request' ? 'on-request' : 'sold-out');
+
+                const [city, country] = (r.location || '').split(',').map((s: string) => s.trim());
+
+                // Regrupisanje soba: Service format (Room-Meal) -> V6 format (Room -> MealPlans)
+                const roomOptionsMap = new Map<string, any>();
+                
+                if (r.rooms && Array.isArray(r.rooms)) {
+                    r.rooms.forEach((srvRoom: any) => {
+                        const roomName = srvRoom.name;
+                        if (!roomOptionsMap.has(roomName)) {
+                            roomOptionsMap.set(roomName, {
+                                id: srvRoom.id,
+                                name: roomName,
+                                description: srvRoom.description || '',
+                                maxAdults: srvRoom.capacity || 2,
+                                maxChildren: 2,
+                                maxOccupancy: (srvRoom.capacity || 2) + 2,
+                                mealPlans: []
+                            });
+                        }
+                        
+                        const v6Room = roomOptionsMap.get(roomName);
+                        v6Room.mealPlans.push({
+                            code: srvRoom.mealPlan || 'RO',
+                            label: srvRoom.mealPlan || 'Smeštaj',
+                            totalPrice: srvRoom.price,
+                            pricePerPersonPerNight: srvRoom.price / (paxSummary.nights * paxSummary.totalAdults || 1),
+                            status: srvRoom.availability === 'available' ? 'instant' : 'on-request',
+                            isRefundable: true, // Solvex standardno dozvoljava otkaz določenog datuma
+                            cancellationDeadline: srvRoom.cancellationPolicyRequestParams?.DateFrom
+                        });
+                    });
+                }
+
+                return {
+                    id: r.id,
+                    name: r.name,
+                    stars: r.stars || 0,
+                    images: r.images && r.images.length > 0 ? r.images : ["https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"],
+                    location: {
+                        city: city || r.location || '',
+                        country: country || '',
+                    },
+                    isPrime: r.provider === 'Solvex',
+                    priority: r.provider === 'Solvex' ? 80 : 50,
+                    lowestTotalPrice: r.price,
+                    lowestMealPlanLabel: r.mealPlan || (r.mealPlans && r.mealPlans[0]) || 'Smeštaj',
+                    currency: r.currency || 'EUR',
+                    status: status,
+                    roomOptions: Array.from(roomOptionsMap.values()),
+                    primaryProvider: {
+                        id: (r.provider.toLowerCase() as ProviderId),
+                        hotelKey: r.id,
+                        price: r.price,
+                        currency: r.currency || 'EUR'
+                    }
+                };
+            });
+
+            setResults(mappedResults);
+            
+            if (mappedResults.length === 0) {
+                addAlert({
+                    id: 'no-results-found',
+                    severity: 'info',
+                    message: 'Nema dostupnih hotela za tražene parametre kod Solvex-a.'
+                });
+            }
+        } catch (error) {
+            console.error('[HotelSearchForm] API Search failed:', error);
+            addAlert({
+                id: 'search-api-error',
+                severity: 'error',
+                message: 'Došlo je do greške pri komunikaciji sa Solvex API-jem. Molimo pokušajte ponovo.'
+            });
         } finally {
             setIsSubmitting(false);
             setIsSearching(false);

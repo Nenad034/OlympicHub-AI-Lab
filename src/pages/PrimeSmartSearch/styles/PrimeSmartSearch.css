@@ -147,11 +147,13 @@
 .v6-results-zone {
   flex: 1;
   overflow-y: auto;
-  padding: 24px var(--v6-side-padding);
+  padding: 24px 10%; /* Makes content 80% wide and centered */
   background: var(--bg-app);
   scroll-behavior: smooth;
   scrollbar-width: thin;
   scrollbar-color: var(--border-color) transparent;
+  position: relative;
+  z-index: 10;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -314,6 +316,9 @@
     background: var(--v6-bg-card);
     padding: 24px 32px;
     border-bottom: 1px solid var(--v6-border);
+    position: relative;
+    z-index: 900; /* Ensure search popovers are above everything below */
+    overflow: visible !important;
 }
 
 /* Režimi pretrage (Classic / Semantic) */
@@ -371,8 +376,7 @@
     width: 100%;
     margin-bottom: 24px;
     background: var(--v6-bg-section);
-    border: 1.8px solid #1A234E !important; /* FIXED OFFICIAL NAVY BORDER */
-
+    border: 2px solid #1A234E !important; /* FIXED CONSISTENT NAVY BORDER */
     border-radius: var(--v6-radius-lg);
     transition: all 0.2s ease;
 }
@@ -393,7 +397,8 @@
 
 .v6-hero-input-wrapper:focus-within {
     background: var(--v6-bg-card);
-    box-shadow: 0 0 0 1px #1e293b !important;
+    border-color: var(--v6-accent) !important;
+    box-shadow: 0 8px 24px rgba(26, 35, 78, 0.12) !important;
 }
 
 .v6-hero-icon-faint {
@@ -456,7 +461,7 @@
     height: 52px !important;
     border-radius: var(--v6-radius-md);
     background: var(--v6-bg-section) !important;
-    border: 1.8px solid #1e293b !important;
+    border: 2px solid #1A234E !important; /* UNIFIED WITH HERO INPUT */
     color: var(--v6-text-primary) !important;
     font-weight: 600;
     transition: all 0.2s ease;
@@ -475,7 +480,7 @@
 .v6-dark .v6-budget-container,
 .v6-dark .field-container {
 
-    border: 1.8px solid var(--v6-border) !important;
+    border: 2px solid var(--v6-border) !important;
 }
 
 .v6-field-icon-faint {
@@ -572,8 +577,8 @@
     stroke: var(--v6-navy) !important;
 }
 
-.v6-type-extra .v6-stack-card-icon svg { 
-    stroke: var(--v6-color-extra) !important; 
+.v6-type-extra .v6-stack-card-icon svg {
+    stroke: var(--v6-color-extra) !important;
 }
 
 
@@ -764,7 +769,7 @@
     width: 100%;
     height: 48px;
     padding: 0 14px;
-    border: 1.8px solid #1A234E !important;
+    border: 2px solid #1A234E !important;
 
     border-radius: var(--v6-radius-md);
     background: var(--v6-bg-main);
@@ -791,7 +796,7 @@
 .v6-occupancy-trigger {
     height: 48px;
     padding: 0 14px;
-    border: 1.8px solid #1A234E !important;
+    border: 2px solid #1A234E !important;
 
     border-radius: var(--v6-radius-md);
     background: var(--v6-bg-main);
@@ -851,12 +856,14 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    padding: 10px 24px;
+    padding: 10px 10%; /* Center 80% content */
     background: var(--v6-bg-section);
     border-bottom: 1px solid var(--v6-border);
     font-size: var(--v6-fs-xs);
     color: var(--v6-text-secondary);
     flex-wrap: wrap;
+    position: relative;
+    z-index: 50;
 }
 
 .v6-pax-chip {
@@ -879,7 +886,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 24px;
+    padding: 12px 10%; /* Center 80% content */
     background: var(--v6-bg-main);
     border-bottom: 1px solid var(--v6-border);
     flex-wrap: wrap;
@@ -1120,7 +1127,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 0 24px;
+    padding: 0 10%; /* Center 80% content */
     margin-bottom: 12px;
 }
 
@@ -1337,14 +1344,7 @@
   display: flex;
   align-items: center;
   background-color: var(--bg-input);
-  border: 1.8px solid #1e293b !important;
-
-.v6-dark .input-wrapper, .v6-dark .field-container {
-
-
-    border: 1.8px solid var(--v6-border) !important;
-}
-
+  border: 2px solid #1A234E !important;
   padding: 12px 16px;
   border-radius: 12px;
   cursor: pointer;
@@ -1352,6 +1352,10 @@
   position: relative;
   min-height: 56px;
   width: 100%;
+}
+
+.v6-dark .input-wrapper, .v6-dark .field-container {
+  border: 2px solid var(--v6-border) !important;
 }
 
 .input-wrapper:hover, .field-container:hover {
@@ -1632,3 +1636,901 @@
 .search-result-card:hover .card-image-section img { transform: scale(1.05); }
 .card-info-section { padding: 24px; display: flex; flex-direction: column; gap: 12px; }
 .badge-luxury { background: var(--brand-accent-light); color: var(--brand-accent); padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; width: fit-content; }
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEW TOGGLE BAR (List / Grid / Notepad)
+   ═══════════════════════════════════════════════════════════════ */
+
+.v6-view-toggle-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 0 4px 0;
+}
+
+.v6-view-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    font-family: var(--v6-font);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    letter-spacing: 0.02em;
+}
+
+.v6-view-toggle-btn:hover {
+    border-color: var(--brand-accent);
+    color: var(--brand-accent);
+}
+
+.v6-view-toggle-btn.v6-vtb-active {
+    background: var(--brand-primary);
+    border-color: var(--brand-primary);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(26, 35, 78, 0.2);
+}
+
+.v6-dark .v6-view-toggle-btn.v6-vtb-active {
+    background: var(--brand-accent);
+    border-color: var(--brand-accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LIST VIEW — kompaktnija (šira +30%, niža -30%)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Wrapper za list mode - širi kontejner */
+.v6-results-list-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 0;
+    width: 100%;
+    max-width: 1300px; /* +30% od 1000px */
+    margin: 0 auto;
+}
+
+/* Kartica u list modu — kraća za ~30% */
+.search-result-card.v6-list-card {
+    grid-template-columns: 240px 1fr 210px; /* Malo šira slika i cena za bolji balans */
+    min-height: 180px; 
+    border-radius: 14px;
+    align-items: stretch;
+    gap: 0;
+}
+
+/* Slika u list modu - mora puniti celu visinu modula */
+.v6-list-card .card-image-section {
+    height: 100%;
+    min-height: 180px;
+    max-height: none;
+    width: 240px;
+    flex-shrink: 0;
+}
+
+/* Info sekcija u list modu */
+.v6-list-card .card-info-section {
+    padding: 16px 24px;
+    gap: 8px;
+    justify-content: center;
+}
+
+/* Price sekcija u list modu */
+.v6-list-card .price-section {
+    padding: 14px 18px;
+    gap: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GRID VIEW — vertikalne kartice u grid-u
+   ═══════════════════════════════════════════════════════════════ */
+
+.v6-results-grid-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); /* +30% širine (+80px) */
+    gap: 20px;
+    padding: 16px 0;
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+@media (min-width: 1400px) {
+    .v6-results-grid-wrapper { grid-template-columns: repeat(3, 1fr); } /* 3 šire kolone umesto 4 */
+}
+
+/* Kartica u grid modu */
+.v6-hotel-grid-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+}
+
+.v6-hotel-grid-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--brand-accent);
+}
+
+.v6-dark .v6-hotel-grid-card {
+    background: #1A233A;
+    border-color: #334155;
+}
+
+/* Slika u grid kartici */
+.v6-grid-card-image {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--bg-app);
+}
+
+.v6-grid-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.v6-hotel-grid-card:hover .v6-grid-card-image img {
+    transform: scale(1.06);
+}
+
+.v6-grid-img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--bg-app) 0%, var(--border-color) 100%);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.v6-grid-prime-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(26, 35, 78, 0.85);
+    backdrop-filter: blur(8px);
+    color: #FFD700;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    border: 1px solid rgba(255,215,0,0.3);
+}
+
+.v6-grid-status-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.v6-gs-instant { background: rgba(16,185,129,0.15); color: #059669; border: 1px solid rgba(16,185,129,0.3); }
+.v6-gs-request { background: rgba(245,158,11,0.15); color: #d97706; border: 1px solid rgba(245,158,11,0.3); }
+
+/* Body grid kartice */
+.v6-grid-card-body {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.v6-grid-card-name {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 0;
+    line-height: 1.25;
+}
+
+.v6-grid-card-location {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.v6-grid-card-rating {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.v6-grid-rating-score {
+    background: var(--brand-accent);
+    color: white;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.v6-grid-rating-count {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.v6-grid-meal-badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    width: fit-content;
+}
+
+/* Footer grid kartice */
+.v6-grid-card-footer {
+    border-top: 1px solid var(--border-color);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--bg-app);
+}
+
+.v6-dark .v6-grid-card-footer {
+    background: rgba(255,255,255,0.02);
+}
+
+.v6-grid-price {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1;
+    margin: 2px 0;
+}
+
+.v6-grid-breakdown {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.v6-grid-cta {
+    padding: 9px 14px !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NOTEPAD VIEW — kompaktan tabelarni prikaz
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Header tabla notepad-a */
+.v6-notepad-header {
+    display: grid;
+    grid-template-columns: 36px 1fr 160px 90px 70px 90px 120px 110px;
+    gap: 0;
+    padding: 11px 16px; /* +30% */
+    background: var(--bg-app);
+    border: 1px solid var(--border-color);
+    border-radius: 12px 12px 0 0;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+}
+
+/* Wrapper notepad */
+.v6-results-notepad-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 16px 0;
+    gap: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+/* Red u notepad-u */
+.v6-hotel-notepad-row {
+    display: grid;
+    grid-template-columns: 36px 1fr 160px 90px 70px 90px 120px 110px;
+    align-items: center;
+    gap: 0;
+    padding: 13px 16px; /* +30% visine (povećan padding) */
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    transition: background 0.15s ease;
+    font-family: var(--v6-font);
+}
+
+.v6-hotel-notepad-row:last-child {
+    border-bottom: none;
+}
+
+.v6-hotel-notepad-row:hover {
+    background: var(--brand-accent-light);
+}
+
+.v6-dark .v6-hotel-notepad-row {
+    background: #1A233A;
+    border-color: #334155;
+}
+
+.v6-dark .v6-hotel-notepad-row:hover {
+    background: rgba(157, 78, 221, 0.08);
+}
+
+/* Redni broj */
+.v6-notepad-idx {
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--text-muted);
+    font-feature-settings: 'tnum';
+    opacity: 0.5;
+}
+
+/* Kolona s imenom */
+.v6-notepad-name-col {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding-right: 12px;
+}
+
+.v6-notepad-prime {
+    background: rgba(255, 215, 0, 0.15);
+    color: #b8860b;
+    border: 1px solid rgba(255,215,0,0.4);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+}
+
+.v6-notepad-stars {
+    color: #f59e0b;
+    font-size: 10px;
+    flex-shrink: 0;
+    letter-spacing: 1px;
+}
+
+.v6-notepad-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Ostale kolone notepad-a */
+.v6-notepad-location {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 8px;
+}
+
+.v6-notepad-meal {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.v6-notepad-rating {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.v6-notepad-status {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    text-align: center;
+}
+
+.v6-np-instant { background: rgba(16,185,129,0.12); color: #059669; }
+.v6-np-request { background: rgba(245,158,11,0.12); color: #d97706; }
+
+.v6-notepad-price {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-main);
+    text-align: right;
+    font-feature-settings: 'tnum';
+}
+
+.v6-notepad-cta {
+    background: var(--brand-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-align: center;
+    font-family: var(--v6-font);
+    justify-self: end;
+}
+
+.v6-notepad-cta:hover {
+    background: var(--brand-accent);
+    transform: scale(1.03);
+}
+
+.v6-dark .v6-notepad-cta {
+    background: var(--brand-accent);
+}
+
+
+/* ---------------------------------------------------------------
+   MAIN RESULTS LAYOUT (Sidebar + Content)
+   --------------------------------------------------------------- */
+
+.v6-search-results-page-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 32px;
+    width: 100%; /* Occupies the full 80% of viewport defined by parent padding */
+    margin: 32px auto;
+    align-items: flex-start;
+}
+
+/* Reverse Layout for Packages (Content Left | Sidebar Right) */
+.v6-package-main-layout {
+    display: grid;
+    grid-template-columns: 1fr 440px;
+    gap: 32px;
+    width: 100%;
+    margin: 32px auto;
+    align-items: flex-start;
+}
+
+.v6-package-full-row {
+    grid-column: 1 / span 2;
+}
+
+.v6-package-sidebar-sticky {
+    position: sticky;
+    top: 120px; /* Aligns with filter sidebar */
+    z-index: 10;
+    grid-column: 2;
+}
+
+@media (max-width: 1200px) {
+    .v6-search-results-page-layout {
+        width: 90%;
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------------------------------------------------------------
+   FILTER SIDEBAR - STACKED CARD DESIGN (V6)
+   --------------------------------------------------------------- */
+
+.v6-filter-sidebar-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* Razmak između kartica kao kod paketa */
+    max-width: 300px;
+    width: 100%;
+}
+
+/* 🎨 TAMNI HEADER (VAŠI FILTERI) */
+.v6-sidebar-dynamic-header {
+    background: #1A233A;
+    color: white;
+    padding: 14px 24px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    margin-bottom: 4px;
+}
+
+.v6-sidebar-dynamic-header .v6-header-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+/* 🃏 FILTER KARTICA */
+.v6-filter-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    transition: all 0.2s ease;
+}
+
+.v6-filter-card:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+
+.v6-filter-card.header-card {
+    padding: 12px 20px;
+}
+
+.v6-dark .v6-filter-card {
+    background: #1E293B;
+    border-color: #334155;
+}
+
+.v6-filter-card .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.v6-filter-card .sidebar-header h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.v6-filter-card .reset-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--brand-primary);
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.v6-filter-card .reset-btn:hover {
+    background: var(--brand-primary-light);
+}
+
+/* Prilagođavanje filter grupa unutar kartica */
+.v6-filter-card .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.v6-filter-card .filter-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* Status stack unutar kartice */
+.v6-filter-card .status-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: -8px;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+}
+
+.reset-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 12px;
+    color: #ef4444;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    font-family: var(--v6-font) !important;
+}
+
+.reset-btn:hover {
+    background: #ef4444;
+    color: #fff;
+    transform: scale(1.02);
+}
+
+/* Groups */
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.filter-group label {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* Input Search */
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-icon svg {
+    position: absolute;
+    left: 14px;
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.input-with-icon input {
+    width: 100%;
+    padding: 12px 14px 12px 42px;
+    background: var(--bg-app);
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
+    color: var(--text-main);
+    font-size: 14px;
+    font-weight: 700;
+    outline: none;
+    transition: all 0.2s ease;
+    font-family: var(--v6-font) !important;
+}
+
+.v6-dark .input-with-icon input {
+    background: #0F172A;
+}
+
+.input-with-icon input:focus {
+    border-color: var(--brand-accent);
+    box-shadow: 0 0 0 4px rgba(142, 36, 172, 0.15);
+}
+
+/* Chips */
+.chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chip-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-chip {
+    padding: 8px 14px;
+    background: var(--bg-app);
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
+    color: var(--text-main);
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--v6-font) !important;
+}
+
+.chip-stack .filter-chip {
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.v6-dark .filter-chip {
+    background: #0F172A;
+}
+
+.filter-chip:hover {
+    border-color: var(--brand-accent);
+}
+
+.filter-chip.active {
+    background: rgba(142, 36, 172, 0.1);
+    border-color: var(--brand-accent);
+    color: var(--brand-accent);
+    box-shadow: 0 4px 12px rgba(142, 36, 172, 0.15);
+}
+
+.filter-chip.active-green {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: #22c55e;
+    color: #22c55e;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+}
+
+/* Status Stack */
+.status-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.status-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-app);
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    font-family: var(--v6-font) !important;
+}
+
+.v6-dark .status-btn {
+    background: #0F172A;
+}
+
+.status-btn span {
+    flex: 1;
+}
+
+.status-btn.active.instant {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: #22c55e;
+    color: #22c55e;
+}
+
+.status-btn.active.request {
+    background: rgba(234, 179, 8, 0.1);
+    border-color: #eab308;
+    color: #eab308;
+}
+
+.status-btn.active.stop {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+/* Toggle Switch */
+.toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--bg-app);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    font-family: var(--v6-font) !important;
+}
+
+.v6-dark .toggle-btn {
+    background: #0F172A;
+}
+
+.toggle-indicator {
+    width: 32px;
+    height: 18px;
+    background: #475569;
+    border-radius: 100px;
+    position: relative;
+    margin-left: auto;
+    transition: all 0.3s ease;
+}
+
+.toggle-indicator::after {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.toggle-btn.active {
+    border-color: var(--brand-accent);
+    color: var(--text-main);
+    background: rgba(142, 36, 172, 0.05);
+}
+
+.toggle-btn.active .toggle-indicator {
+    background: var(--brand-accent);
+}
+
+.toggle-btn.active .toggle-indicator::after {
+    left: 16px;
+}
+
+/* Results Content Area */
+.v6-results-content-area {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.v6-toggle-bar-container-new {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PRETRAGA PAKETA - 95% ŠIRINA
+   ═══════════════════════════════════════════════════════════════ */
+.v6-results-zone.v6-wide-mode {
+    padding-left: 2.5% !important;
+    padding-right: 2.5% !important;
+}
+

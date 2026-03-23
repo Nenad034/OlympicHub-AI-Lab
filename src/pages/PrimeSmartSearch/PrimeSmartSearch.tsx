@@ -9,12 +9,14 @@ import { CharterSearchForm } from './components/CharterSearchForm/CharterSearchF
 import { CarSearchForm } from './components/CarSearchForm/CarSearchForm';
 import { TransferSearchForm } from './components/TransferSearchForm/TransferSearchForm';
 import { PackageWizard } from './components/PackageWizard/PackageWizard';
-import { HotelCard } from './components/HotelCard/HotelCard';
+import { PackageLiveStack } from './components/PackageLiveStack';
+import { HotelCard, type ViewMode } from './components/HotelCard/HotelCard';
 import { FlightCard } from './components/FlightCard/FlightCard';
 import { CharterCard } from './components/CharterCard/CharterCard';
 import { CarCard } from './components/CarCard/CarCard';
 import { TransferCard } from './components/TransferCard/TransferCard';
 import { FilterBar } from './components/FilterBar/FilterBar';
+import { FilterSidebar } from './components/FilterSidebar/FilterSidebar';
 import { HotelRoomWizard } from './components/HotelRoomWizard/HotelRoomWizard';
 import { SmartConcierge } from './components/SmartConcierge/SmartConcierge';
 import { ItineraryExport } from './components/ItineraryExport/ItineraryExport';
@@ -104,11 +106,49 @@ const TabForm: React.FC<{ activeTab: string }> = ({ activeTab }) => {
 };
 
 // ─────────────────────────────────────────────────────────────
+// UI COMPONENTS (Shared)
+// ─────────────────────────────────────────────────────────────
+const ViewToggleBar: React.FC<{ viewMode: ViewMode; onChange: (m: ViewMode) => void }> = ({ viewMode: vm, onChange }) => (
+    <div className="v6-view-toggle-bar">
+        <button
+            id="v6-view-list-btn"
+            className={`v6-view-toggle-btn ${vm === 'list' ? 'v6-vtb-active' : ''}`}
+            onClick={() => onChange('list')}
+            title="List prikaz"
+        >
+            ☰ List
+        </button>
+        <button
+            id="v6-view-grid-btn"
+            className={`v6-view-toggle-btn ${vm === 'grid' ? 'v6-vtb-active' : ''}`}
+            onClick={() => onChange('grid')}
+            title="Grid prikaz"
+        >
+            ⊞ Grid
+        </button>
+        <button
+            id="v6-view-notepad-btn"
+            className={`v6-view-toggle-btn ${vm === 'notepad' ? 'v6-vtb-active' : ''}`}
+            onClick={() => onChange('notepad')}
+            title="Notepad prikaz"
+        >
+            📋 Notepad
+        </button>
+    </div>
+);
+
+// ─────────────────────────────────────────────────────────────
 // EMPTY STATES
 // ─────────────────────────────────────────────────────────────
-const TopOffers: React.FC<{ activeTab: string }> = ({ activeTab }) => {
-    // Helper to pick top 3 items
-    const topHotels = MOCK_HOTEL_RESULTS.slice(0, 3);
+const TopOffers: React.FC<{ 
+    activeTab: string; 
+    hotelViewMode: ViewMode; 
+    setHotelViewMode: (m: ViewMode) => void;
+    tourViewMode: ViewMode;
+    setTourViewMode: (m: ViewMode) => void;
+}> = ({ activeTab, hotelViewMode, setHotelViewMode, tourViewMode, setTourViewMode }) => {
+    // Pick more items for exploration
+    const topHotels = MOCK_HOTEL_RESULTS.slice(0, 11);
     const topFlights = MOCK_FLIGHT_RESULTS.slice(0, 3);
     const topTours = MOCK_TOUR_RESULTS.slice(0, 3);
 
@@ -130,10 +170,15 @@ const TopOffers: React.FC<{ activeTab: string }> = ({ activeTab }) => {
         <div className="v6-top-offers-dashboard v6-fade-in">
             {activeTab === 'hotel' && (
                 <div className="v6-fade-in-up">
-                    {renderOfferHeader("Najtraženiji hoteli", "Istražite najpopularnije destinacije po specijalnim cenama", "Preporuka")}
-                    <div className="search-results-container">
+                    
+                    <div className={hotelViewMode === 'list' ? 'v6-results-list-wrapper' : hotelViewMode === 'grid' ? 'v6-results-grid-wrapper' : 'v6-results-notepad-wrapper'}>
+                        {hotelViewMode === 'notepad' && (
+                            <div className="v6-notepad-header">
+                                <span>#</span><span>Hotel</span><span>Lokacija</span><span>Usluga</span><span>Ocena</span><span>Status</span><span>Cena</span><span></span>
+                            </div>
+                        )}
                         {topHotels.map((hotel, idx) => (
-                            <HotelCard key={hotel.id} hotel={hotel} index={idx} onViewOptions={() => {}} />
+                            <HotelCard key={hotel.id} hotel={hotel} index={idx} onViewOptions={() => {}} viewMode={hotelViewMode} />
                         ))}
                     </div>
                 </div>
@@ -153,15 +198,38 @@ const TopOffers: React.FC<{ activeTab: string }> = ({ activeTab }) => {
             {activeTab === 'package' && (
                 <div className="v6-fade-in-up">
                     {renderOfferHeader("Trendi Paketi", "Kompletna letovanja i gradske ture uz maksimalnu uštedu", "Prime Selection")}
-                    <div className="search-results-container">
+                    
+                    <div className={tourViewMode === 'list' ? 'v6-results-list-wrapper' : tourViewMode === 'grid' ? 'v6-results-grid-wrapper' : 'v6-results-notepad-wrapper'}>
+                        {tourViewMode === 'notepad' && (
+                            <div className="v6-notepad-header">
+                                <span>#</span><span>Paket</span><span>Destinacija</span><span>Trajanje</span><span>Ocena</span><span>Status</span><span>Cena</span><span></span>
+                            </div>
+                        )}
                         {topTours.map((tour, idx) => (
-                            <TourCard key={tour.id} tour={tour} index={idx} />
+                            <TourCard key={tour.id} tour={tour} index={idx} viewMode={tourViewMode} />
                         ))}
                     </div>
                 </div>
             )}
 
-            {(activeTab !== 'hotel' && activeTab !== 'flight' && activeTab !== 'package') && (
+            {activeTab === 'tour' && (
+                <div className="v6-fade-in-up">
+                    {renderOfferHeader("Preporučena Putovanja", "Doživite nezaboravne trenutke na našim organizovanim turama", "Prime Selection")}
+                    
+                    <div className={tourViewMode === 'list' ? 'v6-results-list-wrapper' : tourViewMode === 'grid' ? 'v6-results-grid-wrapper' : 'v6-results-notepad-wrapper'}>
+                        {tourViewMode === 'notepad' && (
+                            <div className="v6-notepad-header">
+                                <span>#</span><span>Paket</span><span>Destinacija</span><span>Trajanje</span><span>Ocena</span><span>Status</span><span>Cena</span><span></span>
+                            </div>
+                        )}
+                        {topTours.map((tour, idx) => (
+                            <TourCard key={tour.id} tour={tour} index={idx} viewMode={tourViewMode} />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {(activeTab !== 'hotel' && activeTab !== 'flight' && activeTab !== 'package' && activeTab !== 'tour') && (
                 <div className="v6-empty-state">
                     <div className="v6-empty-state-icon">✨</div>
                     <div className="v6-empty-title">Otkrijte nove horizonte</div>
@@ -214,6 +282,9 @@ export const PrimeSmartSearch: React.FC = () => {
         setSearchPerformed,
         setIsSearching,
         addToBasket,
+        filters,
+        sortBy,
+        packageWizardStep,
     } = useSearchStore();
 
     const { theme } = useThemeStore();
@@ -223,6 +294,46 @@ export const PrimeSmartSearch: React.FC = () => {
     const [showExport, setShowExport] = useState(false);
     const [carCategoryFilter, setCarCategoryFilter] = useState('all');
     const [transferDirection, setTransferDirection] = useState<'one-way' | 'round-trip'>('one-way');
+
+    // View mode za hotel i paket tabove (nezavisni)
+    const [hotelViewMode, setHotelViewMode] = useState<ViewMode>('list');
+    const [tourViewMode, setTourViewMode] = useState<ViewMode>('list');
+
+    const filteredHotels = React.useMemo(() => {
+        if (activeTab !== 'hotel') return [];
+        const base = results.filter(hotel => {
+            // Name filter
+            if (filters.hotelName && !hotel.name.toLowerCase().includes(filters.hotelName.toLowerCase())) {
+                return false;
+            }
+            // Star filter
+            if (filters.stars && !filters.stars.includes('all')) {
+                if (!filters.stars.includes(hotel.stars.toString())) return false;
+            }
+            // Availability
+            if (filters.availability && filters.availability.length > 0) {
+                if (!filters.availability.includes(hotel.status)) return false;
+            }
+            // Only Refundable
+            if (filters.onlyRefundable) {
+                // Check if any room has a cancellation deadline
+                return hotel.roomOptions?.some(opt => opt.mealPlans.some(mp => mp.isRefundable));
+            }
+            return true;
+        });
+
+        // Apply Sorting
+        return [...base].sort((a, b) => {
+            if (sortBy === 'price_asc') return a.lowestTotalPrice - b.lowestTotalPrice;
+            if (sortBy === 'price_desc') return b.lowestTotalPrice - a.lowestTotalPrice;
+            if (sortBy === 'stars_desc') return b.stars - a.stars;
+            if (sortBy === 'rating_desc') return (b.rating || 0) - (a.rating || 0);
+            
+            // 'smart' (PRIME inventory first, then by priority)
+            if (a.isPrime !== b.isPrime) return a.isPrime ? -1 : 1;
+            return b.priority - a.priority;
+        });
+    }, [results, filters, activeTab, sortBy]);
 
     // Aktiviraj Smart Concierge za grad izabranog hotela
     const conciergeCity = selectedHotel?.location?.city ?? undefined;
@@ -306,11 +417,12 @@ export const PrimeSmartSearch: React.FC = () => {
             ═══════════════════════════════════════════════ */}
             {activeTab !== 'package' && (
                 <section
-                    className="v6-form-zone"
-                id={`v6-panel-${activeTab}`}
-                role="tabpanel"
-                aria-labelledby={`v6-tab-${activeTab}`}
-            >
+                    className="v6-form-zone v6-fade-in v6-wide-mode"
+                    id={`v6-panel-${activeTab}`}
+                    style={{ paddingLeft: '2.5%', paddingRight: '2.5%' }}
+                    role="tabpanel"
+                    aria-labelledby={`v6-tab-${activeTab}`}
+                >
                 <TabForm activeTab={activeTab} />
 
                 {/* Demo dugme za Hotel tab */}
@@ -458,25 +570,14 @@ export const PrimeSmartSearch: React.FC = () => {
                 </section>
             )}
 
-
-
-            {/* ═══════════════════════════════════════════════
-                PAX SUMMARY BANNER
-            ═══════════════════════════════════════════════ */}
+            {/* ═ SUMMARY BANNER ═ */}
             <PaxSummaryBanner />
 
-            {/* ═══════════════════════════════════════════════
-                ALERTS
-            ═══════════════════════════════════════════════ */}
+            {/* ═ ALERTS ═ */}
             {alerts.length > 0 && (
                 <div className="v6-alerts-zone" role="region" aria-label="Obaveštenja">
                     {alerts.map(alert => (
-                        <div
-                            key={alert.id}
-                            className={`v6-alert v6-alert-${alert.severity} v6-fade-in`}
-                            role="alert"
-                            aria-live="polite"
-                        >
+                        <div key={alert.id} className={`v6-alert v6-alert-${alert.severity} v6-fade-in`} role="alert" aria-live="polite">
                             <span aria-hidden="true">{alert.severity === 'warning' ? '⚠️' : 'ℹ️'}</span>
                             <span style={{ flex: 1 }}>{alert.message}</span>
                             <button className="v6-alert-dismiss" onClick={() => dismissAlert(alert.id)} aria-label="Zatvori">✕</button>
@@ -485,351 +586,157 @@ export const PrimeSmartSearch: React.FC = () => {
                 </div>
             )}
 
-            {/* ═══════════════════════════════════════════════
-                FILTER BAR (pojavljuje se samo kad ima rezultata)
-            ═══════════════════════════════════════════════ */}
-            <FilterBar />
+            {/* ═ FILTER BAR (Conditional) ═ */}
+            {activeTab !== 'hotel' && <FilterBar />}
 
-            {/* ═══════════════════════════════════════════════
-                RESULTS ZONA — Nezavisni skrol
-            ═══════════════════════════════════════════════ */}
-            <div
-                className="v6-results-zone"
-                role="region"
-                aria-label="Rezultati pretrage"
+            {/* ═ MAIN RESULTS ZONE ═ */}
+            <div 
+                className="v6-results-zone v6-wide-mode" 
+                style={{ paddingLeft: '2.5%', paddingRight: '2.5%' }}
+                role="region" 
+                aria-label="Rezultati pretrage" 
                 aria-live="polite"
             >
-                {/* ══ PACKAGE WIZARD — Zauzima celu results zonu ══ */}
-                {activeTab === 'package' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-                        <div style={{ background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', border: '1.5px solid var(--border-color)', overflow: 'hidden', boxShadow: 'var(--shadow-md)' }}>
-                            <PackageWizard onComplete={handlePackageComplete} />
+                {(activeTab === 'hotel') ? (
+                    <div className="v6-search-results-page-layout" style={{ gridTemplateColumns: '300px 1fr' }}>
+                        <div className="v6-sidebar-group" style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '120px' }}>
+                            <div className="v6-toggle-bar-container-new" style={{ justifyContent: 'flex-start' }}>
+                                <ViewToggleBar viewMode={hotelViewMode} onChange={setHotelViewMode} />
+                            </div>
+                            <FilterSidebar />
                         </div>
-                        {!searchPerformed && !isSearching && <TopOffers activeTab="package" />}
-                    </div>
-                )}
 
-                {/* ══ HOTEL + FLIGHT rezultati ══ */}
-                {activeTab !== 'package' && isSearching && <SkeletonGrid />}
-                {activeTab !== 'package' && !isSearching && !searchPerformed && <TopOffers activeTab={activeTab} />}
-
-                {/* Hotel rezultati */}
-                {activeTab === 'hotel' && !isSearching && searchPerformed && results.length === 0 && <NoResults />}
-                {activeTab === 'hotel' && !isSearching && searchPerformed && results.length > 0 && (
-                    <div className="search-results-container" role="list">
-                        {results.map((hotel, idx) => (
-                            <div key={hotel.id} role="listitem">
-                                <HotelCard hotel={hotel} index={idx} onViewOptions={handleViewOptions} />
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Flight rezultati */}
-                {activeTab === 'flight' && !isSearching && searchPerformed && flightResults.length === 0 && <NoResults />}
-                {activeTab === 'flight' && !isSearching && searchPerformed && flightResults.length > 0 && (
-                    <div className="search-results-container" role="list">
-                        <div style={{ padding: '16px 20px', background: 'var(--bg-app)', borderRadius: '16px', border: '1px solid var(--border-color)', fontSize: '12px', color: 'var(--text-muted)', display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '4px' }}>
-                            <span style={{ color: 'var(--brand-accent)' }}>✈️</span>
-                            <span><strong>{flightResults.length} letova</strong> pronađeno · Cene uključuju sve takse · Sortirano po preporuci</span>
+                        <div className="v6-results-content-area" style={{ marginTop: '0' }}>
+                            {isSearching ? <SkeletonGrid /> : (
+                                <>
+                                    {!searchPerformed ? (
+                                        <TopOffers 
+                                            activeTab={activeTab} 
+                                            hotelViewMode={hotelViewMode} setHotelViewMode={setHotelViewMode}
+                                            tourViewMode={tourViewMode} setTourViewMode={setTourViewMode}
+                                        />
+                                    ) : (
+                                        <>
+                                            {filteredHotels.length === 0 ? <NoResults /> : (
+                                                <div className={hotelViewMode === 'list' ? 'v6-results-list-wrapper' : hotelViewMode === 'grid' ? 'v6-results-grid-wrapper' : 'v6-results-notepad-wrapper'}>
+                                                    {hotelViewMode === 'notepad' && (
+                                                        <div className="v6-notepad-header">
+                                                            <span>#</span><span>Hotel</span><span>Lokacija</span><span>Usluga</span><span>Ocena</span><span>Status</span><span>Cena</span><span></span>
+                                                        </div>
+                                                    )}
+                                                    {filteredHotels.map((hotel, idx) => (
+                                                        <HotelCard key={hotel.id} hotel={hotel} index={idx} onViewOptions={handleViewOptions} viewMode={hotelViewMode} />
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </>
+                            )}
                         </div>
-                        {flightResults.map((flight, idx) => (
-                            <div key={flight.id} role="listitem">
-                                <FlightCard flight={flight} index={idx} paxTotal={1} onBook={handleBookFlight} />
-                            </div>
-                        ))}
                     </div>
-                )}
+                ) : (
+                    /* STANDARD CENTERED LAYOUT (Includes Packages, Flights, etc.) */
+                    <div className="v6-standard-results-layout" style={{ maxWidth: 'none', margin: '0 auto', width: '100%' }}>
+                        {isSearching ? <SkeletonGrid /> : (
+                            <>
+                                {activeTab === 'package' && (
+                                    <PackageWizard onComplete={handlePackageComplete} />
+                                 )}
 
-                {/* Charter rezultati — kalendarskim tabelarni prikaz */}
-                {activeTab === 'charter' && !isSearching && searchPerformed && charterResults.length === 0 && <NoResults />}
-                {activeTab === 'charter' && !isSearching && searchPerformed && charterResults.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }} role="list" aria-label={`${charterResults.length} čarter relacija`}>
-                        {/* Banner */}
-                        <div style={{ padding: '12px 16px', background: 'var(--v6-bg-section)', borderRadius: 'var(--v6-radius-md)', border: '1px solid var(--v6-border)', fontSize: 'var(--v6-fs-xs)', color: 'var(--v6-text-muted)', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-                            <span>🎫 <strong style={{ color: 'var(--v6-text-primary)' }}>{charterResults.length} čarter relacija</strong> pronađeno</span>
-                            <span style={{ color: 'var(--v6-border)' }}>|</span>
-                            <span style={{ color: 'var(--v6-color-prime)', fontWeight: 600 }}>🏆 {charterResults.filter(c => c.isPrime).length} PRIME allotment</span>
-                            <span style={{ color: 'var(--v6-border)' }}>|</span>
-                            <span>Cene su po osobi · Kliknite na relaciju da vidite polaske</span>
-                        </div>
-                        {charterResults.map((charter, idx) => (
-                            <div key={charter.id} role="listitem">
-                                <CharterCard charter={charter} index={idx} />
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* ══ RENT-A-CAR rezultati ══ */}
-                {activeTab === 'car' && !isSearching && searchPerformed && carResults.length === 0 && <NoResults />}
-                {activeTab === 'car' && !isSearching && searchPerformed && carResults.length > 0 && (() => {
-                    const filtered = carCategoryFilter === 'all'
-                        ? carResults
-                        : carResults.filter(c => c.category === carCategoryFilter);
-                    const days = 7; // TODO: iz CarSearchParams
-                    return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
-                            {/* Banner + Category Filter */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '14px 16px', background: 'var(--v6-bg-section)', borderRadius: 'var(--v6-radius-md)', border: '1px solid var(--v6-border)' }}>
-                                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', fontSize: 'var(--v6-fs-xs)', color: 'var(--v6-text-muted)' }}>
-                                    <span>🚗 <strong style={{ color: 'var(--v6-text-primary)' }}>{carResults.length} vozila</strong> dostupno</span>
-                                    <span style={{ color: 'var(--v6-border)' }}>|</span>
-                                    <span style={{ color: 'var(--v6-color-prime)', fontWeight: 600 }}>🏆 {carResults.filter(c => c.isPrime).length} PRIME</span>
-                                    <span style={{ color: 'var(--v6-border)' }}>|</span>
-                                    <span>Cene za {days} dana najma · Sortiranje: Preporučeno</span>
-                                </div>
-                                {/* Category Filter Pill-ovi */}
-                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                    {CAR_CATEGORIES.map(cat => (
-                                        <button key={cat.value} type="button" onClick={() => setCarCategoryFilter(cat.value)}
-                                            style={{
-                                                padding: '5px 12px',
-                                                border: `1.5px solid ${carCategoryFilter === cat.value ? 'var(--v6-accent)' : 'var(--v6-border)'}`,
-                                                borderRadius: '999px',
-                                                background: carCategoryFilter === cat.value ? 'var(--v6-accent)' : 'var(--v6-bg-main)',
-                                                color: carCategoryFilter === cat.value ? 'var(--v6-accent-text)' : 'var(--v6-text-secondary)',
-                                                fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--v6-font)',
-                                                transition: 'all 0.15s',
-                                            }}>
-                                            {cat.emoji} {cat.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                            {/* Vozila lista */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }} role="list" aria-label={`${filtered.length} vozila`}>
-                                {filtered.length === 0 && (
-                                    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--v6-text-muted)', fontSize: 'var(--v6-fs-sm)' }}>
-                                        Nema vozila u kategoriji <strong>{carCategoryFilter}</strong>. Pokušajte drugu kategoriju.
+                                {!searchPerformed && activeTab !== 'package' ? (
+                                    <TopOffers 
+                                        activeTab={activeTab} 
+                                        hotelViewMode={hotelViewMode} setHotelViewMode={setHotelViewMode}
+                                        tourViewMode={tourViewMode} setTourViewMode={setTourViewMode}
+                                    />
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                        {activeTab === 'flight' && (
+                                            flightResults.length === 0 ? <NoResults /> : (
+                                                <div className="search-results-container">
+                                                    {flightResults.map((flight, idx) => (
+                                                        <FlightCard key={flight.id} flight={flight} index={idx} paxTotal={1} onBook={handleBookFlight} />
+                                                    ))}
+                                                </div>
+                                            )
+                                        )}
+                                        {activeTab === 'charter' && (
+                                            charterResults.length === 0 ? <NoResults /> : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                                    {charterResults.map((charter, idx) => (
+                                                        <CharterCard key={charter.id} charter={charter} index={idx} />
+                                                    ))}
+                                                </div>
+                                            )
+                                        )}
+                                        {activeTab === 'car' && (
+                                            carResults.length === 0 ? <NoResults /> : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                                    {carResults.map((car, idx) => (
+                                                        <CarCard key={car.id} car={car} days={7} index={idx} />
+                                                    ))}
+                                                </div>
+                                            )
+                                        )}
+                                        {activeTab === 'transfer' && (
+                                            transferResults.length === 0 ? <NoResults /> : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                                    {transferResults.map((tr, idx) => (
+                                                        <TransferCard key={tr.id} transfer={tr} direction={transferDirection} index={idx} />
+                                                    ))}
+                                                </div>
+                                            )
+                                        )}
+                                        {activeTab === 'tour' && (
+                                            tourResults.length === 0 ? <NoResults /> : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                                    {tourResults.map((tour, idx) => (
+                                                        <TourCard key={tour.id} tour={tour} index={idx} viewMode={tourViewMode} />
+                                                    ))}
+                                                </div>
+                                            )
+                                        )}
+                                        {activeTab === 'cruise' && (
+                                            cruiseResults.length === 0 ? <NoResults /> : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                                    {cruiseResults.map((cruise, idx) => (
+                                                        <CruiseCard key={cruise.id} cruise={cruise} pax={2} index={idx} />
+                                                    ))}
+                                                </div>
+                                            )
+                                        )}
+                                        {activeTab === 'things-to-do' && (
+                                            activityResults.length === 0 ? <NoResults /> : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                    {activityResults.map((act, idx) => (
+                                                        <ActivityCard key={act.id} activity={act} pax={2} index={idx} />
+                                                    ))}
+                                                </div>
+                                            )
+                                        )}
                                     </div>
                                 )}
-                                {filtered.map((car, idx) => (
-                                    <div key={car.id} role="listitem">
-                                        <CarCard car={car} days={days} index={idx} />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    );
-                })()}
-
-                {/* ══ TRANSFER rezultati ══ */}
-                {activeTab === 'transfer' && !isSearching && searchPerformed && transferResults.length === 0 && <NoResults />}
-                {activeTab === 'transfer' && !isSearching && searchPerformed && transferResults.length > 0 && (() => {
-                    const TRANSFER_TYPES = [
-                        { value: 'all',     label: 'Svi', emoji: '🚌' },
-                        { value: 'vip',     label: 'VIP', emoji: '🚘' },
-                        { value: 'private', label: 'Privatni', emoji: '🚐' },
-                        { value: 'shared',  label: 'Deljeni', emoji: '🚌' },
-                        { value: 'shuttle', label: 'Shuttle', emoji: '🚍' },
-                    ];
-                    return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
-                            {/* Banner + Filter */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '14px 16px', background: 'var(--v6-bg-section)', borderRadius: 'var(--v6-radius-md)', border: '1px solid var(--v6-border)' }}>
-                                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', fontSize: 'var(--v6-fs-xs)', color: 'var(--v6-text-muted)' }}>
-                                    <span>🚌 <strong style={{ color: 'var(--v6-text-primary)' }}>{transferResults.length} opcija</strong> dostupno</span>
-                                    <span style={{ color: 'var(--v6-border)' }}>|</span>
-                                    <span style={{ color: 'var(--v6-color-prime)', fontWeight: 600 }}>🏆 {transferResults.filter(t => t.isPrime).length} PRIME (vlastiti park)</span>
-                                    <span style={{ color: 'var(--v6-border)' }}>|</span>
-                                    <span>Cene su fiksne — bez taksimetra · Sortiranje: Preporučeno</span>
-                                    {/* Direction toggle */}
-                                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px' }}>
-                                        {(['one-way', 'round-trip'] as const).map(d => (
-                                            <button key={d} type="button" onClick={() => setTransferDirection(d)}
-                                                style={{ padding: '4px 12px', fontSize: '11px', fontWeight: 700, borderRadius: '999px', cursor: 'pointer', fontFamily: 'var(--v6-font)', transition: 'all 0.15s',
-                                                    border: `1.5px solid ${transferDirection === d ? 'var(--v6-accent)' : 'var(--v6-border)'}`,
-                                                    background: transferDirection === d ? 'var(--v6-accent)' : 'var(--v6-bg-main)',
-                                                    color: transferDirection === d ? 'var(--v6-accent-text)' : 'var(--v6-text-secondary)',
-                                                }}>
-                                                {d === 'one-way' ? '→ Jedan pravac' : '⇄ Povratni'}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                                {/* Type Filter Pill-ovi */}
-                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                    {TRANSFER_TYPES.map(t => {
-                                        const count = t.value === 'all' ? transferResults.length : transferResults.filter(r => r.vehicle.category === t.value).length;
-                                        if (count === 0 && t.value !== 'all') return null;
-                                        const isActive = t.value === 'all'
-                                            ? !TRANSFER_TYPES.slice(1).some(tt => tt.value === 'all')
-                                            : false; // handled via URL state in future
-                                        return (
-                                            <span key={t.value} style={{ padding: '4px 12px', fontSize: '12px', fontWeight: 600, borderRadius: '999px', border: '1px solid var(--v6-border)', background: 'var(--v6-bg-main)', color: 'var(--v6-text-secondary)' }}>
-                                                {t.emoji} {t.label} ({count})
-                                            </span>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                            {/* Transfer lista */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }} role="list" aria-label={`${transferResults.length} transfera`}>
-                                {transferResults.map((tr, idx) => (
-                                    <div key={tr.id} role="listitem">
-                                        <TransferCard transfer={tr} direction={transferDirection} index={idx} />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    );
-                })()}
-
-                {/* ══ PUTOVANJA (TOURS) rezultati ══ */}
-                {activeTab === 'tour' && !isSearching && searchPerformed && tourResults.length === 0 && <NoResults />}
-                {activeTab === 'tour' && !isSearching && searchPerformed && tourResults.length > 0 && (() => {
-                    return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
-                            {/* Banner + Filter */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '14px 16px', background: 'var(--v6-bg-section)', borderRadius: 'var(--v6-radius-md)', border: '1px solid var(--v6-border)' }}>
-                                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', fontSize: 'var(--v6-fs-xs)', color: 'var(--v6-text-muted)' }}>
-                                    <span>🌍 <strong style={{ color: 'var(--v6-text-primary)' }}>{tourResults.length} putovanja</strong> dostupno</span>
-                                    <span style={{ color: 'var(--v6-border)' }}>|</span>
-                                    <span style={{ color: 'var(--v6-color-prime)', fontWeight: 600 }}>🏆 {tourResults.filter(t => t.isPrime).length} PRIME (naša organizacija)</span>
-                                    <span style={{ color: 'var(--v6-border)' }}>|</span>
-                                    <span>Prikazane cene su po osobi · Sortiranje: Najbolje ocenjeno</span>
-                                </div>
-                                {/* Tip Filter Pill-ovi */}
-                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                    {TOUR_CATEGORIES.map(cat => {
-                                        const count = cat.value === 'all' ? tourResults.length : tourResults.filter(r => r.category === cat.value).length;
-                                        if (count === 0 && cat.value !== 'all') return null;
-                                        return (
-                                            <span key={cat.value} style={{ padding: '4px 12px', fontSize: '12px', fontWeight: 600, borderRadius: '999px', border: '1px solid var(--v6-border)', background: 'var(--v6-bg-main)', color: 'var(--v6-text-secondary)' }}>
-                                                {cat.emoji} {cat.label} ({count})
-                                            </span>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                            {/* Tour lista */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }} role="list" aria-label={`${tourResults.length} putovanja`}>
-                                {tourResults.map((tour, idx) => (
-                                    <div key={tour.id} role="listitem">
-                                        <TourCard tour={tour} index={idx} />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    );
-                })()}
-
-                {/* ══ IZLETI I AKTIVNOSTI rezultati ══ */}
-                {activeTab === 'things-to-do' && !isSearching && searchPerformed && activityResults.length === 0 && <NoResults />}
-                {activeTab === 'things-to-do' && !isSearching && searchPerformed && activityResults.length > 0 && (() => {
-                    return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
-                            {/* Banner + Filter */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '14px 16px', background: 'var(--v6-bg-section)', borderRadius: 'var(--v6-radius-md)', border: '1px solid var(--v6-border)' }}>
-                                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', fontSize: 'var(--v6-fs-xs)', color: 'var(--v6-text-muted)' }}>
-                                    <span>🎟️ <strong style={{ color: 'var(--v6-text-primary)' }}>{activityResults.length} aktivnosti</strong> spremnih za provod</span>
-                                    <span style={{ color: 'var(--v6-border)' }}>|</span>
-                                    <span style={{ color: 'var(--v6-color-prime)', fontWeight: 600 }}>🏆 {activityResults.filter(t => t.isPrime).length} PRIME Ponude</span>
-                                    <span style={{ color: 'var(--v6-border)' }}>|</span>
-                                    <span>Besplatno otkazivanje u ponudi na sve</span>
-                                </div>
-                                {/* Tip Filter Pill-ovi */}
-                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                    {ACTIVITY_CATEGORIES.map(cat => {
-                                        const count = cat.value === 'all' ? activityResults.length : activityResults.filter(r => r.category === cat.value).length;
-                                        if (count === 0 && cat.value !== 'all') return null;
-                                        return (
-                                            <span key={cat.value} style={{ padding: '4px 12px', fontSize: '12px', fontWeight: 600, borderRadius: '999px', border: '1px solid var(--v6-border)', background: 'var(--v6-bg-main)', color: 'var(--v6-text-secondary)' }}>
-                                                {cat.emoji} {cat.label} ({count})
-                                            </span>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                            {/* Activities lista */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }} role="list" aria-label={`${activityResults.length} aktivnosti`}>
-                                {activityResults.map((act, idx) => (
-                                    <div key={act.id} role="listitem">
-                                        <ActivityCard activity={act} pax={2} index={idx} />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    );
-                })()}
-
-                {/* ══ KRSTARENJA rezultati ══ */}
-                {activeTab === 'cruise' && !isSearching && searchPerformed && cruiseResults.length === 0 && <NoResults />}
-                {activeTab === 'cruise' && !isSearching && searchPerformed && cruiseResults.length > 0 && (() => {
-                    return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
-                            {/* Banner + Filter */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '14px 16px', background: 'var(--v6-bg-section)', borderRadius: 'var(--v6-radius-md)', border: '1px solid var(--v6-border)' }}>
-                                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', fontSize: 'var(--v6-fs-xs)', color: 'var(--v6-text-muted)' }}>
-                                    <span>🚢 <strong style={{ color: 'var(--v6-text-primary)' }}>{cruiseResults.length} plovidbe</strong> su pronađene</span>
-                                    <span style={{ color: 'var(--v6-border)' }}>|</span>
-                                    <span style={{ color: 'var(--v6-color-prime)', fontWeight: 600 }}>🏆 {cruiseResults.filter(t => t.isPrime).length} PRIME Ponude</span>
-                                    <span style={{ color: 'var(--v6-border)' }}>|</span>
-                                    <span>Sadrže unutrašnje, prozorske i balkonske kabine</span>
-                                </div>
-                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                    {CRUISE_REGIONS.map(cat => {
-                                        const count = cat.value === 'all' ? cruiseResults.length : cruiseResults.filter(r => r.regionName.toLowerCase().includes(cat.label.toLowerCase())).length;
-                                        if (count === 0 && cat.value !== 'all') return null;
-                                        return (
-                                            <span key={cat.value} style={{ padding: '4px 12px', fontSize: '12px', fontWeight: 600, borderRadius: '999px', border: '1px solid var(--v6-border)', background: 'var(--v6-bg-main)', color: 'var(--v6-text-secondary)' }}>
-                                                {cat.emoji} {cat.label} ({count})
-                                            </span>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                            
-                            {/* Cruises lista */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} role="list" aria-label={`${cruiseResults.length} krstarenja`}>
-                                {cruiseResults.map((cruise, idx) => (
-                                    <div key={cruise.id} role="listitem">
-                                        <CruiseCard cruise={cruise} pax={2} index={idx} />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    );
-                })()}
-
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
 
-            {/* ══ PACKAGE BASKET (Korpa za paket) DNO EKRANA ══ */}
+            {/* ═ POST-RESULTS UTILITIES ═ */}
             <PackageBasket />
-
-            {/* ══ CHECKOUT KASA (Full screen modal narudžbine) ══ */}
             {showPackageCheckout && <DynamicPackageCheckout />}
 
-            {/* ═══════════════════════════════════════════════
-                MODALNI OVERLAYS
-            ═══════════════════════════════════════════════ */}
-
-            {/* Room Wizard (Classic Clarity) */}
+            {/* ═ MODALS ═ */}
             {showRoomWizard && selectedHotel && (
-                <HotelRoomWizard
-                    hotel={selectedHotel}
-                    onClose={handleCloseWizard}
-                    onBook={handleBook}
-                />
+                <HotelRoomWizard hotel={selectedHotel} onClose={handleCloseWizard} onBook={handleBook} />
             )}
-
-            {/* Itinerary Export & Share — radi i za hotel i za package */}
             {showExport && (
-                <ItineraryExport
-                    hotel={selectedHotel ?? undefined}
-                    onClose={() => setShowExport(false)}
-                />
+                <ItineraryExport hotel={selectedHotel ?? undefined} onClose={() => setShowExport(false)} />
             )}
 
-
-            {/* ═══════════════════════════════════════════════
-                SMART CONCIERGE (floating bubbles)
-                Aktivira se kada korisnik izabere hotel
-            ═══════════════════════════════════════════════ */}
+            {/* ═ CONCIERGE ═ */}
             <SmartConcierge activeHotelCity={conciergeCity} />
-
-            {/* SAVED OFFERS PANEL (Faza 6) */}
             <SavedOffersPanel />
         </div>
     );

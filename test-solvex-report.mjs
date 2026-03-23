@@ -1,6 +1,6 @@
 
 const login = 'sol611s';
-const password = 'En5AL535';
+const password = 'AqC384lF';
 const url = 'https://evaluation.solvex.bg/iservice/integrationservice.asmx';
 
 const soapRequest = `<?xml version="1.0" encoding="utf-8"?>

@@ -57,6 +57,7 @@ export interface SmartSearchResult {
     longitude?: number;
 }
 
+// Smart Search Configuration
 export const PROVIDER_MAPPING = {
     hotel: { providers: ['solvex', 'filos', 'mtsglobe'], primary: 'solvex' },
     flight: { providers: [], primary: '' },
@@ -65,7 +66,27 @@ export const PROVIDER_MAPPING = {
     tour: { providers: [], primary: '' },
 };
 
+// Smart Search Cache (simple in-memory)
+const searchCache = new Map<string, { timestamp: number, results: SmartSearchResult[] }>();
+const CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+
 export async function performSmartSearch(params: SmartSearchParams): Promise<SmartSearchResult[]> {
+    const cacheKey = JSON.stringify({
+        type: params.searchType,
+        dests: params.destinations.map(d => d.id || d.name).sort(),
+        in: params.checkIn,
+        out: params.checkOut,
+        rooms: params.roomConfig,
+        nat: params.nationality,
+        providers: params.enabledProviders
+    });
+
+    const cached = searchCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+        console.log('[SmartSearchService] Returning results from cache...');
+        return cached.results;
+    }
+
     console.log('[SmartSearchService] Starting multi-room search...', params);
 
     // --- Transfer Search ---
@@ -331,6 +352,9 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
 
     const finalResults = Array.from(finalResultsMap.values());
     console.log('[SmartSearchService] Returning', finalResults.length, 'final results');
+
+    // Save to cache
+    searchCache.set(cacheKey, { timestamp: Date.now(), results: finalResults });
 
     // Attach last error to the array if no results were found
     if (finalResults.length === 0 && (params as any)._lastError) {

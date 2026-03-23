@@ -126,103 +126,111 @@ export const PackageLiveStack: React.FC = () => {
     ];
 
     return (
-        <div className="v6-live-stack" style={{ width: '100%' }}>
-            {/* Header Badge */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px' }}>
-                <div style={{
-                    padding: '8px 16px',
-                    background: '#1A234E', /* Fiksna tamna teget za vidljivost belog teksta */
-                    borderRadius: 'var(--v6-radius-md)',
-                    color: '#fff',
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    boxShadow: '0 4px 12px rgba(26, 35, 78, 0.25)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                }}>
-                    <Package size={14} /> Vaš Dinamički Paket
-                </div>
+        <div className="v6-live-stack-floating-sidebar" style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '16px', 
+            width: '100%' 
+        }}>
+            {/* Header / Context Badge */}
+            <div style={{
+                padding: '12px 24px',
+                background: 'var(--brand-primary)',
+                borderRadius: '16px',
+                color: '#ffffff',
+                fontSize: '13px',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                boxShadow: 'var(--shadow-md)'
+            }}>
+                <Package size={18} /> 
+                <span>VAŠ DINAMIČKI PAKET</span>
             </div>
 
-            {/* Stack of cards */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {/* List of Floating Individual Segment Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {items.length === 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <div style={{
-                            padding: '24px',
-                            background: 'var(--v6-bg-card)',
-                            border: '1.5px dashed var(--v6-border)',
-                            borderRadius: 'var(--v6-radius-lg)',
-                            textAlign: 'center',
-                            color: 'var(--v6-text-muted)',
-                            fontSize: '13px'
-                        }}>
-                            Odaberite segmente da započnete gradnju paketa
-                        </div>
-                        
-                        <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--v6-text-muted)', textTransform: 'uppercase', marginTop: '10px', textAlign: 'center' }}>Inspiracija za Vas</div>
-                        {mockPackages.map(pkg => (
-                            <div key={pkg.id} style={{
-                                padding: '12px', background: '#FFFFFF', border: '1.8px solid #1A234E',
-                                borderRadius: '14px', cursor: 'pointer', transition: 'all 0.2s',
-                                display: 'flex', alignItems: 'center', gap: '12px',
-                                boxShadow: 'var(--v6-shadow-sm)'
-                            }}>
-                                <div style={{ 
-                                    width: '42px', height: '42px', borderRadius: '10px', 
-                                    background: 'var(--v6-bg-section)', display: 'flex', 
-                                    alignItems: 'center', justifyContent: 'center', color: 'var(--v6-color-prime)' 
-                                }}>
-                                    {pkg.icon}
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--v6-text-primary)' }}>{pkg.title}</div>
-                                    <div style={{ fontSize: '10px', color: 'var(--v6-text-muted)' }}>{pkg.route}</div>
-                                    <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
-                                        {pkg.tags.map(t => <span key={t} style={{ fontSize: '8px', padding: '2px 4px', background: '#fff', borderRadius: '4px', border: '1px solid var(--v6-border)' }}>{t}</span>)}
-                                    </div>
-                                </div>
-                                <div style={{ fontSize: '13px', fontWeight: 900, color: 'var(--v6-navy)' }}>{formatPrice(pkg.price)}</div>
-                            </div>
-                        ))}
+                    <div style={{
+                        padding: '32px 24px',
+                        background: 'var(--bg-surface)',
+                        border: '2px dashed var(--border-color)',
+                        borderRadius: '20px',
+                        textAlign: 'center',
+                        color: 'var(--text-muted)',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        boxShadow: 'var(--shadow-sm)'
+                    }}>
+                        <div style={{ fontSize: '24px', marginBottom: '8px' }}>✨</div>
+                        Odaberite segmente da započnete gradnju paketa
                     </div>
                 ) : (
                     items.map((item, idx) => (
-                        <div key={idx} className={`v6-stack-card v6-type-${item.type}`} style={{ animationDelay: `${idx * 0.1}s` }}>
-                            {/* Glass effect top */}
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)' }} />
-                            
-                             <div className="v6-stack-card-header">
-                                 <div className="v6-stack-card-icon">
-                                     {React.cloneElement(item.icon as React.ReactElement<any>, { size: 22 })}
+                        <div 
+                            key={idx} 
+                            className={`v6-stack-card v6-type-${item.type}`} 
+                            style={{ 
+                                animationDelay: `${idx * 0.1}s`,
+                                background: 'var(--bg-surface)',
+                                border: '1px solid var(--border-color)',
+                                minHeight: '140px',
+                                padding: '24px 20px',
+                                boxShadow: 'var(--shadow-md)',
+                                position: 'relative',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '16px'
+                            }}
+                        >
+                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                 <div style={{ 
+                                     width: '44px', 
+                                     height: '44px', 
+                                     borderRadius: '12px', 
+                                     background: 'var(--brand-accent-light)', 
+                                     color: 'var(--brand-accent)', 
+                                     display: 'flex', 
+                                     alignItems: 'center', 
+                                     justifyContent: 'center' 
+                                 }}>
+                                     {React.cloneElement(item.icon as React.ReactElement<any>, { size: 24 })}
                                  </div>
-                                 <div className="v6-stack-card-body">
-                                     <div className="v6-stack-card-label">{item.label}</div>
-                                     <div className="v6-stack-card-details">{item.details}</div>
+                                 <div style={{ flex: 1 }}>
+                                     <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-main)' }}>{item.label}</div>
+                                     <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.details}</div>
                                  </div>
                                  <div style={{ textAlign: 'right' }}>
-                                    <div className="v6-stack-card-price">
+                                    <div style={{ fontSize: '18px', fontWeight: 900, color: 'var(--brand-primary)' }}>
                                         {formatPrice(item.price)}
                                     </div>
-                                    <div className="v6-stack-card-pax-info">za {paxTotal} putnika</div>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>za {paxTotal} putnika</div>
                                  </div>
-
-                                 {item.segmentNum && (
-                                     <div className="v6-segment-badge">
-                                         Segment {item.segmentNum}
-                                     </div>
-                                 )}
                              </div>
                             
-                            <div className="v6-stack-card-footer">
+                             {item.segmentNum && (
+                                 <div style={{ position: 'absolute', top: '12px', right: '16px', background: 'var(--brand-accent)', color: '#fff', fontSize: '9px', fontWeight: 900, padding: '2px 8px', borderRadius: '10px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
+                                     SEGMENT {item.segmentNum}
+                                 </div>
+                             )}
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>
                                 <button 
                                     onClick={() => setPackageWizardStep(item.step)}
-                                    className="v6-edit-btn-mini"
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: 'var(--brand-accent)',
+                                        fontSize: '11px',
+                                        fontWeight: 800,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        cursor: 'pointer'
+                                    }}
                                 >
-                                    <RotateCcw size={14} /> Izmeni
+                                    <RotateCcw size={13} /> IZMENI
                                 </button>
                             </div>
                         </div>
@@ -230,26 +238,26 @@ export const PackageLiveStack: React.FC = () => {
                 )}
             </div>
 
-            {/* Total Block */}
+            {/* Total Block (Separate Floating Card) */}
             {total > 0 && (
                 <div style={{
-                    background: 'var(--v6-bg-card)',
-                    border: '2px solid var(--v6-color-instant)',
-                    borderRadius: 'var(--v6-radius-lg)',
-                    padding: '16px',
-                    boxShadow: '0 8px 24px rgba(5,150,105,0.15)',
+                    background: 'var(--bg-surface)',
+                    border: '2px solid var(--brand-accent)',
+                    borderRadius: '24px',
+                    padding: '24px',
+                    boxShadow: '0 12px 32px rgba(157, 78, 221, 0.15)',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '12px'
+                    gap: '16px'
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                         <div>
-                            <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--v6-text-muted)', textTransform: 'uppercase' }}>Ukupno za paket</div>
-                            <div style={{ fontSize: '24px', fontWeight: 950, color: 'var(--v6-text-primary)', letterSpacing: '-0.02em' }}>{formatPrice(total)}</div>
+                            <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Ukupno za paket</div>
+                            <div style={{ fontSize: '28px', fontWeight: 950, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>{formatPrice(total)}</div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '11px', color: 'var(--v6-text-muted)' }}>{paxTotal} putnika</div>
-                            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--v6-color-instant-text)' }}>{formatPrice(Math.round(total/paxTotal))}/os</div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{paxTotal} odraslih</div>
+                            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--brand-accent)' }}>{formatPrice(Math.round(total/paxTotal))}/os</div>
                         </div>
                     </div>
 
@@ -258,59 +266,56 @@ export const PackageLiveStack: React.FC = () => {
                             onClick={() => setPackageWizardStep(6)}
                             style={{
                                 width: '100%',
-                                padding: '14px',
-                                background: 'var(--v6-navy)',
+                                padding: '16px',
+                                background: 'var(--brand-primary)',
                                 color: '#fff',
                                 border: 'none',
-                                borderRadius: '12px',
-                                fontSize: '14px',
+                                borderRadius: '16px',
+                                fontSize: '15px',
                                 fontWeight: 900,
                                 cursor: 'pointer',
-                                boxShadow: '0 4px 12px rgba(30,41,59,0.3)',
+                                boxShadow: '0 8px 20px rgba(26,35,78,0.3)',
                                 transition: 'all 0.2s',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '8px'
+                                gap: '10px'
                             }}
-                            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                         >
-                            <Send size={16} /> Kreiraj Paket
+                            <Send size={18} /> KREIRAJ PAKET
                         </button>
                         <div style={{ display: 'flex', gap: '8px' }}>
                             <button 
                                 onClick={handleSave}
                                 style={{
                                     flex: 1,
-                                    padding: '10px',
-                                    background: 'var(--v6-navy)',
-                                    border: '1.8px solid #1A234E',
-                                    borderRadius: 'var(--v6-radius-md)',
-                                    fontSize: '11px',
+                                    padding: '12px',
+                                    background: 'var(--bg-app)',
+                                    border: '1.5px solid var(--border-color)',
+                                    borderRadius: '12px',
+                                    fontSize: '12px',
                                     fontWeight: 700,
-                                    color: '#ffffff',
+                                    color: 'var(--text-main)',
                                     cursor: 'pointer',
-                                    transition: 'all 0.2s',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     gap: '6px'
                                 }}
                             >
-                                <Save size={12} /> Sačuvaj
+                                <Save size={14} /> SAČUVAJ
                             </button>
                             <button 
                                 onClick={() => alert('Share options...')}
                                 style={{
                                     flex: 1,
-                                    padding: '10px',
-                                    background: 'var(--v6-navy)',
-                                    border: '1.8px solid #1A234E',
-                                    borderRadius: 'var(--v6-radius-md)',
-                                    fontSize: '11px',
+                                    padding: '12px',
+                                    background: 'var(--bg-app)',
+                                    border: '1.5px solid var(--border-color)',
+                                    borderRadius: '12px',
+                                    fontSize: '12px',
                                     fontWeight: 700,
-                                    color: '#ffffff',
+                                    color: 'var(--text-main)',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -318,7 +323,7 @@ export const PackageLiveStack: React.FC = () => {
                                     gap: '6px'
                                 }}
                             >
-                                <Share2 size={12} /> Šeruj
+                                <Share2 size={14} /> ŠERUJ
                             </button>
                         </div>
                     </div>

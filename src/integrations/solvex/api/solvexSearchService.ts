@@ -93,6 +93,7 @@ export async function searchHotels(
                             const solvexId = h.id.replace('solvex_', '');
                             enrichedMap[solvexId] = h;
                         });
+                        console.log(`[Solvex Search] Enriched ${hotelsData.length} hotels from Supabase`);
                     }
                 }
             } catch (e2) {
@@ -193,11 +194,12 @@ export async function searchHotels(
 
             // Second pass: unleashing the deep search
             findContentRecursively(s);
-            // Deduplicate
-            extractedImages = [...new Set(extractedImages)];
+            // Deduplicate and encode URI for Cyrillic characters
+            extractedImages = [...new Set(extractedImages)].map(u => encodeURI(u));
             // --- DEEP EXTRACTION END ---
 
-            const finalImages = enriched?.images || (extractedImages.length > 0 ? extractedImages : []);
+            const finalImages = (enriched?.images || (extractedImages.length > 0 ? extractedImages : []))
+                .map((u: string) => encodeURI(u));
             const finalDescription = enriched?.content?.description || extractedDescription;
             const finalLat = enriched?.latitude || extractedLat;
             const finalLng = enriched?.longitude || extractedLng;
