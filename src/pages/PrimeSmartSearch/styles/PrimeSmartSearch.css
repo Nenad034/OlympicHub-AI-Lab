@@ -1896,11 +1896,11 @@
 /* Footer grid kartice */
 .v6-grid-card-footer {
     border-top: 1px solid var(--border-color);
-    padding: 12px 16px;
+    padding: 16px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
     background: var(--bg-app);
 }
 
@@ -2534,3 +2534,413 @@
     padding-right: 2.5% !important;
 }
 
+
+/* ------------------------------------------------------------------------------
+   V6 HOTEL DETAILS PAGE – MICROSOFT TO DO INSPIRED
+   ------------------------------------------------------------------------------ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+.v6-hotel-details-page {
+    --todo-bg: #f5f5f5;
+    --todo-header: #0078d4; /* Default To Do Blue */
+    --todo-card: #ffffff;
+    --todo-text: #323130;
+    --todo-muted: #605e5c;
+    --todo-border: #edebe9;
+    --todo-hover: #faf9f8;
+    --todo-accent: #0078d4;
+    --todo-shadow: 0 2px 8px rgba(0,0,0,0.05);
+
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--todo-bg);
+    color: var(--todo-text);
+    transition: all 0.3s ease;
+}
+
+.v6-hotel-details-page.v6-dark {
+    --todo-bg: #11100f;
+    --todo-header: #1b1a19;
+    --todo-card: #252423;
+    --todo-text: #ffffff;
+    --todo-muted: #a19f9d;
+    --todo-border: #323130;
+    --todo-hover: #2d2c2b;
+    --todo-accent: #2b88d8;
+    --todo-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Hero Section - Microsoft To Do Theme Style */
+.v6-details-hero {
+    position: relative;
+    height: 280px;
+    width: 100%;
+    overflow: hidden;
+    background: var(--todo-header);
+    display: flex;
+    align-items: flex-end;
+}
+
+.v6-hero-img-bg {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0.6;
+    filter: brightness(0.8) saturate(1.1);
+    transition: transform 0.6s ease;
+}
+
+.v6-details-hero:hover .v6-hero-img-bg {
+    transform: scale(1.05);
+}
+
+.v6-hero-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6));
+    z-index: 1;
+}
+
+.v6-hero-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px 20px 40px;
+    color: white;
+}
+
+.v6-hero-actions {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    display: flex;
+    gap: 12px;
+}
+
+.v6-hero-btn {
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.v6-hero-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.v6-hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.v6-hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 1rem;
+    opacity: 0.95;
+}
+
+.v6-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Main Content - Centered Task View */
+.v6-details-container {
+    flex: 1;
+    width: 100%;
+    max-width: 800px;
+    margin: -30px auto 0;
+    position: relative;
+    z-index: 5;
+    padding: 0 20px 100px;
+}
+
+.v6-section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-left: 4px;
+}
+
+.v6-section-title h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--todo-text);
+    margin: 0;
+    text-transform: capitalize;
+}
+
+.v6-section-icon {
+    width: 24px;
+    height: 24px;
+    background: var(--todo-accent);
+    color: white;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Task Rows (Rooms) */
+.v6-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: var(--todo-card);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--todo-shadow);
+    border: 1px solid var(--todo-border);
+}
+
+.v6-task-row {
+    display: grid;
+    grid-template-columns: 48px 1fr 140px;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--todo-card);
+    border-bottom: 1px solid var(--todo-border);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.v6-task-row:last-child {
+    border-bottom: none;
+}
+
+.v6-task-row:hover {
+    background: var(--todo-hover);
+}
+
+.v6-task-row.v6-selected {
+    background: rgba(0, 120, 212, 0.05);
+}
+
+.v6-task-check {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--todo-accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--todo-accent);
+    background: transparent;
+    transition: all 0.2s;
+}
+
+.v6-selected .v6-task-check {
+    background: var(--todo-accent);
+    color: white;
+}
+
+.v6-task-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.v6-task-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--todo-text);
+}
+
+.v6-task-sub {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.8rem;
+    color: var(--todo-muted);
+}
+
+.v6-task-pricing {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.v6-task-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--todo-accent);
+}
+
+.v6-task-currency {
+    font-size: 0.8rem;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+/* Allocation Headers */
+.v6-allocation-group {
+    background: var(--todo-card);
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-shadow: var(--todo-shadow);
+    border: 1px solid var(--todo-border);
+    overflow: hidden;
+}
+
+.v6-allocation-header {
+    padding: 16px 20px;
+    background: rgba(0,0,0,0.02);
+    border-bottom: 1px solid var(--todo-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.v6-allocation-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--todo-text);
+}
+
+.v6-allocation-search {
+    width: 200px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--todo-border);
+    background: var(--todo-bg);
+    color: var(--todo-text);
+    font-size: 0.8rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.v6-allocation-search:focus {
+    border-color: var(--todo-accent);
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
+}
+
+/* To Do Bottom Bar (Summary) */
+.v6-todo-bottom-bar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 800px;
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 16px;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.v6-dark .v6-todo-bottom-bar {
+    background: rgba(37, 36, 35, 0.8);
+    border-color: rgba(255,255,255,0.1);
+}
+
+.v6-total-left {
+    display: flex;
+    flex-direction: column;
+}
+
+.v6-total-label {
+    font-size: 0.8rem;
+    color: var(--todo-muted);
+    font-weight: 500;
+}
+
+.v6-total-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--todo-text);
+}
+
+.v6-book-btn {
+    background: var(--todo-accent);
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+}
+
+.v6-book-btn:hover:not(:disabled) {
+    background: #005a9e;
+    transform: translateY(-2px);
+}
+
+.v6-book-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--todo-muted);
+    box-shadow: none;
+}
+
+/* Features CHIPS */
+.v6-todo-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.v6-feature-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: var(--todo-card);
+    border-radius: 12px;
+    border: 1px solid var(--todo-border);
+    box-shadow: var(--todo-shadow);
+}
+
+.v6-feature-chip span {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.v6-feature-icon {
+    color: var(--todo-accent);
+}
+
+.v6-todo-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: var(--todo-muted);
+}

@@ -9,7 +9,16 @@ import { Calendar, Globe, DollarSign, UtensilsCrossed, Users, Plus, Trash2, Chev
 import { SearchModeSelector } from '../SearchModeSelector';
 import { AIAssistantField } from '../AIAssistantField';
 import { performSmartSearch } from '../../../../services/smartSearchService';
+import { normalizeMealPlan } from '../../../SmartSearch/helpers';
 import type { HotelSearchResult, AvailabilityStatus, ProviderId } from '../../types';
+import type { BookingData } from '../../../../types/booking.types';
+
+// Helper za prikaz labela usluge na kartici
+const overallMealPlanLabel = (lowestPlan: string, selected: string[]) => {
+    if (!selected || selected.includes('all') || selected.length === 0) return lowestPlan;
+    if (selected.length === 1) return lowestPlan;
+    return `Izabrane usluge (${selected.length})`;
+};
 
 // ─────────────────────────────────────────────────────────────
 // KONSTANTE (Nacionalnost i Usluge)
@@ -247,18 +256,94 @@ export const HotelSearchForm: React.FC = () => {
             const paxSummary = calcPaxSummary(roomAllocations, checkIn, checkOut);
 
             // Mapiraj API rezultate u V6 format
+            // Mapiraj API rezultate u V6 format uz filtriranje po meal planu
+            const selectedMealPlans = filters.mealPlans || ['all'];
+            const isAllMealPlans = selectedMealPlans.includes('all');
+
             const mappedResults: HotelSearchResult[] = apiResults.map(r => {
                 const status: AvailabilityStatus = 
                     r.availability === 'available' ? 'instant' : 
                     (r.availability === 'on-request' || r.availability === 'on_request' ? 'on-request' : 'sold-out');
 
-                const [city, country] = (r.location || '').split(',').map((s: string) => s.trim());
+                let city = '';
+                let country = '';
+                if (typeof r.location === 'string') {
+                    const parts = (r.location || '').split(',').map((s: string) => s.trim());
+                    city = parts[0] || '';
+                    country = parts[1] || '';
+                } else if (r.location) {
+                    city = r.location.city;
+                    country = r.location.country;
+                }
 
                 // Regrupisanje soba: Service format (Room-Meal) -> V6 format (Room -> MealPlans)
                 const roomOptionsMap = new Map<string, any>();
-                
+                let filteredAllocationResults: Record<number, any[]> = {};
+                let overallLowestPrice = Infinity;
+                let overallLowestMealPlan = '';
+
+                // Ako imamo multi-room rezultate (alokacije)
+                if (r.allocationResults) {
+                    let totalLowestForHotel = 0;
+                    let hasMatchingRoomsForAllSlots = true;
+
+                    Object.entries(r.allocationResults).forEach(([slotIdx, rooms]) => {
+                        const sIdx = parseInt(slotIdx);
+                        const matchingRooms = (rooms as any[]).filter(rm => {
+                            if (isAllMealPlans) return true;
+                            const norm = rm.mealPlan ? normalizeMealPlan(rm.mealPlan) : 'RO';
+                            return selectedMealPlans.includes(norm);
+                        });
+
+                        if (matchingRooms.length === 0) {
+                            hasMatchingRoomsForAllSlots = false;
+                            return;
+                        }
+
+                        // Pronadji najjeftiniju u ovom slotu koja odgovara filteru
+                        const minPriceInSlot = Math.min(...matchingRooms.map(rm => rm.price));
+                        totalLowestForHotel += minPriceInSlot;
+                        
+                        // Sacuvaj filtrirane rezultate za ovaj slot
+                        filteredAllocationResults[sIdx] = matchingRooms;
+                        
+                        // Za prikaz na kartici (glavni meal plan labels) - uzimamo iz prvog slota ili nalazimo dominantan
+                        if (sIdx === 0) {
+                            const cheapestRoom = matchingRooms.find(rm => rm.price === minPriceInSlot);
+                            overallLowestMealPlan = cheapestRoom?.mealPlan || 'Smeštaj';
+                        }
+                    });
+
+                    if (hasMatchingRoomsForAllSlots) {
+                        overallLowestPrice = totalLowestForHotel;
+                    } else {
+                        overallLowestPrice = -1; // Oznaka da hotel nema sobe za sve slotove sa ovim filterom
+                    }
+                } else {
+                    // Single room fallback (ili stara logika)
+                    const matchingRooms = (r.rooms || []).filter(rm => {
+                        if (isAllMealPlans) return true;
+                        const norm = rm.mealPlan ? normalizeMealPlan(rm.mealPlan) : 'RO';
+                        return selectedMealPlans.includes(norm);
+                    });
+
+                    if (matchingRooms.length > 0) {
+                        overallLowestPrice = Math.min(...matchingRooms.map(rm => rm.price));
+                        const cheapestRoom = matchingRooms.find(rm => rm.price === overallLowestPrice);
+                        overallLowestMealPlan = cheapestRoom?.mealPlan || 'Smeštaj';
+                    } else {
+                        overallLowestPrice = -1;
+                    }
+                }
+
+                // Ako je hotel nelegalan za ove filtere, vrati null (koji ćemo filtrirati kasnije)
+                if (overallLowestPrice === -1) return null as any;
+
+                // Popuni roomOptions za detaljan prikaz
                 if (r.rooms && Array.isArray(r.rooms)) {
                     r.rooms.forEach((srvRoom: any) => {
+                        // Ovde ne filtriramo roomOptionsMap jer želimo da korisnik vidi sve 
+                        // ALI lowestTotalPrice na kartici mora biti onaj koji ODGOVARA filteru
                         const roomName = srvRoom.name;
                         if (!roomOptionsMap.has(roomName)) {
                             roomOptionsMap.set(roomName, {
@@ -279,7 +364,7 @@ export const HotelSearchForm: React.FC = () => {
                             totalPrice: srvRoom.price,
                             pricePerPersonPerNight: srvRoom.price / (paxSummary.nights * paxSummary.totalAdults || 1),
                             status: srvRoom.availability === 'available' ? 'instant' : 'on-request',
-                            isRefundable: true, // Solvex standardno dozvoljava otkaz določenog datuma
+                            isRefundable: true,
                             cancellationDeadline: srvRoom.cancellationPolicyRequestParams?.DateFrom
                         });
                     });
@@ -296,19 +381,20 @@ export const HotelSearchForm: React.FC = () => {
                     },
                     isPrime: r.provider === 'Solvex',
                     priority: r.provider === 'Solvex' ? 80 : 50,
-                    lowestTotalPrice: r.price,
-                    lowestMealPlanLabel: r.mealPlan || (r.mealPlans && r.mealPlans[0]) || 'Smeštaj',
+                    lowestTotalPrice: overallLowestPrice,
+                    lowestMealPlanLabel: overallMealPlanLabel(overallLowestMealPlan, selectedMealPlans),
                     currency: r.currency || 'EUR',
                     status: status,
                     roomOptions: Array.from(roomOptionsMap.values()),
+                    allocationResults: Object.keys(filteredAllocationResults).length > 0 ? filteredAllocationResults : r.allocationResults,
                     primaryProvider: {
                         id: (r.provider.toLowerCase() as ProviderId),
                         hotelKey: r.id,
-                        price: r.price,
+                        price: overallLowestPrice,
                         currency: r.currency || 'EUR'
                     }
                 };
-            });
+            }).filter(h => h !== null);
 
             setResults(mappedResults);
             

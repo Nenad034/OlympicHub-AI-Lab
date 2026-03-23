@@ -14,6 +14,7 @@ import type { SolvexTourist, SolvexService } from '../../integrations/solvex/typ
 import { generateCisCode } from '../../services/reservationService';
 import { performSmartSearch } from '../../services/smartSearchService';
 import type { SmartSearchResult } from '../../services/smartSearchService';
+import { useThemeStore } from '../../stores';
 
 interface BookingModalProps {
     isOpen: boolean;
@@ -104,6 +105,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         }
     }, [isOpen, bookingData?.adults, bookingData?.children]);
 
+    // Theme sync
+    useEffect(() => {
+        if (isOpen) {
+            const currentTheme = useThemeStore.getState().theme;
+            if (currentTheme === 'light') {
+                document.body.classList.add('light-theme');
+            } else {
+                document.body.classList.remove('light-theme');
+            }
+        }
+    }, [isOpen]);
+
     const handleMainGuestChange = (data: GenericGuest) => {
         setState(prev => ({ ...prev, mainGuest: data, validationErrors: { ...prev.validationErrors, 0: {} } }));
     };
@@ -131,7 +144,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 }],
                 checkIn: localBookingData.checkIn,
                 checkOut: localBookingData.checkOut || '',
-                rooms: localBookingData.roomAllocations || [{ adults: localBookingData.adults, children: localBookingData.children, childrenAges: [] }],
+                roomConfig: localBookingData.roomAllocations || [{ adults: localBookingData.adults, children: localBookingData.children, childrenAges: [] }],
                 enabledProviders: { solvex: true }
             });
 

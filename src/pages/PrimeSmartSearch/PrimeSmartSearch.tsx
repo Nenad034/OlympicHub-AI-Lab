@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { useSearchStore } from './stores/useSearchStore';
+import { useSearchStore, calcPaxSummary } from './stores/useSearchStore';
 import { useThemeStore } from '../../stores';
+import { BookingModal } from '../../components/booking/BookingModal';
+import type { BookingData } from '../../types/booking.types';
 import { SearchTabs } from './components/SearchTabs/SearchTabs';
 import { PaxSummaryBanner } from './components/PaxSummaryBanner/PaxSummaryBanner';
 import { HotelSearchForm } from './components/HotelSearchForm/HotelSearchForm';
@@ -17,7 +19,7 @@ import { CarCard } from './components/CarCard/CarCard';
 import { TransferCard } from './components/TransferCard/TransferCard';
 import { FilterBar } from './components/FilterBar/FilterBar';
 import { FilterSidebar } from './components/FilterSidebar/FilterSidebar';
-import { HotelRoomWizard } from './components/HotelRoomWizard/HotelRoomWizard';
+// import { HotelDetailsModal } from '../SmartSearch/components/HotelDetailsModal'; // REPLACED BY DETAILED PAGE
 import { SmartConcierge } from './components/SmartConcierge/SmartConcierge';
 import { ItineraryExport } from './components/ItineraryExport/ItineraryExport';
 import { PackageBasketBar } from './components/PackageBasketBar/PackageBasketBar';
@@ -89,6 +91,7 @@ const ComingSoonForm: React.FC<{ emoji: string; title: string; desc: string }> =
         </div>
     </div>
 );
+
 
 const TabForm: React.FC<{ activeTab: string }> = ({ activeTab }) => {
     switch (activeTab) {
@@ -285,9 +288,13 @@ export const PrimeSmartSearch: React.FC = () => {
         filters,
         sortBy,
         packageWizardStep,
+        roomAllocations,
+        checkIn,
+        checkOut,
     } = useSearchStore();
 
     const { theme } = useThemeStore();
+    const isNavy = theme === 'navy';
 
     // Panel stanja
     const [showRoomWizard, setShowRoomWizard] = useState(false);
@@ -295,9 +302,21 @@ export const PrimeSmartSearch: React.FC = () => {
     const [carCategoryFilter, setCarCategoryFilter] = useState('all');
     const [transferDirection, setTransferDirection] = useState<'one-way' | 'round-trip'>('one-way');
 
+    // Modal state for HotelDetailsModal
+    const [roomFilters, setRoomFilters] = useState<Record<string | number, string>>({});
+    const [selectedCancelPolicy, setSelectedCancelPolicy] = useState('all');
+    const [selectedTimelineRoom, setSelectedTimelineRoom] = useState<any>(null);
+    const [selectedRoomsMap, setSelectedRoomsMap] = useState<Record<number, any>>({});
+    const [selectionPendingHotelId, setSelectionPendingHotelId] = useState<string | undefined>(undefined);
+
     // View mode za hotel i paket tabove (nezavisni)
     const [hotelViewMode, setHotelViewMode] = useState<ViewMode>('list');
     const [tourViewMode, setTourViewMode] = useState<ViewMode>('list');
+
+    // Booking state
+    const [showBookingModal, setShowBookingModal] = useState(false);
+    const [pendingBookingData, setPendingBookingData] = useState<BookingData | null>(null);
+    const [bookingError, setBookingError] = useState<string | null>(null);
 
     const filteredHotels = React.useMemo(() => {
         if (activeTab !== 'hotel') return [];
@@ -360,17 +379,122 @@ export const PrimeSmartSearch: React.FC = () => {
         }, 1800);
     };
 
-    // ── Selekcija hotela → Room Wizard ─────────────────────
+    // ── Selekcija hotela → Hotel Details Modal ───────────────
     const handleViewOptions = (hotel: HotelSearchResult) => {
         setSelectedHotel(hotel);
+        setSelectionPendingHotelId(hotel.id);
         setShowRoomWizard(true);
     };
 
-    const handleCloseWizard = () => setShowRoomWizard(false);
+    const handleCloseWizard = () => {
+        setShowRoomWizard(false);
+        setSelectedRoomsMap({});
+        setSelectionPendingHotelId(undefined);
+    };
 
-    const handleBook = (_selections: unknown[]) => {
+    const handleSelectRoom = (room: any, rIdx: number) => {
+        const searchStore = useSearchStore.getState();
+        const paxSummary = calcPaxSummary(searchStore.roomAllocations, searchStore.checkIn, searchStore.checkOut);
+        
+        const newMap = { ...selectedRoomsMap, [rIdx]: room };
+        setSelectedRoomsMap(newMap);
+
+        // Ako su sve sobe odabrane, idi na booking
+        const totalRoomsNeeded = searchStore.roomAllocations.length;
+        if (Object.keys(newMap).length === totalRoomsNeeded && selectedHotel) {
+            const allSelections = Object.entries(newMap).map(([idx, r]) => {
+                const roomObj = r as any;
+                return {
+                    slotIndex: parseInt(idx),
+                    roomId: roomObj.id,
+                    roomName: roomObj.name,
+                    mealPlanCode: roomObj.mealPlan || 'RO',
+                    mealPlanLabel: roomObj.mealPlan || 'Smeštaj',
+                    totalPrice: roomObj.price,
+                    adults: searchStore.roomAllocations[parseInt(idx)].adults,
+                    children: searchStore.roomAllocations[parseInt(idx)].children,
+                    childrenAges: searchStore.roomAllocations[parseInt(idx)].childrenAges
+                };
+            });
+
+            const total = allSelections.reduce((sum, s) => sum + s.totalPrice, 0);
+
+            const bookingData: BookingData = {
+                serviceName: selectedHotel.name,
+                serviceType: 'hotel',
+                hotelName: selectedHotel.name,
+                location: `${selectedHotel.location.city}, ${selectedHotel.location.country}`,
+                checkIn: searchStore.checkIn,
+                checkOut: searchStore.checkOut,
+                nights: paxSummary.nights,
+                roomType: allSelections.map(s => s.roomName).join(' + '),
+                mealPlan: allSelections[0].mealPlanLabel,
+                adults: allSelections.reduce((sum, s) => sum + s.adults, 0),
+                children: allSelections.reduce((sum, s) => sum + s.children, 0),
+                totalPrice: total,
+                currency: 'EUR',
+                stars: selectedHotel.stars,
+                providerData: {
+                    hotel: selectedHotel,
+                    rooms: allSelections.map(s => s.roomId),
+                    originalSelections: allSelections
+                },
+                allSelectedRooms: allSelections,
+                roomAllocations: searchStore.roomAllocations
+            };
+
+            setPendingBookingData(bookingData);
+            setShowBookingModal(true);
+            setShowRoomWizard(false);
+        }
+    };
+
+    const handleBook = (selections: any[]) => {
         handleCloseWizard();
-        setShowExport(true);
+        
+        if (!selectedHotel || !selections.length) return;
+
+        const total = selections.reduce((sum, s) => sum + s.totalPrice, 0);
+        const searchStore = useSearchStore.getState();
+        const pax = calcPaxSummary(searchStore.roomAllocations, searchStore.checkIn, searchStore.checkOut);
+
+        // Map selections to BookingData format
+        const bookingData: BookingData = {
+            serviceName: selectedHotel.name,
+            serviceType: 'hotel',
+            hotelName: selectedHotel.name,
+            location: `${selectedHotel.location.city}, ${selectedHotel.location.country}`,
+            checkIn: searchStore.checkIn,
+            checkOut: searchStore.checkOut,
+            nights: pax.nights,
+            roomType: selections.map(s => s.roomName).join(' + '),
+            mealPlan: selections[0].mealPlanLabel,
+            adults: selections.reduce((sum, s) => sum + s.adults, 0),
+            children: selections.reduce((sum, s) => sum + s.children, 0),
+            totalPrice: total,
+            currency: 'EUR',
+            stars: selectedHotel.stars,
+            providerData: {
+                hotel: selectedHotel,
+                rooms: selections.map(s => s.roomId),
+                originalSelections: selections
+            },
+            allSelectedRooms: selections,
+            roomAllocations: searchStore.roomAllocations
+        };
+
+        setPendingBookingData(bookingData);
+        setShowBookingModal(true);
+    };
+
+    const handleBookingSuccess = (bookingId: string) => {
+        setShowBookingModal(false);
+        // Add success notification or redirect
+        alert(`Rezervacija ${bookingId} je uspešno kreirana!`);
+    };
+
+    const handleBookingError = (error: string) => {
+        setBookingError(error);
     };
 
     // ── Odaberi let → Dodaj u korpu ────────────────────────
@@ -625,7 +749,7 @@ export const PrimeSmartSearch: React.FC = () => {
                                                         </div>
                                                     )}
                                                     {filteredHotels.map((hotel, idx) => (
-                                                        <HotelCard key={hotel.id} hotel={hotel} index={idx} onViewOptions={handleViewOptions} viewMode={hotelViewMode} />
+                                                        <HotelCard key={hotel.id} hotel={hotel} index={idx} onViewOptions={() => {}} viewMode={hotelViewMode} />
                                                     ))}
                                                 </div>
                                             )}
@@ -728,8 +852,16 @@ export const PrimeSmartSearch: React.FC = () => {
             {showPackageCheckout && <DynamicPackageCheckout />}
 
             {/* ═ MODALS ═ */}
-            {showRoomWizard && selectedHotel && (
-                <HotelRoomWizard hotel={selectedHotel} onClose={handleCloseWizard} onBook={handleBook} />
+            {/* Note: HotelDetailsModal is now a separate page /prime-smart-search/hotel/:id */}
+            {showBookingModal && pendingBookingData && (
+                <BookingModal 
+                    isOpen={showBookingModal}
+                    onClose={() => setShowBookingModal(false)}
+                    provider="solvex" // Default provider for now, or get from hotel
+                    bookingData={pendingBookingData}
+                    onSuccess={handleBookingSuccess}
+                    onError={handleBookingError}
+                />
             )}
             {showExport && (
                 <ItineraryExport hotel={selectedHotel ?? undefined} onClose={() => setShowExport(false)} />

@@ -3,7 +3,7 @@ const https = require('https');
 // HARDCODED CREDENTIALS (from .env)
 const SOLVEX_API_URL = 'https://evaluation.solvex.bg/iservice/integrationservice.asmx';
 const LOGIN = 'sol611s';
-const PASSWORD = 'En5AL535';
+const PASSWORD = 'AqC384lF';
 
 async function soapRequest(method, params, soapAction) {
     const envelope = `<?xml version="1.0" encoding="utf-8"?>

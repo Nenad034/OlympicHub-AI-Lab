@@ -124,8 +124,15 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
                             </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', opacity: 0.7, fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={16} /> {hotel.location}</div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CalendarDays size={16} /> {formatDate(checkIn)} - {formatDate(checkOut)} ({nights} noćenja)</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <MapPin size={16} /> 
+                                {typeof hotel.location === 'string' ? hotel.location : 
+                                 (hotel.location as any)?.city ? `${(hotel.location as any).city}${(hotel.location as any).country ? `, ${(hotel.location as any).country}` : ''}` : ''}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <CalendarDays size={16} /> 
+                                {formatDate ? formatDate(checkIn) : checkIn} - {formatDate ? formatDate(checkOut) : checkOut} ({nights} noćenja)
+                            </div>
                         </div>
                     </div>
                     <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
@@ -137,7 +144,7 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
                                 UKUPNA CENA ARANŽMANA ({roomAllocations.filter(a => a.adults > 0).length} {roomAllocations.filter(a => a.adults > 0).length === 1 ? 'SOBA' : 'SOBE'} / {roomAllocations.reduce((sum, a) => sum + a.adults + a.children, 0)} OSOBA)
                             </span>
                         </div>
-                        {renderAvailabilityStatus(hotel.availability)}
+                        {hotel.availability && renderAvailabilityStatus(hotel.availability)}
                     </div>
                     <button
                         className="close-modal-btn"

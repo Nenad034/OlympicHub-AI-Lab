@@ -40,7 +40,7 @@ export interface SmartSearchResult {
     type: 'hotel' | 'flight' | 'package' | 'transfer' | 'tour' | 'charter' | 'cruise' | 'event' | 'ski';
     id: string;
     name: string;
-    location: string;
+    location: string | { city: string; country: string };
     price: number;
     currency: string;
     stars?: number;
@@ -173,7 +173,7 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                             adults: config.adults,
                             children: config.children,
                             childrenAges: config.ages,
-                            providerId: String(dest.id).startsWith('solvex-') ? String(dest.id).split('-').pop() : dest.id,
+                            providerId: String(dest.id).startsWith('solvex-') ? String(dest.id).split('-')[1] : dest.id,
                             providerType: dest.type === 'destination' ? 'city' : (dest.type === 'country' ? 'country' : 'hotel'),
                             targetProvider: String(dest.id).startsWith('solvex-') || dest.provider === 'Solvex' ? 'Solvex' : undefined,
                             abortSignal: params.abortSignal
@@ -197,7 +197,7 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                             adults: config.adults,
                             children: config.children,
                             childrenAges: config.ages,
-                            providerId: String(dest.id).startsWith('filos-') ? String(dest.id).split('-').pop() : undefined,
+                            providerId: String(dest.id).startsWith('filos-') ? String(dest.id).split('-')[1] : undefined,
                             abortSignal: params.abortSignal
                         });
                         console.log('[SmartSearchService] Filos returned:', filosResults.length, 'results');
@@ -219,7 +219,7 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                             adults: config.adults,
                             children: config.children,
                             childrenAges: config.ages,
-                            providerId: String(dest.id).startsWith('mtsglobe-') ? String(dest.id).split('-').pop() : undefined,
+                            providerId: String(dest.id).startsWith('mtsglobe-') ? String(dest.id).split('-')[1] : undefined,
                             abortSignal: params.abortSignal
                         });
                         console.log('[SmartSearchService] MTS Globe returned:', mtsResults.length, 'results');

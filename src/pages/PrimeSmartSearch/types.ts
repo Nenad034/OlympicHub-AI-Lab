@@ -166,6 +166,7 @@ export interface HotelSearchResult {
     amenities?: string[];
     description?: string;
     roomOptions?: RoomOption[];     // Popunjava se pri ulasku u detalje hotela
+    allocationResults?: Record<number, any[]>; // Faza 6: Multi-room rezultati iz Orchestratora
 
     // Failover Logic (Kritično za silent booking recovery)
     primaryProvider: ProviderRef;

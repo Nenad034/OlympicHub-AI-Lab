@@ -84,6 +84,29 @@ export const HotelCard: React.FC<HotelCardProps> = ({ hotel, index, onViewOption
         return parts.join(' · ');
     };
 
+    const handleDetailClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Build search params to pass state to the new tab
+        const params = new URLSearchParams();
+        params.set('checkIn', checkIn);
+        params.set('checkOut', checkOut);
+        
+        // Serialize rooms: 2-0;2-1-5
+        const roomsStr = roomAllocations.map(r => 
+            `${r.adults}-${r.children}${r.childrenAges.length > 0 ? '-' + r.childrenAges.join('-') : ''}`
+        ).join(';');
+        params.set('rooms', roomsStr);
+        params.set('nat', useSearchStore.getState().nationality || 'RS');
+        params.set('hName', hotel.name);
+        params.set('hCity', hotel.location.city);
+        
+        // Open in new tab
+        const url = `/prime-smart-search/hotel/${hotel.id}?${params.toString()}`;
+        window.open(url, '_blank');
+    };
+
     const delayClass = index < 6 ? `v6-delay-${index + 1}` : '';
 
     // ══════════════════════════════════════════════════════════
@@ -125,7 +148,7 @@ export const HotelCard: React.FC<HotelCardProps> = ({ hotel, index, onViewOption
 
                 <button
                     className="v6-notepad-cta"
-                    onClick={() => onViewOptions(hotel)}
+                    onClick={handleDetailClick}
                     aria-label={`Rezerviši ${hotel.name}`}
                 >
                     Rezerviši →
@@ -143,6 +166,8 @@ export const HotelCard: React.FC<HotelCardProps> = ({ hotel, index, onViewOption
                 className={`v6-hotel-grid-card v6-fade-in-up ${delayClass}`}
                 aria-label={`Hotel: ${hotel.name}`}
                 data-testid={`hotel-card-${hotel.id}`}
+                onClick={handleDetailClick}
+                style={{ cursor: 'pointer' }}
             >
                 <div className="v6-grid-card-image">
                     {hotel.images.length > 0 && !imgError ? (
@@ -200,14 +225,15 @@ export const HotelCard: React.FC<HotelCardProps> = ({ hotel, index, onViewOption
                 <div className="v6-grid-card-footer">
                     <div>
                         <div className="price-label">Ukupna cena</div>
-                        <div className="v6-grid-price">{formatPrice(hotel.lowestTotalPrice, hotel.currency)}</div>
+                        <div className="v6-grid-price" style={{ margin: '4px 0', fontSize: '24px' }}>{formatPrice(hotel.lowestTotalPrice, hotel.currency)}</div>
                         <div className="v6-grid-breakdown">{getPriceBreakdown()}</div>
                     </div>
                     <button
                         className="v6-card-cta-btn v6-grid-cta"
-                        onClick={() => onViewOptions(hotel)}
+                        onClick={handleDetailClick}
+                        style={{ width: '100%', marginTop: '8px' }}
                     >
-                        Rezerviši odmah
+                        Detaljnije...
                     </button>
                 </div>
             </article>
@@ -215,13 +241,15 @@ export const HotelCard: React.FC<HotelCardProps> = ({ hotel, index, onViewOption
     }
 
     // ══════════════════════════════════════════════════════════
-    // LIST VIEW (default) — horizontalna kartica, šira i kraća (-30% visina, +30% širina)
+    // LIST VIEW (default) — horizontalna kartica
     // ══════════════════════════════════════════════════════════
     return (
         <article
             className={`search-result-card v6-list-card v6-fade-in-up ${delayClass}`}
             aria-label={`Hotel: ${hotel.name}`}
             data-testid={`hotel-card-${hotel.id}`}
+            onClick={handleDetailClick}
+            style={{ cursor: 'pointer' }}
         >
             {/* COL 1: IMAGE */}
             <div className="card-image-section">
@@ -306,15 +334,16 @@ export const HotelCard: React.FC<HotelCardProps> = ({ hotel, index, onViewOption
                 <div style={{ width: '100%', marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <button
                         className="v6-card-cta-btn"
-                        onClick={() => onViewOptions(hotel)}
+                        onClick={handleDetailClick}
                         style={{ width: '100%', padding: '9px', borderRadius: '10px' }}
                     >
-                        Rezerviši odmah
+                        Detaljnije...
                     </button>
                     <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                         <button
                             className="counter-btn-luxury"
-                            onClick={() => {
+                            onClick={(e) => {
+                                e.stopPropagation();
                                 useSearchStore.getState().saveOffer({
                                     id: `htl-${hotel.id}-${Date.now()}`,
                                     type: 'hotel',
@@ -332,7 +361,7 @@ export const HotelCard: React.FC<HotelCardProps> = ({ hotel, index, onViewOption
                         >
                             💾
                         </button>
-                        <button className="counter-btn-luxury" onClick={() => alert('Link kopiran!')} title="Podeli">
+                        <button className="counter-btn-luxury" onClick={(e) => { e.stopPropagation(); alert('Link kopiran!'); }} title="Podeli">
                             🔗
                         </button>
                     </div>

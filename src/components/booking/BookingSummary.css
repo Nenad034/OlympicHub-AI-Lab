@@ -131,3 +131,47 @@
 .progress-fill {
     animation: pulse 2s ease-in-out infinite;
 }
+
+/* Light Theme Overrides */
+body.light-theme .booking-summary {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .booking-summary-header {
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .booking-summary-header h3 {
+    color: #0f172a !important;
+}
+
+body.light-theme .booking-summary-item {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.light-theme .booking-summary-label {
+    color: #64748b !important;
+}
+
+body.light-theme .booking-summary-value {
+    color: #0f172a !important;
+}
+
+body.light-theme .booking-summary-item.booking-summary-price {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.light-theme .booking-summary-value.price {
+    color: #1A2B3C !important;
+}
+
+body.light-theme .progress-bar {
+    background: #e2e8f0 !important;
+}
+
+body.light-theme .progress-text {
+    color: #64748b !important;
+}

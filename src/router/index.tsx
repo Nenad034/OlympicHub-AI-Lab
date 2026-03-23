@@ -96,6 +96,7 @@ const OperationalReports = React.lazy(() => import('../modules/production/Operat
 const PimDashboard = React.lazy(() => import('../modules/pim/PimDashboard'));
 const ModernSearch = React.lazy(() => import('../modules/search/ModernSearch'));
 const PrimeSmartSearch = React.lazy(() => import('../pages/PrimeSmartSearch/PrimeSmartSearch'));
+const HotelDetailsPage = React.lazy(() => import('../pages/PrimeSmartSearch/HotelDetailsPage'));
 
 
 
@@ -633,6 +634,10 @@ export const router = createBrowserRouter([
                     {
                         path: 'prime-smart-search',
                         element: <PrimeSmartSearch />,
+                    },
+                    {
+                        path: 'prime-smart-search/hotel/:id',
+                        element: <HotelDetailsPage />,
                     },
 
                     {
