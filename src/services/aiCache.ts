@@ -33,7 +33,7 @@ class AICacheService {
     // TTL configurations (in milliseconds)
     private ttlConfig = {
         chat: 24 * 60 * 60 * 1000,        // 24 hours
-        analysis: 60 * 60 * 1000,          // 1 hour
+        analysis: 24 * 60 * 60 * 1000,      // 24 hours (Increased from 1h to save quota)
         prices: 30 * 60 * 1000,            // 30 minutes
         milica: 24 * 60 * 60 * 1000,        // 24 hours
         default: 60 * 60 * 1000            // 1 hour

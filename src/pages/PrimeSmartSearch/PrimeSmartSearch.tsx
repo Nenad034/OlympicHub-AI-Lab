@@ -44,6 +44,7 @@ import {
     IconActivityV6, IconCruiseV6, IconCharterV6, IconTourV6 
 } from './components/V6ModuleIcons';
 import { SavedOffersPanel } from './components/SavedOffersPanel';
+import { HorizontalPriceCalendar } from './components/HorizontalPriceCalendar/HorizontalPriceCalendar';
 import type { HotelSearchResult, FlightSearchResult } from './types';
 import './styles/PrimeSmartSearch.css';
 
@@ -731,6 +732,7 @@ export const PrimeSmartSearch: React.FC = () => {
                         </div>
 
                         <div className="v6-results-content-area" style={{ marginTop: '0' }}>
+                            {activeTab === 'hotel' && <HorizontalPriceCalendar />}
                             {isSearching ? <SkeletonGrid /> : (
                                 <>
                                     {!searchPerformed ? (

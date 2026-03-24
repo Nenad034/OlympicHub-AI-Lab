@@ -1,13 +1,15 @@
-/**
- * AI Rate Limiter Service
- * Prevents hitting Gemini API rate limits by queuing and throttling requests
- */
+import { useAuthStore } from '../stores/authStore';
 
 interface RateLimitConfig {
     maxRequestsPerMinute: number;
     maxRequestsPerDay: number;
     retryDelay: number;
     maxRetries: number;
+}
+
+interface TierConfigs {
+    b2c: RateLimitConfig;
+    b2b: RateLimitConfig;
 }
 
 interface QueuedRequest {
@@ -20,12 +22,25 @@ interface QueuedRequest {
 }
 
 class AIRateLimiter {
-    private config: RateLimitConfig = {
-        maxRequestsPerMinute: 15,
-        maxRequestsPerDay: 1500,
-        retryDelay: 2000,
-        maxRetries: 3
+    private tiers: TierConfigs = {
+        b2c: {
+            maxRequestsPerMinute: 10,
+            maxRequestsPerDay: 50,
+            retryDelay: 3000,
+            maxRetries: 2
+        },
+        b2b: {
+            maxRequestsPerMinute: 30,
+            maxRequestsPerDay: 500,
+            retryDelay: 1500,
+            maxRetries: 3
+        }
     };
+
+    private getConfig(): RateLimitConfig {
+        const userLevel = useAuthStore.getState().userLevel;
+        return userLevel >= 3 ? this.tiers.b2b : this.tiers.b2c;
+    }
 
     private queue: QueuedRequest[] = [];
     private processing = false;
@@ -79,13 +94,13 @@ class AIRateLimiter {
         this.requestTimestamps = this.requestTimestamps.filter(ts => ts > oneMinuteAgo);
 
         // Check per-minute limit
-        if (this.requestTimestamps.length >= this.config.maxRequestsPerMinute) {
+        if (this.requestTimestamps.length >= this.getConfig().maxRequestsPerMinute) {
             console.log('⏱️ [RATE LIMITER] Per-minute limit reached, waiting...');
             return false;
         }
 
         // Check daily limit
-        if (this.dailyRequestCount >= this.config.maxRequestsPerDay) {
+        if (this.dailyRequestCount >= this.getConfig().maxRequestsPerDay) {
             console.log('🚫 [RATE LIMITER] Daily limit reached!');
             return false;
         }
@@ -114,8 +129,8 @@ class AIRateLimiter {
         return {
             requestsPerMinute: requestsLastMinute,
             requestsToday: this.dailyRequestCount,
-            remainingToday: this.config.maxRequestsPerDay - this.dailyRequestCount,
-            percentageUsed: (this.dailyRequestCount / this.config.maxRequestsPerDay) * 100,
+            remainingToday: this.getConfig().maxRequestsPerDay - this.dailyRequestCount,
+            percentageUsed: (this.dailyRequestCount / this.getConfig().maxRequestsPerDay) * 100,
             canMakeRequest: this.canMakeRequest()
         };
     }
@@ -124,6 +139,19 @@ class AIRateLimiter {
      * Queue a request
      */
     async queueRequest<T>(execute: () => Promise<T>): Promise<T> {
+        // STRICT BURST LIMIT CHECK
+        const now = Date.now();
+        const oneMinuteAgo = now - 60000;
+        const recentRequests = this.requestTimestamps.filter(ts => ts > oneMinuteAgo).length;
+
+        // If user is spamming (e.g. > max per minute), throw immediately
+        if (recentRequests >= this.getConfig().maxRequestsPerMinute) {
+            const error = new Error('Too many AI requests. Please try again in 60 seconds.');
+            (error as any).status = 429;
+            (error as any).isRateLimit = true;
+            throw error;
+        }
+
         return new Promise((resolve, reject) => {
             const request: QueuedRequest = {
                 id: Math.random().toString(36).substr(2, 9),
@@ -133,7 +161,7 @@ class AIRateLimiter {
                 timestamp: Date.now(),
                 retries: 0
             };
-
+            
             this.queue.push(request);
             console.log(`📥 [RATE LIMITER] Request queued (${this.queue.length} in queue)`);
 
@@ -172,10 +200,10 @@ class AIRateLimiter {
                 console.error(`❌ [RATE LIMITER] Request ${request.id} failed:`, error.message);
 
                 // Check if it's a rate limit error
-                if (this.isRateLimitError(error) && request.retries < this.config.maxRetries) {
+                if (this.isRateLimitError(error) && request.retries < this.getConfig().maxRetries) {
                     request.retries++;
-                    const delay = this.config.retryDelay * Math.pow(2, request.retries - 1);
-                    console.log(`🔄 [RATE LIMITER] Retrying ${request.id} in ${delay}ms (attempt ${request.retries}/${this.config.maxRetries})`);
+                    const delay = this.getConfig().retryDelay * Math.pow(2, request.retries - 1);
+                    console.log(`🔄 [RATE LIMITER] Retrying ${request.id} in ${delay}ms (attempt ${request.retries}/${this.getConfig().maxRetries})`);
 
                     await this.sleep(delay);
                     this.queue.unshift(request); // Put back at front of queue

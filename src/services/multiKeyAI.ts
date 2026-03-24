@@ -7,6 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { aiRateLimiter } from './aiRateLimiter';
 import { aiCache } from './aiCache';
 import { aiUsageService } from './aiUsageService';
+import type { HotelSearchResult, AvailabilityStatus } from '../pages/PrimeSmartSearch/types';
 import { supabase } from '../supabaseClient';
 import { ActivityLogger } from './activityLogger';
 import { useAuthStore } from '../stores/authStore';
@@ -19,6 +20,7 @@ interface APIKey {
     failureCount: number;
     lastFailure: number | null;
     isProxy?: boolean;
+    provider: 'gemini' | 'openrouter';
 }
 
 interface GenerateOptions {
@@ -36,6 +38,8 @@ class MultiKeyAIService {
     private currentKeyIndex = 0;
     private readonly maxFailures = 3;
     private readonly failureResetTime = 60 * 60 * 1000; // 1 hour
+    private readonly defaultModel = 'models/gemini-2.0-flash';
+    private readonly defaultEmbeddingModel = 'models/gemini-embedding-001';
 
     constructor() {
         this.loadAPIKeys();
@@ -49,7 +53,7 @@ class MultiKeyAIService {
         const keys: APIKey[] = [];
 
         // Always try Supabase proxy first (most secure)
-        const useProxy = true;
+        const useProxy = false;
 
         if (useProxy) {
             keys.push({
@@ -59,8 +63,24 @@ class MultiKeyAIService {
                 enabled: true,
                 failureCount: 0,
                 lastFailure: null,
-                isProxy: true
+                isProxy: true,
+                provider: 'gemini'
             });
+        }
+
+        // OpenRouter API Key (Very High Priority if available)
+        const openRouterKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+        if (openRouterKey && openRouterKey.trim().length > 10 && openRouterKey !== 'YOUR_API_KEY') {
+            keys.push({
+                key: openRouterKey.trim(),
+                name: 'OpenRouter (Multi-Model)',
+                priority: 2,
+                enabled: true,
+                failureCount: 0,
+                lastFailure: null,
+                provider: 'openrouter'
+            });
+            console.log(`🔑 [MULTI-KEY] Found OpenRouter key! Accessing unlimited models.`);
         }
 
         // Direct Gemini API keys as fallback (for when proxy is unavailable)
@@ -68,7 +88,7 @@ class MultiKeyAIService {
             'VITE_GEMINI_KEY_1', 'VITE_GEMINI_KEY_2', 'VITE_GEMINI_KEY_3',
             'VITE_GEMINI_API_KEY', 'VITE_GEMINI_KEY'
         ];
-        let directPriority = 2;
+        let directPriority = 3;
         for (const keyName of directKeyNames) {
             const keyValue = (import.meta.env as any)[keyName];
             if (keyValue && keyValue.trim().length > 10 && keyValue !== 'YOUR_API_KEY') {
@@ -78,7 +98,8 @@ class MultiKeyAIService {
                     priority: directPriority++,
                     enabled: true,
                     failureCount: 0,
-                    lastFailure: null
+                    lastFailure: null,
+                    provider: 'gemini'
                 });
                 console.log(`🔑 [MULTI-KEY] Found direct key: ${keyName}`);
             }
@@ -95,7 +116,7 @@ class MultiKeyAIService {
     /**
      * Get next available API key
      */
-    private getNextKey(): APIKey | null {
+    private getNextKey(requiredProvider?: 'gemini' | 'openrouter'): APIKey | null {
         const now = Date.now();
         const authState = useAuthStore.getState();
 
@@ -108,7 +129,8 @@ class MultiKeyAIService {
                 priority: -1, // Highest priority
                 enabled: true,
                 failureCount: 0,
-                lastFailure: null
+                lastFailure: null,
+                provider: 'gemini'
             };
         }
 
@@ -122,8 +144,15 @@ class MultiKeyAIService {
             }
         });
 
-        // Find first enabled key
-        const availableKeys = this.apiKeys.filter(k => k.enabled && k.failureCount < this.maxFailures);
+        // Priority-based selection
+        const availableKeys = this.apiKeys
+            .filter(k => {
+                const isEnabled = k.enabled && k.failureCount < this.maxFailures;
+                if (!isEnabled) return false;
+                if (requiredProvider) return k.provider === requiredProvider || k.isProxy;
+                return true;
+            })
+            .sort((a, b) => a.priority - b.priority);
 
         if (availableKeys.length === 0) {
             console.error('❌ [MULTI-KEY] No available API keys! Total keys in registry:', this.apiKeys.length);
@@ -131,19 +160,31 @@ class MultiKeyAIService {
             return null;
         }
 
-        // Round-robin through available keys
-        this.currentKeyIndex = (this.currentKeyIndex + 1) % availableKeys.length;
-        const selected = availableKeys[this.currentKeyIndex];
-        console.log(`🎯 [MULTI-KEY] Selected: ${selected.name} (Priority: ${selected.priority})`);
+        // We use the first key (highest priority) if it's the first attempt, 
+        // or we can still do round-robin within the same priority level if needed.
+        // For simplicity and effectiveness, we'll pick the best available one.
+        const selected = availableKeys[0];
+        console.log(`🎯 [MULTI-KEY] Selected Best: ${selected.name} (Priority: ${selected.priority})`);
         return selected;
     }
 
     /**
      * Mark key as failed
      */
-    private markKeyFailed(keyName: string) {
+    private markKeyFailed(keyName: string, error?: any) {
         const key = this.apiKeys.find(k => k.name === keyName);
         if (key) {
+            // Don't disable keys for 429 (Rate Limit) errors, as those are temporary
+            const errorStr = String(error || '').toLowerCase();
+            const isRateLimit = errorStr.includes('429') || 
+                               errorStr.includes('quota') || 
+                               errorStr.includes('rate limit');
+
+            if (isRateLimit) {
+                console.log(`⚠️ [MULTI-KEY] ${key.name} hit rate limit. Not disabling.`);
+                return;
+            }
+
             key.failureCount++;
             key.lastFailure = Date.now();
 
@@ -166,8 +207,11 @@ class MultiKeyAIService {
         const {
             useCache = true,
             cacheCategory = 'default',
-            model = 'gemini-1.5-flash'
+            model = this.defaultModel
         } = options;
+
+        // Check daily token/request limits before execution
+        aiUsageService.checkQuotaBeforeExecution('gemini'); // Default to gemini check if general
 
         // --- DEVELOPMENT BYPASS ---
         if (import.meta.env.VITE_AI_DEV_MODE === 'true') {
@@ -226,7 +270,34 @@ class MultiKeyAIService {
 
                     // Use rate limiter
                     const response = await aiRateLimiter.queueRequest(async () => {
-                        if (apiKey.isProxy) {
+                        if (apiKey.provider === 'openrouter') {
+                            console.log(`🌐 [MULTI-KEY] Routing through OpenRouter...`);
+                            const orResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                                method: "POST",
+                                headers: {
+                                    "Authorization": `Bearer ${apiKey.key}`,
+                                    "HTTP-Referer": window.location.origin,
+                                    "X-Title": "Prime Smart Search",
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                    "model": model.includes('gemini') ? "google/gemini-2.0-flash-001" : model,
+                                    "messages": options.history 
+                                        ? [...options.history.map(h => ({ 
+                                            role: h.role === 'ai' ? 'assistant' : 'user', 
+                                            content: h.text 
+                                          })), { role: 'user', content: prompt }]
+                                        : [{ role: 'user', content: prompt }],
+                                    "temperature": options.temperature ?? 0.7,
+                                    "max_tokens": options.maxOutputTokens
+                                })
+                            });
+
+                            const orData = await orResponse.json();
+                            if (orData.error) throw new Error(`OpenRouter Error: ${orData.error.message || orData.error}`);
+                            if (!orData.choices?.[0]?.message?.content) throw new Error('No content from OpenRouter');
+                            return orData.choices[0].message.content;
+                        } else if (apiKey.isProxy) {
                             console.log(`📡 [MULTI-KEY] Routing through Supabase Proxy...`);
                             const { data, error } = await supabase.functions.invoke('gemini-proxy', {
                                 body: {
@@ -290,7 +361,7 @@ class MultiKeyAIService {
                 } catch (error: any) {
                     lastError = error;
                     console.error(`❌ [MULTI-KEY] Failed with ${apiKey.name}:`, error.message);
-                    this.markKeyFailed(apiKey.name);
+                    this.markKeyFailed(apiKey.name, error);
 
                     // Track failed API call
                     ActivityLogger.logAPICall(
@@ -321,7 +392,8 @@ class MultiKeyAIService {
      */
     async embedContent(
         content: string,
-        model: string = 'gemini-embedding-001'
+        model: string = this.defaultEmbeddingModel,
+        useCache: boolean = true
     ): Promise<number[]> {
         // --- DEVELOPMENT BYPASS ---
         if (import.meta.env.VITE_AI_DEV_MODE === 'true') {
@@ -329,12 +401,26 @@ class MultiKeyAIService {
             return Array.from({ length: 768 }, () => Math.random() * 2 - 1);
         }
 
+        // --- CACHE CHECK ---
+        if (useCache) {
+            const cacheKey = `embed_${content}`;
+            const cached = aiCache.get(cacheKey, 'default');
+            if (cached) {
+                try {
+                    return JSON.parse(cached);
+                } catch (e) {
+                    console.warn('[MULTI-KEY] Cache parse failed for embedding');
+                }
+            }
+        }
+
         // Try each available key
         let lastError: Error | null = null;
         const maxAttempts = Math.max(this.apiKeys.length, 1);
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            const apiKey = this.getNextKey();
+            // For embedding we EXCLUSIVELY need Gemini (Direct or Proxy)
+            const apiKey = this.getNextKey('gemini');
             if (!apiKey) {
                 throw new Error('No available API keys or proxy');
             }
@@ -377,12 +463,18 @@ class MultiKeyAIService {
                 ActivityLogger.logAPICall('Gemini-Embedding', model, durationMs, true);
 
                 console.log(`✅ [MULTI-KEY] Embedding success with ${apiKey.name}`);
+
+                // --- CACHE SAVE ---
+                if (useCache) {
+                    aiCache.set(`embed_${content}`, JSON.stringify(vector), tokens, 'default');
+                }
+
                 return vector;
 
             } catch (error: any) {
                 lastError = error;
                 console.error(`❌ [MULTI-KEY] Embedding failed with ${apiKey.name}:`, error.message);
-                this.markKeyFailed(apiKey.name);
+                this.markKeyFailed(apiKey.name, error);
                 continue;
             }
         }
@@ -441,7 +533,8 @@ class MultiKeyAIService {
             priority,
             enabled: true,
             failureCount: 0,
-            lastFailure: null
+            lastFailure: null,
+            provider: 'gemini'
         };
 
         if (existingIndex >= 0) {

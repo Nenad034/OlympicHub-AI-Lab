@@ -137,6 +137,10 @@ interface SearchActions {
     checkPriceChange: (id: string) => Promise<void>;
     dismissPriceNotification: () => void;
 
+    // Interactive & Range (Faza 6.1)
+    setPendingClarification: (val: SearchState['pendingClarification']) => void;
+    setDateRangeResults: (results: SearchState['dateRangeResults']) => void;
+
     // Reset
     resetSearch: () => void;
 }
@@ -196,6 +200,8 @@ const initialState: SearchState = {
     conciergeOffers: [],
     savedOffers: [],
     lastPriceChangeNotification: undefined,
+    pendingClarification: null,
+    dateRangeResults: [],
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -413,6 +419,10 @@ export const useSearchStore = create<SearchState & SearchActions>((set, get) => 
         }
     },
     dismissPriceNotification: () => set({ lastPriceChangeNotification: undefined }),
+
+    // ── Interactive & Range (Faza 6.1) ─────────────────────────
+    setPendingClarification: (pendingClarification) => set({ pendingClarification }),
+    setDateRangeResults: (dateRangeResults) => set({ dateRangeResults }),
 
     // ── Reset ────────────────────────────────────────────────
     resetSearch: () => set(initialState)

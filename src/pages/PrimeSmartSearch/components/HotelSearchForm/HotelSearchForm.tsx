@@ -3,25 +3,17 @@ import { useSearchStore, calcPaxSummary } from '../../stores/useSearchStore';
 import { OccupancyWizard } from '../OccupancyWizard/OccupancyWizard';
 import { MultiSelectDropdown } from '../../../../components/MultiSelectDropdown';
 import { ExpediaCalendar } from '../../../../components/ExpediaCalendar';
-import { BudgetTypeToggle } from '../../../../components/BudgetTypeToggle';
-import type { Destination, SearchAlert } from '../../types';
-import { Calendar, Globe, DollarSign, UtensilsCrossed, Users, Plus, Trash2, ChevronDown, MapPin, Sparkles, Search, Building2, Flag } from 'lucide-react';
+import { Calendar, Globe, UtensilsCrossed, Users, Search, Building2, Flag, MapPin, ChevronDown } from 'lucide-react';
 import { SearchModeSelector } from '../SearchModeSelector';
 import { AIAssistantField } from '../AIAssistantField';
 import { performSmartSearch } from '../../../../services/smartSearchService';
 import { normalizeMealPlan } from '../../../SmartSearch/helpers';
-import type { HotelSearchResult, AvailabilityStatus, ProviderId } from '../../types';
-import type { BookingData } from '../../../../types/booking.types';
-
-// Helper za prikaz labela usluge na kartici
-const overallMealPlanLabel = (lowestPlan: string, selected: string[]) => {
-    if (!selected || selected.includes('all') || selected.length === 0) return lowestPlan;
-    if (selected.length === 1) return lowestPlan;
-    return `Izabrane usluge (${selected.length})`;
-};
+import { parseSearchIntent } from '../../../../services/ai/nlpParserService';
+import { hybridSearchEngine } from '../../../../services/ai/HybridSearchService';
+import type { Destination, SearchAlert, HotelSearchResult, AvailabilityStatus } from '../../types';
 
 // ─────────────────────────────────────────────────────────────
-// KONSTANTE (Nacionalnost i Usluge)
+// KONSTANTE
 // ─────────────────────────────────────────────────────────────
 const NATIONALITY_OPTIONS = [
     { value: 'RS', label: 'Srbija' },
@@ -38,12 +30,6 @@ const NATIONALITY_OPTIONS = [
     { value: 'DE', label: 'Nemačka' },
     { value: 'AT', label: 'Austrija' },
     { value: 'CH', label: 'Švajcarska' },
-    { value: 'RU', label: 'Rusija' },
-    { value: 'US', label: 'SAD' },
-    { value: 'GB', label: 'Velika Britanija' },
-    { value: 'IT', label: 'Italija' },
-    { value: 'FR', label: 'Francuska' },
-    { value: 'ES', label: 'Španija' },
 ];
 
 const MEAL_PLAN_OPTIONS = [
@@ -65,47 +51,21 @@ const validateSearch = (
     checkOut: string
 ): SearchAlert[] => {
     const alerts: SearchAlert[] = [];
-
     if (destinations.length === 0) {
-        alerts.push({
-            id: 'no-destination',
-            severity: 'warning',
-            message: 'Molimo unesite destinaciju pretrage.',
-        });
+        alerts.push({ id: 'no-destination', severity: 'warning', message: 'Molimo unesite destinaciju pretrage.' });
     }
-
     if (!checkIn || !checkOut) {
-        alerts.push({
-            id: 'no-dates',
-            severity: 'warning',
-            message: 'Molimo odaberite datum dolaska i odlaska.',
-        });
+        alerts.push({ id: 'no-dates', severity: 'warning', message: 'Molimo odaberite datum dolaska i odlaska.' });
     }
-
     if (checkIn && checkOut) {
-        const nights = Math.round(
-            (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)
-        );
-        if (nights < 1) {
-            alerts.push({
-                id: 'invalid-dates',
-                severity: 'warning',
-                message: 'Datum odlaska mora biti posle datuma dolaska.',
-            });
-        }
-        if (nights < 3) {
-            alerts.push({
-                id: 'min-stay',
-                severity: 'info',
-                message: `ℹ️ Napomena: Za neke hotele važi minimalan boravak od 3 noćenja. Prikazaćemo samo dostupne opcije za ${nights} noć(i).`,
-            });
+        const d1 = new Date(checkIn);
+        const d2 = new Date(checkOut);
+        if (d2 <= d1) {
+            alerts.push({ id: 'invalid-dates', severity: 'warning', message: 'Datum odlaska mora biti posle datuma dolaska.' });
         }
     }
-
     return alerts;
 };
-
-// Orchestrator (smartSearchService) handles the actual API calls.
 
 // ─────────────────────────────────────────────────────────────
 // HOTEL SEARCH FORM
@@ -126,18 +86,17 @@ export const HotelSearchForm: React.FC = () => {
         removeDestination,
         setNationality,
         updateFilter,
-        addRoom,
-        removeRoom,
-        updateRoomAllocation,
         setIsSearching,
         setResults,
         setSearchPerformed,
         addAlert,
         dismissAlert,
         searchMode,
-        setSearchMode,
         semanticQuery,
-        setSemanticQuery,
+        setPendingClarification,
+        setDateRangeResults,
+        pendingClarification,
+        dateRangeResults,
     } = useSearchStore();
 
     const [destInput, setDestInput] = useState('');
@@ -148,491 +107,457 @@ export const HotelSearchForm: React.FC = () => {
     const [nationalitySearch, setNationalitySearch] = useState('');
 
     const autocompleteResults = [
-        { id: 'solvex-9', name: 'Bansko', type: 'city', sub: 'Bugarska (Solvex)', provider: 'Solvex' },
-        { id: 'solvex-33', name: 'Zlatni Pjasci', type: 'city', sub: 'Bugarska (Solvex)', provider: 'Solvex' },
-        { id: 'solvex-68', name: 'Sunčev Breg', type: 'city', sub: 'Bugarska (Solvex)', provider: 'Solvex' },
-        { id: 'solvex-1', name: 'Nesebar', type: 'city', sub: 'Bugarska (Solvex)', provider: 'Solvex' },
-        { id: 'solvex-6', name: 'Borovets', type: 'city', sub: 'Bugarska (Solvex)', provider: 'Solvex' },
-        { id: 'solvex-10', name: 'Pamporovo', type: 'city', sub: 'Bugarska (Solvex)', provider: 'Solvex' },
-        { id: '2', name: 'Atina', type: 'city', sub: 'Grčka' },
-        { id: '3', name: 'Sani Beach', type: 'hotel', sub: 'Halkidiki, Grčka' },
+        { id: 'solvex-9', name: 'Bansko', type: 'city' as const, sub: 'Bugarska (Solvex)', provider: 'Solvex' },
+        { id: 'solvex-33', name: 'Zlatni Pjasci', type: 'city' as const, sub: 'Bugarska (Solvex)', provider: 'Solvex' },
+        { id: 'solvex-68', name: 'Sunčev Breg', type: 'city' as const, sub: 'Bugarska (Solvex)', provider: 'Solvex' },
+        { id: 'solvex-1', name: 'Nesebar', type: 'city' as const, sub: 'Bugarska (Solvex)', provider: 'Solvex' },
+        { id: 'solvex-6', name: 'Borovets', type: 'city' as const, sub: 'Bugarska (Solvex)', provider: 'Solvex' },
+        { id: 'solvex-10', name: 'Pamporovo', type: 'city' as const, sub: 'Bugarska (Solvex)', provider: 'Solvex' },
     ].filter(item => item.name.toLowerCase().includes(destInput.toLowerCase()));
 
-    // Filtrirane nacionalnosti za search
     const filteredNationalities = NATIONALITY_OPTIONS.filter(n =>
         n.label.toLowerCase().includes(nationalitySearch.toLowerCase())
     );
 
-    // ── Destinacija logika ───────────────────────────────────
     const handleSelectOption = (item: any) => {
-        const fullName = item.type === 'country' ? item.name : 
-                         item.type === 'city' ? `${item.name} (${item.sub})` :
-                         `${item.name} (${item.sub})`;
-        
-        const newDestination = {
-            id: `dest-${Date.now()}`,
-            name: fullName,
+        addDestination({
+            id: item.id || `dest-${Date.now()}`,
+            name: item.name,
             type: item.type,
-            country: item.type === 'country' ? item.name : '',
-            provider: item.provider, // Ensure provider is passed if available
-        };
-
-        addDestination(newDestination);
+            country: '',
+            provider: item.provider,
+        });
         setDestInput('');
         setShowAutocomplete(false);
-
-        // --- PREFETCH LOGIC ---
-        // Ako već imamo datume, iniciramo "tihu" pretragu u pozadini
-        // Rezultati će se keširati u smartSearchService
-        if (checkIn && checkOut) {
-            console.log('[HotelSearchForm] Prefetching for:', newDestination.name);
-            performSmartSearch({
-                searchType: 'hotel',
-                destinations: [{
-                    id: newDestination.id,
-                    name: newDestination.name,
-                    type: newDestination.type as any,
-                    provider: newDestination.provider
-                }],
-                checkIn,
-                checkOut,
-                roomConfig: roomAllocations,
-                nationality: nationality,
-                enabledProviders: { solvex: true }
-            }).catch(err => console.warn('[Prefetch] Background prefetch failed (silent)', err));
-        }
-    };
-    const handleDestKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if ((e.key === 'Enter' || e.key === ',') && destInput.trim()) {
-            e.preventDefault();
-            addDestination({
-                id: `dest-${Date.now()}`,
-                name: destInput.trim(),
-                type: 'city',
-                country: '',
-            });
-            setDestInput('');
-        }
     };
 
-    // ── Submit ───────────────────────────────────────────────
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const processResults = async (apiResults: any[]) => {
+        const paxSummary = calcPaxSummary(roomAllocations, checkIn, checkOut);
+        const currentFilters = useSearchStore.getState().filters;
+        const selectedMealPlans = currentFilters.mealPlans || ['all'];
+        const isAllMealPlans = selectedMealPlans.includes('all');
 
-        // Dimiss prethodnih upozorenja
-        ['no-destination', 'no-dates', 'invalid-dates', 'min-stay'].forEach(dismissAlert);
-
-        // Validacija
-        const validationAlerts = validateSearch(destinations, checkIn, checkOut);
-        if (validationAlerts.some(a => a.severity === 'warning')) {
-            validationAlerts.forEach(addAlert);
-            return;
-        }
-        validationAlerts.forEach(addAlert); // Informacije koje propuste validaciju
-
-        // Pokreni pretragu
-        setIsSubmitting(true);
-        setIsSearching(true);
-        setSearchPerformed(true);
-
-        try {
-            console.log('[HotelSearchForm] Starting live search for:', destinations.map(d => d.name));
+        const mappedResults = apiResults.map((r: any) => {
+            if (!r) return null;
             
-            const apiResults = await performSmartSearch({
-                searchType: 'hotel',
-                destinations: destinations.map(d => ({
-                    id: d.id,
-                    name: d.name,
-                    type: d.type as any,
-                    provider: d.provider
-                })),
-                checkIn,
-                checkOut,
-                roomConfig: roomAllocations,
-                nationality: nationality,
-                enabledProviders: { solvex: true }
-            });
+            // Availability mapping
+            const status: AvailabilityStatus = 
+                r.availability === 'available' ? 'instant' : 
+                (r.availability === 'on-request' || r.availability === 'on_request' ? 'on-request' : 'sold-out');
 
-            const paxSummary = calcPaxSummary(roomAllocations, checkIn, checkOut);
+            // Location
+            let city = '';
+            let country = '';
+            if (typeof r.location === 'string') {
+                const parts = r.location.split(',').map((s: string) => s.trim());
+                city = parts[0] || '';
+                country = parts[1] || '';
+            } else if (r.location && typeof r.location === 'object') {
+                city = r.location.city || '';
+                country = r.location.country || '';
+            }
 
-            // Mapiraj API rezultate u V6 format
-            // Mapiraj API rezultate u V6 format uz filtriranje po meal planu
-            const selectedMealPlans = filters.mealPlans || ['all'];
-            const isAllMealPlans = selectedMealPlans.includes('all');
+            // Pricing & Meals Logic
+            let overallLowestPrice = Infinity;
+            let overallLowestMealPlan = 'Smeštaj';
+            const filteredAllocationResults: Record<number, any[]> = {};
 
-            const mappedResults: HotelSearchResult[] = apiResults.map(r => {
-                const status: AvailabilityStatus = 
-                    r.availability === 'available' ? 'instant' : 
-                    (r.availability === 'on-request' || r.availability === 'on_request' ? 'on-request' : 'sold-out');
+            if (r.allocationResults) {
+                let totalLowestForHotel = 0;
+                let hasMatchingRoomsForAllSlots = true;
 
-                let city = '';
-                let country = '';
-                if (typeof r.location === 'string') {
-                    const parts = (r.location || '').split(',').map((s: string) => s.trim());
-                    city = parts[0] || '';
-                    country = parts[1] || '';
-                } else if (r.location) {
-                    city = r.location.city;
-                    country = r.location.country;
-                }
-
-                // Regrupisanje soba: Service format (Room-Meal) -> V6 format (Room -> MealPlans)
-                const roomOptionsMap = new Map<string, any>();
-                let filteredAllocationResults: Record<number, any[]> = {};
-                let overallLowestPrice = Infinity;
-                let overallLowestMealPlan = '';
-
-                // Ako imamo multi-room rezultate (alokacije)
-                if (r.allocationResults) {
-                    let totalLowestForHotel = 0;
-                    let hasMatchingRoomsForAllSlots = true;
-
-                    Object.entries(r.allocationResults).forEach(([slotIdx, rooms]) => {
-                        const sIdx = parseInt(slotIdx);
-                        const matchingRooms = (rooms as any[]).filter(rm => {
-                            if (isAllMealPlans) return true;
-                            const norm = rm.mealPlan ? normalizeMealPlan(rm.mealPlan) : 'RO';
-                            return selectedMealPlans.includes(norm);
-                        });
-
-                        if (matchingRooms.length === 0) {
-                            hasMatchingRoomsForAllSlots = false;
-                            return;
-                        }
-
-                        // Pronadji najjeftiniju u ovom slotu koja odgovara filteru
-                        const minPriceInSlot = Math.min(...matchingRooms.map(rm => rm.price));
-                        totalLowestForHotel += minPriceInSlot;
-                        
-                        // Sacuvaj filtrirane rezultate za ovaj slot
-                        filteredAllocationResults[sIdx] = matchingRooms;
-                        
-                        // Za prikaz na kartici (glavni meal plan labels) - uzimamo iz prvog slota ili nalazimo dominantan
-                        if (sIdx === 0) {
-                            const cheapestRoom = matchingRooms.find(rm => rm.price === minPriceInSlot);
-                            overallLowestMealPlan = cheapestRoom?.mealPlan || 'Smeštaj';
-                        }
-                    });
-
-                    if (hasMatchingRoomsForAllSlots) {
-                        overallLowestPrice = totalLowestForHotel;
-                    } else {
-                        overallLowestPrice = -1; // Oznaka da hotel nema sobe za sve slotove sa ovim filterom
-                    }
-                } else {
-                    // Single room fallback (ili stara logika)
-                    const matchingRooms = (r.rooms || []).filter(rm => {
+                Object.entries(r.allocationResults).forEach(([slotIdx, rooms]) => {
+                    const sIdx = parseInt(slotIdx);
+                    const matchingRooms = (rooms as any[]).filter((rm: any) => {
                         if (isAllMealPlans) return true;
                         const norm = rm.mealPlan ? normalizeMealPlan(rm.mealPlan) : 'RO';
                         return selectedMealPlans.includes(norm);
                     });
 
-                    if (matchingRooms.length > 0) {
-                        overallLowestPrice = Math.min(...matchingRooms.map(rm => rm.price));
-                        const cheapestRoom = matchingRooms.find(rm => rm.price === overallLowestPrice);
-                        overallLowestMealPlan = cheapestRoom?.mealPlan || 'Smeštaj';
-                    } else {
-                        overallLowestPrice = -1;
+                    if (matchingRooms.length === 0) {
+                        hasMatchingRoomsForAllSlots = false;
+                        return;
                     }
+
+                    const minPriceInSlot = Math.min(...matchingRooms.map((rm: any) => rm.price));
+                    totalLowestForHotel += minPriceInSlot;
+                    filteredAllocationResults[sIdx] = matchingRooms;
+                    
+                    if (sIdx === 0) {
+                        const cheapestRoom = matchingRooms.find((rm: any) => rm.price === minPriceInSlot);
+                        overallLowestMealPlan = cheapestRoom?.mealPlan || 'Smeštaj';
+                    }
+                });
+
+                if (hasMatchingRoomsForAllSlots) {
+                    overallLowestPrice = totalLowestForHotel;
+                } else {
+                    return null; 
+                }
+            } else if (r.provider === 'AI-Internal' || r.provider === 'AI Preporuka') {
+                overallLowestPrice = r.price || 0;
+                overallLowestMealPlan = r.mealPlan || 'Preporuka';
+            } else {
+                return null;
+            }
+
+            return {
+                id: r.id || `res-${Math.random()}`,
+                name: r.name,
+                location: { city, country },
+                stars: r.stars || 4,
+                lowestTotalPrice: overallLowestPrice === Infinity ? 0 : overallLowestPrice,
+                currency: r.currency || 'EUR',
+                status: status,
+                lowestMealPlanLabel: overallLowestMealPlan,
+                images: r.images && r.images.length > 0 ? r.images : ["https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"],
+                description: r.description || '',
+                isPrime: r.provider === 'Solvex' || r.isPrime,
+                priority: r.provider === 'Solvex' ? 100 : (r.aiScore || 50),
+                primaryProvider: {
+                    id: (r.provider?.toLowerCase() || 'solvex') as any,
+                    hotelKey: r.id || '',
+                    price: overallLowestPrice === Infinity ? 0 : overallLowestPrice,
+                    currency: r.currency || 'EUR'
+                },
+                paxSummary,
+                aiInsight: r.aiInsight,
+                aiScore: r.aiScore,
+                originalData: r,
+                roomOptions: [], 
+                allocationResults: Object.keys(filteredAllocationResults).length > 0 ? filteredAllocationResults : r.allocationResults,
+            } as HotelSearchResult;
+        }).filter(Boolean) as HotelSearchResult[];
+
+        setResults(mappedResults);
+        if (mappedResults.length === 0) {
+            addAlert({ id: 'no-results-found', severity: 'info', message: 'Nema dostupnih hotela za tražene parametre.' });
+        }
+    };
+
+    const handleSearch = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        ['no-destination', 'no-dates', 'invalid-dates', 'min-stay', 'no-results-found'].forEach(dismissAlert);
+
+        setIsSubmitting(true);
+        setIsSearching(true);
+        setSearchPerformed(true);
+
+        try {
+            if (searchMode === 'semantic' && semanticQuery) {
+                // Parallel: Vector pre-fetch + AI intent parsing
+                const vectorPromise = hybridSearchEngine.getVectorMatches(semanticQuery);
+                const intentPromise = parseSearchIntent(semanticQuery);
+                
+                const parsedIntent = await intentPromise;
+                
+                // 1. Check for interactive Clarification (Pax Split)
+                if (parsedIntent.needsClarification === 'pax_split') {
+                    setPendingClarification({
+                        type: 'pax_split',
+                        question: "Milica: Vidim da vas je petoro! Želite li jednu veliku smeštajnu jedinicu (ako je dostupna) ili dve odvojene sobe?",
+                        options: [
+                            { label: 'JEDNA jedinica (npr. Family Suite)', value: 'single' },
+                            { label: 'DVE odvojene sobe', value: 'split' }
+                        ]
+                    });
+                    setIsSubmitting(false);
+                    return; // Pause execution
                 }
 
-                // Ako je hotel nelegalan za ove filtere, vrati null (koji ćemo filtrirati kasnije)
-                if (overallLowestPrice === -1) return null as any;
+                // Reset range results
+                setDateRangeResults([]);
 
-                // Popuni roomOptions za detaljan prikaz
-                if (r.rooms && Array.isArray(r.rooms)) {
-                    r.rooms.forEach((srvRoom: any) => {
-                        // Ovde ne filtriramo roomOptionsMap jer želimo da korisnik vidi sve 
-                        // ALI lowestTotalPrice na kartici mora biti onaj koji ODGOVARA filteru
-                        const roomName = srvRoom.name;
-                        if (!roomOptionsMap.has(roomName)) {
-                            roomOptionsMap.set(roomName, {
-                                id: srvRoom.id,
-                                name: roomName,
-                                description: srvRoom.description || '',
-                                maxAdults: srvRoom.capacity || 2,
-                                maxChildren: 2,
-                                maxOccupancy: (srvRoom.capacity || 2) + 2,
-                                mealPlans: []
-                            });
+                // 2. Handle Date Range (Multi-date probing)
+                const isRangeSearch = !!(parsedIntent.dateRange && parsedIntent.durationNights);
+                
+                // Update store with AI intent
+                if (parsedIntent.destinations.length > 0 && destinations.length === 0) {
+                    parsedIntent.destinations.forEach((d, i) => addDestination({ id: `ai-d-${i}`, name: d, type: 'city', country: '' }));
+                }
+                
+                if (parsedIntent.checkIn && parsedIntent.checkOut) {
+                    setCheckIn(parsedIntent.checkIn);
+                    setCheckOut(parsedIntent.checkOut);
+                }
+
+                if (parsedIntent.stars && parsedIntent.stars.length > 0) updateFilter('stars', parsedIntent.stars);
+                if (parsedIntent.board && parsedIntent.board.length > 0) updateFilter('mealPlans', parsedIntent.board);
+
+                // Re-fetch current state
+                const state = useSearchStore.getState();
+                const vectorMatches = await vectorPromise;
+
+                const baseParams = {
+                    searchType: 'hotel' as const,
+                    destinations: state.destinations,
+                    roomConfig: state.roomAllocations,
+                    nationality: state.nationality,
+                    enabledProviders: { solvex: true }
+                };
+
+                if (isRangeSearch && parsedIntent.dateRange && parsedIntent.durationNights) {
+                    const { start, end } = parsedIntent.dateRange;
+                    const duration = parsedIntent.durationNights;
+                    
+                    // Limit range to +- 7 days from midpoint if the range is too wide
+                    const startDate = new Date(start);
+                    const endDate = new Date(end);
+                    const diffDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                    
+                    let probeDates: string[] = [];
+                    if (diffDays > 14) {
+                        // If user gave a month or more, we center it and pick 7 dates
+                        const midTime = startDate.getTime() + (endDate.getTime() - startDate.getTime()) / 2;
+                        for (let i = -3; i <= 3; i++) {
+                            probeDates.push(new Date(midTime + i * 86400000 * 2).toISOString().split('T')[0]);
+                        }
+                    } else {
+                        // Small range, probe every 2nd day or similar
+                        for (let i = 0; i <= diffDays; i += 2) {
+                            probeDates.push(new Date(startDate.getTime() + i * 86400000).toISOString().split('T')[0]);
+                        }
+                    }
+
+                    const rangeResults: any[] = [];
+                    for (const dIn of probeDates) {
+                        const dOut = new Date(new Date(dIn).getTime() + duration * 86400000).toISOString().split('T')[0];
+                        const apiResults = await hybridSearchEngine.executeFusedSearch(vectorMatches, { ...baseParams, checkIn: dIn, checkOut: dOut }, semanticQuery);
+                        const minPrice = apiResults.length > 0 ? Math.min(...apiResults.map(r => r.price || r.lowestTotalPrice || Infinity).filter(p => p > 0)) : 0;
+                        
+                        rangeResults.push({
+                            checkIn: dIn,
+                            checkOut: dOut,
+                            price: minPrice === Infinity ? 0 : minPrice,
+                            currency: 'EUR',
+                            isRecommended: dIn === state.checkIn
+                        });
+
+                        if (dIn === state.checkIn) {
+                            await processResults(apiResults);
+                        }
+                    }
+                    setDateRangeResults(rangeResults);
+                } else {
+                    const apiResults = await hybridSearchEngine.executeFusedSearch(vectorMatches, { ...baseParams, checkIn: state.checkIn, checkOut: state.checkOut }, semanticQuery);
+                    
+                    // SMART FALLBACK: If no results, try Prev (-2 nights) and Next
+                    if (apiResults.length === 0) {
+                        console.log("🔍 [FALLBACK] No results found. Probing alternatives...");
+                        const duration = Math.round((new Date(state.checkOut).getTime() - new Date(state.checkIn).getTime()) / 86400000);
+                        
+                        // Probe Prev: -2 days, duration - 2 nights (as requested)
+                        const dInPrev = new Date(new Date(state.checkIn).getTime() - 2 * 86400000).toISOString().split('T')[0];
+                        const dOutPrev = new Date(new Date(dInPrev).getTime() + Math.max(1, duration - 2) * 86400000).toISOString().split('T')[0];
+                        
+                        // Probe Next: +2 days, same duration
+                        const dInNext = new Date(new Date(state.checkIn).getTime() + 2 * 86400000).toISOString().split('T')[0];
+                        const dOutNext = new Date(new Date(dInNext).getTime() + duration * 86400000).toISOString().split('T')[0];
+
+                        const probes = [
+                            { dIn: dInPrev, dOut: dOutPrev, label: 'Prethodni period (-2 noći)' },
+                            { dIn: dInNext, dOut: dOutNext, label: 'Sledeći period' }
+                        ];
+
+                        const rangeResults: any[] = [];
+                        for (const p of probes) {
+                            const pResults = await hybridSearchEngine.executeFusedSearch(vectorMatches, { ...baseParams, checkIn: p.dIn, checkOut: p.dOut }, semanticQuery);
+                            const minPrice = pResults.length > 0 ? Math.min(...pResults.map(r => r.price || r.lowestTotalPrice || Infinity).filter(p => p > 0)) : 0;
+                            if (minPrice > 0 && minPrice !== Infinity) {
+                                rangeResults.push({
+                                    checkIn: p.dIn,
+                                    checkOut: p.dOut,
+                                    price: minPrice,
+                                    currency: 'EUR',
+                                    isRecommended: false
+                                });
+                            }
                         }
                         
-                        const v6Room = roomOptionsMap.get(roomName);
-                        v6Room.mealPlans.push({
-                            code: srvRoom.mealPlan || 'RO',
-                            label: srvRoom.mealPlan || 'Smeštaj',
-                            totalPrice: srvRoom.price,
-                            pricePerPersonPerNight: srvRoom.price / (paxSummary.nights * paxSummary.totalAdults || 1),
-                            status: srvRoom.availability === 'available' ? 'instant' : 'on-request',
-                            isRefundable: true,
-                            cancellationDeadline: srvRoom.cancellationPolicyRequestParams?.DateFrom
-                        });
-                    });
+                        if (rangeResults.length > 0) {
+                            setDateRangeResults(rangeResults);
+                            addAlert({ 
+                                id: 'fallback-offer', 
+                                severity: 'info', 
+                                message: 'Nismo pronašli slobodne sobe za tvoj tačan datum, ali Milica ti nudi alternativne termine ispod.' 
+                            });
+                        }
+                    }
+
+                    await processResults(apiResults);
                 }
 
-                return {
-                    id: r.id,
-                    name: r.name,
-                    stars: r.stars || 0,
-                    images: r.images && r.images.length > 0 ? r.images : ["https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"],
-                    location: {
-                        city: city || r.location || '',
-                        country: country || '',
-                    },
-                    isPrime: r.provider === 'Solvex',
-                    priority: r.provider === 'Solvex' ? 80 : 50,
-                    lowestTotalPrice: overallLowestPrice,
-                    lowestMealPlanLabel: overallMealPlanLabel(overallLowestMealPlan, selectedMealPlans),
-                    currency: r.currency || 'EUR',
-                    status: status,
-                    roomOptions: Array.from(roomOptionsMap.values()),
-                    allocationResults: Object.keys(filteredAllocationResults).length > 0 ? filteredAllocationResults : r.allocationResults,
-                    primaryProvider: {
-                        id: (r.provider.toLowerCase() as ProviderId),
-                        hotelKey: r.id,
-                        price: overallLowestPrice,
-                        currency: r.currency || 'EUR'
-                    }
-                };
-            }).filter(h => h !== null);
+            } else {
+                const state = useSearchStore.getState();
+                const validationAlerts = validateSearch(state.destinations, state.checkIn, state.checkOut);
+                if (validationAlerts.some(a => a.severity === 'warning')) {
+                    validationAlerts.forEach(addAlert);
+                    setIsSubmitting(false);
+                    setIsSearching(false);
+                    return;
+                }
 
-            setResults(mappedResults);
-            
-            if (mappedResults.length === 0) {
-                addAlert({
-                    id: 'no-results-found',
-                    severity: 'info',
-                    message: 'Nema dostupnih hotela za tražene parametre kod Solvex-a.'
-                });
+                const searchParams = {
+                    searchType: 'hotel' as const,
+                    destinations: state.destinations,
+                    checkIn: state.checkIn,
+                    checkOut: state.checkOut,
+                    roomConfig: state.roomAllocations,
+                    nationality: state.nationality,
+                    enabledProviders: { solvex: true }
+                };
+
+                const apiResults = await performSmartSearch(searchParams as any);
+                await processResults(apiResults);
             }
-        } catch (error) {
-            console.error('[HotelSearchForm] API Search failed:', error);
-            addAlert({
-                id: 'search-api-error',
-                severity: 'error',
-                message: 'Došlo je do greške pri komunikaciji sa Solvex API-jem. Molimo pokušajte ponovo.'
-            });
+        } catch (err: any) {
+            console.error('[HotelSearchForm] Search failed:', err);
+            
+            if (err.isRateLimit || err.status === 429) {
+                addAlert({ 
+                    id: 'rate-limit-err', 
+                    severity: 'warning', 
+                    message: 'Milica se malo umorila od prevelikog broja pitanja. Molimo Vas sačekajte 60 sekundi pre sledećeg upita.' 
+                });
+            } else {
+                addAlert({ id: 'search-err', severity: 'error', message: 'Došlo je do greške u pretrazi.' });
+            }
         } finally {
             setIsSubmitting(false);
             setIsSearching(false);
         }
     };
 
-    const today = new Date().toISOString().split('T')[0];
-
     return (
         <form onSubmit={handleSearch} className="v6-search-form-advanced" noValidate>
-            
-            {/* 1. SELECTION MODES */}
             <SearchModeSelector />
+            
+            {(searchMode === 'semantic' || searchMode === 'hybrid') && (
+                <AIAssistantField onSearch={() => handleSearch()} isSubmitting={isSubmitting} />
+            )}
 
-            {/* 2. AI ASSISTANT FIELD */}
-            {(searchMode === 'semantic' || searchMode === 'hybrid') && <AIAssistantField />}
-
-            {/* 3. HERO SEARCH (Standard Destinacija - Hidden in pure Semantic) */}
             {searchMode !== 'semantic' && (
                 <div className="v6-search-primary-row">
                     <div className="v6-hero-input-wrapper">
-                        {/* ... rest of the destination logic remains same ... */}
-                    <div className="v6-hero-icon-faint">
-                        <Search className="icon-luxury" size={28} />
-                    </div>
-                    
-                    {/* Tags for destination if any */}
-                    <div className="v6-search-tags-overlay" style={{
-                        position: 'absolute', left: '60px', top: '50%', transform: 'translateY(-50%)',
-                        display: 'flex', gap: '8px', pointerEvents: 'none', zIndex: 5
-                    }}>
-                        {destinations.map(d => (
-                            <span key={d.id} style={{
-                                padding: '6px 14px', background: 'var(--v6-accent)', color: 'var(--v6-accent-text)',
-                                borderRadius: '12px', fontSize: '14px', fontWeight: 700, pointerEvents: 'auto',
-                                display: 'flex', alignItems: 'center', gap: '6px'
-                            }}>
-                                {d.name}
-                                <button type="button" onClick={() => removeDestination(d.id)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px' }}>✕</button>
-                            </span>
-                        ))}
-                    </div>
-
-                    <input 
-                        className="v6-hero-input"
-                        type="text"
-                        placeholder={destinations.length > 0 ? "" : "Unesite državu, destinaciju ili hotel..."}
-                        value={destInput}
-                        onChange={(e) => {
-                            setDestInput(e.target.value);
-                            setShowAutocomplete(e.target.value.length > 1);
-                        }}
-                        onFocus={() => destInput.length > 1 && setShowAutocomplete(true)}
-                        style={{ paddingLeft: destinations.length > 0 ? `${(destinations.length * 140) + 60}px` : '60px' }}
-                    />
-
-                    {/* Autocomplete Panel */}
-                    {showAutocomplete && destInput && (
-                        <div className="v6-autocomplete-panel">
-                            {autocompleteResults.map(item => (
-                                <div key={item.id} className="v6-autocomplete-item" onClick={() => handleSelectOption(item)}>
-                                    <div className="v6-item-type-icon">
-                                        {item.type === 'country' && <Flag size={18} />}
-                                        {item.type === 'city' && <MapPin size={18} />}
-                                        {item.type === 'hotel' && <Building2 size={18} />}
-                                    </div>
-                                    <div>
-                                        <div className="v6-item-main-text">{item.name}</div>
-                                        <div className="v6-item-sub-text">{item.sub}</div>
-                                    </div>
-                                </div>
-                            ))}
-                            {autocompleteResults.length === 0 && (
-                                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--v6-text-muted)' }}>
-                                    Nema rezultata za "{destInput}"
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </div>
-            )}
-
-            {/* 4. CONTROLS ROW (Bottom - Hidden in pure Semantic) */}
-            {searchMode !== 'semantic' && (
-                <div className="v6-search-controls-row">
-                
-                {/* DATES - Equal Width */}
-                <div className="v6-field-icon-wrapper v6-ctrl-box" onClick={() => setShowCalendar(true)}>
-                    <div className="v6-field-icon-faint"><Calendar className="icon-luxury" size={20} /></div>
-                    <div className="v6-field-input" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {checkIn ? (
-                            <>
-                                <span>{new Date(checkIn).toLocaleDateString('sr-RS')}</span>
-                                <span style={{ opacity: 0.3 }}>-</span>
-                                <span>{new Date(checkOut).toLocaleDateString('sr-RS')}</span>
-                            </>
-                        ) : null}
-                    </div>
-                </div>
-
-                {/* OCCUPANCY - Equal Width */}
-                <div className="v6-field-icon-wrapper v6-ctrl-box">
-                    <div className="v6-field-icon-faint"><Users className="icon-luxury" size={20} /></div>
-                    <div style={{ width: '100%' }}>
-                        <OccupancyWizard />
-                    </div>
-                </div>
-
-                {/* MEAL PLANS */}
-                <div className="v6-field-icon-wrapper v6-ctrl-box">
-                    <div className="v6-field-icon-faint"><UtensilsCrossed className="icon-luxury" size={18} /></div>
-                    <div style={{ width: '100%' }}>
-                        <MultiSelectDropdown 
-                            options={MEAL_PLAN_OPTIONS}
-                            selected={filters.mealPlans || ['all']}
-                            onChange={(val) => updateFilter('mealPlans', val)}
-                            placeholder="Sve usluge"
-                            displayType="codes"
-                        />
-                    </div>
-                </div>
-
-                {/* BUDGET */}
-                <div className="v6-field-icon-wrapper v6-budget-container">
-                    <div className="v6-field-icon-faint"><DollarSign className="icon-luxury" size={20} /></div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap', color: 'var(--v6-text-muted)' }}>Ukupni budžet do</span>
-                        <input 
-                            placeholder="" 
-                            className="v6-field-input-clean" 
-                            type="number"
-                            value={filters.budgetTo}
-                            onChange={e => updateFilter('budgetTo', e.target.value)}
-                            style={{ 
-                                flex: 1, 
-                                background: 'transparent', 
-                                border: 'none', 
-                                outline: 'none', 
-                                padding: 0, 
-                                fontWeight: 800, 
-                                fontSize: '15px', 
-                                color: 'var(--v6-text-primary)',
-                                boxShadow: 'none'
-                            }}
-                        />
-                    </div>
-                </div>
-
-                {/* NATIONALITY */}
-                <div className="v6-field-icon-wrapper v6-ctrl-box" style={{ position: 'relative' }}>
-                    <div className="v6-field-icon-faint"><Globe className="icon-luxury" size={20} /></div>
-                    <div className="v6-field-input" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', paddingRight: '12px' }}>
-                        <input 
-                            type="text"
-                            placeholder="Zemlja / Passport"
-                            value={showNationalityPicker ? nationalitySearch : (nationality === 'RS' ? 'Srbija' : NATIONALITY_OPTIONS.find(n => n.value === nationality)?.label)}
-                            onChange={(e) => {
-                                setNationalitySearch(e.target.value);
-                                if (!showNationalityPicker) setShowNationalityPicker(true);
-                            }}
-                            onFocus={() => {
-                                setShowNationalityPicker(true);
-                                setNationalitySearch('');
-                            }}
-                            className="v6-field-input-clean"
-                            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontWeight: 600 }}
-                        />
-                        <ChevronDown 
-                            size={14} 
-                            style={{ opacity: 0.4, cursor: 'pointer' }} 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setShowNationalityPicker(!showNationalityPicker);
-                            }}
-                        />
+                        <div className="v6-hero-icon-faint"><Search size={28} /></div>
                         
-                        {showNationalityPicker && (
-                            <div style={{ 
-                                position: 'absolute', top: '105%', left: 0, right: 0, zIndex: 1100, 
-                                background: 'var(--v6-bg-card)', border: '1px solid var(--v6-border)', 
-                                borderRadius: '12px', padding: '8px', boxShadow: 'var(--v6-shadow-lg)', maxHeight: '250px', overflowY: 'auto'
-                            }}>
-                                {filteredNationalities.map(n => (
-                                    <div 
-                                        key={n.value} 
-                                        onClick={(e) => { 
-                                            e.stopPropagation(); 
-                                            setNationality(n.value); 
-                                            setShowNationalityPicker(false);
-                                            setNationalitySearch('');
-                                        }}
-                                        className="v6-autocomplete-item"
-                                        style={{ padding: '8px 12px', fontSize: '14px' }}
-                                    >
-                                        {n.label}
+                        <div className="v6-search-tags-overlay" style={{
+                            position: 'absolute', left: '60px', top: '50%', transform: 'translateY(-50%)',
+                            display: 'flex', gap: '8px', pointerEvents: 'none', zIndex: 5
+                        }}>
+                            {destinations.map(d => (
+                                <span key={d.id} style={{
+                                    padding: '6px 14px', background: 'var(--v6-accent)', color: 'var(--v6-accent-text)',
+                                    borderRadius: '12px', fontSize: '14px', fontWeight: 700, pointerEvents: 'auto',
+                                    display: 'flex', alignItems: 'center', gap: '6px'
+                                }}>
+                                    {d.name}
+                                    <button type="button" onClick={() => removeDestination(d.id)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px' }}>✕</button>
+                                </span>
+                            ))}
+                        </div>
+
+                        <input 
+                            className="v6-hero-input"
+                            type="text"
+                            placeholder={destinations.length > 0 ? "" : "Unesite državu, destinaciju ili hotel..."}
+                            value={destInput}
+                            onChange={(e) => {
+                                setDestInput(e.target.value);
+                                setShowAutocomplete(e.target.value.length > 1);
+                            }}
+                            onFocus={() => destInput.length > 1 && setShowAutocomplete(true)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && destInput.trim()) {
+                                    e.preventDefault();
+                                    handleSelectOption({ name: destInput.trim(), type: 'city' });
+                                }
+                            }}
+                            style={{ paddingLeft: destinations.length > 0 ? `${(destinations.length * 150) + 60}px` : '60px' }}
+                        />
+
+                        {showAutocomplete && (
+                            <div className="v6-autocomplete-panel">
+                                {autocompleteResults.map(item => (
+                                    <div key={item.id} className="v6-autocomplete-item" onClick={() => handleSelectOption(item)}>
+                                        <div className="v6-item-type-icon">
+                                            {item.type === 'city' ? <MapPin size={18} /> : <Building2 size={18} />}
+                                        </div>
+                                        <div>
+                                            <div className="v6-item-main-text">{item.name}</div>
+                                            <div className="v6-item-sub-text">{item.sub}</div>
+                                        </div>
                                     </div>
                                 ))}
-                                {filteredNationalities.length === 0 && (
-                                    <div style={{ padding: '12px', textAlign: 'center', color: 'var(--v6-text-muted)', fontSize: '12px' }}>
-                                        Nema rezultata
-                                    </div>
-                                )}
                             </div>
                         )}
                     </div>
                 </div>
+            )}
 
-                {/* SEARCH BUTTON */}
-                <button type="submit" className="v6-search-btn-advanced btn-primary" disabled={isSubmitting}>
-                    {isSubmitting ? '...' : (
-                        <>
-                            <Search className="icon-luxury" size={20} stroke="white" />
-                            Traži
-                        </>
-                    )}
-                </button>
+            {searchMode !== 'semantic' && (
+                <div className="v6-search-controls-row">
+                    {/* Datum */}
+                    <div className="v6-field-icon-wrapper v6-ctrl-box" onClick={() => setShowCalendar(true)}>
+                        <div className="v6-field-icon-faint"><Calendar size={20} /></div>
+                        <div className="v6-field-input" style={{ cursor: 'pointer' }}>
+                            {checkIn ? `${new Date(checkIn).toLocaleDateString('sr-RS')} - ${checkOut ? new Date(checkOut).toLocaleDateString('sr-RS') : ''}` : 'Odaberite datume'}
+                        </div>
+                    </div>
+
+                    {/* Putnici */}
+                    <div className="v6-field-icon-wrapper v6-ctrl-box">
+                        <div className="v6-field-icon-faint"><Users size={20} /></div>
+                        <div style={{ width: '100%' }}><OccupancyWizard /></div>
+                    </div>
+
+                    {/* Usluga */}
+                    <div className="v6-field-icon-wrapper v6-ctrl-box">
+                        <div className="v6-field-icon-faint"><UtensilsCrossed size={18} /></div>
+                        <div style={{ width: '100%' }}>
+                            <MultiSelectDropdown 
+                                options={MEAL_PLAN_OPTIONS}
+                                selected={filters.mealPlans || ['all']}
+                                onChange={(val) => updateFilter('mealPlans', val)}
+                                placeholder="Sve usluge"
+                                displayType="codes"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Nacionalnost */}
+                    <div className="v6-field-icon-wrapper v6-budget-container" style={{ position: 'relative' }}>
+                        <div className="v6-field-icon-faint"><Globe size={20} /></div>
+                        <div className="v6-field-input" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}>
+                            <input 
+                                type="text"
+                                placeholder="Zemlja / Passport"
+                                value={showNationalityPicker ? nationalitySearch : (NATIONALITY_OPTIONS.find(n => n.value === nationality)?.label || 'Srbija')}
+                                onChange={(e) => setNationalitySearch(e.target.value)}
+                                onFocus={() => { setShowNationalityPicker(true); setNationalitySearch(''); }}
+                                className="v6-field-input-clean"
+                                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontWeight: 600 }}
+                            />
+                            <ChevronDown size={14} style={{ opacity: 0.4 }} onClick={() => setShowNationalityPicker(!showNationalityPicker)} />
+                            
+                            {showNationalityPicker && (
+                                <div className="v6-autocomplete-panel" style={{ top: '105%', maxHeight: '250px', overflowY: 'auto' }}>
+                                    {filteredNationalities.map(n => (
+                                        <div key={n.value} onClick={() => { setNationality(n.value); setShowNationalityPicker(false); }} className="v6-autocomplete-item">
+                                            {n.label}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <button type="submit" className="v6-search-btn-advanced btn-primary" disabled={isSubmitting}>
+                        {isSubmitting ? '...' : <><Search size={20} stroke="white" /> Traži</>}
+                    </button>
                 </div>
             )}
 
-            {/* EXPEDIA CALENDAR MODAL */}
             {showCalendar && (
                 <ExpediaCalendar
                     startDate={checkIn}

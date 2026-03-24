@@ -80,6 +80,27 @@ class AIUsageService {
     }
 
     /**
+     * Check if a provider is within quota before execution
+     */
+    isWithinQuota(provider: 'gemini' | 'gemini-embedding' | 'openai' | 'claude'): boolean {
+        const usage = this.getUsage(provider);
+        const limit = this.limits[provider];
+        return usage.dailyUsed < limit;
+    }
+
+    /**
+     * Throws an error if over quota
+     */
+    checkQuotaBeforeExecution(provider: 'gemini' | 'gemini-embedding' | 'openai' | 'claude') {
+        if (!this.isWithinQuota(provider)) {
+            const error = new Error(`Dnevni limit za AI (${provider}) je dostignut. Molim pokušajte sutra.`);
+            (error as any).status = 403;
+            (error as any).isQuotaExceeded = true;
+            throw error;
+        }
+    }
+
+    /**
      * Get current usage for a provider
      */
     getUsage(provider: 'gemini' | 'gemini-embedding' | 'openai' | 'claude'): UsageData {

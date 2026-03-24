@@ -688,6 +688,22 @@ export interface SearchState {
     // ─────────────────────────────────────────────────────────────
     savedOffers: SavedOffer[];
     lastPriceChangeNotification?: PriceChangeNotification;
+
+    // ─────────────────────────────────────────────────────────────
+    // 17. INTERACTIVE & RANGE (NEW: Faza 6.1)
+    // ─────────────────────────────────────────────────────────────
+    pendingClarification: {
+        type: 'pax_split' | 'dates' | null;
+        question: string;
+        options: Array<{ label: string, value: any }>;
+    } | null;
+    dateRangeResults: Array<{
+        checkIn: string;
+        checkOut: string;
+        price: number;
+        currency: string;
+        isRecommended?: boolean;
+    }>;
 }
 
 export interface SavedOffer {
