@@ -3,12 +3,6 @@
  * 
  * This module acts as a "Bridge" between our generic application architecture 
  * and the specific Solvex (Master-Interlook) API.
- * 
- * ARCHITECTURAL RULE:
- * 1. This is the ONLY file allowed to know about Solvex data structures.
- * 2. It translates generic requests into Solvex SOAP calls.
- * 3. It translates Solvex SOAP responses back into our generic Domain Model.
- * 4. This isolation ensures we can remove or swap Solvex without changing any UI or Business Logic.
  */
 
 import type {
@@ -152,7 +146,15 @@ export class SolvexProvider implements HotelProvider {
      * Destination Mapping Dictionary
      */
     private mapDestinationToCityId(destination: string): number | undefined {
-        const d = destination.toLowerCase();
+        const normalize = (s: string) => s.toLowerCase()
+            .replace(/č/g, 'c')
+            .replace(/ć/g, 'c')
+            .replace(/š/g, 's')
+            .replace(/ž/g, 'z')
+            .replace(/đ/g, 'dj');
+            
+        const d = normalize(destination);
+        
         if (d.includes('bansko')) return 9;
         if (d.includes('borovec') || d.includes('borovets')) return 6;
         if (d.includes('pamporovo')) return 10;
@@ -160,7 +162,7 @@ export class SolvexProvider implements HotelProvider {
         if (d.includes('varna')) return 42;
         if (d.includes('burgas')) return 43;
         if (d.includes('zlatni pjasci') || d.includes('golden sands')) return 33;
-        if (d.includes('sunčev breg') || d.includes('sunny beach')) return 68;
+        if (d.includes('suncev breg') || d.includes('sunny beach') || d.includes('suncev')) return 68;
         if (d.includes('nesebar') || d.includes('nessebar')) return 1;
         return undefined;
     }
@@ -220,8 +222,8 @@ export class SolvexProvider implements HotelProvider {
             images: (solvexResult as any).hotel.images?.length > 0 ? (solvexResult as any).hotel.images : [`https://online.solvex.bg/Common/HotelImage.aspx?HotelKey=${solvexResult.hotel.id}`],
             description: (solvexResult as any).hotel.description || `Uživajte u boravku u hotelu ${cleanName} u destinaciji ${solvexResult.hotel.city.name}. Hotel nudi ${mealPlanName} uslugu.`,
             availability: this.bridgeAvailability(solvexResult.quotaType),
-            latitude: (solvexResult as any).hotel.latitude || 42.1354, // Fallback coordinates for Bulgaria if missing
-            longitude: (solvexResult as any).hotel.longitude || 24.7453,
+            latitude: (solvexResult as any).hotel.latitude || 43.2847,
+            longitude: (solvexResult as any).hotel.longitude || 28.0416,
             checkIn,
             checkOut,
             nights,

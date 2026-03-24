@@ -30,7 +30,8 @@ export type SearchModeType =
     | 'immersive'       // Fullscreen immersive
     | 'immersive-map'   // Map Explorer
     | 'semantic'        // AI Semantic Search
-    | 'hybrid';         // AI Semantic + Fields
+    | 'hybrid'          // AI Semantic + Fields
+    | 'range';          // NEW: Flexible date range search
 
 // ─────────────────────────────────────────────────────────────
 // 3. AVAILABILITY STATUS (Semafor Logika)
@@ -704,6 +705,7 @@ export interface SearchState {
         currency: string;
         isRecommended?: boolean;
     }>;
+    enabledProviders?: Record<string, boolean>;
 }
 
 export interface SavedOffer {

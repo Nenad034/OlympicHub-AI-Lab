@@ -41,7 +41,8 @@ import {
     ChevronDown,
     Brain,
     GripVertical,
-    Layers
+    Layers,
+    Zap
 } from 'lucide-react';
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
@@ -63,6 +64,7 @@ interface NavItemDef {
     icon: React.ElementType;
     label: string;
     subItems?: SubItem[];
+    className?: string;
 }
 
 const HorizontalNav: React.FC = () => {
@@ -90,17 +92,6 @@ const HorizontalNav: React.FC = () => {
             ]
         },
         {
-            to: '/operational-reports',
-            icon: Activity,
-            label: 'Izveštaji',
-            subItems: [
-                { to: '/operational-reports?tab=inventory', label: 'Inventory', icon: Calendar },
-                { to: '/operational-reports?tab=stats', label: 'PAX & Statistika', icon: BarChart3 },
-                { to: '/operational-reports?tab=analytics', label: 'Analytics', icon: TrendingUp },
-                { to: '/operational-reports?tab=rooming', label: 'Rooming', icon: Users }
-            ]
-        },
-        {
             to: '/financial-hub',
             icon: PieChart,
             label: 'Finansije',
@@ -112,11 +103,23 @@ const HorizontalNav: React.FC = () => {
             ]
         },
         {
+            to: '/operational-reports',
+            icon: Activity,
+            label: 'Izveštaji',
+            subItems: [
+                { to: '/operational-reports?tab=inventory', label: 'Inventory', icon: Calendar },
+                { to: '/operational-reports?tab=stats', label: 'PAX & Statistika', icon: BarChart3 },
+                { to: '/operational-reports?tab=analytics', label: 'Analytics', icon: TrendingUp },
+                { to: '/operational-reports?tab=rooming', label: 'Rooming', icon: Users }
+            ]
+        },
+        {
             to: '/production',
             icon: Package,
             label: t.production,
             subItems: [
                 { to: '/smart-search', label: 'Smart Search ✨', icon: Sparkles },
+                { to: '/smart-search-v2', label: 'Smart Search V2 🚀', icon: Zap },
                 { to: '/production?view=accommodations', label: 'Smeštaj', icon: Building2 },
                 { to: '/production?tab=trips', label: 'Grupna Putovanja', icon: Users },
                 { to: '/production?tab=trips', label: 'Individualna', icon: User },
@@ -132,7 +135,7 @@ const HorizontalNav: React.FC = () => {
             subItems: [
                 { to: '/api-connections', label: 'API Connections', icon: SettingsIcon },
                 { to: '/suppliers', label: 'Lista Dobavljača', icon: Users },
-                { to: '/supplier-admin', label: 'Upravljanje', icon: Building2 },
+                { to: '/suppliers?tab=matrix', label: 'Matrica Cene', icon: Building2 },
                 { to: '/pricing-intelligence', label: 'Pricing Rules', icon: DollarSign }
             ]
         },
@@ -151,10 +154,12 @@ const HorizontalNav: React.FC = () => {
             label: 'Moduli',
             subItems: [
                 { to: '/modules', label: 'Svi Moduli', icon: LayoutGrid },
+                { to: '/smart-marketing', label: 'Smart AI Marketing', icon: Brain },
                 { to: '/b2b-promo-manager', label: 'Promo Manager', icon: Sparkles },
                 { to: '/katana', label: 'Katana Engine', icon: Cpu },
             ]
         },
+        { to: '/mail', icon: Mail, label: 'Prime Mail', className: 'prime-mail-nav-item' },
         {
             to: '/settings',
             icon: SettingsIcon,
@@ -172,7 +177,7 @@ const HorizontalNav: React.FC = () => {
     ];
 
     const [staffNavOrder, setStaffNavOrder] = React.useState<NavItemDef[]>(() => {
-        const saved = localStorage.getItem('horizontal_nav_order');
+        const saved = localStorage.getItem('horizontal_nav_order_v7');
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
@@ -184,7 +189,7 @@ const HorizontalNav: React.FC = () => {
     });
 
     React.useEffect(() => {
-        localStorage.setItem('horizontal_nav_order', JSON.stringify(staffNavOrder.map(i => ({ to: i.to }))));
+        localStorage.setItem('horizontal_nav_order_v7', JSON.stringify(staffNavOrder.map(i => ({ to: i.to }))));
     }, [staffNavOrder]);
 
     const [openMenu, setOpenMenu] = React.useState<string | null>(null);
@@ -244,7 +249,7 @@ const HorizontalNav: React.FC = () => {
                                     </div>
                                     <NavLink
                                         to={item.to}
-                                        className={({ isActive }) => navItemClass(isActive || (openMenu === item.to))}
+                                        className={({ isActive }) => `${navItemClass(isActive || (openMenu === item.to))} ${item.className || ''}`}
                                         onClick={(e) => {
                                             if (item.subItems) e.preventDefault();
                                         }}
@@ -256,9 +261,6 @@ const HorizontalNav: React.FC = () => {
                                 </div>
                             </Reorder.Item>
                         ))}
-                        <NavLink to="/mail" className={({ isActive }) => navItemClass(isActive)} style={{ color: '#FFD700', marginLeft: '12px' }}>
-                            <Mail size={18} /> <span>Prime Mail</span>
-                        </NavLink>
 
                         {userLevel === 6 && !impersonatedSubagent ? (
                             <div style={{ display: 'flex', gap: '8px', marginLeft: '12px', alignItems: 'center' }}>

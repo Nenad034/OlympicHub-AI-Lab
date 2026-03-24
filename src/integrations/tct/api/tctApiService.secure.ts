@@ -5,9 +5,15 @@
 import { supabase } from '../../../supabaseClient';
 
 const callEdgeFunction = async (endpoint: string, body: any) => {
-    const baseUrl = 'https://imc-dev.tct.travel';
-    const apiKey = '689b54e328f3e759abfdced76ad8e8d0';
-    const username = 'nenad.tomic@olympic.rs';
+    const rawBaseUrl = import.meta.env.VITE_TCT_API_URL || 'https://imc-dev.tct.travel';
+    // Clean base URL - remove trailing /api/v1 if present to avoid dual /v1 in path
+    const baseUrl = rawBaseUrl.replace(/\/api\/v1\/?$/, '');
+    
+    const apiKey = import.meta.env.VITE_TCT_PASSWORD || '689b54e328f3e759abfdced76ad8e8d0';
+    const username = import.meta.env.VITE_TCT_USERNAME || 'nenad.tomic@olympic.rs';
+
+    // CORS Proxy for browser-side requests
+    const PROXY_URL = 'https://corsproxy.io/?';
 
     // TCT MAPIRANJE
     const mappedBody = { ...body };
@@ -15,10 +21,9 @@ const callEdgeFunction = async (endpoint: string, body: any) => {
     if (mappedBody.nationality === 'RS' || mappedBody.nationality === 'Serbia') mappedBody.nationality = '324667';
     if (mappedBody.residence === 'RS' || mappedBody.residence === 'Serbia') mappedBody.residence = '324667';
 
-    // Pokušaćemo tri različita načina autentifikacije koje TCT podržava
+    // TCT usually expects Basic Auth with API Key as password
     const authCombinations = [
         { user: username, pass: apiKey },
-        { user: username, pass: '' },
         { user: apiKey, pass: '' }
     ];
 
@@ -27,11 +32,13 @@ const callEdgeFunction = async (endpoint: string, body: any) => {
     for (const auth of authCombinations) {
         const authHeader = `Basic ${btoa(auth.user + ':' + auth.pass)}`;
 
-        let url = `${baseUrl}/v1/hotel/searchSync`;
-        if (body.endpoint === 'nationalities') url = `${baseUrl}/v1/nbc/nationalities`;
-        if (body.endpoint === 'geography' || endpoint === 'geography') url = `${baseUrl}/v1/nbc/geography`;
+        let apiPath = `/v1/hotel/searchSync`;
+        if (body.endpoint === 'nationalities') apiPath = `/v1/nbc/nationalities`;
+        if (body.endpoint === 'geography' || endpoint === 'geography') apiPath = `/v1/nbc/geography`;
 
-        const response = await fetch(url, {
+        const fullUrl = `${PROXY_URL}${baseUrl}${apiPath}`;
+
+        const response = await fetch(fullUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -49,7 +56,7 @@ const callEdgeFunction = async (endpoint: string, body: any) => {
             return response.json();
         }
 
-        lastError = await response.json().catch(() => ({}));
+        lastError = await response.json().catch(() => ({ error: 'Auth/Request failed' }));
     }
 
     throw new Error(JSON.stringify(lastError) || `Auth failed`);

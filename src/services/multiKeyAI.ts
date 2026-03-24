@@ -30,7 +30,9 @@ interface GenerateOptions {
     temperature?: number;
     maxOutputTokens?: number;
     tools?: any[]; // For function calling
-    history?: { role: 'user' | 'ai' | 'player', text: string }[];
+    history?: { role: 'user' | 'ai' | 'player' | 'model', text: string }[];
+    attachment?: { name: string; type: string; base64: string; mimeType: string; preview?: string };
+    systemPrompt?: string;
 }
 
 class MultiKeyAIService {
@@ -59,7 +61,7 @@ class MultiKeyAIService {
             keys.push({
                 key: 'PROXY',
                 name: 'Supabase Proxy (Secure)',
-                priority: 1,
+                priority: 2,
                 enabled: true,
                 failureCount: 0,
                 lastFailure: null,
@@ -74,7 +76,7 @@ class MultiKeyAIService {
             keys.push({
                 key: openRouterKey.trim(),
                 name: 'OpenRouter (Multi-Model)',
-                priority: 2,
+                priority: 1,
                 enabled: true,
                 failureCount: 0,
                 lastFailure: null,
@@ -272,22 +274,46 @@ class MultiKeyAIService {
                     const response = await aiRateLimiter.queueRequest(async () => {
                         if (apiKey.provider === 'openrouter') {
                             console.log(`🌐 [MULTI-KEY] Routing through OpenRouter...`);
+                            
+                            // Format messages for OpenRouter (multimodal if attachment is present)
+                            const messages: any[] = [];
+                            
+                            if (options.systemPrompt) {
+                                messages.push({ role: 'system', content: options.systemPrompt });
+                            }
+
+                            if (options.history) {
+                                options.history.forEach(h => {
+                                    messages.push({ 
+                                        role: (h.role === 'ai' || h.role === 'model') ? 'assistant' : 'user', 
+                                        content: h.text 
+                                    });
+                                });
+                            }
+
+                            if (options.attachment && options.attachment.mimeType.startsWith('image/')) {
+                                messages.push({
+                                    role: 'user',
+                                    content: [
+                                        { type: 'text', text: prompt || `Analiziraj ovu sliku: ${options.attachment.name}` },
+                                        { type: 'image_url', image_url: { url: `data:${options.attachment.mimeType};base64,${options.attachment.base64}` } }
+                                    ]
+                                });
+                            } else {
+                                messages.push({ role: 'user', content: prompt });
+                            }
+
                             const orResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                                 method: "POST",
                                 headers: {
                                     "Authorization": `Bearer ${apiKey.key}`,
                                     "HTTP-Referer": window.location.origin,
-                                    "X-Title": "Prime Smart Search",
+                                    "X-Title": "Olympic Hub",
                                     "Content-Type": "application/json"
                                 },
                                 body: JSON.stringify({
                                     "model": model.includes('gemini') ? "google/gemini-2.0-flash-001" : model,
-                                    "messages": options.history 
-                                        ? [...options.history.map(h => ({ 
-                                            role: h.role === 'ai' ? 'assistant' : 'user', 
-                                            content: h.text 
-                                          })), { role: 'user', content: prompt }]
-                                        : [{ role: 'user', content: prompt }],
+                                    "messages": messages,
                                     "temperature": options.temperature ?? 0.7,
                                     "max_tokens": options.maxOutputTokens
                                 })
@@ -304,7 +330,8 @@ class MultiKeyAIService {
                                     prompt,
                                     model: model,
                                     temperature: options.temperature,
-                                    maxTokens: options.maxOutputTokens
+                                    maxTokens: options.maxOutputTokens,
+                                    history: options.history
                                 }
                             });
 
@@ -319,12 +346,37 @@ class MultiKeyAIService {
                                     temperature: options.temperature,
                                     maxOutputTokens: options.maxOutputTokens
                                 },
-                                tools: options.tools
+                                tools: options.tools,
+                                systemInstruction: options.systemPrompt
                             });
 
-                            // Start a chat if tools are provided to enable multi-turn function calling
-                            if (options.tools) {
-                                const chat = geminiModel.startChat();
+                            // Handle history mapping for Gemini
+                            const geminiHistory = (options.history || []).map(h => ({
+                                role: (h.role === 'ai' || h.role === 'model') ? 'model' : 'user',
+                                parts: [{ text: h.text }]
+                            }));
+
+                            // If attachment is present (Vision / Multimodal)
+                            if (options.attachment) {
+                                const parts: any[] = [
+                                    { text: prompt || `Analiziraj ovaj fajl: ${options.attachment.name}` },
+                                    {
+                                        inline_data: {
+                                            mime_type: options.attachment.mimeType,
+                                            data: options.attachment.base64
+                                        }
+                                    }
+                                ];
+                                
+                                const result = await geminiModel.generateContent({ contents: [...geminiHistory.map(h => ({ role: h.role, parts: h.parts })), { role: 'user', parts }] });
+                                return result.response.text();
+                            }
+
+                            // Normal chat with history or tools
+                            if (options.history || options.tools) {
+                                const chat = geminiModel.startChat({
+                                    history: geminiHistory,
+                                });
                                 const result = await chat.sendMessage(prompt);
                                 return result.response.text();
                             } else {

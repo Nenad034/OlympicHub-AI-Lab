@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
     Send, Loader2, X, VolumeX, Volume2, Bot, Maximize,
-    Copy, Check, Paperclip, Image, FileText
+    Copy, Check, Paperclip, Image, FileText, Mic, MicOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../../stores';
 import { ActivityLogger } from '../../../services/activityLogger';
+import { multiKeyAI } from '../../../services/multiKeyAI';
 import './MilicaChat.css';
 
 interface Attachment {
@@ -33,86 +34,7 @@ Pravila komunikacije:
 5. Ton je topao, profesionalan i pun poverenja. Budi koncizna (max 3-4 rečenice).
 ZABRANJENO: "Kao AI model...", "Naravno, rado ću vam pomoći".`;
 
-async function callGeminiDirect(
-    userMessage: string,
-    history: Message[],
-    attachment?: Attachment
-): Promise<string> {
-    const env = import.meta.env as Record<string, string>;
-    const apiKey = (env.VITE_GEMINI_KEY || env.VITE_GEMINI_API_KEY || '').trim();
-
-    if (!apiKey || apiKey.length < 10) {
-        throw new Error(`API ključ nije pronađen. Kontaktirajte administratora.`);
-    }
-
-    // Build history — Gemini requires first msg to be 'user'
-    const firstUserIdx = history.findIndex(m => m.role === 'user');
-    const validHistory = firstUserIdx >= 0 ? history.slice(firstUserIdx) : [];
-
-    const contents = [
-        ...validHistory.map(m => ({
-            role: m.role === 'user' ? 'user' : 'model',
-            parts: [{ text: m.text }]
-        })),
-        // Current user message, optionally with attachment
-        {
-            role: 'user',
-            parts: [
-                ...(attachment
-                    ? [{
-                        inline_data: {
-                            mime_type: attachment.mimeType,
-                            data: attachment.base64
-                        }
-                    }]
-                    : []
-                ),
-                { text: userMessage || (attachment ? `Analiziraj ovaj fajl: ${attachment.name}` : '') }
-            ]
-        }
-    ];
-
-    // Use vision model if there's an image attachment
-    const MODELS_TO_TRY = attachment?.mimeType.startsWith('image/')
-        ? ['gemini-1.5-flash', 'gemini-2.0-flash']
-        : ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
-
-    for (const model of MODELS_TO_TRY) {
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    system_instruction: { parts: [{ text: MILICA_SYSTEM_PROMPT }] },
-                    contents,
-                    generationConfig: { temperature: 0.8, maxOutputTokens: 1024 }
-                })
-            });
-
-            if (res.status === 429) {
-                console.warn(`[MilicaChat] 429 on ${model}, trying next...`);
-                continue;
-            }
-
-            if (!res.ok) {
-                const errText = await res.text();
-                throw new Error(`[${res.status}] ${errText.substring(0, 200)}`);
-            }
-
-            const data = await res.json();
-            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!text) throw new Error('Gemini nije vratio odgovor.');
-            console.log(`[MilicaChat] ✅ Success with: ${model}`);
-            return text;
-        } catch (e: unknown) {
-            const msg = e instanceof Error ? e.message : String(e);
-            if (msg.includes('429')) { continue; }
-            throw e;
-        }
-    }
-    throw new Error('Svi modeli su iscrpili kvotu. Pokušajte za 1 minut.');
-}
+// Redundant helper removed since we now use multiKeyAI
 
 function readFileAsBase64(file: File): Promise<{ base64: string; mimeType: string; preview?: string }> {
     return new Promise((resolve, reject) => {
@@ -142,6 +64,7 @@ export const MilicaChat: React.FC = () => {
     const [dimensions, setDimensions] = useState({ width: 440, height: 620 });
     const [attachment, setAttachment] = useState<Attachment | null>(null);
     const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+    const [isListening, setIsListening] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const windowRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -150,8 +73,22 @@ export const MilicaChat: React.FC = () => {
     const speak = useCallback((text: string) => {
         if (isMuted) return;
         window.speechSynthesis.cancel();
+        
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'sr-RS';
+        
+        // Try to find a Serbian voice
+        const voices = window.speechSynthesis.getVoices();
+        const serbianVoice = voices.find(v => v.lang.startsWith('sr') || v.lang.startsWith('hr') || v.lang.startsWith('bs'));
+        
+        if (serbianVoice) {
+            utterance.voice = serbianVoice;
+        } else {
+            utterance.lang = 'sr-RS';
+        }
+
+        utterance.rate = 1.0;
+        utterance.pitch = 1.1; // Slightly higher pitch for a female persona
+        
         window.speechSynthesis.speak(utterance);
     }, [isMuted]);
 
@@ -199,11 +136,16 @@ export const MilicaChat: React.FC = () => {
         setIsThinking(true);
 
         try {
-            const response = await callGeminiDirect(textToSend, messages, sentAttachment || undefined);
+            const response = await multiKeyAI.generateContent(textToSend, {
+                history: messages.map(m => ({ role: m.role as any, text: m.text })),
+                attachment: sentAttachment || undefined,
+                systemPrompt: MILICA_SYSTEM_PROMPT,
+                temperature: 0.8
+            });
             setMessages(prev => [...prev, { role: 'ai', text: response }]);
             speak(response);
             const tokens = Math.ceil(textToSend.length / 4) + Math.ceil(response.length / 4);
-            ActivityLogger.logAIChat('milica-session', 'User', textToSend, tokens, 'gemini-1.5-flash');
+            ActivityLogger.logAIChat('milica-session', 'User', textToSend, tokens, 'multi-model');
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : String(e);
             console.error('[MilicaChat] Error:', e);
@@ -212,6 +154,48 @@ export const MilicaChat: React.FC = () => {
 
         setIsThinking(false);
     }, [input, attachment, isThinking, messages, speak]);
+
+    // Speech-to-Text (Voice Search)
+    const toggleListening = useCallback(() => {
+        if (isListening) {
+            setIsListening(false);
+            return;
+        }
+
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert('Vaš pretraživač ne podržava glasovni unos.');
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'sr-RS';
+        recognition.interimResults = true;
+        recognition.continuous = false;
+
+        recognition.onstart = () => {
+            setIsListening(true);
+        };
+
+        recognition.onresult = (event: any) => {
+            const transcript = Array.from(event.results)
+                .map((result: any) => result[0])
+                .map((result: any) => result.transcript)
+                .join('');
+            setInput(transcript);
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error('Speech recognition error:', event.error);
+            setIsListening(false);
+        };
+
+        recognition.onend = () => {
+            setIsListening(false);
+        };
+
+        recognition.start();
+    }, [isListening]);
 
     // Welcome message
     useEffect(() => {
@@ -367,6 +351,19 @@ export const MilicaChat: React.FC = () => {
                             placeholder={attachment ? `Dodaj komentar uz ${attachment.name}...` : 'Pošalji poruku Milici...'}
                             disabled={isThinking}
                         />
+                        <button
+                            className={`milica-voice-btn ${isListening ? 'listening' : ''}`}
+                            onClick={toggleListening}
+                            title={isListening ? 'Prekini slušanje' : 'Govori sa Milicom'}
+                            disabled={isThinking}
+                        >
+                            {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                            {isListening && <motion.div 
+                                className="milica-mic-pulse"
+                                animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                                transition={{ repeat: Infinity, duration: 2 }}
+                            />}
+                        </button>
                         <button
                             onClick={() => handleSend()}
                             disabled={isThinking || (!input.trim() && !attachment)}

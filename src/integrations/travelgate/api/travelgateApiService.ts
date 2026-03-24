@@ -88,8 +88,11 @@ export class TravelgateApiService {
             this.config.timeout || DEFAULT_TIMEOUT
         );
 
+        const PROXY_URL = 'https://corsproxy.io/?';
+        const fullUrl = `${PROXY_URL}${this.endpoint}`;
+
         try {
-            const response = await fetch(this.endpoint, {
+            const response = await fetch(fullUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

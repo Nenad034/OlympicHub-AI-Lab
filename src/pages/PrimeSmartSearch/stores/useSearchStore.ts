@@ -71,7 +71,7 @@ interface SearchActions {
     showPackageCheckout: boolean;
 
     // Ostalo (UI)Rezultati
-    setResults: (results: HotelSearchResult[]) => void;
+    setResults: (results: HotelSearchResult[], finished?: boolean) => void;
     setSelectedHotel: (hotel: HotelSearchResult | null) => void;
 
     // Flight Rezultati
@@ -140,6 +140,7 @@ interface SearchActions {
     // Interactive & Range (Faza 6.1)
     setPendingClarification: (val: SearchState['pendingClarification']) => void;
     setDateRangeResults: (results: SearchState['dateRangeResults']) => void;
+    setEnabledProviders: (providers: Record<string, boolean>) => void;
 
     // Reset
     resetSearch: () => void;
@@ -202,6 +203,7 @@ const initialState: SearchState = {
     lastPriceChangeNotification: undefined,
     pendingClarification: null,
     dateRangeResults: [],
+    enabledProviders: { solvex: true, opengreece: true, tct: true, filos: true, mtsglobe: true, travelgate: true, santsg: true },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -294,7 +296,11 @@ export const useSearchStore = create<SearchState & SearchActions>((set, get) => 
     setSearchPerformed: (searchPerformed) => set({ searchPerformed }),
 
     // ── Hotel Rezultati ─────────────────────────────────────
-    setResults: (results) => set({ results, isSearching: false, searchPerformed: true }),
+    setResults: (results, finished = true) => set({ 
+        results, 
+        isSearching: !finished, 
+        searchPerformed: true 
+    }),
     setSelectedHotel: (selectedHotel) => set({ selectedHotel }),
 
     // ── Flight Rezultati ────────────────────────────────────
@@ -423,6 +429,7 @@ export const useSearchStore = create<SearchState & SearchActions>((set, get) => 
     // ── Interactive & Range (Faza 6.1) ─────────────────────────
     setPendingClarification: (pendingClarification) => set({ pendingClarification }),
     setDateRangeResults: (dateRangeResults) => set({ dateRangeResults }),
+    setEnabledProviders: (enabledProviders) => set({ enabledProviders }),
 
     // ── Reset ────────────────────────────────────────────────
     resetSearch: () => set(initialState)

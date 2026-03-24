@@ -15,6 +15,8 @@ export interface SolvexHotelSearchParams {
     childrenAges?: number[];
     rooms?: number;
     tariffId?: number; // 0 = Ordinary, 1993 = Non-Refundable
+    board?: string[];
+    stars?: string[] | number[];
 }
 
 export interface SolvexHotel {

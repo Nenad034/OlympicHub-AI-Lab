@@ -61,7 +61,8 @@ const SUPABASE_ANON_KEY = getEnvVar('VITE_SUPABASE_ANON_KEY', '');
 
 // By default we use the direct API in local (via Vite proxy),
 // but for production we use the Supabase Edge Function Proxy.
-const USE_PROXY = !isDev && !!SUPABASE_URL;
+// USER REQUEST: Always use our API aggregator (proxy) if available
+const USE_PROXY = !!SUPABASE_URL;
 
 const SOLVEX_API_URL = USE_PROXY
     ? `${SUPABASE_URL}/functions/v1/solvex-proxy`
@@ -230,91 +231,81 @@ export async function makeSoapRequest<T>(
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort('Timeout'), 60000); // 60 seconds timeout per request
+    const timeoutId = setTimeout(() => controller.abort('Timeout'), 30000); // 30s timeout
 
-    // Combine internal timeout with external signal if provided
-    const combinedSignal = signal ? (AbortSignal as any).any([controller.signal, signal]) : controller.signal;
+    let currentUrl = SOLVEX_API_URL;
+    const headers: Record<string, string> = {
+        'Content-Type': 'text/xml; charset=utf-8',
+        'SOAPAction': `"${method.startsWith('http') ? method : `http://www.megatec.ru/${method}`}"`
+    };
+
+    if (USE_PROXY && SUPABASE_ANON_KEY) {
+        headers['Authorization'] = `Bearer ${SUPABASE_ANON_KEY}`;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 3;
 
     try {
-        const headers: Record<string, string> = {
-            'Content-Type': 'text/xml; charset=utf-8',
-            'SOAPAction': `"${method.startsWith('http') ? method : `http://www.megatec.ru/${method}`}"`
-        };
-
-        if (USE_PROXY && SUPABASE_ANON_KEY) {
-            headers['Authorization'] = `Bearer ${SUPABASE_ANON_KEY}`;
-        }
-
-        let lastXmlText = '';
-        let lastError: any = null;
-        let attempts = 0;
-        const maxAttempts = 3;
-
         while (attempts < maxAttempts) {
             attempts++;
             try {
-                const response = await fetch(SOLVEX_API_URL, {
+                if (isDebug) console.log(`[Solvex SOAP] ${method} Attempt ${attempts} -> ${currentUrl}`);
+                
+                const response = await fetch(currentUrl, {
                     method: 'POST',
                     headers,
                     body: soapEnvelope,
-                    signal: combinedSignal
+                    signal: controller.signal
                 });
 
-                lastXmlText = await response.text();
+                const text = await response.text();
 
                 if (response.ok) {
                     clearTimeout(timeoutId);
-                    if (isDebug) console.log('[Solvex SOAP] Response:', lastXmlText);
-                    return parseSoapResponse<T>(lastXmlText);
+                    return parseSoapResponse<T>(text);
                 }
 
-                // If we got a 500 error, it might be the proxy failing to connect (OS Error 104)
-                if (response.status === 500 && attempts < maxAttempts) {
-                    console.warn(`[Solvex SOAP] Attempt ${attempts} failed with 500. Retrying in 1.5s...`);
-                    await new Promise(resolve => setTimeout(resolve, 1500));
+                // If Aggregator (Supabase) fails with 5xx, switch to LOCAL fallback
+                if (currentUrl.includes('supabase') && (response.status === 500 || response.status === 502)) {
+                    console.warn(`⚠️ [Solvex Proxy] Aggregator failed (${response.status}). Falling back to LOCAL...`);
+                    currentUrl = SOLVEX_BASE_URL.startsWith('http') ? SOLVEX_BASE_URL : window.location.origin + SOLVEX_BASE_URL;
+                    delete headers['Authorization']; 
                     continue;
                 }
 
                 if (response.status === 403) {
-                    throw new Error(`Solvex API Forbidden (403). Moguće je da su kredencijali ispravni, ali IP adresa nije na beloj listi ili nemate pristup ovom metodu.`);
-                }
-                if (response.status === 401) {
-                    throw new Error(`Solvex Auth Unauthorized (401). Molimo proverite VITE_SOLVEX_LOGIN i PASSWORD.`);
+                    throw new Error(`Solvex API Forbidden (403). Moguće je da su kredencijali ispravni, ali IP adresa nije na beloj listi.`);
                 }
 
-                throw new Error(`Solvex API Error (${response.status}): ${response.statusText}\n\n--- REQUEST ---\n${soapEnvelope}\n\n--- RESPONSE ---\n${lastXmlText}`);
-            } catch (error) {
-                lastError = error;
-                // If it's a network error (not a Response Error), retry
-                if (attempts < maxAttempts && !(error instanceof Error && error.message.includes('Solvex API Error'))) {
-                    console.warn(`[Solvex SOAP] Attempt ${attempts} network error. Retrying in 2s...`, error);
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                throw new Error(`Solvex API Error (${response.status}): ${text}`);
+            } catch (err: any) {
+                if (err.name === 'AbortError' || err.message === 'Timeout') {
+                    throw new Error('Solvex API Timeout: Sistem trenutno sporije odgovara.');
+                }
+                
+                // On connection reset / network error, try local fallback
+                if (attempts < maxAttempts && currentUrl.includes('supabase')) {
+                    console.warn(`⚠️ [Solvex Proxy] Connection issue. Trying LOCAL fallback...`);
+                    currentUrl = SOLVEX_BASE_URL.startsWith('http') ? SOLVEX_BASE_URL : window.location.origin + SOLVEX_BASE_URL;
+                    delete headers['Authorization'];
                     continue;
                 }
-                throw error;
+                
+                if (attempts >= maxAttempts) throw err;
+                await new Promise(r => setTimeout(r, 1000));
             }
         }
-
-        throw lastError || new Error("Failed after max attempts");
+        throw new Error("Solvex API: Neuspeh nakon maksimalnog broja pokušaja."); 
     } catch (error) {
         clearTimeout(timeoutId);
-        console.error(`[Solvex SOAP] Error in ${method}:`, error);
-        console.error('[Solvex SOAP] Failed Request Payload:', soapEnvelope);
-
-        // RETHROW without formatting if it already has details
-        if (error instanceof Error && error.message.includes('--- REQUEST ---')) {
-            throw error;
-        }
-        if (error instanceof Error && (error.name === 'AbortError' || error.message.toLowerCase().includes('aborted'))) {
-            throw new Error('Solvex sistem trenutno sporije odgovara (Timeout). Preporučujemo da suzite filtere (npr. izaberete konkretan hotel ili kraći period) i pokušate ponovo.');
+        console.error(`[Solvex SOAP] Final Error:`, error);
+        
+        if (error instanceof Error && error.message.includes('Timeout')) {
+            throw new Error('Solvex sistem trenutno sporije odgovara (Timeout). Preporučujemo da suzite filtere i pokušate ponovo.');
         }
 
-        // If it's already a clean error, rethrow it
-        if (error instanceof Error && !error.message.includes('--- REQUEST ---')) {
-            throw error;
-        }
-
-        throw new Error(`Konekcija sa Solvex sistemom nije uspela (${error instanceof Error ? error.message : 'Network Error'}). Proverite internet konekciju ili VPN.`);
+        throw error;
     }
 }
 

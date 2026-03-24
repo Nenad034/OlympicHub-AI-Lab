@@ -18,7 +18,7 @@
  */
 
 import type { HotelProvider, HotelSearchParams, HotelSearchResult } from '../../services/providers/HotelProviderInterface' ;
-import { searchHotelsSync } from '../tctApi';
+import { searchHotelsSync } from './api/tctApi';
 
 export class TCTProvider implements HotelProvider {
     readonly name = 'TCT';

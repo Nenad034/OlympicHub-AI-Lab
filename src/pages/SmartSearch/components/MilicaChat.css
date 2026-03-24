@@ -280,6 +280,38 @@
     cursor: not-allowed;
 }
 
+/* Voice Chat Button */
+.milica-voice-btn {
+    background: transparent !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-secondary) !important;
+    position: relative;
+    overflow: visible !important;
+}
+
+.milica-voice-btn:hover {
+    color: #8E24AC !important;
+    border-color: #8E24AC !important;
+}
+
+.milica-voice-btn.listening {
+    color: #ef4444 !important;
+    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.milica-mic-pulse {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 12px;
+    background: rgba(239, 68, 68, 0.4);
+    z-index: -1;
+    pointer-events: none;
+}
+
 .milica-hotel-card {
     background: var(--bg-sidebar);
     border-radius: 16px;

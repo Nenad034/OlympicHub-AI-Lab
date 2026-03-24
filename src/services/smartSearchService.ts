@@ -3,10 +3,7 @@
  * Connects SmartSearch UI with appropriate providers based on search type
  */
 
-import { SolvexProvider } from '../integrations/solvex/SolvexProvider';
-import { SolvexAiProvider } from '../integrations/solvex/SolvexAiProvider';
-import { FilosProvider } from '../integrations/filos/FilosProvider';
-import { MtsGlobeProvider } from '../integrations/mtsglobe/MtsGlobeProvider';
+import { getHotelProviderManager } from './providers/HotelProviderManager';
 
 export interface RoomAllocation {
     adults: number;
@@ -34,6 +31,7 @@ export interface SmartSearchParams {
     nationality?: string;
     enabledProviders?: Record<string, boolean>;
     abortSignal?: AbortSignal;
+    onPartialResults?: (results: SmartSearchResult[]) => void;
 }
 
 export interface SmartSearchResult {
@@ -60,7 +58,7 @@ export interface SmartSearchResult {
 
 // Smart Search Configuration
 export const PROVIDER_MAPPING = {
-    hotel: { providers: ['solvex', 'filos', 'mtsglobe'], primary: 'solvex' },
+    hotel: { providers: ['Solvex', 'Filos', 'MtsGlobe', 'TCT'], primary: 'Solvex' },
     flight: { providers: [], primary: '' },
     package: { providers: [], primary: '' },
     transfer: { providers: [], primary: '' },
@@ -70,301 +68,157 @@ export const PROVIDER_MAPPING = {
 // Smart Search Cache (simple in-memory)
 const searchCache = new Map<string, { timestamp: number, results: SmartSearchResult[] }>();
 const CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+const PROVIDER_TIMEOUT = 30000; // 30s (adjusted for potential proxy overhead)
 
+/**
+ * Perform Smart Search (ORCHESTRATOR)
+ */
 export async function performSmartSearch(params: SmartSearchParams): Promise<SmartSearchResult[]> {
-    const cacheKey = JSON.stringify({
-        type: params.searchType,
-        dests: params.destinations.map(d => d.id || d.name).sort(),
-        in: params.checkIn,
-        out: params.checkOut,
-        rooms: params.roomConfig,
-        nat: params.nationality,
-        providers: params.enabledProviders
+    console.log('🚀 [START] Smart Search Orchestration:', params);
+    
+    // Check Cache
+    const cacheKey = JSON.stringify({ 
+        t: params.searchType, 
+        d: params.destinations.map(d => d.id), 
+        i: params.checkIn, 
+        o: params.checkOut, 
+        r: params.roomConfig 
     });
-
     const cached = searchCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
         console.log('[SmartSearchService] Returning results from cache...');
         return cached.results;
     }
 
-    console.log('[SmartSearchService] Starting multi-room search...', params);
-
-    // --- Transfer Search ---
-    if (params.searchType === 'transfer') {
-        return [
-            {
-                provider: 'Olympic',
-                type: 'transfer',
-                id: 'tr-1',
-                name: 'Privatni Transfer (Standard)',
-                location: params.destinations[0]?.name || 'Aerodrom - Hotel',
-                price: 45,
-                currency: 'EUR',
-                originalData: {}
-            }
-        ];
-    }
-
-    // --- Tour Search ---
-    if (params.searchType === 'tour') {
-        return [
-            {
-                provider: 'Olympic',
-                type: 'tour',
-                id: 'tour-1',
-                name: 'Obilazak grada sa vodičem',
-                location: params.destinations[0]?.name || 'Centar grada',
-                price: 25,
-                currency: 'EUR',
-                originalData: {}
-            }
-        ];
-    }
-
-    if (params.searchType !== 'hotel') {
-        return [];
-    }
-
-    const solvexAIProvider = new SolvexAiProvider();
-    const solvexProvider = params.enabledProviders?.solvexai ? solvexAIProvider : new SolvexProvider();
-    const filosProvider = new FilosProvider();
-    const mtsGlobeProvider = new MtsGlobeProvider();
+    const providerManager = getHotelProviderManager();
     const finalResultsMap = new Map<string, SmartSearchResult>();
+    
+    // Determine active providers and normalize them (case-insensitive match with registered names)
+    const registeredNames = providerManager.getProviderNames();
+    const rawKeys = params.enabledProviders 
+        ? Object.keys(params.enabledProviders).filter(k => (params.enabledProviders as any)[k])
+        : ['Solvex', 'Filos', 'MtsGlobe', 'Travelgate', 'TCT'];
 
-    try {
-        // STEP 1: Identify unique room configurations to minimize API calls
-        const uniqueConfigs = new Map<string, { adults: number, children: number, ages: number[], indices: number[] }>();
-        params.roomConfig.forEach((room: RoomAllocation, idx: number) => {
-            const key = `${room.adults}-${room.children}-${[...room.childrenAges].sort().join(',')}`;
-            if (!uniqueConfigs.has(key)) {
-                uniqueConfigs.set(key, { ...room, ages: room.childrenAges, indices: [idx] });
-            } else {
-                uniqueConfigs.get(key)!.indices.push(idx);
-            }
-        });
+    const activeProviderKeys = rawKeys.map(key => {
+        const match = registeredNames.find(name => name.toLowerCase() === key.toLowerCase());
+        return match || key;
+    });
 
-        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-        // STEP 2: Perform searches for each unique configuration
-        for (const dest of params.destinations) {
-            console.log(`[SmartSearchService] Querying for destination: ${dest.name}`);
-
-            const configResults: Array<{ config: any, results: any[] }> = [];
-
-            // Execute unique configs with a small staggered delay to be polite to the API
-            const configSearchPromises = Array.from(uniqueConfigs.values()).map(async (config, cIdx) => {
-                if (cIdx > 0) await delay(200 * cIdx); // Stagger by 200ms
-
-                const results: any[] = [];
-                const isSolvexEnabled = params.enabledProviders?.solvex || params.enabledProviders?.solvexai;
-                const noProvidersSpecified = !params.enabledProviders || Object.keys(params.enabledProviders).length === 0;
-
-                // SOLVEX SEARCH
-                if (isSolvexEnabled || noProvidersSpecified) {
-                    try {
-                        console.log(`[SmartSearchService] Calling SolvexProvider for ${dest.name}...`);
-                        // Authenticate only when Solvex is enabled
-                        await solvexProvider.authenticate();
-
-                        const solvexResults = await solvexProvider.search({
-                            destination: dest.name,
-                            checkIn: new Date(params.checkIn),
-                            checkOut: new Date(params.checkOut),
-                            adults: config.adults,
-                            children: config.children,
-                            childrenAges: config.ages,
-                            providerId: String(dest.id).startsWith('solvex-') ? String(dest.id).split('-')[1] : dest.id,
-                            providerType: (dest.type === 'city' || dest.type === 'destination') ? 'city' : (dest.type === 'country' ? 'country' : 'hotel'),
-                            targetProvider: String(dest.id).startsWith('solvex-') || dest.provider === 'Solvex' ? 'Solvex' : undefined,
-                            abortSignal: params.abortSignal,
-                            stars: params.stars,
-                            board: params.board,
-                            nationality: params.nationality
-                        });
-                        results.push(...solvexResults);
-                    } catch (e) {
-                        console.error('Solvex search failed', e);
-                        // Store the error so we can potentially inform the user
-                        (params as any)._lastError = e instanceof Error ? e.message : String(e);
-                    }
-                }
-
-                // FILOS SEARCH
-                const isFilosEnabled = params.enabledProviders?.filos;
-                if (isFilosEnabled || (noProvidersSpecified && PROVIDER_MAPPING.hotel.providers.includes('filos'))) {
-                    try {
-                        const filosResults = await filosProvider.search({
-                            destination: dest.name,
-                            checkIn: new Date(params.checkIn),
-                            checkOut: new Date(params.checkOut),
-                            adults: config.adults,
-                            children: config.children,
-                            childrenAges: config.ages,
-                            providerId: String(dest.id).startsWith('filos-') ? String(dest.id).split('-')[1] : undefined,
-                            abortSignal: params.abortSignal
-                        });
-                        console.log('[SmartSearchService] Filos returned:', filosResults.length, 'results');
-                        results.push(...filosResults);
-                    } catch (e) {
-                        console.error('Filos search segment failed', e);
-                    }
-                }
-
-                // MTS GLOBE SEARCH
-                const isMtsGlobeEnabled = params.enabledProviders?.mtsglobe;
-                if (isMtsGlobeEnabled || (noProvidersSpecified && PROVIDER_MAPPING.hotel.providers.includes('mtsglobe'))) {
-                    try {
-                        console.log(`[SmartSearchService] Calling MtsGlobeProvider for ${dest.name}...`);
-                        const mtsResults = await mtsGlobeProvider.search({
-                            destination: dest.name,
-                            checkIn: new Date(params.checkIn),
-                            checkOut: new Date(params.checkOut),
-                            adults: config.adults,
-                            children: config.children,
-                            childrenAges: config.ages,
-                            providerId: String(dest.id).startsWith('mtsglobe-') ? String(dest.id).split('-')[1] : undefined,
-                            abortSignal: params.abortSignal
-                        });
-                        console.log('[SmartSearchService] MTS Globe returned:', mtsResults.length, 'results');
-                        results.push(...mtsResults);
-                    } catch (e) {
-                        console.error('MTS Globe search failed', e);
-                    }
-                }
-
-                console.log('[SmartSearchService] Total results for this config:', results.length);
-                return { config, results };
-            });
-
-            configResults.push(...(await Promise.all(configSearchPromises)));
-            console.log('[SmartSearchService] Config results:', configResults.map(cr => ({ configKey: `${cr.config.adults}ad`, resultsCount: cr.results.length })));
-
-            // STEP 3: Merge results - a hotel must be available for ALL unique configurations
-            // We group results by hotel name (case-insensitive) for merging
-            const hotelsInAllConfigs = new Set<string>();
-
-            // Prime the set with hotels from the first configuration's results
-            if (configResults.length > 0) {
-                configResults[0].results.forEach(r => hotelsInAllConfigs.add(r.hotelName.toLowerCase()));
-            }
-
-            // Intersect with remaining configurations
-            for (let i = 1; i < configResults.length; i++) {
-                const currentHotelNames = new Set(configResults[i].results.map(r => r.hotelName.toLowerCase()));
-                for (const name of hotelsInAllConfigs) {
-                    if (!currentHotelNames.has(name)) {
-                        hotelsInAllConfigs.delete(name);
-                    }
-                }
-            }
-
-            console.log('[SmartSearchService] Hotels available in ALL configs:', Array.from(hotelsInAllConfigs));
-
-            // STEP 4: Build final merged results for hotels available in ALL configs
-            configResults.forEach(({ config, results }) => {
-                results.forEach(h => {
-                    const hotelKey = h.hotelName.toLowerCase();
-                    if (hotelsInAllConfigs.has(hotelKey)) {
-                        if (!finalResultsMap.has(hotelKey)) {
-                            let providerName = 'Solvex';
-                            if (String(h.id).startsWith('filos-')) providerName = 'Filos';
-                            else if (String(h.id).startsWith('mtsglobe-')) providerName = 'MtsGlobe';
-
-                            finalResultsMap.set(hotelKey, {
-                                provider: providerName,
-                                type: 'hotel',
-                                id: h.id,
-                                name: h.hotelName,
-                                location: h.location,
-                                price: 0, // Will sum up later
-                                currency: h.currency,
-                                stars: h.stars,
-                                mealPlan: h.mealPlan,
-                                mealPlans: h.mealPlan ? [h.mealPlan] : [],
-                                images: h.image ? [h.image] : [],
-                                rooms: [], // Legacy, will be empty in multi-room
-                                allocationResults: {},
-                                originalData: h.originalData,
-                                latitude: h.latitude,
-                                longitude: h.longitude
-                            });
-                        }
-
-                        const existing = finalResultsMap.get(hotelKey)!;
-                        config.indices.forEach((roomIdx: number) => {
-                            if (!existing.allocationResults![roomIdx]) {
-                                existing.allocationResults![roomIdx] = h.rooms || [];
-                            } else {
-                                // De-duplicate rooms by ID
-                                const currentRooms = existing.allocationResults![roomIdx];
-                                const newRooms = h.rooms || [];
-
-                                newRooms.forEach((nr: any) => {
-                                    if (!currentRooms.some((cr: any) => cr.id === nr.id)) {
-                                        currentRooms.push(nr);
-                                    }
-                                });
-                            }
-                        });
-
-                        // Extract all unique meal plans available for this combined hotel result
-                        const uniqueMealPlans = new Set<string>();
-                        if (existing.mealPlans) existing.mealPlans.forEach(mp => uniqueMealPlans.add(mp));
-                        if (existing.mealPlan) uniqueMealPlans.add(existing.mealPlan);
-
-                        Object.values(existing.allocationResults!).forEach((rooms: any) => {
-                            if (rooms && rooms.length > 0) {
-                                rooms.forEach((r: any) => {
-                                    if (r.mealPlan) uniqueMealPlans.add(r.mealPlan);
-                                });
-                            }
-                        });
-                        existing.mealPlans = Array.from(uniqueMealPlans);
-
-                        // 1. Calculate the total starting price (sum of minimums for each room index)
-                        // 2. Aggregate availability (if any room is 'on_request', the whole booking is 'on_request')
-                        let minTotal = 0;
-                        let worstStatus: 'available' | 'on_request' | 'unavailable' = 'available';
-
-                        Object.values(existing.allocationResults!).forEach((rooms: any) => {
-                            if (rooms && rooms.length > 0) {
-                                const minForThisRoom = Math.min(...rooms.map((r: any) => r.price));
-                                minTotal += Number(minForThisRoom);
-
-                                // Check statuses in this room allocation
-                                const hasAvailable = rooms.some((r: any) => r.availability === 'available');
-                                const hasOnRequest = rooms.some((r: any) => r.availability === 'on_request');
-                                const hasUnavailable = rooms.every((r: any) => r.availability === 'unavailable');
-
-                                if (hasUnavailable && worstStatus !== 'unavailable') {
-                                    worstStatus = 'unavailable';
-                                } else if (hasOnRequest && worstStatus === 'available') {
-                                    worstStatus = 'on_request';
-                                }
-                            }
-                        });
-                        existing.price = minTotal;
-                        existing.availability = worstStatus;
-                    }
-                });
-            });
+    // 1. Authenticate all providers in parallel
+    await Promise.all(activeProviderKeys.map(async (key) => {
+        try {
+            const provider = providerManager.getProvider(key);
+            if (provider) await provider.authenticate();
+        } catch (e) {
+            console.error(`auth failed for ${key}`, e);
         }
-    } catch (error) {
-        console.error('[SmartSearchService] Search failed:', error);
+    }));
+
+    const searchTasks: Promise<void>[] = [];
+
+    // 2. Parallel Search across ALL destinations and ALL room configs
+    for (const dest of params.destinations) {
+        // Unique room configs to avoid redundant requests
+        const uniqueConfigs = Array.from(new Set(params.roomConfig.map(r => JSON.stringify(r))))
+            .map(s => JSON.parse(s));
+
+        for (const room of uniqueConfigs) {
+            for (const providerKey of activeProviderKeys) {
+                const searchTask = (async () => {
+                    const provider = providerManager.getProvider(providerKey);
+                    if (!provider) return;
+
+                    const providerParams = {
+                        destination: dest.name,
+                        checkIn: new Date(params.checkIn),
+                        checkOut: new Date(params.checkOut),
+                        adults: room.adults,
+                        children: room.children,
+                        childrenAges: room.childrenAges,
+                        nationality: params.nationality || 'RS',
+                        stars: params.stars,
+                        board: params.board,
+                        abortSignal: params.abortSignal
+                    };
+
+                    try {
+                        const results = await Promise.race([
+                            provider.search(providerParams),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), PROVIDER_TIMEOUT))
+                        ]) as any[];
+
+                        if (!results || results.length === 0) return;
+
+                        results.forEach(h => {
+                            // Filter out 0 price results
+                            const price = h.price || h.totalPrice || h.lowestTotalPrice || 0;
+                            if (price <= 0) return;
+
+                            const hotelKey = (h.hotelName || h.name || '').toLowerCase();
+                            if (!hotelKey) return;
+
+                            if (!finalResultsMap.has(hotelKey)) {
+                                finalResultsMap.set(hotelKey, {
+                                    provider: providerKey,
+                                    type: 'hotel',
+                                    id: h.id || `h-${Math.random()}`,
+                                    name: h.hotelName || h.name,
+                                    location: h.location,
+                                    price: 0,
+                                    currency: h.currency || 'EUR',
+                                    stars: h.stars,
+                                    mealPlan: h.mealPlan,
+                                    mealPlans: h.mealPlan ? [h.mealPlan] : [],
+                                    images: h.image ? [h.image] : (h.images || []),
+                                    rooms: h.rooms || [],
+                                    allocationResults: {},
+                                    originalData: h.originalData || h,
+                                    latitude: h.latitude,
+                                    longitude: h.longitude,
+                                    availability: h.availability || 'available'
+                                });
+                            }
+
+                            const existing = finalResultsMap.get(hotelKey)!;
+                            
+                            // Initialize allocationResults if missing (unlikely but safe)
+                            if (!existing.allocationResults) existing.allocationResults = {};
+
+                            params.roomConfig.forEach((rc, slotIdx) => {
+                                if (JSON.stringify(rc) === JSON.stringify(room)) {
+                                    existing.allocationResults![slotIdx] = h.rooms || [];
+                                }
+                            });
+
+                            const currentPrice = h.price || 0;
+                            if (existing.price === 0 || currentPrice < existing.price) {
+                                existing.price = currentPrice;
+                                existing.provider = providerKey;
+                            }
+                        });
+
+                        // Emit partial results
+                        if (params.onPartialResults) {
+                            const currentBatch = Array.from(finalResultsMap.values());
+                            const sorted = currentBatch.sort((a: any, b: any) => {
+                                if (a.provider === 'Solvex' && b.provider !== 'Solvex') return -1;
+                                if (b.provider === 'Solvex' && a.provider !== 'Solvex') return 1;
+                                return (b.stars || 0) - (a.stars || 0);
+                            });
+                            params.onPartialResults(sorted);
+                        }
+                    } catch (err) {
+                        console.warn(`⚠️ [PROVIDER TIMEOUT/ERROR] ${providerKey}:`, err);
+                    }
+                })();
+                searchTasks.push(searchTask);
+            }
+        }
     }
 
+    await Promise.all(searchTasks);
     const finalResults = Array.from(finalResultsMap.values());
-    console.log('[SmartSearchService] Returning', finalResults.length, 'final results');
-
-    // Save to cache
     searchCache.set(cacheKey, { timestamp: Date.now(), results: finalResults });
-
-    // Attach last error to the array if no results were found
-    if (finalResults.length === 0 && (params as any)._lastError) {
-        (finalResults as any)._lastError = (params as any)._lastError;
-    }
-
     return finalResults;
 }
 
@@ -380,12 +234,11 @@ export function isProviderSupported(searchType: string, provider: string): boole
  * Get detailed cancellation policy for a room from a specific provider
  */
 export async function getDetailedCancellationPolicy(provider: string, room: any): Promise<any> {
-    const p = provider.toLowerCase();
-    if (p === 'solvex') {
-        const solver = new SolvexProvider();
-        return solver.getCancellationPolicy(room);
+    const providerManager = getHotelProviderManager();
+    const providerInstance = providerManager.getProvider(provider);
+    if (providerInstance && providerInstance.getCancellationPolicy) {
+        return providerInstance.getCancellationPolicy(room);
     }
-    // Add other providers here
     return null;
 }
 

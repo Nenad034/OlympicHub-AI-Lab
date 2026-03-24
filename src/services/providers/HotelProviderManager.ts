@@ -83,92 +83,15 @@ export class HotelProviderManager {
             console.error('❌ Failed to register Solvex provider:', error);
         }
 
-        // Register Solvex AI provider (Lab Experiment)
-        try {
-            const solvexAiProvider = new SolvexAiProvider();
-            if (solvexAiProvider.isConfigured()) {
-                this.registerProvider(solvexAiProvider);
-                console.log('✨ Solvex AI provider registered');
-            }
-        } catch (error) {
-            console.error('❌ Failed to register Solvex AI provider:', error);
-        }
-
-        // Register OpenGreece provider
-        try {
-            const openGreeceProvider = new OpenGreeceProvider();
-            if (openGreeceProvider.isConfigured()) {
-                this.registerProvider(openGreeceProvider);
-                console.log('✅ OpenGreece provider registered');
-            } else {
-                console.warn('⚠️ OpenGreece provider not configured');
-            }
-        } catch (error) {
-            console.error('❌ Failed to register OpenGreece provider:', error);
-        }
-
-        // Register TCT provider
-        try {
-            const tctProvider = new TCTProvider();
-            if (tctProvider.isConfigured()) {
-                this.registerProvider(tctProvider);
-                console.log('✅ TCT provider registered');
-            } else {
-                console.warn('⚠️ TCT provider not configured');
-            }
-        } catch (error) {
-            console.error('❌ Failed to register TCT provider:', error);
-        }
-
-        // Register Filos provider
-        try {
-            const filosProvider = new FilosProvider();
-            if (filosProvider.isConfigured()) {
-                this.registerProvider(filosProvider);
-                console.log('✅ Filos provider registered');
-            }
-        } catch (error) {
-            console.error('❌ Failed to register Filos provider:', error);
-        }
-
-        // Register MTS Globe provider
-        try {
-            const mtsGlobeProvider = new MtsGlobeProvider();
-            if (mtsGlobeProvider.isConfigured()) {
-                this.registerProvider(mtsGlobeProvider);
-                console.log('✅ MTS Globe provider registered');
-            } else {
-                console.warn('⚠️ MTS Globe provider not configured');
-            }
-        } catch (error) {
-            console.error('❌ Failed to register MTS Globe provider:', error);
-        }
-
-        // Register Travelgate provider (Hotel-X GraphQL API)
-        try {
-            const travelgateProvider = new TravelgateProvider();
-            if (travelgateProvider.isConfigured()) {
-                this.registerProvider(travelgateProvider);
-                console.log('✅ Travelgate Hotel-X provider registered');
-            } else {
-                console.warn('⚠️ Travelgate provider not configured (missing VITE_TRAVELGATE_API_KEY)');
-            }
-        } catch (error) {
-            console.error('❌ Failed to register Travelgate provider:', error);
-        }
-
-        // Register SAN TSG provider (TourVisio REST API)
-        try {
-            const santsgProvider = new SanTsgProvider();
-            if (santsgProvider.isConfigured()) {
-                this.registerProvider(santsgProvider);
-                console.log('✅ SAN TSG (TourVisio) provider registered');
-            } else {
-                console.warn('⚠️ SAN TSG provider not configured (missing VITE_SANTSG_AGENCY_CODE)');
-            }
-        } catch (error) {
-            console.error('❌ Failed to register SAN TSG provider:', error);
-        }
+        /* 
+         * OTHER PROVIDERS DISABLED BY USER REQUEST
+         * - OpenGreece
+         * - TCT
+         * - Filos
+         * - MTS Globe
+         * - Travelgate
+         * - SAN TSG
+         */
     }
 
     /**

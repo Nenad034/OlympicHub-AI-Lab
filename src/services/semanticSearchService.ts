@@ -17,8 +17,17 @@ class SemanticSearchService {
         
         try {
             // 1. Convert text query to vector
-            const vector = await multiKeyAI.embedContent(params.query);
+            let vector = await multiKeyAI.embedContent(params.query);
             
+            // Fast Path: Matryoshka slicing (conceptual: prefix of the vector)
+            // Reduces cosine similarity computation time in Supabase
+            if (params.query.length < 50) {
+                // If short query, we can use a reduced-dimension fast path
+                // Supabase rpc would need to support truncated matching
+                // For now, we keep full to ensure accuracy but mark for optimization
+                // vector = vector.slice(0, 512); 
+            }
+
             // 2. Call Supabase RPC function
             const { data, error } = await supabase.rpc('match_hotels', {
                 query_embedding: vector,

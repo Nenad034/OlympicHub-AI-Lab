@@ -17,3 +17,8 @@
 
 ## AI & Security
 - [ ] **Global AI Double Confirmation**: Implementirati obavezan "Human-in-the-loop" sistem sa dvostrukom potvrdom za sve AI agente u aplikaciji (kao što je urađeno u Inventory modulu). Svaka akcija mora proći kroz dva nivoa potvrde pre izvršenja.
+- [ ] **AI Destinacioni Asistent**: Implementirati novog AI agenta (ili nadograditi Milicu) koji pruža korisne informacije za svaku destinaciju:
+    - [ ] Informacije o vizama (Vize)
+    - [ ] Preporuke šta razgledati (Sightseeing)
+    - [ ] Lokalni saveti i tajne destinacije
+- [ ] **Milica Voice Chat Refinement**: Nastaviti razvoj glasovnog agenta za Milicu kako bi bio još prirodniji.

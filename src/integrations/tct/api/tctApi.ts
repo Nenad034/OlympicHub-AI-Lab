@@ -7,11 +7,8 @@ import { tctApi as realApi } from './tctApiService.secure';
 import { tctMockApi as mockApi } from './tctMockService';
 import { rateLimiter } from '../../../utils/rateLimiter';
 
-// Force Mock mode for now since B2B is not activated
-const FORCE_MOCK = true;
-
 const envValue = import.meta.env.VITE_TCT_USE_MOCK;
-const useMock = FORCE_MOCK || envValue === 'true' || envValue === true;
+const useMock = envValue === 'true' || envValue === true;
 
 // Log which API we're using
 if (useMock) {

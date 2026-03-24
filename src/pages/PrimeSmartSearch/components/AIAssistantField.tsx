@@ -1,6 +1,7 @@
 import React, { type KeyboardEvent, useEffect, useState } from 'react';
-import { Sparkles, Search } from 'lucide-react';
+import { Sparkles, Search, MessageCircle, Mic, MicOff } from 'lucide-react';
 import { useSearchStore } from '../stores/useSearchStore';
+import { useAppStore } from '../../../stores';
 
 export interface AIAssistantFieldProps {
     onSearch?: () => void;
@@ -18,7 +19,10 @@ export const AIAssistantField: React.FC<AIAssistantFieldProps> = ({ onSearch, is
         addRoom,
         roomAllocations
     } = useSearchStore();
+
+    const { setMilicaChatOpen } = useAppStore();
     const [loadingMessage, setLoadingMessage] = useState("Milica traži najbolju ponudu za vas...");
+    const [isListening, setIsListening] = useState(false);
 
     useEffect(() => {
         if (isSubmitting) {
@@ -50,6 +54,37 @@ export const AIAssistantField: React.FC<AIAssistantFieldProps> = ({ onSearch, is
             setLoadingMessage("Milica traži najbolju ponudu za vas...");
         }
     }, [isSubmitting, context]);
+
+    const toggleListening = () => {
+        if (isListening) {
+            setIsListening(false);
+            return;
+        }
+
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert('Vaš pretraživač ne podržava glasovni unos.');
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'sr-RS';
+        recognition.interimResults = true;
+        recognition.continuous = false;
+
+        recognition.onstart = () => setIsListening(true);
+        recognition.onresult = (event: any) => {
+            const transcript = Array.from(event.results)
+                .map((result: any) => result[0])
+                .map((result: any) => result.transcript)
+                .join('');
+            setSemanticQuery(transcript);
+        };
+        recognition.onerror = () => setIsListening(false);
+        recognition.onend = () => setIsListening(false);
+        
+        recognition.start();
+    };
 
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -94,175 +129,14 @@ export const AIAssistantField: React.FC<AIAssistantFieldProps> = ({ onSearch, is
             setTimeout(() => onSearch?.(), 100);
         }
     };
-
     return (
-        <>
-            {/* INTERACTIVE CLARIFICATION OVERLAY */}
-            {!isSubmitting && pendingClarification && (
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 99999,
-                    backgroundColor: 'rgba(8, 15, 30, 0.95)',
-                    backdropFilter: 'blur(20px)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    animation: 'v6FadeIn 0.3s ease-out',
-                    padding: '24px'
-                }}>
-                    <div style={{
-                        background: 'var(--v6-bg-section)',
-                        border: '2px solid var(--v6-accent)',
-                        borderRadius: '32px',
-                        padding: '40px',
-                        maxWidth: '500px',
-                        width: '100%',
-                        textAlign: 'center',
-                        boxShadow: '0 30px 60px rgba(0,0,0,0.5)'
-                    }}>
-                        <div style={{
-                            width: '120px', height: '120px', borderRadius: '32px', margin: '0 auto 24px',
-                            overflow: 'hidden', border: '3px solid var(--v6-accent)',
-                            boxShadow: '0 12px 32px rgba(99, 179, 237, 0.4)'
-                        }}>
-                            <img src="/images/milica-avatar.png" alt="Milica" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </div>
-                        <h3 style={{ fontSize: '26px', color: 'white', marginBottom: '8px', fontWeight: 800 }}>Milica</h3>
-                        <p style={{ color: 'var(--v6-text-muted)', marginBottom: '24px', fontSize: '16px' }}>Vaša AI asistentkinja za hotele</p>
-                        <div style={{
-                            padding: '24px', borderRadius: '20px', background: 'rgba(255,255,255,0.03)',
-                            border: '1px solid rgba(255,255,255,0.1)', marginBottom: '24px'
-                        }}>
-                            <p style={{ fontSize: '18px', color: 'white', margin: 0, lineHeight: 1.5 }}>{pendingClarification.question}</p>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {pendingClarification.options.map((opt, i) => (
-                                <button 
-                                    key={i} 
-                                    onClick={() => handleOptionSelect(opt.value)}
-                                    style={{
-                                        padding: '16px', borderRadius: '16px', background: 'var(--v6-accent)',
-                                        color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer',
-                                        transition: 'transform 0.2s',
-                                    }}
-                                    onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-                                    onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                                >
-                                    {opt.label}
-                                </button>
-                            ))}
-                            <button 
-                                onClick={() => setPendingClarification(null)}
-                                style={{ background: 'none', border: 'none', color: 'var(--v6-text-muted)', cursor: 'pointer', marginTop: '10px' }}
-                            >
-                                Otkaži pretragu
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* FULL SCREEN OVERLAY WHEN SEARCHING */}
-            {isSubmitting && (
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 99999,
-                    backgroundColor: 'rgba(8, 15, 30, 0.9)',
-                    backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    animation: 'v6FadeIn 0.3s ease-out'
-                }}>
-                    <style>
-                        {`
-                        @keyframes v6PulseAvatar {
-                            0% { box-shadow: 0 0 0 0 rgba(235, 94, 40, 0.5); transform: scale(1); }
-                            50% { box-shadow: 0 0 0 40px rgba(235, 94, 40, 0); transform: scale(1.02); }
-                            100% { box-shadow: 0 0 0 0 rgba(235, 94, 40, 0); transform: scale(1); }
-                        }
-                        @keyframes v6FadeText {
-                            0% { opacity: 0; transform: translateY(15px); }
-                            15% { opacity: 1; transform: translateY(0); }
-                            85% { opacity: 1; transform: translateY(0); }
-                            100% { opacity: 0; transform: translateY(-15px); }
-                        }
-                        @keyframes v6LoadingSlide {
-                            0% { left: -50%; }
-                            100% { left: 100%; }
-                        }
-                        `}
-                    </style>
-                    
-                    {/* Big Avatar Card (Center Screen) */}
-                    <div style={{
-                        width: '240px',
-                        height: '240px',
-                        borderRadius: '24px',
-                        overflow: 'hidden',
-                        border: '6px solid var(--v6-accent)',
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-                        position: 'relative',
-                        animation: 'v6PulseAvatar 2.5s infinite ease-in-out',
-                        background: 'linear-gradient(135deg, #1e293b, #0f172a)',
-                    }}>
-                        <img 
-                            src="/images/milica-avatar.png" 
-                            alt="Milica AI Agent" 
-                            style={{ 
-                                width: '100%', 
-                                height: '100%', 
-                                objectFit: 'cover',
-                                objectPosition: 'center top',
-                                scale: '1.05'
-                            }} 
-                        />
-                    </div>
-                    
-                    {/* Glowing Changing Text */}
-                    <div style={{
-                        marginTop: '36px',
-                        fontSize: '22px',
-                        fontWeight: 600,
-                        color: 'white',
-                        textShadow: '0 2px 10px rgba(255,255,255,0.2)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '16px'
-                    }}>
-                        {/* Custom loading bar indicator */}
-                        <div style={{ 
-                            width: '40px', height: '4px', background: 'rgba(99, 179, 237, 0.3)', 
-                            borderRadius: '2px', overflow: 'hidden', position: 'relative' 
-                        }}>
-                            <div style={{ 
-                                position: 'absolute', top: 0, left: 0, height: '100%', width: '50%', 
-                                background: 'white', borderRadius: '2px',
-                                animation: 'v6LoadingSlide 1s infinite ease-in-out alternate' 
-                            }} />
-                        </div>
-                        
-                        <span key={loadingMessage} style={{ animation: 'v6FadeText 2s forwards' }}>
-                            {loadingMessage}
-                        </span>
-                    </div>
-                </div>
-            )}
-
-            {/* NORMAL INPUT VIEW - MILICA ONLY */}
-            <div className="v6-semantic-search-row v6-fade-in" style={{ 
-              marginBottom: '32px', 
-              display: 'flex', 
-              gap: '16px', 
-              alignItems: 'stretch',
-              position: 'relative'
-            }}>
+        <div className="v6-semantic-search-row v6-fade-in" style={{ 
+          marginBottom: '32px', 
+          display: 'flex', 
+          gap: '16px', 
+          alignItems: 'stretch',
+          position: 'relative'
+        }}>
                 
                 {/* LEFT SIDE: MILICA AVATAR (STRETCHED) */}
                 <div style={{
@@ -273,12 +147,23 @@ export const AIAssistantField: React.FC<AIAssistantFieldProps> = ({ onSearch, is
                     border: '2px solid var(--v6-accent)',
                     boxShadow: '0 8px 32px rgba(99, 179, 237, 0.1)',
                     background: 'linear-gradient(135deg, #1e293b, #0f172a)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative'
-                }}>
+                    position: 'relative',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                }}
+                className="v6-milica-trigger"
+                onClick={() => setMilicaChatOpen(true)}
+                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                    <div style={{
+                        position: 'absolute', top: '8px', right: '8px', zIndex: 10,
+                        background: 'var(--v6-accent)', borderRadius: '50%', width: '24px', height: '24px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.3)', border: '2px solid white'
+                    }}>
+                        <MessageCircle size={12} color="white" />
+                    </div>
                     <img 
                         src="/images/milica-avatar.png" 
                         alt="Milica AI" 
@@ -390,34 +275,100 @@ export const AIAssistantField: React.FC<AIAssistantFieldProps> = ({ onSearch, is
                             }}
                         />
                         
-                        {/* FLOATING ACTION BUTTON */}
-                        <button 
-                          onClick={onSearch}
-                          disabled={isSubmitting || !semanticQuery.trim()}
-                          style={{
+                        <div style={{
                             position: 'absolute',
                             right: '12px',
                             bottom: '12px',
-                            width: '44px',
-                            height: '44px',
-                            borderRadius: '12px',
-                            background: 'var(--v6-accent)',
-                            border: 'none',
                             display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            opacity: semanticQuery.trim() ? 1 : 0.5,
-                            boxShadow: '0 4px 12px rgba(99, 179, 237, 0.3)'
-                          }}
-                        >
-                            <Search size={20} color="white" />
-                        </button>
-                    </div>
-                </div>
+                            gap: '8px'
+                        }}>
+                            {/* VOICE BUTTON (MILICA WITH MIC) */}
+                            <button 
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    toggleListening();
+                                }}
+                                disabled={isSubmitting}
+                                style={{
+                                    width: '44px',
+                                    height: '44px',
+                                    borderRadius: '12px',
+                                    background: isListening ? 'rgba(239, 68, 68, 0.2)' : 'var(--v6-bg-card)',
+                                    border: isListening ? '2px solid #ef4444' : '1px solid var(--v6-accent)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s ease',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    padding: 0,
+                                    boxShadow: isListening ? '0 0 20px rgba(239, 68, 68, 0.4)' : 'none'
+                                }}
+                                title="Miličin glasovni asistent"
+                            >
+                                <img 
+                                    src="/images/milica-avatar.png" 
+                                    alt="Milica Mic" 
+                                    style={{ 
+                                        width: '100%', 
+                                        height: '100%', 
+                                        objectFit: 'cover',
+                                        filter: isListening ? 'sepia(1) saturate(5) hue-rotate(-50deg)' : 'none'
+                                    }} 
+                                />
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: '2px',
+                                    right: '2px',
+                                    background: isListening ? '#ef4444' : 'var(--v6-accent)',
+                                    borderRadius: '50%',
+                                    width: '18px',
+                                    height: '18px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    border: '1px solid white'
+                                }}>
+                                    {isListening ? <MicOff size={10} color="white" /> : <Mic size={10} color="white" />}
+                                </div>
+                                
+                                {isListening && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        border: '2px solid #ef4444',
+                                        borderRadius: '10px',
+                                        animation: 'v6VoicePulse 1.5s infinite ease-out'
+                                    }} />
+                                )}
+                            </button>
 
+                            {/* SEARCH BUTTON (LUPA) */}
+                            <button 
+                              onClick={onSearch}
+                              disabled={isSubmitting || (!semanticQuery.trim() && !isListening)}
+                              style={{
+                                width: '44px',
+                                height: '44px',
+                                borderRadius: '12px',
+                                background: 'var(--v6-accent)',
+                                border: 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                opacity: semanticQuery.trim() || isListening ? 1 : 0.5,
+                                boxShadow: '0 4px 12px rgba(99, 179, 237, 0.3)'
+                              }}
+                            >
+                                <Search size={20} color="white" />
+                            </button>
+                </div>
             </div>
-        </>
+        </div>
+    </div>
     );
 };

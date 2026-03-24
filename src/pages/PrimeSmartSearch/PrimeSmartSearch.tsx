@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchStore, calcPaxSummary } from './stores/useSearchStore';
 import { useThemeStore } from '../../stores';
 import { BookingModal } from '../../components/booking/BookingModal';
@@ -31,13 +31,17 @@ import { DynamicPackageCheckout } from './components/DynamicPackageCheckout/Dyna
 import { SavedOffersPanel } from './components/SavedOffersPanel';
 import { HorizontalPriceCalendar } from './components/HorizontalPriceCalendar/HorizontalPriceCalendar';
 import { DashboardWelcome } from './components/DashboardWelcome';
+import { MilicaChat } from '../SmartSearch/components/MilicaChat';
+import { Bot, MessageCircle, List, LayoutGrid, FileText } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAppStore } from '../../stores';
 
 import type { HotelSearchResult, FlightSearchResult } from './types';
 import './styles/PrimeSmartSearch.css';
 
-// ─────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // SKELETON
-// ─────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const SkeletonGrid: React.FC = () => (
     <div className="v6-results-grid" aria-busy="true">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -53,20 +57,20 @@ const SkeletonGrid: React.FC = () => (
     </div>
 );
 
-// ─────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // NO RESULTS
-// ─────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const NoResults: React.FC = () => (
     <div className="v6-no-results v6-active">
-        <div className="v6-no-results-icon">📭</div>
+        <div className="v6-no-results-icon">Ã°Å¸â€œÂ­</div>
         <h2>Nema dostupnih rezultata</h2>
-        <p>Nažalost, nismo pronašli ništa što odgovara tvojim kriterijumima.</p>
+        <p>NaÃ…Â¾alost, nismo pronaÃ…Â¡li niÃ…Â¡ta Ã…Â¡to odgovara tvojim kriterijumima.</p>
     </div>
 );
 
-// ─────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // UI COMPONENTS
-// ─────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const ViewToggleBar: React.FC<{ viewMode: ViewMode; onChange: (v: ViewMode) => void }> = ({ viewMode, onChange }) => (
     <div className="v6-view-toggle-bar" style={{ 
         display: 'grid', 
@@ -91,9 +95,9 @@ const ViewToggleBar: React.FC<{ viewMode: ViewMode; onChange: (v: ViewMode) => v
                     justifyContent: 'center'
                 }}
             >
-                {mode === 'list' && '☰'}
-                {mode === 'grid' && '▦'}
-                {mode === 'notepad' && '📝'}
+                {mode === 'list' && <List size={22} />}
+                {mode === 'grid' && <LayoutGrid size={22} />}
+                {mode === 'notepad' && <FileText size={22} />}
             </button>
         ))}
     </div>
@@ -114,9 +118,9 @@ const TabForm: React.FC<{ activeTab: string }> = ({ activeTab }) => {
     }
 };
 
-// ─────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // MAIN COMPONENT
-// ─────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 export const PrimeSmartSearch: React.FC = () => {
     const {
         activeTab,
@@ -144,7 +148,7 @@ export const PrimeSmartSearch: React.FC = () => {
     
     // UI Local State
     const [showExport, setShowExport] = useState(false);
-    const [hotelViewMode, setHotelViewMode] = useState<ViewMode>('list');
+    const [hotelViewMode, setHotelViewMode] = useState<ViewMode>('grid');
     const [showBookingModal, setShowBookingModal] = useState(false);
     const [pendingBookingData, setPendingBookingData] = useState<BookingData | null>(null);
 
@@ -172,7 +176,7 @@ export const PrimeSmartSearch: React.FC = () => {
 
     const handleBookingSuccess = (id: string) => {
         setShowBookingModal(false);
-        alert(`Uspešna rezervacija: ${id}`);
+        alert(`UspeÃ…Â¡na rezervacija: ${id}`);
     };
 
     const showSidebar = activeTab === 'hotel' && searchMode === 'classic';
@@ -196,7 +200,7 @@ export const PrimeSmartSearch: React.FC = () => {
                     {alerts.map(a => (
                         <div key={a.id} className={`v6-alert v6-alert-${a.severity}`}>
                             <span>{a.message}</span>
-                            <button onClick={() => dismissAlert(a.id)}>✕</button>
+                            <button onClick={() => dismissAlert(a.id)}>Ã¢Å“â€¢</button>
                         </div>
                     ))}
                 </div>
@@ -218,13 +222,21 @@ export const PrimeSmartSearch: React.FC = () => {
                                 height: 'calc(100vh - 120px)',
                                 overflowY: 'auto'
                             }}>
-                                <ViewToggleBar viewMode={hotelViewMode} onChange={setHotelViewMode} />
                                 <div style={{ marginTop: '16px' }}><FilterSidebar /></div>
                             </aside>
                         )}
 
                         <main className="v6-results-main-col">
-                            {activeTab === 'hotel' && <HorizontalPriceCalendar />}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                <div style={{ flex: 1 }}>
+                                   {activeTab === 'hotel' && <HorizontalPriceCalendar />}
+                                </div>
+                                {results.length > 0 && (
+                                    <div style={{ width: '160px', marginLeft: '16px' }}>
+                                        <ViewToggleBar viewMode={hotelViewMode} onChange={setHotelViewMode} />
+                                    </div>
+                                )}
+                            </div>
                             {isSearching ? <SkeletonGrid /> : (
                                 !searchPerformed ? <DashboardWelcome activeTab={activeTab} /> : (
                                     results.length === 0 ? <NoResults /> : (
@@ -359,7 +371,59 @@ export const PrimeSmartSearch: React.FC = () => {
             )}
             <SavedOffersPanel />
             <SmartConcierge activeHotelCity={selectedHotel?.location.city} />
-        </div>
+             <MilicaChat />
+             
+             {/* Floating Milica Toggle */}
+             <motion.button
+                 className="v6-milica-fab"
+                 initial={{ scale: 0, opacity: 0 }}
+                 animate={{ scale: 1, opacity: 1 }}
+                 whileHover={{ scale: 1.1, y: -5 }}
+                 whileTap={{ scale: 0.9 }}
+                 onClick={() => useAppStore.getState().setMilicaChatOpen(true)}
+                 style={{
+                     position: 'fixed',
+                     bottom: '30px',
+                     right: '30px',
+                     width: '64px',
+                     height: '64px',
+                     borderRadius: '20px',
+                     background: 'linear-gradient(135deg, #8E24AC, #6A1B9A)',
+                     border: '2px solid rgba(255,255,255,0.2)',
+                     boxShadow: '0 12px 32px rgba(142, 36, 172, 0.4)',
+                     display: 'flex',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     zIndex: 9999,
+                     cursor: 'pointer',
+                     color: 'white'
+                 }}
+             >
+                 <Bot size={32} />
+                 <motion.div 
+                     className="v6-fab-badge"
+                     initial={{ opacity: 0 }}
+                     animate={{ opacity: 1 }}
+                     style={{
+                         position: 'absolute',
+                         top: '-5px',
+                         right: '-5px',
+                         background: '#ef4444',
+                         borderRadius: '50%',
+                         width: '20px',
+                         height: '20px',
+                         display: 'flex',
+                         alignItems: 'center',
+                         justifyContent: 'center',
+                         fontSize: '10px',
+                         fontWeight: 900,
+                         border: '2px solid white'
+                     }}
+                 >
+                     AI
+                 </motion.div>
+             </motion.button>
+         </div>
     );
 };
 

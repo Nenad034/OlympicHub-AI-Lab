@@ -25,9 +25,9 @@ export function initializeAmadeus(): boolean {
         apiSecret = 'proxy_auth';
     } else {
         // Fallback for local development WITHOUT proxy if VITE variables exist
-        apiKey = import.meta.env.AMADEUS_API_KEY || '';
-        apiSecret = import.meta.env.AMADEUS_API_SECRET || '';
-        baseUrl = import.meta.env.AMADEUS_BASE_URL || 'https://test.api.amadeus.com';
+        apiKey = import.meta.env.VITE_AMADEUS_API_KEY || '';
+        apiSecret = import.meta.env.VITE_AMADEUS_API_SECRET || '';
+        baseUrl = import.meta.env.VITE_AMADEUS_BASE_URL || 'https://test.api.amadeus.com';
 
         if (!apiKey || !apiSecret) {
             console.warn('⚠️  Amadeus credentials not found and proxy is not enabled. Using mock service.');

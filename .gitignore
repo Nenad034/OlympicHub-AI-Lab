@@ -101,3 +101,16 @@ backups/
 # Nested repositories
 OlympicHub-AI-Lab/
 
+# Agent Memory - CRITICAL: Never commit these!
+MEMORY.md
+memory/
+BOOTSTRAP.md
+USER.md
+SOUL.md
+AGENTS.md
+TOOLS.md
+HEARTBEAT.md
+.agents/
+_agents/
+.prompt/
+

@@ -73,6 +73,37 @@ export async function searchHotels(
             return { success: true, data: [] };
         }
 
+        // --- STRICT POST-FILTERING ---
+        if (params.board && params.board.length > 0) {
+            const requestedBoards = params.board.map((b: string) => b.toUpperCase());
+            items = items.filter((s: any) => {
+                const pName = String(s.PansionName || '').toUpperCase();
+                const pCode = String(s.PansionCode || '').toUpperCase();
+                // Map names to codes if necessary, but Solvex codes are usually standard (HB, AI, BB)
+                return requestedBoards.some((rb: string) => 
+                    pCode === rb || 
+                    pName.includes(rb) || 
+                    (rb === 'HB' && pName.includes('POLUPANSION')) ||
+                    (rb === 'BB' && pName.includes('DORUČAK')) ||
+                    (rb === 'AI' && pName.includes('ALL INCLUSIVE'))
+                );
+            });
+        }
+
+        if (params.stars && params.stars.length > 0) {
+            const requestedStars = params.stars.map((sRatingInput: any) => parseInt(String(sRatingInput).replace(/\D/g, '')));
+            items = items.filter((s: any) => {
+                const hotelName = String(s.HotelName || '');
+                const desc = String(s.Description || '');
+                // Try to find stars in name or description if provider doesn't give CategoryKey clearly
+                const starMatch = (hotelName + desc).match(/(\d)\s*\*+/);
+                const actualRating = starMatch ? parseInt(starMatch[1]) : 0;
+                // If we found a rating, it must match. If 0, we can't be sure, so we keep unless we have a strong reason.
+                return requestedStars.length === 0 || requestedStars.includes(actualRating) || actualRating === 0;
+            });
+        }
+        // --- END POST-FILTERING ---
+
         console.log(`[Solvex Search] Found ${items.length} hotel services total`);
 
         // Fetch enriched content from Supabase (images, descriptions)
@@ -91,25 +122,26 @@ export async function searchHotels(
                     }
 
                     console.log(`[Solvex Search] Fetching enrichment in ${idChunks.length} chunks...`);
-
-                    for (const chunk of idChunks) {
-                        const { data: hotelsData, error } = await supabase
+                    
+                    const chunkPromises = idChunks.map(async (chunk) => {
+                        return await supabase
                             .from('properties')
-                            .select('id, images, content, propertyAmenities')
+                            .select('id, images, content, propertyAmenities, geoCoordinates')
                             .in('id', chunk.map(id => `solvex_${id}`));
+                    });
 
+                    const chunkResults = await Promise.all(chunkPromises);
+
+                    chunkResults.forEach(({ data: hotelsData, error }: any) => {
                         if (error) {
-                            console.error('[Solvex Search] Chunk fetch error:', error);
-                            continue;
-                        }
-
-                        if (hotelsData) {
+                            console.error('[Solvex Search] Supabase enrichment error:', error);
+                        } else if (hotelsData) {
                             hotelsData.forEach((h: any) => {
                                 const solvexId = h.id.replace('solvex_', '');
                                 enrichedMap[solvexId] = h;
                             });
                         }
-                    }
+                    });
                     console.log(`[Solvex Search] Enriched ${Object.keys(enrichedMap).length} hotels total from Supabase`);
                 }
             } catch (e2) {
@@ -215,10 +247,13 @@ export async function searchHotels(
             // --- DEEP EXTRACTION END ---
 
             const finalImages = (enriched?.images || (extractedImages.length > 0 ? extractedImages : []))
-                .map((u: string) => encodeURI(u));
+                .map((u: any) => {
+                    const url = typeof u === 'string' ? u : u?.url;
+                    return url ? encodeURI(url) : '';
+                }).filter(Boolean);
             const finalDescription = enriched?.content?.description || extractedDescription;
-            const finalLat = enriched?.latitude || extractedLat;
-            const finalLng = enriched?.longitude || extractedLng;
+            const finalLat = enriched?.geoCoordinates?.latitude || enriched?.latitude || extractedLat;
+            const finalLng = enriched?.geoCoordinates?.longitude || enriched?.longitude || extractedLng;
 
             return {
                 hotel: {

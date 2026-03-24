@@ -39,7 +39,11 @@ export class HybridSearchEngine {
      * Logic for fusing results with optional live data injection
      */
     async executeFusedSearch(semanticMatches: any[], params: any, query: string, liveResultsInput?: any[]) {
-        const liveResults = liveResultsInput || await performSmartSearch({ ...params, searchType: 'hotel' });
+        const liveResults = liveResultsInput || await performSmartSearch({ 
+            ...params, 
+            searchType: 'hotel',
+            onPartialResults: params.onPartialResults // PASS THROUGH
+        });
         
         console.log(`📡 [HYBRID ENGINE] Results: Live(${liveResults.length}), Semantic(${semanticMatches.length})`);
 
