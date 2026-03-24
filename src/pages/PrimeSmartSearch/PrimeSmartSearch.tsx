@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useSearchStore, calcPaxSummary } from './stores/useSearchStore';
 import { useThemeStore } from '../../stores';
 import { BookingModal } from '../../components/booking/BookingModal';
@@ -11,7 +11,6 @@ import { CharterSearchForm } from './components/CharterSearchForm/CharterSearchF
 import { CarSearchForm } from './components/CarSearchForm/CarSearchForm';
 import { TransferSearchForm } from './components/TransferSearchForm/TransferSearchForm';
 import { PackageWizard } from './components/PackageWizard/PackageWizard';
-import { PackageLiveStack } from './components/PackageLiveStack';
 import { HotelCard, type ViewMode } from './components/HotelCard/HotelCard';
 import { FlightCard } from './components/FlightCard/FlightCard';
 import { CharterCard } from './components/CharterCard/CharterCard';
@@ -19,32 +18,20 @@ import { CarCard } from './components/CarCard/CarCard';
 import { TransferCard } from './components/TransferCard/TransferCard';
 import { FilterBar } from './components/FilterBar/FilterBar';
 import { FilterSidebar } from './components/FilterSidebar/FilterSidebar';
-// import { HotelDetailsModal } from '../SmartSearch/components/HotelDetailsModal'; // REPLACED BY DETAILED PAGE
 import { SmartConcierge } from './components/SmartConcierge/SmartConcierge';
 import { ItineraryExport } from './components/ItineraryExport/ItineraryExport';
 import { PackageBasketBar } from './components/PackageBasketBar/PackageBasketBar';
-import { MOCK_HOTEL_RESULTS } from './data/mockResults';
-import { MOCK_FLIGHT_RESULTS } from './data/mockFlights';
-import { MOCK_CHARTER_RESULTS } from './data/mockCharters';
-import { MOCK_CAR_RESULTS, CAR_CATEGORIES } from './data/mockCars';
-import { MOCK_TRANSFER_RESULTS } from './data/mockTransfers';
-import { MOCK_TOUR_RESULTS, TOUR_CATEGORIES } from './data/mockTours';
-import { MOCK_ACTIVITY_RESULTS, ACTIVITY_CATEGORIES } from './data/mockActivities';
 import { TourSearchForm } from './components/TourSearchForm/TourSearchForm';
 import { TourCard } from './components/TourCard/TourCard';
 import { ActivitySearchForm } from './components/ActivitySearchForm/ActivitySearchForm';
 import { ActivityCard } from './components/ActivityCard/ActivityCard';
-import { MOCK_CRUISE_RESULTS, CRUISE_REGIONS } from './data/mockCruises';
 import { CruiseSearchForm } from './components/CruiseSearchForm/CruiseSearchForm';
 import { CruiseCard } from './components/CruiseCard/CruiseCard';
-import { PackageBasket } from './components/PackageBasket/PackageBasket';
 import { DynamicPackageCheckout } from './components/DynamicPackageCheckout/DynamicPackageCheckout';
-import { 
-    IconHotelV6, IconFlightV6, IconPackageV6, IconTransferV6, 
-    IconActivityV6, IconCruiseV6, IconCharterV6, IconTourV6 
-} from './components/V6ModuleIcons';
 import { SavedOffersPanel } from './components/SavedOffersPanel';
 import { HorizontalPriceCalendar } from './components/HorizontalPriceCalendar/HorizontalPriceCalendar';
+import { DashboardWelcome } from './components/DashboardWelcome';
+
 import type { HotelSearchResult, FlightSearchResult } from './types';
 import './styles/PrimeSmartSearch.css';
 
@@ -52,18 +39,14 @@ import './styles/PrimeSmartSearch.css';
 // SKELETON
 // ─────────────────────────────────────────────────────────────
 const SkeletonGrid: React.FC = () => (
-    <div className="v6-results-grid" aria-busy="true" aria-label="Učitavaju se rezultati...">
+    <div className="v6-results-grid" aria-busy="true">
         {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="v6-skeleton-card" aria-hidden="true" style={{ animationDelay: `${i * 0.06}s` }}>
+            <div key={i} className="v6-skeleton-card" style={{ animationDelay: `${i * 0.06}s` }}>
                 <div className="v6-skeleton-img" />
                 <div className="v6-skeleton-body">
                     <div className="v6-skeleton-line v6-w-80" />
                     <div className="v6-skeleton-line v6-w-60" />
                     <div className="v6-skeleton-line v6-w-40" />
-                    <div style={{ marginTop: '12px' }}>
-                        <div className="v6-skeleton-line v6-w-60" style={{ height: '24px' }} />
-                        <div className="v6-skeleton-line v6-w-80" style={{ height: '36px', marginTop: '8px' }} />
-                    </div>
                 </div>
             </div>
         ))}
@@ -71,28 +54,50 @@ const SkeletonGrid: React.FC = () => (
 );
 
 // ─────────────────────────────────────────────────────────────
-// PLACEHOLDER ZA OSTALE TABOVE
+// NO RESULTS
 // ─────────────────────────────────────────────────────────────
-const ComingSoonForm: React.FC<{ emoji: string; title: string; desc: string }> = ({ emoji, title, desc }) => (
-    <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '14px',
-        padding: '20px',
-        background: 'var(--v6-bg-section)',
-        borderRadius: 'var(--v6-radius-md)',
-        border: '1px dashed var(--v6-border)',
-    }}>
-        <span style={{ fontSize: '32px' }}>{emoji}</span>
-        <div>
-            <div style={{ fontSize: 'var(--v6-fs-md)', fontWeight: 700, color: 'var(--v6-text-primary)' }}>{title}</div>
-            <div style={{ fontSize: 'var(--v6-fs-xs)', color: 'var(--v6-text-muted)', marginTop: '4px' }}>
-                {desc} · <em>Implementacija u sledećoj fazi</em>
-            </div>
-        </div>
+const NoResults: React.FC = () => (
+    <div className="v6-no-results v6-active">
+        <div className="v6-no-results-icon">📭</div>
+        <h2>Nema dostupnih rezultata</h2>
+        <p>Nažalost, nismo pronašli ništa što odgovara tvojim kriterijumima.</p>
     </div>
 );
 
+// ─────────────────────────────────────────────────────────────
+// UI COMPONENTS
+// ─────────────────────────────────────────────────────────────
+const ViewToggleBar: React.FC<{ viewMode: ViewMode; onChange: (v: ViewMode) => void }> = ({ viewMode, onChange }) => (
+    <div className="v6-view-toggle-bar" style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(3, 1fr)', 
+        gap: '4px', 
+        background: 'rgba(255,255,255,0.03)', 
+        padding: '4px', 
+        borderRadius: '12px',
+        border: '1px solid rgba(255,255,255,0.05)'
+    }}>
+        {(['list', 'grid', 'notepad'] as ViewMode[]).map((mode) => (
+            <button
+                key={mode}
+                className={`v6-view-btn ${viewMode === mode ? 'active' : ''}`}
+                onClick={() => onChange(mode)}
+                style={{
+                    padding: '8px',
+                    fontSize: '18px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
+            >
+                {mode === 'list' && '☰'}
+                {mode === 'grid' && '▦'}
+                {mode === 'notepad' && '📝'}
+            </button>
+        ))}
+    </div>
+);
 
 const TabForm: React.FC<{ activeTab: string }> = ({ activeTab }) => {
     switch (activeTab) {
@@ -110,152 +115,7 @@ const TabForm: React.FC<{ activeTab: string }> = ({ activeTab }) => {
 };
 
 // ─────────────────────────────────────────────────────────────
-// UI COMPONENTS (Shared)
-// ─────────────────────────────────────────────────────────────
-const ViewToggleBar: React.FC<{ viewMode: ViewMode; onChange: (m: ViewMode) => void }> = ({ viewMode: vm, onChange }) => (
-    <div className="v6-view-toggle-bar">
-        <button
-            id="v6-view-list-btn"
-            className={`v6-view-toggle-btn ${vm === 'list' ? 'v6-vtb-active' : ''}`}
-            onClick={() => onChange('list')}
-            title="List prikaz"
-        >
-            ☰ List
-        </button>
-        <button
-            id="v6-view-grid-btn"
-            className={`v6-view-toggle-btn ${vm === 'grid' ? 'v6-vtb-active' : ''}`}
-            onClick={() => onChange('grid')}
-            title="Grid prikaz"
-        >
-            ⊞ Grid
-        </button>
-        <button
-            id="v6-view-notepad-btn"
-            className={`v6-view-toggle-btn ${vm === 'notepad' ? 'v6-vtb-active' : ''}`}
-            onClick={() => onChange('notepad')}
-            title="Notepad prikaz"
-        >
-            📋 Notepad
-        </button>
-    </div>
-);
-
-// ─────────────────────────────────────────────────────────────
-// EMPTY STATES
-// ─────────────────────────────────────────────────────────────
-const TopOffers: React.FC<{ 
-    activeTab: string; 
-    hotelViewMode: ViewMode; 
-    setHotelViewMode: (m: ViewMode) => void;
-    tourViewMode: ViewMode;
-    setTourViewMode: (m: ViewMode) => void;
-}> = ({ activeTab, hotelViewMode, setHotelViewMode, tourViewMode, setTourViewMode }) => {
-    // Pick more items for exploration
-    const topHotels = MOCK_HOTEL_RESULTS.slice(0, 11);
-    const topFlights = MOCK_FLIGHT_RESULTS.slice(0, 3);
-    const topTours = MOCK_TOUR_RESULTS.slice(0, 3);
-
-    const renderOfferHeader = (title: string, subtitle: string, badgeText?: string) => (
-        <div className="v6-offer-section-header">
-            <div className="v6-offer-title-group">
-                <h2>{title}</h2>
-                <p>{subtitle}</p>
-            </div>
-            {badgeText && (
-                <div className="badge-luxury">
-                    <span>✨</span> {badgeText}
-                </div>
-            )}
-        </div>
-    );
-
-    return (
-        <div className="v6-top-offers-dashboard v6-fade-in">
-            {activeTab === 'hotel' && (
-                <div className="v6-fade-in-up">
-                    
-                    <div className={hotelViewMode === 'list' ? 'v6-results-list-wrapper' : hotelViewMode === 'grid' ? 'v6-results-grid-wrapper' : 'v6-results-notepad-wrapper'}>
-                        {hotelViewMode === 'notepad' && (
-                            <div className="v6-notepad-header">
-                                <span>#</span><span>Hotel</span><span>Lokacija</span><span>Usluga</span><span>Ocena</span><span>Status</span><span>Cena</span><span></span>
-                            </div>
-                        )}
-                        {topHotels.map((hotel, idx) => (
-                            <HotelCard key={hotel.id} hotel={hotel} index={idx} onViewOptions={() => {}} viewMode={hotelViewMode} />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'flight' && (
-                <div className="v6-fade-in-up">
-                    {renderOfferHeader("Najpovoljniji letovi", "Putujte svetom sa najpouzdanijim avio kompanijama", "Best Value")}
-                    <div className="search-results-container">
-                        {topFlights.map((flight, idx) => (
-                            <FlightCard key={flight.id} flight={flight} index={idx} paxTotal={1} onBook={() => {}} />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'package' && (
-                <div className="v6-fade-in-up">
-                    {renderOfferHeader("Trendi Paketi", "Kompletna letovanja i gradske ture uz maksimalnu uštedu", "Prime Selection")}
-                    
-                    <div className={tourViewMode === 'list' ? 'v6-results-list-wrapper' : tourViewMode === 'grid' ? 'v6-results-grid-wrapper' : 'v6-results-notepad-wrapper'}>
-                        {tourViewMode === 'notepad' && (
-                            <div className="v6-notepad-header">
-                                <span>#</span><span>Paket</span><span>Destinacija</span><span>Trajanje</span><span>Ocena</span><span>Status</span><span>Cena</span><span></span>
-                            </div>
-                        )}
-                        {topTours.map((tour, idx) => (
-                            <TourCard key={tour.id} tour={tour} index={idx} viewMode={tourViewMode} />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'tour' && (
-                <div className="v6-fade-in-up">
-                    {renderOfferHeader("Preporučena Putovanja", "Doživite nezaboravne trenutke na našim organizovanim turama", "Prime Selection")}
-                    
-                    <div className={tourViewMode === 'list' ? 'v6-results-list-wrapper' : tourViewMode === 'grid' ? 'v6-results-grid-wrapper' : 'v6-results-notepad-wrapper'}>
-                        {tourViewMode === 'notepad' && (
-                            <div className="v6-notepad-header">
-                                <span>#</span><span>Paket</span><span>Destinacija</span><span>Trajanje</span><span>Ocena</span><span>Status</span><span>Cena</span><span></span>
-                            </div>
-                        )}
-                        {topTours.map((tour, idx) => (
-                            <TourCard key={tour.id} tour={tour} index={idx} viewMode={tourViewMode} />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {(activeTab !== 'hotel' && activeTab !== 'flight' && activeTab !== 'package' && activeTab !== 'tour') && (
-                <div className="v6-empty-state">
-                    <div className="v6-empty-state-icon">✨</div>
-                    <div className="v6-empty-title">Otkrijte nove horizonte</div>
-                    <div className="v6-empty-subtitle">Pretražite našu bazu za najbolje cene čartera, rent-a-car i transfer usluga.</div>
-                </div>
-            )}
-        </div>
-    );
-};
-
-const NoResults: React.FC = () => (
-    <div className="v6-empty-state v6-fade-in">
-        <div className="v6-empty-state-icon">😔</div>
-        <div className="v6-empty-title">Nema rezultata za zadatu pretragu</div>
-        <div className="v6-empty-subtitle">
-            Nema slobodnih mesta za izabrane termine. Pokušajte fleksibilne datume.
-        </div>
-    </div>
-);
-
-// ─────────────────────────────────────────────────────────────
-// MAIN COMPONENT — PrimeSmartSearch V6 (Faza 5 Finalna)
+// MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────
 export const PrimeSmartSearch: React.FC = () => {
     const {
@@ -274,572 +134,151 @@ export const PrimeSmartSearch: React.FC = () => {
         alerts,
         dismissAlert,
         selectedHotel,
-        setSelectedHotel,
-        setResults,
-        setFlightResults,
-        setCharterResults,
-        setCarResults,
-        setTransferResults,
-        setTourResults,
-        setActivityResults,
-        setCruiseResults,
-        setSearchPerformed,
-        setIsSearching,
-        addToBasket,
-        filters,
-        sortBy,
-        packageWizardStep,
         roomAllocations,
         checkIn,
         checkOut,
+        searchMode,
     } = useSearchStore();
 
     const { theme } = useThemeStore();
-    const isNavy = theme === 'navy';
-
-    // Panel stanja
-    const [showRoomWizard, setShowRoomWizard] = useState(false);
+    
+    // UI Local State
     const [showExport, setShowExport] = useState(false);
-    const [carCategoryFilter, setCarCategoryFilter] = useState('all');
-    const [transferDirection, setTransferDirection] = useState<'one-way' | 'round-trip'>('one-way');
-
-    // Modal state for HotelDetailsModal
-    const [roomFilters, setRoomFilters] = useState<Record<string | number, string>>({});
-    const [selectedCancelPolicy, setSelectedCancelPolicy] = useState('all');
-    const [selectedTimelineRoom, setSelectedTimelineRoom] = useState<any>(null);
-    const [selectedRoomsMap, setSelectedRoomsMap] = useState<Record<number, any>>({});
-    const [selectionPendingHotelId, setSelectionPendingHotelId] = useState<string | undefined>(undefined);
-
-    // View mode za hotel i paket tabove (nezavisni)
     const [hotelViewMode, setHotelViewMode] = useState<ViewMode>('list');
-    const [tourViewMode, setTourViewMode] = useState<ViewMode>('list');
-
-    // Booking state
     const [showBookingModal, setShowBookingModal] = useState(false);
     const [pendingBookingData, setPendingBookingData] = useState<BookingData | null>(null);
-    const [bookingError, setBookingError] = useState<string | null>(null);
 
-    const filteredHotels = React.useMemo(() => {
-        if (activeTab !== 'hotel') return [];
-        const base = results.filter(hotel => {
-            // Name filter
-            if (filters.hotelName && !hotel.name.toLowerCase().includes(filters.hotelName.toLowerCase())) {
-                return false;
-            }
-            // Star filter
-            if (filters.stars && !filters.stars.includes('all')) {
-                if (!filters.stars.includes(hotel.stars.toString())) return false;
-            }
-            // Availability
-            if (filters.availability && filters.availability.length > 0) {
-                if (!filters.availability.includes(hotel.status)) return false;
-            }
-            // Only Refundable
-            if (filters.onlyRefundable) {
-                // Check if any room has a cancellation deadline
-                return hotel.roomOptions?.some(opt => opt.mealPlans.some(mp => mp.isRefundable));
-            }
-            return true;
-        });
+    const totalPax = useMemo(() => 
+        roomAllocations.reduce((sum, r) => sum + r.adults + r.children, 0) || 1
+    , [roomAllocations]);
 
-        // Apply Sorting
-        return [...base].sort((a, b) => {
-            if (sortBy === 'price_asc') return a.lowestTotalPrice - b.lowestTotalPrice;
-            if (sortBy === 'price_desc') return b.lowestTotalPrice - a.lowestTotalPrice;
-            if (sortBy === 'stars_desc') return b.stars - a.stars;
-            if (sortBy === 'rating_desc') return (b.rating || 0) - (a.rating || 0);
-            
-            // 'smart' (PRIME inventory first, then by priority)
-            if (a.isPrime !== b.isPrime) return a.isPrime ? -1 : 1;
-            return b.priority - a.priority;
-        });
-    }, [results, filters, activeTab, sortBy]);
-
-    // Aktiviraj Smart Concierge za grad izabranog hotela
-    const conciergeCity = selectedHotel?.location?.city ?? undefined;
-
-    // ── Demo Hotel pretraga ────────────────────────────────
-    const handleDemoHotelSearch = () => {
-        setIsSearching(true);
-        setResults([]);
-        setTimeout(() => {
-            setResults(MOCK_HOTEL_RESULTS);
-            setIsSearching(false);
-            setSearchPerformed(true);
-        }, 1600);
-    };
-
-    // ── Demo Flight pretraga ───────────────────────────────
-    const handleDemoFlightSearch = () => {
-        setIsSearching(true);
-        setFlightResults([]);
-        setTimeout(() => {
-            setFlightResults(MOCK_FLIGHT_RESULTS);
-            setIsSearching(false);
-            setSearchPerformed(true);
-        }, 1800);
-    };
-
-    // ── Selekcija hotela → Hotel Details Modal ───────────────
+    // Handlers
     const handleViewOptions = (hotel: HotelSearchResult) => {
-        setSelectedHotel(hotel);
-        setSelectionPendingHotelId(hotel.id);
-        setShowRoomWizard(true);
-    };
-
-    const handleCloseWizard = () => {
-        setShowRoomWizard(false);
-        setSelectedRoomsMap({});
-        setSelectionPendingHotelId(undefined);
-    };
-
-    const handleSelectRoom = (room: any, rIdx: number) => {
-        const searchStore = useSearchStore.getState();
-        const paxSummary = calcPaxSummary(searchStore.roomAllocations, searchStore.checkIn, searchStore.checkOut);
+        const params = new URLSearchParams();
+        params.set('checkIn', checkIn);
+        params.set('checkOut', checkOut);
+        const roomsStr = roomAllocations.map(r => 
+            `${r.adults}-${r.children}${r.childrenAges.length > 0 ? '-' + r.childrenAges.join('-') : ''}`
+        ).join(';');
+        params.set('rooms', roomsStr);
+        params.set('nat', useSearchStore.getState().nationality || 'RS');
         
-        const newMap = { ...selectedRoomsMap, [rIdx]: room };
-        setSelectedRoomsMap(newMap);
-
-        // Ako su sve sobe odabrane, idi na booking
-        const totalRoomsNeeded = searchStore.roomAllocations.length;
-        if (Object.keys(newMap).length === totalRoomsNeeded && selectedHotel) {
-            const allSelections = Object.entries(newMap).map(([idx, r]) => {
-                const roomObj = r as any;
-                return {
-                    slotIndex: parseInt(idx),
-                    roomId: roomObj.id,
-                    roomName: roomObj.name,
-                    mealPlanCode: roomObj.mealPlan || 'RO',
-                    mealPlanLabel: roomObj.mealPlan || 'Smeštaj',
-                    totalPrice: roomObj.price,
-                    adults: searchStore.roomAllocations[parseInt(idx)].adults,
-                    children: searchStore.roomAllocations[parseInt(idx)].children,
-                    childrenAges: searchStore.roomAllocations[parseInt(idx)].childrenAges
-                };
-            });
-
-            const total = allSelections.reduce((sum, s) => sum + s.totalPrice, 0);
-
-            const bookingData: BookingData = {
-                serviceName: selectedHotel.name,
-                serviceType: 'hotel',
-                hotelName: selectedHotel.name,
-                location: `${selectedHotel.location.city}, ${selectedHotel.location.country}`,
-                checkIn: searchStore.checkIn,
-                checkOut: searchStore.checkOut,
-                nights: paxSummary.nights,
-                roomType: allSelections.map(s => s.roomName).join(' + '),
-                mealPlan: allSelections[0].mealPlanLabel,
-                adults: allSelections.reduce((sum, s) => sum + s.adults, 0),
-                children: allSelections.reduce((sum, s) => sum + s.children, 0),
-                totalPrice: total,
-                currency: 'EUR',
-                stars: selectedHotel.stars,
-                providerData: {
-                    hotel: selectedHotel,
-                    rooms: allSelections.map(s => s.roomId),
-                    originalSelections: allSelections
-                },
-                allSelectedRooms: allSelections,
-                roomAllocations: searchStore.roomAllocations
-            };
-
-            setPendingBookingData(bookingData);
-            setShowBookingModal(true);
-            setShowRoomWizard(false);
-        }
+        window.open(`/prime-smart-search/hotel/${hotel.id}?${params.toString()}`, '_blank');
     };
 
-    const handleBook = (selections: any[]) => {
-        handleCloseWizard();
-        
-        if (!selectedHotel || !selections.length) return;
-
-        const total = selections.reduce((sum, s) => sum + s.totalPrice, 0);
-        const searchStore = useSearchStore.getState();
-        const pax = calcPaxSummary(searchStore.roomAllocations, searchStore.checkIn, searchStore.checkOut);
-
-        // Map selections to BookingData format
-        const bookingData: BookingData = {
-            serviceName: selectedHotel.name,
-            serviceType: 'hotel',
-            hotelName: selectedHotel.name,
-            location: `${selectedHotel.location.city}, ${selectedHotel.location.country}`,
-            checkIn: searchStore.checkIn,
-            checkOut: searchStore.checkOut,
-            nights: pax.nights,
-            roomType: selections.map(s => s.roomName).join(' + '),
-            mealPlan: selections[0].mealPlanLabel,
-            adults: selections.reduce((sum, s) => sum + s.adults, 0),
-            children: selections.reduce((sum, s) => sum + s.children, 0),
-            totalPrice: total,
-            currency: 'EUR',
-            stars: selectedHotel.stars,
-            providerData: {
-                hotel: selectedHotel,
-                rooms: selections.map(s => s.roomId),
-                originalSelections: selections
-            },
-            allSelectedRooms: selections,
-            roomAllocations: searchStore.roomAllocations
-        };
-
-        setPendingBookingData(bookingData);
-        setShowBookingModal(true);
+    const handleFlightBook = (flight: FlightSearchResult) => {
+        console.log("Booking flight:", flight);
     };
 
-    const handleBookingSuccess = (bookingId: string) => {
+    const handleBookingSuccess = (id: string) => {
         setShowBookingModal(false);
-        // Add success notification or redirect
-        alert(`Rezervacija ${bookingId} je uspešno kreirana!`);
+        alert(`Uspešna rezervacija: ${id}`);
     };
 
-    const handleBookingError = (error: string) => {
-        setBookingError(error);
-    };
-
-    // ── Odaberi let → Dodaj u korpu ────────────────────────
-    const handleBookFlight = (flight: FlightSearchResult) => {
-        addToBasket({
-            id: `flight-${flight.id}`,
-            type: 'flight',
-            label: `✈ ${flight.airline}`,
-            details: [
-                `${flight.outbound.segments[0].origin} → ${flight.outbound.segments[flight.outbound.segments.length - 1].destination}`,
-                flight.outbound.stops === 0 ? 'Direktno' : `${flight.outbound.stops} presedanje`,
-                flight.outbound.fareBrand ?? '',
-            ].filter(Boolean).join(' · '),
-            pricePerUnit: Math.round(flight.totalPrice / Math.max(1, 1)),
-            totalPrice: flight.totalPrice,
-            currency: flight.currency,
-            status: flight.outbound.status,
-            icon: flight.airlineLogo,
-            isRemovable: true,
-        });
-    };
-
-    // ── Package Wizard komplet → Export ────────────────────
-    const handlePackageComplete = (_total: number) => {
-        setShowExport(true);
-    };
+    const showSidebar = activeTab === 'hotel' && searchMode === 'classic';
 
     return (
-        <div
-            className={`v6-prime-hub v6-cockpit-layout ${theme === 'navy' ? 'v6-dark' : ''}`}
-            role="main"
-            aria-label="PrimeSmartSearch V6"
-            data-testid="prime-smart-search-v6"
-        >
-            {/* ═══════════════════════════════════════════════
-                HEADER ZONA — Sticky tabovi
-            ═══════════════════════════════════════════════ */}
+        <div className={`v6-prime-hub v6-cockpit-layout ${theme === 'navy' ? 'v6-dark' : ''}`}>
             <header className="v6-header-zone">
                 <SearchTabs />
             </header>
 
-            {/* ═══════════════════════════════════════════════
-                FORMA ZONA (Prikazuje se samo ako ima sadržaja)
-            ═══════════════════════════════════════════════ */}
             {activeTab !== 'package' && (
-                <section
-                    className="v6-form-zone v6-fade-in v6-wide-mode"
-                    id={`v6-panel-${activeTab}`}
-                    style={{ paddingLeft: '2.5%', paddingRight: '2.5%' }}
-                    role="tabpanel"
-                    aria-labelledby={`v6-tab-${activeTab}`}
-                >
-                <TabForm activeTab={activeTab} />
-
-                {/* Demo dugme za Hotel tab */}
-                {activeTab === 'hotel' && !searchPerformed && !isSearching && (
-                    <div style={{ marginTop: '12px' }}>
-                        <button
-                            onClick={handleDemoHotelSearch}
-                            id="v6-demo-hotel-btn"
-                            style={{
-                                background: 'none',
-                                border: '1.5px dashed var(--v6-border)',
-                                borderRadius: 'var(--v6-radius-md)',
-                                padding: '8px 16px',
-                                fontSize: '12px',
-                                color: 'var(--v6-text-muted)',
-                                cursor: 'pointer',
-                                fontFamily: 'var(--v6-font)',
-                                fontWeight: 600,
-                            }}
-                        >
-                            🎯 Demo: Prikaži primer hotela →
-                        </button>
-                    </div>
-                )}
-
-                {/* Demo dugme za Charter tab */}
-                {activeTab === 'charter' && !searchPerformed && !isSearching && (
-                    <div style={{ marginTop: '12px' }}>
-                        <button
-                            onClick={() => {
-                                setIsSearching(true);
-                                setTimeout(() => {
-                                    setCharterResults(MOCK_CHARTER_RESULTS);
-                                    setIsSearching(false);
-                                    setSearchPerformed(true);
-                                }, 1400);
-                            }}
-                            id="v6-demo-charter-btn"
-                            style={{ background: 'none', border: '1.5px dashed var(--v6-border)', borderRadius: 'var(--v6-radius-md)', padding: '8px 16px', fontSize: '12px', color: 'var(--v6-text-muted)', cursor: 'pointer', fontFamily: 'var(--v6-font)', fontWeight: 600 }}
-                        >
-                            🎫 Demo: Prikaži primer čartera (BEG→TIV + BEG→DBV) →
-                        </button>
-                    </div>
-                )}
-
-                {/* Demo dugme za Rent-a-Car tab */}
-                {activeTab === 'car' && !searchPerformed && !isSearching && (
-                    <div style={{ marginTop: '12px' }}>
-                        <button
-                            onClick={() => {
-                                setIsSearching(true);
-                                setTimeout(() => {
-                                    setCarResults(MOCK_CAR_RESULTS);
-                                    setIsSearching(false);
-                                    setSearchPerformed(true);
-                                }, 1300);
-                            }}
-                            id="v6-demo-car-btn"
-                            style={{ background: 'none', border: '1.5px dashed var(--v6-border)', borderRadius: 'var(--v6-radius-md)', padding: '8px 16px', fontSize: '12px', color: 'var(--v6-text-muted)', cursor: 'pointer', fontFamily: 'var(--v6-font)', fontWeight: 600 }}
-                        >
-                            🚗 Demo: Prikaži primer vozila (BEG, Jul 5–12) →
-                        </button>
-                    </div>
-                )}
-
-                {/* Demo dugme za Transfer tab */}
-                {activeTab === 'transfer' && !searchPerformed && !isSearching && (
-                    <div style={{ marginTop: '12px' }}>
-                        <button
-                            onClick={() => {
-                                setIsSearching(true);
-                                setTimeout(() => {
-                                    setTransferResults(MOCK_TRANSFER_RESULTS);
-                                    setIsSearching(false);
-                                    setSearchPerformed(true);
-                                }, 1100);
-                            }}
-                            id="v6-demo-transfer-btn"
-                            style={{ background: 'none', border: '1.5px dashed var(--v6-border)', borderRadius: 'var(--v6-radius-md)', padding: '8px 16px', fontSize: '12px', color: 'var(--v6-text-muted)', cursor: 'pointer', fontFamily: 'var(--v6-font)', fontWeight: 600 }}
-                        >
-                            🚌 Demo: Prikaži primer transfera (TIV → Budva) →
-                        </button>
-                    </div>
-                )}
-
-                {/* Demo dugme za Putovanja tab */}
-                {activeTab === 'tour' && !searchPerformed && !isSearching && (
-                    <div style={{ marginTop: '12px' }}>
-                        <button
-                            onClick={() => {
-                                setIsSearching(true);
-                                setTimeout(() => {
-                                    setTourResults(MOCK_TOUR_RESULTS);
-                                    setIsSearching(false);
-                                    setSearchPerformed(true);
-                                }, 1200);
-                            }}
-                            id="v6-demo-tour-btn"
-                            style={{ background: 'none', border: '1.5px dashed var(--v6-border)', borderRadius: 'var(--v6-radius-md)', padding: '8px 16px', fontSize: '12px', color: 'var(--v6-text-muted)', cursor: 'pointer', fontFamily: 'var(--v6-font)', fontWeight: 600 }}
-                        >
-                            🌍 Demo: Prikaži primer putovanja (Bali, Rim, Pariz) →
-                        </button>
-                    </div>
-                )}
-
-                {/* Demo dugme za Izleti i Aktivnosti (Things to Do) tab */}
-                {activeTab === 'things-to-do' && !searchPerformed && !isSearching && (
-                    <div style={{ marginTop: '12px' }}>
-                        <button
-                            onClick={() => {
-                                setIsSearching(true);
-                                setTimeout(() => {
-                                    setActivityResults(MOCK_ACTIVITY_RESULTS);
-                                    setIsSearching(false);
-                                    setSearchPerformed(true);
-                                }, 900);
-                            }}
-                            id="v6-demo-activities-btn"
-                            style={{ background: 'none', border: '1.5px dashed var(--v6-border)', borderRadius: 'var(--v6-radius-md)', padding: '8px 16px', fontSize: '12px', color: 'var(--v6-text-muted)', cursor: 'pointer', fontFamily: 'var(--v6-font)', fontWeight: 600 }}
-                        >
-                            🎟️ Demo: Prikaži primer izleta i aktivnosti (Boka, Tara, Skadar) →
-                        </button>
-                    </div>
-                )}
-
-                {/* Demo dugme za Krstarenja tab */}
-                {activeTab === 'cruise' && !searchPerformed && !isSearching && (
-                    <div style={{ marginTop: '12px' }}>
-                        <button
-                            onClick={() => {
-                                setIsSearching(true);
-                                setTimeout(() => {
-                                    setCruiseResults(MOCK_CRUISE_RESULTS);
-                                    setIsSearching(false);
-                                    setSearchPerformed(true);
-                                }, 1400);
-                            }}
-                            id="v6-demo-cruise-btn"
-                            style={{ background: 'none', border: '1.5px dashed var(--v6-border)', borderRadius: 'var(--v6-radius-md)', padding: '8px 16px', fontSize: '12px', color: 'var(--v6-text-muted)', cursor: 'pointer', fontFamily: 'var(--v6-font)', fontWeight: 600 }}
-                        >
-                            🚢 Demo: Prikaži brodove i plovidbe (Mediteran, Karibi) →
-                        </button>
-                    </div>
-                )}
+                <section className="v6-form-zone v6-wide-mode">
+                    <TabForm activeTab={activeTab} />
                 </section>
             )}
 
-            {/* ═ SUMMARY BANNER ═ */}
             <PaxSummaryBanner />
 
-            {/* ═ ALERTS ═ */}
             {alerts.length > 0 && (
-                <div className="v6-alerts-zone" role="region" aria-label="Obaveštenja">
-                    {alerts.map(alert => (
-                        <div key={alert.id} className={`v6-alert v6-alert-${alert.severity} v6-fade-in`} role="alert" aria-live="polite">
-                            <span aria-hidden="true">{alert.severity === 'warning' ? '⚠️' : 'ℹ️'}</span>
-                            <span style={{ flex: 1 }}>{alert.message}</span>
-                            <button className="v6-alert-dismiss" onClick={() => dismissAlert(alert.id)} aria-label="Zatvori">✕</button>
+                <div className="v6-alerts-zone">
+                    {alerts.map(a => (
+                        <div key={a.id} className={`v6-alert v6-alert-${a.severity}`}>
+                            <span>{a.message}</span>
+                            <button onClick={() => dismissAlert(a.id)}>✕</button>
                         </div>
                     ))}
                 </div>
             )}
 
-            {/* ═ FILTER BAR (Conditional) ═ */}
-            {activeTab !== 'hotel' && <FilterBar />}
+            {activeTab !== 'hotel' && activeTab !== 'package' && <FilterBar />}
 
-            {/* ═ MAIN RESULTS ZONE ═ */}
-            <div 
-                className="v6-results-zone v6-wide-mode" 
-                style={{ paddingLeft: '2.5%', paddingRight: '2.5%' }}
-                role="region" 
-                aria-label="Rezultati pretrage" 
-                aria-live="polite"
-            >
-                {(activeTab === 'hotel') ? (
-                    <div className="v6-search-results-page-layout" style={{ gridTemplateColumns: '300px 1fr' }}>
-                        <div className="v6-sidebar-group" style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '120px' }}>
-                            <div className="v6-toggle-bar-container-new" style={{ justifyContent: 'flex-start' }}>
+            <div className="v6-results-zone v6-wide-mode" style={{ paddingLeft: '2.5%', paddingRight: '2.5%' }}>
+                {activeTab === 'hotel' ? (
+                    <div className="v6-search-results-page-layout" style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: showSidebar ? '300px 1fr' : '1fr',
+                        gap: '24px'
+                    }}>
+                        {showSidebar && (
+                            <aside className="v6-sidebar-group v6-silent-scroll" style={{ 
+                                position: 'sticky', 
+                                top: '100px',
+                                height: 'calc(100vh - 120px)',
+                                overflowY: 'auto'
+                            }}>
                                 <ViewToggleBar viewMode={hotelViewMode} onChange={setHotelViewMode} />
-                            </div>
-                            <FilterSidebar />
-                        </div>
+                                <div style={{ marginTop: '16px' }}><FilterSidebar /></div>
+                            </aside>
+                        )}
 
-                        <div className="v6-results-content-area" style={{ marginTop: '0' }}>
+                        <main className="v6-results-main-col">
                             {activeTab === 'hotel' && <HorizontalPriceCalendar />}
                             {isSearching ? <SkeletonGrid /> : (
-                                <>
-                                    {!searchPerformed ? (
-                                        <TopOffers 
-                                            activeTab={activeTab} 
-                                            hotelViewMode={hotelViewMode} setHotelViewMode={setHotelViewMode}
-                                            tourViewMode={tourViewMode} setTourViewMode={setTourViewMode}
-                                        />
-                                    ) : (
-                                        <>
-                                            {filteredHotels.length === 0 ? <NoResults /> : (
-                                                <div className={hotelViewMode === 'list' ? 'v6-results-list-wrapper' : hotelViewMode === 'grid' ? 'v6-results-grid-wrapper' : 'v6-results-notepad-wrapper'}>
-                                                    {hotelViewMode === 'notepad' && (
-                                                        <div className="v6-notepad-header">
-                                                            <span>#</span><span>Hotel</span><span>Lokacija</span><span>Usluga</span><span>Ocena</span><span>Status</span><span>Cena</span><span></span>
-                                                        </div>
-                                                    )}
-                                                    {filteredHotels.map((hotel, idx) => (
-                                                        <HotelCard key={hotel.id} hotel={hotel} index={idx} onViewOptions={() => {}} viewMode={hotelViewMode} />
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
-                                </>
+                                !searchPerformed ? <DashboardWelcome activeTab={activeTab} /> : (
+                                    results.length === 0 ? <NoResults /> : (
+                                        <div className={`v6-results-container v6-view-${hotelViewMode}`}>
+                                            {results.map((hotel, idx) => (
+                                                <HotelCard 
+                                                    key={hotel.id} 
+                                                    hotel={hotel} 
+                                                    index={idx} 
+                                                    onViewOptions={() => handleViewOptions(hotel)} 
+                                                    viewMode={hotelViewMode} 
+                                                />
+                                            ))}
+                                        </div>
+                                    )
+                                )
                             )}
-                        </div>
+                        </main>
                     </div>
                 ) : (
-                    /* STANDARD CENTERED LAYOUT (Includes Packages, Flights, etc.) */
-                    <div className="v6-standard-results-layout" style={{ maxWidth: 'none', margin: '0 auto', width: '100%' }}>
+                    <div className="v6-standard-results-layout" style={{ width: '100%' }}>
                         {isSearching ? <SkeletonGrid /> : (
                             <>
-                                {activeTab === 'package' && (
-                                    <PackageWizard onComplete={handlePackageComplete} />
-                                 )}
-
-                                {!searchPerformed && activeTab !== 'package' ? (
-                                    <TopOffers 
-                                        activeTab={activeTab} 
-                                        hotelViewMode={hotelViewMode} setHotelViewMode={setHotelViewMode}
-                                        tourViewMode={tourViewMode} setTourViewMode={setTourViewMode}
-                                    />
-                                ) : (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                {activeTab === 'package' && <PackageWizard onComplete={() => setShowExport(true)} />}
+                                
+                                {!searchPerformed && activeTab !== 'package' ? <DashboardWelcome activeTab={activeTab} /> : (
+                                    <div className="v6-results-stack" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                         {activeTab === 'flight' && (
-                                            flightResults.length === 0 ? <NoResults /> : (
-                                                <div className="search-results-container">
-                                                    {flightResults.map((flight, idx) => (
-                                                        <FlightCard key={flight.id} flight={flight} index={idx} paxTotal={1} onBook={handleBookFlight} />
-                                                    ))}
-                                                </div>
-                                            )
+                                            flightResults.length === 0 ? <NoResults /> : 
+                                            flightResults.map((f, i) => <FlightCard key={f.id} flight={f} index={i} paxTotal={totalPax} onBook={handleFlightBook} />)
                                         )}
                                         {activeTab === 'charter' && (
-                                            charterResults.length === 0 ? <NoResults /> : (
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                                    {charterResults.map((charter, idx) => (
-                                                        <CharterCard key={charter.id} charter={charter} index={idx} />
-                                                    ))}
-                                                </div>
-                                            )
+                                            charterResults.length === 0 ? <NoResults /> :
+                                            <div className="v6-results-grid">{charterResults.map((c, i) => <CharterCard key={c.id} charter={c} index={i} />)}</div>
                                         )}
                                         {activeTab === 'car' && (
-                                            carResults.length === 0 ? <NoResults /> : (
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                                    {carResults.map((car, idx) => (
-                                                        <CarCard key={car.id} car={car} days={7} index={idx} />
-                                                    ))}
-                                                </div>
-                                            )
+                                            carResults.length === 0 ? <NoResults /> :
+                                            <div className="v6-results-grid">{carResults.map((c, i) => <CarCard key={c.id} car={c} index={i} />)}</div>
                                         )}
                                         {activeTab === 'transfer' && (
-                                            transferResults.length === 0 ? <NoResults /> : (
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                                    {transferResults.map((tr, idx) => (
-                                                        <TransferCard key={tr.id} transfer={tr} direction={transferDirection} index={idx} />
-                                                    ))}
-                                                </div>
-                                            )
+                                            transferResults.length === 0 ? <NoResults /> :
+                                            <div className="v6-results-grid">{transferResults.map((t, i) => <TransferCard key={t.id} transfer={t} index={i} />)}</div>
                                         )}
                                         {activeTab === 'tour' && (
-                                            tourResults.length === 0 ? <NoResults /> : (
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                                    {tourResults.map((tour, idx) => (
-                                                        <TourCard key={tour.id} tour={tour} index={idx} viewMode={tourViewMode} />
-                                                    ))}
-                                                </div>
-                                            )
-                                        )}
-                                        {activeTab === 'cruise' && (
-                                            cruiseResults.length === 0 ? <NoResults /> : (
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                                    {cruiseResults.map((cruise, idx) => (
-                                                        <CruiseCard key={cruise.id} cruise={cruise} pax={2} index={idx} />
-                                                    ))}
-                                                </div>
-                                            )
+                                            tourResults.length === 0 ? <NoResults /> :
+                                            <div className="v6-results-grid">{tourResults.map((t, i) => <TourCard key={t.id} tour={t} index={i} />)}</div>
                                         )}
                                         {activeTab === 'things-to-do' && (
-                                            activityResults.length === 0 ? <NoResults /> : (
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                                    {activityResults.map((act, idx) => (
-                                                        <ActivityCard key={act.id} activity={act} pax={2} index={idx} />
-                                                    ))}
-                                                </div>
-                                            )
+                                            activityResults.length === 0 ? <NoResults /> :
+                                            <div className="v6-results-grid">{activityResults.map((a, i) => <ActivityCard key={a.id} activity={a} index={i} pax={totalPax} />)}</div>
+                                        )}
+                                        {activeTab === 'cruise' && (
+                                            cruiseResults.length === 0 ? <NoResults /> :
+                                            <div className="v6-results-grid">{cruiseResults.map((c, i) => <CruiseCard key={c.id} cruise={c} index={i} pax={totalPax} />)}</div>
                                         )}
                                     </div>
                                 )}
@@ -849,29 +288,77 @@ export const PrimeSmartSearch: React.FC = () => {
                 )}
             </div>
 
-            {/* ═ POST-RESULTS UTILITIES ═ */}
-            <PackageBasket />
-            {showPackageCheckout && <DynamicPackageCheckout />}
+            <style>{`
+                .v6-silent-scroll {
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+                .v6-silent-scroll::-webkit-scrollbar {
+                    display: none;
+                }
+                
+                /* VIEW MODES LAYOUTS */
+                .v6-results-container.v6-view-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                    gap: 24px;
+                }
+                .v6-results-container.v6-view-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+                .v6-results-container.v6-view-notepad {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px; /* Tight for notepad */
+                    background: var(--v6-bg-section);
+                    padding: 8px;
+                    border-radius: var(--v6-radius-lg);
+                }
 
-            {/* ═ MODALS ═ */}
-            {/* Note: HotelDetailsModal is now a separate page /prime-smart-search/hotel/:id */}
+                .v6-sidebar-dynamic-header .v6-header-content {
+                    background: var(--v6-accent);
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    box-shadow: 0 4px 12px rgba(99, 179, 237, 0.2);
+                }
+
+                .v6-view-btn {
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    border: 2px solid transparent !important;
+                    background: transparent;
+                    color: var(--v6-text-muted);
+                    opacity: 0.6;
+                }
+                .v6-view-btn:hover {
+                    opacity: 1;
+                    background: rgba(255,255,255,0.05);
+                }
+                .v6-view-btn.active {
+                    opacity: 1;
+                    background: var(--v6-bg-card);
+                    color: var(--v6-accent);
+                    border-color: var(--v6-accent) !important;
+                    box-shadow: 0 0 15px rgba(99, 179, 237, 0.2);
+                    transform: scale(1.02);
+                }
+            `}</style>
+
+            <PackageBasketBar onExport={() => setShowExport(true)} />
+            {showPackageCheckout && <DynamicPackageCheckout />}
+            {showExport && <ItineraryExport onClose={() => setShowExport(false)} />}
             {showBookingModal && pendingBookingData && (
                 <BookingModal 
-                    isOpen={showBookingModal}
-                    onClose={() => setShowBookingModal(false)}
-                    provider="solvex" // Default provider for now, or get from hotel
-                    bookingData={pendingBookingData}
-                    onSuccess={handleBookingSuccess}
-                    onError={handleBookingError}
+                    isOpen={showBookingModal} onClose={() => setShowBookingModal(false)}
+                    provider="solvex" bookingData={pendingBookingData}
+                    onSuccess={handleBookingSuccess} onError={() => {}}
                 />
             )}
-            {showExport && (
-                <ItineraryExport hotel={selectedHotel ?? undefined} onClose={() => setShowExport(false)} />
-            )}
-
-            {/* ═ CONCIERGE ═ */}
-            <SmartConcierge activeHotelCity={conciergeCity} />
             <SavedOffersPanel />
+            <SmartConcierge activeHotelCity={selectedHotel?.location.city} />
         </div>
     );
 };

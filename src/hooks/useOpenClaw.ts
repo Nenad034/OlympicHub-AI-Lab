@@ -5,9 +5,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const GATEWAY_URL = '/api/openclaw'; 
 const GATEWAY_TOKEN = 'olympic-hub-secret-token-2026'; 
 
-// Init Gemini SDK for Backup
-const genAI = new GoogleGenerativeAI('AIzaSyC_vYi80SghECEYmmKA3CCY4wuhWZrKXRU');
-const geminiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+// Init Gemini SDK for Backup (Use Secure Environment Variable)
+const genAI = new GoogleGenerativeAI((import.meta as any).env?.VITE_GEMINI_API_KEY || '');
+const geminiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export interface OpenClawMessage {
   role: 'user' | 'assistant';

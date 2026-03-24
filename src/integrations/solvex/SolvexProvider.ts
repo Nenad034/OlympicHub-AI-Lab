@@ -142,7 +142,9 @@ export class SolvexProvider implements HotelProvider {
             rooms: params.rooms || 1,
             destination: params.destination,
             cityId: cityIds.length === 1 ? cityIds[0] : (cityIds.length > 1 ? cityIds : undefined),
-            hotelId: hotelId
+            hotelId: hotelId,
+            stars: params.stars,
+            board: params.board
         };
     }
 

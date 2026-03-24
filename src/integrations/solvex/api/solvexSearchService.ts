@@ -83,18 +83,34 @@ export async function searchHotels(
             try {
                 const { supabase } = await import('../../../supabaseClient');
                 if (supabase) {
-                    const { data: hotelsData } = await supabase
-                        .from('properties')
-                        .select('id, images, content, propertyAmenities, latitude, longitude')
-                        .in('id', uniqueHotelIds.map(id => `solvex_${id}`));
-
-                    if (hotelsData) {
-                        hotelsData.forEach((h: any) => {
-                            const solvexId = h.id.replace('solvex_', '');
-                            enrichedMap[solvexId] = h;
-                        });
-                        console.log(`[Solvex Search] Enriched ${hotelsData.length} hotels from Supabase`);
+                    // Chunk uniqueHotelIds to avoid URL length limits (400 Bad Request)
+                    const chunkSize = 20;
+                    const idChunks = [];
+                    for (let i = 0; i < uniqueHotelIds.length; i += chunkSize) {
+                        idChunks.push(uniqueHotelIds.slice(i, i + chunkSize));
                     }
+
+                    console.log(`[Solvex Search] Fetching enrichment in ${idChunks.length} chunks...`);
+
+                    for (const chunk of idChunks) {
+                        const { data: hotelsData, error } = await supabase
+                            .from('properties')
+                            .select('id, images, content, propertyAmenities')
+                            .in('id', chunk.map(id => `solvex_${id}`));
+
+                        if (error) {
+                            console.error('[Solvex Search] Chunk fetch error:', error);
+                            continue;
+                        }
+
+                        if (hotelsData) {
+                            hotelsData.forEach((h: any) => {
+                                const solvexId = h.id.replace('solvex_', '');
+                                enrichedMap[solvexId] = h;
+                            });
+                        }
+                    }
+                    console.log(`[Solvex Search] Enriched ${Object.keys(enrichedMap).length} hotels total from Supabase`);
                 }
             } catch (e2) {
                 console.warn('[Solvex Search] Could not load Supabase for enrichment', e2);

@@ -80,19 +80,28 @@ export const FilterSidebar: React.FC = () => {
 
     return (
         <aside className="v6-filter-sidebar-stack v6-fade-in-right">
-            {/* Header Sticky */}
-            <div className="v6-sidebar-dynamic-header">
-                <div className="v6-header-content">
-                    <Search size={18} />
-                    <span>VAŠI FILTERI</span>
-                </div>
-            </div>
 
-            <div className="v6-filter-card header-card">
-                <div className="sidebar-header">
-                    <h3>Opcije pretrage</h3>
-                    <button className="reset-btn" onClick={resetFilters}>
-                        <RefreshCw size={14} /> RESETUJ
+            <div className="v6-filter-card header-card" style={{ 
+                padding: '0 12px', 
+                marginBottom: '6px', 
+                minHeight: 'unset',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center'
+            }}>
+                <div className="sidebar-header" style={{ marginBottom: 0, gap: '8px', minHeight: 'unset', width: '100%', height: '100%' }}>
+                    <h3 style={{ fontSize: '11px', margin: 0, opacity: 0.7, lineHeight: 1 }}>Parametri</h3>
+                    <button className="reset-btn" onClick={resetFilters} style={{ 
+                        padding: '0 8px', 
+                        fontSize: '9px',
+                        height: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        background: 'transparent',
+                        border: '1px solid rgba(99, 179, 237, 0.2)'
+                    }}>
+                        <RefreshCw size={9} /> RESETUJ
                     </button>
                 </div>
             </div>

@@ -12,7 +12,7 @@ export const TOUR_CATEGORIES: { value: TourCategory | 'all'; label: string; emoj
 export const MOCK_TOUR_RESULTS: TourResult[] = [
     // ── Egzotika (Avio) ──────────────────────────────────
     {
-        id: 'tour-001',
+        id: '001',
         name: 'Magični Bali - Ostrvo Bogova',
         image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=800',
         supplierName: 'PrimeClick Tours',

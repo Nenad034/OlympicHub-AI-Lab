@@ -8,6 +8,8 @@ import { FlightPaxWizard } from './FlightPaxWizard';
 import { ExpediaCalendar } from '../../../../components/ExpediaCalendar';
 import AirportAutocomplete from '../../../../components/flight/AirportAutocomplete';
 import { Plane, Calendar, MapPin, ArrowLeftRight, ChevronDown, SlidersHorizontal, Clock, Search, Route, Send, Briefcase, Building2, Check, Plus, Trash2 } from 'lucide-react';
+import flightSearchManager from '../../../../services/flight/flightSearchManager';
+import { mapFlightResults } from '../../utils/flightMapper';
 
 const CABIN_CLASSES = [
     { value: 'economy', label: 'Ekonomska' },
@@ -39,7 +41,14 @@ interface FlightLeg {
 }
 
 export const FlightSearchForm: React.FC = () => {
-    const { searchMode, setIsSearching, setSearchPerformed, addAlert } = useSearchStore();
+    const { 
+        searchMode, 
+        setIsSearching, 
+        setSearchPerformed, 
+        addAlert,
+        setFlightResults,
+        setFlightSearchParams
+    } = useSearchStore();
     const { theme } = useThemeStore();
     const isDark = theme === 'navy';
 
@@ -56,6 +65,7 @@ export const FlightSearchForm: React.FC = () => {
     const [showCalendar, setShowCalendar] = useState(false);
     const [cabinClass, setCabinClass] = useState('economy');
     const [pax, setPax] = useState({ adults: 1, children: 0, infants: 0, childAges: [] as number[] });
+    const [directOnly, setDirectOnly] = useState(false);
 
     // Multi-city Legs
     const [legs, setLegs] = useState<FlightLeg[]>([
@@ -76,12 +86,48 @@ export const FlightSearchForm: React.FC = () => {
     const [airlinePanelPos, setAirlinePanelPos] = useState({ top: 0, left: 0 });
     const [activeClassLegId, setActiveClassLegId] = useState<number | null>(null);
 
-    const handleSearch = () => {
+    const handleSearch = async () => {
+        if (!origin.code || !destination.code || !departDate) {
+            addAlert({ id: 'missing-fields', severity: 'warning', message: 'Molimo popunite polazak, odredište i datum odlaska.' });
+            return;
+        }
+
         setIsSearching(true);
-        setTimeout(() => {
+        setSearchPerformed(true);
+
+        const searchParams = {
+            tripType,
+            origin: origin.code,
+            originCity: origin.city,
+            destination: destination.code,
+            destinationCity: destination.city,
+            departureDate: departDate,
+            returnDate: returnDate || undefined,
+            adults: pax.adults,
+            children: pax.children,
+            infants: pax.infants,
+            childrenAges: pax.childAges,
+            cabinClass: cabinClass as any,
+            directFlightsOnly: directOnly
+        };
+
+        try {
+            setFlightSearchParams(searchParams as any);
+            const response = await flightSearchManager.searchFlights(searchParams as any);
+            
+            if (response.success) {
+                const uiResults = mapFlightResults(response.offers);
+                setFlightResults(uiResults);
+            } else {
+                setFlightResults([]);
+                addAlert({ id: 'no-flights', severity: 'info', message: 'Nismo pronašli letove za tražene kriterijume.' });
+            }
+        } catch (error) {
+            console.error('Flight search error:', error);
+            addAlert({ id: 'search-error', severity: 'error', message: 'Došlo je do greške prilikom pretrage letova.' });
+        } finally {
             setIsSearching(false);
-            setSearchPerformed(true);
-        }, 1200);
+        }
     };
 
     const addLeg = () => {
@@ -139,21 +185,54 @@ export const FlightSearchForm: React.FC = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }} className="v6-flight-form-container">
-            {/* TOP BAR */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* TOP BAR - Perfectly Aligned */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px' }}>
+                {/* Trip Type Selector - Extreme Compact */}
                 <div style={{ 
-                    display: 'flex', gap: '6px', background: 'var(--bg-surface)', padding: '6px', borderRadius: '16px', 
-                    border: '1.5px solid var(--border-color)', height: '52px', minWidth: '220px', boxSizing: 'border-box',
-                    boxShadow: 'var(--shadow-sm)'
+                    display: 'flex', background: 'var(--v6-bg-card)', padding: '2px', borderRadius: '12px', 
+                    border: '1.5px solid var(--v6-border)', height: '40px', boxSizing: 'border-box',
+                    boxShadow: 'var(--v6-shadow-sm)', alignItems: 'center'
                 }}>
-                    <button onClick={() => setTripType('roundtrip')} className={`v6-trip-btn ${tripType === 'roundtrip' ? 'active' : ''}`}><div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Plane className="icon-luxury plane-e" size={16} /><Plane className="icon-luxury plane-w" size={16} /></div></button>
-                    <button onClick={() => setTripType('oneway')} className={`v6-trip-btn ${tripType === 'oneway' ? 'active' : ''}`}><Plane className="icon-luxury plane-e" size={18} /></button>
-                    <button onClick={() => setTripType('multicity')} className={`v6-trip-btn ${tripType === 'multicity' ? 'active' : ''}`}><Route className="icon-luxury" size={18} /></button>
+                    <button 
+                        onClick={() => setTripType('roundtrip')} 
+                        className={`v6-trip-btn ${tripType === 'roundtrip' ? 'active' : ''}`}
+                        title="Povratno putovanje"
+                        style={{ height: '34px', padding: '0 12px', borderRadius: '9px', border: tripType==='roundtrip' ? 'none' : '1px solid transparent' }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Plane className="plane-e" size={14} />
+                            <Plane className="plane-w" size={14} />
+                        </div>
+                    </button>
+                    
+                    {/* Thin Separator */}
+                    <div style={{ width: '1px', height: '20px', background: 'var(--v6-border)', margin: '0 2px' }} />
+
+                    <button 
+                        onClick={() => setTripType('oneway')} 
+                        className={`v6-trip-btn ${tripType === 'oneway' ? 'active' : ''}`}
+                        title="U jednom pravcu"
+                        style={{ height: '34px', padding: '0 14px', borderRadius: '9px', border: tripType==='oneway' ? 'none' : '1px solid transparent' }}
+                    >
+                        <Plane size={14} />
+                    </button>
+
+                    <div style={{ width: '1px', height: '20px', background: 'var(--v6-border)', margin: '0 2px' }} />
+
+                    <button 
+                        onClick={() => setTripType('multicity')} 
+                        className={`v6-trip-btn ${tripType === 'multicity' ? 'active' : ''}`}
+                        title="Više gradova"
+                        style={{ height: '34px', padding: '0 14px', borderRadius: '9px', border: tripType==='multicity' ? 'none' : '1px solid transparent' }}
+                    >
+                        <Route size={14} />
+                    </button>
                 </div>
-                <SearchModeSelector />
+                
+                <SearchModeSelector style={{ flex: 1, justifyContent: 'flex-end', marginBottom: 0 }} />
             </div>
 
-            {(searchMode === 'semantic' || searchMode === 'hybrid') && <AIAssistantField />}
+            {(searchMode === 'semantic' || searchMode === 'hybrid') && <AIAssistantField context="flight" />}
 
             {searchMode !== 'semantic' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -369,6 +448,9 @@ export const FlightSearchForm: React.FC = () => {
                             </div>
                             
                             <div className="v6-filters-switches-v2">
+                                <label className="v6-switch-label-v2">
+                                    <input type="checkbox" checked={directOnly} onChange={(e) => setDirectOnly(e.target.checked)} /> Samo direktni letovi
+                                </label>
                                 <label className="v6-switch-label-v2">
                                     <input type="checkbox" /> Samo fleksibilne tarife
                                 </label>

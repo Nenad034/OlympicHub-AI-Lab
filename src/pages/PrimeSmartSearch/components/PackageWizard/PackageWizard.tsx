@@ -204,57 +204,65 @@ const Step1Search: React.FC<{ onNext: () => void }> = ({ onNext }) => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    {/* Reset Button (Nova Pretraga) */}
-                    <button
-                        onClick={resetPackageWizard}
-                        style={{
-                            padding: '10px 18px',
-                            background: 'var(--v6-bg-card)',
-                            border: '1.8px solid #1A234E',
-                            borderRadius: '12px',
-                            color: 'var(--v6-text-primary)',
-                            fontSize: '13px',
-                            fontFamily: 'var(--v6-font)',
-                            fontWeight: 900,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            transition: 'all 0.2s',
-                            boxShadow: 'var(--v6-shadow-sm)'
-                        }}
-                    >
-                        NOVA PRETRAGA
-                    </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        {/* Reset Button (Nova Pretraga) */}
+                        <button
+                            onClick={resetPackageWizard}
+                            style={{
+                                padding: '10px 18px',
+                                background: 'var(--v6-bg-card)',
+                                border: '1.8px solid #1A234E',
+                                borderRadius: '12px',
+                                color: 'var(--v6-text-primary)',
+                                fontSize: '13px',
+                                fontFamily: 'var(--v6-font)',
+                                fontWeight: 900,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                transition: 'all 0.2s',
+                                boxShadow: 'var(--v6-shadow-sm)'
+                            }}
+                        >
+                            NOVA PRETRAGA
+                        </button>
 
-                    {/* Multi-Stop Toggle */}
-                    <button 
-                        onClick={() => setIsMultiStop(!isMultiStop)}
-                        style={{
-                            padding: '10px 18px',
-                            background: isMultiStop ? 'var(--v6-accent)' : 'var(--v6-bg-card)',
-                            border: isMultiStop ? '1.8px solid var(--v6-accent)' : '1.8px solid #1A234E',
-                            borderRadius: '12px',
-                            color: isMultiStop ? 'var(--v6-accent-text)' : 'var(--v6-text-primary)',
-                            fontSize: '13px',
-                            fontFamily: 'var(--v6-font)',
-                            fontWeight: 900,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            transition: 'all 0.2s',
-                            boxShadow: 'var(--v6-shadow-sm)'
-                        }}
-                    >
-                        {isMultiStop ? 'Multi-Stop Aktivan' : 'Aktiviraj Multi-Stop'}
-                    </button>
+                        {/* Multi-Stop Toggle */}
+                        <button 
+                            onClick={() => setIsMultiStop(!isMultiStop)}
+                            style={{
+                                padding: '10px 18px',
+                                background: isMultiStop ? 'var(--v6-accent)' : 'var(--v6-bg-card)',
+                                border: isMultiStop ? '1.8px solid var(--v6-accent)' : '1.8px solid #1A234E',
+                                borderRadius: '12px',
+                                color: isMultiStop ? 'var(--v6-accent-text)' : 'var(--v6-text-primary)',
+                                fontSize: '13px',
+                                fontFamily: 'var(--v6-font)',
+                                fontWeight: 900,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                transition: 'all 0.2s',
+                                boxShadow: 'var(--v6-shadow-sm)'
+                            }}
+                        >
+                            {isMultiStop ? 'Multi-Stop Aktivan' : 'Aktiviraj Multi-Stop'}
+                        </button>
+                    </div>
+
+                    <SearchModeSelector />
                 </div>
 
-            {((searchMode as any) === 'semantic' || (searchMode as any) === 'hybrid') && <AIAssistantField />}
 
-            {(searchMode as any) !== 'semantic' && (
+            {((searchMode as any) === 'semantic' || (searchMode as any) === 'hybrid') && (
+                <AIAssistantField onSearch={onNext} />
+            )}
+
+
+            {((searchMode as any) === 'classic' || (searchMode as any) === 'hybrid') && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <h3 style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 900, color: 'var(--v6-text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <Search size={20} color="var(--v6-accent)" /> 
@@ -1135,7 +1143,7 @@ export const PackageWizard: React.FC<PackageWizardProps> = ({ onComplete }) => {
                         <div style={{ padding: '0 0' }}>
                             <div className="v6-results-list-wrapper">
                                 {MOCK_TOUR_RESULTS.slice(0, 3).map((tour, idx) => (
-                                    <TourCard key={tour.id} tour={tour} index={idx} viewMode="list" />
+                                    <TourCard key={`pkg-tour-${tour.id}`} tour={tour} index={idx} viewMode="list" />
                                 ))}
                             </div>
                         </div>

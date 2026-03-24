@@ -27,10 +27,11 @@ export interface SmartSearchParams {
     checkOut: string;
     roomConfig: RoomAllocation[];
     mealPlan?: string;
-    stars?: string[];
+    flexibility?: number;
+    stars?: string[] | number[];
+    board?: string[];
     currency?: string;
     nationality?: string;
-    flexibility?: number;
     enabledProviders?: Record<string, boolean>;
     abortSignal?: AbortSignal;
 }
@@ -174,9 +175,12 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                             children: config.children,
                             childrenAges: config.ages,
                             providerId: String(dest.id).startsWith('solvex-') ? String(dest.id).split('-')[1] : dest.id,
-                            providerType: dest.type === 'destination' ? 'city' : (dest.type === 'country' ? 'country' : 'hotel'),
+                            providerType: (dest.type === 'city' || dest.type === 'destination') ? 'city' : (dest.type === 'country' ? 'country' : 'hotel'),
                             targetProvider: String(dest.id).startsWith('solvex-') || dest.provider === 'Solvex' ? 'Solvex' : undefined,
-                            abortSignal: params.abortSignal
+                            abortSignal: params.abortSignal,
+                            stars: params.stars,
+                            board: params.board,
+                            nationality: params.nationality
                         });
                         results.push(...solvexResults);
                     } catch (e) {

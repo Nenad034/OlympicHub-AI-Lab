@@ -60,14 +60,20 @@ export interface HotelSearchParams {
     /** Nationality (optional) */
     nationality?: string;
 
-    /** Specific provider identifier (e.g. Solvex HotelKey or CityKey) */
+    /** Specific provider id if targetProvider is set */
     providerId?: string | number;
 
-    /** Specific provider type (e.g. 'hotel', 'city', 'country') */
+    /** Specific provider type if targetProvider is set */
     providerType?: 'hotel' | 'city' | 'country';
 
-    /** If providerId is specified, which provider does it belong to? */
+    /** Target provider name */
     targetProvider?: string;
+
+    /** Category filter (e.g. ['4', '5']) */
+    stars?: string[] | number[];
+
+    /** Meal plan filters (e.g. ['AI', 'HB']) */
+    board?: string[];
 
     /** Abort signal to cancel in-flight request */
     abortSignal?: AbortSignal;

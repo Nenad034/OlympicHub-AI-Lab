@@ -404,7 +404,9 @@ export const HotelSearchForm: React.FC = () => {
                     checkOut: state.checkOut,
                     roomConfig: state.roomAllocations,
                     nationality: state.nationality,
-                    enabledProviders: { solvex: true }
+                    enabledProviders: { solvex: true },
+                    stars: state.filters.stars.includes('all') ? [] : state.filters.stars,
+                    board: state.filters.mealPlans.includes('all') ? [] : state.filters.mealPlans
                 };
 
                 const apiResults = await performSmartSearch(searchParams as any);
@@ -432,7 +434,7 @@ export const HotelSearchForm: React.FC = () => {
         <form onSubmit={handleSearch} className="v6-search-form-advanced" noValidate>
             <SearchModeSelector />
             
-            {(searchMode === 'semantic' || searchMode === 'hybrid') && (
+            {searchMode === 'semantic' && (
                 <AIAssistantField onSearch={() => handleSearch()} isSubmitting={isSubmitting} />
             )}
 
@@ -557,6 +559,13 @@ export const HotelSearchForm: React.FC = () => {
                     </button>
                 </div>
             )}
+
+            {searchMode === 'hybrid' && (
+                <div style={{ marginTop: '24px' }}>
+                    <AIAssistantField onSearch={() => handleSearch()} isSubmitting={isSubmitting} />
+                </div>
+            )}
+
 
             {showCalendar && (
                 <ExpediaCalendar

@@ -5,9 +5,10 @@ import { useSearchStore } from '../stores/useSearchStore';
 export interface AIAssistantFieldProps {
     onSearch?: () => void;
     isSubmitting?: boolean;
+    context?: 'stay' | 'flight' | 'package';
 }
 
-export const AIAssistantField: React.FC<AIAssistantFieldProps> = ({ onSearch, isSubmitting }) => {
+export const AIAssistantField: React.FC<AIAssistantFieldProps> = ({ onSearch, isSubmitting, context = 'stay' }) => {
     const { 
         semanticQuery, 
         setSemanticQuery, 
@@ -21,7 +22,7 @@ export const AIAssistantField: React.FC<AIAssistantFieldProps> = ({ onSearch, is
 
     useEffect(() => {
         if (isSubmitting) {
-            const messages = [
+            const stayMessages = [
                 "Milica traži idealne destinacije...",
                 "Milica traži najbolje termine...",
                 "Milica traži ekskluzivne Solvex popuste...",
@@ -29,6 +30,16 @@ export const AIAssistantField: React.FC<AIAssistantFieldProps> = ({ onSearch, is
                 "Milica traži najbolje sobe za vas...",
                 "Skoro gotovo, pakujem rezultate!"
             ];
+            const flightMessages = [
+                "Milica traži najbrže rute...",
+                "Milica pretražuje sve avio kompanije...",
+                "Milica traži najbolje cene karata...",
+                "Milica proverava slobodna mesta...",
+                "Milica optimizuje vaše putovanje...",
+                "Skoro gotovo, polećemo!"
+            ];
+            
+            const messages = context === 'flight' ? flightMessages : stayMessages;
             let idx = 0;
             const timer = setInterval(() => {
                 idx = (idx + 1) % messages.length;
@@ -38,7 +49,7 @@ export const AIAssistantField: React.FC<AIAssistantFieldProps> = ({ onSearch, is
         } else {
             setLoadingMessage("Milica traži najbolju ponudu za vas...");
         }
-    }, [isSubmitting]);
+    }, [isSubmitting, context]);
 
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -48,6 +59,23 @@ export const AIAssistantField: React.FC<AIAssistantFieldProps> = ({ onSearch, is
             }
         }
     };
+
+    const tags = context === 'flight' ? [
+        { id: 'direct', label: 'Samo direktni letovi', query: 'samo direktne letove' },
+        { id: 'flextariff', label: 'Fleksibilna karta', query: 'sa fleksibilnom kartom' },
+        { id: 'baggage', label: 'Prtljag uključen', query: 'sa uključenim prtljagom' },
+        { id: 'business', label: 'Biznis klasa', query: 'u biznis klasi' },
+        { id: 'morning', label: 'Jutarnji polazak', query: 'sa polaskom ujutru' },
+        { id: 'evening', label: 'Večernji polazak', query: 'sa polaskom uveče' }
+    ] : [
+        { id: 'refundable', label: 'Besplatan otkaz', query: 'sa besplatnim otkazom' },
+        { id: 'pool', label: 'Bazen', query: 'sa bazenom' },
+        { id: 'wifi', label: 'WiFi', query: 'sa WiFi internetom' },
+        { id: 'parking', label: 'Parking', query: 'sa parkingom' },
+        { id: 'breakfast', label: 'Doručak', query: 'sa doručkom' },
+        { id: 'center', label: 'Centar', query: 'u centru grada' },
+        { id: 'stars5', label: '5 Zvezdica', query: 'sa 5 zvezdica' }
+    ];
 
     const handleOptionSelect = (value: any) => {
         if (pendingClarification?.type === 'pax_split') {
@@ -94,13 +122,21 @@ export const AIAssistantField: React.FC<AIAssistantFieldProps> = ({ onSearch, is
                         textAlign: 'center',
                         boxShadow: '0 30px 60px rgba(0,0,0,0.5)'
                     }}>
-                         <div style={{
-                            width: '100px', height: '100px', borderRadius: '24px', margin: '0 auto 24px',
-                            overflow: 'hidden', border: '3px solid var(--v6-accent)'
+                        <div style={{
+                            width: '120px', height: '120px', borderRadius: '32px', margin: '0 auto 24px',
+                            overflow: 'hidden', border: '3px solid var(--v6-accent)',
+                            boxShadow: '0 12px 32px rgba(99, 179, 237, 0.4)'
                         }}>
                             <img src="/images/milica-avatar.png" alt="Milica" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
-                        <h3 style={{ fontSize: '24px', color: 'white', marginBottom: '16px' }}>{pendingClarification.question}</h3>
+                        <h3 style={{ fontSize: '26px', color: 'white', marginBottom: '8px', fontWeight: 800 }}>Milica</h3>
+                        <p style={{ color: 'var(--v6-text-muted)', marginBottom: '24px', fontSize: '16px' }}>Vaša AI asistentkinja za hotele</p>
+                        <div style={{
+                            padding: '24px', borderRadius: '20px', background: 'rgba(255,255,255,0.03)',
+                            border: '1px solid rgba(255,255,255,0.1)', marginBottom: '24px'
+                        }}>
+                            <p style={{ fontSize: '18px', color: 'white', margin: 0, lineHeight: 1.5 }}>{pendingClarification.question}</p>
+                        </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {pendingClarification.options.map((opt, i) => (
                                 <button 
@@ -219,115 +255,168 @@ export const AIAssistantField: React.FC<AIAssistantFieldProps> = ({ onSearch, is
                 </div>
             )}
 
-            {/* NORMAL INPUT VIEW */}
-            <div className="v6-semantic-search-row v6-fade-in" style={{ marginBottom: '16px', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+            {/* NORMAL INPUT VIEW - MILICA ONLY */}
+            <div className="v6-semantic-search-row v6-fade-in" style={{ 
+              marginBottom: '32px', 
+              display: 'flex', 
+              gap: '16px', 
+              alignItems: 'stretch',
+              position: 'relative'
+            }}>
                 
-                {/* SQUPORTRAIT AVATAR MODULE */}
+                {/* LEFT SIDE: MILICA AVATAR (STRETCHED) */}
                 <div style={{
                     flexShrink: 0,
-                    width: '96px',
-                    height: '110px',
-                    borderRadius: '24px',
+                    width: '90px',
+                    borderRadius: 'var(--v6-radius-lg)',
                     overflow: 'hidden',
-                    border: '3px solid var(--v6-accent)',
-                    boxShadow: '0 8px 24px rgba(99, 179, 237, 0.2)',
-                    background: 'linear-gradient(135deg, rgba(23,37,84,1), rgba(30,58,138,1))',
+                    border: '2px solid var(--v6-accent)',
+                    boxShadow: '0 8px 32px rgba(99, 179, 237, 0.1)',
+                    background: 'linear-gradient(135deg, #1e293b, #0f172a)',
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    position: 'relative',
-                    marginTop: '6px'
+                    position: 'relative'
                 }}>
                     <img 
                         src="/images/milica-avatar.png" 
-                        alt="Milica AI Agent" 
-                        style={{ 
-                            width: '100%', 
-                            height: '100%', 
-                            objectFit: 'cover',
-                            objectPosition: 'center top',
-                            scale: '1.05'
-                        }} 
+                        alt="Milica AI" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', scale: '1.05' }} 
                     />
-                    
-                    {/* AI Badge inside the module */}
-                    <div style={{
-                        position: 'absolute',
-                        bottom: '0',
-                        left: '0',
-                        right: '0',
-                        background: 'rgba(15, 23, 42, 0.8)',
-                        backdropFilter: 'blur(4px)',
-                        padding: '4px 0',
-                        textAlign: 'center',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        color: 'var(--v6-accent)',
-                        borderTop: '1px solid rgba(255,255,255,0.1)'
+                    <div style={{ 
+                        position: 'absolute', bottom: 0, left: 0, right: 0, 
+                        background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)',
+                        padding: '6px 0', textAlign: 'center', fontSize: '10px', fontWeight: 900,
+                        color: 'var(--v6-accent)', borderTop: '1px solid rgba(255,255,255,0.1)',
+                        letterSpacing: '0.05em'
                     }}>
                         MILICA AI
                     </div>
                 </div>
 
                 {/* INPUT CONTAINER */}
-                <div className="v6-semantic-input-container" style={{ position: 'relative', flex: 1 }}>
+                <div className="v6-semantic-input-container" style={{ 
+                    position: 'relative', 
+                    flex: 1, 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    background: 'var(--v6-bg-section)',
+                    border: '2px solid var(--v6-accent)',
+                    borderRadius: 'var(--v6-radius-lg)',
+                    overflow: 'hidden',
+                    boxShadow: '0 8px 32px rgba(99, 179, 237, 0.1)',
+                }}>
                     <div className="v6-ai-glow-orb" />
-                    <textarea
-                        className="v6-semantic-textarea"
-                        placeholder="Zdravo, ja sam Milica! Kako mogu da dizajniram vaše idealno putovanje danas? Opišite mi u jednoj rečenici šta želite! (npr. 'Nađi mi dobar hotel za decu u Grčkoj')"
-                        value={semanticQuery}
-                        onChange={(e) => setSemanticQuery(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        style={{
-                            width: '100%',
-                            minHeight: '120px',
-                            padding: '24px 80px 24px 24px', // Right padding for button
-                            borderRadius: 'var(--v6-radius-lg)',
-                            background: 'var(--v6-bg-section)',
-                            border: '2px solid var(--v6-accent)',
-                            color: 'var(--v6-text-primary)',
-                            fontSize: 'var(--v6-fs-md)',
-                            fontFamily: 'var(--v6-font)',
-                            outline: 'none',
-                            resize: 'none',
-                            transition: 'all 0.3s ease',
-                            boxShadow: '0 8px 32px rgba(99, 179, 237, 0.1)',
-                        }}
-                    />
                     
-                    {/* FLOATING ACTION BUTTON */}
-                    <button 
-                      onClick={onSearch}
-                      disabled={isSubmitting || !semanticQuery.trim()}
-                      style={{
-                        position: 'absolute',
-                        right: '12px',
-                        top: '12px',
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '14px',
-                        background: 'var(--v6-accent)',
-                        border: 'none',
+                    {/* ── SMART TAGS BAR (TOP HALF) ── */}
+                    <div style={{ 
+                        padding: '8px 16px', 
+                        borderBottom: '1.5px solid rgba(99, 179, 237, 0.2)',
+                        background: 'rgba(99, 179, 237, 0.03)',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        opacity: semanticQuery.trim() ? 1 : 0.5,
-                        boxShadow: '0 4px 12px rgba(99, 179, 237, 0.3)'
-                      }}
-                      className="v6-ai-search-trigger"
-                    >
-                        <Search size={22} color="white" />
-                    </button>
+                        gap: '12px',
+                        overflowX: 'auto',
+                        scrollbarWidth: 'none',
+                    }} className="v6-silent-scroll">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '4px' }}>
+                            <Sparkles size={14} color="var(--v6-accent)" />
+                            <span style={{ fontSize: '10px', fontWeight: 900, color: 'var(--v6-text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>BRZI FILTERI:</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            {tags.map(tag => (
+                                <button
+                                    key={tag.id}
+                                    onClick={() => {
+                                        const baseText = context === 'flight' ? 'Pronađi letove' : 'Pronađi hotele';
+                                        const newQuery = semanticQuery.trim() 
+                                            ? `${semanticQuery.trim()}, ${tag.query}`
+                                            : `${baseText} ${tag.query}`;
+                                        setSemanticQuery(newQuery);
+                                    }}
+                                    style={{
+                                        padding: '6px 14px',
+                                        background: 'var(--v6-bg-card)',
+                                        border: '1.2px solid rgba(99, 179, 237, 0.3)',
+                                        borderRadius: '100px',
+                                        fontSize: '11px',
+                                        fontWeight: 800,
+                                        color: 'var(--v6-text-secondary)',
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap',
+                                        transition: 'all 0.2s ease',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                    }}
+                                    onMouseOver={(e) => {
+                                        e.currentTarget.style.borderColor = 'var(--v6-accent)';
+                                        e.currentTarget.style.color = 'var(--v6-accent)';
+                                        e.currentTarget.style.transform = 'translateY(-1px)';
+                                    }}
+                                    onMouseOut={(e) => {
+                                        e.currentTarget.style.borderColor = 'rgba(99, 179, 237, 0.3)';
+                                        e.currentTarget.style.color = 'var(--v6-text-secondary)';
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                    }}
+                                >
+                                    {tag.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
-                    <div style={{ position: 'absolute', right: '20px', bottom: '15px', display: 'flex', gap: '8px', pointerEvents: 'none' }}>
-                        <span style={{ fontSize: '12px', color: 'var(--v6-text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-                            <Sparkles size={12} style={{ marginRight: '4px' }} />
-                            Smart Extraction Active
-                        </span>
+                    {/* ── INPUT ZONE (BOTTOM HALF) ── */}
+                    <div style={{ position: 'relative', flex: 1 }}>
+                        <textarea
+                            className="v6-semantic-textarea"
+                            placeholder="Pitajte Milicu bilo šta... (npr. Hotel u centru sa bazenom do 200 EUR)"
+                            value={semanticQuery}
+                            onChange={(e) => setSemanticQuery(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            style={{
+                                width: '100%',
+                                minHeight: '52px',
+                                padding: '14px 80px 14px 16px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--v6-text-primary)',
+                                fontSize: '16px',
+                                fontFamily: 'var(--v6-font)',
+                                outline: 'none',
+                                resize: 'none',
+                                transition: 'all 0.3s ease',
+                            }}
+                        />
+                        
+                        {/* FLOATING ACTION BUTTON */}
+                        <button 
+                          onClick={onSearch}
+                          disabled={isSubmitting || !semanticQuery.trim()}
+                          style={{
+                            position: 'absolute',
+                            right: '12px',
+                            bottom: '12px',
+                            width: '44px',
+                            height: '44px',
+                            borderRadius: '12px',
+                            background: 'var(--v6-accent)',
+                            border: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            opacity: semanticQuery.trim() ? 1 : 0.5,
+                            boxShadow: '0 4px 12px rgba(99, 179, 237, 0.3)'
+                          }}
+                        >
+                            <Search size={20} color="white" />
+                        </button>
                     </div>
                 </div>
+
             </div>
         </>
     );

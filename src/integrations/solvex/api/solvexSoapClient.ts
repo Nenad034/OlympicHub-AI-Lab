@@ -355,6 +355,8 @@ export function buildHotelSearchParams(params: {
     childrenAges?: number[];
     rooms?: number;
     tariffs?: number[]; // Optional override, defaults to [0, 1993]
+    stars?: string[] | number[];
+    board?: string[];
 }): Record<string, any> {
     // STRICT ORDER REQUIRED BY WSDL s:sequence for SearchHotelServiceRequest
     const request: any = {};
@@ -379,7 +381,25 @@ export function buildHotelSearchParams(params: {
         request['HotelKeys'] = { 'int': ids };
     }
 
-    // 8-9. RoomDescriptionsKeys, PansionKeys (Skip)
+    // 8. RoomDescriptionsKeys (Skip)
+    
+    // 9. PansionKeys (Mapping Board codes to Solvex IDs)
+    if (params.board && params.board.length > 0) {
+        const boardMap: Record<string, number> = {
+            'AI': 1, 'UAI': 1, // All Inclusive
+            'FB': 2,           // Full Board
+            'HB': 3,           // Half Board
+            'BB': 4,           // Bed & Breakfast
+            'RO': 5, 'OB': 5   // Room Only
+        };
+        const pansionKeys = params.board
+            .map(b => boardMap[b.toUpperCase()])
+            .filter(id => id !== undefined);
+            
+        if (pansionKeys.length > 0) {
+            request['PansionKeys'] = { 'int': [...new Set(pansionKeys)] };
+        }
+    }
 
     // 10. Ages
     if (params.childrenAges && params.childrenAges.length > 0) {
@@ -392,15 +412,26 @@ export function buildHotelSearchParams(params: {
     // 12. Tariffs (Critical for evaluation/results)
     request['Tariffs'] = { 'int': params.tariffs || [0, 1993] };
 
-    // 13. CacheGuid (Skip)
+    // 13. CategoryKeys (Mapping Stars to Solvex IDs)
+    if (params.stars && params.stars.length > 0) {
+        const categories = params.stars
+            .map(s => parseInt(String(s).replace(/\D/g, '')))
+            .filter(n => !isNaN(n));
+        
+        if (categories.length > 0) {
+            request['CategoryKeys'] = { 'int': categories };
+        }
+    }
 
-    // 14. ResultView (Strict order: ResultView then Mode)
+    // 14. CacheGuid (Skip)
+
+    // 15. ResultView (Strict order: ResultView then Mode)
     request['ResultView'] = 1;
 
-    // 15. Mode
+    // 16. Mode
     request['Mode'] = 0;
 
-    // 16. QuotaTypes
+    // 17. QuotaTypes
     request['QuotaTypes'] = { 'int': [0, 1] }; // 0 = On request, 1 = On quota
 
     return {

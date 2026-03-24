@@ -68,7 +68,7 @@ export class HybridSearchEngine {
             });
         });
 
-        // 2. Interleave Semantic matches
+        // 2. Score boost from Semantic matches
         semantic.forEach(match => {
             const key = match.name.toLowerCase();
             if (merged.has(key)) {
@@ -77,29 +77,10 @@ export class HybridSearchEngine {
                 merged.set(key, {
                     ...existing,
                     aiScore: 98, // Ultra priority
-                    matchReason: 'Savršeno odgovara vašim željama (Dostupno odmah)'
-                });
-            } else {
-                // Potential hit: semantically good but maybe not in current live search? 
-                // We show it but indicate it's a "Smart Recommendation"
-                merged.set(key, {
-                    ...match,
-                    aiScore: 85,
-                    status: 'on-request',
-                    availability: 'on-request',
-                    matchReason: 'AI Preporuka: Odlično odgovara vašem opisu',
-                    // Mock allocation for UI compatibility
-                    allocationResults: {
-                        0: [{
-                            id: 'ai-mock',
-                            name: 'Standardna Soba (AI)',
-                            price: 0,
-                            availability: 'on-request',
-                            mealPlan: 'Smeštaj'
-                        }]
-                    }
+                    matchReason: 'Odlično odgovara vašim željama'
                 });
             }
+            // Logic for adding non-live semantic matches was removed to avoid mock data injection
         });
 
         // 3. Sort by AI Score
