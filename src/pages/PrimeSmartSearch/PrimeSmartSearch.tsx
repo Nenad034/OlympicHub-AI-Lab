@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchStore, calcPaxSummary } from './stores/useSearchStore';
 import { useThemeStore } from '../../stores';
 import { BookingModal } from '../../components/booking/BookingModal';
@@ -12,6 +12,7 @@ import { CarSearchForm } from './components/CarSearchForm/CarSearchForm';
 import { TransferSearchForm } from './components/TransferSearchForm/TransferSearchForm';
 import { PackageWizard } from './components/PackageWizard/PackageWizard';
 import { HotelCard, type ViewMode } from './components/HotelCard/HotelCard';
+import { PrimeMapSearch } from './components/PrimeMapSearch/PrimeMapSearch';
 import { FlightCard } from './components/FlightCard/FlightCard';
 import { CharterCard } from './components/CharterCard/CharterCard';
 import { CarCard } from './components/CarCard/CarCard';
@@ -32,16 +33,14 @@ import { SavedOffersPanel } from './components/SavedOffersPanel';
 import { HorizontalPriceCalendar } from './components/HorizontalPriceCalendar/HorizontalPriceCalendar';
 import { DashboardWelcome } from './components/DashboardWelcome';
 import { MilicaChat } from '../SmartSearch/components/MilicaChat';
-import { Bot, MessageCircle, List, LayoutGrid, FileText } from 'lucide-react';
+import { Bot, MessageCircle, List, LayoutGrid, FileText, Map as MapIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../stores';
 
 import type { HotelSearchResult, FlightSearchResult } from './types';
 import './styles/PrimeSmartSearch.css';
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // SKELETON
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const SkeletonGrid: React.FC = () => (
     <div className="v6-results-grid" aria-busy="true">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -57,9 +56,7 @@ const SkeletonGrid: React.FC = () => (
     </div>
 );
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // NO RESULTS
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const NoResults: React.FC = () => (
     <div className="v6-no-results v6-active">
         <div className="v6-no-results-icon">Ã°Å¸â€œÂ­</div>
@@ -68,20 +65,18 @@ const NoResults: React.FC = () => (
     </div>
 );
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // UI COMPONENTS
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const ViewToggleBar: React.FC<{ viewMode: ViewMode; onChange: (v: ViewMode) => void }> = ({ viewMode, onChange }) => (
     <div className="v6-view-toggle-bar" style={{ 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(3, 1fr)', 
+        gridTemplateColumns: 'repeat(4, 1fr)', 
         gap: '4px', 
         background: 'rgba(255,255,255,0.03)', 
         padding: '4px', 
         borderRadius: '12px',
         border: '1px solid rgba(255,255,255,0.05)'
     }}>
-        {(['list', 'grid', 'notepad'] as ViewMode[]).map((mode) => (
+        {(['list', 'grid', 'map', 'notepad'] as ViewMode[]).map((mode) => (
             <button
                 key={mode}
                 className={`v6-view-btn ${viewMode === mode ? 'active' : ''}`}
@@ -97,6 +92,7 @@ const ViewToggleBar: React.FC<{ viewMode: ViewMode; onChange: (v: ViewMode) => v
             >
                 {mode === 'list' && <List size={22} />}
                 {mode === 'grid' && <LayoutGrid size={22} />}
+                {mode === 'map' && <MapIcon size={22} />}
                 {mode === 'notepad' && <FileText size={22} />}
             </button>
         ))}
@@ -118,9 +114,9 @@ const TabForm: React.FC<{ activeTab: string }> = ({ activeTab }) => {
     }
 };
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// ─────────────────────────────────────────────────────────────
 // MAIN COMPONENT
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// ─────────────────────────────────────────────────────────────
 export const PrimeSmartSearch: React.FC = () => {
     const {
         activeTab,
@@ -240,16 +236,18 @@ export const PrimeSmartSearch: React.FC = () => {
                             {isSearching ? <SkeletonGrid /> : (
                                 !searchPerformed ? <DashboardWelcome activeTab={activeTab} /> : (
                                     results.length === 0 ? <NoResults /> : (
-                                        <div className={`v6-results-container v6-view-${hotelViewMode}`}>
-                                            {results.map((hotel, idx) => (
-                                                <HotelCard 
-                                                    key={hotel.id} 
-                                                    hotel={hotel} 
-                                                    index={idx} 
-                                                    onViewOptions={() => handleViewOptions(hotel)} 
-                                                    viewMode={hotelViewMode} 
-                                                />
-                                            ))}
+                        <div className={`v6-results-container v6-view-${hotelViewMode}`}>
+                                                {hotelViewMode !== 'map' && (
+                                                    results.map((hotel, idx) => (
+                                                        <HotelCard 
+                                                            key={hotel.id} 
+                                                            hotel={hotel} 
+                                                            index={idx} 
+                                                            onViewOptions={() => handleViewOptions(hotel)} 
+                                                            viewMode={hotelViewMode} 
+                                                        />
+                                                    ))
+                                                )}
                                         </div>
                                     )
                                 )
@@ -360,6 +358,74 @@ export const PrimeSmartSearch: React.FC = () => {
             `}</style>
 
             <PackageBasketBar onExport={() => setShowExport(true)} />
+
+            {/* ====== FULLSCREEN MAP OVERLAY ====== */}
+            {hotelViewMode === 'map' && results.length > 0 && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 9998,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    background: '#0f172a',
+                    animation: 'mapSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}>
+                    {/* Top bar */}
+                    <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '60px',
+                        background: 'linear-gradient(to bottom, rgba(15,23,42,0.95), transparent)',
+                        zIndex: 10,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0 24px',
+                        pointerEvents: 'none'
+                    }}>
+                        <div style={{ color: 'white', fontWeight: 700, fontSize: '16px', pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ background: 'rgba(99,102,241,0.9)', borderRadius: '8px', padding: '4px 12px', fontSize: '13px' }}>
+                                🗺️ {results.length} hotela na mapi
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => setHotelViewMode('grid')}
+                            style={{
+                                pointerEvents: 'auto',
+                                width: '44px',
+                                height: '44px',
+                                borderRadius: '50%',
+                                background: 'rgba(255,255,255,0.15)',
+                                backdropFilter: 'blur(8px)',
+                                border: '1px solid rgba(255,255,255,0.3)',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                fontSize: '20px',
+                                fontWeight: 300,
+                                transition: 'all 0.2s',
+                                boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.8)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    <PrimeMapSearch results={results} onClose={() => setHotelViewMode('grid')} />
+                </div>
+            )}
+            <style>{`
+                @keyframes mapSlideIn {
+                    from { opacity: 0; transform: scale(0.98); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+            `}</style>
+
             {showPackageCheckout && <DynamicPackageCheckout />}
             {showExport && <ItineraryExport onClose={() => setShowExport(false)} />}
             {showBookingModal && pendingBookingData && (

@@ -136,6 +136,9 @@ export async function performSmartSearch(params: SmartSearchParams): Promise<Sma
                         children: room.children,
                         childrenAges: room.childrenAges,
                         nationality: params.nationality || 'RS',
+                        providerId: dest.id,
+                        providerType: dest.type,
+                        targetProvider: (dest as any).provider, // ONLY if explicitly set
                         stars: params.stars,
                         board: params.board,
                         abortSignal: params.abortSignal

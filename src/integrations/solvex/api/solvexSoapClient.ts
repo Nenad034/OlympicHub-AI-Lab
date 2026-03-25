@@ -68,6 +68,10 @@ const SOLVEX_API_URL = USE_PROXY
     ? `${SUPABASE_URL}/functions/v1/solvex-proxy`
     : (SOLVEX_BASE_URL.startsWith('http') ? SOLVEX_BASE_URL : window.location.origin + SOLVEX_BASE_URL);
 
+// Circuit Breaker for Proxy
+let proxyUnhealthyUntil = 0;
+const PROXY_COOLDOWN = 120 * 1000; // 2 minutes cooldown if failing 5xx
+
 
 
 // XML Parser options
@@ -233,18 +237,26 @@ export async function makeSoapRequest<T>(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort('Timeout'), 30000); // 30s timeout
 
-    let currentUrl = SOLVEX_API_URL;
+    const isProxyHealthy = Date.now() > proxyUnhealthyUntil;
+    let currentUrl = (USE_PROXY && SUPABASE_URL && isProxyHealthy)
+        ? `${SUPABASE_URL}/functions/v1/solvex-proxy` 
+        : (SOLVEX_BASE_URL.startsWith('http') ? SOLVEX_BASE_URL : window.location.origin + SOLVEX_BASE_URL);
+
     const headers: Record<string, string> = {
         'Content-Type': 'text/xml; charset=utf-8',
         'SOAPAction': `"${method.startsWith('http') ? method : `http://www.megatec.ru/${method}`}"`
     };
 
-    if (USE_PROXY && SUPABASE_ANON_KEY) {
+    if (currentUrl.includes('supabase') && SUPABASE_ANON_KEY) {
         headers['Authorization'] = `Bearer ${SUPABASE_ANON_KEY}`;
     }
 
+    if (isDebug) {
+        console.log(`[Solvex SOAP] Using Endpoint: ${currentUrl}`);
+    }
+
     let attempts = 0;
-    const maxAttempts = 3;
+    const maxAttempts = 2; // Reduced for faster failover
 
     try {
         while (attempts < maxAttempts) {
@@ -266,9 +278,10 @@ export async function makeSoapRequest<T>(
                     return parseSoapResponse<T>(text);
                 }
 
-                // If Aggregator (Supabase) fails with 5xx, switch to LOCAL fallback
+                // If Aggregator (Supabase) fails with 5xx, switch to LOCAL fallback and mark as unhealthy
                 if (currentUrl.includes('supabase') && (response.status === 500 || response.status === 502)) {
-                    console.warn(`⚠️ [Solvex Proxy] Aggregator failed (${response.status}). Falling back to LOCAL...`);
+                    console.warn(`⚠️ [Solvex Proxy] Aggregator failed (${response.status}). Marking as UNHEALTHY for 2 min.`);
+                    proxyUnhealthyUntil = Date.now() + PROXY_COOLDOWN;
                     currentUrl = SOLVEX_BASE_URL.startsWith('http') ? SOLVEX_BASE_URL : window.location.origin + SOLVEX_BASE_URL;
                     delete headers['Authorization']; 
                     continue;
@@ -383,6 +396,11 @@ export function buildHotelSearchParams(params: {
             'BB': 4,           // Bed & Breakfast
             'RO': 5, 'OB': 5   // Room Only
         };
+        /* 
+         * FIX [Solvex Error 500]: "Pansion with key - 3 is not found"
+         * We disable pansion filtering on the server-side as it's unreliable for some regions.
+         * solvexSearchService.ts already performs client-side post-filtering by breadcrumbs/pansion name.
+         * 
         const pansionKeys = params.board
             .map(b => boardMap[b.toUpperCase()])
             .filter(id => id !== undefined);
@@ -390,6 +408,7 @@ export function buildHotelSearchParams(params: {
         if (pansionKeys.length > 0) {
             request['PansionKeys'] = { 'int': [...new Set(pansionKeys)] };
         }
+        */
     }
 
     // 10. Ages
@@ -403,16 +422,23 @@ export function buildHotelSearchParams(params: {
     // 12. Tariffs (Critical for evaluation/results)
     request['Tariffs'] = { 'int': params.tariffs || [0, 1993] };
 
-    // 13. CategoryKeys (Mapping Stars to Solvex IDs)
+    // 13. CategoryKeys (Mihailo: Disabled server-side filter to prevent 500 errors. Filtering is done on client-hand side)
+    /*
     if (params.stars && params.stars.length > 0) {
+        // Solvex IDs: 1=5*, 2=4*, 3=3*, 4=2*, 5=1*
+        const categoryMap: Record<number, number> = {
+            5: 1, 4: 2, 3: 3, 2: 4, 1: 5
+        };
         const categories = params.stars
             .map(s => parseInt(String(s).replace(/\D/g, '')))
-            .filter(n => !isNaN(n));
+            .map(n => categoryMap[n])
+            .filter(n => n !== undefined);
         
         if (categories.length > 0) {
             request['CategoryKeys'] = { 'int': categories };
         }
     }
+    */
 
     // 14. CacheGuid (Skip)
 

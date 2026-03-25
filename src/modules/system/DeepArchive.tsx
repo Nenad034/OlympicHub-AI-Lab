@@ -19,7 +19,7 @@ import { restoreItem } from '../../utils/storageUtils';
 interface ArchiveItem {
     id: string;
     type: 'DELETE' | 'UPDATE';
-    entityType: 'User' | 'Reservation' | 'Payment' | 'Hotel' | 'Supplier' | 'Customer';
+    entityType: 'User' | 'Reservation' | 'Payment' | 'Hotel' | 'Supplier' | 'Customer' | 'LegacyModule';
     entityId: string;
     oldData: any;
     newData?: any;
@@ -36,7 +36,7 @@ interface Props {
 
 export default function DeepArchive({ onBack }: Props) {
     const [searchQuery, setSearchQuery] = useState('');
-    const [filter, setFilter] = useState<'ALL' | 'DELETE' | 'UPDATE'>('ALL');
+    const [filter, setFilter] = useState<'ALL' | 'DELETE' | 'UPDATE' | 'MODULE'>('ALL');
     const [items, setItems] = useState<ArchiveItem[]>([]);
     const [selectedItem, setSelectedItem] = useState<ArchiveItem | null>(null);
 
@@ -63,7 +63,7 @@ export default function DeepArchive({ onBack }: Props) {
         const matchesSearch = item.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
             item.entityType.toLowerCase().includes(searchQuery.toLowerCase()) ||
             item.changedBy.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesType = filter === 'ALL' || item.type === filter;
+        const matchesType = filter === 'ALL' || item.type === filter || (filter === 'MODULE' && item.entityType === 'LegacyModule');
         return matchesSearch && matchesType;
     });
 
@@ -78,7 +78,8 @@ export default function DeepArchive({ onBack }: Props) {
     const filters = [
         { id: 'ALL', title: 'Sve Promene', icon: <Layout size={18} /> },
         { id: 'DELETE', title: 'Obrisano', icon: <Trash2 size={18} /> },
-        { id: 'UPDATE', title: 'Izmenjeno', icon: <RefreshCcw size={18} /> }
+        { id: 'UPDATE', title: 'Izmenjeno', icon: <RefreshCcw size={18} /> },
+        { id: 'MODULE', title: 'Zastareli Moduli', icon: <FileJson size={18} /> }
     ];
 
     return (

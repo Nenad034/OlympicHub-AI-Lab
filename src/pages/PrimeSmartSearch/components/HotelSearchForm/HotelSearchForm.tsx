@@ -3,7 +3,7 @@ import { useSearchStore, calcPaxSummary } from '../../stores/useSearchStore';
 import { OccupancyWizard } from '../OccupancyWizard/OccupancyWizard';
 import { MultiSelectDropdown } from '../../../../components/MultiSelectDropdown';
 import { ExpediaCalendar } from '../../../../components/ExpediaCalendar';
-import { Calendar, Globe, UtensilsCrossed, Users, Search, Building2, Flag, MapPin, ChevronDown } from 'lucide-react';
+import { Calendar, Globe, UtensilsCrossed, Users, Search, Building2, Flag, MapPin, ChevronDown, Star } from 'lucide-react';
 import { SearchModeSelector } from '../SearchModeSelector';
 import { AIAssistantField } from '../AIAssistantField';
 import { performSmartSearch } from '../../../../services/smartSearchService';
@@ -40,6 +40,15 @@ const MEAL_PLAN_OPTIONS = [
     { value: 'FB', label: 'Pun pansion' },
     { value: 'AI', label: 'All Inclusive' },
     { value: 'UAI', label: 'Ultra All Inclusive' }
+];
+
+const STAR_OPTIONS = [
+    { value: 'all', label: 'Sve Kategorije' },
+    { value: '5', label: '5★ - Hotel 5 zvezdica' },
+    { value: '4', label: '4★ - Hotel 4 zvezdice' },
+    { value: '3', label: '3★ - Hotel 3 zvezdice' },
+    { value: '2', label: '2★ - Hotel 2 zvezdice' },
+    { value: 'none', label: 'Bez kategorizacije' }
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -360,6 +369,8 @@ export const HotelSearchForm: React.FC = () => {
                     roomConfig: state.roomAllocations,
                     nationality: state.nationality,
                     enabledProviders: state.enabledProviders || undefined,
+                    stars: state.filters.stars.includes('all') ? [] : state.filters.stars,
+                    board: state.filters.mealPlans.includes('all') ? [] : state.filters.mealPlans,
                     onPartialResults: (partial: any[]) => {
                         processResults(partial);
                     }
@@ -462,7 +473,13 @@ export const HotelSearchForm: React.FC = () => {
                     let searchError = false;
 
                     try {
-                        apiResults = await hybridSearchEngine.executeFusedSearch(vectorMatches, { ...baseParams, checkIn: state.checkIn, checkOut: state.checkOut }, semanticQuery);
+                        apiResults = await hybridSearchEngine.executeFusedSearch(vectorMatches, { 
+                            ...baseParams, 
+                            checkIn: state.checkIn, 
+                            checkOut: state.checkOut,
+                            stars: state.filters.stars.includes('all') ? [] : state.filters.stars,
+                            board: state.filters.mealPlans.includes('all') ? [] : state.filters.mealPlans
+                        }, semanticQuery);
                     } catch (e) {
                         console.error("Primary search failed:", e);
                         searchError = true;
@@ -655,6 +672,20 @@ export const HotelSearchForm: React.FC = () => {
                     <div className="v6-field-icon-wrapper v6-ctrl-box">
                         <div className="v6-field-icon-faint"><Users size={20} /></div>
                         <div style={{ width: '100%' }}><OccupancyWizard /></div>
+                    </div>
+
+                    {/* Kategorija */}
+                    <div className="v6-field-icon-wrapper v6-ctrl-box">
+                        <div className="v6-field-icon-faint"><Star size={18} /></div>
+                        <div style={{ width: '100%' }}>
+                            <MultiSelectDropdown 
+                                options={STAR_OPTIONS}
+                                selected={filters.stars || ['all']}
+                                onChange={(val: string[]) => updateFilter('stars', val)}
+                                placeholder="Kategorija"
+                                displayType="default"
+                            />
+                        </div>
                     </div>
 
                     {/* Usluga */}

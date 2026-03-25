@@ -73,33 +73,85 @@ export async function searchHotels(
             return { success: true, data: [] };
         }
 
-        // --- STRICT POST-FILTERING ---
+        // --- BOARD FILTER (MULTI-LANGUAGE ROBUST) ---
         if (params.board && params.board.length > 0) {
             const requestedBoards = params.board.map((b: string) => b.toUpperCase());
             items = items.filter((s: any) => {
-                const pName = String(s.PansionName || '').toUpperCase();
-                const pCode = String(s.PansionCode || '').toUpperCase();
-                // Map names to codes if necessary, but Solvex codes are usually standard (HB, AI, BB)
-                return requestedBoards.some((rb: string) => 
-                    pCode === rb || 
-                    pName.includes(rb) || 
-                    (rb === 'HB' && pName.includes('POLUPANSION')) ||
-                    (rb === 'BB' && pName.includes('DORUČAK')) ||
-                    (rb === 'AI' && pName.includes('ALL INCLUSIVE'))
-                );
+                const pName = String(s.PansionName || s.PnName || '').toUpperCase().trim();
+                const pCode = String(s.PansionCode || s.PnCode || s.PansionKey || '').toUpperCase().trim();
+                
+                // If BOTH are empty, we can't filter - allow through (server didn't provide meal plan info)
+                if (!pName && !pCode) return true;
+                
+                return requestedBoards.some((rb: string) => {
+                    // Direct code match
+                    if (pCode === rb) return true;
+                    // Direct name includes code
+                    if (pName.includes(rb)) return true;
+                    
+                    // HB = Half Board / Polupansion / Полупансион
+                    if (rb === 'HB' && (
+                        pName.includes('HALF') || 
+                        pName.includes('POLU') || 
+                        pName.includes('HB') ||
+                        pCode === '3' ||         // Solvex PansionKey for HB
+                        pName.includes('\u041F\u041E\u041B\u0423') // Cyrillic ПОЛУ
+                    )) return true;
+                    
+                    // BB = Bed & Breakfast / Doručak
+                    if (rb === 'BB' && (
+                        pName.includes('BED') || 
+                        pName.includes('BREAKFAST') ||
+                        pName.includes('DORU') ||
+                        pCode === '4'
+                    )) return true;
+                    
+                    // AI = All Inclusive
+                    if (rb === 'AI' && (
+                        pName.includes('ALL') || 
+                        pName.includes('INCLUSIVE') ||
+                        pCode === '1'
+                    )) return true;
+                    
+                    // FB = Full Board / Puni pansion
+                    if (rb === 'FB' && (
+                        pName.includes('FULL') || 
+                        pName.includes('PUNI') ||
+                        pCode === '2'
+                    )) return true;
+                    
+                    return false;
+                });
             });
+            console.log(`[Solvex Filter] Board filter (${requestedBoards.join(',')}) retained ${items.length} items`);
         }
+
 
         if (params.stars && params.stars.length > 0) {
             const requestedStars = params.stars.map((sRatingInput: any) => parseInt(String(sRatingInput).replace(/\D/g, '')));
             items = items.filter((s: any) => {
                 const hotelName = String(s.HotelName || '');
                 const desc = String(s.Description || '');
-                // Try to find stars in name or description if provider doesn't give CategoryKey clearly
-                const starMatch = (hotelName + desc).match(/(\d)\s*\*+/);
+                // Parse stars from hotel name or description (e.g. "Hotel XYZ 4*")
+                // Added support for multiple formats: 4*, 4 *, 4-star, etc.
+                const starMatch = (hotelName + desc).match(/(\d)\s*(\*|star|zvezd)/i);
                 const actualRating = starMatch ? parseInt(starMatch[1]) : 0;
-                // If we found a rating, it must match. If 0, we can't be sure, so we keep unless we have a strong reason.
-                return requestedStars.length === 0 || requestedStars.includes(actualRating) || actualRating === 0;
+                
+                // If user requested specific stars, we try to match.
+                if (requestedStars.length > 0) {
+                    const isMatch = requestedStars.includes(actualRating);
+                    // LOG for debugging why results are zero
+                    if (!isMatch && items.length < 50) {
+                         console.log(`[Filter] Rejected ${hotelName} (${actualRating}*) - Wanted: ${requestedStars.join(',')}`);
+                    }
+                    
+                    // FALLBACK: If we couldn't detect stars (0), BUT it's a known provider like Solvex, 
+                    // we can't be 100% sure, so if we have ZERO results, we might want to be more lenient.
+                    // For now, let's keep it strict ONLY if we detected a WRONG rating.
+                    // If rating is 0, we allow it to pass to avoid empty results.
+                    return isMatch || actualRating === 0;
+                }
+                return true;
             });
         }
         // --- END POST-FILTERING ---
@@ -114,14 +166,16 @@ export async function searchHotels(
             try {
                 const { supabase } = await import('../../../supabaseClient');
                 if (supabase) {
-                    // Chunk uniqueHotelIds to avoid URL length limits (400 Bad Request)
-                    const chunkSize = 20;
+                    // Larger chunk size for faster enrichment
+                    const chunkSize = 100;
                     const idChunks = [];
                     for (let i = 0; i < uniqueHotelIds.length; i += chunkSize) {
                         idChunks.push(uniqueHotelIds.slice(i, i + chunkSize));
                     }
 
-                    console.log(`[Solvex Search] Fetching enrichment in ${idChunks.length} chunks...`);
+                    if (idChunks.length > 0) {
+                        console.log(`[Solvex Search] Fetching enrichment for ${uniqueHotelIds.length} hotels in ${idChunks.length} chunks...`);
+                    }
                     
                     const chunkPromises = idChunks.map(async (chunk) => {
                         return await supabase
@@ -240,17 +294,18 @@ export async function searchHotels(
                 });
             }
 
-            // Second pass: unleashing the deep search
-            findContentRecursively(s);
+            // Second pass: unleashing the deep search ONLY if not enriched
+            if (!enriched) {
+                findContentRecursively(s);
+            }
+            
             // Deduplicate and encode URI for Cyrillic characters
             extractedImages = [...new Set(extractedImages)].map(u => encodeURI(u));
             // --- DEEP EXTRACTION END ---
 
-            const finalImages = (enriched?.images || (extractedImages.length > 0 ? extractedImages : []))
-                .map((u: any) => {
-                    const url = typeof u === 'string' ? u : u?.url;
-                    return url ? encodeURI(url) : '';
-                }).filter(Boolean);
+            const finalImages = enriched?.images 
+                ? enriched.images.map((img: any) => typeof img === 'string' ? encodeURI(img) : encodeURI(img.url))
+                : (extractedImages.length > 0 ? extractedImages : [`https://online.solvex.bg/Common/HotelImage.aspx?HotelKey=${hotelId}`]);
             const finalDescription = enriched?.content?.description || extractedDescription;
             const finalLat = enriched?.geoCoordinates?.latitude || enriched?.latitude || extractedLat;
             const finalLng = enriched?.geoCoordinates?.longitude || enriched?.longitude || extractedLng;

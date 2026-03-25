@@ -2,7 +2,7 @@ import React from 'react';
 import type { HotelSearchResult } from '../../types';
 import { useSearchStore, calcPaxSummary } from '../../stores/useSearchStore';
 
-export type ViewMode = 'list' | 'grid' | 'notepad';
+export type ViewMode = 'list' | 'grid' | 'notepad' | 'map';
 
 interface HotelCardProps {
     hotel: HotelSearchResult;

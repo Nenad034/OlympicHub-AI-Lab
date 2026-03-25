@@ -273,7 +273,8 @@ class MultiKeyAIService {
                     // Use rate limiter
                     const response = await aiRateLimiter.queueRequest(async () => {
                         if (apiKey.provider === 'openrouter') {
-                            console.log(`🌐 [MULTI-KEY] Routing through OpenRouter...`);
+                            const openRouterModel = "google/gemini-2.0-flash-001"; // PHASE 1: Unified High-Performance Model
+                            console.log(`🌐 [MULTI-KEY] Routing through OpenRouter [Model: ${openRouterModel}]...`);
                             
                             // Format messages for OpenRouter (multimodal if attachment is present)
                             const messages: any[] = [];
@@ -312,7 +313,7 @@ class MultiKeyAIService {
                                     "Content-Type": "application/json"
                                 },
                                 body: JSON.stringify({
-                                    "model": model.includes('gemini') ? "google/gemini-2.0-flash-001" : model,
+                                    "model": openRouterModel,
                                     "messages": messages,
                                     "temperature": options.temperature ?? 0.7,
                                     "max_tokens": options.maxOutputTokens

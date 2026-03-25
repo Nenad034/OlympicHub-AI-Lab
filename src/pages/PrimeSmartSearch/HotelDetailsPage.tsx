@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { 
     Star, MapPin, CalendarDays, Users, ShieldCheck, 
@@ -66,6 +66,7 @@ const HotelDetailsPage: React.FC = () => {
     const [selectedRoomsMap, setSelectedRoomsMap] = useState<Record<number, any>>({});
     const [showBookingModal, setShowBookingModal] = useState(false);
     const [pendingBookingData, setPendingBookingData] = useState<BookingData | null>(null);
+    const lastFetchedId = useRef<string | null>(null);
 
     // Context from URL or Store
     const checkInStr = searchParams.get('checkIn') || '';
@@ -93,8 +94,9 @@ const HotelDetailsPage: React.FC = () => {
 
     useEffect(() => {
         const fetchHotelDetails = async () => {
-            if (!id) return;
+            if (!id || id === lastFetchedId.current) return;
             setLoading(true);
+            lastFetchedId.current = id;
             try {
                 const results = await performSmartSearch({
                     searchType: 'hotel',

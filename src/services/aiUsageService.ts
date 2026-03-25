@@ -1,121 +1,99 @@
 /**
- * AI Usage Service
- * Centralized tracking for token usage and API calls
+ * AI Usage Tracking & Quota Service
+ * Monitors token consumption and handles budget alerts
  */
 
 import { quotaNotificationService } from './quotaNotificationService';
 
-export interface UsageData {
-    dailyUsed: number;
-    weeklyUsed: number;
-    monthlyUsed: number;
-    totalCalls: number;
-    avgPerRequest: number;
-    lastReset: string;
-}
+class AiUsageService {
+    private readonly storageKey = 'ai_usage_metrics';
+    private readonly defaultQuota = 500000; // 500K tokens / day by default
 
-class AIUsageService {
-    private readonly providerKeys = {
-        'gemini': 'ai_quota_gemini',
-        'gemini-embedding': 'ai_quota_gemini_embed',
-        'openai': 'ai_quota_openai',
-        'claude': 'ai_quota_claude'
-    };
+    constructor() {
+        this.initializeMetrics();
+    }
 
-    private readonly limits = {
-        'gemini': 1000000,
-        'gemini-embedding': 1000, // 1000 requests per day for free tier
-        'openai': 500000,
-        'claude': 750000
-    };
-
-    /**
-     * Record token usage for a provider
-     */
-    recordUsage(provider: 'gemini' | 'gemini-embedding' | 'openai' | 'claude', tokens: number) {
-        const key = this.providerKeys[provider];
-        const saved = localStorage.getItem(key);
-
-        let data: UsageData = saved ? JSON.parse(saved) : {
-            dailyUsed: 0,
-            weeklyUsed: 0,
-            monthlyUsed: 0,
-            totalCalls: 0,
-            avgPerRequest: 0,
-            lastReset: new Date().toISOString()
-        };
-
-        // Check for daily reset
-        const lastReset = new Date(data.lastReset);
-        const now = new Date();
-        if (lastReset.toDateString() !== now.toDateString()) {
-            data.dailyUsed = 0;
-            data.lastReset = now.toISOString();
+    private initializeMetrics() {
+        if (!localStorage.getItem(this.storageKey)) {
+            const initialMetrics = {
+                lastReset: new Date().toISOString(),
+                dailyUsed: 0,
+                dailyLimit: this.defaultQuota, // Tokens / day
+                totalHistorical: 0,
+                providerMetrics: {
+                    gemini: { dailyUsed: 0, limit: 300000 },
+                    'gemini-embedding': { dailyUsed: 0, limit: 200000 }
+                }
+            };
+            localStorage.setItem(this.storageKey, JSON.stringify(initialMetrics));
         }
+        this.checkDayReset();
+    }
 
-        // Update stats
-        if (provider === 'gemini-embedding') {
-            data.dailyUsed += 1; // Track requests
-            data.weeklyUsed += 1;
-            data.monthlyUsed += 1;
+    private checkDayReset() {
+        const metrics = this.getMetrics();
+        const lastDate = new Date(metrics.lastReset).toLocaleDateString();
+        const nowDate = new Date().toLocaleDateString();
+
+        if (lastDate !== nowDate) {
+            console.log('🌅 [AI USAGE] New day detected! Resetting daily quotas.');
+            metrics.lastReset = new Date().toISOString();
+            metrics.dailyUsed = 0;
+            // Also reset individuals
+            Object.keys(metrics.providerMetrics).forEach(p => {
+                metrics.providerMetrics[p].dailyUsed = 0;
+            });
+            this.saveMetrics(metrics);
+        }
+    }
+
+    recordUsage(provider: string, tokens: number) {
+        this.checkDayReset();
+        const metrics = this.getMetrics();
+        
+        metrics.dailyUsed += tokens;
+        metrics.totalHistorical += tokens;
+        
+        if (metrics.providerMetrics[provider]) {
+            metrics.providerMetrics[provider].dailyUsed += tokens;
         } else {
-            data.dailyUsed += tokens; // Track tokens
-            data.weeklyUsed += tokens;
-            data.monthlyUsed += tokens;
+            metrics.providerMetrics[provider] = { dailyUsed: tokens, limit: 100000 };
         }
         
-        data.totalCalls += 1;
-        // For embeddings, avgPerRequest becomes average characters
-        data.avgPerRequest = Math.round((provider === 'gemini-embedding' ? tokens * 4 : data.dailyUsed) / data.totalCalls);
-
-        localStorage.setItem(key, JSON.stringify(data));
-        console.group(`📊 [AI USAGE] ${provider.toUpperCase()}`);
-        console.log(`Tokens: ${tokens}`);
-        console.log(`Daily Total: ${data.dailyUsed}`);
-        console.log(`Weekly Total: ${data.weeklyUsed}`);
-        console.groupEnd();
-
-        // Check for alerts
-        quotaNotificationService.checkAndAlert(provider, data.dailyUsed, this.limits[provider]);
-    }
-
-    /**
-     * Check if a provider is within quota before execution
-     */
-    isWithinQuota(provider: 'gemini' | 'gemini-embedding' | 'openai' | 'claude'): boolean {
-        const usage = this.getUsage(provider);
-        const limit = this.limits[provider];
-        return usage.dailyUsed < limit;
-    }
-
-    /**
-     * Throws an error if over quota
-     */
-    checkQuotaBeforeExecution(provider: 'gemini' | 'gemini-embedding' | 'openai' | 'claude') {
-        if (!this.isWithinQuota(provider)) {
-            const error = new Error(`Dnevni limit za AI (${provider}) je dostignut. Molim pokušajte sutra.`);
-            (error as any).status = 403;
-            (error as any).isQuotaExceeded = true;
-            throw error;
+        this.saveMetrics(metrics);
+        
+        const providerData = metrics.providerMetrics[provider];
+        if (providerData) {
+            quotaNotificationService.checkAndAlert(
+                provider as any, 
+                providerData.dailyUsed, 
+                providerData.limit
+            );
         }
     }
 
-    /**
-     * Get current usage for a provider
-     */
-    getUsage(provider: 'gemini' | 'gemini-embedding' | 'openai' | 'claude'): UsageData {
-        const key = this.providerKeys[provider];
-        const saved = localStorage.getItem(key);
-        return saved ? JSON.parse(saved) : {
-            dailyUsed: 0,
-            weeklyUsed: 0,
-            monthlyUsed: 0,
-            totalCalls: 0,
-            avgPerRequest: 0,
-            lastReset: new Date().toISOString()
-        };
+    checkQuotaBeforeExecution(provider: string): void {
+        const metrics = this.getMetrics();
+        const prov = metrics.providerMetrics[provider];
+        
+        if (prov && prov.dailyUsed >= prov.limit) {
+            console.error(`🛑 [AI USAGE] CRITICAL: Daily limit reached for ${provider}! Blocked.`);
+            throw new Error(`AI Usage daily limit reached for ${provider}`);
+        }
+    }
+
+    private getMetrics() {
+        return JSON.parse(localStorage.getItem(this.storageKey) || '{}');
+    }
+
+    private saveMetrics(metrics: any) {
+        localStorage.setItem(this.storageKey, JSON.stringify(metrics));
+    }
+
+    getReport() {
+        return this.getMetrics();
     }
 }
 
-export const aiUsageService = new AIUsageService();
+export const aiUsageService = new AiUsageService();
 export default aiUsageService;

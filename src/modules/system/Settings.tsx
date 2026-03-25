@@ -96,7 +96,8 @@ interface SettingsModuleConfig {
 const SETTING_MODULES: SettingsModuleConfig[] = [
     { id: 'modules-overview', name: 'Pregled Modula', desc: 'Audit i monitoring svih API konekcija i sistemskih funkcija.', icon: <BookOpen size={24} />, color: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', minLevel: 6, category: 'system' },
     { id: 'connections', name: 'Aktivne Konekcije', desc: 'Upravljanje eksternim API servisima i integracijama.', icon: <Activity size={24} />, color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', minLevel: 1, category: 'system' },
-    { id: 'orchestrator', name: 'AI Orchestrator', desc: 'Centralno upravljanje AI agentima i modelima.', icon: <Brain size={24} />, color: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', minLevel: 6, category: 'ai' },
+    { id: 'ai-training', name: 'Sala za sastanke', desc: 'Održavanje sastanaka i dnevnih izveštaja (Board of Directors).', icon: <Users size={24} />, color: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)', minLevel: 6, category: 'ai' },
+    { id: 'orchestrator', name: 'Virtuelna Kancelarija', desc: 'Upravljanje zaposlenima po hijerarhiji (CEO, COO, Specialists).', icon: <LayoutDashboard size={24} />, color: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', minLevel: 6, category: 'ai' },
     { id: 'ai-quota', name: 'AI Quota Tracker', desc: 'Praćenje i kontrola potrošnje AI resursa po modulima.', icon: <Zap size={24} />, color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', minLevel: 3, category: 'ai' },
     { id: 'daily-activity', name: 'Dnevni Izveštaj', desc: 'Kompletna analiza aktivnosti i statusa rezervacija.', icon: <FileText size={24} />, color: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', minLevel: 3, category: 'activity' },
     { id: 'general', name: 'General Settings', desc: 'Osnovna podešavanja sistema i AI konfiguracija.', icon: <LayoutDashboard size={24} />, color: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', minLevel: 1, category: 'system' },
@@ -243,6 +244,12 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
     const [isSaving, setIsSaving] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+    const [agentRules, setAgentRules] = useState<Record<string, string>>({});
+
+    const handleUpdateAgentRules = (id: string, rules: string) => {
+        setAgentRules(prev => ({ ...prev, [id]: rules }));
+    };
 
     // Data States
     const [users, setUsers] = useState<UserAccount[]>([]);
@@ -346,6 +353,7 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
             }
             const { success: s2, data: d2 } = await loadFromCloud('archived_users');
             if (s2 && d2) setArchivedUsers(d2 as UserAccount[]);
+            
             const { success: s3, data: d3 } = await loadFromCloud('access_rules');
             if (s3 && d3) {
                 const rulesMap: Record<number, string[]> = {};
@@ -360,6 +368,17 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                     5: ['dashboard', 'search', 'customers', 'suppliers', 'production-hub', 'mars-analysis', 'settings'],
                     6: ['dashboard', 'search', 'customers', 'suppliers', 'production-hub', 'mars-analysis', 'settings', 'master-access']
                 });
+            }
+
+            const { success: s4, data: d4 } = await loadFromCloud('agent_rules');
+            if (s4 && d4) {
+                const rulesMap: Record<string, string> = {};
+                if (Array.isArray(d4)) {
+                    d4.forEach((item: any) => rulesMap[item.id] = item.rules);
+                } else if (typeof d4 === 'object') {
+                    Object.assign(rulesMap, d4);
+                }
+                setAgentRules(rulesMap);
             }
         };
         loadSettingsData();
@@ -377,6 +396,11 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
     const handleSave = async () => {
         setIsSaving(true);
         await updateConfig({ geminiKey });
+        
+        // Save Agent Rules to Cloud
+        const rulesArray = Object.entries(agentRules).map(([id, rules]) => ({ id, rules }));
+        await saveToCloud('agent_rules', rulesArray);
+        
         setTimeout(() => setIsSaving(false), 800);
     };
 
@@ -579,7 +603,7 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
                             <div>
                                 <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     {u.firstName} {u.lastName}
-                                    {u.level === 6 && <ClickToTravelLogo height={20} showText={false} />}
+                                    {u.level === 6 && <ClickToTravelLogo height={20} />}
                                     <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginLeft: 'auto' }}>LVL {u.level}</span>
                                 </div>
                                 <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{u.email}</div>
@@ -605,76 +629,95 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
     );
 
     // 3. Permissions Matrix
-    const renderPermissions = () => (
-        <div className="fade-in">
-            <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px' }}>Sistemske Dozvole</h3>
+    const renderPermissions = () => {
+        const levels = [1, 2, 3, 4, 5, 6];
+        const modulesList = [
+            { id: 'dashboard', name: 'Dashboard' },
+            { id: 'search', name: 'Smart Search' },
+            { id: 'customers', name: 'Customers/CRM' },
+            { id: 'suppliers', name: 'Suppliers/B2B' },
+            { id: 'production-hub', name: 'Production Hub' },
+            { id: 'mars-analysis', name: 'MARS Analysis' },
+            { id: 'settings', name: 'System Settings' },
+            { id: 'master-access', name: 'Master Access' }
+        ];
 
-            <div style={{ ...styles.card, overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
-                    <thead>
-                        <tr>
-                            <th style={{ textAlign: 'left', color: '#94a3b8', padding: '10px' }}>Module</th>
-                            {[1, 2, 3, 4, 5, 6].map(l => <th key={l} style={{ color: '#94a3b8', fontSize: '12px' }}>LVL {l}</th>)}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {modulesList.map(mod => (
-                            <tr key={mod.id} style={{ background: 'rgba(255,255,255,0.02)' }}>
-                                <td style={{ padding: '12px', borderRadius: '8px 0 0 8px' }}>{mod.name}</td>
-                                {[1, 2, 3, 4, 5, 6].map(l => (
-                                    <td key={l} style={{ textAlign: 'center', padding: '10px', borderRadius: l === 6 ? '0 8px 8px 0' : 0 }}>
-                                        <button onClick={() => toggleModuleAccess(l, mod.id)}
-                                            style={{
-                                                width: '20px', height: '20px', borderRadius: '4px', border: '1px solid var(--border)', cursor: 'pointer',
-                                                background: accessRules[l]?.includes(mod.id) ? 'var(--accent)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center'
-                                            }}>
-                                            {accessRules[l]?.includes(mod.id) && <Check size={12} color="#fff" />}
-                                        </button>
-                                    </td>
-                                ))}
+        return (
+            <div className="fade-in">
+                <div style={{ marginBottom: '32px' }}>
+                    <h3 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>Access Permissions Hub</h3>
+                    <p style={{ color: '#94a3b8', margin: '4px 0 0', fontSize: '14px' }}>Upravljanje pravima pristupa po nivoima i specifičnim privilegijama.</p>
+                </div>
+
+                <div style={styles.card}>
+                    <h4 style={{ margin: '0 0 15px 0' }}>Global Permission Matrix</h4>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <thead>
+                            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                                <th style={{ padding: '12px 16px', color: '#64748b', fontSize: '12px', fontWeight: 700 }}>MODUL</th>
+                                {levels.map(l => <th key={l} style={{ padding: '12px 16px', color: '#64748b', fontSize: '12px', fontWeight: 700, textAlign: 'center' }}>LVL {l}</th>)}
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {modulesList.map(mod => (
+                                <tr key={mod.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                                    <td style={{ padding: '16px', fontWeight: 600 }}>{mod.name}</td>
+                                    {levels.map(l => (
+                                        <td key={l} style={{ padding: '16px', textAlign: 'center' }}>
+                                            <button
+                                                onClick={() => toggleModuleAccess(l, mod.id)}
+                                                style={{
+                                                    width: '24px', height: '24px', borderRadius: '6px', border: '1px solid var(--border)', cursor: 'pointer',
+                                                    background: accessRules[l]?.includes(mod.id) ? 'var(--accent)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center'
+                                                }}>
+                                                {accessRules[l]?.includes(mod.id) && <Check size={12} color="#fff" />}
+                                            </button>
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
-            <div style={styles.card}>
-                <h4 style={{ margin: '0 0 15px 0' }}>User Specific Overrides</h4>
-                <select value={selectedUserForOverride} onChange={e => setSelectedUserForOverride(e.target.value)} style={styles.input}>
-                    <option value="">Select User to Override Rules...</option>
-                    {users.map(u => <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}
-                </select>
+                <div style={styles.card}>
+                    <h4 style={{ margin: '0 0 15px 0' }}>User Specific Overrides</h4>
+                    <select value={selectedUserForOverride} onChange={e => setSelectedUserForOverride(e.target.value)} style={styles.input}>
+                        <option value="">Select User to Override Rules...</option>
+                        {users.map(u => <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}
+                    </select>
 
-                {selectedUserForOverride && (
-                    <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                        <div>
-                            <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '10px' }}>MODULE ACCESS</div>
-                            {modulesList.map(mod => {
-                                const s = getOverrideState(selectedUserForOverride, 'module', mod.id);
-                                return (
-                                    <div key={mod.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <span>{mod.name}</span>
-                                        <div style={{ display: 'flex', gap: '5px' }}>
-                                            {['auto', 'allow', 'deny'].map(v => (
-                                                <button key={v} onClick={() => setOverride(selectedUserForOverride, 'module', mod.id, v as any)}
-                                                    style={{
-                                                        padding: '2px 6px', borderRadius: '4px', fontSize: '10px', border: 'none', cursor: 'pointer',
-                                                        background: s === v ? (v === 'allow' ? '#22c55e' : v === 'deny' ? '#ef4444' : '#fff') : 'rgba(255,255,255,0.1)',
-                                                        color: s === v ? (v === 'auto' ? '#000' : '#fff') : '#94a3b8'
-                                                    }}>
-                                                    {v.toUpperCase()}
-                                                </button>
-                                            ))}
+                    {selectedUserForOverride && (
+                        <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                            <div>
+                                <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '10px' }}>MODULE ACCESS</div>
+                                {modulesList.map(mod => {
+                                    const s = getOverrideState(selectedUserForOverride, 'module', mod.id);
+                                    return (
+                                        <div key={mod.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <span>{mod.name}</span>
+                                            <div style={{ display: 'flex', gap: '5px' }}>
+                                                {['auto', 'allow', 'deny'].map(v => (
+                                                    <button key={v} onClick={() => setOverride(selectedUserForOverride, 'module', mod.id, v as any)}
+                                                        style={{
+                                                            padding: '2px 6px', borderRadius: '4px', fontSize: '10px', border: 'none', cursor: 'pointer',
+                                                            background: s === v ? (v === 'allow' ? '#22c55e' : v === 'deny' ? '#ef4444' : '#fff') : 'rgba(255,255,255,0.1)',
+                                                            color: s === v ? (v === 'auto' ? '#000' : '#fff') : '#94a3b8'
+                                                        }}>
+                                                        {v.toUpperCase()}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                )
-                            })}
+                                    )
+                                })}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     // 4. API Connections (Requested Layout)
     const renderConnections = () => (
@@ -1077,6 +1120,343 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
         );
     };
 
+    // AI Agents Data for Training Hub
+    const AI_AGENTS = [
+        {
+            id: 'ljubica',
+            name: 'Ljubica',
+            role: 'CEO & Master Orchestrator',
+            avatar: 'file:///C:/Users/nenad/.gemini/antigravity/brain/ad9fdfe9-4176-49c1-9e47-99d960b953bf/ljubica_ceo_master_avatar_v7_1774421429905.png',
+            color: '#6366f1',
+            desc: 'Glavni interfejs sistema. Nadgleda sve module, delegira zadatke specijalistima i donosi strateške odluke na nivou celog biznisa.',
+            jd: 'Upravljanje svim AI agentima, delegiranje kompleksnih upita, analiza profitabilnosti i nadzor sistemske harmonije.',
+            skills: ['Strategic Analysis', 'Agent Coordination', 'Conflict Resolution']
+        },
+        {
+            id: 'milica',
+            name: 'Milica',
+            role: 'Smart Search Guru',
+            avatar: 'file:///C:/Users/nenad/.gemini/antigravity/brain/ad9fdfe9-4176-49c1-9e47-99d960b953bf/milica_avatar_1774344976526.png',
+            color: '#ec4899',
+            desc: 'Specijalista za korisničko iskustvo i pretragu aranžmana. Pomaže putnicima da pronađu idealan odmor uz pozitivnu energiju.',
+            jd: 'Optimizacija pretrage hotela, personalizovane preporuke, objašnjavanje politika otkazivanja i vođenje kroz booking proces.',
+            skills: ['Customer Experience', 'Search Optimization', 'Sentiment Analysis']
+        },
+        {
+            id: 'viktor',
+            name: 'Viktor',
+            role: 'Financial Auditor',
+            avatar: 'file:///C:/Users/nenad/.gemini/antigravity/brain/ad9fdfe9-4176-49c1-9e47-99d960b953bf/victor_finance_ai_avatar_1774420396588.png',
+            color: '#10b981',
+            desc: 'Čuvar vaših finansija. Detektuje nepravilnosti u plaćanjima, maržama i dugovanjima dobavljača.',
+            jd: 'Analiza finansijskih izveštaja, kontrola marži, detekcija anomalija u transakcijama i automatizacija fakturisanja.',
+            skills: ['Financial Forensics', 'Margin Protection', 'Anomaly Detection']
+        },
+        {
+            id: 'elena',
+            name: 'Elena',
+            role: 'Booking & Operations Specialist',
+            avatar: 'file:///C:/Users/nenad/.gemini/antigravity/brain/ad9fdfe9-4176-49c1-9e47-99d960b953bf/elena_hotel_ai_avatar_1774420412156.png',
+            color: '#3b82f6',
+            desc: 'Stručnjak za hotelske rezervacije i rooming liste. Pazi na sve birokratske detalje koji mogu promaći ljudskom oku.',
+            jd: 'Validacija putničkih podataka, popunjavanje rooming lista, provera datuma rođenja dece i priprema vaučera.',
+            skills: ['Operational Accuracy', 'Document Validation', 'Inventory Tracking']
+        },
+        {
+            id: 'marko',
+            name: 'Marko',
+            role: 'B2B Account Manager',
+            avatar: 'file:///C:/Users/nenad/.gemini/antigravity/brain/ad9fdfe9-4176-49c1-9e47-99d960b953bf/marko_b2b_account_manager_avatar_1774421444103.png',
+            color: '#f59e0b',
+            desc: 'Podrška za vaše subagente. Pomaže im da brže prodaju, prate svoje rezervacije i stanje duga.',
+            jd: 'B2B podrška u realnom vremenu, praćenje nivoa duga subagenata, edukacija o novim alatima i povećanje prodaje.',
+            skills: ['Relationship Management', 'B2B Sales Assist', 'Debt Monitoring']
+        },
+        {
+            id: 'luka',
+            name: 'Luka',
+            role: 'Pricing Operations Lead',
+            avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=256', // Placeholder until real gen
+            color: '#06b6d4',
+            desc: 'Majstor za uvoz cena i OCR dokumentaciju. Pomaže kod ručnog unosa i pretvaranja PDF-ova u bazu podataka.',
+            jd: 'Automatizacija uvoza cena iz Excel/PDF fajlova, pomoć operaterima pri ručnom unosu i kontrola strukture cenovnika.',
+            skills: ['Data Engineering', 'OCR Mapping', 'Pricing Logic']
+        },
+        {
+            id: 'nikola',
+            name: 'Nikola',
+            role: 'System Guardian (Sentinel)',
+            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=256',
+            color: '#ef4444',
+            desc: 'Tehnička zaštita i nadzor API konekcija. Javlja se samo kada sistem ili bezbednost zahtevaju hitnu pažnju.',
+            jd: 'Monitoring API uptime-a, kontrola AI kvota, detekcija bezbednosnih rizika i automatski oporavak servisa.',
+            skills: ['Cyber Security', 'API Reliability', 'System Health Monitoring']
+        }
+    ];
+
+    const renderAgentDetail = (agent: any) => {
+        return (
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="fade-in">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>
+                    <button 
+                        onClick={() => setSelectedAgentId(null)}
+                        style={{ ...styles.button, background: 'rgba(255,255,255,0.05)', color: '#94a3b8' }}
+                    >
+                        <ArrowLeft size={16} /> Nazad na Tim
+                    </button>
+                    <div style={{ padding: '4px 12px', background: `${agent.color}20`, color: agent.color, borderRadius: '100px', fontSize: '12px', fontWeight: 800 }}>
+                        {agent.role}
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '30px' }}>
+                    {/* Left Panel: Profile & Bio */}
+                    <div>
+                        <div style={{ ...styles.card, textAlign: 'center' as const, padding: '40px 24px' }}>
+                            <div style={{
+                                width: '120px',
+                                height: '120px',
+                                borderRadius: '30px',
+                                margin: '0 auto 20px',
+                                backgroundImage: `url(${agent.avatar})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                border: `3px solid ${agent.color}`,
+                                boxShadow: `0 0 30px ${agent.color}30`
+                            }} />
+                            <h2 style={{ margin: '0 0 8px 0', fontSize: '24px' }}>{agent.name}</h2>
+                            <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>{agent.role}</p>
+                            
+                            <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                                <div style={{ textAlign: 'center' as const }}>
+                                    <div style={{ fontSize: '18px', fontWeight: 800 }}>{Math.floor(Math.random() * 50) + 120}</div>
+                                    <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Zadataka</div>
+                                </div>
+                                <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', height: '30px' }} />
+                                <div style={{ textAlign: 'center' as const }}>
+                                    <div style={{ fontSize: '18px', fontWeight: 800 }}>98.4%</div>
+                                    <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Tačnost</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={styles.card}>
+                            <h4 style={{ margin: '0 0 12px 0', fontSize: '14px' }}>Specijalne Veštine</h4>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                {agent.skills.map((s: string) => (
+                                    <span key={s} style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', fontSize: '12px', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.05)' }}>{s}</span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Panel: Rules & Instructions */}
+                    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '20px' }}>
+                        <div style={styles.card}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                <h3 style={{ margin: 0, fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <Brain size={20} color={agent.color} /> Ponašanje i Manuelna Pravila
+                                </h3>
+                                <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>● AKTIVNO</span>
+                            </div>
+                            
+                            <p style={{ fontSize: '14px', color: '#94a3b8', lineHeight: 1.6, marginBottom: '20px' }}>
+                                Ovde definišete kako {agent.name} treba da reaguje u specifičnim situacijama. Možete koristiti "Ako... Onda..." logiku.
+                            </p>
+
+                            <textarea
+                                value={agentRules[agent.id] || ''}
+                                onChange={(e) => handleUpdateAgentRules(agent.id, e.target.value)}
+                                placeholder="Primer: Ako primetiš da je marža manja od 12% za hotele u Grčkoj, odmah pošalji notifikaciju Viktoru i stopiraj prodaju tog hotela..."
+                                style={{
+                                    ...styles.input,
+                                    height: '240px',
+                                    fontFamily: 'inherit',
+                                    fontSize: '14px',
+                                    lineHeight: 1.6,
+                                    resize: 'none',
+                                    padding: '20px',
+                                    background: 'rgba(0,0,0,0.2)'
+                                }}
+                            />
+                            
+                            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                                <button 
+                                    onClick={handleSave}
+                                    style={{ ...styles.button, background: agent.color, color: '#fff', padding: '10px 30px' }}
+                                >
+                                    Spremi Pravila
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                            <div style={styles.card}>
+                                <h4 style={{ margin: '0 0 12px 0', fontSize: '14px' }}>Edukativna Arhiva</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: '10px', fontSize: '13px' }}>
+                                        <FileText size={16} color="#64748b" /> 
+                                        <span>Protokoli_{agent.id}_v3.pdf</span>
+                                        <span style={{ marginLeft: 'auto', fontSize: '10px', color: '#64748b' }}>1.2MB</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: '10px', fontSize: '13px' }}>
+                                        <FileText size={16} color="#64748b" /> 
+                                        <span>Rules_Configuration.json</span>
+                                        <span style={{ marginLeft: 'auto', fontSize: '10px', color: '#64748b' }}>4KB</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ 
+                                ...styles.card, 
+                                border: '2px dashed rgba(255,255,255,0.05)', 
+                                background: 'transparent', 
+                                display: 'flex', 
+                                flexDirection: 'column' as const, 
+                                justifyContent: 'center', 
+                                alignItems: 'center', 
+                                gap: '10px' 
+                            }}>
+                                <Plus size={24} color="#64748b" />
+                                <span style={{ fontSize: '12px', color: '#64748b' }}>Dodaj novi dokument za učenje</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+        );
+    };
+
+    const renderAITraining = () => {
+        if (selectedAgentId) {
+            const agent = AI_AGENTS.find(a => a.id === selectedAgentId);
+            if (agent) return renderAgentDetail(agent);
+        }
+
+        return (
+            <div className="fade-in">
+                <div style={{ marginBottom: '32px' }}>
+                    <h3 style={{ fontSize: '24px', fontWeight: 800, margin: 0 }}>AI Training Hub</h3>
+                    <p style={{ color: '#94a3b8', margin: '4px 0 0', fontSize: '14px' }}>
+                        Personalizacija inteligencije i upravljanje ulogama vaših digitalnih saradnika.
+                    </p>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                        {AI_AGENTS.map(agent => (
+                            <motion.div
+                                key={agent.id}
+                                whileHover={{ y: -5, borderColor: agent.color }}
+                                onClick={() => setSelectedAgentId(agent.id)}
+                                style={{
+                                    ...styles.card,
+                                    cursor: 'pointer',
+                                    border: '1px solid var(--border)',
+                                    borderLeft: `4px solid ${agent.color}`,
+                                    background: 'var(--glass-bg)',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    position: 'relative',
+                                    display: 'flex',
+                                    flexDirection: 'column' as const,
+                                    gap: '15px'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <div style={{
+                                        width: '64px',
+                                        height: '64px',
+                                        borderRadius: '16px',
+                                        backgroundImage: `url(${agent.avatar})`,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center',
+                                        boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
+                                        border: '1px solid rgba(255,255,255,0.1)'
+                                    }} />
+                                    <div>
+                                        <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>{agent.name}</h4>
+                                        <span style={{ fontSize: '11px', color: agent.color, fontWeight: 700, textTransform: 'uppercase' }}>{agent.role}</span>
+                                    </div>
+                                </div>
+
+                                <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.5, minHeight: '40px' }}>
+                                    {agent.desc}
+                                </p>
+
+                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+                                    <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px', fontWeight: 600 }}>OPIS POSLA (JD):</div>
+                                    <div style={{ fontSize: '12px', color: '#e2e8f0', lineHeight: 1.4, fontStyle: 'italic' }}>
+                                        "{agent.jd}"
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: 'auto' }}>
+                                    {agent.skills.map(skill => (
+                                        <span key={skill} style={{
+                                            fontSize: '10px',
+                                            background: 'rgba(255,255,255,0.05)',
+                                            color: '#cbd5e1',
+                                            padding: '2px 8px',
+                                            borderRadius: '100px',
+                                            border: '1px solid rgba(255,255,255,0.05)'
+                                        }}>
+                                            {skill}
+                                        </span>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    {/* Training Tools Sidebar */}
+                    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '20px' }}>
+                        <div style={{ ...styles.card, background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(126, 34, 206, 0.1) 100%)', borderColor: 'rgba(168, 85, 247, 0.2)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                                <Brain color="#a855f7" size={20} />
+                                <h4 style={{ margin: 0 }}>Učenje Agenta</h4>
+                            </div>
+                            <p style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '20px' }}>
+                                Prevucite dokumentaciju (PDF, XLSX) kako biste "dresirali" agente.
+                            </p>
+                            <div style={{
+                                border: '2px dashed rgba(168, 85, 247, 0.3)',
+                                borderRadius: '16px',
+                                padding: '32px 20px',
+                                textAlign: 'center' as const,
+                                cursor: 'pointer',
+                                background: 'rgba(0,0,0,0.1)'
+                            }}>
+                                <Plus size={24} color="#a855f7" style={{ marginBottom: '8px' }} />
+                                <div style={{ fontSize: '13px', fontWeight: 600 }}>Dodaj Znanje</div>
+                                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>PDF, Excel ili Tekst</div>
+                            </div>
+                        </div>
+
+                        <div style={styles.card}>
+                            <h4 style={{ margin: '0 0 15px 0' }}>Sistemska Inteligencija</h4>
+                            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px' }}>
+                                {[
+                                    { label: 'Knowledge Base', val: '84%', color: '#a855f7' },
+                                    { label: 'Reasoning Logic', val: '92%', color: '#3b82f6' },
+                                    { label: 'Agent Coordination', val: '100%', color: '#10b981' }
+                                ].map(item => (
+                                    <div key={item.label}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px' }}>
+                                            <span style={{ color: '#94a3b8' }}>{item.label}</span>
+                                            <span style={{ fontWeight: 700 }}>{item.val}</span>
+                                        </div>
+                                        <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+                                            <div style={{ width: item.val, height: '100%', background: item.color }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     // 5. Backups
     const renderBackups = () => (
         <div className="fade-in">
@@ -1276,6 +1656,7 @@ export default function SettingsModule({ onBack, userLevel, setUserLevel }: Prop
 
                 {/* CONTENT AREA */}
                 <div style={{ ...styles.contentArea, padding: isMobile ? '15px' : isTablet ? '20px' : '30px' }}>
+                    {activeTab === 'ai-training' && renderAITraining()}
                     {activeTab === 'overview' && renderOverview()}
                     {activeTab === 'general' && renderGeneral()}
                     {activeTab === 'users' && renderUsers()}

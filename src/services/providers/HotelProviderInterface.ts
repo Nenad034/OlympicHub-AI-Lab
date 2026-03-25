@@ -64,7 +64,7 @@ export interface HotelSearchParams {
     providerId?: string | number;
 
     /** Specific provider type if targetProvider is set */
-    providerType?: 'hotel' | 'city' | 'country';
+    providerType?: 'hotel' | 'city' | 'country' | 'destination';
 
     /** Target provider name */
     targetProvider?: string;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Brain,
     Send,
@@ -34,7 +34,13 @@ import {
     Search,
     Download,
     FileSpreadsheet,
-    FileCode
+    FileCode,
+    Award,
+    MessageSquare,
+    LayoutDashboard,
+    ChevronRight,
+    Volume2,
+    VolumeX
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GeometricBrain } from '../../components/icons/GeometricBrain';
@@ -42,6 +48,8 @@ import { supabase } from '../../supabaseClient';
 import { apiCache } from '../../utils/apiCache';
 import { checkNetworkHealth } from '../../utils/networkHealth';
 import ExcelJS from 'exceljs';
+import { loadFromCloud } from '../../utils/storageUtils';
+import { multiKeyAI } from '../../services/multiKeyAI';
 
 interface Props {
     onBack: () => void;
@@ -50,7 +58,7 @@ interface Props {
 
 interface Message {
     id: string;
-    role: 'user' | 'orchestrator' | 'agent';
+    role: 'user' | 'assistant' | 'system' | 'orchestrator' | 'agent' | 'ceo';
     content: string;
     agentName?: string;
     timestamp: Date;
@@ -59,42 +67,24 @@ interface Message {
     report?: {
         title: string;
         summary: string;
-        rows: any[];
         columns: { header: string; key: string }[];
+        rows: any[];
     };
 }
 
-interface Agent {
+interface Employee {
     id: string;
     name: string;
     module: string;
-    status: 'idle' | 'active' | 'busy' | 'offline';
+    status: 'active' | 'busy' | 'idle' | 'offline';
     capabilities: string[];
     icon: React.ReactNode;
     color: string;
     lastActive?: Date;
     tasksCompleted: number;
     minLevel: number; // Minimum user level required to access this agent
+    avatarUrl?: string; // For the new visual identity
 }
-
-const getFileIcon = (type: string, name?: string) => {
-    const fileName = name || '';
-    if (type.includes('image')) return <ImageIcon size={14} color="#667eea" />;
-    if (type.includes('pdf')) return <FileText size={14} color="#ff4d4d" />;
-    if (type.includes('excel') || type.includes('spreadsheet') || fileName.endsWith('.csv') || fileName.endsWith('.xlsx'))
-        return <Database size={14} color="#22c55e" />;
-    if (fileName.endsWith('.html') || fileName.endsWith('.htm'))
-        return <Globe size={14} color="#3b82f6" />;
-    return <File size={14} color="var(--text-secondary)" />;
-};
-
-const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-};
 
 interface TrainingDocument {
     id: string;
@@ -118,14 +108,49 @@ interface TrainingRule {
     documents?: TrainingDocument[]; // Attached learning documents
 }
 
-type TabType = 'chat' | 'training' | 'security';
+const getFileIcon = (type: string, name?: string) => {
+    const fileName = name || '';
+    if (type.includes('image')) return <ImageIcon size={14} color="#667eea" />;
+    if (type.includes('pdf')) return <FileText size={14} color="#ff4d4d" />;
+    if (type.includes('excel') || type.includes('spreadsheet') || fileName.endsWith('.csv') || fileName.endsWith('.xlsx'))
+        return <Database size={14} color="#22c55e" />;
+    if (fileName.endsWith('.html') || fileName.endsWith('.htm'))
+        return <Globe size={14} color="#3b82f6" />;
+    return <File size={14} color="var(--text-secondary)" />;
+};
 
-export default function MasterOrchestrator({ onBack, userLevel }: Props) {
+const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
+
+type TabType = 'chat' | 'office' | 'training' | 'logs' | 'security' | 'meeting';
+
+interface AgentStats {
+    id: string;
+    tasksCompleted: number;
+    efficiency: number;
+    status: string;
+}
+
+interface DailyReport {
+    date: string;
+    totalTasks: number;
+    highlight: string;
+    agentBreakdown: { name: string; impact: string; tasks: number }[];
+    anomalies: string[];
+}
+
+export default function MasterOrchestrator({ onBack, userLevel }: Props): React.ReactElement {
     const [messages, setMessages] = useState<Message[]>([]);
-    const [input, setInput] = useState('');
+    const [currentInput, setCurrentInput] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [activeAgents, setActiveAgents] = useState<string[]>([]);
     const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
+    const [autoDelegate, setAutoDelegate] = useState(true);
     const [activeTab, setActiveTab] = useState<TabType>('chat');
     const [trainingRules, setTrainingRules] = useState<TrainingRule[]>([]);
     const [editingRule, setEditingRule] = useState<Partial<TrainingRule> | null>(null);
@@ -139,11 +164,96 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
     const chatEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const chatFileInputRef = useRef<HTMLInputElement>(null);
+    const [agentRules, setAgentRules] = useState<Record<string, string>>({});
+    const [voiceEnabled, setVoiceEnabled] = useState(false);
+
+    // TTS Voice Configuration for each agent
+    const TTS_VOICES: Record<string, { lang: string; pitch: number; rate: number }> = {
+        'nenad': { lang: 'sr-RS', pitch: 0.8, rate: 0.9 },
+        'ljubica': { lang: 'sr-RS', pitch: 1.1, rate: 1.05 },
+        'milica': { lang: 'sr-RS', pitch: 1.2, rate: 1.1 },
+        'viktor': { lang: 'sr-RS', pitch: 0.9, rate: 1.0 },
+        'elena': { lang: 'sr-RS', pitch: 1.15, rate: 1.05 },
+        'marko': { lang: 'sr-RS', pitch: 0.95, rate: 1.1 },
+        'luka': { lang: 'sr-RS', pitch: 1.0, rate: 1.0 },
+        'sara': { lang: 'sr-RS', pitch: 1.2, rate: 1.15 },
+        'relja': { lang: 'sr-RS', pitch: 1.05, rate: 1.2 },
+        'nikola': { lang: 'sr-RS', pitch: 0.7, rate: 0.85 },
+        'orchestrator': { lang: 'sr-RS', pitch: 1.0, rate: 1.0 }
+    };
+
+    const speakContent = (text: string, agentId: string = 'orchestrator') => {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel(); // Stop current speech
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        const config = TTS_VOICES[agentId] || TTS_VOICES['orchestrator'];
+        
+        utterance.lang = config.lang;
+        utterance.pitch = config.pitch;
+        utterance.rate = config.rate;
+        
+        // Find a Serbian/Croatian voice if available
+        const voices = window.speechSynthesis.getVoices();
+        const localVoice = voices.find(v => v.lang.startsWith('sr') || v.lang.startsWith('hr') || v.lang.startsWith('bs'));
+        if (localVoice) utterance.voice = localVoice;
+        
+        window.speechSynthesis.speak(utterance);
+    };
 
     // Fetch rules from Supabase on mount
+    const [meetingData, setMeetingData] = useState<DailyReport | null>(null);
+    const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+    const [agentStats, setAgentStats] = useState<AgentStats[]>([]);
+
     useEffect(() => {
-        fetchTrainingRules();
+        // Initialize mock stats for agents
+        setAgentStats(allAgents.map(a => ({
+            id: a.id,
+            tasksCompleted: Math.floor(Math.random() * 50) + 20,
+            efficiency: 85 + Math.random() * 14,
+            status: a.status
+        })));
     }, []);
+
+    const generateDailyReport = async () => {
+        setIsGeneratingReport(true);
+        // Simulate AI analysis 
+        await new Promise(r => setTimeout(r, 2000));
+        
+        const report: DailyReport = {
+            date: new Date().toLocaleDateString('sr-RS'),
+            totalTasks: agentStats.reduce((sum, s) => sum + s.tasksCompleted, 0),
+            highlight: "Svi sistemi su stabilni. Primećen je porast u OCR obradi dokumenata zahvaljujući Lukinoj optimizaciji. Finansijski auditor Viktor je potvrdio validnost svih marži za tekući kvartal.",
+            agentBreakdown: agents.map(a => {
+                const stat = agentStats.find(s => s.id === a.id);
+                return {
+                    name: a.name,
+                    tasks: stat?.tasksCompleted || 0,
+                    impact: a.id === 'luka' ? 'Visok (OCR Optimizacija)' : a.id === 'viktor' ? 'Srednji (Finansijski Audit)' : 'Normalan'
+                };
+            }),
+            anomalies: [
+                "Blagi porast latencije na Solvex API-ju u 08:45 (Rešeno od strane Nikole)",
+                "3 rezervacije na čekanju zbog nepotpune dokumentacije (Elena prati)"
+            ]
+        };
+        
+        setMeetingData(report);
+        setIsGeneratingReport(false);
+        if (voiceEnabled) speakContent("Dnevni izveštaj je spreman. Ukupan broj obrađenih zadataka danas je " + report.totalTasks + ". Svi sistemi su stabilni.", 'ljubica');
+    };
+
+    const loadManualRules = async () => {
+        const { success, data } = await loadFromCloud('agent_rules');
+        if (success && data) {
+            const rulesMap: Record<string, string> = {};
+            if (Array.isArray(data)) {
+                data.forEach((item: any) => rulesMap[item.id] = item.rules);
+            }
+            setAgentRules(rulesMap);
+        }
+    };
 
     const fetchTrainingRules = async () => {
         setIsLoadingRules(true);
@@ -178,95 +288,127 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
         }
     };
 
-    // Definicija svih agenata u sistemu sa nivoima pristupa
-    const allAgents: Agent[] = [
+    // Unified AI Team (Zaposleni)
+    const allAgents: Employee[] = [
         {
-            id: 'hotel-agent',
-            name: 'Hotel Agent',
-            module: 'Production Hub',
-            status: 'idle',
-            capabilities: ['search_hotels', 'manage_rooms', 'pricing'],
-            icon: <Hotel size={20} />,
-            color: '#3b82f6',
+            id: 'nenad',
+            name: 'Nenad',
+            module: 'CEO & Founder',
+            status: 'active',
+            capabilities: ['Ultimate Authority', 'Strategic Vision', 'Final Approval', 'High-Level Decision Making', 'System Architecture'],
+            icon: <Award size={20} />,
+            color: '#000000',
             tasksCompleted: 0,
-            minLevel: 2 // Level 2: Operater - može da pretražuje i upravlja hotelima
+            minLevel: 6,
+            avatarUrl: '/avatars/nenad_ceo.png'
         },
         {
-            id: 'pricing-agent',
-            name: 'Pricing Agent',
-            module: 'Pricing Intelligence',
-            status: 'idle',
-            capabilities: ['calculate_price', 'apply_discounts', 'market_analysis'],
-            icon: <DollarSign size={20} />,
-            color: '#10b981',
+            id: 'ljubica',
+            name: 'Ljubica',
+            module: 'COO & Master Orchestrator',
+            status: 'active',
+            capabilities: ['Strategic Strategy', 'Agent Coordination', 'Conflict Resolution', 'Business Intelligence', 'Operational Oversight'],
+            icon: <Brain size={20} />,
+            color: '#6366f1',
             tasksCompleted: 0,
-            minLevel: 3 // Level 3: Menadžer - može da upravlja cenama
+            minLevel: 5,
+            avatarUrl: '/avatars/ljubica_coo.png'
         },
         {
-            id: 'mail-agent',
-            name: 'Mail Agent',
-            module: 'ClickToTravel Mail',
+            id: 'milica',
+            name: 'Milica',
+            module: 'Smart Search Guru',
             status: 'idle',
-            capabilities: ['analyze_email', 'generate_response', 'send_email'],
-            icon: <Mail size={20} />,
-            color: '#f59e0b',
-            tasksCompleted: 0,
-            minLevel: 1 // Level 1: Korisnik - svi mogu da koriste mail
-        },
-        {
-            id: 'customer-agent',
-            name: 'Customer Agent',
-            module: 'Customer Management',
-            status: 'idle',
-            capabilities: ['customer_lookup', 'booking_history', 'preferences'],
-            icon: <Users size={20} />,
-            color: '#8b5cf6',
-            tasksCompleted: 0,
-            minLevel: 2 // Level 2: Operater - može da upravlja kupcima
-        },
-        {
-            id: 'fortress-agent',
-            name: 'Fortress Agent',
-            module: 'Security',
-            status: 'idle',
-            capabilities: ['security_analysis', 'threat_detection', 'recommendations'],
-            icon: <Shield size={20} />,
-            color: '#ef4444',
-            tasksCompleted: 0,
-            minLevel: 6 // Level 6: Master - samo master ima pristup security
-        },
-        {
-            id: 'data-agent',
-            name: 'Data Agent',
-            module: 'Database',
-            status: 'idle',
-            capabilities: ['query_data', 'analytics', 'reporting'],
-            icon: <Database size={20} />,
-            color: '#06b6d4',
-            tasksCompleted: 0,
-            minLevel: 4 // Level 4: Admin - može da pristupa podacima i analytics
-        },
-        {
-            id: 'insight-agent',
-            name: 'Intelligence Agent',
-            module: 'Business Intelligence',
-            status: 'idle',
-            capabilities: ['complex_audit', 'financial_extraction', 'partner_reconciliation', 'deep_analysis'],
+            capabilities: ['Customer Experience', 'Search Optimization', 'Sentiment Analysis', 'Travel Guidance', 'Personalized Recommendations'],
             icon: <Search size={20} />,
             color: '#ec4899',
             tasksCompleted: 0,
-            minLevel: 3
+            minLevel: 1,
+            avatarUrl: '/avatars/milica.png'
         },
         {
-            id: 'sentinel-agent',
-            name: 'Sentinel Agent',
-            module: 'API Gateway',
-            status: 'active',
-            capabilities: ['api_health', 'quota_protection', 'cache_optimization', 'compliance_audit'],
-            icon: <Activity size={20} />,
-            color: '#8b5cf6', // Purple/Royal color for the sentinel
+            id: 'viktor',
+            name: 'Viktor',
+            module: 'Financial Auditor',
+            status: 'idle',
+            capabilities: ['Financial Forensics', 'Margin Protection', 'Anomaly Detection', 'Tax Audit', 'Budget Analysis'],
+            icon: <DollarSign size={20} />,
+            color: '#10b981',
             tasksCompleted: 0,
-            minLevel: 5 // Level 5: System Admin - upravlja API infrastrukturom
+            minLevel: 3,
+            avatarUrl: '/avatars/viktor.png'
+        },
+        {
+            id: 'elena',
+            name: 'Elena',
+            module: 'Booking & Operations',
+            status: 'idle',
+            capabilities: ['Operational Accuracy', 'Document Validation', 'Inventory Tracking', 'Voucher Prep', 'Reservation Management'],
+            icon: <Hotel size={20} />,
+            color: '#3b82f6',
+            tasksCompleted: 0,
+            minLevel: 2,
+            avatarUrl: '/avatars/elena.png'
+        },
+        {
+            id: 'marko',
+            name: 'Marko',
+            module: 'B2B Account Manager',
+            status: 'idle',
+            capabilities: ['Relationship Management', 'B2B Sales Assist', 'Debt Monitoring', 'Subagent Training', 'Partnership Development'],
+            icon: <Users size={20} />,
+            color: '#f59e0b',
+            tasksCompleted: 0,
+            minLevel: 2,
+            avatarUrl: '/avatars/marko.png'
+        },
+        {
+            id: 'luka',
+            name: 'Luka',
+            module: 'Pricing Operations Lead',
+            status: 'idle',
+            capabilities: ['Data Engineering', 'OCR Mapping', 'Pricing Logic', 'Excel Import Automation', 'Database Management'],
+            icon: <Database size={20} />,
+            color: '#06b6d4',
+            tasksCompleted: 0,
+            minLevel: 2,
+            avatarUrl: '/avatars/luka.png'
+        },
+        {
+            id: 'sara',
+            name: 'Sara',
+            module: 'Smart Marketing & Growth',
+            status: 'idle',
+            capabilities: ['Viral Content', 'Campaign Optimization', 'Funnel Analysis', 'Brand Sentiment', 'Market Research'],
+            icon: <Sparkles size={20} />,
+            color: '#f97316',
+            tasksCompleted: 0,
+            minLevel: 2,
+            avatarUrl: '/avatars/sara.png'
+        },
+        {
+            id: 'relja',
+            name: 'Relja',
+            module: 'Lead Software Engineer',
+            status: 'idle',
+            capabilities: ['Code Audit', 'Bug Resolution', 'Real-time Patching', 'Performance Tuning', 'System Integration'],
+            icon: <FileCode size={20} />,
+            color: '#8b5cf6',
+            tasksCompleted: 0,
+            minLevel: 4,
+            avatarUrl: '/avatars/relja.png'
+        },
+        {
+            id: 'nikola',
+            name: 'Nikola',
+            module: 'System Guardian (Sentinel)',
+            status: 'active',
+            capabilities: ['Cyber Security', 'API Reliability', 'System Health Monitoring', 'Self-Healing Protocols', 'Threat Detection'],
+            icon: <Shield size={20} />,
+            color: '#ef4444',
+            tasksCompleted: 0,
+            minLevel: 5,
+            avatarUrl: '/avatars/nikola.png'
         }
     ];
 
@@ -289,19 +431,19 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
     }, [messages]);
 
     const handleSend = async () => {
-        if ((!input.trim() && chatFiles.length === 0) || isProcessing) return;
+        if ((!currentInput.trim() && chatFiles.length === 0) || isProcessing) return;
 
         const currentFiles = [...chatFiles];
         const userMessage: Message = {
             id: Date.now().toString(),
             role: 'user',
-            content: input.trim() || (currentFiles.length === 1 ? `Poslao sam fajl: ${currentFiles[0].name}` : `Poslao sam ${currentFiles.length} fajla`),
+            content: currentInput.trim() || (currentFiles.length === 1 ? `Poslao sam fajl: ${currentFiles[0].name}` : `Poslao sam ${currentFiles.length} fajla`),
             timestamp: new Date(),
             files: currentFiles.map(f => ({ name: f.name, type: f.type, size: f.size }))
         };
 
         setMessages(prev => [...prev, userMessage]);
-        const currentInput = input; // Snapshot input for agent responses
+        const currentInputSnapshot = currentInput; // Snapshot input for agent responses
 
         // Update File History (keep last 10)
         if (currentFiles.length > 0) {
@@ -318,7 +460,7 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
             });
         }
 
-        setInput('');
+        setCurrentInput('');
         setIsProcessing(true);
         setChatFiles([]); // Clear immediately so UI reflects "sent" state
 
@@ -335,14 +477,14 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
 
         // Pre-fetch network status if query is about Sentinel/Status
         let currentNetStatus = null;
-        if (input.toLowerCase().includes('status') || input.toLowerCase().includes('api') || input.toLowerCase().includes('internet')) {
+        if (currentInputSnapshot.toLowerCase().includes('status') || currentInputSnapshot.toLowerCase().includes('api') || currentInputSnapshot.toLowerCase().includes('internet')) {
             currentNetStatus = await checkNetworkHealth();
             setNetworkSpeed(currentNetStatus);
         }
 
         // Simulacija identifikacije agenata
         setTimeout(() => {
-            const query = input.toLowerCase();
+            const query = currentInputSnapshot.toLowerCase();
             let identifiedAgents: string[] = [];
             const isCapabilityQuery = query.includes('zadaci') ||
                 query.includes('šta možeš') ||
@@ -355,50 +497,66 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                 query.includes('ko ste');
 
             // Ako korisnik NIJE ručno izabrao agente, koristi automatsku detekciju
-            if (selectedAgentIds.length === 0) {
+            if (autoDelegate && selectedAgentIds.length === 0) {
                 if (isCapabilityQuery) {
                     // Activate all agents to introduce themselves
                     identifiedAgents = agents.map(a => a.id);
                 } else {
                     if (query.includes('hotel') || query.includes('smeštaj') || query.includes('soba')) {
-                        identifiedAgents.push('hotel-agent');
+                        identifiedAgents.push('elena');
                     }
                     if (query.includes('cena') || query.includes('popust') || query.includes('price')) {
-                        identifiedAgents.push('pricing-agent');
+                        identifiedAgents.push('luka');
                     }
-                    if (query.includes('email') || query.includes('mail') || query.includes('poruka')) {
-                        identifiedAgents.push('mail-agent');
+                    if (query.includes('hotel') || query.includes('smeštaj') || query.includes('soba') || query.includes('destinacij') || query.includes('aranzman')) {
+                        identifiedAgents.push('milica');
                     }
-                    if (query.includes('kupac') || query.includes('customer') || query.includes('gost')) {
-                        identifiedAgents.push('customer-agent');
+                    if (query.includes('cena') || query.includes('popust') || query.includes('price') || query.includes('profit') || query.includes('marža')) {
+                        identifiedAgents.push('viktor');
                     }
-                    if (query.includes('security') || query.includes('napad') || query.includes('bezbednost')) {
-                        identifiedAgents.push('fortress-agent');
+                    if (query.includes('email') || query.includes('mail') || query.includes('poruka') || query.includes('customer')) {
+                        identifiedAgents.push('milica');
                     }
-                    if (query.includes('data') || query.includes('podatak') || query.includes('report')) {
-                        identifiedAgents.push('data-agent');
+                    if (query.includes('booking') || query.includes('rezervacij') || query.includes('vaučer') || query.includes('voucher')) {
+                        identifiedAgents.push('elena');
                     }
-                    if (query.includes('api') || query.includes('konekcij') || query.includes('status') || query.includes('limit') || query.includes('cache') || query.includes('sentinel')) {
-                        identifiedAgents.push('sentinel-agent');
+                    if (query.includes('security') || query.includes('bezbednost') || query.includes('napad') || query.includes('api') || query.includes('limit') || query.includes('status')) {
+                        identifiedAgents.push('nikola');
+                    }
+                    if (query.includes('b2b') || query.includes('subagent') || query.includes('dugovanj')) {
+                        identifiedAgents.push('marko');
+                    }
+                    if (query.includes('data') || query.includes('podatak') || query.includes('report') || query.includes('excel') || query.includes('ocr')) {
+                        identifiedAgents.push('luka');
+                    }
+                    if (query.includes('bug') || query.includes('error') || query.includes('greška') || query.includes('kod') || query.includes('sistem')) {
+                        identifiedAgents.push('relja');
+                    }
+                    if (query.includes('marketing') || query.includes('kampanja') || query.includes('društvene mreže') || query.includes('rast')) {
+                        identifiedAgents.push('sara');
+                    }
+                    if (query.includes('ceo') || query.includes('nenad') || query.includes('strategija') || query.includes('odluka')) {
+                        identifiedAgents.push('nenad');
                     }
 
                     // Auto-activate based on file types
                     if (currentFiles.some(f => f.name.endsWith('.xlsx') || f.name.endsWith('.csv') || f.name.endsWith('.html') || f.name.endsWith('.htm'))) {
-                        if (!identifiedAgents.includes('data-agent')) identifiedAgents.push('data-agent');
-                        if (!identifiedAgents.includes('pricing-agent')) identifiedAgents.push('pricing-agent');
+                        if (!identifiedAgents.includes('luka')) identifiedAgents.push('luka');
+                        if (!identifiedAgents.includes('viktor')) identifiedAgents.push('viktor');
                     }
                     if (currentFiles.some(f => f.type.includes('image') || f.name.endsWith('.pdf'))) {
-                        if (!identifiedAgents.includes('hotel-agent')) identifiedAgents.push('hotel-agent');
+                        if (!identifiedAgents.includes('elena')) identifiedAgents.push('elena');
+                        if (!identifiedAgents.includes('luka')) identifiedAgents.push('luka');
                     }
 
                     // New Intelligence Agent is always activated for file analysis
                     if (currentFiles.length > 0) {
-                        if (!identifiedAgents.includes('insight-agent')) identifiedAgents.push('insight-agent');
+                        if (!identifiedAgents.includes('viktor')) identifiedAgents.push('viktor');
                     }
 
                     // Ako nijedan agent nije identifikovan, koristi opšti pristup
                     if (identifiedAgents.length === 0) {
-                        identifiedAgents.push('hotel-agent', 'data-agent');
+                        identifiedAgents.push('milica', 'ljubica');
                     }
                 }
             } else {
@@ -441,26 +599,28 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
             };
 
             setMessages(prev => [...prev.slice(0, -1), orchestratorMessage]);
+            if (voiceEnabled) speakContent(orchestratorContent, 'orchestrator');
 
-            // Simulacija odgovora agenata
+            // Simulacija odgovora zaposlenih (AI call)
             setTimeout(() => {
-                identifiedAgents.forEach((agentId, index) => {
-                    setTimeout(() => {
-                        const agent = agents.find(a => a.id === agentId);
-                        if (!agent) return;
+                identifiedAgents.forEach(async (agentId, index) => {
+                    setTimeout(async () => {
+                        const employee = agents.find(a => a.id === agentId);
+                        if (!employee) return;
 
-                        const agentResponse = generateAgentResponse(agentId, currentInput, currentFiles);
+                        const agentResponse = await generateAgentResponse(agentId, currentInputSnapshot, currentFiles);
 
                         const agentMessage: Message = {
                             id: (Date.now() + 3 + index).toString(),
                             role: 'agent',
                             content: agentResponse,
-                            agentName: agent.name,
+                            agentName: employee.name,
                             timestamp: new Date(),
                             status: 'complete'
                         };
 
                         setMessages(prev => [...prev, agentMessage]);
+                        if (voiceEnabled) speakContent(agentResponse, agentId);
                     }, index * 1000);
                 });
 
@@ -479,7 +639,7 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                     setActiveAgents([]);
 
                     // Check for Intelligence Report trigger
-                    if (identifiedAgents.includes('insight-agent') && currentFiles.length > 0) {
+                    if (identifiedAgents.includes('viktor') && currentFiles.length > 0) {
                         setTimeout(() => {
                             const reportMsg: Message = {
                                 id: Date.now().toString() + '-report',
@@ -545,10 +705,15 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
         }
     };
 
-    const generateAgentResponse = (agentId: string, query: string, files: File[] = []): string => {
+    const generateAgentResponse = async (agentId: string, query: string, files: File[] = []): Promise<string> => {
         const queryLower = query.toLowerCase();
 
-        // Provera da li korisnik pita o mogućnostima/zadacima agenata
+        // Check for technical/code errors in query to trigger Relja
+        if ((queryLower.includes('greška') || queryLower.includes('error') || queryLower.includes('ne radi') || queryLower.includes('bug') || queryLower.includes('bag')) && agentId === 'relja') {
+            return `Nenade, analizirao sam sistemske logove. Primećujem problem sa putanjom modula u config fajlu. Predlažem sledeći fix: Promeni import u liniji 12. Želiš li da primenim zakrpu odmah?`;
+        }
+
+        // 1. Check for Capability Query
         const isCapabilityQuery = queryLower.includes('zadaci') ||
             queryLower.includes('šta možeš') ||
             queryLower.includes('sta možeš') ||
@@ -560,13 +725,13 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
             queryLower.includes('ko ste');
 
         if (isCapabilityQuery) {
-            const agent = agents.find(a => a.id === agentId);
-            if (agent) {
-                return `Zdravo! Ja sam ${agent.name} iz modula "${agent.module}". Moji zadaci uključuju: ${agent.capabilities.map(c => c.replace(/_/g, ' ')).join(', ')}. Kako mogu da vam pomognem?`;
+            const employee = agents.find(a => a.id === agentId);
+            if (employee) {
+                return `Zdravo! Ja sam ${employee.name} iz modula "${employee.module}". Moji zadaci uključuju: ${employee.capabilities.map(c => c.replace(/_/g, ' ')).join(', ')}. Kako mogu da vam pomognem?`;
             }
         }
 
-        // Proveri da li postoji specifično pravilo za ovog agenta koje se aktivira
+        // 2. Check for Training Rules (from Hub)
         const relevantRule = trainingRules.find(rule =>
             rule.enabled &&
             rule.agentId === agentId &&
@@ -577,8 +742,6 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
             let response = `Na osnovu naučenog pravila "${relevantRule.title}": ${relevantRule.action}. `;
             if (relevantRule.documents && relevantRule.documents.length > 0) {
                 response += `Analizirao sam ${relevantRule.documents.length} dokumenata za učenje. `;
-
-                // Add preview of the first document content if available
                 const firstDoc = relevantRule.documents[0];
                 if (firstDoc.content) {
                     const preview = firstDoc.content.slice(0, 150).replace(/\n/g, ' ');
@@ -588,59 +751,77 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
             return response;
         }
 
-        const responses: Record<string, string> = {
-            'hotel-agent': `Pronašao sam 3 hotela koji odgovaraju vašim kriterijumima. Hotel Splendid (5*), Hotel Mediteran (4*), i Hotel Budva (3*). Svi imaju dostupne sobe za traženi period.`,
-            'pricing-agent': `Analizirao sam cene za traženi period. Prosečna cena je 85€ po noći. Detektovao sam early bird popust od 15% za rezervacije 30+ dana unapred.`,
-            'mail-agent': `Analizirao sam poslednje email-ove. Pronašao sam 2 nova upita za rezervaciju i 1 zahtev za izmenu postojeće rezervacije. Generisao sam draft odgovore.`,
-            'customer-agent': `Uspešno sam locirao profil kupca. Radi se o VIP klijentu sa visokim prioritetom. Prethodne rezervacije ukazuju na preferenciju hotela sa 5* i all-inclusive uslugom.`,
-            'fortress-agent': `Sistem bezbednosti je u pripravnosti. Skenirao sam mrežni saobraćaj i nisam detektovao nikakve sumnjive aktivnosti. Firewall pravila su ažurirana.`,
-            'data-agent': `Izveštaj je spreman. Prodaja je porasla za 12% u odnosu na prošli mesec. Najprodavaniji paketi su "Luxury Summer 2026" i "Budva Weekend Getaway".`,
-            'insight-agent': `Sistem za BI analizu je spreman. Čekam ulazne podatke za dubinsku reviziju marži i usklađenosti sa partnerima.`,
-            'sentinel-agent': `[Sentinel Status Report] 🟢 Svi API sistemi su stabilni.
-            - Solvex: Online (Quota: 12/1000)
-            - OpenGreece: Online (Active Cache: 85%)
-            - TCT: Online (Anti-Bursting aktivan)
-            - Internet: ${networkSpeed ? `${networkSpeed.quality.toUpperCase()} (${networkSpeed.latency}ms / ~${networkSpeed.speedEstimate} Mbps)` : 'Provjeravam...'}
-            - Compliance: 100% usklađeno sa Antigravity Protokolom.
+        // 3. System Responses (Real AI Fallback)
+        const employee = agents.find(e => e.id === agentId);
+        
+        try {
+            const systemPrompt = `Ti si ${employee?.name}, tvoja uloga je: ${employee?.module}. 
+            Tvoj profil obuhvata: ${employee?.capabilities.join(', ')}.
+            Vodi se instrukcijama: ${agentRules[agentId] || 'Sledi opšte smernice Prime kompanije.'}
+            VAŽNO: Budi maksimalno štedljiv sa tokenima. Ako klijent traži podatke (cene, analizu), odgovori da ćeš izvršiti SQL upit ili obraditi bazu lokalno umesto da trošiš AI resurse na nagađanje.
+            Obavezno koristi srpski jezik u profesionalnom, ali vedrom tonu.`;
 
-            Uradio sam analizu infrastrukture. Vaša konekcija je ${networkSpeed?.quality === 'excellent' ? 'perfektna za pretragu svih provajdera istovremeno.' : 'stabilna.'}`
-        };
+            const aiResponse = await multiKeyAI.generateContent(query, {
+                systemPrompt,
+                cacheCategory: 'chat',
+                temperature: 0.5
+            });
 
-        if (files.length > 0) {
-            const fileList = files.map(f => f.name).join(', ');
-            const isExcel = files.some(f => f.name.endsWith('.xlsx') || f.name.endsWith('.csv'));
-            const isImage = files.some(f => f.type.includes('image'));
-            const isHtml = files.some(f => f.name.endsWith('.html') || f.name.endsWith('.htm'));
+            const manualInstruction = agentRules[agentId];
+            let finalResponse = aiResponse;
+            if (manualInstruction) {
+                finalResponse = `[Instrukcija: ${manualInstruction}]\n\n${finalResponse}`;
+            }
+            return finalResponse;
 
-            const fileContextMsg = files.length === 1
-                ? `Pažljivo sam analizirao dokument "${files[0].name}". `
-                : `Analizirao sam svih ${files.length} priloženih dokumenata (${fileList}). `;
-
-            const fileSpecificResponses: Record<string, string> = {
-                'hotel-agent': isImage
-                    ? `${fileContextMsg}Na osnovu vizuelnog prikaza, potvrdio sam kategorizaciju i sadržaje objekta. Sistem je spreman za ažuriranje baze.`
-                    : isHtml
-                        ? `${fileContextMsg}Ekstraktovao sam opisne atribute direktno iz HTML strukture fajla. Sve je mapirano u Unified Model.`
-                        : `${fileContextMsg}Identifikovao sam nove statuse soba i alokacije. Pripremio sam import tabelu sa ovim izmenama.`,
-                'pricing-agent': isExcel
-                    ? `${fileContextMsg}Izvukao sam kompletan cenovnik za sezonu 2026. Detektovano je 12 različitih perioda i stop-sale datumi su ažurirani.`
-                    : isHtml
-                        ? `${fileContextMsg}Uspešno sam izvukao cene iz HTML koda. Čak i bez tabele, prepoznao sam cenovne razrede i primenio marže.`
-                        : `${fileContextMsg}Pronašao sam podatke o popustima i akcijama. Ovi parametri će biti automatski primenjeni pri sledećoj pretrazi.`,
-                'data-agent': `${fileContextMsg}Izvršio sam dubinsko mapiranje podataka u naš unificirani model. Statistika i BI izveštaji su osveženi novim podacima iz ovog dokumenta.`,
-                'mail-agent': `${fileContextMsg}Ekstraktovao sam kontakte i tekstualne zahteve. Pripremio sam draft odgovore koji čekaju na vaše odobrenje.`,
-                'insight-agent': `${fileContextMsg}Fajl prepoznat kao Reservation/Audit Report. Detektovao sam finansijske kolone: "Purchase price", "Selling price" i "Supplier name". Vršim automatsko upoređivanje troškova i računam neto profit po stavkama. Izvještaj o anomalijama će biti spreman za 30 sekundi.`
+        } catch (error) {
+            console.error("AI Error:", error);
+            const responses: Record<string, string> = {
+                'ljubica': `Kao CEO, koordiniram rad svih modula. Vaš zahtev je uspešno delegiran specijalistima. Trenutni KPI sistema je na ${Math.floor(Math.random() * 5 + 95)}%, a profitabilnost raste uz aktivne optimizacije.`,
+                'milica': `Pronašla sam najbolje opcije za vas! Hotel Splendid (5*) i Mediteran (4*) su trenutno najprodavaniji. Klijenti ostavljaju odlične recenzije za njihovu uslugu ovog jutra.`,
+                'viktor': `Analizirao sam finansijski tok. Prosečna marža je stabilna, ali sam detektovao 2 hotela gde možemo povećati profit za 3% bez gubitka konkurentnosti. Revizija marži je završena.`,
+                'elena': `Sve rezervacije su pod kontrolom. Validacija dokumenata za grupu u julu je završena, a vaučeri su spremni za automatskom slanje. Operativa teče neometano.`,
+                'marko': `Subagenti su aktivni. Solvex B2B portal beleži porast prometa. Pratim njihova dugovanja i dospela plaćanja - sve je u okviru dozvoljenih limita.`,
+                'luka': `OCR procesor je obradio dokumente. Mapirao sam nove cenovnike iz Solvex dokumentacije direktno u naš sistem. Import je spreman za finalno odobrenje.`,
+                'nikola': `[Sentinel Status Report] 🟢 Sistem je 100% bezbedan.
+                - Solvex API: Online (Latency: 120ms)
+                - Firewall: Aktivno blokirano 15 sumnjivih IP adresa u poslednjih sat vremena.
+                - Internet: ${networkSpeed ? `${networkSpeed.quality.toUpperCase()} (${networkSpeed.latency}ms)` : 'Stabilan.'}
+                - Quota: Potrošeno 14% dnevnog limita.`
             };
 
-            if (fileSpecificResponses[agentId]) {
-                return fileSpecificResponses[agentId];
-            }
-        }
+            // 4. File-specific Logic (Fallback)
+            if (files.length > 0) {
+                const fileList = files.map(f => f.name).join(', ');
+                const isExcel = files.some(f => f.name.endsWith('.xlsx') || f.name.endsWith('.csv'));
+                const isImage = files.some(f => f.type.includes('image'));
 
-        return responses[agentId] || `${agentId} je obradio zahtev i vratio rezultate.`;
+                const fileContextMsg = files.length === 1
+                    ? `Pažljivo sam analizirao dokument "${files[0].name}". `
+                    : `Analizirao sam svih ${files.length} priloženih dokumenata (${fileList}). `;
+
+                const fileSpecificResponses: Record<string, string> = {
+                    'milica': isImage
+                        ? `${fileContextMsg}Analizirala sam fotografije hotela. Kvalitet je odličan, možemo ih odmah postaviti na B2B portal.`
+                        : `${fileContextMsg}Ekstraktovala sam želje klijenta iz fajla. Pripremila sam personalizovanu ponudu.`,
+                    'viktor': isExcel
+                        ? `${fileContextMsg}Vršim finansijsku reviziju tabela. Detektovao sam 15% niže cene kod konkurencije za Hotel Splendid.`
+                        : `${fileContextMsg}Analizirao sam finansijske anomalije u izveštaju. Rezultati BI analize su spremni.`,
+                    'elena': `${fileContextMsg}Potvrdila sam podatke o gostima. Svi pasoši su validni i u skladu sa booking zahtevom.`,
+                    'luka': `${fileContextMsg}OCR prepoznavanje uspešno završeno. Mapirao sam ${files.length} dokumenata u bazu cena.`,
+                    'marko': `${fileContextMsg}Analizirao sam promet subagenta. Njihov obim prodaje raste za 20% nakon što su dobili pristup novim alatima.`
+                };
+
+                if (fileSpecificResponses[agentId]) {
+                    return fileSpecificResponses[agentId];
+                }
+            }
+
+            return responses[agentId] || `${agentId} je obradio zahtev i vratio rezultate.`;
+        }
     };
 
-    const getStatusColor = (status: Agent['status']) => {
+    const getStatusColor = (status: Employee['status']) => {
         switch (status) {
             case 'active': return '#10b981';
             case 'busy': return '#f59e0b';
@@ -1012,17 +1193,37 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                         border: 'none',
                         borderBottom: activeTab === 'chat' ? '2px solid var(--accent)' : '2px solid transparent',
                         color: activeTab === 'chat' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                        cursor: 'pointer',
                         fontSize: '14px',
                         fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
-                        transition: 'all 0.2s'
+                        gap: '8px'
                     }}
                 >
-                    <Sparkles size={16} />
-                    AI Chat
+                    <MessageSquare size={16} />
+                    Live Chat
+                </button>
+                <button
+                    onClick={() => setActiveTab('office')}
+                    style={{
+                        padding: '12px 24px',
+                        background: activeTab === 'office' ? 'var(--bg-main)' : 'transparent',
+                        border: 'none',
+                        borderBottom: activeTab === 'office' ? '2px solid var(--accent)' : '2px solid transparent',
+                        color: activeTab === 'office' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}
+                >
+                    <LayoutDashboard size={16} />
+                    Virtuelna Kancelarija
                 </button>
                 <button
                     onClick={() => setActiveTab('training')}
@@ -1032,17 +1233,57 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                         border: 'none',
                         borderBottom: activeTab === 'training' ? '2px solid var(--accent)' : '2px solid transparent',
                         color: activeTab === 'training' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                        cursor: 'pointer',
                         fontSize: '14px',
                         fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
-                        transition: 'all 0.2s'
+                        gap: '8px'
                     }}
                 >
                     <BookOpen size={16} />
-                    Training Rules ({trainingRules.length})
+                    Training Hub
+                </button>
+                <button
+                    onClick={() => setActiveTab('meeting')}
+                    style={{
+                        padding: '12px 24px',
+                        background: activeTab === 'meeting' ? 'var(--bg-main)' : 'transparent',
+                        border: 'none',
+                        borderBottom: activeTab === 'meeting' ? '2px solid var(--accent)' : '2px solid transparent',
+                        color: activeTab === 'meeting' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}
+                >
+                    <Users size={16} />
+                    Sala za sastanke
+                </button>
+                <button
+                    onClick={() => setActiveTab('logs')}
+                    style={{
+                        padding: '12px 24px',
+                        background: activeTab === 'logs' ? 'var(--bg-main)' : 'transparent',
+                        border: 'none',
+                        borderBottom: activeTab === 'logs' ? '2px solid var(--accent)' : '2px solid transparent',
+                        color: activeTab === 'logs' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}
+                >
+                    <Activity size={16} />
+                    Logovi Aktivnosti
                 </button>
                 <button
                     onClick={() => setActiveTab('security')}
@@ -1052,241 +1293,268 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                         border: 'none',
                         borderBottom: activeTab === 'security' ? '2px solid var(--accent)' : '2px solid transparent',
                         color: activeTab === 'security' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                        cursor: 'pointer',
                         fontSize: '14px',
                         fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
-                        transition: 'all 0.2s'
+                        gap: '8px'
                     }}
                 >
-                    <Shield size={16} color={securityEvents.length > 0 ? '#ef4444' : 'inherit'} />
-                    Security Shield ({securityEvents.length})
+                    <Shield size={16} />
+                    Code Audit & Security
                 </button>
             </div>
-
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                {/* Left Sidebar - Agent Registry */}
-                <div style={{
-                    width: '320px',
-                    borderRight: '1px solid var(--border)',
-                    background: 'var(--bg-card)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden'
-                }}>
-                    <div style={{ padding: '20px', borderBottom: '1px solid var(--border)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                            <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Network size={16} />
-                                Agent Registry
-                            </h3>
-                            <button
-                                onClick={selectAllAgents}
-                                style={{
-                                    fontSize: '11px',
-                                    padding: '4px 8px',
-                                    borderRadius: '6px',
-                                    background: 'rgba(102, 126, 234, 0.1)',
-                                    border: '1px solid rgba(102, 126, 234, 0.2)',
-                                    color: 'var(--accent)',
-                                    cursor: 'pointer',
-                                    fontWeight: 600
-                                }}
-                            >
-                                {selectedAgentIds.length === agents.length ? 'Deselect All' : 'Select All'}
-                            </button>
+            
+            {/* Content Area */}
+            <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+                {activeTab === 'chat' && (
+                    <div style={{
+                        width: '320px',
+                        borderRight: '1px solid var(--border)',
+                        background: 'var(--bg-card)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden'
+                    }}>
+                        <div style={{ padding: '20px', borderBottom: '1px solid var(--border)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Network size={16} />
+                                    Agent Registry
+                                </h3>
+                                <button
+                                    onClick={selectAllAgents}
+                                    style={{
+                                        fontSize: '11px',
+                                        padding: '4px 8px',
+                                        borderRadius: '6px',
+                                        background: 'rgba(102, 126, 234, 0.1)',
+                                        border: '1px solid rgba(102, 126, 234, 0.2)',
+                                        color: 'var(--accent)',
+                                        cursor: 'pointer',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    {selectedAgentIds.length === agents.length ? 'Deselect All' : 'Select All'}
+                                </button>
+                            </div>
+                            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>
+                                {selectedAgentIds.length > 0
+                                    ? `${selectedAgentIds.length} Agents Selected Manually`
+                                    : `${agents.length} Agents (Auto-selection active)`}
+                            </p>
                         </div>
-                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>
-                            {selectedAgentIds.length > 0
-                                ? `${selectedAgentIds.length} Agents Selected Manually`
-                                : `${agents.length} Agents (Auto-selection active)`}
-                        </p>
-                    </div>
 
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '15px' }}>
-                        {agents.map(agent => (
-                            <motion.div
-                                key={agent.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                onClick={() => toggleAgentSelection(agent.id)}
-                                style={{
-                                    background: selectedAgentIds.includes(agent.id)
-                                        ? 'rgba(59, 130, 246, 0.15)'
-                                        : 'var(--bg-main)',
-                                    border: `1px solid ${selectedAgentIds.includes(agent.id) ? 'var(--accent)' : 'var(--border)'}`,
-                                    borderRadius: '12px',
-                                    padding: '12px',
-                                    marginBottom: '10px',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    boxShadow: selectedAgentIds.includes(agent.id)
-                                        ? `0 0 15px -5px ${agent.color}80`
-                                        : 'none',
-                                    position: 'relative'
-                                }}
-                            >
-                                {selectedAgentIds.includes(agent.id) && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '8px',
-                                        right: '8px',
-                                        width: '6px',
-                                        height: '6px',
-                                        borderRadius: '50%',
-                                        background: agent.color,
-                                        boxShadow: `0 0 8px ${agent.color}`
-                                    }} />
-                                )}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                                    <div style={{
-                                        width: '36px',
-                                        height: '36px',
-                                        borderRadius: '10px',
-                                        background: agent.color,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: '#fff'
-                                    }}>
-                                        {agent.icon}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            {agent.name}
-                                            <span style={{
-                                                fontSize: '9px',
-                                                fontWeight: 700,
-                                                padding: '2px 6px',
-                                                borderRadius: '6px',
-                                                background: agent.minLevel === 6 ? 'rgba(239, 68, 68, 0.1)' :
-                                                    agent.minLevel >= 4 ? 'rgba(139, 92, 246, 0.1)' :
-                                                        agent.minLevel >= 3 ? 'rgba(16, 185, 129, 0.1)' :
-                                                            'rgba(59, 130, 246, 0.1)',
-                                                color: agent.minLevel === 6 ? '#ef4444' :
-                                                    agent.minLevel >= 4 ? '#8b5cf6' :
-                                                        agent.minLevel >= 3 ? '#10b981' :
-                                                            '#3b82f6',
-                                                border: `1px solid ${agent.minLevel === 6 ? 'rgba(239, 68, 68, 0.2)' :
-                                                    agent.minLevel >= 4 ? 'rgba(139, 92, 246, 0.2)' :
-                                                        agent.minLevel >= 3 ? 'rgba(16, 185, 129, 0.2)' :
-                                                            'rgba(59, 130, 246, 0.2)'}`
-                                            }}>
-                                                Lvl {agent.minLevel}
-                                            </span>
-                                            {agent.id === 'insight-agent' && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        chatFileInputRef.current?.click();
-                                                    }}
-                                                    style={{
-                                                        background: 'var(--accent)',
-                                                        border: 'none',
-                                                        borderRadius: '6px',
-                                                        color: '#fff',
-                                                        padding: '2px 8px',
-                                                        fontSize: '10px',
-                                                        fontWeight: 700,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '4px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    <Upload size={10} />
-                                                    IMPORT
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{agent.module}</div>
-                                    </div>
-                                    <div style={{
-                                        width: '8px',
-                                        height: '8px',
-                                        borderRadius: '50%',
-                                        background: activeAgents.includes(agent.id) ? '#10b981' : '#6b7280'
-                                    }} />
-                                </div>
-                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-                                    {agent.capabilities.slice(0, 2).join(', ')}
-                                    {agent.capabilities.length > 2 && ` +${agent.capabilities.length - 2}`}
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-
-                    {/* File History History UI */}
-                    {fileHistory.length > 0 && (
-                        <div style={{
-                            padding: '15px',
-                            borderTop: '1px solid var(--border)',
-                            background: 'rgba(0,0,0,0.1)',
-                            maxHeight: '300px',
-                            display: 'flex',
-                            flexDirection: 'column'
-                        }}>
-                            <h4 style={{
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                margin: '0 0 10px 0',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                opacity: 0.7
-                            }}>
-                                <Clock size={12} />
-                                POSLEDNJI FAJLOVI (10)
-                            </h4>
-                            <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '6px',
-                                overflowY: 'auto'
-                            }}>
-                                {fileHistory.map((item, idx) => (
-                                    <div
-                                        key={idx}
-                                        onClick={() => handleReAttachFile(item)}
-                                        style={{
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '15px' }}>
+                            {agents.map(agent => (
+                                <motion.div
+                                    key={agent.id}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    onClick={() => toggleAgentSelection(agent.id)}
+                                    style={{
+                                        background: selectedAgentIds.includes(agent.id)
+                                            ? 'rgba(59, 130, 246, 0.15)'
+                                            : 'var(--bg-main)',
+                                        border: `1px solid ${selectedAgentIds.includes(agent.id) ? 'var(--accent)' : 'var(--border)'}`,
+                                        borderRadius: '12px',
+                                        padding: '12px',
+                                        marginBottom: '10px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        boxShadow: selectedAgentIds.includes(agent.id)
+                                            ? `0 0 15px -5px ${agent.color}80`
+                                            : 'none',
+                                        position: 'relative'
+                                    }}
+                                >
+                                    {selectedAgentIds.includes(agent.id) && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '8px',
+                                            right: '8px',
+                                            width: '6px',
+                                            height: '6px',
+                                            borderRadius: '50%',
+                                            background: agent.color,
+                                            boxShadow: `0 0 8px ${agent.color}`
+                                        }} />
+                                    )}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                                        <div style={{
+                                            width: '36px',
+                                            height: '36px',
+                                            borderRadius: '10px',
+                                            background: agent.avatarUrl ? 'transparent' : agent.color,
                                             display: 'flex',
                                             alignItems: 'center',
-                                            gap: '8px',
-                                            padding: '8px',
-                                            background: 'var(--bg-main)',
-                                            borderRadius: '8px',
-                                            border: '1px solid var(--border)',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s'
-                                        }}
-                                        title="Kliknite da ponovo priložite ovaj fajl"
-                                    >
-                                        <div style={{ opacity: 0.8 }}>
-                                            {getFileIcon(item.type, item.name)}
+                                            justifyContent: 'center',
+                                            color: '#fff',
+                                            overflow: 'hidden',
+                                            border: agent.avatarUrl ? '1px solid var(--border)' : 'none'
+                                        }}>
+                                            {agent.avatarUrl ? (
+                                                <img 
+                                                    src={agent.avatarUrl} 
+                                                    alt={agent.name} 
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    onError={(e) => {
+                                                        e.currentTarget.style.display = 'none';
+                                                        e.currentTarget.parentElement!.innerHTML = `<span style="font-weight: 700; font-size: 14px;">${agent.name.charAt(0)}</span>`;
+                                                    }}
+                                                />
+                                            ) : (
+                                                agent.icon
+                                            )}
                                         </div>
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                            <div style={{
-                                                fontSize: '11px',
-                                                fontWeight: 600,
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}>
-                                                {item.name}
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                {agent.name}
+                                                <span style={{
+                                                    fontSize: '9px',
+                                                    fontWeight: 700,
+                                                    padding: '2px 6px',
+                                                    borderRadius: '6px',
+                                                    background: agent.minLevel === 6 ? 'rgba(239, 68, 68, 0.1)' :
+                                                        agent.minLevel >= 4 ? 'rgba(139, 92, 246, 0.1)' :
+                                                            agent.minLevel >= 3 ? 'rgba(16, 185, 129, 0.1)' :
+                                                                'rgba(59, 130, 246, 0.1)',
+                                                    color: agent.minLevel === 6 ? '#ef4444' :
+                                                        agent.minLevel >= 4 ? '#8b5cf6' :
+                                                            agent.minLevel >= 3 ? '#10b981' :
+                                                                '#3b82f6',
+                                                    border: `1px solid ${agent.minLevel === 6 ? 'rgba(239, 68, 68, 0.2)' :
+                                                        agent.minLevel >= 4 ? 'rgba(139, 92, 246, 0.2)' :
+                                                            agent.minLevel >= 3 ? 'rgba(16, 185, 129, 0.2)' :
+                                                                'rgba(59, 130, 246, 0.2)'}`
+                                                }}>
+                                                    Lvl {agent.minLevel}
+                                                </span>
+                                                {agent.id === 'insight-agent' && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            chatFileInputRef.current?.click();
+                                                        }}
+                                                        style={{
+                                                            background: 'var(--accent)',
+                                                            border: 'none',
+                                                            borderRadius: '6px',
+                                                            color: '#fff',
+                                                            padding: '2px 8px',
+                                                            fontSize: '10px',
+                                                            fontWeight: 700,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        <Upload size={10} />
+                                                        IMPORT
+                                                    </button>
+                                                )}
                                             </div>
-                                            <div style={{ fontSize: '9px', opacity: 0.5 }}>
-                                                {formatFileSize(item.size)} • {item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                {agent.module}
+                                                <span style={{ 
+                                                    fontSize: '8px', 
+                                                    background: 'rgba(99, 102, 241, 0.1)', 
+                                                    padding: '1px 4px', 
+                                                    borderRadius: '4px',
+                                                    color: 'var(--accent)',
+                                                    fontWeight: 700,
+                                                    border: '1px solid rgba(99, 102, 241, 0.2)'
+                                                }}>GEMINI 2.0 FLASH</span>
                                             </div>
                                         </div>
-                                        <Plus size={10} style={{ opacity: 0.5 }} />
+                                        <div style={{
+                                            width: '8px',
+                                            height: '8px',
+                                            borderRadius: '50%',
+                                            background: activeAgents.includes(agent.id) ? '#10b981' : '#6b7280'
+                                        }} />
                                     </div>
-                                ))}
-                            </div>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                                        {agent.capabilities.slice(0, 2).join(', ')}
+                                        {agent.capabilities.length > 2 && ` +${agent.capabilities.length - 2}`}
+                                    </div>
+                                </motion.div>
+                            ))}
                         </div>
-                    )}
-                </div>
+
+                        {/* File history UI */}
+                        {fileHistory.length > 0 && (
+                            <div style={{
+                                padding: '15px',
+                                borderTop: '1px solid var(--border)',
+                                background: 'rgba(0,0,0,0.1)',
+                                maxHeight: '300px',
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}>
+                                <h4 style={{
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    margin: '0 0 10px 0',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    opacity: 0.7
+                                }}>
+                                    <Clock size={12} />
+                                    POSLEDNJI FAJLOVI (10)
+                                </h4>
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '6px',
+                                    overflowY: 'auto'
+                                }}>
+                                    {fileHistory.map((item, idx) => (
+                                        <div
+                                            key={idx}
+                                            onClick={() => handleReAttachFile(item)}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                padding: '8px',
+                                                background: 'var(--bg-main)',
+                                                borderRadius: '8px',
+                                                border: '1px solid var(--border)',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            title="Kliknite da ponovo priložite ovaj fajl"
+                                        >
+                                            <div style={{ opacity: 0.8 }}>
+                                                {getFileIcon(item.type, item.name)}
+                                            </div>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{
+                                                    fontSize: '11px',
+                                                    fontWeight: 600,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
+                                                    {item.name}
+                                                </div>
+                                                <div style={{ fontSize: '9px', opacity: 0.5 }}>
+                                                    {formatFileSize(item.size)} • {item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                            </div>
+                                            <Plus size={10} style={{ opacity: 0.5 }} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Main Content Area - Chat or Training */}
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -1332,10 +1600,25 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                                                         marginBottom: '6px',
                                                         display: 'flex',
                                                         alignItems: 'center',
-                                                        gap: '6px'
+                                                        justifyContent: 'space-between',
+                                                        width: '100%'
                                                     }}>
-                                                        <Cpu size={12} />
-                                                        {message.agentName}
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <Cpu size={12} />
+                                                            {message.agentName}
+                                                        </div>
+                                                        {(message.role === 'agent' || message.role === 'orchestrator') && (
+                                                            <button 
+                                                                onClick={() => {
+                                                                    const agentId = agents.find(a => a.name === message.agentName)?.id || 'orchestrator';
+                                                                    speakContent(message.content, agentId);
+                                                                }}
+                                                                style={{ background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer', padding: '2px', display: 'flex' }}
+                                                                title="Slušaj poruku"
+                                                            >
+                                                                <Volume2 size={12} />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 )}
                                                 <div style={{ fontSize: '14px', lineHeight: '1.5' }}>
@@ -1525,8 +1808,8 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                                     </button>
                                     <input
                                         type="text"
-                                        value={input}
-                                        onChange={(e) => setInput(e.target.value)}
+                                        value={currentInput}
+                                        onChange={(e) => setCurrentInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                         placeholder="Pitajte Master Orchestrator-a..."
                                         disabled={isProcessing}
@@ -1543,7 +1826,7 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                                     />
                                     <button
                                         onClick={handleSend}
-                                        disabled={(!input.trim() && chatFiles.length === 0) || isProcessing}
+                                        disabled={(!currentInput.trim() && chatFiles.length === 0) || isProcessing}
                                         style={{
                                             padding: '14px 24px',
                                             borderRadius: '12px',
@@ -1557,36 +1840,271 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                                             alignItems: 'center',
                                             gap: '8px',
                                             fontSize: '14px',
-                                            fontWeight: 600,
-                                            opacity: (isProcessing || (!input.trim() && chatFiles.length === 0)) ? 0.5 : 1
+                                            fontWeight: 700,
+                                            boxShadow: isProcessing ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)',
+                                            transition: 'all 0.2s'
                                         }}
                                     >
                                         {isProcessing ? (
                                             <>
                                                 <RefreshCcw size={18} className="spin" />
-                                                Processing...
+                                                <span>OBRADA...</span>
                                             </>
                                         ) : (
                                             <>
                                                 <Send size={18} />
-                                                Send
+                                                <span>POŠALJI</span>
                                             </>
                                         )}
+                                    </button>
+
+                                    <button
+                                        onClick={() => setVoiceEnabled(!voiceEnabled)}
+                                        style={{
+                                            padding: '14px',
+                                            borderRadius: '12px',
+                                            background: voiceEnabled ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-main)',
+                                            border: voiceEnabled ? '1px solid var(--accent)' : '1px solid var(--border)',
+                                            color: voiceEnabled ? 'var(--accent)' : 'var(--text-secondary)',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        title={voiceEnabled ? "Isključi glas" : "Uključi glas"}
+                                    >
+                                        {voiceEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
                                     </button>
                                 </div>
                             </div>
                         </>
-                    ) : activeTab === 'training' ? (
-                        <div style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
+                    ) : activeTab === 'office' ? (
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '40px', background: 'var(--bg-main)' }}>
                             <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-                                <div style={{ marginBottom: '30px' }}>
-                                    <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>
-                                        AI Training Rules
+                                <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+                                    <h2 style={{ fontSize: '32px', fontWeight: 900, marginBottom: '10px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                                        Virtuelna Kancelarija Prime Click
                                     </h2>
-                                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-                                        Definiši pravila koja će AI agenti koristiti za automatizaciju zadataka
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '16px' }}>
+                                        Struktura agencije i AI zaposleni
                                     </p>
                                 </div>
+
+                                {/* CEO - Nenad */}
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '60px', position: 'relative' }}>
+                                    <motion.div
+                                        whileHover={{ scale: 1.05 }}
+                                        style={{
+                                            width: '320px',
+                                            padding: '24px',
+                                            background: 'var(--bg-card)',
+                                            borderRadius: '24px',
+                                            border: '2px solid #000',
+                                            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                                            textAlign: 'center',
+                                            position: 'relative',
+                                            zIndex: 2
+                                        }}
+                                    >
+                                        <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: '#000', margin: '0 auto 15px', overflow: 'hidden', border: '4px solid var(--accent)' }}>
+                                            <img src="/avatars/nenad_ceo.png" alt="Nenad" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => (e.currentTarget.src = 'https://ui-avatars.com/api/?name=Nenad&background=000&color=fff')} />
+                                        </div>
+                                        <h3 style={{ margin: '0 0 5px 0', fontSize: '20px', fontWeight: 800 }}>Nenad</h3>
+                                        <div style={{ display: 'inline-block', padding: '4px 12px', background: 'rgba(0,0,0,0.1)', borderRadius: '20px', fontSize: '12px', fontWeight: 700, marginBottom: '5px' }}>CEO & FOUNDER</div>
+                                        <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--accent)', marginBottom: '12px' }}>AI MODEL: GEMINI 2.0 FLASH</div>
+                                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 20, fontStyle: 'italic' }}>"Tata nad svim avatarima. Vizija i strateške odluke."</p>
+                                        <button
+                                            onClick={() => {
+                                                setActiveTab('chat');
+                                                setSelectedAgentIds(['ljubica']);
+                                                setCurrentInput('Instrukcije od CEO: ');
+                                            }}
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px',
+                                                borderRadius: '12px',
+                                                background: 'var(--accent)',
+                                                border: 'none',
+                                                color: '#fff',
+                                                fontSize: '12px',
+                                                fontWeight: 800,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '8px',
+                                                boxShadow: '0 4px 10px rgba(99, 102, 241, 0.3)'
+                                            }}
+                                        >
+                                            <Shield size={14} />
+                                            DAJ INSTRUKCIJE LJUBICI
+                                        </button>
+                                    </motion.div>
+                                    <div style={{ width: '2px', height: '60px', background: 'var(--border)', marginTop: '-10px' }} />
+                                </div>
+
+                                {/* COO - Ljubica */}
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '60px', position: 'relative' }}>
+                                    <motion.div
+                                        whileHover={{ scale: 1.05 }}
+                                        style={{
+                                            width: '300px',
+                                            padding: '20px',
+                                            background: 'var(--bg-card)',
+                                            borderRadius: '20px',
+                                            border: '1px solid var(--accent)',
+                                            boxShadow: '0 8px 25px rgba(99, 102, 241, 0.1)',
+                                            textAlign: 'center',
+                                            zIndex: 2
+                                        }}
+                                    >
+                                        <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--accent)', margin: '0 auto 12px', overflow: 'hidden', border: '3px solid #fff' }}>
+                                            <img src="/avatars/ljubica_coo.png" alt="Ljubica" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => (e.currentTarget.src = 'https://ui-avatars.com/api/?name=Ljubica&background=6366f1&color=fff')} />
+                                        </div>
+                                        <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', fontWeight: 700 }}>Ljubica</h3>
+                                        <div style={{ display: 'inline-block', padding: '3px 10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '20px', fontSize: '11px', fontWeight: 700, color: 'var(--accent)', marginBottom: '5px' }}>COO & MASTER ORCHESTRATOR</div>
+                                        <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--accent)', marginBottom: '10px' }}>AI MODEL: GEMINI 2.0 FLASH</div>
+                                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>Direktno izvršava Nenadove instrukcije i koordiniše tim.</p>
+                                    </motion.div>
+                                    <div style={{ width: '80%', height: '2px', background: 'var(--border)', position: 'absolute', bottom: '-30px', left: '10%' }} />
+                                    <div style={{ width: '2px', height: '30px', background: 'var(--border)' }} />
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '25px', padding: '0 20px' }}>
+                                    {agents.filter(a => a.id !== 'nenad' && a.id !== 'ljubica').map(agent => (
+                                        <motion.div
+                                            key={agent.id}
+                                            whileHover={{ y: -5 }}
+                                            style={{
+                                                background: 'var(--bg-card)',
+                                                borderRadius: '20px',
+                                                padding: '24px',
+                                                border: '1px solid var(--border)',
+                                                boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                textAlign: 'center'
+                                            }}
+                                        >
+                                            <div style={{
+                                                width: '80px',
+                                                height: '80px',
+                                                borderRadius: '20px',
+                                                background: agent.avatarUrl ? 'transparent' : agent.color,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: '#fff',
+                                                marginBottom: '15px',
+                                                boxShadow: agent.avatarUrl ? '0 5px 15px rgba(0,0,0,0.1)' : `0 8px 20px ${agent.color}40`,
+                                                overflow: 'hidden',
+                                                border: agent.avatarUrl ? '2px solid #fff' : 'none'
+                                            }}>
+                                                {agent.avatarUrl ? (
+                                                    <img 
+                                                        src={agent.avatarUrl} 
+                                                        alt={agent.name} 
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${agent.name}&background=${agent.color.replace('#', '')}&color=fff`;
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    agent.icon
+                                                )}
+                                            </div>
+                                            <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 700 }}>{agent.name}</h4>
+                                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                {agent.module}
+                                            </div>
+                                            <div style={{ 
+                                                fontSize: '9px', 
+                                                fontWeight: 800, 
+                                                color: agent.color, 
+                                                background: `${agent.color}10`,
+                                                padding: '2px 8px',
+                                                borderRadius: '8px',
+                                                marginBottom: '10px',
+                                                border: `1px solid ${agent.color}30`
+                                            }}>
+                                                GEMINI 2.0 FLASH
+                                            </div>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', justifyContent: 'center', marginTop: 'auto' }}>
+                                                {agent.capabilities.slice(0, 3).map((cap, i) => (
+                                                    <span key={i} style={{ fontSize: '10px', padding: '3px 8px', background: 'var(--bg-main)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                                                        {cap}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    setActiveTab('chat');
+                                                    setSelectedAgentIds([agent.id]);
+                                                }}
+                                                style={{
+                                                    marginTop: '15px',
+                                                    width: '100%',
+                                                    padding: '8px',
+                                                    borderRadius: '10px',
+                                                    background: 'transparent',
+                                                    border: `1px solid ${agent.color}`,
+                                                    color: agent.color,
+                                                    fontSize: '12px',
+                                                    fontWeight: 600,
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                onMouseOver={(e) => {
+                                                    e.currentTarget.style.background = agent.color;
+                                                    e.currentTarget.style.color = '#fff';
+                                                }}
+                                                onMouseOut={(e) => {
+                                                    e.currentTarget.style.background = 'transparent';
+                                                    e.currentTarget.style.color = agent.color;
+                                                }}
+                                            >
+                                                Dodeli Zadatak
+                                            </button>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    ) : activeTab === 'training' ? (
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '30px', background: 'var(--bg-main)' }}>
+                            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                                    <div>
+                                        <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px' }}>
+                                            <Users size={24} color="var(--accent)" style={{ marginRight: '10px' }} />
+                                            Sala za sastanke
+                                        </h2>
+                                        <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                                            Izveštaji, pravila i obuka AI agenata
+                                        </p>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                         <button 
+                                            onClick={() => {/* Trigger daily report manually */}}
+                                            style={{
+                                                padding: '10px 20px',
+                                                borderRadius: '12px',
+                                                background: 'var(--bg-card)',
+                                                border: '1px solid var(--border)',
+                                                color: 'var(--text-primary)',
+                                                fontSize: '14px',
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px'
+                                            }}
+                                         >
+                                            <BarChart3 size={16} />
+                                            Dnevni Izveštaj
+                                         </button>
+                                    </div>
+                                </div>
+
 
                                 {/* Add New Rule Form */}
                                 <div style={{
@@ -1996,6 +2514,111 @@ export default function MasterOrchestrator({ onBack, userLevel }: Props) {
                                         })
                                     )}
                                 </div>
+                            </div>
+                        </div>
+                    ) : activeTab === 'meeting' ? (
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '40px', background: 'var(--bg-main)' }}>
+                            <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                                    <div>
+                                        <h2 style={{ fontSize: '28px', fontWeight: 900, margin: 0 }}>Sala za Sastanke</h2>
+                                        <p style={{ color: 'var(--text-secondary)', marginTop: '5px' }}>Koordinacija i dnevni strateški pregled</p>
+                                    </div>
+                                    <button
+                                        onClick={generateDailyReport}
+                                        disabled={isGeneratingReport}
+                                        style={{
+                                            padding: '12px 24px',
+                                            borderRadius: '12px',
+                                            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                                            color: '#fff',
+                                            border: 'none',
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '10px'
+                                        }}
+                                    >
+                                        <Activity size={18} className={isGeneratingReport ? 'spin' : ''} />
+                                        GENERISI DNEVNI IZVEŠTAJ
+                                    </button>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
+                                    <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                        <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600, marginBottom: '10px' }}>AKTIVNI AGENTI</div>
+                                        <div style={{ fontSize: '24px', fontWeight: 900, color: '#10b981' }}>{agents.length} / {allAgents.length}</div>
+                                    </div>
+                                    <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                        <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600, marginBottom: '10px' }}>UKUPNO ZADATAKA</div>
+                                        <div style={{ fontSize: '24px', fontWeight: 900 }}>{agentStats.reduce((sum, s) => sum + s.tasksCompleted, 0)}</div>
+                                    </div>
+                                    <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                        <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600, marginBottom: '10px' }}>PROS. EFIKASNOST</div>
+                                        <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--accent)' }}>94.2%</div>
+                                    </div>
+                                    <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                        <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600, marginBottom: '10px' }}>STATUS SISTEMA</div>
+                                        <div style={{ fontSize: '24px', fontWeight: 900, color: '#10b981' }}>OPTIMALAN</div>
+                                    </div>
+                                </div>
+
+                                {meetingData ? (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        style={{ background: 'var(--bg-card)', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden' }}
+                                    >
+                                        <div style={{ padding: '30px', borderBottom: '1px solid var(--border)', background: 'rgba(99, 102, 241, 0.05)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800 }}>Dnevni Strateški Izveštaj - {meetingData.date}</h3>
+                                                <div style={{ padding: '6px 12px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '20px', color: '#10b981', fontSize: '11px', fontWeight: 700 }}>VERIFIKOVANO OD CEO</div>
+                                            </div>
+                                        </div>
+                                        <div style={{ padding: '30px' }}>
+                                            <div style={{ marginBottom: '30px' }}>
+                                                <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <Brain size={16} /> GLAVNI ZAKLJUČAK
+                                                </h4>
+                                                <p style={{ fontSize: '16px', lineHeight: '1.6', color: 'var(--text-primary)' }}>{meetingData.highlight}</p>
+                                            </div>
+
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+                                                <div>
+                                                    <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '15px' }}>UČINAK PO AGENTIMA</h4>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                        {meetingData.agentBreakdown.map((a, i) => (
+                                                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-main)', borderRadius: '12px' }}>
+                                                                <div>
+                                                                    <div style={{ fontWeight: 700, fontSize: '13px' }}>{a.name}</div>
+                                                                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{a.impact}</div>
+                                                                </div>
+                                                                <div style={{ fontWeight: 800, color: 'var(--accent)' }}>{a.tasks}</div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '15px', color: '#ef4444' }}>DETEKTOVANE ANOMALIJE</h4>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                        {meetingData.anomalies.map((a, i) => (
+                                                            <div key={i} style={{ display: 'flex', gap: '12px', padding: '12px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '12px', color: '#ef4444', fontSize: '12px' }}>
+                                                                <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                                                                {a}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-card)', borderRadius: '24px', border: '1px dashed var(--border)', color: 'var(--text-secondary)' }}>
+                                        <Users size={48} style={{ opacity: 0.1, marginBottom: '20px' }} />
+                                        <p>Kliknite na dugme iznad da započnete analizu današnjih aktivnosti.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ) : (

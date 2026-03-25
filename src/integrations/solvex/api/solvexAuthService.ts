@@ -26,6 +26,7 @@ const SOLVEX_PASSWORD = getEnvVar('VITE_SOLVEX_PASSWORD');
 let cachedToken: string | null = null;
 let tokenExpiry: number | null = null;
 const TOKEN_LIFETIME = 30 * 60 * 1000; // 30 minutes
+let connectionPromise: Promise<SolvexApiResponse<string>> | null = null;
 
 /**
  * Connect to Solvex API and obtain authentication token
@@ -34,46 +35,52 @@ export async function connect(): Promise<SolvexApiResponse<string>> {
     try {
         // Check if we have a valid cached token
         if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) {
-            console.log('[Solvex Auth] Using cached token');
-            return {
-                success: true,
-                data: cachedToken
-            };
+            return { success: true, data: cachedToken };
         }
 
-        // Under the Fortress architecture, credentials are injected by the Supabase Edge Function Proxy.
-        // We provide dummy values here which the proxy will replace with actual secrets.
-        const login = getEnvVar('VITE_SOLVEX_LOGIN') || SOLVEX_LOGIN || 'proxy_auth';
-        const password = getEnvVar('VITE_SOLVEX_PASSWORD') || SOLVEX_PASSWORD || 'proxy_auth';
-
-        console.log('[Solvex Auth] Requesting new token (proxy handled)...');
-
-        const result = await makeSoapRequest<string>('Connect', {
-            'login': login,
-            'password': password
-        });
-
-        if (!result) {
-            throw new Error('Solvex API nije vratio token (prazan odgovor)');
+        // If a connection is already in progress, return that same promise
+        if (connectionPromise) {
+            console.log('[Solvex Auth] Waiting for existing connection attempt...');
+            return connectionPromise;
         }
 
-        // Check if result is an error message instead of a GUID
-        // GUID is typically: 8-4-4-4-12 hex chars or similar
-        // Solvex error messages start with "Connection result code:"
-        if (result.includes('Connection result code:') || result.toLowerCase().includes('invalid')) {
-            throw new Error(`Solvex API Auth Error: ${result}`);
-        }
+        connectionPromise = (async () => {
+            try {
+                // Under the Fortress architecture, credentials are injected by the Supabase Edge Function Proxy.
+                // We provide dummy values here which the proxy will replace with actual secrets.
+                const login = getEnvVar('VITE_SOLVEX_LOGIN') || SOLVEX_LOGIN || 'proxy_auth';
+                const password = getEnvVar('VITE_SOLVEX_PASSWORD') || SOLVEX_PASSWORD || 'proxy_auth';
 
-        // Cache the token
-        cachedToken = result;
-        tokenExpiry = Date.now() + TOKEN_LIFETIME;
+                console.log('[Solvex Auth] Requesting new token (proxy handled)...');
 
-        console.log('[Solvex Auth] Token obtained successfully');
+                const result = await makeSoapRequest<string>('Connect', {
+                    'login': login,
+                    'password': password
+                });
 
-        return {
-            success: true,
-            data: result
-        };
+                if (!result) {
+                    throw new Error('Solvex API nije vratio token (prazan odgovor)');
+                }
+
+                if (result.includes('Connection result code:') || result.toLowerCase().includes('invalid')) {
+                    throw new Error(`Solvex API Auth Error: ${result}`);
+                }
+
+                // Cache the token
+                cachedToken = result;
+                tokenExpiry = Date.now() + TOKEN_LIFETIME;
+                console.log('[Solvex Auth] Token obtained successfully');
+
+                return { success: true, data: result };
+            } catch (authError: any) {
+                console.error('[Solvex Auth] Connection attempt failed:', authError);
+                return { success: false, error: authError.message || 'Failed to connect to Solvex' };
+            } finally {
+                connectionPromise = null;
+            }
+        })();
+
+        return connectionPromise;
     } catch (error) {
         console.error('[Solvex Auth] Connection failed:', error);
 

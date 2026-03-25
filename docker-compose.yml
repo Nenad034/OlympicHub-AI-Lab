@@ -16,10 +16,12 @@ services:
       - OPENCLAW_BIND_ADDR=0.0.0.0
       - OPENAI_API_KEY=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
       - OPENAI_BASE_URL=https://openrouter.ai/api/v1
+      # - GEMINI_API_KEY=AIzaSyAu8Jcwwn4iH2vHxJltkNE8LB7RkGGgPgg
+      # - GOOGLE_GENERATIVE_AI_API_KEY=AIzaSyAu8Jcwwn4iH2vHxJltkNE8LB7RkGGgPgg
+      # - GOOGLE_AI_API_KEY=AIzaSyAu8Jcwwn4iH2vHxJltkNE8LB7RkGGgPgg
       - OPENCLAW_MODELS_PROXY_ALLOW_UNCONFIGURED_PROVIDERS=true
     env_file:
       - ./external-tools/openclaw/.env
-    # Volumes su ponovo ukljuceni (config i workspace)
     volumes:
       - ./:/home/node/.openclaw/workspace
       - ./external-tools/openclaw/openclaw_config:/home/node/.openclaw

@@ -21,28 +21,26 @@ export const parseSearchIntent = async (query: string): Promise<ParsedSearchInte
         console.log(`🧠 [NLP Parse] Analyzing query: "${query}"`);
         
     const systemPrompt = `
-You are a travel agent assistant parsing natural language queries into strict JSON.
-Today's date is: ${new Date().toISOString().split('T')[0]}.
-Your job is to extract search parameters from the user's query and map them exactly to this schema.
+You are a precision-focused travel agent assistant. Your goal is to parse natural language queries into strict JSON.
+Current date: ${new Date().toISOString().split('T')[0]}.
 
-Instructions:
-1. destinations: Array of detected city/country/hotel names.
-2. checkIn / checkOut: Specific dates in YYYY-MM-DD format. 
-3. dateRange: If the user specifies a range (e.g. "between July 15 and 29") but also a duration ("7 nights").
-4. durationNights: Extract explicitly requested duration (e.g., "7 nocenja" -> 7).
-5. stars: Array of strings representing requested star counts (e.g. "4 zvezdice" -> ["4"]).
-6. board: Array of codes for requested meal plans. 
-   Mappings: "polupansion" -> "HB", "doručak" -> "BB", "all inclusive" -> "AI", "pun pansion" -> "FB", "noćenje" -> "RO".
-7. searchMode: 
-   - "range" ONLY if the user explicitly asks for a flexible period or a window larger than the stay (e.g. "između 10 i 20. jula za 7 noći", "bilo kada u avgustu na 10 dana").
-   - "classic" if they give specific arrival and departure dates (e.g. "od 10. do 20. jula", "u periodu 10-20.08.2026").
-8. pax: Array of room objects.
-9. If no destination is mentioned but it is a search query, set destinations to ["Bulgaria"] as a default.
-10. needsClarification: "pax_split" if total persons >= 5 without room details.
+CRITICAL INSTRUCTIONS:
+1. STAR RATING (STARS):
+   - User says "4 zvezdice", "hotel 4*", "kategorija 4" -> ALWAYS set stars: ["4"].
+   - NEVER return multiple star ratings unless the user specifies a range (e.g. "4 ili 5 zvezdica").
+   - If they say "hotel 4*", return ONLY ["4"]. Do NOT include ["3"] or ["5"].
+2. MEAL PLANS (BOARD):
+   - Mapping: "polupansion" -> "HB", "doručak" -> "BB", "all inclusive", "sve uključeno" -> "AI", "pun pansion" -> "FB", "noćenje" -> "RO".
+3. DESTINATIONS:
+   - Extract city names (e.g. "Sunčev Breg", "Bansko").
+4. DATES:
+   - Format: YYYY-MM-DD. Handle "10-20.08.2026" as checkIn: 2026-08-10, checkOut: 2026-08-20.
+5. PAX:
+   - "2 odrasle" -> [{ adults: 2, children: 0, childrenAges: [] }].
 
 User Query: "${query}"
 
-Return ONLY valid JSON.
+Return ONLY valid JSON with fields: destinations (array), checkIn (string), checkOut (string), dateRange (object/null), durationNights (number), stars (array of strings), board (array of strings), pax (array), searchMode (string), needsClarification (string/null).
 `;
 
         const response = await aiService.generateContent(systemPrompt, {

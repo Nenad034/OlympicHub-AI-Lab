@@ -124,6 +124,7 @@ export class SolvexProvider implements HotelProvider {
                 cityIds = [pid];
             } else if (params.providerType === 'hotel') {
                 hotelId = pid;
+                cityIds = []; // IMPORTANT: Clear city search if we want a specific hotel!
             }
         }
 
@@ -135,7 +136,7 @@ export class SolvexProvider implements HotelProvider {
             childrenAges: params.childrenAges || [],
             rooms: params.rooms || 1,
             destination: params.destination,
-            cityId: cityIds.length === 1 ? cityIds[0] : (cityIds.length > 1 ? cityIds : undefined),
+            cityId: cityIds.length > 0 ? (cityIds.length === 1 ? cityIds[0] : cityIds) : undefined,
             hotelId: hotelId,
             stars: params.stars,
             board: params.board
