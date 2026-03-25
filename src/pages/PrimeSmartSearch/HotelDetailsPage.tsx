@@ -98,10 +98,13 @@ const HotelDetailsPage: React.FC = () => {
             setLoading(true);
             lastFetchedId.current = id;
             try {
+                // Ensure ID is prefixed with solvex_ for detail fetching if it's not already
+                const solvexId = id?.startsWith('solvex_') ? id : `solvex_${id}`;
+
                 const results = await performSmartSearch({
                     searchType: 'hotel',
                     destinations: [{ 
-                        id: id, 
+                        id: solvexId, 
                         name: searchParams.get('hCity') || searchParams.get('hName') || '', 
                         type: 'hotel' 
                     }], 
@@ -109,10 +112,10 @@ const HotelDetailsPage: React.FC = () => {
                     checkOut: checkOutStr,
                     roomConfig: roomAllocations,
                     nationality: searchParams.get('nat') || 'RS',
-                    enabledProviders: id?.startsWith('solvex') ? { solvex: true } : (id?.startsWith('filos') ? { filos: true } : undefined)
+                    enabledProviders: solvexId?.startsWith('solvex') ? { solvex: true } : (solvexId?.startsWith('filos') ? { filos: true } : undefined)
                 });
 
-                const found = results.find(r => r.id === id);
+                const found = results.find(r => r.id === solvexId || r.id === id);
                 if (found) {
                     setHotel(found);
                 } else {

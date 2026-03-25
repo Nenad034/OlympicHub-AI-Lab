@@ -142,7 +142,9 @@ export const PrimeMapSearch: React.FC<PrimeMapSearchProps> = ({ results, onClose
             mapRef.current.on('load', () => {
                 setIsMapLoading(false);
                 // Force resize to ensure it fills the container
-                mapRef.current?.resize();
+                setTimeout(() => {
+                    mapRef.current?.resize();
+                }, 100);
             });
 
             mapRef.current.on('error', (e) => {
@@ -217,7 +219,8 @@ export const PrimeMapSearch: React.FC<PrimeMapSearchProps> = ({ results, onClose
     };
 
     function addMarker(hotel: HotelSearchResult, lng: number, lat: number) {
-        if (!mapRef.current || markersRef.current[hotel.id]) return;
+        const safeId = String(hotel.id).startsWith('solvex_') ? hotel.id : `solvex_${hotel.id}`;
+        if (!mapRef.current || markersRef.current[safeId]) return;
         
         const color = getMarkerColor(hotel.lowestTotalPrice);
         const el = document.createElement('div');
@@ -237,7 +240,8 @@ export const PrimeMapSearch: React.FC<PrimeMapSearchProps> = ({ results, onClose
         el.addEventListener('click', () => {
             setSelectedHotel(hotel);
             mapRef.current?.flyTo({ center: [lng, lat], zoom: 15, essential: true });
-            // Calculate pixel position of marker on map canvas
+            
+            // Calculate pixel position after flyTo starts/settles
             setTimeout(() => {
                 if (mapRef.current) {
                     const point = mapRef.current.project([lng, lat]);
@@ -247,77 +251,65 @@ export const PrimeMapSearch: React.FC<PrimeMapSearchProps> = ({ results, onClose
                         const cardH = 420;
                         const margin = 18;
                         let x = point.x - cardW / 2;
-                        let y = point.y - cardH - margin;
-                        // Clamp to viewport
+                        let y = point.y - cardH - 8;
+                        
+                        // Safety clamp
                         if (x < margin) x = margin;
                         if (x + cardW > container.clientWidth - margin) x = container.clientWidth - cardW - margin;
-                        if (y < margin) y = point.y + 30; // flip below if not enough space above
+                        if (y < margin) y = point.y + 30;
                         setPopupPos({ x, y });
                     }
                 }
-            }, 350); // wait for flyTo to settle
+            }, 350);
         });
-        el.addEventListener('mouseenter', () => setHoveredHotelId(hotel.id));
+        el.addEventListener('mouseenter', () => setHoveredHotelId(safeId));
         el.addEventListener('mouseleave', () => setHoveredHotelId(null));
 
         const marker = new mapboxgl.Marker(el)
             .setLngLat([lng, lat])
             .addTo(mapRef.current!);
-        markersRef.current[hotel.id] = marker;
+        markersRef.current[safeId] = marker;
     }
 
-    // 2. Upravljanje Markerima (Price Bubbles + Geocoding Fallback)
     useEffect(() => {
         if (!mapRef.current) return;
 
-        // Ukloni stare markere koji više nisu u rezultatima
-        Object.keys(markersRef.current).forEach(id => {
-            if (!results.find(h => h.id === id)) {
-                markersRef.current[id].remove();
-                delete markersRef.current[id];
-            }
-        });
+        // Force a tiny delay to ensure container is ready
+        const timer = setTimeout(() => {
+            if (!mapRef.current) return;
+            mapRef.current.resize();
 
-        // Ažuriraj stil postojećih markera (hover + selection visibility)
-        results.forEach(hotel => {
-            if (markersRef.current[hotel.id]) {
-                const el = markersRef.current[hotel.id].getElement();
-                const isSelected = selectedHotel?.id === hotel.id;
-                const isAnotherSelected = selectedHotel !== null && !isSelected;
-                
-                el.className = `marker-bubble ${hotel.isPrime ? 'is-prime' : ''} ${hoveredHotelId === hotel.id ? 'is-hovered' : ''} ${isSelected ? 'is-selected-marker' : ''} ${isAnotherSelected ? 'is-hidden' : ''}`;
-            }
-        });
+            // Normalize sidebar selection comparison by ensuring both have solvex_ prefix if needed
+            const currentSelectedId = selectedHotel ? (String(selectedHotel.id).startsWith('solvex_') ? selectedHotel.id : `solvex_${selectedHotel.id}`) : null;
 
-        // Dodaj nove markere — sa koordinatama ili geocodingom
-        const bounds = new mapboxgl.LngLatBounds();
-        let boundsHasPoints = false;
-        results.forEach(async hotel => {
-            if (markersRef.current[hotel.id]) {
-                if (hotel.location.lng && hotel.location.lat) {
-                    bounds.extend([hotel.location.lng, hotel.location.lat]);
-                    boundsHasPoints = true;
+            // Update existing markers style
+            results.forEach(hotel => {
+                const hId = String(hotel.id).startsWith('solvex_') ? hotel.id : `solvex_${hotel.id}`;
+                if (markersRef.current[hId]) {
+                    const el = markersRef.current[hId].getElement();
+                    const isSelected = currentSelectedId === hId;
+                    
+                    el.className = `marker-bubble ${hotel.isPrime ? 'is-prime' : ''} ${hoveredHotelId === hId ? 'is-hovered' : ''} ${isSelected ? 'is-selected-marker' : ''}`;
                 }
-                return;
-            }
+            });
 
-            if (hotel.location.lat && hotel.location.lng && !isNaN(hotel.location.lat) && !isNaN(hotel.location.lng)) {
-                addMarker(hotel, hotel.location.lng, hotel.location.lat);
-                bounds.extend([hotel.location.lng, hotel.location.lat]);
-                boundsHasPoints = true;
-            } else {
-                const coords = await geocodeHotel(hotel);
-                if (coords && mapRef.current) {
-                    addMarker(hotel, coords[0], coords[1]);
-                    try {
-                        bounds.extend(coords);
-                        if (!bounds.isEmpty()) {
-                            mapRef.current.fitBounds(bounds, { padding: 120, maxZoom: 13, animate: true });
-                        }
-                    } catch(_) {}
+            // Add new markers
+            results.forEach(async hotel => {
+                const hId = String(hotel.id).startsWith('solvex_') ? hotel.id : `solvex_${hotel.id}`;
+                if (markersRef.current[hId]) return;
+
+                if (hotel.location.lat && hotel.location.lng && !isNaN(hotel.location.lat) && !isNaN(hotel.location.lng)) {
+                    addMarker(hotel, hotel.location.lng, hotel.location.lat);
+                } else {
+                    const coords = await geocodeHotel(hotel);
+                    if (coords && mapRef.current) {
+                        addMarker(hotel, coords[0], coords[1]);
+                    }
                 }
-            }
-        });
+            });
+        }, 50);
+
+        return () => clearTimeout(timer);
     }, [results, hoveredHotelId, selectedHotel]);
 
     const toggleFavorite = (id: string, e: React.MouseEvent) => {
@@ -328,38 +320,30 @@ export const PrimeMapSearch: React.FC<PrimeMapSearchProps> = ({ results, onClose
     };
 
     const handleHotelSelect = (hotel: HotelSearchResult) => {
+        const hId = String(hotel.id).startsWith('solvex_') ? hotel.id : `solvex_${hotel.id}`;
         setSelectedHotel(hotel);
-        setHoveredHotelId(hotel.id); // Highlight this marker
-        setShow360(false); // Reset 360 viewer
+        setHoveredHotelId(hId);
+        setShow360(false);
         
-        let targetLngLat: [number, number] | mapboxgl.LngLat | null = null;
-        
-        // 1. Direct coords
+        let coords: [number, number] | null = null;
         if (hotel.location.lng && hotel.location.lat) {
-            targetLngLat = [hotel.location.lng, hotel.location.lat];
-        } 
-        
-        // 2. Fallback to existing marker
-        if (!targetLngLat) {
-            const marker = markersRef.current[hotel.id];
-            if (marker) targetLngLat = marker.getLngLat();
+            coords = [hotel.location.lng, hotel.location.lat];
+        } else if (markersRef.current[hId]) {
+            const ll = markersRef.current[hId].getLngLat();
+            coords = [ll.lng, ll.lat];
         }
 
-        if (targetLngLat && mapRef.current) {
-            const coords = targetLngLat instanceof mapboxgl.LngLat 
-                ? [targetLngLat.lng, targetLngLat.lat] as [number, number] 
-                : targetLngLat;
-
+        if (coords && mapRef.current) {
             mapRef.current.flyTo({ 
                 center: coords, 
-                zoom: 16, 
+                zoom: 15, 
                 essential: true,
-                duration: 1200 // Slightly slower for smoothness
+                duration: 1000
             });
             
-            // Initial position update
-            const updatePopupPosition = () => {
-                if (!mapRef.current || !mapContainerRef.current) return;
+            // Wait for map to stabilize then show popup
+            setTimeout(() => {
+                if (!mapRef.current || !mapContainerRef.current || !coords) return;
                 const point = mapRef.current.project(coords);
                 const container = mapContainerRef.current;
                 
@@ -367,23 +351,14 @@ export const PrimeMapSearch: React.FC<PrimeMapSearchProps> = ({ results, onClose
                 const cardH = 420;
                 const margin = 18;
                 let x = point.x - cardW / 2;
-                let y = point.y - cardH - margin;
+                let y = point.y - cardH - 8;
                 
                 if (x < margin) x = margin;
                 if (x + cardW > container.clientWidth - margin) x = container.clientWidth - cardW - margin;
-                if (y < margin) y = point.y + 30; 
+                if (y < margin) y = point.y + 30;
                 
                 setPopupPos({ x, y });
-            };
-
-            // Keep tracking during flyTo
-            const onMove = () => updatePopupPosition();
-            mapRef.current.on('move', onMove);
-            mapRef.current.once('moveend', () => {
-                mapRef.current?.off('move', onMove);
-            });
-
-            updatePopupPosition();
+            }, 500);
         }
     };
 
@@ -394,6 +369,7 @@ export const PrimeMapSearch: React.FC<PrimeMapSearchProps> = ({ results, onClose
                     opacity: 0 !important;
                     visibility: hidden !important;
                     pointer-events: none !important;
+                    transition: opacity 0.3s ease;
                 }
             `}</style>
 
@@ -890,7 +866,12 @@ export const PrimeMapSearch: React.FC<PrimeMapSearchProps> = ({ results, onClose
                                             hCity: selectedHotel.location.city
                                         });
 
-                                        const detailUrl = `/prime-smart-search/hotel/${selectedHotel.id}?${queryParams.toString()}`;
+                                        // Ensure ID is prefixed with solvex_ for details page to work
+                                        const solvexId = String(selectedHotel.id).startsWith('solvex_') 
+                                            ? selectedHotel.id 
+                                            : `solvex_${selectedHotel.id}`;
+
+                                        const detailUrl = `/prime-smart-search/hotel/${solvexId}?${queryParams.toString()}`;
                                         window.open(detailUrl, '_blank');
                                     }}
                                 >
@@ -918,24 +899,31 @@ export const PrimeMapSearch: React.FC<PrimeMapSearchProps> = ({ results, onClose
                     border-radius: 16px;
                     overflow: hidden;
                     box-shadow: 0 4px 30px rgba(0,0,0,0.1);
-                    display: flex; /* Sidebar + Map container */
                 }
                 .map-results-sidebar {
-                    width: 380px;
-                    height: 100%;
-                    background: var(--v6-bg-card, #f8f9fa);
-                    border-right: 1px solid rgba(0,0,0,0.08);
+                    position: absolute;
+                    top: 20px;
+                    left: 20px;
+                    bottom: 20px;
+                    width: 360px;
+                    background: transparent;
+                    pointer-events: none; /* Let clicks pass through gaps */
                     display: flex;
                     flex-direction: column;
                     z-index: 20;
                 }
                 .sidebar-header {
-                    padding: 24px 20px 16px 20px;
-                    background: white;
-                    border-bottom: 1px solid rgba(0,0,0,0.05);
+                    padding: 16px;
+                    background: rgba(var(--v6-bg-card-rgb, 255, 255, 255), 0.9);
+                    backdrop-filter: blur(12px);
+                    border-radius: 20px;
+                    margin-bottom: 20px;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                    border: 1px solid rgba(255,255,255,0.4);
                     display: flex;
                     flex-direction: column;
-                    gap: 16px;
+                    gap: 12px;
+                    pointer-events: auto;
                 }
                 .sidebar-filters {
                     display: flex;
@@ -978,24 +966,26 @@ export const PrimeMapSearch: React.FC<PrimeMapSearchProps> = ({ results, onClose
                 .sidebar-content {
                     flex: 1;
                     overflow-y: auto;
-                    padding: 16px;
+                    padding: 4px;
                     display: flex;
                     flex-direction: column;
-                    gap: 12px;
-                    scrollbar-width: none; /* Firefox */
+                    gap: 16px; /* Spacing between floating cards */
+                    scrollbar-width: none;
                 }
-                .sidebar-content::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+                .sidebar-content::-webkit-scrollbar { display: none; }
                 
                 .sidebar-hotel-card {
+                    pointer-events: auto;
                     display: flex;
                     gap: 14px;
-                    padding: 10px;
-                    background: white;
-                    border-radius: 16px;
-                    border: 1.5px solid transparent;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+                    padding: 12px;
+                    background: rgba(255, 255, 255, 0.95);
+                    backdrop-filter: blur(8px);
+                    border-radius: 20px;
+                    border: 1px solid rgba(255,255,255,0.6);
+                    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
                     cursor: pointer;
-                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
                 }
                 .sidebar-hotel-card:hover {
                     box-shadow: 0 8px 20px rgba(0,0,0,0.08);
@@ -1412,7 +1402,6 @@ export const PrimeMapSearch: React.FC<PrimeMapSearchProps> = ({ results, onClose
                     transform: scale(1.15);
                     z-index: 100;
                 }
-                .prime-map-wrapper.has-selection .marker-bubble:not(.is-selected-marker),
                 .marker-bubble.is-hidden {
                     opacity: 0 !important;
                     visibility: hidden !important;

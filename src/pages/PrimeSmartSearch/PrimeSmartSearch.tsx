@@ -163,7 +163,12 @@ export const PrimeSmartSearch: React.FC = () => {
         params.set('rooms', roomsStr);
         params.set('nat', useSearchStore.getState().nationality || 'RS');
         
-        window.open(`/prime-smart-search/hotel/${hotel.id}?${params.toString()}`, '_blank');
+        // Ensure ID is prefixed with solvex_ for details page to work
+        const solvexId = String(hotel.id).startsWith('solvex_') 
+            ? hotel.id 
+            : `solvex_${hotel.id}`;
+
+        window.open(`/prime-smart-search/hotel/${solvexId}?${params.toString()}`, '_blank');
     };
 
     const handleFlightBook = (flight: FlightSearchResult) => {

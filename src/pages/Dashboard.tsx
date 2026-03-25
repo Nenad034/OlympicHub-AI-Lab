@@ -297,10 +297,11 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
     };
 
     const ROW1_IDS = isB2BView
-        ? ['prime-smart-search', 'modern-search', 'smart-search-v5', 'reservations', 'my-reservations', 'b2b-portal']
-        : ['prime-smart-search', 'modern-search', 'reservations', 'smart-search-v5', 'subagent-admin'];
+        ? ['prime-smart-search', 'reservations', 'my-reservations', 'b2b-portal']
+        : ['prime-smart-search', 'reservations', 'subagent-admin'];
 
     const ROW2_IDS: string[] = ['public-booking', 'smart-marketing', 'supplier-finance'];
+    const ARCHIVE_IDS = ['modern-search', 'smart-search-v5'];
 
     // Quick Info Data
     const staffInfo = [
@@ -323,7 +324,14 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
         .sort((a, b) => ROW1_IDS.indexOf(a.id) - ROW1_IDS.indexOf(b.id));
 
     const row2Apps = userApps.filter(app => ROW2_IDS.includes(app.id) && userLevel >= app.minLevel);
-    const otherApps = userApps.filter(app => !ROW1_IDS.includes(app.id) && !ROW2_IDS.includes(app.id) && userLevel >= app.minLevel);
+    const archiveApps = userApps.filter(app => ARCHIVE_IDS.includes(app.id) && userLevel >= app.minLevel);
+
+    const otherApps = userApps.filter(app => 
+        !ROW1_IDS.includes(app.id) && 
+        !ROW2_IDS.includes(app.id) && 
+        !ARCHIVE_IDS.includes(app.id) && 
+        userLevel >= app.minLevel
+    );
 
     const filteredOtherApps = otherApps.filter(app => {
         if (!forceShowAll && app.category === 'ai') return false;
@@ -713,6 +721,82 @@ const Dashboard: React.FC<DashboardProps> = ({ forceShowAll }) => {
                                                     <div>
                                                         <h3 className="card-title" style={{ margin: 0, fontSize: '18px' }}>{app.name}</h3>
                                                         <p className="card-desc" style={{ margin: '4px 0 0', fontSize: '12px', opacity: 0.7 }}>{app.desc.substring(0, 60)}...</p>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {/* Arhiva Modula Section */}
+                            {!forceShowAll && archiveApps.length > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.4 }}
+                                    style={{
+                                        maxWidth: '1400px',
+                                        margin: '60px auto 20px',
+                                        padding: '0 20px',
+                                        width: '100%'
+                                    }}
+                                >
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        marginBottom: '24px',
+                                        opacity: 0.5
+                                    }}>
+                                        <div style={{ height: '1px', flex: 1, background: 'linear-gradient(90deg, transparent, var(--border))' }}></div>
+                                        <Database size={18} />
+                                        <h2 style={{ 
+                                            fontSize: '14px', 
+                                            fontWeight: '900', 
+                                            margin: 0, 
+                                            textTransform: 'uppercase', 
+                                            letterSpacing: '3px',
+                                            color: 'var(--text-secondary)'
+                                        }}>Arhiva Modula</h2>
+                                        <div style={{ height: '1px', flex: 1, background: 'linear-gradient(90deg, var(--border), transparent)' }}></div>
+                                    </div>
+
+                                    <div className={`dashboard-grid ${viewMode === 'list' ? 'view-list' : ''}`} style={{
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '20px',
+                                        justifyContent: 'center'
+                                    }}>
+                                        {archiveApps.map((app: AppConfig) => (
+                                            <motion.div
+                                                key={app.id}
+                                                whileHover={{ scale: 1.02, opacity: 1, background: 'rgba(255,255,255,0.03)' }}
+                                                className={`module-card ${viewMode === 'list' ? 'list-item' : ''}`}
+                                                onClick={() => handleAppClick(app)}
+                                                style={{
+                                                    background: 'rgba(255, 255, 255, 0.01)',
+                                                    border: '1px dashed var(--border)',
+                                                    padding: '16px 20px',
+                                                    minWidth: '280px',
+                                                    flex: viewMode === 'list' ? '1' : '0 1 300px',
+                                                    opacity: 0.6,
+                                                    filter: 'grayscale(0.5)',
+                                                    transition: 'all 0.3s ease'
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                                    <div className="card-icon" style={{ 
+                                                        background: app.color, 
+                                                        width: '36px', 
+                                                        height: '36px',
+                                                        opacity: 0.8
+                                                    }}>
+                                                        {React.cloneElement(app.icon as React.ReactElement, { size: 18 })}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="card-title" style={{ margin: 0, fontSize: '14px', fontWeight: '700' }}>{app.name}</h3>
+                                                        <div style={{ fontSize: '10px', opacity: 0.5 }}>Starija verzija</div>
                                                     </div>
                                                 </div>
                                             </motion.div>

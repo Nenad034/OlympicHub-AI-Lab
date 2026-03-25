@@ -33,12 +33,22 @@ let connectionPromise: Promise<SolvexApiResponse<string>> | null = null;
  */
 export async function connect(): Promise<SolvexApiResponse<string>> {
     try {
-        // Check if we have a valid cached token
+        // 1. Check in-memory cache
         if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) {
             return { success: true, data: cachedToken };
         }
 
-        // If a connection is already in progress, return that same promise
+        // 2. Check localStorage cache (Persistence across reloads)
+        const storedToken = localStorage.getItem('solvex_token');
+        const storedExpiry = localStorage.getItem('solvex_token_expiry');
+        if (storedToken && storedExpiry && Date.now() < parseInt(storedExpiry)) {
+            cachedToken = storedToken;
+            tokenExpiry = parseInt(storedExpiry);
+            console.log('[Solvex Auth] Restored token from storage');
+            return { success: true, data: storedToken };
+        }
+
+        // 3. Prevent parallel connection attempts
         if (connectionPromise) {
             console.log('[Solvex Auth] Waiting for existing connection attempt...');
             return connectionPromise;
@@ -47,7 +57,6 @@ export async function connect(): Promise<SolvexApiResponse<string>> {
         connectionPromise = (async () => {
             try {
                 // Under the Fortress architecture, credentials are injected by the Supabase Edge Function Proxy.
-                // We provide dummy values here which the proxy will replace with actual secrets.
                 const login = getEnvVar('VITE_SOLVEX_LOGIN') || SOLVEX_LOGIN || 'proxy_auth';
                 const password = getEnvVar('VITE_SOLVEX_PASSWORD') || SOLVEX_PASSWORD || 'proxy_auth';
 
@@ -66,9 +75,14 @@ export async function connect(): Promise<SolvexApiResponse<string>> {
                     throw new Error(`Solvex API Auth Error: ${result}`);
                 }
 
-                // Cache the token
+                // Cache the token in memory
                 cachedToken = result;
                 tokenExpiry = Date.now() + TOKEN_LIFETIME;
+
+                // Persist token in storage
+                localStorage.setItem('solvex_token', result);
+                localStorage.setItem('solvex_token_expiry', tokenExpiry.toString());
+                
                 console.log('[Solvex Auth] Token obtained successfully');
 
                 return { success: true, data: result };
@@ -87,6 +101,8 @@ export async function connect(): Promise<SolvexApiResponse<string>> {
         // Clear cache on error
         cachedToken = null;
         tokenExpiry = null;
+        localStorage.removeItem('solvex_token');
+        localStorage.removeItem('solvex_token_expiry');
 
         return {
             success: false,
@@ -133,6 +149,8 @@ export function getCachedToken(): string | null {
 export function clearToken(): void {
     cachedToken = null;
     tokenExpiry = null;
+    localStorage.removeItem('solvex_token');
+    localStorage.removeItem('solvex_token_expiry');
     console.log('[Solvex Auth] Token cache cleared');
 }
 

@@ -160,43 +160,60 @@ export async function searchHotels(
 
         // Fetch enriched content from Supabase (images, descriptions)
         const uniqueHotelIds = [...new Set(items.map(s => String(s.HotelKey || '0')))];
+        
+        // OPTIMIZATION: Only enrich the first 15 hotels to reach TTI faster.
+        // The remaining hotels can be enriched in the background or during detail view.
+        const INITIAL_ENRICHMENT_COUNT = 15;
+        const hotelsToEnrich = uniqueHotelIds.slice(0, INITIAL_ENRICHMENT_COUNT);
         let enrichedMap: Record<string, any> = {};
 
-        if (uniqueHotelIds.length > 0) {
+        if (hotelsToEnrich.length > 0) {
             try {
                 const { supabase } = await import('../../../supabaseClient');
                 if (supabase) {
-                    // Larger chunk size for faster enrichment
-                    const chunkSize = 100;
-                    const idChunks = [];
-                    for (let i = 0; i < uniqueHotelIds.length; i += chunkSize) {
-                        idChunks.push(uniqueHotelIds.slice(i, i + chunkSize));
-                    }
-
-                    if (idChunks.length > 0) {
-                        console.log(`[Solvex Search] Fetching enrichment for ${uniqueHotelIds.length} hotels in ${idChunks.length} chunks...`);
-                    }
+                    console.log(`[Solvex Search] Fetching INITIAL enrichment for first ${hotelsToEnrich.length} hotels...`);
                     
-                    const chunkPromises = idChunks.map(async (chunk) => {
-                        return await supabase
-                            .from('properties')
-                            .select('id, images, content, propertyAmenities, geoCoordinates')
-                            .in('id', chunk.map(id => `solvex_${id}`));
-                    });
+                    const { data: hotelsData, error } = await supabase
+                        .from('properties')
+                        .select('id, images, content, propertyAmenities, geoCoordinates')
+                        .in('id', hotelsToEnrich.map((id: string) => `solvex_${id}`));
 
-                    const chunkResults = await Promise.all(chunkPromises);
+                    if (error) {
+                        console.error('[Solvex Search] Supabase enrichment error:', error);
+                    } else if (hotelsData) {
+                        hotelsData.forEach((h: any) => {
+                            const solvexId = h.id.replace('solvex_', '');
+                            enrichedMap[solvexId] = h;
+                        });
+                        console.log(`[Solvex Search] Enriched ${Object.keys(enrichedMap).length} priority hotels`);
+                    }
 
-                    chunkResults.forEach(({ data: hotelsData, error }: any) => {
-                        if (error) {
-                            console.error('[Solvex Search] Supabase enrichment error:', error);
-                        } else if (hotelsData) {
-                            hotelsData.forEach((h: any) => {
-                                const solvexId = h.id.replace('solvex_', '');
-                                enrichedMap[solvexId] = h;
-                            });
-                        }
-                    });
-                    console.log(`[Solvex Search] Enriched ${Object.keys(enrichedMap).length} hotels total from Supabase`);
+                    // Background enrichment for the rest if needed
+                    if (uniqueHotelIds.length > INITIAL_ENRICHMENT_COUNT) {
+                        const remainingIds = uniqueHotelIds.slice(INITIAL_ENRICHMENT_COUNT);
+                        console.log(`[Solvex Search] ${remainingIds.length} hotels left for background enrichment.`);
+                        
+                        // We don't await this, let it run in background
+                        (async () => {
+                           try {
+                               const chunkSize = 100;
+                               for (let i = 0; i < remainingIds.length; i += chunkSize) {
+                                   const chunk = remainingIds.slice(i, i + chunkSize);
+                                   const { data } = await supabase
+                                       .from('properties')
+                                       .select('id, images, content, propertyAmenities, geoCoordinates')
+                                       .in('id', chunk.map((id: string) => `solvex_${id}`));
+                                   
+                                   if (data) {
+                                       data.forEach((h: any) => {
+                                           const sid = h.id.replace('solvex_', '');
+                                           enrichedMap[sid] = h;
+                                       });
+                                   }
+                               }
+                           } catch(e3) { /* silent bg error */ }
+                        })();
+                    }
                 }
             } catch (e2) {
                 console.warn('[Solvex Search] Could not load Supabase for enrichment', e2);

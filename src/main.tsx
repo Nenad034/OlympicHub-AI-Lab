@@ -48,36 +48,49 @@ try {
 
 console.log("🚀 Booting ClickToTravel Hub...");
 
-try {
-  // Initialize Amadeus on app startup
-  initializeAmadeus();
-  console.log("✅ Amadeus service initialized");
+// Boot services in parallel for speed
+const bootServices = async () => {
+  try {
+    // Start non-dependent initializations together
+    const bootResults = await Promise.allSettled([
+      initializeAmadeus(), // Amadeus init
+      // We could add more global service inits here as they grow
+    ]);
+    
+    bootResults.forEach((result, idx) => {
+      if (result.status === 'rejected') {
+        console.error(`❌ Service[${idx}] failed to boot:`, result.reason);
+      }
+    });
 
-  const rootElement = document.getElementById('root');
-  if (!rootElement) {
-    throw new Error("Root element 'root' not found in document.");
+    const rootElement = document.getElementById('root');
+    if (!rootElement) {
+      throw new Error("Root element 'root' not found in document.");
+    }
+
+    createRoot(rootElement).render(
+      <StrictMode>
+        <ErrorBoundary>
+          <ConfigProvider>
+            <ToastProvider>
+              <App />
+            </ToastProvider>
+          </ConfigProvider>
+        </ErrorBoundary>
+      </StrictMode>,
+    );
+    console.log("✅ React Root rendered");
+  } catch (e: any) {
+    console.error("❌ BOOT STRAP ERROR:", e);
+    document.body.innerHTML = `
+      <div style="background: #1a0000; color: #ff3333; padding: 20px; font-family: monospace; height: 100vh;">
+        <h1>BOOTSTRAP FATAL ERROR</h1>
+        <p>${e.message}</p>
+        <pre>${e.stack}</pre>
+      </div>
+    `;
   }
+};
 
-  createRoot(rootElement).render(
-    <StrictMode>
-      <ErrorBoundary>
-        <ConfigProvider>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
-        </ConfigProvider>
-      </ErrorBoundary>
-    </StrictMode>,
-  )
-  console.log("✅ React Root rendered");
-} catch (e: any) {
-  console.error("❌ BOOT STRAP ERROR:", e);
-  document.body.innerHTML = `
-    <div style="background: #1a0000; color: #ff3333; padding: 20px; font-family: monospace; height: 100vh;">
-      <h1>BOOTSTRAP FATAL ERROR</h1>
-      <p>${e.message}</p>
-      <pre>${e.stack}</pre>
-    </div>
-  `;
-}
+bootServices();
 
